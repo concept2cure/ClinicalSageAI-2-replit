@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT49508147",
+  "indication": "Psoriasis",
+  "phase": "Phase 2",
+  "sample_size": 354,
+  "duration_weeks": 54,
+  "dropout_rate": 0.33,
+  "primary_endpoints": ["Quality of life improvement"],
+  "secondary_endpoints": ["PASI 75 response", "IGA score"],
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "outcome_summary": "Study did not demonstrate sufficient efficacy.",
+  "success": false,
+  "failure_reason": "Poor recruitment/enrollment"
+}

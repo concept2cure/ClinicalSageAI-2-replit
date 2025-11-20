@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT33249630",
+  "indication": "Epilepsy",
+  "phase": "Phase 1",
+  "sample_size": 328,
+  "duration_weeks": 20,
+  "dropout_rate": 0.23,
+  "primary_endpoints": ["Seizure-free days"],
+  "secondary_endpoints": ["Seizure frequency", "Seizure-free days"],
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "outcome_summary": "Study no significant difference compared to placebo.",
+  "success": false,
+  "failure_reason": "Dosing limitations due to side effects"
+}

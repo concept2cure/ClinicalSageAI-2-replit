@@ -1,0 +1,101 @@
+nct_id,indication,phase,sample_size,duration_weeks,dropout_rate,endpoint_primary,control_type,blinding,success,failure_reason
+NCT74864043,COPD,2,296,71,0.4,Exacerbation reduction,active comparator,single-blind,1,
+NCT32913640,Hypertension,3,499,42,0.2,SBP reduction,placebo,double-blind,0,Pharmacokinetic issues with drug exposure
+NCT88126051,Rheumatoid Arthritis,2,286,61,0.29,DAS28 score reduction,standard of care,double-blind,0,Inadequate statistical power
+NCT72348905,Non-Small Cell Lung Cancer,2/3,329,51,0.13,Overall survival,active comparator,open-label,0,Inadequate statistical power
+NCT59065170,Type 2 Diabetes,3,871,36,0.18,HbA1c reduction,placebo,double-blind,0,
+NCT88876707,Major Depressive Disorder,3,946,33,0.24,MADRS score reduction,active comparator,open-label,0,Pharmacokinetic issues with drug exposure
+NCT60080773,Melanoma,1,59,16,0.09,Objective response rate,active comparator,double-blind,1,
+NCT26724911,Type 2 Diabetes,2,185,19,0.13,Postprandial glucose reduction,placebo,double-blind,0,
+NCT38662174,Melanoma,2,225,75,0.27,Objective response rate,placebo,double-blind,0,Dose selection suboptimal
+NCT58940370,Rheumatoid Arthritis,3,861,45,0.28,ACR20 response,placebo,open-label,0,Drug-drug interactions affected efficacy
+NCT89580737,Colorectal Cancer,3,1127,142,0.4,Disease control rate,placebo,open-label,0,Endpoint selection not sensitive to change
+NCT63401626,Prostate Cancer,3,782,26,0.11,PSA response,placebo,double-blind,0,Dose selection suboptimal
+NCT62919485,Melanoma,1,67,5,0.02,Objective response rate,placebo,single-blind,0,
+NCT15512971,Non-Small Cell Lung Cancer,3,331,41,0.19,Objective response rate,placebo,double-blind,0,
+NCT21168821,Non-Small Cell Lung Cancer,3,887,45,0.2,Overall survival,standard of care,open-label,1,
+NCT99700153,Colorectal Cancer,1/2,95,127,0.4,Disease control rate,active comparator,open-label,0,Drug-drug interactions affected efficacy
+NCT85572677,Melanoma,3,1184,41,0.12,Overall survival,standard of care,double-blind,0,
+NCT71839257,COPD,3,462,28,0.31,Exacerbation reduction,placebo,double-blind,1,
+NCT32177747,Multiple Sclerosis,1/2,90,19,0.14,EDSS score change,active comparator,double-blind,0,
+NCT87304415,Parkinson's Disease,3,1164,50,0.22,ON time without dyskinesia,placebo,double-blind,1,
+NCT28650056,COPD,3,703,37,0.27,SGRQ score improvement,placebo,double-blind,1,
+NCT36789964,Rheumatoid Arthritis,2,190,13,0.11,HAQ-DI improvement,active comparator,double-blind,0,Target population too heterogeneous
+NCT44181109,Major Depressive Disorder,1/2,62,17,0.17,MADRS score reduction,active comparator,double-blind,0,Unexpected safety signal
+NCT18555929,Prostate Cancer,2,135,80,0.27,PSA response,active comparator,open-label,0,
+NCT16113819,Asthma,2/3,1178,41,0.14,Asthma exacerbation reduction,placebo,double-blind,0,Unexpected safety signal
+NCT20848327,Rheumatoid Arthritis,3,836,21,0.15,ACR20 response,active comparator,open-label,0,
+NCT55577639,Parkinson's Disease,1/2,21,5,0.04,UPDRS score improvement,placebo,double-blind,0,
+NCT29492472,Asthma,1/2,39,22,0.12,Asthma exacerbation reduction,active comparator,single-blind,0,
+NCT92902838,Type 2 Diabetes,2/3,733,59,0.25,HbA1c reduction,no control,open-label,1,
+NCT65859436,Rheumatoid Arthritis,2,135,26,0.17,HAQ-DI improvement,standard of care,double-blind,1,
+NCT48703275,Rheumatoid Arthritis,1,71,23,0.09,ACR20 response,standard of care,open-label,1,
+NCT95266614,Melanoma,1,25,11,0.15,Overall survival,placebo,open-label,0,Inadequate statistical power
+NCT40470638,Colorectal Cancer,1/2,83,58,0.21,Progression-free survival,placebo,open-label,0,Patient recruitment challenges led to underpowered study
+NCT83144422,Obesity,3,713,53,0.21,BMI reduction,placebo,double-blind,0,
+NCT19395346,Hypertension,2/3,718,55,0.23,DBP reduction,active comparator,double-blind,1,
+NCT61118479,Parkinson's Disease,2/3,892,74,0.3,UPDRS score improvement,placebo,double-blind,0,High dropout rate affected statistical analysis
+NCT86361477,Major Depressive Disorder,2,296,42,0.28,MADRS score reduction,placebo,double-blind,1,
+NCT28493049,Alzheimer's Disease,3,572,56,0.25,ADAS-Cog improvement,active comparator,double-blind,0,Unexpected safety signal
+NCT90536475,Asthma,2/3,602,12,0.18,ACQ score improvement,no control,single-blind,0,Unexpected safety signal
+NCT37002837,Multiple Sclerosis,1,57,18,0.09,EDSS score change,active comparator,double-blind,1,
+NCT85356104,Obesity,2/3,1130,57,0.23,Waist circumference reduction,standard of care,double-blind,1,
+NCT40720524,Obesity,2,293,50,0.2,Weight reduction,active comparator,double-blind,0,Unexpected safety signal
+NCT91863063,Non-Small Cell Lung Cancer,2,239,53,0.23,Objective response rate,placebo,double-blind,1,
+NCT61127768,Non-Small Cell Lung Cancer,4,1185,127,0.4,Objective response rate,active comparator,double-blind,0,High placebo response rate
+NCT17893775,Obesity,3,1192,17,0.11,Waist circumference reduction,placebo,open-label,0,High placebo response rate
+NCT31748253,Non-Small Cell Lung Cancer,2,89,114,0.4,Overall survival,active comparator,single-blind,1,
+NCT64963456,Parkinson's Disease,1,73,9,0.02,ON time without dyskinesia,placebo,open-label,0,Unexpected safety signal
+NCT46439032,Type 2 Diabetes,1,44,6,0.04,HbA1c reduction,placebo,double-blind,0,Pharmacokinetic issues with drug exposure
+NCT28914233,Colorectal Cancer,2,229,89,0.35,Disease control rate,active comparator,double-blind,0,Endpoint selection not sensitive to change
+NCT47665427,Breast Cancer,1/2,40,64,0.31,Objective response rate,placebo,double-blind,1,
+NCT70936914,Alzheimer's Disease,3,312,85,0.46,CDR-SB score,active comparator,open-label,0,Target engagement not achieved
+NCT59881139,Major Depressive Disorder,2/3,340,117,0.23,Response rate,active comparator,single-blind,1,
+NCT72560182,Parkinson's Disease,2,302,76,0.22,UPDRS score,placebo,single-blind,1,
+NCT26842489,Rheumatoid Arthritis,1/2,248,56,0.21,ACR20 response,standard of care,open-label,0,Dosing limitations due to side effects
+NCT93892341,Non-Small Cell Lung Cancer,1,426,46,0.27,Objective response rate,none,double-blind,0,Low compliance/adherence
+NCT58486812,Rheumatoid Arthritis,2,186,4,0.41,DAS28 score reduction,active comparator,double-blind,1,
+NCT64048010,Alzheimer's Disease,3,310,56,0.32,CDR-SB score,standard of care,double-blind,0,Unexpected safety findings
+NCT43042469,Non-Small Cell Lung Cancer,2/3,305,75,0.19,Objective response rate,placebo,single-blind,0,Poor recruitment/enrollment
+NCT28367867,Rheumatoid Arthritis,2,114,47,0.09,Joint damage progression,active comparator,open-label,0,Endpoint selection issues
+NCT37488942,COPD,3,163,27,0.36,FEV1 improvement,standard of care,double-blind,0,Low compliance/adherence
+NCT39052331,Type 2 Diabetes,2,209,59,0.3,Weight change,none,open-label,1,
+NCT33249630,Epilepsy,1,328,20,0.23,Seizure-free days,placebo,double-blind,1,
+NCT90016127,Major Depressive Disorder,2,329,106,0.27,MADRS score,none,open-label,1,
+NCT18746282,Heart Failure,1,330,74,0.25,CV death or HF hospitalization,standard of care,single-blind,1,
+NCT78883924,Breast Cancer,3,194,52,0.21,Disease-free survival,active comparator,double-blind,1,
+NCT23228919,Multiple Sclerosis,1/2,504,56,0.42,Relapse rate,active comparator,open-label,1,
+NCT78754636,Asthma,2,185,46,0.15,Exacerbation rate,active comparator,open-label,0,Poor recruitment/enrollment
+NCT20998792,Heart Failure,4,426,50,0.26,6MWT distance,standard of care,double-blind,0,Inadequate statistical power
+NCT81887677,Heart Failure,2,229,52,0.09,CV death or HF hospitalization,active comparator,double-blind,0,Unexpected safety findings
+NCT11879616,Type 2 Diabetes,2,399,55,0.3,Fasting plasma glucose,placebo,single-blind,1,
+NCT86014471,COPD,2,263,80,0.08,Exacerbation reduction,active comparator,double-blind,1,
+NCT42209004,Multiple Sclerosis,2,406,80,0.39,EDSS progression,standard of care,double-blind,1,
+NCT49508147,Psoriasis,2,354,54,0.33,Quality of life improvement,placebo,double-blind,0,Poor recruitment/enrollment
+NCT19694719,Crohn's Disease,1/2,247,105,0.42,Steroid-free remission,standard of care,double-blind,0,Unexpected safety findings
+NCT31825286,Non-Small Cell Lung Cancer,4,405,47,0.09,Overall survival,active comparator,double-blind,0,Unexpected safety findings
+NCT94488340,Multiple Sclerosis,2,312,114,0.21,EDSS progression,standard of care,open-label,0,Endpoint selection issues
+NCT85359681,Hypertension,2,349,37,0.43,CV events reduction,placebo,double-blind,0,Low compliance/adherence
+NCT23959179,Breast Cancer,2/3,87,38,0.16,Overall survival,placebo,open-label,0,Low compliance/adherence
+NCT95976257,Rheumatoid Arthritis,3,314,99,0.18,ACR20 response,none,single-blind,0,Inadequate statistical power
+NCT15579591,Asthma,3,232,46,0.31,Exacerbation rate,active comparator,double-blind,1,
+NCT82737882,COPD,4,475,45,0.21,Quality of life score,active comparator,double-blind,1,
+NCT81289757,Crohn's Disease,3,214,43,0.33,Steroid-free remission,none,open-label,1,
+NCT32820513,Major Depressive Disorder,2,421,16,0.14,HAM-D score,placebo,double-blind,1,
+NCT31176527,Non-Small Cell Lung Cancer,2,337,79,0.27,Objective response rate,active comparator,double-blind,0,Unexpected safety findings
+NCT96952461,Epilepsy,1,412,55,0.15,Quality of life,placebo,double-blind,1,
+NCT97163947,Crohn's Disease,2,406,27,0.14,Steroid-free remission,placebo,open-label,0,Low compliance/adherence
+NCT61924903,Multiple Sclerosis,2,240,64,0.46,MRI lesion count,standard of care,open-label,1,
+NCT99443561,Type 2 Diabetes,2,50,34,0.33,Fasting plasma glucose,placebo,open-label,0,Pharmacokinetic issues with drug exposure
+NCT90018262,Crohn's Disease,1/2,295,81,0.18,Steroid-free remission,standard of care,open-label,0,Low compliance/adherence
+NCT51989657,Psoriasis,2,318,61,0.23,PASI 75 response,standard of care,open-label,0,Poor recruitment/enrollment
+NCT35185151,Crohn's Disease,3,89,95,0.11,Mucosal healing,active comparator,double-blind,0,Low compliance/adherence
+NCT24176836,COPD,3,337,28,0.25,Exacerbation reduction,active comparator,open-label,1,
+NCT53219399,Epilepsy,1/2,327,35,0.26,Seizure frequency,active comparator,open-label,0,Formulation problems
+NCT27932369,Rheumatoid Arthritis,2,330,76,0.34,DAS28 score reduction,standard of care,open-label,1,
+NCT70353278,COPD,2,304,44,0.23,FEV1 improvement,active comparator,open-label,0,Unexpected safety findings
+NCT73444942,Epilepsy,1/2,177,30,0.42,Quality of life,active comparator,double-blind,0,Low compliance/adherence
+NCT55623926,Alzheimer's Disease,3,232,50,0.29,Cognitive function,placebo,double-blind,1,
+NCT42506814,Parkinson's Disease,1/2,130,91,0.23,PDQ-39 score,active comparator,double-blind,1,
+NCT73392044,Multiple Sclerosis,3,243,42,0.13,MRI lesion count,placebo,double-blind,1,
+NCT72105917,Alzheimer's Disease,3,478,11,0.27,Cognitive function,placebo,single-blind,0,Unexpected safety findings

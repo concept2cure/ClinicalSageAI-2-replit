@@ -1,0 +1,216 @@
+modules = ["bash", "nodejs-20", "python-3.11", "python3", "web"]
+run = "npm run dev"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "gitFull", "glibcLocales", "gobject-introspection", "gtk3", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libiconv", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "libyaml", "mupdf", "openjpeg", "openssl", "pgadmin4", "pkg-config", "playwright-driver", "postgresql", "qhull", "rustc", "swig", "tcl", "tesseract", "tk", "xcbuild", "xcodebuild", "xsimd", "zlib"]
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
+
+[[ports]]
+localPort = 3000
+externalPort = 6000
+
+[[ports]]
+localPort = 3001
+externalPort = 5000
+
+[[ports]]
+localPort = 3500
+externalPort = 3000
+
+[[ports]]
+localPort = 4000
+externalPort = 4200
+
+[[ports]]
+localPort = 4001
+externalPort = 5173
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3001
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+
+[[ports]]
+localPort = 8001
+externalPort = 3002
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8083
+externalPort = 3003
+
+[[ports]]
+localPort = 24678
+externalPort = 6800
+
+[[ports]]
+localPort = 32867
+externalPort = 8008
+
+[[ports]]
+localPort = 41247
+externalPort = 8099
+
+[[ports]]
+localPort = 45597
+externalPort = 9000
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Run App"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Run TrialSage"
+author = 41101236
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Run Focused Test Server"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && node --inspect index.ts"
+
+[[workflows.workflow]]
+name = "Test Server"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/pre-test-stability-check.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Restart Application"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Controlled Development"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔒 STRICT CONTROL MODE ACTIVE\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📋 Check replit.md for constraints\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚀 Server ready for controlled development\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Run TrialSage Optimized"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚀 Starting TrialSage with optimizations...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node cleanup-toastify.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_OPTIONS=\"--max-old-space-size=512\" tsx server/index.ts"
+
+[[workflows.workflow]]
+name = "Debug Start"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔧 Starting TrialSage with enhanced debugging...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node cleanup-toastify.js"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development NODE_OPTIONS=\"--trace-warnings --unhandled-rejections=strict\" tsx server/index.ts"
+
+[[workflows.workflow]]
+name = "Restart Server"
+author = 41101236
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[agent]
+integrations = ["javascript_database:1.0.0", "javascript_openai:1.0.0", "javascript_openai_ai_integrations:1.0.0"]

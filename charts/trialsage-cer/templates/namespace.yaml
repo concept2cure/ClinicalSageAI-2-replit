@@ -1,0 +1,15 @@
+{{- if .Values.namespace.create -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace.name | default (include "trialsage-cer.namespace" . ) }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    {{- if .Values.namespace.labels }}
+    {{- toYaml .Values.namespace.labels | nindent 4 }}
+    {{- end }}
+  {{- if .Values.namespace.annotations }}
+  annotations:
+    {{- toYaml .Values.namespace.annotations | nindent 4 }}
+  {{- end }}
+{{- end }}

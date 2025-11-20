@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["meta", "module3", "ir", "q12", "sequences", "weights"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["region", "version"],
+      "properties": {
+        "region": { "type": "string" },
+        "version": { "type": "string" },
+        "source": { "type": "string" }
+      }
+    },
+    "module3": {
+      "type": "object",
+      "required": ["requiredSections", "stability", "methods"],
+      "properties": {
+        "requiredSections": { "type": "array", "items": { "type": "string" } },
+        "stability": {
+          "type": "object",
+          "required": ["minCoverageMonths"],
+          "properties": {
+            "minCoverageMonths": { "type": "integer", "minimum": 0 },
+            "requireAccelerated": { "type": "boolean" }
+          }
+        },
+        "methods": {
+          "type": "object",
+          "properties": { "requireValidatedForCQA": { "type": "boolean" } }
+        }
+      }
+    },
+    "ir": {
+      "type": "object",
+      "required": ["defaultResponseDays"],
+      "properties": {
+        "defaultResponseDays": { "type": "integer", "minimum": 1 },
+        "tone": { "type": "string" },
+        "signatureRoles": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "q12": {
+      "type": "object",
+      "properties": {
+        "classificationMap": { "type": "object" }
+      }
+    },
+    "sequences": {
+      "type": "object",
+      "properties": {
+        "defaultFormats": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["pdf", "docx", "txt"] }
+        },
+        "allowForceBuild": { "type": "boolean" }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "properties": {
+        "rpi": { "type": "object" }
+      }
+    }
+  }
+}

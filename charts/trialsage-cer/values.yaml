@@ -1,0 +1,194 @@
+# Default values for trialsage-cer chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ''
+fullnameOverride: ''
+namespaceOverride: ''
+
+# Pod-level security settings
+podSecurityContext: {}
+
+# Container-level security settings
+securityContext: {}
+
+# Service account configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ''
+
+# RBAC configuration
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+# API component configuration
+api:
+  # Controls whether the API component is enabled
+  enabled: true
+  # Number of replicas (ignored if autoscaling is enabled)
+  replicaCount: 1
+
+  image:
+    repository: trialsage/cer-api
+    tag: 'latest' # Will default to Chart.AppVersion if not specified
+    pullPolicy: IfNotPresent
+
+  env:
+    NODE_ENV: 'production'
+    PORT: '4000'
+    METRICS_PORT: '9090'
+    AWS_ENABLED: false
+    AWS_S3_BUCKET: ''
+    AWS_REGION: 'us-east-1'
+    OPENAI_API_KEY: ''
+    # Additional custom environment variables
+    custom: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+    metricsPort: 9090
+    annotations: {}
+
+  ingress:
+    enabled: false
+    className: ''
+    annotations: {}
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Worker component configuration
+worker:
+  # Controls whether the Worker component is enabled
+  enabled: true
+  # Number of replicas (ignored if autoscaling is enabled)
+  replicaCount: 1
+
+  image:
+    repository: trialsage/cer-worker
+    tag: 'latest' # Will default to Chart.AppVersion if not specified
+    pullPolicy: IfNotPresent
+
+  env:
+    NODE_ENV: 'production'
+    PORT: '8080'
+    METRICS_PORT: '9090'
+    CONCURRENCY: '2'
+    MAX_MEMORY_RESTART: '2G'
+    AWS_ENABLED: false
+    AWS_S3_BUCKET: ''
+    AWS_REGION: 'us-east-1'
+    OPENAI_API_KEY: ''
+    # Additional custom environment variables
+    custom: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+    metricsPort: 9090
+    annotations: {}
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Storage configuration
+storage:
+  enabled: true
+  persistentVolume:
+    enabled: true
+    storageClass: ''
+    size: 10Gi
+
+# Configuration maps
+configMaps:
+  app:
+    create: true
+    data:
+      LOG_LEVEL: 'info'
+      ENABLE_METRICS: 'true'
+
+# Secrets configuration
+secrets:
+  create: true
+  annotations: {}
+  stringData:
+    # These will be auto-generated if not provided
+    jwt_secret: ''
+    # These should be provided
+    database_url: ''
+    redis_url: ''
+    aws_access_key: ''
+    aws_secret_key: ''
+    openai_api_key: ''
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    selector:
+      release: prometheus
+
+# PostgreSQL dependency configuration
+postgresql:
+  enabled: false
+  auth:
+    username: 'trialsage'
+    password: ''
+    database: 'cer'
+  primary:
+    service:
+      ports:
+        postgresql: 5432
+
+# Redis dependency configuration
+redis:
+  enabled: false
+  master:
+    service:
+      port: 6379

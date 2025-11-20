@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT64963456",
+  "indication": "Parkinson's Disease",
+  "phase": "Phase 1",
+  "sample_size": 73,
+  "duration_weeks": 9,
+  "dropout_rate": 0.02,
+  "blinding": "open-label",
+  "control_arm": "placebo",
+  "primary_endpoints": ["ON time without dyskinesia"],
+  "secondary_endpoints": ["UPDRS score improvement", "OFF time reduction"],
+  "outcome_summary": "Study terminated early due to futility",
+  "success": 0,
+  "failure_reason": "Unexpected safety signal",
+  "start_date": "2023-01-26",
+  "completion_date": "2023-03-30"
+}

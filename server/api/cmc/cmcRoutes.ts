@@ -1,0 +1,643 @@
+import express from 'express';
+import { z } from 'zod';
+import { EnhancedCMCService } from './enhancedCMCService.js';
+import { CMCTemplateService } from './templateService.js';
+import workflowRoutes from './workflowRoutes.js';
+import collaborationRoutes from './collaborationRoutes.js';
+import documentRoutes from './documentRoutes.js';
+
+const router = express.Router();
+
+// Mount Smart Workflows routes
+router.use('/workflows', workflowRoutes);
+
+// Mount Collaboration routes
+router.use('/collaboration', collaborationRoutes);
+
+// Mount Document routes
+router.use('/documents', documentRoutes);
+
+// Validation schema for CMC blueprint generation request
+const generateBlueprintSchema = z.object({
+  drugName: z.string().min(1, 'Drug name is required').max(100, 'Drug name too long'),
+});
+
+// POST /api/cmc/generate-blueprint
+router.post('/generate-blueprint', async (req, res) => {
+  try {
+    // Validate request body
+    const validationResult = generateBlueprintSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const { drugName } = validationResult.data;
+
+    // Log the received data
+    console.log(`[CMC] CMC Blueprint request for: ${drugName}`);
+    console.log(`[CMC] Request timestamp: ${new Date().toISOString()}`);
+    console.log(`[CMC] Request from IP: ${req.ip}`);
+
+    // TODO: Implement actual CMC blueprint generation logic
+    // For now, return a success response
+
+    const response = {
+      status: 'received',
+      message: `Request for CMC Blueprint received for drug: ${drugName}`,
+      drugName: drugName,
+      timestamp: new Date().toISOString(),
+      nextSteps: [
+        'Process development analysis',
+        'Quality control specifications',
+        'Module 3 documentation generation',
+      ],
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('[CMC] Error in generate-blueprint endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to process CMC blueprint request',
+    });
+  }
+});
+
+// POST /api/cmc/generate-enhanced-blueprint - Enhanced AI-powered blueprint generation
+router.post('/generate-enhanced-blueprint', async (req, res) => {
+  try {
+    const enhancedSchema = z.object({
+      drugName: z.string().min(1, 'Drug name is required'),
+      structuredInputs: z
+        .object({
+          molecularWeight: z.string().optional(),
+          synthesisRoute: z.string().optional(),
+          drugSubstance: z.string().optional(),
+          dosageForm: z.string().optional(),
+          excipients: z.string().optional(),
+          manufacturingSite: z.string().optional(),
+        })
+        .optional(),
+      generateTables: z.boolean().default(true),
+      generateFlowcharts: z.boolean().default(true),
+      generateProtocols: z.boolean().default(true),
+    });
+
+    const validationResult = enhancedSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const data = validationResult.data;
+
+    console.log(`[CMC Enhanced] Blueprint request for: ${data.drugName}`);
+    console.log(`[CMC Enhanced] Structured inputs:`, data.structuredInputs);
+
+    // Generate enhanced blueprint
+    const enhancedBlueprint = await EnhancedCMCService.generateEnhancedBlueprint(data);
+
+    const response = {
+      status: 'success',
+      message: `Enhanced AI-powered CMC Blueprint generated for ${data.drugName} with multi-format content and predictive compliance analysis`,
+      ...enhancedBlueprint,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('[CMC Enhanced] Error in generate-enhanced-blueprint endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to generate enhanced CMC blueprint',
+    });
+  }
+});
+
+// GET /api/cmc/compliance-monitor - Real-time compliance monitoring
+router.get('/compliance-monitor', async (req, res) => {
+  try {
+    const changes = await EnhancedCMCService.monitorRegulatoryChanges();
+
+    res.status(200).json({
+      status: 'active',
+      changes,
+      lastUpdate: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in compliance monitor:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve compliance updates',
+    });
+  }
+});
+
+// POST /api/cmc/mock-inspection - AI-powered mock inspection
+router.post('/mock-inspection', async (req, res) => {
+  try {
+    const inspection = await EnhancedCMCService.performMockInspection(req.body.sections);
+
+    res.status(200).json({
+      status: 'completed',
+      inspection,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in mock inspection:', error);
+    res.status(500).json({
+      error: 'Failed to perform mock inspection',
+    });
+  }
+});
+
+// GET /api/cmc/templates - Get eCTD CMC templates
+router.get('/templates', async (req, res) => {
+  try {
+    const templates = await CMCTemplateService.getCMCTemplates();
+
+    res.status(200).json({
+      status: 'success',
+      ...templates,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error fetching templates:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve CMC templates',
+    });
+  }
+});
+
+// GET /api/cmc/terminology - Get controlled terminology
+router.get('/terminology', async (req, res) => {
+  try {
+    const terminology = await CMCTemplateService.getControlledTerminology();
+
+    res.status(200).json({
+      status: 'success',
+      ...terminology,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error fetching terminology:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve controlled terminology',
+    });
+  }
+});
+
+// POST /api/cmc/validate-content - Real-time content validation
+router.post('/validate-content', async (req, res) => {
+  try {
+    const contentSchema = z.object({
+      content: z.string().min(1, 'Content is required'),
+      documentType: z.string().optional(),
+      section: z.string().optional(),
+    });
+
+    const validationResult = contentSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid content data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const { content, documentType, section } = validationResult.data;
+
+    // Simulate AI-powered content validation
+    const validation = {
+      complianceScore: 88,
+      suggestions: [
+        {
+          type: 'enhancement',
+          message: 'Consider adding ICH Q8 quality by design principles',
+          position: { line: 12, column: 5 },
+        },
+        {
+          type: 'terminology',
+          message:
+            'Use standardized term "Active Pharmaceutical Ingredient" instead of "active ingredient"',
+          position: { line: 8, column: 15 },
+        },
+      ],
+      ichCompliance: {
+        q8: true,
+        q9: false,
+        q10: true,
+        q11: true,
+      },
+      terminologyChecks: 15,
+      crossReferences: 3,
+    };
+
+    res.status(200).json({
+      status: 'validated',
+      validation,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error validating content:', error);
+    res.status(500).json({
+      error: 'Failed to validate content',
+    });
+  }
+});
+
+// POST /api/cmc/save-document - Save CMC document to VAULT
+router.post('/save-document', async (req, res) => {
+  try {
+    const documentSchema = z.object({
+      title: z.string().min(1, 'Title is required'),
+      content: z.string().min(1, 'Content is required'),
+      documentType: z.string(),
+      section: z.string().optional(),
+      metadata: z
+        .object({
+          drugName: z.string().optional(),
+          version: z.string().optional(),
+          author: z.string().optional(),
+        })
+        .optional(),
+    });
+
+    const validationResult = documentSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid document data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const documentData = validationResult.data;
+
+    // Simulate saving to VAULT DMS
+    const savedDocument = {
+      id: Date.now().toString(),
+      ...documentData,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      complianceScore: 92,
+      vaultPath: `/cmc/${documentData.documentType}/${documentData.title.replace(/\s+/g, '_')}.html`,
+    };
+
+    res.status(201).json({
+      status: 'saved',
+      document: savedDocument,
+      message: 'CMC document successfully saved to VAULT',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error saving document:', error);
+    res.status(500).json({
+      error: 'Failed to save document to VAULT',
+    });
+  }
+});
+
+// GET /api/cmc/health - Health check endpoint
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    module: 'Enhanced CMC with eCTD Editor',
+    features: [
+      'AI Co-Pilot Authoring',
+      'eCTD-Aware Rich Text Editor',
+      'Predictive Compliance',
+      'Data Governance',
+      'Smart Workflows',
+      'Template Library',
+      'Controlled Terminology',
+      'VAULT Integration',
+    ],
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// POST /api/cmc/qbd-analysis - Quality by Design analysis
+router.post('/qbd-analysis', async (req, res) => {
+  try {
+    const qbdSchema = z.object({
+      drugName: z.string().min(1, 'Drug name is required'),
+      structuredInputs: z
+        .object({
+          drugSubstance: z.string().optional(),
+          dosageForm: z.string().optional(),
+          synthesisRoute: z.string().optional(),
+          molecularWeight: z.string().optional(),
+        })
+        .optional(),
+    });
+
+    const validationResult = qbdSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    console.log(`[CMC] QbD analysis request for: ${validationResult.data.drugName}`);
+
+    const qbdAnalysis = await EnhancedCMCService.performQbDAnalysis(validationResult.data);
+
+    res.status(200).json({
+      status: 'success',
+      data: qbdAnalysis,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in qbd-analysis endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to perform QbD analysis',
+    });
+  }
+});
+
+// POST /api/cmc/method-validation - Method validation protocol generator
+router.post('/method-validation', async (req, res) => {
+  try {
+    const methodSchema = z.object({
+      drugName: z.string().min(1, 'Drug name is required'),
+      structuredInputs: z
+        .object({
+          drugSubstance: z.string().optional(),
+          dosageForm: z.string().optional(),
+          molecularWeight: z.string().optional(),
+        })
+        .optional(),
+    });
+
+    const validationResult = methodSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    console.log(`[CMC] Method validation request for: ${validationResult.data.drugName}`);
+
+    const methodValidation = await EnhancedCMCService.generateMethodValidation(
+      validationResult.data
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: methodValidation,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in method-validation endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to generate method validation protocol',
+    });
+  }
+});
+
+// GET /api/cmc/regulatory-updates - Real-time regulatory intelligence
+router.get('/regulatory-updates', async (req, res) => {
+  try {
+    console.log('[CMC] Regulatory updates request');
+
+    const updates = await EnhancedCMCService.monitorRegulatoryChanges();
+
+    res.status(200).json({
+      status: 'success',
+      data: updates,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in regulatory-updates endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to retrieve regulatory updates',
+    });
+  }
+});
+
+// POST /api/cmc/risk-assessment - AI-powered risk assessment
+router.post('/risk-assessment', async (req, res) => {
+  try {
+    const riskSchema = z.object({
+      drugName: z.string().min(1, 'Drug name is required'),
+      structuredInputs: z
+        .object({
+          molecularWeight: z.string().optional(),
+          synthesisRoute: z.string().optional(),
+          drugSubstance: z.string().optional(),
+          dosageForm: z.string().optional(),
+          excipients: z.string().optional(),
+          manufacturingSite: z.string().optional(),
+        })
+        .optional(),
+    });
+
+    const validationResult = riskSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    console.log(`[CMC] Risk assessment request for: ${validationResult.data.drugName}`);
+
+    const riskAlerts = await EnhancedCMCService.generateRiskAlerts(validationResult.data);
+
+    res.status(200).json({
+      status: 'success',
+      data: riskAlerts,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error in risk-assessment endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to perform risk assessment',
+    });
+  }
+});
+
+// POST /api/cmc/compliance-check - Real-time compliance monitoring
+router.post('/compliance-check', async (req, res) => {
+  try {
+    const complianceSchema = z.object({
+      drugName: z.string().min(1, 'Drug name is required'),
+      sections: z.object({}).optional(),
+      structuredInputs: z.object({}).optional(),
+    });
+
+    const validationResult = complianceSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    console.log(`[CMC] Compliance check request for: ${validationResult.data.drugName}`);
+
+    const complianceScore = EnhancedCMCService.calculateComplianceScore(
+      validationResult.data.structuredInputs || {}
+    );
+    const mockInspection = await EnhancedCMCService.performMockInspection(
+      validationResult.data.sections || {}
+    );
+    const approvalTimeline = await EnhancedCMCService.predictApprovalTimeline(complianceScore);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        complianceScore,
+        mockInspection,
+        approvalTimeline,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('[CMC] Error in compliance-check endpoint:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to perform compliance check',
+    });
+  }
+});
+
+// POST /api/cmc/insights/take-action - Take action on AI insights
+router.post('/insights/take-action', async (req, res) => {
+  try {
+    const actionSchema = z.object({
+      insightId: z.string().min(1, 'Insight ID is required'),
+      action: z.string().min(1, 'Action is required'),
+      type: z.string().min(1, 'Type is required'),
+    });
+
+    const validationResult = actionSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const { insightId, action, type } = validationResult.data;
+
+    console.log(`[CMC] Taking action on insight ${insightId}: ${action}`);
+
+    // Simulate task creation and assignment
+    const taskResult = {
+      taskId: `task_${Date.now()}`,
+      action: action,
+      status: 'created',
+      assignedTo: 'CMC Team Lead',
+      priority: type === 'compliance' ? 'high' : 'medium',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      createdAt: new Date().toISOString(),
+    };
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Action taken successfully',
+      task: taskResult,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error taking action on insight:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to take action on insight',
+    });
+  }
+});
+
+// POST /api/cmc/compliance/check-rules - Check compliance rules
+router.post('/compliance/check-rules', async (req, res) => {
+  try {
+    const rulesSchema = z.object({
+      insightId: z.string().min(1, 'Insight ID is required'),
+      type: z.string().min(1, 'Type is required'),
+      section: z.string().optional(),
+    });
+
+    const validationResult = rulesSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: 'Invalid input data',
+        details: validationResult.error.errors,
+      });
+    }
+
+    const { insightId, type, section } = validationResult.data;
+
+    console.log(
+      `[CMC] Checking compliance rules for insight ${insightId} (type: ${type}, section: ${section})`
+    );
+
+    // Simulate compliance rule checking
+    const complianceCheck = {
+      insightId: insightId,
+      violations: Math.floor(Math.random() * 5) + 1, // 1-5 violations
+      rules: [
+        {
+          rule: 'ICH Q8 Quality by Design',
+          status: 'violation',
+          severity: 'medium',
+          description: 'Missing design space justification in process development section',
+        },
+        {
+          rule: 'ICH Q9 Quality Risk Management',
+          status: 'compliant',
+          severity: 'low',
+          description: 'Risk assessment documentation is adequate',
+        },
+        {
+          rule: 'FDA 21 CFR 211.84',
+          status: 'violation',
+          severity: 'high',
+          description: 'Incomplete validation documentation for cleaning procedures',
+        },
+      ],
+      complianceScore: 75,
+      recommendedActions: [
+        'Complete design space documentation with DOE studies',
+        'Update cleaning validation protocols',
+        'Review risk assessment for manufacturing process',
+      ],
+      checkedAt: new Date().toISOString(),
+    };
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Compliance rules checked successfully',
+      violations: complianceCheck.violations,
+      complianceCheck: complianceCheck,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[CMC] Error checking compliance rules:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to check compliance rules',
+    });
+  }
+});
+
+export default router;

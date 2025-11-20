@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# TrialSage Safety System Launcher
+# A command launcher for the TrialSage safety tools
+
+# Set colors for better readability
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Print banner
+echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║     ${CYAN}TrialSage Platform Safety System${BLUE}     ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+
+# Check if script directory exists
+if [ ! -d "scripts" ]; then
+  echo -e "${RED}Error: scripts directory not found!${NC}"
+  echo "This script must be run from the project root directory."
+  exit 1
+fi
+
+# Function to display usage help
+show_help() {
+  echo -e "${CYAN}Usage:${NC} ./safe [command] [arguments]"
+  echo ""
+  echo -e "${CYAN}Available commands:${NC}"
+  echo "  backup                Create a full system backup"
+  echo "  snapshot [path]       Create a component snapshot"
+  echo "  verify                Run verification checks"
+  echo "  recover [path]        List/restore component versions"
+  echo "  safety [path]         Run full safety sequence"
+  echo "  help                  Show this help message"
+  echo ""
+  echo -e "${CYAN}Examples:${NC}"
+  echo "  ./safe backup"
+  echo "  ./safe snapshot client/src/components/cer/GSPRMappingPanel.jsx"
+  echo "  ./safe recover client/src/components/cer/GSPRMappingPanel.jsx"
+  echo "  ./safe recover client/src/components/cer/GSPRMappingPanel.jsx 20250508142731"
+  echo "  ./safe safety client/src/components/cer/GSPRMappingPanel.jsx"
+  echo ""
+}
+
+# Process commands
+if [ $# -eq 0 ]; then
+  show_help
+  exit 0
+fi
+
+COMMAND="$1"
+shift
+
+case "$COMMAND" in
+  backup)
+    echo -e "${BLUE}🔐 Running system backup...${NC}"
+    ./scripts/backup.sh "$@"
+    ;;
+    
+  snapshot)
+    if [ $# -eq 0 ]; then
+      echo -e "${YELLOW}⚠️ Error: Missing component path${NC}"
+      echo "Usage: ./safe snapshot [component_path]"
+      exit 1
+    fi
+    echo -e "${BLUE}📸 Creating component snapshot...${NC}"
+    ./scripts/create_component_snapshot.sh "$@"
+    ;;
+    
+  recover)
+    if [ $# -eq 0 ]; then
+      echo -e "${YELLOW}⚠️ Error: Missing component path${NC}"
+      echo "Usage: ./safe recover [component_path] [optional:version]"
+      exit 1
+    fi
+    echo -e "${BLUE}🔄 Running component recovery...${NC}"
+    ./scripts/recover_component.sh "$@"
+    ;;
+    
+  verify)
+    echo -e "${BLUE}🔍 Running verification checks...${NC}"
+    ./scripts/verify_components.sh "$@"
+    ;;
+    
+  safety)
+    echo -e "${BLUE}🛡️ Running full safety sequence...${NC}"
+    ./scripts/pre_commit_safety.sh "$@"
+    ;;
+    
+  help)
+    show_help
+    ;;
+    
+  *)
+    echo -e "${RED}❌ Unknown command: ${COMMAND}${NC}"
+    show_help
+    exit 1
+    ;;
+esac
+
+exit $?

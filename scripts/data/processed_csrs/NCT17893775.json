@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT17893775",
+  "indication": "Obesity",
+  "phase": "Phase 3",
+  "sample_size": 1192,
+  "duration_weeks": 17,
+  "dropout_rate": 0.11,
+  "blinding": "open-label",
+  "control_arm": "placebo",
+  "primary_endpoints": ["Waist circumference reduction"],
+  "secondary_endpoints": ["BMI reduction"],
+  "outcome_summary": "Failed to reach statistical significance on primary endpoint",
+  "success": 0,
+  "failure_reason": "High placebo response rate",
+  "start_date": "2021-04-15",
+  "completion_date": "2021-08-12"
+}

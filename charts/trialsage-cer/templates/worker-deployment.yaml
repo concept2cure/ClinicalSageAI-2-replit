@@ -1,0 +1,140 @@
+{{- if .Values.worker.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trialsage-cer.fullname" . }}-worker
+  namespace: {{ include "trialsage-cer.namespace" . }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  {{- if not .Values.worker.autoscaling.enabled }}
+  replicas: {{ .Values.worker.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "trialsage-cer.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        {{- include "trialsage-cer.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "trialsage-cer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-worker
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.worker.env.NODE_ENV | default "production" | quote }}
+            - name: METRICS_PORT
+              value: {{ .Values.worker.env.METRICS_PORT | default "9090" | quote }}
+            - name: CONCURRENCY
+              value: {{ .Values.worker.env.CONCURRENCY | default "2" | quote }}
+            - name: MAX_MEMORY_RESTART
+              value: {{ .Values.worker.env.MAX_MEMORY_RESTART | default "2G" | quote }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: jwt_secret
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: database_url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: redis_url
+            {{- if .Values.worker.env.AWS_ENABLED }}
+            - name: AWS_ENABLED
+              value: "true" 
+            - name: AWS_S3_BUCKET
+              value: {{ .Values.worker.env.AWS_S3_BUCKET | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.worker.env.AWS_REGION | quote }}
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: aws_access_key
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: aws_secret_key
+            {{- end }}
+            {{- if .Values.worker.env.OPENAI_API_KEY }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: openai_api_key
+            {{- end }}
+            {{- range $key, $value := .Values.worker.env.custom }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.worker.env.PORT | default 8080 }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.worker.env.METRICS_PORT | default 9090 }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+          volumeMounts:
+            {{- if and .Values.storage.enabled .Values.storage.persistentVolume.enabled }}
+            - name: pdf-storage
+              mountPath: /app/generated_documents
+            {{- end }}
+      volumes:
+        {{- if and .Values.storage.enabled .Values.storage.persistentVolume.enabled }}
+        - name: pdf-storage
+          persistentVolumeClaim:
+            claimName: {{ include "trialsage-cer.fullname" . }}-pdf-storage
+        {{- end }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

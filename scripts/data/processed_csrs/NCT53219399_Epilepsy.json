@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT53219399",
+  "indication": "Epilepsy",
+  "phase": "Phase 1/2",
+  "sample_size": 327,
+  "duration_weeks": 35,
+  "dropout_rate": 0.26,
+  "primary_endpoints": ["Seizure frequency"],
+  "secondary_endpoints": ["Seizure frequency", "Seizure-free days"],
+  "blinding": "open-label",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study did not demonstrate sufficient efficacy.",
+  "success": false,
+  "failure_reason": "Formulation problems"
+}

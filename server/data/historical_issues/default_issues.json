@@ -1,0 +1,42 @@
+[
+  {
+    "id": "default-1",
+    "type": "missing_document",
+    "description": "Critical document missing from submission",
+    "risk_level": "HIGH",
+    "mitigation": "Include all required documents before submission",
+    "region_specific": false
+  },
+  {
+    "id": "default-2",
+    "type": "validation_error",
+    "description": "Document structure does not conform to eCTD specifications",
+    "risk_level": "MEDIUM",
+    "mitigation": "Reformat document according to eCTD standards",
+    "region_specific": false
+  },
+  {
+    "id": "default-3",
+    "type": "validation_error",
+    "description": "XML metadata contains errors",
+    "risk_level": "MEDIUM",
+    "mitigation": "Correct XML metadata to comply with requirements",
+    "region_specific": false
+  },
+  {
+    "id": "default-4",
+    "type": "missing_document",
+    "description": "Required signature page is missing",
+    "risk_level": "HIGH",
+    "mitigation": "Add signature page with required signatures",
+    "region_specific": false
+  },
+  {
+    "id": "default-5",
+    "type": "validation_error",
+    "description": "PDF document contains security restrictions",
+    "risk_level": "MEDIUM",
+    "mitigation": "Remove PDF security restrictions",
+    "region_specific": false
+  }
+]

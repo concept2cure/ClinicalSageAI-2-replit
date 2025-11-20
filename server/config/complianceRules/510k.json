@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "510(k) Compliance Rules",
+  "type": "object",
+  "properties": {
+    "requiredSections": {
+      "type": "array",
+      "description": "Sections required for all 510(k) submissions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "wordCountMin": { "type": "integer" },
+          "wordCountMax": { "type": "integer" },
+          "requiredTerms": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["id", "name"]
+      }
+    },
+    "deviceClassRules": {
+      "type": "object",
+      "description": "Rules specific to device classes",
+      "properties": {
+        "I": {
+          "type": "object",
+          "properties": {
+            "additionalSections": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "exemptionCriteria": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "II": {
+          "type": "object",
+          "properties": {
+            "additionalSections": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "specialControls": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "III": {
+          "type": "object",
+          "properties": {
+            "additionalSections": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "templateWarnings": {
+      "type": "array",
+      "description": "Phrases that suggest template-based content that should be customized",
+      "items": { "type": "string" }
+    }
+  },
+  "requiredSections": [
+    {
+      "id": "device_description",
+      "name": "Device Description",
+      "description": "Comprehensive description of the device, including physical characteristics, materials, and components.",
+      "wordCountMin": 300,
+      "wordCountMax": 2000,
+      "requiredTerms": ["specifications", "dimensions", "components", "materials"]
+    },
+    {
+      "id": "intended_use",
+      "name": "Intended Use & Indications for Use",
+      "description": "Clear statement of the device's intended use and specific indications for use.",
+      "wordCountMin": 100,
+      "wordCountMax": 500,
+      "requiredTerms": ["intended", "use", "indications", "purpose"]
+    },
+    {
+      "id": "substantial_equivalence",
+      "name": "Substantial Equivalence",
+      "description": "Demonstration of substantial equivalence to a legally marketed predicate device.",
+      "wordCountMin": 300,
+      "wordCountMax": 2000,
+      "requiredTerms": ["predicate", "device", "equivalent", "comparison"]
+    },
+    {
+      "id": "technological_characteristics",
+      "name": "Technological Characteristics",
+      "description": "Detailed comparison of technological characteristics between the subject and predicate devices.",
+      "wordCountMin": 300,
+      "wordCountMax": 2000,
+      "requiredTerms": ["technology", "characteristics", "comparison", "differences"]
+    },
+    {
+      "id": "performance_data",
+      "name": "Performance Data",
+      "description": "Summary of performance testing data, including bench testing, animal studies, and clinical data if applicable.",
+      "wordCountMin": 300,
+      "wordCountMax": 5000,
+      "requiredTerms": ["performance", "testing", "results", "data"]
+    },
+    {
+      "id": "labeling",
+      "name": "Labeling",
+      "description": "Proposed labeling for the device, including instructions for use.",
+      "wordCountMin": 200,
+      "wordCountMax": 3000,
+      "requiredTerms": ["label", "instructions", "warnings", "precautions"]
+    }
+  ],
+  "deviceClassRules": {
+    "I": {
+      "additionalSections": [],
+      "exemptionCriteria": [
+        "General controls are sufficient to provide reasonable assurance of safety and effectiveness",
+        "Device is not intended for a use which is of substantial importance in preventing impairment of human health",
+        "Device does not present a potential unreasonable risk of illness or injury"
+      ]
+    },
+    "II": {
+      "additionalSections": ["special_controls", "software_documentation", "biocompatibility"],
+      "specialControls": [
+        "Performance standards",
+        "Post-market surveillance",
+        "Patient registries",
+        "Development and dissemination of guidance documents",
+        "Recommendations and other appropriate actions as necessary to provide reasonable assurance of safety and effectiveness"
+      ]
+    },
+    "III": {
+      "additionalSections": ["clinical_data", "risk_analysis", "manufacturing_information"]
+    }
+  },
+  "templateWarnings": [
+    "To be added by manufacturer",
+    "Insert company name here",
+    "Insert device name here",
+    "[Placeholder]",
+    "This section will be completed",
+    "TBD",
+    "Per FDA guidance"
+  ]
+}

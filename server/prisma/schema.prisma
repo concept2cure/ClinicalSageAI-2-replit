@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model audit_log {
+  id        Int      @id @default(autoincrement())
+  objectId  String
+  event     String
+  actor     String
+  timestamp DateTime
+  meta      Json
+}
+
+model document {
+  id        Int      @id @default(autoincrement())
+  name      String
+  sha256    String   @unique
+  uploadedBy Int
+  createdAt DateTime @default(now())
+}

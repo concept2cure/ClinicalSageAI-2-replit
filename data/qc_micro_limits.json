@@ -1,0 +1,69 @@
+[
+  {
+    "dosage_form": "Oral Solid",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 1000, "unit": "CFU/g" },
+      "TYMC": { "limit": 100, "unit": "CFU/g" },
+      "specified_absence": [{ "org": "E. coli", "per": "g", "amount": 1 }],
+      "endotoxin": null
+    },
+    "notes": "Typical non-sterile oral solid placeholder; confirm per compendia."
+  },
+  {
+    "dosage_form": "Non-sterile Aqueous",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 1000, "unit": "CFU/mL" },
+      "TYMC": { "limit": 100, "unit": "CFU/mL" },
+      "specified_absence": [
+        { "org": "P. aeruginosa", "per": "mL", "amount": 1 },
+        { "org": "S. aureus", "per": "mL", "amount": 1 }
+      ],
+      "endotoxin": null
+    }
+  },
+  {
+    "dosage_form": "Topical",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 1000, "unit": "CFU/g" },
+      "TYMC": { "limit": 100, "unit": "CFU/g" },
+      "specified_absence": [
+        { "org": "S. aureus", "per": "g", "amount": 1 },
+        { "org": "P. aeruginosa", "per": "g", "amount": 1 }
+      ],
+      "endotoxin": null
+    }
+  },
+  {
+    "dosage_form": "Inhalation",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 100, "unit": "CFU/g" },
+      "TYMC": { "limit": 100, "unit": "CFU/g" },
+      "specified_absence": [{ "org": "B. cepacia complex", "per": "g", "amount": 1 }],
+      "endotoxin": null
+    }
+  },
+  {
+    "dosage_form": "Ophthalmic",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 100, "unit": "CFU/mL" },
+      "TYMC": { "limit": 100, "unit": "CFU/mL" },
+      "specified_absence": [{ "org": "P. aeruginosa", "per": "mL", "amount": 1 }],
+      "endotoxin": { "limit": 0.5, "unit": "EU/mL" }
+    }
+  },
+  {
+    "dosage_form": "Parenteral",
+    "region": "GLOBAL",
+    "limits_json": {
+      "TAMC": { "limit": 10, "unit": "CFU/100 mL" },
+      "TYMC": { "limit": 10, "unit": "CFU/100 mL" },
+      "specified_absence": [{ "org": "Specified Pathogens", "per": "N/A", "amount": 0 }],
+      "endotoxin": { "limit": 0.25, "unit": "EU/mL" }
+    }
+  }
+]

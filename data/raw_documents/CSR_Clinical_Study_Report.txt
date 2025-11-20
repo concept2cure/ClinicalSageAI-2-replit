@@ -1,0 +1,92 @@
+CLINICAL STUDY REPORT
+
+Study Title: A Randomized, Double-Blind, Placebo-Controlled Phase III Study of OncoMab in Patients with Advanced Solid Tumors
+
+Protocol Number: ONC-P3-2025-001
+Study Drug: OncoMab (Investigational Monoclonal Antibody)
+Sponsor: Global Pharma Inc.
+Report Date: December 15, 2024
+
+1.0 SYNOPSIS
+
+1.1 Study Objectives
+Primary Objective: To evaluate the efficacy of OncoMab compared to placebo in terms of overall survival in patients with advanced solid tumors.
+
+Secondary Objectives:
+- Assess progression-free survival
+- Evaluate objective response rate
+- Assess safety and tolerability
+- Characterize pharmacokinetic profile
+
+1.2 Study Design
+This was a multicenter, randomized, double-blind, placebo-controlled Phase III study conducted at 25 sites across the United States and Europe.
+
+2.0 STUDY POPULATION
+
+2.1 Inclusion Criteria
+- Adults ≥18 years with histologically confirmed advanced solid tumors
+- ECOG performance status 0-2
+- Adequate organ function
+- Life expectancy ≥3 months
+
+2.2 Exclusion Criteria
+- Prior exposure to anti-PD-1/PD-L1 therapy
+- Active autoimmune disease
+- Pregnancy or nursing
+
+3.0 STUDY RESULTS
+
+3.1 Patient Disposition
+- Screened: 512 patients
+- Randomized: 450 patients
+- Completed study: 387 patients
+- Discontinued early: 63 patients
+
+3.2 Efficacy Results
+Primary Endpoint - Overall Survival:
+- Median OS OncoMab arm: 14.2 months (95% CI: 12.1-16.8)
+- Median OS Placebo arm: 11.3 months (95% CI: 9.8-12.9)
+- Hazard Ratio: 0.73 (95% CI: 0.61-0.88), p=0.0012
+
+Secondary Endpoints:
+- Median PFS OncoMab: 6.1 months vs Placebo: 4.2 months (HR=0.68, p<0.001)
+- ORR OncoMab: 23% vs Placebo: 12% (p=0.008)
+
+4.0 SAFETY RESULTS
+
+4.1 Adverse Events
+Treatment-emergent adverse events occurred in 95% of patients in the OncoMab arm and 89% in the placebo arm.
+
+Most common AEs (≥10% incidence):
+- Fatigue: OncoMab 45%, Placebo 32%
+- Nausea: OncoMab 38%, Placebo 25%
+- Diarrhea: OncoMab 28%, Placebo 18%
+- Rash: OncoMab 22%, Placebo 8%
+
+4.2 Serious Adverse Events
+SAEs were reported in 28% of OncoMab patients vs 22% of placebo patients. No treatment-related deaths occurred.
+
+5.0 DISCUSSION AND CONCLUSIONS
+
+5.1 Efficacy
+OncoMab demonstrated statistically significant and clinically meaningful improvement in overall survival compared to placebo.
+
+5.2 Safety
+The safety profile was consistent with the known toxicity profile of the drug class. No new safety signals were identified.
+
+5.3 Benefit-Risk Assessment
+The benefit-risk profile supports the use of OncoMab in the studied patient population.
+
+6.0 STUDY LIMITATIONS
+- Open-label extension phase results not yet mature
+- Biomarker analysis ongoing
+
+7.0 REGULATORY IMPLICATIONS
+Results support filing of a New Drug Application (NDA) with FDA and Marketing Authorization Application (MAA) with EMA.
+
+Appendices:
+A. Individual Patient Data Listings
+B. Statistical Analysis Plan
+C. Adverse Event Listings
+D. Protocol Amendments
+E. Investigator Signatures

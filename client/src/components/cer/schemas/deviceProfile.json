@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Device Profile Schema",
+  "description": "Schema for FDA 510(k) device profile information",
+  "type": "object",
+  "required": ["deviceName", "deviceClass", "intendedUse"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the device profile"
+    },
+    "deviceName": {
+      "type": "string",
+      "description": "Commercial name of the device",
+      "minLength": 2,
+      "maxLength": 200
+    },
+    "modelNumber": {
+      "type": "string",
+      "description": "Model number or identifier of the device",
+      "maxLength": 100
+    },
+    "manufacturer": {
+      "type": "string",
+      "description": "Name of the device manufacturer",
+      "maxLength": 200
+    },
+    "deviceClass": {
+      "type": "string",
+      "description": "FDA regulatory classification (I, II, or III)",
+      "enum": ["I", "II", "III"]
+    },
+    "intendedUse": {
+      "type": "string",
+      "description": "Statement of the device's intended use or indication for use",
+      "minLength": 10,
+      "maxLength": 2000
+    },
+    "technologyType": {
+      "type": "string",
+      "description": "Primary technology used in the device",
+      "maxLength": 200
+    },
+    "predicateDevice": {
+      "type": "string",
+      "description": "Legally marketed device to which substantial equivalence will be claimed",
+      "maxLength": 200
+    },
+    "organizationId": {
+      "type": "string",
+      "description": "Organization ID for multi-tenant isolation"
+    },
+    "clientWorkspaceId": {
+      "type": "string",
+      "description": "Client workspace ID for multi-tenant isolation"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the device profile was created"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the device profile was last updated"
+    }
+  },
+  "additionalProperties": false
+}

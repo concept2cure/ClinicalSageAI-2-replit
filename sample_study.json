@@ -1,0 +1,202 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT03785600",
+      "orgStudyIdInfo": { "id": "D2947-W" },
+      "secondaryIdInfos": [
+        {
+          "id": "IK2RX002947",
+          "type": "NIH",
+          "link": "https://reporter.nih.gov/quickSearch/IK2RX002947"
+        }
+      ],
+      "organization": { "fullName": "VA Office of Research and Development", "class": "FED" },
+      "briefTitle": "Improving Sleep in Veterans With TBI",
+      "officialTitle": "A Sleep Intervention to Improve Rehabilitation in Veterans With Chronic mTBI",
+      "acronym": "SPTBI"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2025-01",
+      "overallStatus": "COMPLETED",
+      "expandedAccessInfo": { "hasExpandedAccess": false },
+      "startDateStruct": { "date": "2019-11-01", "type": "ACTUAL" },
+      "primaryCompletionDateStruct": { "date": "2024-07-31", "type": "ACTUAL" },
+      "completionDateStruct": { "date": "2024-09-30", "type": "ACTUAL" },
+      "studyFirstSubmitDate": "2018-12-20",
+      "studyFirstSubmitQcDate": "2018-12-20",
+      "studyFirstPostDateStruct": { "date": "2018-12-24", "type": "ACTUAL" },
+      "lastUpdateSubmitDate": "2025-01-13",
+      "lastUpdatePostDateStruct": { "date": "2025-01-15", "type": "ACTUAL" }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": { "type": "SPONSOR" },
+      "leadSponsor": { "name": "VA Office of Research and Development", "class": "FED" }
+    },
+    "oversightModule": {
+      "oversightHasDmc": false,
+      "isFdaRegulatedDrug": false,
+      "isFdaRegulatedDevice": false,
+      "isUsExport": false
+    },
+    "descriptionModule": {
+      "briefSummary": "Traumatic brain injury (TBI) is a major cause of disability in the Veteran population, often resulting in chronic pain and sleep disturbances, among other issues. Extensive rehabilitative efforts are usually required and often prevent return to the workforce and community. Disturbed sleep and excessive daytime sleepiness are among the most pervasive and enduring problems after TBI, which the investigators hypothesize is a significant contributor to these functional impairments and an impediment toward rehabilitation. Thus, this research aims to enhance sleep quality as a means to reduce pain and improve quality of life and functional outcome measures in Veterans with TBI. The investigators predict that the proposed intervention, morning bright light therapy, if found effective, will be cost-effective, rapidly deployable, and highly accepted by Veterans with TBI.",
+      "detailedDescription": "Each year \\~2.5 million people sustain a traumatic brain injury (TBI). Also a prominent general public health issue, TBI is particularly prevalent in Veterans, with 60-80% reporting a history of TBI. Over 80% of all TBI are categorized as mild TBI (mTBI), which is associated with a myriad of short- and long-term complications. Two of the principal complicating factors associated with mTBI are sleep-wake disturbances (e.g., insomnia, excessive daytime sleepiness, and circadian rhythm sleep disorders) and chronic pain, including headache and diffuse/global pain. Sleep-wake disturbances and chronic pain have an independent prevalence of \\~70%, individually impair quality of life, impede effective rehabilitative therapies, and have staggering functional and economic impacts.\n\nFurthermore, there is a strong bidirectional relationship between sleep-wake disturbances and pain such that impaired sleep exacerbates pain, which leads to greater impairments in sleep and worse pain. This vicious cycle between sleep disturbances and pain, which is a particularly prevalent and detrimental condition in Veterans with chronic mTBI, represents a central challenge precluding effective treatment and ultimately, improving Veteran quality of life. Although there are pharmacological and non-pharmacological therapies for chronic pain, the presence of TBI significantly complicates the effectiveness of these treatment options, and have significant adverse effects (e.g., long-term prescription opioid dependence, misuse, or overdose). The investigators believe there is profound potential to intervene at the sleep level, and, by improving sleep quality, enable Veterans with chronic mTBI to better manage their pain and end this vicious cycle.\n\nThis proposal aims to apply a sleep intervention to improve chronic pain in Veterans with mTBI. The investigators propose to use morning bright light therapy (MBLT), a readily deployable, cost-effective, non-pharmacologic, and home-based sleep intervention, to improve sleep-wake disturbances and therefore ameliorate chronic pain and improve quality of life in Veterans with chronic mTBI. Outcomes will be assessed pre- and post-intervention, and at a 3-month follow-up time point. The central hypothesis is that MBLT will improve sleep quality and ameliorate pain, resulting in improved quality of life in Veterans with chronic mTBI."
+    },
+    "conditionsModule": {
+      "conditions": ["Traumatic Brain Injury"],
+      "keywords": ["traumatic brain injury", "sleep-wake disturbances", "Veterans", "chronic pain"]
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": ["NA"],
+      "designInfo": {
+        "allocation": "RANDOMIZED",
+        "interventionModel": "PARALLEL",
+        "interventionModelDescription": "Subjects will be randomized to receive MBLT or a sham/no-light control. Subjects randomized to receive MBLT will be given a light box (LightPad, Aurora Light Solutions) to take home. Subjects randomized to receive the sham/no-light control will be given a modified negative ion generator.",
+        "primaryPurpose": "SUPPORTIVE_CARE",
+        "maskingInfo": {
+          "masking": "SINGLE",
+          "maskingDescription": "Participants will be blinded to the intervention by way of study personnel's description. Subjects will be told that both devices may or may not be active and thus, will be unaware that all light boxes are active and all negative ion generators are inactivated.",
+          "whoMasked": ["PARTICIPANT"]
+        }
+      },
+      "enrollmentInfo": { "count": 100, "type": "ACTUAL" }
+    },
+    "armsInterventionsModule": {
+      "armGroups": [
+        {
+          "label": "Morning Bright Light Therapy",
+          "type": "EXPERIMENTAL",
+          "description": "Morning bright light: Sitting in front of a lightbox for 60 minutes every morning within 90 minutes of waking up.",
+          "interventionNames": ["Device: Morning Bright Light Therapy"]
+        },
+        {
+          "label": "Negative Ion Generator",
+          "type": "SHAM_COMPARATOR",
+          "description": "Negative ion generator: Sitting in front of a modified negative ion generator for 60 min every morning within 90 minutes of waking up.",
+          "interventionNames": ["Device: Negative Ion Generator"]
+        }
+      ],
+      "interventions": [
+        {
+          "type": "DEVICE",
+          "name": "Morning Bright Light Therapy",
+          "description": "Morning bright light: Sitting in front of a lightbox for 60 minutes every morning within 90 minutes of waking up.",
+          "armGroupLabels": ["Morning Bright Light Therapy"],
+          "otherNames": ["Lightbox, light therapy"]
+        },
+        {
+          "type": "DEVICE",
+          "name": "Negative Ion Generator",
+          "description": "Negative ion generator: Sitting in front of a modified negative ion generator for 60 min every morning within 90 minutes of waking up.",
+          "armGroupLabels": ["Negative Ion Generator"]
+        }
+      ]
+    },
+    "outcomesModule": {
+      "primaryOutcomes": [
+        {
+          "measure": "self-reported pain change determined via the NIH PROMIS scale",
+          "description": "NIH PROMIS Pain Scale 4 questions; each question is a 0-4 scale, total score range is 0-16 Higher scores represent worse outcomes",
+          "timeFrame": "Pre- and post-4 weeks of MBLT or sham treatment, and 12 weeks following the end of MBLT or sham treatment"
+        }
+      ]
+    },
+    "eligibilityModule": {
+      "eligibilityCriteria": "Inclusion Criteria:\n\n* Veteran\n* Medical record-confirmed diagnosis of mTBI\n* Current self-reported sleep-wake disturbances\n\n  * defined by clinically abnormal Insomnia Severity Index and/or Functional Outcomes of Sleep scores\n* Moderate to severe pain\n\n  * defined as a score of 4 on an 11-point scale94) persisting for longer than 6 months\n* English speaking with phone access\n\nExclusion Criteria:\n\nExclusion Criteria:\n\n* Decisional impairment and/or dementia\n* Current usage of a lightbox or negative ion generator\n* Shift work\n* History of macular degeneration and/or bipolar disorder\n* Evidence for suicidal ideation\n* Cancer diagnosis within the past 6 months\n* Surgery within the past 6-12 months\n* Substance abuse within the past 6-12 months",
+      "healthyVolunteers": false,
+      "sex": "ALL",
+      "minimumAge": "18 Years",
+      "maximumAge": "70 Years",
+      "stdAges": ["ADULT", "OLDER_ADULT"]
+    },
+    "contactsLocationsModule": {
+      "overallOfficials": [
+        {
+          "name": "Jonathan E Elliott, PhD",
+          "affiliation": "VA Portland Health Care System, Portland, OR",
+          "role": "PRINCIPAL_INVESTIGATOR"
+        }
+      ],
+      "locations": [
+        {
+          "facility": "VA Portland Health Care System, Portland, OR",
+          "city": "Portland",
+          "state": "Oregon",
+          "zip": "97207-2964",
+          "country": "United States",
+          "geoPoint": { "lat": 45.52345, "lon": -122.67621 }
+        }
+      ]
+    },
+    "referencesModule": {
+      "references": [
+        {
+          "pmid": "39775195",
+          "type": "BACKGROUND",
+          "citation": "Elliott JE, Brewer JS, Keil AT, Ligman BR, Bryant-Ekstrand MD, McBride AA, Powers K, Sicard SJ, Twamley EW, O'Neil ME, Hildebrand AD, Nguyen T, Morasco BJ, Gill JM, Dengler BA, Lim MM. Feasibility and acceptability for LION, a fully remote, randomized clinical trial within the VA for light therapy to improve sleep in Veterans with and without TBI: An MTBI2 sponsored protocol. PLoS One. 2025 Jan 7;20(1):e0305305. doi: 10.1371/journal.pone.0305305. eCollection 2025."
+        }
+      ]
+    },
+    "ipdSharingStatementModule": { "ipdSharing": "NO" }
+  },
+  "documentSection": {
+    "largeDocumentModule": {
+      "largeDocs": [
+        {
+          "typeAbbrev": "ICF",
+          "hasProtocol": false,
+          "hasSap": false,
+          "hasIcf": true,
+          "label": "Informed Consent Form",
+          "date": "2023-11-15",
+          "uploadDate": "2024-11-19T14:58",
+          "filename": "ICF_000.pdf",
+          "size": 234946
+        }
+      ]
+    }
+  },
+  "derivedSection": {
+    "miscInfoModule": { "versionHolder": "2025-04-11" },
+    "conditionBrowseModule": {
+      "meshes": [
+        { "id": "D001930", "term": "Brain Injuries" },
+        { "id": "D000070642", "term": "Brain Injuries, Traumatic" }
+      ],
+      "ancestors": [
+        { "id": "D001927", "term": "Brain Diseases" },
+        { "id": "D002493", "term": "Central Nervous System Diseases" },
+        { "id": "D009422", "term": "Nervous System Diseases" },
+        { "id": "D006259", "term": "Craniocerebral Trauma" },
+        { "id": "D020196", "term": "Trauma, Nervous System" },
+        { "id": "D014947", "term": "Wounds and Injuries" }
+      ],
+      "browseLeaves": [
+        { "id": "M5207", "name": "Brain Injuries", "asFound": "Brain Injury", "relevance": "HIGH" },
+        { "id": "M29442", "name": "Chronic Pain", "relevance": "LOW" },
+        {
+          "id": "M628",
+          "name": "Brain Injuries, Traumatic",
+          "asFound": "Traumatic Brain Injury",
+          "relevance": "HIGH"
+        },
+        { "id": "M13066", "name": "Pain", "relevance": "LOW" },
+        { "id": "M5204", "name": "Brain Diseases", "relevance": "LOW" },
+        { "id": "M5742", "name": "Central Nervous System Diseases", "relevance": "LOW" },
+        { "id": "M17685", "name": "Wounds and Injuries", "relevance": "LOW" },
+        { "id": "M9349", "name": "Craniocerebral Trauma", "relevance": "LOW" },
+        { "id": "M22023", "name": "Trauma, Nervous System", "relevance": "LOW" },
+        { "id": "T1303", "name": "Chronic Graft Versus Host Disease", "relevance": "LOW" }
+      ],
+      "browseBranches": [
+        { "abbrev": "BC10", "name": "Nervous System Diseases" },
+        { "abbrev": "BC26", "name": "Wounds and Injuries" },
+        { "abbrev": "All", "name": "All Conditions" },
+        { "abbrev": "BC23", "name": "Symptoms and General Pathology" },
+        { "abbrev": "Rare", "name": "Rare Diseases" }
+      ]
+    }
+  },
+  "hasResults": false
+}

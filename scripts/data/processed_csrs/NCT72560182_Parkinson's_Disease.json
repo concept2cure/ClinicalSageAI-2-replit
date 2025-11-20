@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT72560182",
+  "indication": "Parkinson's Disease",
+  "phase": "Phase 2",
+  "sample_size": 302,
+  "duration_weeks": 76,
+  "dropout_rate": 0.22,
+  "primary_endpoints": ["UPDRS score"],
+  "secondary_endpoints": ["OFF time reduction", "UPDRS score"],
+  "blinding": "single-blind",
+  "control_arm": "placebo",
+  "outcome_summary": "Study met its primary endpoint with UPDRS score showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

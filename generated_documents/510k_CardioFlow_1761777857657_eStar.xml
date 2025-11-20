@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eStar xmlns="http://www.fda.gov/cdrh/estar">
+  <submission>
+    <submissionType>510(k)</submissionType>
+    <submissionNumber>K20250995</submissionNumber>
+    <submissionDate>2025-10-29T22:44:17.657Z</submissionDate>
+    
+    <applicant>
+      <companyName>CardioMed Technologies, Inc.</companyName>
+      <address>500 Innovation Drive, Boston, MA 02142</address>
+      <contact>
+        <name>Dr. Sarah Mitchell</name>
+        <phone>(617) 555-8900</phone>
+        <email>regulatory@cardiomed.com</email>
+      </contact>
+    </applicant>
+    
+    <device>
+      <deviceName>CardioFlow Vascular Stent System</deviceName>
+      <commonName>Vascular Stent</commonName>
+      <classificationName>Stent, cardiovascular</classificationName>
+      <productCode>NIQ</productCode>
+      <regulationNumber>21 CFR 870.3450</regulationNumber>
+      <deviceClass>Class II</deviceClass>
+      <reviewPanel>Cardiovascular</reviewPanel>
+      
+      <intendedUse><![CDATA[The CardioFlow Vascular Stent System is intended to improve coronary luminal diameter in patients with symptomatic ischemic heart disease due to discrete de novo or restenotic native coronary artery lesions.]]></intendedUse>
+      <indicationsForUse><![CDATA[The CardioFlow Vascular Stent System is indicated for improving coronary luminal diameter in patients with symptomatic ischemic heart disease due to discrete de novo or restenotic lesions in native coronary arteries with reference vessel diameters of 2.5 to 4.0 mm and lesion lengths ≤ 30 mm.]]></indicationsForUse>
+      
+      <technicalCharacteristics>
+        <material>L605 Cobalt-Chromium Alloy</material>
+        <coating>Sirolimus-eluting polymer</coating>
+        <dimensions>
+          <diameter unit="mm">2.5-4.0</diameter>
+          <length unit="mm">8-33</length>
+          <strutThickness unit="microns">81</strutThickness>
+        </dimensions>
+        <drugLoad unit="mcg/cm2">100</drugLoad>
+      </technicalCharacteristics>
+    </device>
+    
+    <predicateDevice>
+      <kNumber>K181351</kNumber>
+      <deviceName>XIENCE Sierra Everolimus Eluting Coronary Stent System</deviceName>
+      <manufacturer>Abbott Vascular</manufacturer>
+      <clearanceDate>2018-05-24</clearanceDate>
+    </predicateDevice>
+    
+    <substantialEquivalence>
+      <comparisonTable>
+        <feature name="Intended Use">
+          <subject>Treatment of coronary artery disease</subject>
+          <predicate>Treatment of coronary artery disease</predicate>
+          <equivalent>true</equivalent>
+        </feature>
+        <feature name="Material">
+          <subject>L605 Cobalt-Chromium</subject>
+          <predicate>L605 Cobalt-Chromium</predicate>
+          <equivalent>true</equivalent>
+        </feature>
+        <feature name="Drug">
+          <subject>Sirolimus</subject>
+          <predicate>Everolimus</predicate>
+          <equivalent>true</equivalent>
+          <rationale>Both are limus family drugs with similar mechanisms and proven safety</rationale>
+        </feature>
+      </comparisonTable>
+    </substantialEquivalence>
+    
+    <performanceData>
+      <biocompatibility>
+        <standard>ISO 10993</standard>
+        <result>All tests passed</result>
+      </biocompatibility>
+      
+      <mechanicalTesting>
+        <radialStrength unit="psi">16.0</radialStrength>
+        <recoil unit="percent">3.8</recoil>
+        <foreshortening unit="percent">1.2</foreshortening>
+        <fatigueTesting>400 million cycles - No fractures</fatigueTesting>
+      </mechanicalTesting>
+      
+      <clinicalData>
+        <trialName>CardioFlow SPIRIT Trial</trialName>
+        <primaryEndpoint>
+          <description>12-month Target Lesion Revascularization</description>
+          <result>3.2%</result>
+        </primaryEndpoint>
+        <safety>
+          <stentThrombosis>0.4%</stentThrombosis>
+          <cardiacDeath>0.8%</cardiacDeath>
+        </safety>
+      </clinicalData>
+    </performanceData>
+    
+    <conclusion>
+      <substantiallyEquivalent>true</substantiallyEquivalent>
+      <rationale>The device has been shown to be substantially equivalent based on same intended use, similar technological characteristics, and comparable safety and effectiveness.</rationale>
+    </conclusion>
+  </submission>
+</eStar>

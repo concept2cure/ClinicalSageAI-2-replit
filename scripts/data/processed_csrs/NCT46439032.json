@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT46439032",
+  "indication": "Type 2 Diabetes",
+  "phase": "Phase 1",
+  "sample_size": 44,
+  "duration_weeks": 6,
+  "dropout_rate": 0.04,
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "primary_endpoints": ["HbA1c reduction"],
+  "secondary_endpoints": ["Postprandial glucose reduction", "Fasting glucose reduction"],
+  "outcome_summary": "Benefit-risk profile does not support further development",
+  "success": 0,
+  "failure_reason": "Pharmacokinetic issues with drug exposure",
+  "start_date": "2023-10-25",
+  "completion_date": "2023-12-06"
+}

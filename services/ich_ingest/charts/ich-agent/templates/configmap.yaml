@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: { { include "common.names.fullname" . } }
+  labels: { { - include "common.labels.standard" . | nindent 4 } }
+data:
+  logging.conf: |
+    version: 1
+    disable_existing_loggers: false
+    formatters:
+      json:
+        class: pythonjsonlogger.jsonlogger.JsonFormatter
+        format: "%(asctime)s %(levelname)s %(name)s %(message)s"
+      standard:
+        format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: json
+        level: INFO
+        stream: ext://sys.stdout
+    root:
+      level: INFO
+      handlers: [console]
+      propagate: no
+    loggers:
+      uvicorn:
+        level: INFO
+      services.ich_ingest:
+        level: {{.Values.env.LOG_LEVEL | lower}}
+        handlers: [console]
+        propagate: no

@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT32820513",
+  "indication": "Major Depressive Disorder",
+  "phase": "Phase 2",
+  "sample_size": 421,
+  "duration_weeks": 16,
+  "dropout_rate": 0.14,
+  "primary_endpoints": ["HAM-D score"],
+  "secondary_endpoints": ["MADRS score", "Response rate"],
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "outcome_summary": "Study no significant difference compared to placebo.",
+  "success": false,
+  "failure_reason": "Target engagement not achieved"
+}

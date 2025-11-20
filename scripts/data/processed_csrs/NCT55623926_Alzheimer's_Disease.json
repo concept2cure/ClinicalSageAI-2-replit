@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT55623926",
+  "indication": "Alzheimer's Disease",
+  "phase": "Phase 3",
+  "sample_size": 232,
+  "duration_weeks": 50,
+  "dropout_rate": 0.29,
+  "primary_endpoints": ["Cognitive function"],
+  "secondary_endpoints": ["CDR-SB score", "Cognitive function"],
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "outcome_summary": "Study met its primary endpoint with Cognitive function showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

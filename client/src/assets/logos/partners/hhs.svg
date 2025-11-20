@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Main circle -->
+  <circle cx="90" cy="90" r="80" fill="#004f93"/>
+  
+  <!-- HHS Eagle Symbol -->
+  <g fill="#ffffff" transform="translate(30, 40)">
+    <path d="M60,10 C65,20 70,35 65,50 C60,65 50,70 40,75 C30,70 20,65 15,50 C10,35 15,20 20,10 C30,15 50,15 60,10 Z"/>
+    <path d="M40,40 L40,80 M25,55 L55,55 M25,65 L55,65" stroke="#004f93" stroke-width="3" fill="none"/>
+  </g>
+  
+  <!-- Text at bottom -->
+  <text x="90" y="135" font-family="Arial, sans-serif" font-weight="bold" font-size="14" text-anchor="middle" fill="#ffffff">U.S. DEPARTMENT OF</text>
+  <text x="90" y="150" font-family="Arial, sans-serif" font-weight="bold" font-size="14" text-anchor="middle" fill="#ffffff">HEALTH AND HUMAN SERVICES</text>
+</svg>

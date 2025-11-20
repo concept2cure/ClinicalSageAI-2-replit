@@ -1,0 +1,97 @@
+.canvas-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.canvas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.canvas-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.canvas-tabs {
+  display: flex;
+  gap: 1rem;
+}
+
+.canvas-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.canvas-tab:hover {
+  background-color: #f5f5f5;
+}
+
+.canvas-tab.active {
+  background-color: #f0f4ff;
+  color: var(--color-primary, #5c4dff);
+  font-weight: 500;
+}
+
+.canvas-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.submission-type {
+  background-color: #e6f7ff;
+  color: #0070f3;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.submission-id {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.canvas-main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .canvas-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .canvas-tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .canvas-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

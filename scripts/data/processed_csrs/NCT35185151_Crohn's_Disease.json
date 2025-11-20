@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT35185151",
+  "indication": "Crohn's Disease",
+  "phase": "Phase 3",
+  "sample_size": 89,
+  "duration_weeks": 95,
+  "dropout_rate": 0.11,
+  "primary_endpoints": ["Mucosal healing"],
+  "secondary_endpoints": ["Mucosal healing", "CDAI score"],
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study benefit-risk profile does not support further development.",
+  "success": false,
+  "failure_reason": "Low compliance/adherence"
+}

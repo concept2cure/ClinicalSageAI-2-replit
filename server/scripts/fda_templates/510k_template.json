@@ -1,0 +1,145 @@
+{
+  "title": "510(k) PREMARKET NOTIFICATION",
+  "subtitle": "For Sample Medical Device",
+  "submissionDate": "May 14, 2025",
+  "deviceInfo": {
+    "tradeName": "Sample Medical Device",
+    "commonName": "Diagnostic Device",
+    "classificationName": "Automated Clinical Chemistry Analyzer",
+    "regulatoryClass": "II",
+    "productCode": "JJE",
+    "regulationNumber": "21 CFR 862.2160",
+    "description": "The Sample Medical Device is a diagnostic system designed for in vitro diagnostic use in clinical laboratories. The device uses spectrophotometric technology to measure various analytes in human serum, plasma, urine, and other body fluids. The system consists of a main analyzer unit, a touch-screen interface, and various consumables including reagent cartridges, calibrators, and quality control materials.",
+    "indicationsForUse": "The Sample Medical Device is intended for in vitro diagnostic use by healthcare professionals in clinical laboratory settings for the quantitative measurement of various clinical chemistry analytes in human serum, plasma, urine, and other body fluids. The device provides information for the diagnosis and treatment monitoring of various diseases and conditions."
+  },
+  "submitterInfo": {
+    "manufacturer": "Medical Innovations, Inc.",
+    "address": "123 Innovation Way, Silicon Valley, CA 94304",
+    "contactPerson": "Jane Smith, Regulatory Affairs Director",
+    "phone": "(650) 555-1234",
+    "email": "jsmith@medicalinnovations.example.com"
+  },
+  "predicateInfo": {
+    "name": "PreviGen Diagnostic System",
+    "k_number": "K123456",
+    "manufacturer": "Diagnostic Systems Corp.",
+    "additionalPredicates": [
+      {
+        "name": "DiagnoPlus Analyzer",
+        "k_number": "K987654",
+        "manufacturer": "Advanced Diagnostic Technologies"
+      }
+    ]
+  },
+  "technologicalCharacteristics": "The Sample Medical Device utilizes the same fundamental technological characteristics as the predicate device, including spectrophotometric measurement principles, automated sample processing, and computerized data analysis. Both devices use similar reagent systems and perform measurements using comparable wavelengths.\n\nAny differences in the technological characteristics between the subject and predicate devices do not raise different questions of safety and effectiveness.",
+  "comparisonTable": {
+    "headers": ["Characteristic", "Subject Device", "Predicate Device", "Comparison"],
+    "rows": [
+      [
+        "Intended Use",
+        "In vitro diagnostic use for the quantitative measurement of various clinical chemistry analytes",
+        "In vitro diagnostic use for the quantitative measurement of various clinical chemistry analytes",
+        "Same"
+      ],
+      ["Technology", "Spectrophotometric measurement", "Spectrophotometric measurement", "Same"],
+      [
+        "Sample Types",
+        "Serum, plasma, urine, CSF",
+        "Serum, plasma, urine",
+        "Similar, subject device adds CSF"
+      ],
+      ["Throughput", "120 tests per hour", "100 tests per hour", "Similar"],
+      [
+        "User Interface",
+        "Touch-screen LCD display",
+        "Membrane keypad with LCD display",
+        "Different, but does not affect safety or effectiveness"
+      ],
+      ["Power Requirements", "100-240V AC, 50/60 Hz", "100-240V AC, 50/60 Hz", "Same"],
+      [
+        "Data Storage",
+        "Internal SSD, up to 10,000 patient results",
+        "Internal HDD, up to 5,000 patient results",
+        "Similar"
+      ],
+      [
+        "QC System",
+        "Automated QC tracking and lockout",
+        "Automated QC tracking and lockout",
+        "Same"
+      ],
+      ["Calibration", "Automated 2-point calibration", "Manual 2-point calibration", "Similar"]
+    ]
+  },
+  "substantialEquivalenceSummary": "The Sample Medical Device has the same intended use and similar technological characteristics as the predicate device. Both devices are intended for in vitro diagnostic use for the quantitative measurement of various clinical chemistry analytes in human specimens. The differences in technological characteristics between the two devices do not raise different questions of safety and effectiveness.\n\nPerformance testing demonstrates that the Sample Medical Device is substantially equivalent to the predicate device in terms of accuracy, precision, linearity, analytical sensitivity, and analytical specificity.",
+  "nonClinicalTests": [
+    "Analytical Performance Testing - Accuracy, precision, linearity, and reportable range studies were conducted according to CLSI guidelines.",
+    "Method Comparison Studies - Comparison to reference methods and the predicate device showed acceptable correlation.",
+    "Interference Testing - Common endogenous and exogenous substances were tested to determine potential interferences.",
+    "Analytical Sensitivity - Limit of Blank (LoB), Limit of Detection (LoD), and Limit of Quantitation (LoQ) were determined.",
+    "Stability Testing - Reagent stability, calibration stability, and on-board stability were evaluated.",
+    "Electrical Safety Testing - Conducted according to IEC 61010-1.",
+    "Electromagnetic Compatibility Testing - Conducted according to IEC 61326-1."
+  ],
+  "clinicalTests": "Clinical testing was not required to demonstrate substantial equivalence. The analytical performance studies and method comparison studies were sufficient to establish substantial equivalence to the predicate device.",
+  "conclusion": "Based on the information provided in this premarket notification, including device description, intended use, technological characteristics, and performance testing, the Sample Medical Device is substantially equivalent to the predicate device and does not raise different questions of safety and effectiveness.",
+  "additionalSections": [
+    {
+      "title": "Device Description",
+      "content": [
+        {
+          "heading": "System Components",
+          "text": "The Sample Medical Device system consists of the following components:\n1. Main analyzer unit with built-in spectrophotometer\n2. Touch-screen user interface\n3. Sample processing module\n4. Reagent cartridge compartment\n5. Calibrator and quality control materials\n6. System software (version 1.0)"
+        },
+        {
+          "heading": "Principles of Operation",
+          "text": "The Sample Medical Device operates based on spectrophotometric principles. Light at specific wavelengths passes through the sample, and the absorbance is measured. The concentration of the analyte is calculated based on the absorbance values and the calibration curve."
+        },
+        {
+          "heading": "Software",
+          "text": "The device software controls all aspects of system operation, including sample processing, measurement, data analysis, quality control, and user interface. The software is developed according to FDA's guidance for software contained in medical devices."
+        }
+      ]
+    },
+    {
+      "title": "Performance Testing",
+      "content": [
+        {
+          "heading": "Accuracy",
+          "text": "Accuracy studies were conducted using reference materials with known concentrations of analytes. The results showed that the Sample Medical Device provides accurate measurements across the reportable range for all analytes."
+        },
+        {
+          "heading": "Precision",
+          "text": "Precision studies were conducted according to CLSI EP05-A3 guideline. The studies included within-run, between-run, between-day, and total precision evaluations. The results demonstrated acceptable precision for all analytes."
+        },
+        {
+          "heading": "Method Comparison",
+          "text": "Method comparison studies were conducted to compare the performance of the Sample Medical Device with the predicate device. Patient samples spanning the reportable range were measured on both devices. Regression analysis showed good correlation between the results."
+        },
+        {
+          "table": {
+            "headers": ["Analyte", "Correlation Coefficient (r)", "Slope", "Intercept"],
+            "rows": [
+              ["Glucose", "0.998", "1.02", "-1.5 mg/dL"],
+              ["Total Protein", "0.995", "0.98", "0.1 g/dL"],
+              ["Albumin", "0.993", "1.01", "-0.05 g/dL"],
+              ["Creatinine", "0.997", "0.99", "0.02 mg/dL"],
+              ["Urea", "0.996", "1.03", "-0.8 mg/dL"]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Labeling",
+      "content": [
+        {
+          "text": "The labeling for the Sample Medical Device includes:\n1. User Manual containing detailed instructions for use, installation, operation, maintenance, and troubleshooting\n2. Quick Reference Guide for routine operation\n3. Package inserts for reagents, calibrators, and controls\n4. Device labeling compliant with 21 CFR Part 809.10\n\nAll labeling materials have been reviewed and conform to FDA requirements for in vitro diagnostic devices."
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "text": "510(k) Submission for Sample Medical Device - Confidential"
+  }
+}

@@ -1,0 +1,40 @@
+apiVersion: v2
+name: trialsage-cer
+description: Helm chart for TrialSage CER Generator module - a comprehensive solution for AI-powered clinical evaluation reports
+type: application
+version: 1.0.0
+appVersion: '1.0.0'
+icon: https://trialsage.com/images/logo.png
+home: https://trialsage.com
+sources:
+  - https://github.com/trialsage/cer-generator
+maintainers:
+  - name: TrialSage Team
+    email: support@trialsage.com
+    url: https://trialsage.com
+keywords:
+  - clinical-evaluation-report
+  - regulatory-writing
+  - medical-device
+  - pdf-generator
+  - ai-powered
+  - document-intelligence
+  - compliance
+  - clinical-research
+annotations:
+  category: Regulatory Technology
+  licenses: Commercial
+  support: https://trialsage.com/support
+dependencies:
+  - name: postgresql
+    version: '~11.9.0'
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+  - name: redis
+    version: '~17.8.0'
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache

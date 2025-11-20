@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <code code="51725-7" codeSystem="2.16.840.1.113883.6.1" displayName="Human Prescription Drug Labeling"/>
+  <setId root="2.16.840.1.113883.19.000.9999.001.001.SPL"/>
+  <versionNumber value="1.0"/>
+  <effectiveTime value="20240101"/>
+  <component>
+    <structuredBody>
+      <component>
+        <section>
+          <id root="d1e1"/>
+          <code code="34066-1" codeSystem="2.16.840.1.113883.6.1" displayName="DESCRIPTION"/>
+          <text>
+            <paragraph>XYZ-Drug is a monoclonal antibody indicated for the treatment of severe autoimmune disorders. Each vial contains 100mg of active substance.</paragraph>
+            <list listType="unordered">
+              <item><paragraph>Storage: Store at 2-8°C. Do not freeze.</paragraph></item>
+              <item><paragraph>Dosage: 10mg/kg every two weeks.</paragraph></item>
+              <item><paragraph>Route: Intravenous infusion over 60 minutes.</paragraph></item>
+            </list>
+          </text>
+        </section>
+        <section>
+          <id root="d1e2"/>
+          <code code="43685-7" codeSystem="2.16.840.1.113883.6.1" displayName="ADVERSE REACTIONS"/>
+          <text>
+            <paragraph>Common adverse reactions include nausea and headache (incidence >10%). Serious adverse events such as anaphylaxis have been reported rarely.</paragraph>
+            <table>
+              <thead>
+                <tr><th>Adverse Reaction</th><th>Incidence</th><th>Severity</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Nausea</td><td>15%</td><td>Mild to Moderate</td></tr>
+                <tr><td>Headache</td><td>12%</td><td>Mild</td></tr>
+                <tr><td>Fatigue</td><td>8%</td><td>Mild to Moderate</td></tr>
+                <tr><td>Anaphylaxis</td><td>&lt;1%</td><td>Severe</td></tr>
+              </tbody>
+            </table>
+          </text>
+        </section>
+        <section>
+          <id root="d1e3"/>
+          <code code="34067-9" codeSystem="2.16.840.1.113883.6.1" displayName="INDICATIONS AND USAGE"/>
+          <text>
+            <paragraph>XYZ-Drug is indicated for the treatment of adults with moderate to severe autoimmune disorders who have had an inadequate response to conventional therapy.</paragraph>
+          </text>
+        </section>
+        <section>
+          <id root="d1e4"/>
+          <code code="34070-3" codeSystem="2.16.840.1.113883.6.1" displayName="CONTRAINDICATIONS"/>
+          <text>
+            <paragraph>XYZ-Drug is contraindicated in patients with known hypersensitivity to the active substance or any excipients.</paragraph>
+          </text>
+        </section>
+      </component>
+    </structuredBody>
+  </component>
+</document>

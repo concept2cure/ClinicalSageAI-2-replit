@@ -1,0 +1,16 @@
+{
+  "nct_id": "NCT59065170",
+  "indication": "Type 2 Diabetes",
+  "phase": "Phase 3",
+  "sample_size": 871,
+  "duration_weeks": 36,
+  "dropout_rate": 0.18,
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "primary_endpoints": ["HbA1c reduction"],
+  "secondary_endpoints": ["Postprandial glucose reduction", "Fasting glucose reduction"],
+  "outcome_summary": "Primary endpoint met with statistical significance (p<0.05)",
+  "success": 1,
+  "start_date": "2019-11-12",
+  "completion_date": "2020-07-21"
+}

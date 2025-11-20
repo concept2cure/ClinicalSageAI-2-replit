@@ -1,0 +1,48 @@
+.utnv5-header {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-bottom: 1px solid #ddd;
+  padding: var(--space-sm) var(--space-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.utnv5-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.utnv5-controls button,
+.utnv5-controls .utnv5-home,
+.utnv5-controls .utnv5-switch,
+.utnv5-controls .utnv5-reports {
+  background: none;
+  border: none;
+  font-size: var(--text-md);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.utnv5-controls .utnv5-reports {
+  display: flex;
+  align-items: center;
+  color: #0f6cbd;
+  font-weight: 500;
+}
+.utnv5-tabs {
+  margin-top: var(--space-sm);
+  display: flex;
+  gap: var(--space-lg);
+}
+.utnv5-tabs a {
+  text-decoration: none;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  padding-bottom: var(--space-xs);
+}
+.utnv5-tabs a.active {
+  color: var(--color-primary);
+  border-bottom: 3px solid var(--color-primary);
+}

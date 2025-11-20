@@ -1,0 +1,849 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix for dropdown transparency issue */
+[data-radix-select-content] {
+  background-color: white !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-radix-select-viewport] {
+  background-color: white !important;
+}
+
+[data-radix-select-item] {
+  background-color: white !important;
+}
+
+[data-radix-select-item]:hover {
+  background-color: #f9fafb !important;
+}
+
+[data-radix-select-item]:focus {
+  background-color: #eff6ff !important;
+  color: #1e40af !important;
+}
+
+/* Fix for popover transparency issue (date picker calendar) - comprehensive fix */
+[data-radix-popover-content],
+[data-radix-popper-content-wrapper],
+.rdp {
+  background-color: white !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.375rem !important;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: none !important;
+  z-index: 9999 !important;
+}
+
+/* Ensure calendar container has opaque background */
+.rdp,
+.rdp-months,
+.rdp-month,
+.rdp-table {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Fix all calendar cells and days */
+.rdp-cell,
+.rdp-day,
+.rdp-day_button {
+  background-color: white !important;
+  background: white !important;
+}
+
+.rdp-day:hover,
+.rdp-day_button:hover {
+  background-color: #f3f4f6 !important;
+  background: #f3f4f6 !important;
+}
+
+/* Fix calendar header */
+.rdp-caption,
+.rdp-nav,
+.rdp-head {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Additional fallback for any react-day-picker elements */
+[class*='rdp'],
+[class*='day-picker'] {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Fix bouncing animation in file browser */
+.embedded-file-browser * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.embedded-file-browser {
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+}
+
+/* Custom styles for CER V2 tab interface */
+.cer-tab-trigger {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+/* Fix for tab list spacing */
+.cer-tabs .cer-tabs-list {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+/* SOTA panel specific styles */
+.sota-panel .badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.sota-panel .competitor-badge {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border: 1px solid #e1dfdd;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.sota-panel .competitor-badge .remove-btn {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  color: #616161;
+  transition: color 0.2s ease;
+}
+
+.sota-panel .competitor-badge .remove-btn:hover {
+  color: #d83b01;
+}
+
+:root {
+  /* Brand Colors */
+  --color-primary: #2563eb; /* Blue 600 */
+  --color-primary-dark: #1d4ed8; /* Blue 700 */
+  --color-secondary: #475569; /* Slate 600 */
+  --color-accent: #8b5cf6; /* Violet 500 */
+
+  /* UI Colors */
+  --color-success: #10b981; /* Emerald 500 */
+  --color-warning: #f59e0b; /* Amber 500 */
+  --color-error: #ef4444; /* Red 500 */
+  --color-info: #3b82f6; /* Blue 500 */
+
+  /* Neutral Colors */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+
+  /* Typography */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Typography Scale */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--color-gray-800);
+  background-color: var(--color-gray-50);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Font Sizing System - Based on Professional Design System */
+.text-display {
+  font-size: 2.25rem; /* 36px */
+  line-height: 2.5rem; /* 40px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-h1 {
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-h2 {
+  font-size: 1.5rem; /* 24px */
+  line-height: 2rem; /* 32px */
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.text-h3 {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+.text-h4 {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+}
+
+.text-body {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+}
+
+.text-body-sm {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+}
+
+.text-caption {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+/* Card Styles */
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-gray-200);
+}
+
+.card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-gray-200);
+}
+
+/* Glass card effect for components */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth hover transitions */
+
+/* Enhanced tab styling */
+[role='tablist'] {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+[role='tab'] {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  color: #64748b;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+[role='tab'][data-state='active'] {
+  background-color: white;
+  color: #1e40af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+[role='tab']:hover:not([data-state='active']) {
+  background-color: rgba(241, 245, 249, 0.7);
+  color: #334155;
+}
+
+[role='tabpanel'] {
+  padding: 1rem 0;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Global dropdown and select component styling */
+div.select-content,
+div.popover-content,
+div.command-dialog,
+div.dialog-content,
+div.dropdown-menu-content {
+  --bg-color: white;
+  --text-color: #1a202c;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.15);
+
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: var(--shadow) !important;
+  z-index: 50 !important;
+  padding: 0.5rem !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Custom select trigger styling */
+.select-trigger {
+  border: 1px solid rgba(226, 232, 240, 1) !important;
+  background-color: white !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+/* Select items and dropdown items */
+.select-item,
+.dropdown-menu-item,
+.command-item {
+  color: #111827 !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.25rem !important;
+  margin-bottom: 0.125rem !important;
+  transition: background-color 0.15s ease-in-out !important;
+  font-size: 0.95rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Hover state for dropdown items */
+.select-item:hover,
+.dropdown-menu-item:hover,
+.command-item:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Selected/Checked state */
+.select-item[data-state='checked'],
+.dropdown-menu-item[data-state='checked'] {
+  background-color: #e0f2fe !important;
+  color: #1e40af !important;
+  font-weight: 500 !important;
+}
+
+/* Text elements inside dropdown items */
+:where(.select-item-text),
+:where(.dropdown-menu-item-text),
+:where(.command-item-text) {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* Selection indicator for selected items */
+:where(.select-item[data-state='checked']):after {
+  content: '✓';
+  display: inline-block;
+  margin-left: auto;
+  font-weight: bold;
+}
+
+/* Disabled state */
+:where(.select-item[data-disabled]),
+:where(.dropdown-menu-item[data-disabled]) {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Scrollable areas inside dropdowns */
+:where(.select-viewport),
+:where(.dropdown-menu-viewport),
+:where(.command-list) {
+  padding: 0.25rem !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+/* Group labels */
+:where(.select-group-label),
+:where(.dropdown-menu-group-label) {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+.hover-lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+/* Legacy CoAuthor styles - no longer needed */
+/*
+.coauthor-page {
+  background: #f7f7f7;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.section-editor {
+  background: white;
+  margin-top: 1rem;
+}
+
+.unified-top-nav {
+  margin-bottom: 0;
+}
+*/
+
+/* Legacy CoAuthor Two-Pane Layout - Superseded by newer styles below */
+/*
+.coauthor-content {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  flex: 1;
+}
+
+.editor-pane {
+  flex: 7;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 600px;
+  padding: 24px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.copilot-pane {
+  flex: 3;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 600px;
+  padding: 24px;
+  background: #fafafa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+*/
+
+.coauthor-footer {
+  margin-top: 16px;
+  text-align: right;
+  font-size: 12px;
+  color: #666;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* AI Copilot Panel */
+.ai-copilot-panel {
+  font-family: sans-serif;
+  color: #333;
+}
+
+.ai-copilot-panel h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1e293b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .coauthor-content {
+    flex-direction: column;
+  }
+
+  .editor-pane,
+  .copilot-pane {
+    flex: auto;
+    width: 100%;
+  }
+}
+
+/* UNIFIED TOP NAV V4 STYLES */
+/* HEADER */
+.utnv4-header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 12px 16px;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.utnv4-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.utnv4-controls button,
+.utnv4-controls .utnv4-home,
+.utnv4-controls .utnv4-switch {
+  margin-right: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #444;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+}
+.utnv4-controls button:hover,
+.utnv4-controls .utnv4-home:hover,
+.utnv4-controls .utnv4-switch:hover {
+  background: #e9e9e9;
+}
+.utnv4-breadcrumbs {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 8px 0;
+}
+.utnv4-breadcrumbs a {
+  color: #0078d4;
+  text-decoration: none;
+  margin: 0 3px;
+}
+.utnv4-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+.utnv4-tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.utnv4-tabs li {
+  list-style: none;
+}
+.utnv4-tabs a {
+  padding: 8px 0;
+  display: block;
+  color: #444;
+  text-decoration: none;
+  font-weight: 500;
+}
+.utnv4-tabs .active a {
+  border-bottom: 2px solid #0078d4;
+  color: #0078d4;
+}
+
+/* Coauthor styles moved to CoAuthor.css */
+
+/* Canvas Workbench Styles */
+.konvajs-content {
+  cursor: grab;
+}
+.konvajs-content:active {
+  cursor: grabbing;
+}
+
+/* Ensure annotation panel sits on top */
+.annotation-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 300px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* Canvas Workbench Custom Cursor Styles */
+.canvas-workbench {
+  cursor: grab;
+}
+.canvas-workbench:active {
+  cursor: grabbing;
+}
+
+/* CER Tab Styles */
+.cer-tab-trigger {
+  min-width: 110px;
+  margin-right: 6px;
+  padding-left: 16px;
+  padding-right: 16px;
+  text-align: center;
+  position: relative; /* Add positioning context */
+  z-index: 1; /* Ensure tabs stay on top */
+}
+
+/* Fix for tab content */
+.cer-tabs-content {
+  position: relative;
+  z-index: 0;
+  margin-top: 10px; /* Add some space below tabs */
+}
+
+/* Lumen AI Assistant Markdown Styling */
+.markdown-content {
+  color: inherit;
+}
+
+/* Headings */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h3 {
+  font-size: 1.15em;
+}
+
+.markdown-content h4 {
+  font-size: 1.05em;
+}
+
+/* Lists */
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content li {
+  margin: 0.25em 0;
+}
+
+.markdown-content li p {
+  margin: 0.5em 0;
+}
+
+/* Links */
+.markdown-content a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* Code blocks */
+.markdown-content pre {
+  background-color: #f1f5f9;
+  border-radius: 0.375rem;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.markdown-content code {
+  background-color: #f1f5f9;
+  border-radius: 0.25rem;
+  padding: 0.2em 0.4em;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 4px solid #e2e8f0;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #64748b;
+}
+
+/* Tables */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.markdown-content tr:nth-of-type(even) {
+  background-color: #f8fafc;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5em 0;
+}
+
+/* Paragraphs */
+.markdown-content p {
+  margin: 0.75em 0;
+  line-height: 1.6;
+}
+
+/* Ensure proper spacing in the chat context */
+.markdown-content *:first-child {
+  margin-top: 0;
+}
+
+.markdown-content *:last-child {
+  margin-bottom: 0;
+}

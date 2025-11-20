@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Device Profile",
+  "type": "object",
+  "required": ["deviceName", "deviceClass", "intendedUse"],
+  "properties": {
+    "deviceName": {
+      "type": "string",
+      "title": "Device Name",
+      "description": "The commercial name of the medical device"
+    },
+    "modelNumber": {
+      "type": "string",
+      "title": "Model Number",
+      "description": "The model number or identifier for the device"
+    },
+    "manufacturer": {
+      "type": "string",
+      "title": "Manufacturer",
+      "description": "The legal manufacturer of the device"
+    },
+    "deviceClass": {
+      "type": "string",
+      "enum": ["I", "II", "III"],
+      "title": "Device Class",
+      "description": "FDA regulatory class of the device"
+    },
+    "productCode": {
+      "type": "string",
+      "title": "Product Code",
+      "description": "FDA product classification code"
+    },
+    "regulationNumber": {
+      "type": "string",
+      "title": "Regulation Number",
+      "description": "21 CFR regulation number applicable to the device"
+    },
+    "medicalSpecialty": {
+      "type": "string",
+      "title": "Medical Specialty",
+      "description": "Medical specialty the device is intended for"
+    },
+    "intendedUse": {
+      "type": "string",
+      "title": "Intended Use",
+      "description": "The general intended use of the device"
+    },
+    "indications": {
+      "type": "string",
+      "title": "Indications for Use",
+      "description": "Specific indications for use statement"
+    },
+    "technologyDescription": {
+      "type": "string",
+      "title": "Technology Description",
+      "description": "Description of the device's core technology"
+    },
+    "predicateDevices": {
+      "type": "array",
+      "title": "Predicate Devices",
+      "description": "List of predicate devices for substantial equivalence",
+      "items": {
+        "type": "object",
+        "properties": {
+          "deviceName": {
+            "type": "string",
+            "title": "Device Name"
+          },
+          "manufacturer": {
+            "type": "string",
+            "title": "Manufacturer"
+          },
+          "kNumber": {
+            "type": "string",
+            "title": "K Number"
+          },
+          "productCode": {
+            "type": "string",
+            "title": "Product Code"
+          },
+          "clearanceDate": {
+            "type": "string",
+            "title": "Clearance Date",
+            "format": "date"
+          },
+          "primaryPredicate": {
+            "type": "boolean",
+            "title": "Primary Predicate",
+            "default": false
+          }
+        }
+      }
+    },
+    "sterilization": {
+      "type": "boolean",
+      "title": "Requires Sterilization",
+      "description": "Whether the device is provided sterile or requires sterilization"
+    },
+    "singleUse": {
+      "type": "boolean",
+      "title": "Single Use Device",
+      "description": "Whether the device is intended for single use only"
+    },
+    "implantable": {
+      "type": "boolean",
+      "title": "Implantable",
+      "description": "Whether the device is implantable"
+    },
+    "containsSoftware": {
+      "type": "boolean",
+      "title": "Contains Software",
+      "description": "Whether the device contains software"
+    },
+    "softwareLevel": {
+      "type": "string",
+      "enum": ["N/A", "A", "B", "C"],
+      "title": "Software Level of Concern",
+      "description": "FDA software level of concern if applicable"
+    },
+    "hasBiologicalMaterial": {
+      "type": "boolean",
+      "title": "Contains Biological Material",
+      "description": "Whether the device contains biological material"
+    },
+    "clinicalTrials": {
+      "type": "boolean",
+      "title": "Requires Clinical Trials",
+      "description": "Whether clinical trials are required for the submission"
+    },
+    "specialControls": {
+      "type": "array",
+      "title": "Special Controls",
+      "description": "Special controls applicable to this device",
+      "items": {
+        "type": "string"
+      }
+    },
+    "standards": {
+      "type": "array",
+      "title": "Applicable Standards",
+      "description": "Industry standards applicable to the device",
+      "items": {
+        "type": "object",
+        "properties": {
+          "standardNumber": {
+            "type": "string",
+            "title": "Standard Number"
+          },
+          "standardName": {
+            "type": "string",
+            "title": "Standard Name"
+          },
+          "recognitionNumber": {
+            "type": "string",
+            "title": "FDA Recognition Number"
+          }
+        }
+      }
+    },
+    "biocompatibilityTests": {
+      "type": "array",
+      "title": "Biocompatibility Tests",
+      "description": "Biocompatibility tests applicable to the device",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patientContactDuration": {
+      "type": "string",
+      "enum": ["None", "Limited", "Prolonged", "Permanent"],
+      "title": "Patient Contact Duration",
+      "description": "Duration of patient contact"
+    },
+    "patientContactType": {
+      "type": "array",
+      "title": "Patient Contact Type",
+      "description": "Types of patient contact",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Surface Device",
+          "External Communicating Device",
+          "Implant Device",
+          "No Patient Contact"
+        ]
+      }
+    },
+    "tissues": {
+      "type": "array",
+      "title": "Tissues in Contact",
+      "description": "Tissues the device comes in contact with",
+      "items": {
+        "type": "string"
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "title": "Keywords",
+      "description": "Keywords related to the device",
+      "items": {
+        "type": "string"
+      }
+    },
+    "references": {
+      "type": "array",
+      "title": "References",
+      "description": "Scientific literature references",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authors": {
+            "type": "string",
+            "title": "Authors"
+          },
+          "journal": {
+            "type": "string",
+            "title": "Journal"
+          },
+          "year": {
+            "type": "string",
+            "title": "Year"
+          },
+          "doi": {
+            "type": "string",
+            "title": "DOI"
+          }
+        }
+      }
+    },
+    "submissionType": {
+      "type": "string",
+      "enum": ["Traditional", "Abbreviated", "Special", "Exempt"],
+      "title": "Submission Type",
+      "description": "Type of 510(k) submission"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+.git
+node_modules
+npm-debug.log
+.env
+.env.local
+.DS_Store
+attached_assets
+csrs
+data
+docs
+exports
+generated_documents
+logs
+tmp_backup
+*.log

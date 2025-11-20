@@ -1,0 +1,21 @@
+{
+  "nextId": 1580,
+  "batchesCompleted": 7,
+  "trialsImported": 2820,
+  "importedIds": [],
+  "lastRunTime": "2025-04-13T11:02:54.777Z",
+  "lastBatchIndex": 1,
+  "batches": [
+    {
+      "batchIndex": 10,
+      "timestamp": "2025-04-13T17:34:47.181Z",
+      "trialsImported": 50
+    },
+    {
+      "batchIndex": 1,
+      "timestamp": "2025-04-13T17:37:46.049Z",
+      "trialsImported": 50
+    }
+  ],
+  "totalImported": 100
+}

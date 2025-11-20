@@ -1,0 +1,4 @@
+#!/bin/bash
+# Temporarily unlock the TrialSage HTML files for editing
+chmod -R u+w trialsage-html
+echo "✅ trialsage-html unlocked (writable)"

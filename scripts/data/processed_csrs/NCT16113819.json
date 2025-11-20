@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT16113819",
+  "indication": "Asthma",
+  "phase": "Phase 2/3",
+  "sample_size": 1178,
+  "duration_weeks": 41,
+  "dropout_rate": 0.14,
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "primary_endpoints": ["Asthma exacerbation reduction"],
+  "secondary_endpoints": ["ACQ score improvement"],
+  "outcome_summary": "Failed to reach statistical significance on primary endpoint",
+  "success": 0,
+  "failure_reason": "Unexpected safety signal",
+  "start_date": "2023-08-27",
+  "completion_date": "2024-06-09"
+}

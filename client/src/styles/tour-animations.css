@@ -1,0 +1,109 @@
+/* Tour Animation Styles */
+
+/* Welcome animation slide-up effect */
+.welcome-slide-up {
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+/* Glowing effect for tour highlights */
+@keyframes tour-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* Apply to elements that should be highlighted during tour */
+[data-tour]:not([data-tour='']):focus {
+  animation: tour-glow 1.5s infinite;
+  outline: none;
+}
+
+/* Tour components styling */
+.tour-spotlight {
+  border-radius: 4px;
+  background-color: rgba(59, 130, 246, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.tour-spotlight:hover {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Override react-joyride styles */
+.react-joyride__tooltip {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-joyride__beacon {
+  animation: beacon-pulse 1.2s infinite !important;
+}
+
+@keyframes beacon-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Tour step buttons */
+.tour-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tour-button-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.tour-button-primary:hover {
+  background-color: #2563eb;
+}
+
+.tour-button-secondary {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.tour-button-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+/* Tour help button pulse animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.help-button-pulse {
+  animation: pulse 2s infinite;
+}

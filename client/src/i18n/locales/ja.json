@@ -1,0 +1,35 @@
+{
+  "wizardHeader": {
+    "title": "IND準備ウィザード 3.2",
+    "moduleReadiness": "モジュール準備状況",
+    "confidenceInterval": "95%信頼区間",
+    "ready": "準備完了",
+    "errors": "エラー",
+    "docs": "文書",
+    "savings": "節約額"
+  },
+  "moduleNames": {
+    "module1": "モジュール1：管理情報",
+    "module2": "モジュール2：概要",
+    "module3": "モジュール3：品質",
+    "module4": "モジュール4：非臨床",
+    "module5": "モジュール5：臨床"
+  },
+  "uploadValidate": {
+    "dragDrop": "PDFをここにドラッグ＆ドロップするか、クリックして参照",
+    "analyzing": "分析中…",
+    "commit": "問題なし → 確定",
+    "review": "レビューで開く",
+    "uploaded": "アップロード完了！"
+  },
+  "aiTips": {
+    "title": "AI分析情報",
+    "noInsights": "このステップでは情報がありません"
+  },
+  "kpiRibbon": {
+    "docs": "文書",
+    "errors": "エラー",
+    "ready": "準備完了",
+    "savings": "節約額"
+  }
+}

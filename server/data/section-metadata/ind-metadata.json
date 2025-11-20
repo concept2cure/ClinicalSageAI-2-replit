@@ -1,0 +1,46 @@
+{
+  "moduleId": "ind",
+  "title": "Investigational New Drug Application",
+  "sections": [
+    {
+      "id": "intro",
+      "title": "Introduction",
+      "description": "Provides an overview of the IND application and the investigational product.",
+      "regulatoryGuidance": [
+        "Include a brief description of the drug, including its formulation and route of administration.",
+        "Provide a high-level summary of the development program and its objectives.",
+        "Reference relevant FDA regulations (21 CFR Part 312)."
+      ]
+    },
+    {
+      "id": "cmc",
+      "title": "Chemistry, Manufacturing, and Controls",
+      "description": "Describes the composition, manufacture, and specifications of the drug substance and drug product.",
+      "regulatoryGuidance": [
+        "Include information on drug substance (active ingredient) and drug product (final formulation).",
+        "Describe manufacturing process, quality controls, and stability data.",
+        "Address any novel excipients or delivery systems used in the formulation."
+      ]
+    },
+    {
+      "id": "pharmacology",
+      "title": "Pharmacology and Toxicology",
+      "description": "Summarizes the nonclinical studies performed to support the safety of the investigational product.",
+      "regulatoryGuidance": [
+        "Include summaries of pharmacology, ADME, and toxicology studies.",
+        "Address safety pharmacology and toxicokinetics.",
+        "Justify the proposed clinical dose based on nonclinical findings."
+      ]
+    },
+    {
+      "id": "clinical",
+      "title": "Clinical Protocol",
+      "description": "Provides detailed information about the proposed clinical investigation.",
+      "regulatoryGuidance": [
+        "Include study objectives, design, and endpoints.",
+        "Describe subject population, inclusion/exclusion criteria, and safety monitoring.",
+        "Address statistical analysis plan and stopping rules."
+      ]
+    }
+  ]
+}

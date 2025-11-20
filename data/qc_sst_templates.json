@@ -1,0 +1,149 @@
+[
+  {
+    "name": "HPLC Assay (C18, 5 µm)",
+    "method_family": "HPLC",
+    "valid_hours": 8,
+    "rules_json": {
+      "plates_min": 2000,
+      "tailing_max": 2.0,
+      "r2_min": 0.999,
+      "rsd_max": 2.0,
+      "id_peaks": ["API", "IS"]
+    },
+    "notes": "General purpose assay with C18 column"
+  },
+  {
+    "name": "HPLC Impurities (Gradient)",
+    "method_family": "HPLC",
+    "valid_hours": 8,
+    "rules_json": {
+      "plates_min": 3000,
+      "tailing_max": 2.0,
+      "resolution_min": 1.5,
+      "r2_min": 0.999,
+      "rsd_max": 5.0,
+      "id_peaks": ["Imp A", "Imp B", "API"]
+    }
+  },
+  {
+    "name": "UPLC Assay (Sub-2 µm)",
+    "method_family": "UPLC",
+    "valid_hours": 8,
+    "rules_json": { "plates_min": 5000, "tailing_max": 1.8, "r2_min": 0.9995, "rsd_max": 1.5 }
+  },
+  {
+    "name": "GC-FID Residual Solvents",
+    "method_family": "GC",
+    "valid_hours": 12,
+    "rules_json": {
+      "resolution_min": 1.5,
+      "rsd_max": 5.0,
+      "id_peaks": ["Class 1", "Class 2A", "Class 2B"]
+    }
+  },
+  {
+    "name": "GC-MS Confirmation",
+    "method_family": "GC",
+    "valid_hours": 12,
+    "rules_json": { "match_factor_min": 0.9, "rsd_max": 10.0 }
+  },
+  {
+    "name": "LC-MS/MS Potency",
+    "method_family": "LCMS",
+    "valid_hours": 8,
+    "rules_json": { "r2_min": 0.999, "bias_max": 3.0, "rsd_max": 2.0 }
+  },
+  {
+    "name": "UV-Vis Assay (Single λ)",
+    "method_family": "UV",
+    "valid_hours": 24,
+    "rules_json": { "r2_min": 0.999, "rsd_max": 2.0 }
+  },
+  {
+    "name": "Karl Fischer (Volumetric)",
+    "method_family": "KF",
+    "valid_hours": 24,
+    "rules_json": { "blank_drift_max": 15.0, "rsd_max": 2.0 }
+  },
+  {
+    "name": "pH Meter Qualification",
+    "method_family": "PH",
+    "valid_hours": 24,
+    "rules_json": {
+      "buffer_brackets": [4.01, 7.0, 10.01],
+      "slope_min": 95.0,
+      "slope_max": 105.0,
+      "r2_min": 0.999
+    }
+  },
+  {
+    "name": "Dissolution Apparatus 1 (Basket)",
+    "method_family": "DISSOLUTION",
+    "valid_hours": 8,
+    "rules_json": { "rpm_tolerance": 2, "temp_range": [36.5, 37.5], "rsd_max": 2.0 }
+  },
+  {
+    "name": "Dissolution Apparatus 2 (Paddle)",
+    "method_family": "DISSOLUTION",
+    "valid_hours": 8,
+    "rules_json": { "rpm_tolerance": 2, "temp_range": [36.5, 37.5], "rsd_max": 2.0 }
+  },
+  {
+    "name": "TOC (Nonionic)",
+    "method_family": "TOC",
+    "valid_hours": 24,
+    "rules_json": { "blank_max": 50, "r2_min": 0.995, "rsd_max": 5.0 }
+  },
+  {
+    "name": "Conductivity (WFI)",
+    "method_family": "COND",
+    "valid_hours": 24,
+    "rules_json": { "cell_const_tolerance": 5.0, "rsd_max": 2.0 }
+  },
+  {
+    "name": "Endotoxin (LAL Gel-Clot)",
+    "method_family": "ENDOTOXIN",
+    "valid_hours": 8,
+    "rules_json": {
+      "positive_control_pass": true,
+      "negative_control_pass": true,
+      "lambda_sensitivity_eu_ml": 0.125
+    }
+  },
+  {
+    "name": "Endotoxin (Turbidimetric)",
+    "method_family": "ENDOTOXIN",
+    "valid_hours": 8,
+    "rules_json": { "r2_min": 0.99, "%cv_max": 25.0 }
+  },
+  {
+    "name": "Microbial Plate Count (TAMC)",
+    "method_family": "MICRO",
+    "valid_hours": 8,
+    "rules_json": { "recovery_range": [50, 200], "%cv_max": 35.0 }
+  },
+  {
+    "name": "Microbial Plate Count (TYMC)",
+    "method_family": "MICRO",
+    "valid_hours": 8,
+    "rules_json": { "recovery_range": [50, 200], "%cv_max": 35.0 }
+  },
+  {
+    "name": "IR Identity",
+    "method_family": "IR",
+    "valid_hours": 48,
+    "rules_json": { "match_factor_min": 0.95 }
+  },
+  {
+    "name": "NMR Identity",
+    "method_family": "NMR",
+    "valid_hours": 48,
+    "rules_json": { "signal_to_noise_min": 20 }
+  },
+  {
+    "name": "Weight Variation (Tablets)",
+    "method_family": "BALANCE",
+    "valid_hours": 24,
+    "rules_json": { "balance_cert_ok": true, "rsd_max": 2.0 }
+  }
+]

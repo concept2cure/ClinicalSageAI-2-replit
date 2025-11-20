@@ -1,0 +1,26 @@
+{
+  "templateKey": "m3/p-5/specs-dp",
+  "title": "3.2.P.5 — Drug Product Specifications (DP)",
+  "locale": ["en", "eu", "jp"],
+  "sections": [
+    {
+      "code": "3.2.P.5",
+      "title": "Control of Drug Product",
+      "order_idx": 500,
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {"level": 2},
+            "content": [{"type": "text", "text": "3.2.P.5 Control of Drug Product"}]
+          },
+          {
+            "type": "paragraph",
+            "content": [{"type": "text", "text": "Insert token → QUALITY.SPECS.DP then explain justification per ICH Q6A."}]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+
+
+Trusted evidence.
+Informed decisions.
+Better health.
+Navigating the clinical 
+study report (CSR): A road 
+map to the data 
+abstraction of CSRs for 
+systematic reviews
+Facilitators: Nicole Fusco, Roberta Scherer, 
+Kay Dickersin
+
+Purpose and Structure of 
+this Workshop
+•Introduction to Clinical Study Reports (CSRs) 
+and their use in systematic reviews (10 
+minutes)
+•Small group scavenger hunt using excerpts 
+from CSRs (30 minutes)
+•Discussion of findings from scavenger hunt (30 
+minutes)
+•Lessons learned from our experiences (10 
+minutes)
+•Evaluation (10 minutes)
+2
+
+What is a clinical study 
+report (CSR)?
+“integrated full report of an individual study 
+of any therapeutic, prophylactic or diagnostic 
+agent (referred to herein as drug or treatment) 
+conducted in patients, in which the clinical 
+and statistical description, presentations, and 
+analyses are integrated into a single report”
+1
+Example of a CSR: 
+https://industrydocuments.library.ucsf.edu/drug/doc
+s/#id=llgw0217
+31. ICH 1995
+
+What information is in a CSR?
+•Study design
+•Risk of bias
+•Analysis methods
+•Results for all outcomes
+•All adverse events
+•Case report forms
+•Individual patient data
+4
+
+CSR Structure Example
+5
+Section DescriptionNumber of Pages
+Title page/Synopsis
+9
+Table of contents
+9
+List of abbreviations and definitions of terms
+2
+Ethics
+1
+Investigators and study administrative structure
+1
+Introduction
+1
+Study objectives, plan, and procedures
+43
+Study subjects
+10
+Efficacy results
+25
+Safety results
+48
+Discussion and overall conclusions
+6
+Tables, figures, and graphs referred to but not included in the 
+text
+1458
+Appendix: Study information (e.g., Protocol, Case Report Forms, 
+Statistical Analysis Plan, Publications based on study)
+2097
+Appendix: Subject data listings
+4316
+
+Individual patient data in CSRs
+•Not always available
+•Can be extracted into usable 
+format using optical character 
+recognition software
+6
+
+IPD Example
+7
+
+Benefits of using CSRs in 
+meta-analysis
+•Access to unpublished results
+ØWhole outcomes (e.g., quality of life)
+ØSubgroups (e.g., sex, comorbid conditions)
+ØAdverse events
+•Standardization of analysis methods
+ØPopulation of analysis
+ØMethods for handling missing data
+8
+
+Challenges of using CSRs
+•Hard to obtain
+•Extremely long
+ØOur 8 CSRs: average length 2917 
+pages, range 1315-8027
+•Contradicting information
+9
+
+Case example: Tamiflu
+2, 3
+•Meta-analysis in 2003 showed:
+ØReduced secondary complications 
+and hospital admission
+•FDA had different conclusions:
+ØTamiflu did not reduce complications
+•Cochrane review of CSRs
+102. Jefferson 2012; 3. Doshi2012
+
+Gains from using CSRs
+2, 3
+11
+•Access to trials with delayed or no 
+publication
+•Fine details of trial conduct
+•Subgroup analysis
+•Information about adverse events
+•Ability to assess of validity of other 
+data sources
+2. Jefferson 2012; 3. Doshi2012
+
+Questions?
+12
+
+References
+1.ICH E3. Structure and content of clinical study reports. London, 
+UK: International Conference on Harmonisation; 1995.
+2.Jefferson T, Jones MA, DoshiP, et al. Neuraminidase inhibitors 
+for preventing and treating influenza in healthy adults and 
+children. Cochrane Database SystRev. 2012;1(1). 
+3.DoshiP, Jefferson T, Del Mar C. The imperative to share clinical 
+study reports: recommendations from the Tamiflu experience. 
+PLoSmedicine. 2012;9(4):e1001201.
+13
+
+Small groups
+•Form groups of 2-3
+•Each group will extract data from a CSR 
+section
+•Each group will have different sections of the 
+CSR
+•We will compare groups’ findings and discuss 
+the benefits and challenges of using CSRs for 
+systematic reviews
+14
+
+Data Extraction Item 1
+What population(s) (e.g., intent-
+to-treat, all randomized, 
+evaluable, etc.) will be used for 
+the efficacy analyses and how 
+are these populations defined?
+15
+
+Data Extraction Item 2
+Which outcomes are identified 
+as "secondary” outcomes?
+16
+
+Data Extraction Item 3
+The primary outcome was change 
+from baseline in the Montgomery-
+AsbergDepression Rating Scale 
+(MADRS) at the end of the study 
+(day 57). What data would you 
+extract for meta-analysis of this 
+outcome?
+17
+
+Follow-up Discussion
+•What was difficult?
+•What was unexpected?
+18
+
+Lessons Learned
+•If the CSR is in PDF format, make sure 
+the text is searchable
+•Utilize the “Add note to text” function 
+19
+
+Example
+20
+
+Lessons Learned
+•If the CSR is a PDF, make sure the text is 
+searchable
+•Utilize the “Add note to text” function
+•Make a priori rules about which sections you 
+will “trust” when there are discrepancies 
+•Completely specify outcome
+ØComparing outcomes in CSRs with 
+outcomes in other sources can help identify 
+potential for reporting bias
+21
+
+Wrap-Up
+•Remaining questions
+•Possible solutions to problems 
+that arise
+22
+
+Thank you!
+23
+
+Acknowledgements
+Gillian Gresham
+Evan Mayo Wilson
+Tianjing Li
+As well as everyone from:
+Multiple Data Sources (MUDS) Team
+Cochrane United States
+Johns Hopkins Bloomberg School of Public Health
+Patient Centered Outcome Research Institute (PCORI)
+24

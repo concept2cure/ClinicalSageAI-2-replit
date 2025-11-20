@@ -1,0 +1,226 @@
+[
+  {
+    "name": "Semaglutide",
+    "moa": "GLP-1 receptor agonist",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "GLP-1",
+    "indication": "Obesity",
+    "pk": { "half_life": 7.0, "route": "Subcutaneous" },
+    "pd": ["ALT reduction", "A1c improvement", "Body weight loss"],
+    "csr_links": ["CSR_2020_OBESITY_03", "CSR_2022_METABOLIC_01"],
+    "success_rate": 0.88,
+    "trial_design": {
+      "arms": 2,
+      "duration_weeks": 68,
+      "control_type": "Placebo",
+      "primary_endpoint": "Percent body weight change from baseline",
+      "secondary_endpoints": [
+        "HbA1c change",
+        "Waist circumference reduction",
+        "Quality of life improvement"
+      ],
+      "typical_doses": ["0.25mg/week", "0.5mg/week", "1.0mg/week"]
+    }
+  },
+  {
+    "name": "Liraglutide",
+    "moa": "GLP-1 receptor agonist",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "GLP-1",
+    "indication": "Obesity",
+    "pk": { "half_life": 3.0, "route": "Subcutaneous" },
+    "pd": ["ALT reduction", "Body weight loss", "Reduced caloric intake"],
+    "csr_links": ["CSR_2019_OBESITY_01", "CSR_2018_OBESITY_02"],
+    "success_rate": 0.82,
+    "trial_design": {
+      "arms": 2,
+      "duration_weeks": 56,
+      "control_type": "Placebo",
+      "primary_endpoint": "Percent body weight change from baseline",
+      "secondary_endpoints": ["Waist circumference", "Blood pressure", "Lipid profiles"],
+      "typical_doses": ["0.6mg/day", "1.2mg/day", "1.8mg/day", "3.0mg/day"]
+    }
+  },
+  {
+    "name": "Obeticholic acid",
+    "moa": "FXR agonist",
+    "type": "Small Molecule",
+    "origin": "Synthetic",
+    "class": "FXR",
+    "indication": "NASH",
+    "pk": { "half_life": 4.5, "route": "Oral" },
+    "pd": ["Fibrosis improvement", "ALT lowering", "AST reduction"],
+    "csr_links": ["CSR_2021_NASH_03", "CSR_2019_NASH_01"],
+    "success_rate": 0.63,
+    "trial_design": {
+      "arms": 3,
+      "duration_weeks": 72,
+      "control_type": "Placebo",
+      "primary_endpoint": "NASH resolution with no worsening of fibrosis",
+      "secondary_endpoints": [
+        "Fibrosis improvement",
+        "ALT/AST normalization",
+        "Liver stiffness by elastography"
+      ],
+      "typical_doses": ["5mg/day", "10mg/day", "25mg/day"]
+    }
+  },
+  {
+    "name": "Tirzepatide",
+    "moa": "GIP/GLP-1 dual receptor agonist",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "GIP/GLP-1",
+    "indication": "Obesity",
+    "pk": { "half_life": 5.0, "route": "Subcutaneous" },
+    "pd": ["Body weight loss", "A1c improvement", "Reduced food intake"],
+    "csr_links": ["CSR_2022_OBESITY_05", "CSR_2021_METABOLIC_03"],
+    "success_rate": 0.91,
+    "trial_design": {
+      "arms": 4,
+      "duration_weeks": 72,
+      "control_type": "Placebo",
+      "primary_endpoint": "Percent body weight change from baseline",
+      "secondary_endpoints": [
+        "Cardiometabolic risk factors",
+        "Quality of life",
+        "Glycemic control"
+      ],
+      "typical_doses": ["5mg/week", "10mg/week", "15mg/week"]
+    }
+  },
+  {
+    "name": "Cenicriviroc",
+    "moa": "CCR2/CCR5 antagonist",
+    "type": "Small Molecule",
+    "origin": "Synthetic",
+    "class": "Chemokine receptor antagonist",
+    "indication": "NASH",
+    "pk": { "half_life": 30.0, "route": "Oral" },
+    "pd": ["Reduced inflammation", "Anti-fibrotic activity"],
+    "csr_links": ["CSR_2020_NASH_02"],
+    "success_rate": 0.57,
+    "trial_design": {
+      "arms": 2,
+      "duration_weeks": 52,
+      "control_type": "Placebo",
+      "primary_endpoint": "≥1-stage improvement in fibrosis with no worsening of NASH",
+      "secondary_endpoints": [
+        "NASH resolution",
+        "Changes in fibrosis biomarkers",
+        "Safety assessments"
+      ],
+      "typical_doses": ["150mg/day"]
+    }
+  },
+  {
+    "name": "Resmetirom",
+    "moa": "Thyroid hormone receptor-β agonist",
+    "type": "Small Molecule",
+    "origin": "Synthetic",
+    "class": "THR-β agonist",
+    "indication": "NASH",
+    "pk": { "half_life": 24.0, "route": "Oral" },
+    "pd": ["Hepatic fat reduction", "LDL cholesterol reduction"],
+    "csr_links": ["CSR_2021_NASH_02", "CSR_2020_NASH_04"],
+    "success_rate": 0.72,
+    "trial_design": {
+      "arms": 3,
+      "duration_weeks": 52,
+      "control_type": "Placebo",
+      "primary_endpoint": "Reduction in hepatic fat by MRI-PDFF",
+      "secondary_endpoints": [
+        "LDL-C reduction",
+        "ALT normalization",
+        "Histological NASH resolution"
+      ],
+      "typical_doses": ["80mg/day", "100mg/day"]
+    }
+  },
+  {
+    "name": "Aldafermin",
+    "moa": "FGF19 analog",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "FGF19",
+    "indication": "NASH",
+    "pk": { "half_life": 2.5, "route": "Subcutaneous" },
+    "pd": ["Bile acid synthesis reduction", "Hepatic fat reduction", "Fibrosis improvement"],
+    "csr_links": ["CSR_2021_NASH_01"],
+    "success_rate": 0.64,
+    "trial_design": {
+      "arms": 3,
+      "duration_weeks": 24,
+      "control_type": "Placebo",
+      "primary_endpoint": "Change in liver fat content by MRI-PDFF",
+      "secondary_endpoints": ["ALT normalization", "Fibrosis biomarkers", "Lipid profiles"],
+      "typical_doses": ["0.3mg/day", "1mg/day", "3mg/day"]
+    }
+  },
+  {
+    "name": "Efruxifermin",
+    "moa": "FGF21 analog",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "FGF21",
+    "indication": "NASH",
+    "pk": { "half_life": 3.0, "route": "Subcutaneous" },
+    "pd": ["Improved insulin sensitivity", "Lipid profile improvement", "Anti-inflammatory"],
+    "csr_links": ["CSR_2022_NASH_01"],
+    "success_rate": 0.68,
+    "trial_design": {
+      "arms": 4,
+      "duration_weeks": 16,
+      "control_type": "Placebo",
+      "primary_endpoint": "Absolute change in liver fat by MRI-PDFF",
+      "secondary_endpoints": ["Liver enzymes", "Serum lipids", "Glycemic parameters"],
+      "typical_doses": ["28mg/week", "50mg/week", "70mg/week"]
+    }
+  },
+  {
+    "name": "Retatrutide",
+    "moa": "GIP/GLP-1/Glucagon triple receptor agonist",
+    "type": "Biologic",
+    "origin": "Recombinant",
+    "class": "GIP/GLP-1/Glucagon",
+    "indication": "Obesity",
+    "pk": { "half_life": 5.5, "route": "Subcutaneous" },
+    "pd": ["Enhanced energy expenditure", "Body weight reduction", "Glycemic control"],
+    "csr_links": ["CSR_2023_OBESITY_01"],
+    "success_rate": 0.89,
+    "trial_design": {
+      "arms": 5,
+      "duration_weeks": 48,
+      "control_type": "Placebo",
+      "primary_endpoint": "Percent body weight change from baseline",
+      "secondary_endpoints": [
+        "Waist circumference",
+        "Body composition",
+        "Cardiovascular risk markers"
+      ],
+      "typical_doses": ["1mg/week", "4mg/week", "8mg/week", "12mg/week"]
+    }
+  },
+  {
+    "name": "Setmelanotide",
+    "moa": "MC4R agonist",
+    "type": "Small Molecule",
+    "origin": "Synthetic",
+    "class": "Melanocortin-4 receptor agonist",
+    "indication": "Genetic obesity",
+    "pk": { "half_life": 11.0, "route": "Subcutaneous" },
+    "pd": ["Reduced hunger", "Weight loss", "Reduced caloric intake"],
+    "csr_links": ["CSR_2020_GENETIC_OB_01"],
+    "success_rate": 0.78,
+    "trial_design": {
+      "arms": 2,
+      "duration_weeks": 52,
+      "control_type": "Placebo",
+      "primary_endpoint": "Percent body weight change from baseline",
+      "secondary_endpoints": ["Hunger scores", "Waist circumference", "Quality of life"],
+      "typical_doses": ["2mg/day", "3mg/day"]
+    }
+  }
+]

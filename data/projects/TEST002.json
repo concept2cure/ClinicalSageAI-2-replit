@@ -1,0 +1,13 @@
+{
+  "project_id": "TEST002",
+  "sponsor": "TestPharma2",
+  "drug_name": "TestDrug-002",
+  "protocol": "Phase 2 study of TestDrug-002 in patients with condition X",
+  "pi_name": "Dr. John Smith",
+  "pi_address": "456 Clinical Blvd, Boston MA",
+  "nct_number": null,
+  "ind_number": "654321",
+  "serial_number": 0,
+  "created": "2025-04-18",
+  "updated": null
+}

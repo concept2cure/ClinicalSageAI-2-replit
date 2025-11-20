@@ -1,0 +1,2 @@
+# Main server Python dependencies - use unified requirements
+-r services/python/requirements.txt

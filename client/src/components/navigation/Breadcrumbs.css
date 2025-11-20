@@ -1,0 +1,16 @@
+.breadcrumbs {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: var(--space-md) 0;
+}
+.breadcrumbs .crumb {
+  display: inline-flex;
+  align-items: center;
+}
+.breadcrumbs .sep {
+  margin: 0 var(--space-xs);
+}
+.breadcrumbs a {
+  color: var(--color-primary);
+  text-decoration: none;
+}

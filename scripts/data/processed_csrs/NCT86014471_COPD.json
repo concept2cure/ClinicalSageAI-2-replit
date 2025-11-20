@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT86014471",
+  "indication": "COPD",
+  "phase": "Phase 2",
+  "sample_size": 263,
+  "duration_weeks": 80,
+  "dropout_rate": 0.08,
+  "primary_endpoints": ["Exacerbation reduction"],
+  "secondary_endpoints": ["Quality of life score", "FEV1 improvement"],
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study met its primary endpoint with Exacerbation reduction showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

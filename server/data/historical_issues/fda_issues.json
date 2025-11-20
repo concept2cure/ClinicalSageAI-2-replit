@@ -1,0 +1,47 @@
+[
+  {
+    "id": "fda-1",
+    "type": "missing_document",
+    "code": "FDA-1571-MISSING",
+    "description": "FDA Form 1571 is missing or incomplete",
+    "risk_level": "HIGH",
+    "mitigation": "Complete and include Form 1571 (Investigational New Drug Application) with all required information and signatures",
+    "region_specific": true
+  },
+  {
+    "id": "fda-2",
+    "type": "validation_error",
+    "code": "FDA-COVERL-LETTERHEAD",
+    "description": "Cover letter must be on company letterhead",
+    "risk_level": "MEDIUM",
+    "mitigation": "Resubmit cover letter on official company letterhead",
+    "region_specific": true
+  },
+  {
+    "id": "fda-3",
+    "type": "validation_error",
+    "code": "FDA-1572-INCOMPLETE",
+    "description": "FDA Form 1572 is incomplete or contains errors",
+    "risk_level": "HIGH",
+    "mitigation": "Review and complete Form 1572 (Statement of Investigator) with all required fields and signatures",
+    "region_specific": true
+  },
+  {
+    "id": "fda-4",
+    "type": "missing_document",
+    "code": "FDA-PROTO-MISSING",
+    "description": "Protocol document is missing or incomplete",
+    "risk_level": "HIGH",
+    "mitigation": "Include complete protocol document following FDA guidelines",
+    "region_specific": true
+  },
+  {
+    "id": "fda-5",
+    "type": "validation_error",
+    "code": "FDA-MODULE2-INCOMPLETE",
+    "description": "Module 2 CTD summaries are incomplete or contain structural errors",
+    "risk_level": "MEDIUM",
+    "mitigation": "Review and complete all Module 2 CTD summaries according to FDA guidelines",
+    "region_specific": true
+  }
+]

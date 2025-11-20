@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT95266614",
+  "indication": "Melanoma",
+  "phase": "Phase 1",
+  "sample_size": 25,
+  "duration_weeks": 11,
+  "dropout_rate": 0.15,
+  "blinding": "open-label",
+  "control_arm": "placebo",
+  "primary_endpoints": ["Overall survival"],
+  "secondary_endpoints": ["Objective response rate", "Progression-free survival"],
+  "outcome_summary": "Did not meet primary efficacy endpoints",
+  "success": 0,
+  "failure_reason": "Inadequate statistical power",
+  "start_date": "2021-02-01",
+  "completion_date": "2021-04-19"
+}

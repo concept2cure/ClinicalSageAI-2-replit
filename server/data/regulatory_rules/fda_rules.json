@@ -1,0 +1,95 @@
+[
+  {
+    "id": "fda-rule-1",
+    "category": "documentation",
+    "title": "FDA Form 1571 Requirement",
+    "description": "Form FDA 1571 (Investigational New Drug Application) must be included in Module 1 of all IND submissions.",
+    "severity": "critical",
+    "validation_regex": null,
+    "required_file_pattern": "m1\\/us\\/.*1571.*\\.pdf",
+    "applicable_sections": ["m1/us"],
+    "metadata": {
+      "url": "https://www.fda.gov/media/72335/download",
+      "documentation": "Form FDA 1571 must be completed for all IND submissions"
+    }
+  },
+  {
+    "id": "fda-rule-2",
+    "category": "documentation",
+    "title": "FDA Form 1572 Requirement",
+    "description": "Form FDA 1572 (Statement of Investigator) must be included for each investigator in the clinical trial.",
+    "severity": "critical",
+    "validation_regex": null,
+    "required_file_pattern": "m1\\/us\\/.*1572.*\\.pdf",
+    "applicable_sections": ["m1/us"],
+    "metadata": {
+      "url": "https://www.fda.gov/media/72981/download",
+      "documentation": "Form FDA 1572 is required for each investigator participating in the clinical trial"
+    }
+  },
+  {
+    "id": "fda-rule-3",
+    "category": "formatting",
+    "title": "Cover Letter Requirement",
+    "description": "A cover letter on company letterhead must be included with all submissions.",
+    "severity": "major",
+    "validation_regex": null,
+    "required_file_pattern": "m1\\/us\\/.*cover-letter.*\\.pdf",
+    "applicable_sections": ["m1/us"],
+    "metadata": {
+      "documentation": "Cover letter should be on company letterhead and signed by authorized representative"
+    }
+  },
+  {
+    "id": "fda-rule-4",
+    "category": "formatting",
+    "title": "PDF Format Requirements",
+    "description": "All PDF documents must conform to FDA PDF specifications, be unsecured, and have all fonts embedded.",
+    "severity": "major",
+    "validation_regex": null,
+    "required_file_pattern": null,
+    "applicable_sections": ["all"],
+    "metadata": {
+      "documentation": "PDF documents must not have security settings, must have embedded fonts, and must be PDF version 1.4 or higher"
+    }
+  },
+  {
+    "id": "fda-rule-5",
+    "category": "documentation",
+    "title": "Protocol Document Requirement",
+    "description": "A complete Protocol document must be included for all clinical trials.",
+    "severity": "critical",
+    "validation_regex": null,
+    "required_file_pattern": "m5\\/.*protocol.*\\.pdf",
+    "applicable_sections": ["m5"],
+    "metadata": {
+      "documentation": "Protocol document must include detailed study design, methodology, and statistical analysis plan"
+    }
+  },
+  {
+    "id": "fda-rule-6",
+    "category": "structure",
+    "title": "eCTD Structure Compliance",
+    "description": "Submission must adhere to FDA eCTD folder structure requirements.",
+    "severity": "critical",
+    "validation_regex": null,
+    "required_file_pattern": null,
+    "applicable_sections": ["all"],
+    "metadata": {
+      "documentation": "All submissions must follow the FDA eCTD structure and naming conventions"
+    }
+  },
+  {
+    "id": "fda-rule-7",
+    "category": "metadata",
+    "title": "XML Backbone Requirement",
+    "description": "A valid XML backbone file must be included and correctly reference all documents.",
+    "severity": "critical",
+    "validation_regex": null,
+    "required_file_pattern": "index\\.xml",
+    "applicable_sections": ["root"],
+    "metadata": {
+      "documentation": "XML backbone must conform to FDA DTD specifications and correctly reference all documents"
+    }
+  }
+]

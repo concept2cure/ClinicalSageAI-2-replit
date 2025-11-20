@@ -1,0 +1,61 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.serviceMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "trialsage-cer.fullname" . }}
+  namespace: {{ include "trialsage-cer.namespace" . }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.serviceMonitor.selector }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "trialsage-cer.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ include "trialsage-cer.namespace" . }}
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      honorLabels: true
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_component]
+          targetLabel: component
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+    {{- if .Values.api.enabled }}
+  - jobLabel: component
+    targetLabels:
+      - app.kubernetes.io/component
+    selector:
+      matchLabels:
+        {{- include "trialsage-cer.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+    namespaceSelector:
+      matchNames:
+        - {{ include "trialsage-cer.namespace" . }}
+    endpoints:
+      - port: metrics
+        interval: 15s
+        path: /metrics
+    {{- end }}
+    {{- if .Values.worker.enabled }}
+  - jobLabel: component
+    targetLabels:
+      - app.kubernetes.io/component
+    selector:
+      matchLabels:
+        {{- include "trialsage-cer.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    namespaceSelector:
+      matchNames:
+        - {{ include "trialsage-cer.namespace" . }}
+    endpoints:
+      - port: metrics
+        interval: 15s
+        path: /metrics
+    {{- end }}
+{{- end }}

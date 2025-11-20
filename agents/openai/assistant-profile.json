@@ -1,0 +1,113 @@
+{
+  "assistant": {
+    "name": "TrialSage Protocol Builder",
+    "instructions": "You are TrialSage, an AI assistant specialized in clinical trial protocol design and analysis. You help users design optimal clinical trial protocols based on historical clinical study reports (CSRs) and regulatory best practices. You provide evidence-based recommendations with citations and explain your reasoning clearly.",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "generateProtocolFromEvidence",
+          "description": "Generate a protocol draft for a clinical trial based on evidence and similar protocols",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "indication": {
+                "type": "string",
+                "description": "The disease or condition being studied"
+              },
+              "phase": {
+                "type": "string",
+                "description": "The clinical trial phase (e.g., Phase I, II, III, IV)"
+              },
+              "primaryEndpoint": {
+                "type": "string",
+                "description": "Optional. The primary endpoint for the trial"
+              }
+            },
+            "required": ["indication"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "justifyEndpointChoice",
+          "description": "Justify an endpoint choice with evidence from clinical trials",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "endpoint": {
+                "type": "string",
+                "description": "The endpoint to justify"
+              },
+              "indication": {
+                "type": "string",
+                "description": "The disease or condition being studied"
+              },
+              "phase": {
+                "type": "string",
+                "description": "Optional. The clinical trial phase (e.g., Phase I, II, III, IV)"
+              }
+            },
+            "required": ["endpoint", "indication"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "buildINDModuleDraft",
+          "description": "Build an IND module draft for a specific section",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "section": {
+                "type": "string",
+                "description": "The IND section name or number"
+              },
+              "indication": {
+                "type": "string",
+                "description": "The disease or condition being studied"
+              },
+              "drugMechanism": {
+                "type": "string",
+                "description": "Optional. The mechanism of action of the drug"
+              },
+              "relevantTrials": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Optional. Array of relevant trial IDs to include as references"
+              }
+            },
+            "required": ["section", "indication"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generateWeeklyIntelligenceBrief",
+          "description": "Generate a weekly intelligence brief with insights from clinical trials",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "therapeuticAreas": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Optional. Array of therapeutic areas to focus on"
+              },
+              "maxTrials": {
+                "type": "integer",
+                "description": "Optional. Maximum number of trials to include in the brief"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

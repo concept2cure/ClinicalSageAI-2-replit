@@ -1,0 +1,35 @@
+{
+  "2.1": {
+    "title": "Table of Contents",
+    "description": "Provide a comprehensive Table of Contents for Module 2.",
+    "fields": [
+      { "name": "IncludeAppendices", "type": "checkbox", "label": "Include Appendices" },
+      { "name": "AddHyperlinks", "type": "checkbox", "label": "Add Hyperlinks to Sections" }
+    ],
+    "prompt": "Generate a Table of Contents for Module 2 CTD submission according to ICH M4E guidelines. {{#if IncludeAppendices}}Include appendices in the TOC.{{/if}} {{#if AddHyperlinks}}Add hyperlinks to all document sections.{{/if}}",
+    "guidanceText": "This section should follow CTD format and include a comprehensive Table of Contents for Module 2."
+  },
+  "2.2": {
+    "title": "Introduction",
+    "description": "Provide a concise overview of the pharmaceutical class, mode of action, and proposed clinical use.",
+    "fields": [
+      { "name": "DrugClass", "type": "text", "label": "Pharmaceutical Class" },
+      { "name": "MechanismOfAction", "type": "textarea", "label": "Mechanism of Action" },
+      { "name": "ProposedIndication", "type": "textarea", "label": "Proposed Indication" }
+    ],
+    "prompt": "Draft an introduction for a CTD submission about a {{DrugClass}} with the following mechanism of action: {{MechanismOfAction}}. The proposed indication is: {{ProposedIndication}}.",
+    "guidanceText": "Introduction should provide a concise overview of the pharmaceutical class, mode of action, and proposed clinical use."
+  },
+  "2.7": {
+    "title": "Clinical Summary",
+    "description": "Provide a comprehensive clinical summary with detailed analysis of benefits and risks.",
+    "fields": [
+      { "name": "Population", "type": "text", "label": "Patient Population" },
+      { "name": "EfficacySummary", "type": "textarea", "label": "Efficacy Summary" },
+      { "name": "SafetySummary", "type": "textarea", "label": "Safety Summary" },
+      { "name": "DoseJustification", "type": "textarea", "label": "Dose Justification" }
+    ],
+    "prompt": "Generate a detailed Clinical Summary for the {{Population}} population. Include efficacy data: {{EfficacySummary}}. Incorporate safety findings: {{SafetySummary}}. Justify dosing: {{DoseJustification}}.",
+    "guidanceText": "This section should follow ICH E3 guidelines. Use Ctrl+Enter or Cmd+Enter to generate section content with AI assistance."
+  }
+}

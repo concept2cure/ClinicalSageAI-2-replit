@@ -1,0 +1,153 @@
+# TrialSage Continuous Integration Pipeline
+# This configuration defines CI steps for quality and security checks
+
+version: 1.0
+
+# Define pipeline stages
+stages:
+  - lint
+  - typecheck
+  - test
+  - security
+  - build
+
+# Global environment variables available to all jobs
+environment:
+  NODE_ENV: development
+
+# Job definitions
+jobs:
+  # Linting
+  eslint:
+    stage: lint
+    script:
+      - echo "Running ESLint"
+      - npx eslint --ext .js,.jsx,.ts,.tsx ./client ./server ./shared
+    artifacts:
+      paths:
+        - eslint-report.json
+      when: always
+
+  prettier:
+    stage: lint
+    script:
+      - echo "Running Prettier check"
+      - npx prettier --check "./client/**/*.{js,jsx,ts,tsx,json}" "./server/**/*.{js,jsx,ts,tsx,json}" "./shared/**/*.{js,jsx,ts,tsx,json}"
+    artifacts:
+      paths:
+        - prettier-report.json
+      when: always
+
+  # Type checking
+  typescript:
+    stage: typecheck
+    script:
+      - echo "Running TypeScript check"
+      - npx tsc --noEmit
+    artifacts:
+      paths:
+        - typescript-error-report.json
+      when: always
+
+  # Testing
+  unit-tests:
+    stage: test
+    script:
+      - echo "Running unit tests"
+      - npx jest --config=jest.config.js
+    artifacts:
+      paths:
+        - test-report.xml
+        - coverage/
+      when: always
+
+  integration-tests:
+    stage: test
+    script:
+      - echo "Running integration tests"
+      - node scripts/security-test.js
+    artifacts:
+      paths:
+        - integration-test-report.xml
+      when: always
+
+  # Security
+  security-scan:
+    stage: security
+    script:
+      - echo "Running security audit"
+      - npm audit --json > security-audit.json
+    artifacts:
+      paths:
+        - security-audit.json
+      when: always
+
+  dependency-check:
+    stage: security
+    script:
+      - echo "Checking dependencies"
+      - npx depcheck > dependency-check.txt
+    artifacts:
+      paths:
+        - dependency-check.txt
+      when: always
+
+  # Building
+  build:
+    stage: build
+    script:
+      - echo "Building application"
+      - npm run build
+    artifacts:
+      paths:
+        - dist/
+      when: always
+
+# Define pipeline workflow
+workflow:
+  rules:
+    # Run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # Run on main branch
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    # Run on develop branch
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    # Run on staging branch
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    # Run on release branches
+    - if: '$CI_COMMIT_BRANCH =~ /^release\//'
+
+# Define deployment rules
+deploy:
+  # Deploy to dev environment on merge to develop
+  dev:
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "develop"'
+    script:
+      - echo "Deploying to development environment"
+      - bash ./scripts/deploy-dev.sh
+    environment:
+      name: development
+      url: https://dev.trialsage.com
+
+  # Deploy to staging environment on merge to staging
+  staging:
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "staging"'
+    script:
+      - echo "Deploying to staging environment"
+      - bash ./scripts/deploy-staging.sh
+    environment:
+      name: staging
+      url: https://staging.trialsage.com
+
+  # Deploy to production environment on merge to main
+  production:
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+    script:
+      - echo "Deploying to production environment"
+      - bash ./scripts/deploy-prod.sh
+    environment:
+      name: production
+      url: https://trialsage.com

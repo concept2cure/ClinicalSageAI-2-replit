@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT90018262",
+  "indication": "Crohn's Disease",
+  "phase": "Phase 1/2",
+  "sample_size": 295,
+  "duration_weeks": 81,
+  "dropout_rate": 0.18,
+  "primary_endpoints": ["Steroid-free remission"],
+  "secondary_endpoints": ["CDAI score", "Steroid-free remission"],
+  "blinding": "open-label",
+  "control_arm": "standard of care",
+  "outcome_summary": "Study failed to reach statistical significance on primary endpoint.",
+  "success": false,
+  "failure_reason": "Low compliance/adherence"
+}

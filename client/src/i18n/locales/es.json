@@ -1,0 +1,35 @@
+{
+  "wizardHeader": {
+    "title": "Asistente de Preparación IND 3.2",
+    "moduleReadiness": "Estado de los Módulos",
+    "confidenceInterval": "Intervalo de Confianza del 95%",
+    "ready": "Listo",
+    "errors": "Errores",
+    "docs": "Docs",
+    "savings": "Ahorros"
+  },
+  "moduleNames": {
+    "module1": "Módulo 1: Administrativo",
+    "module2": "Módulo 2: Resúmenes",
+    "module3": "Módulo 3: Calidad",
+    "module4": "Módulo 4: No Clínico",
+    "module5": "Módulo 5: Clínico"
+  },
+  "uploadValidate": {
+    "dragDrop": "Arrastra y suelta el PDF aquí o haz clic para buscar",
+    "analyzing": "Analizando…",
+    "commit": "Se ve bien → Confirmar",
+    "review": "Abrir en Revisión",
+    "uploaded": "¡Subido!"
+  },
+  "aiTips": {
+    "title": "Información Ejecutiva IA",
+    "noInsights": "No hay información disponible para este paso"
+  },
+  "kpiRibbon": {
+    "docs": "Docs",
+    "errors": "Errores",
+    "ready": "Listo",
+    "savings": "Ahorros"
+  }
+}

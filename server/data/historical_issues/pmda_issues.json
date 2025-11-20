@@ -1,0 +1,47 @@
+[
+  {
+    "id": "pmda-1",
+    "type": "missing_document",
+    "code": "PMDA-JPDOC-TRANSLATION",
+    "description": "Japanese translation required for key documents",
+    "risk_level": "HIGH",
+    "mitigation": "Provide Japanese translations for all required documents in Module 1",
+    "region_specific": true
+  },
+  {
+    "id": "pmda-2",
+    "type": "validation_error",
+    "code": "PMDA-JTABLE-FORMAT",
+    "description": "Japanese tables have incorrect format",
+    "risk_level": "MEDIUM",
+    "mitigation": "Reformat Japanese tables according to PMDA specifications",
+    "region_specific": true
+  },
+  {
+    "id": "pmda-3",
+    "type": "validation_error",
+    "code": "PMDA-PROTOCOL-JPVERSION",
+    "description": "Japanese version of protocol has inconsistencies with English version",
+    "risk_level": "HIGH",
+    "mitigation": "Ensure Japanese protocol is translated accurately and matches English version",
+    "region_specific": true
+  },
+  {
+    "id": "pmda-4",
+    "type": "missing_document",
+    "code": "PMDA-JPANNEX-MISSING",
+    "description": "Japanese Annex documents are missing",
+    "risk_level": "HIGH",
+    "mitigation": "Include all required Japanese Annex documents",
+    "region_specific": true
+  },
+  {
+    "id": "pmda-5",
+    "type": "validation_error",
+    "code": "PMDA-CMC-FORMATTING",
+    "description": "Chemistry, Manufacturing, and Controls (CMC) document formatting does not meet PMDA requirements",
+    "risk_level": "MEDIUM",
+    "mitigation": "Reformat CMC documents according to PMDA guidelines",
+    "region_specific": true
+  }
+]

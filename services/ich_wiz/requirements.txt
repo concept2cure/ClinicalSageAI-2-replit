@@ -1,0 +1,5 @@
+# ICH Wizard Service - Service-specific dependencies
+# Note: Core dependencies (FastAPI, uvicorn, pydantic, structlog, openai, pinecone-client, PyPDF2, pytest, requests) are in server/services/python/requirements.txt  
+# Only service-specific dependencies listed here to avoid duplicates
+pydantic-settings>=2.0.0
+prometheus-client>=0.16.0

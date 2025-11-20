@@ -1,0 +1,68 @@
+/* High Contrast Mode - Forces maximum contrast on all text */
+* {
+  color: black !important;
+  background-color: white !important;
+  border-color: black !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensures that all text is fully visible */
+p,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+button,
+input,
+textarea,
+select,
+label,
+div {
+  color: black !important;
+  background-color: white !important;
+  border-color: black !important;
+  opacity: 1 !important;
+}
+
+/* Strong borders around elements */
+.card,
+.button,
+.badge,
+.input,
+.select {
+  border: 2px solid black !important;
+}
+
+/* Ensures text contrast in dark mode as well */
+@media (prefers-color-scheme: dark) {
+  * {
+    color: white !important;
+    background-color: black !important;
+    border-color: white !important;
+  }
+
+  p,
+  span,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  div {
+    color: white !important;
+    background-color: black !important;
+    border-color: white !important;
+  }
+}

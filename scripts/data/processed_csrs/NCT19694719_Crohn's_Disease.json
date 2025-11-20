@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT19694719",
+  "indication": "Crohn's Disease",
+  "phase": "Phase 1/2",
+  "sample_size": 247,
+  "duration_weeks": 105,
+  "dropout_rate": 0.42,
+  "primary_endpoints": ["Steroid-free remission"],
+  "secondary_endpoints": ["Mucosal healing", "Steroid-free remission"],
+  "blinding": "double-blind",
+  "control_arm": "standard of care",
+  "outcome_summary": "Study did not demonstrate sufficient efficacy.",
+  "success": false,
+  "failure_reason": "Unexpected safety findings"
+}

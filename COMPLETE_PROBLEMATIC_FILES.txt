@@ -1,0 +1,56 @@
+COMPLETE PROBLEMATIC CODE PACKAGE FOR 3RD PARTY DEVELOPER
+===========================================================
+
+**CRITICAL ISSUE**: Application fails to build due to JavaScript parsing errors
+**PRIMARY FILE**: client/src/pages/WorkingDocumentEditor.jsx (2502 lines)
+**ERROR**: Unterminated regular expression at line 2032
+
+FILES TO PROVIDE TO 3RD PARTY DEVELOPER:
+========================================
+
+1. PRIMARY PROBLEM FILE:
+   - client/src/pages/WorkingDocumentEditor.jsx (2502 lines)
+   - Contains enterprise regulatory document editor with eCTD functionality
+   - Has persistent "unterminated regular expression" esbuild parsing error
+
+2. BACKUP FILES:
+   - client/src/pages/WorkingDocumentEditor.jsx.backup
+   - Any other backup versions for reference
+
+3. RELATED DEPENDENCIES:
+   - shared/schema.ts (database schema)
+   - server/services/ectdService.ts (backend service)
+   - server/index.ts (server with API endpoints)
+
+EXACT ERROR MESSAGE:
+===================
+✘ [ERROR] Unterminated regular expression
+client/src/pages/WorkingDocumentEditor.jsx:2032:12:
+2032 │       </div>
+     ╵             ^
+
+WHAT 3RD PARTY NEEDS TO FIX:
+============================
+1. Scan entire WorkingDocumentEditor.jsx for hidden Unicode characters
+2. Fix all template literal expressions in JSX contexts  
+3. Extract complex JavaScript expressions to variables before JSX usage
+4. Convert regex patterns to safe syntax outside template literals
+5. Validate all JSX structure and nesting
+6. Normalize line endings and encoding issues
+
+CRITICAL REQUIREMENTS:
+=====================
+- PRESERVE ALL FUNCTIONALITY - No feature removal allowed
+- MAINTAIN EXACT SAME UI/UX - Only fix parsing issues
+- KEEP ALL STATE VARIABLES - Preserve React hooks and state
+- ENTERPRISE CODE - Used by biotech companies for FDA submissions
+
+DELIVERABLES NEEDED:
+===================
+1. Fixed WorkingDocumentEditor.jsx that builds without errors
+2. Detailed change log with line numbers
+3. Root cause explanation of parsing failure
+4. Verification that application starts successfully
+
+FILE SIZE: 2502 lines of complex enterprise React code
+URGENCY: HIGH - Application completely non-functional until resolved

@@ -1,0 +1,16 @@
+{
+  "nct_id": "NCT71839257",
+  "indication": "COPD",
+  "phase": "Phase 3",
+  "sample_size": 462,
+  "duration_weeks": 28,
+  "dropout_rate": 0.31,
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "primary_endpoints": ["Exacerbation reduction"],
+  "secondary_endpoints": ["SGRQ score improvement", "FEV1 improvement"],
+  "outcome_summary": "Statistically significant improvement on primary and key secondary endpoints",
+  "success": 1,
+  "start_date": "2020-11-29",
+  "completion_date": "2021-06-13"
+}

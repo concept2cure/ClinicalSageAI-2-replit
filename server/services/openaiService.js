@@ -1,0 +1,114 @@
+import OpenAI from 'openai';
+
+class OpenAIService {
+  constructor() {
+    this.client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    this.isAvailable = !!process.env.OPENAI_API_KEY;
+  }
+
+  async analyzeRegulatoryDocument(text, documentType = 'CMC') {
+    if (!this.isAvailable) {
+      throw new Error('OpenAI API key not available');
+    }
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: 'gpt-4o', // Latest OpenAI model
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory affairs expert specializing in ${documentType} documentation. Analyze the provided text for:
+            1. FDA compliance issues
+            2. ICH guideline adherence
+            3. EMA requirements
+            4. Missing required elements
+            5. Terminology accuracy
+            6. Structure and format compliance
+            
+            Provide specific, actionable suggestions with regulatory citations. Return response in JSON format with:
+            - suggestions: array of objects with {type, severity, text, suggestion, guideline, action}
+            - overallScore: number (0-100)
+            - complianceAreas: object with FDA, ICH, EMA scores`,
+          },
+          {
+            role: 'user',
+            content: `Analyze this ${documentType} document text:\n\n${text}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 2000,
+        temperature: 0.1,
+      });
+
+      return JSON.parse(response.choices[0].message.content);
+    } catch (error) {
+      console.error('OpenAI analysis error:', error);
+      throw error;
+    }
+  }
+
+  async generateRegulatoryContent(prompt, documentType = 'CMC', requirements = {}) {
+    if (!this.isAvailable) {
+      throw new Error('OpenAI API key not available');
+    }
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert regulatory writer specializing in ${documentType} documentation. 
+            Generate professional, compliant content following FDA, ICH, and EMA guidelines.
+            Requirements: ${JSON.stringify(requirements)}`,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 1500,
+        temperature: 0.3,
+      });
+
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenAI content generation error:', error);
+      throw error;
+    }
+  }
+
+  async enhanceRegulatoryText(text, improvements = []) {
+    if (!this.isAvailable) {
+      throw new Error('OpenAI API key not available');
+    }
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory writing expert. Enhance the provided text by addressing these improvements: ${improvements.join(', ')}. 
+            Maintain regulatory compliance and professional tone. Return only the enhanced text.`,
+          },
+          {
+            role: 'user',
+            content: text,
+          },
+        ],
+        max_tokens: 2000,
+        temperature: 0.2,
+      });
+
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenAI text enhancement error:', error);
+      throw error;
+    }
+  }
+}
+
+export default new OpenAIService();

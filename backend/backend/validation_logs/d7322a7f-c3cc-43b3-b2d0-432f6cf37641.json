@@ -1,0 +1,53 @@
+{
+  "id": "d7322a7f-c3cc-43b3-b2d0-432f6cf37641",
+  "filename": "sample_protocol.pdf",
+  "engineId": "regintel-protocol",
+  "engineName": "Protocol Validator",
+  "timestamp": "2025-04-23T21:55:57.244519",
+  "status": "completed",
+  "validations": [
+    {
+      "id": "REG001",
+      "rule": "Document structure validation",
+      "status": "success",
+      "message": "Document structure meets requirements"
+    },
+    {
+      "id": "REG002",
+      "rule": "Regulatory header verification",
+      "status": "success",
+      "message": "Headers contain required information"
+    },
+    {
+      "id": "REG003",
+      "rule": "Section completeness check",
+      "status": "success",
+      "message": "All required sections present"
+    },
+    {
+      "id": "REG004",
+      "rule": "Format consistency validation",
+      "status": "warning",
+      "message": "Inconsistent formatting detected in section 3.2"
+    },
+    {
+      "id": "REG005",
+      "rule": "Cross-reference validation",
+      "status": "error",
+      "message": "Missing cross-references in section 4.1",
+      "path": "Section 4.1",
+      "lineNumber": 42
+    },
+    {
+      "id": "PDF001",
+      "rule": "PDF/A compliance check",
+      "status": "warning",
+      "message": "Document is not PDF/A compliant"
+    }
+  ],
+  "summary": {
+    "success": 3,
+    "warning": 2,
+    "error": 1
+  }
+}

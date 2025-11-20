@@ -1,0 +1,19 @@
+{{- if and .Values.storage.enabled .Values.storage.persistentVolume.enabled -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "trialsage-cer.fullname" . }}-pdf-storage
+  namespace: {{ include "trialsage-cer.namespace" . }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.storage.persistentVolume.size }}
+  {{- if .Values.storage.persistentVolume.storageClass }}
+  storageClassName: {{ .Values.storage.persistentVolume.storageClass }}
+  {{- end }}
+{{- end }}

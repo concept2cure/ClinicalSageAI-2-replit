@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT87304415",
+  "indication": "Parkinson's Disease",
+  "phase": "Phase 3",
+  "sample_size": 1164,
+  "duration_weeks": 50,
+  "dropout_rate": 0.22,
+  "blinding": "double-blind",
+  "control_arm": "placebo",
+  "primary_endpoints": ["ON time without dyskinesia"],
+  "secondary_endpoints": ["UPDRS score improvement", "OFF time reduction"],
+  "outcome_summary": "No significant difference compared to placebo",
+  "success": 0,
+  "failure_reason": "High dropout rate affected statistical analysis",
+  "start_date": "2022-05-27",
+  "completion_date": "2023-05-12"
+}

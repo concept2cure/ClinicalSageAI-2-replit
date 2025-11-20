@@ -1,0 +1,56 @@
+- id: PV-101
+  title: PPQ runs insufficient for commercial scale
+  severity: high
+  rationale: "Completed PPQ runs < target runs for the intended commercial scale; acceptance criteria not fully demonstrated."
+  actions:
+    - "Execute additional PPQ runs; update protocol acceptance criteria and statistical justification."
+    - "Provide comparability assessment if equipment/scale changed vs. development."
+  relatedTabs: [Validation, Regulatory, DocumentAuthoring]
+  module3Sections: ["3.2.P.3.5", "3.2.S.2.5"]
+
+- id: Q8-210
+  title: Incomplete CPP↔CQA mapping for critical unit operation(s)
+  severity: high
+  rationale: "CPP–CQA relationships are missing or lack justification; control strategy not complete per ICH Q8/Q9/Q10."
+  actions:
+    - "Complete CPP↔CQA linkage and provide scientific rationale (DoE or risk-based)."
+    - "Update control strategy table and sampling plan."
+  relatedTabs: [Analytical, Manufacturing, Regulatory]
+  module3Sections: ["3.2.P.3.3", "3.2.P.3.4"]
+
+- id: STAB-330
+  title: Shelf-life claim unsupported by long-term data
+  severity: high
+  rationale: "Long-term stability data (real-time) are insufficient to justify proposed shelf-life."
+  actions:
+    - "Reduce claimed shelf-life or submit projection with commitment to provide confirmatory data."
+    - "Align labeling and supply planning accordingly."
+  relatedTabs: [Stability, Packaging, Regulatory]
+  module3Sections: ["3.2.P.8", "3.2.S.7"]
+
+- id: EBR-140
+  title: EBR missing complete e-signature chain or steps incomplete
+  severity: high
+  rationale: "One or more executed steps lack Part 11 compliant e-signature or complete audit trail."
+  actions:
+    - "Complete signature chain; attach audit trail; document impact assessment on batch release."
+  relatedTabs: [Manufacturing, Quality]
+  module3Sections: ["3.2.P.3.5"]
+
+- id: EQP-075
+  title: Calibration or PQ overdue for critical equipment
+  severity: high
+  rationale: "Critical equipment shows overdue calibration/PQ while remaining in active use."
+  actions:
+    - "Remove equipment from service; complete calibration/PQ; document evaluation of impacted data."
+  relatedTabs: [Manufacturing, Quality]
+  module3Sections: ["3.2.P.3.3", "3.2.P.3.4"]
+
+- id: CC-220
+  title: Change control missing impact assessment to Module 3
+  severity: medium
+  rationale: "Change control record lacks explicit mapping of impacted Module 3 sections and regulatory commitments."
+  actions:
+    - "Add Module 3 impact matrix and specify required updates to 3.2 sections and commitments."
+  relatedTabs: [Regulatory, DocumentAuthoring, Manufacturing]
+  module3Sections: ["3.2.P.3.3", "3.2.P.3.5", "3.2.S.2.5"]

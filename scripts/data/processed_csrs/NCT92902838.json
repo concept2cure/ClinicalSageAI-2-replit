@@ -1,0 +1,16 @@
+{
+  "nct_id": "NCT92902838",
+  "indication": "Type 2 Diabetes",
+  "phase": "Phase 2/3",
+  "sample_size": 733,
+  "duration_weeks": 59,
+  "dropout_rate": 0.25,
+  "blinding": "open-label",
+  "control_arm": "no control",
+  "primary_endpoints": ["HbA1c reduction"],
+  "secondary_endpoints": ["Fasting glucose reduction", "Postprandial glucose reduction"],
+  "outcome_summary": "Statistically significant improvement on primary and key secondary endpoints",
+  "success": 1,
+  "start_date": "2022-09-28",
+  "completion_date": "2023-11-15"
+}

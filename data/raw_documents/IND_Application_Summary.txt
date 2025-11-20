@@ -1,0 +1,105 @@
+INVESTIGATIONAL NEW DRUG APPLICATION
+
+IND Number: 123456
+Drug Name: OncoMab (Anti-PD-L1 Monoclonal Antibody)
+Sponsor: Global Pharma Inc.
+Submission Date: January 15, 2024
+
+COVER LETTER
+
+Dear FDA Review Team,
+
+Global Pharma Inc. is pleased to submit this Investigational New Drug (IND) Application for OncoMab, a novel anti-PD-L1 monoclonal antibody for the treatment of advanced solid tumors.
+
+1.0 DRUG SUBSTANCE
+
+1.1 General Information
+- Chemical Name: Anti-PD-L1 Humanized Monoclonal Antibody
+- Molecular Weight: ~150 kDa
+- Drug Substance Manufacturer: BioPharma Manufacturing LLC
+
+1.2 Manufacturing Information
+Drug substance is manufactured using CHO cell expression system following current Good Manufacturing Practices (cGMP).
+
+2.0 DRUG PRODUCT
+
+2.1 Formulation
+OncoMab injection, 100 mg/10 mL single-use vial
+- Active ingredient: OncoMab 10 mg/mL
+- Excipients: Histidine, sucrose, polysorbate 80, water for injection
+
+2.2 Stability
+Shelf life: 24 months when stored at 2-8°C. Do not freeze.
+
+3.0 NONCLINICAL PHARMACOLOGY AND TOXICOLOGY
+
+3.1 Pharmacodynamics
+OncoMab binds to PD-L1 with high affinity (KD = 0.28 nM) and blocks PD-1/PD-L1 interaction.
+
+3.2 Pharmacokinetics
+Single and repeat-dose toxicity studies conducted in cynomolgus monkeys demonstrated acceptable safety profile.
+
+3.3 Safety Pharmacology
+- Cardiovascular: No effects on heart rate, blood pressure, or ECG parameters
+- Respiratory: No effects on respiratory rate or tidal volume
+- CNS: No behavioral or neurological effects observed
+
+4.0 CLINICAL PROTOCOL
+
+4.1 Phase I Dose Escalation Study
+Title: A Phase I Dose Escalation Study of OncoMab in Patients with Advanced Solid Tumors
+
+4.2 Study Objectives
+Primary: Determine maximum tolerated dose (MTD) and recommended Phase II dose (RP2D)
+Secondary: Assess safety, tolerability, pharmacokinetics, and preliminary efficacy
+
+4.3 Study Design
+- 3+3 dose escalation design
+- Dose levels: 1, 3, 10, 20 mg/kg IV every 3 weeks
+- Maximum 6 dose levels planned
+
+5.0 INVESTIGATOR INFORMATION
+
+Principal Investigator: Dr. Sarah Johnson, MD, PhD
+Institution: Cancer Research Institute
+Qualifications: Board-certified oncologist with 15 years experience in early-phase oncology trials
+
+6.0 REGULATORY HISTORY
+
+6.1 FDA Interactions
+- Pre-IND meeting held December 10, 2023
+- FDA feedback incorporated into study design
+
+6.2 International Regulatory Status
+- European CTA submitted to MHRA (pending approval)
+- Health Canada CTA planned for Q2 2024
+
+7.0 RISK ASSESSMENT
+
+7.1 Identified Risks
+- Immune-related adverse events (based on drug class)
+- Infusion-related reactions
+- Potential for autoimmune toxicity
+
+7.2 Risk Mitigation
+- Comprehensive safety monitoring plan
+- Pre-medication protocol for infusion reactions
+- Immunosuppressive therapy algorithms
+
+8.0 BENEFIT-RISK ASSESSMENT
+
+The nonclinical data support the safety of OncoMab for human testing. The proposed Phase I study design includes appropriate safety measures and dose escalation strategy.
+
+ATTACHMENTS:
+- Form FDA 1571
+- Clinical Protocol ONC-P1-2024-001
+- Investigator's Brochure
+- Chemistry, Manufacturing, and Controls (CMC) Information
+- Nonclinical Study Reports
+- Clinical Investigator Information
+- Institutional Review Board Information
+
+Sincerely,
+Dr. Michael Chen, MD
+Chief Medical Officer
+Global Pharma Inc.

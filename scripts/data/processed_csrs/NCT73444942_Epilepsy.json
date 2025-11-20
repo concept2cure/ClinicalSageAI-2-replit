@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT73444942",
+  "indication": "Epilepsy",
+  "phase": "Phase 1/2",
+  "sample_size": 177,
+  "duration_weeks": 30,
+  "dropout_rate": 0.42,
+  "primary_endpoints": ["Quality of life"],
+  "secondary_endpoints": ["Seizure frequency", "Quality of life"],
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study failed to reach statistical significance on primary endpoint.",
+  "success": false,
+  "failure_reason": "Low compliance/adherence"
+}

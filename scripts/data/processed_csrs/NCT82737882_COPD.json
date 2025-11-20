@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT82737882",
+  "indication": "COPD",
+  "phase": "Phase 4",
+  "sample_size": 475,
+  "duration_weeks": 45,
+  "dropout_rate": 0.21,
+  "primary_endpoints": ["Quality of life score"],
+  "secondary_endpoints": ["Quality of life score", "FEV1 improvement"],
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study met its primary endpoint with Quality of life score showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

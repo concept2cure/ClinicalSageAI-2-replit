@@ -1,0 +1,5 @@
+{"type":"prediction","message":"Trial success prediction for Obesity (Phase 2)","timestamp":"2025-04-11T17:00:39.159Z","details":{"result":"Failure","probability":0.29,"confidence":0.42000000000000004}}
+{"type":"prediction","message":"Trial success prediction for Type 2 Diabetes (Phase 3)","timestamp":"2025-04-11T17:00:45.429Z","details":{"result":"Failure","probability":0.05,"confidence":0.9}}
+{"type":"prediction","message":"Trial success prediction for Hypertension (Phase 3)","timestamp":"2025-04-11T17:00:51.843Z","details":{"result":"Failure","probability":0.29,"confidence":0.42000000000000004}}
+{"type":"prediction","message":"Trial success prediction for Obesity (Phase 2)","timestamp":"2025-04-11T17:19:55.734Z","details":{"result":"Failure","probability":0.14,"confidence":0.72}}
+{"type":"prediction","message":"Trial success prediction for Type 2 Diabetes (Phase 3)","timestamp":"2025-04-11T17:20:36.119Z","details":{"result":"Failure","probability":0.16,"confidence":0.6799999999999999}}

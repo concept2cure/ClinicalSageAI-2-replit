@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT78883924",
+  "indication": "Breast Cancer",
+  "phase": "Phase 3",
+  "sample_size": 194,
+  "duration_weeks": 52,
+  "dropout_rate": 0.21,
+  "primary_endpoints": ["Disease-free survival"],
+  "secondary_endpoints": ["Objective response rate", "Disease-free survival"],
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study no significant difference compared to placebo.",
+  "success": false,
+  "failure_reason": "Insufficient efficacy"
+}

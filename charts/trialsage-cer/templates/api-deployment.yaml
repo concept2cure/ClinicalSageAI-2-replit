@@ -1,0 +1,137 @@
+{{- if .Values.api.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trialsage-cer.fullname" . }}-api
+  namespace: {{ include "trialsage-cer.namespace" . }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  {{- if not .Values.api.autoscaling.enabled }}
+  replicas: {{ .Values.api.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "trialsage-cer.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        {{- include "trialsage-cer.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "trialsage-cer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-api
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.api.env.NODE_ENV | default "production" | quote }}
+            - name: PORT
+              value: {{ .Values.api.env.PORT | default "4000" | quote }}
+            - name: METRICS_PORT
+              value: {{ .Values.api.env.METRICS_PORT | default "9090" | quote }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: jwt_secret
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: database_url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: redis_url
+            {{- if .Values.api.env.AWS_ENABLED }}
+            - name: AWS_ENABLED
+              value: "true"
+            - name: AWS_S3_BUCKET
+              value: {{ .Values.api.env.AWS_S3_BUCKET | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.api.env.AWS_REGION | quote }}
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: aws_access_key
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: aws_secret_key
+            {{- end }}
+            {{- if .Values.api.env.OPENAI_API_KEY }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trialsage-cer.fullname" . }}-secrets
+                  key: openai_api_key
+            {{- end }}
+            {{- range $key, $value := .Values.api.env.custom }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.api.env.PORT | default 4000 }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.api.env.METRICS_PORT | default 9090 }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          volumeMounts:
+            {{- if and .Values.storage.enabled .Values.storage.persistentVolume.enabled }}
+            - name: pdf-storage
+              mountPath: /app/generated_documents
+            {{- end }}
+      volumes:
+        {{- if and .Values.storage.enabled .Values.storage.persistentVolume.enabled }}
+        - name: pdf-storage
+          persistentVolumeClaim:
+            claimName: {{ include "trialsage-cer.fullname" . }}-pdf-storage
+        {{- end }}
+      {{- with .Values.api.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

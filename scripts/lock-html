@@ -1,0 +1,4 @@
+#!/bin/bash
+# Permanently lock the TrialSage HTML files
+chmod -R a-w trialsage-html
+echo "🔒 trialsage-html locked (read-only)"

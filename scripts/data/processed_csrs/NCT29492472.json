@@ -1,0 +1,16 @@
+{
+  "nct_id": "NCT29492472",
+  "indication": "Asthma",
+  "phase": "Phase 1/2",
+  "sample_size": 39,
+  "duration_weeks": 22,
+  "dropout_rate": 0.12,
+  "blinding": "single-blind",
+  "control_arm": "active comparator",
+  "primary_endpoints": ["Asthma exacerbation reduction"],
+  "secondary_endpoints": ["FEV1 improvement", "ACQ score improvement"],
+  "outcome_summary": "Demonstrated superior efficacy compared to placebo",
+  "success": 1,
+  "start_date": "2020-04-17",
+  "completion_date": "2020-09-18"
+}

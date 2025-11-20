@@ -1,0 +1,52 @@
+{
+  "title": "Biotech Investor Intelligence Suite",
+  "description": "Comprehensive analytics for investment decisions in clinical-stage biotech companies",
+  "version": "1.0",
+  "created": "2025-04-14",
+  "persona": "investor",
+  "categories": ["Portfolio Analysis", "Risk Assessment", "Market Analysis", "Valuation"],
+  "files": [
+    "investor_portfolio_overview.pdf",
+    "therapeutic_area_success_rates.pdf",
+    "pipeline_valuation_models.pdf",
+    "biotech_risk_calculator.pdf",
+    "market_landscape_analysis.pdf",
+    "trial_success_probability.pdf",
+    "competitor_pipeline_assessment.pdf",
+    "catalysts_timeline.pdf"
+  ],
+  "features": [
+    {
+      "name": "Portfolio Strength Assessment",
+      "description": "AI-driven analysis of clinical pipeline strength with probabilistic success modeling",
+      "icon": "chart-bar"
+    },
+    {
+      "name": "Risk-Adjusted NPV Modeling",
+      "description": "Trial-specific risk adjustment for accurate net present value calculations",
+      "icon": "calculator"
+    },
+    {
+      "name": "Competitive Intelligence",
+      "description": "Comprehensive landscape analysis with differentiation scoring",
+      "icon": "users"
+    },
+    {
+      "name": "Catalyst Monitoring",
+      "description": "Predictive timeline of major value-inflecting events",
+      "icon": "calendar"
+    },
+    {
+      "name": "Regulatory Success Prediction",
+      "description": "FDA and EMA approval probability based on historical patterns",
+      "icon": "check-circle"
+    }
+  ],
+  "quickStats": {
+    "successPredictionAccuracy": 92,
+    "analyticsDatapoints": 178540,
+    "historicalTrials": 3021,
+    "regulatoryApprovals": 872,
+    "biomarkerInsights": 1255
+  }
+}

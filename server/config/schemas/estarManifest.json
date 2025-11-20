@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA eSTAR Manifest",
+  "description": "Schema for FDA eSTAR 510(k) submission manifest",
+  "type": "object",
+  "requiredFields": [
+    {
+      "section": "Administrative Information",
+      "name": "Device Name",
+      "pattern": "devicename|device name",
+      "critical": true
+    },
+    {
+      "section": "Administrative Information",
+      "name": "Company Name",
+      "pattern": "company|manufacturer",
+      "critical": true
+    },
+    {
+      "section": "Administrative Information",
+      "name": "Contact Information",
+      "pattern": "contact|phone|email",
+      "critical": true
+    },
+    {
+      "section": "Administrative Information",
+      "name": "Submission Type",
+      "pattern": "submission type|510k type",
+      "critical": true
+    },
+    {
+      "section": "Device Description",
+      "name": "Intended Use",
+      "pattern": "intended use|purpose",
+      "critical": true
+    },
+    {
+      "section": "Device Description",
+      "name": "Materials",
+      "pattern": "material|composition",
+      "critical": false
+    },
+    {
+      "section": "Device Description",
+      "name": "Specifications",
+      "pattern": "specification|dimension|measurement",
+      "critical": false
+    },
+    {
+      "section": "Performance Testing",
+      "name": "Test Methodology",
+      "pattern": "methodology|test protocol|procedure",
+      "critical": true
+    },
+    {
+      "section": "Performance Testing",
+      "name": "Test Results",
+      "pattern": "result|outcome|finding",
+      "critical": true
+    },
+    {
+      "section": "Substantial Equivalence Discussion",
+      "name": "Predicate Device",
+      "pattern": "predicate|substantially equivalent|similar device",
+      "critical": true
+    },
+    {
+      "section": "Substantial Equivalence Discussion",
+      "name": "Comparison",
+      "pattern": "comparison|compare|similarity|difference",
+      "critical": true
+    },
+    {
+      "section": "Labeling",
+      "name": "Labels",
+      "pattern": "label|packaging|include",
+      "critical": true
+    }
+  ],
+  "fileTypeRequirements": {
+    "allowedTypes": [".pdf", ".docx", ".xlsx", ".jpg", ".jpeg", ".png", ".svg", ".xml"],
+    "preferredTypes": [".pdf"],
+    "sectionSpecificRequirements": {
+      "Performance Testing": {
+        "requiredTypes": [".pdf", ".xlsx"],
+        "message": "Performance testing section requires PDF reports and/or Excel data"
+      },
+      "Labeling": {
+        "requiredTypes": [".pdf", ".jpg", ".jpeg", ".png"],
+        "message": "Labeling section requires PDF documents or images"
+      }
+    }
+  },
+  "pdfRequirements": {
+    "standard": "PDF/A",
+    "maxSizeMB": 50,
+    "securitySettings": {
+      "allowPrinting": true,
+      "allowCopying": true,
+      "allowEditing": false,
+      "allowAnnotations": true
+    },
+    "validation": {
+      "requireTextSearchability": true,
+      "requireBookmarks": true,
+      "requireTOC": true
+    }
+  },
+  "submissionChecklist": [
+    "Verify all required sections are present",
+    "Ensure all file attachments meet FDA format requirements",
+    "Check that the Administrative Information is accurate and complete",
+    "Validate that PDF files conform to PDF/A standards",
+    "Confirm that substantial equivalence is clearly established with predicate device(s)",
+    "Verify that performance testing data supports safety and effectiveness claims",
+    "Ensure labeling is consistent with 21 CFR 801"
+  ]
+}

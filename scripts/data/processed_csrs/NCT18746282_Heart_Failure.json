@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT18746282",
+  "indication": "Heart Failure",
+  "phase": "Phase 1",
+  "sample_size": 330,
+  "duration_weeks": 74,
+  "dropout_rate": 0.25,
+  "primary_endpoints": ["CV death or HF hospitalization"],
+  "secondary_endpoints": ["CV death or HF hospitalization", "6MWT distance"],
+  "blinding": "single-blind",
+  "control_arm": "standard of care",
+  "outcome_summary": "Study met its primary endpoint with CV death or HF hospitalization showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

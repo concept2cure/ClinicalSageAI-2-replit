@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT88126051",
+  "indication": "Rheumatoid Arthritis",
+  "phase": "Phase 2",
+  "sample_size": 286,
+  "duration_weeks": 61,
+  "dropout_rate": 0.29,
+  "blinding": "double-blind",
+  "control_arm": "standard of care",
+  "primary_endpoints": ["DAS28 score reduction"],
+  "secondary_endpoints": ["HAQ-DI improvement", "ACR20 response"],
+  "outcome_summary": "Failed to reach statistical significance on primary endpoint",
+  "success": 0,
+  "failure_reason": "Inadequate statistical power",
+  "start_date": "2019-12-06",
+  "completion_date": "2021-02-05"
+}

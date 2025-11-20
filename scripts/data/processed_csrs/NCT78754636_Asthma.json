@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT78754636",
+  "indication": "Asthma",
+  "phase": "Phase 2",
+  "sample_size": 185,
+  "duration_weeks": 46,
+  "dropout_rate": 0.15,
+  "primary_endpoints": ["Exacerbation rate"],
+  "secondary_endpoints": ["FEV1 improvement", "Exacerbation rate"],
+  "blinding": "open-label",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study did not demonstrate sufficient efficacy.",
+  "success": false,
+  "failure_reason": "Poor recruitment/enrollment"
+}

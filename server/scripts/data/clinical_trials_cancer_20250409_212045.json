@@ -1,0 +1,4291 @@
+{
+  "metadata": {
+    "query": "cancer",
+    "phase": null,
+    "total_fetched": 10,
+    "fetch_date": "2025-04-09T21:20:45.911142",
+    "elapsed_seconds": 0.06787538528442383
+  },
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT00072579",
+          "orgStudyIdInfo": {
+            "id": "CCCWFU-23102"
+          },
+          "secondaryIdInfos": [
+            {
+              "id": "CDR0000340983",
+              "type": "REGISTRY",
+              "domain": "PDQ (Physician Data Query)"
+            },
+            {
+              "id": "BRLX-02153"
+            },
+            {
+              "id": "NCI-7350"
+            }
+          ],
+          "organization": {
+            "fullName": "Wake Forest University Health Sciences",
+            "class": "OTHER"
+          },
+          "briefTitle": "Sargramostim in Treating Patients With Chronic Phase Chronic Myelogenous Leukemia Who Are Not in Complete Cytogenetic Remission Following Initial Treatment",
+          "officialTitle": "Phase II Study of GM-CSF in Patients With Chronic Phase Chronic Myeloid Leukemia (CP-CML) Who Are Not in Complete Cytogenetic Remission After Initial Therapy"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2013-06",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2003-05"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2006-04",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2007-12",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2003-11-04",
+          "studyFirstSubmitQcDate": "2003-11-04",
+          "studyFirstPostDateStruct": {
+            "date": "2003-11-05",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2017-01-17",
+          "lastUpdatePostDateStruct": {
+            "date": "2017-01-19",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Wake Forest University Health Sciences",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "National Cancer Institute (NCI)",
+              "class": "NIH"
+            }
+          ]
+        },
+        "descriptionModule": {
+          "briefSummary": "RATIONALE: Colony-stimulating factors, such as sargramostim, may increase the number of immune cells found in bone marrow or peripheral blood and may bring about complete remission in patients who have chronic phase chronic myelogenous leukemia.\n\nPURPOSE: This phase II trial is studying sargramostim to see how well it works in treating patients with chronic phase chronic myelogenous leukemia that is not in complete cytogenetic remission after initial treatment.",
+          "detailedDescription": "OBJECTIVES:\n\n* Determine the efficacy and safety of sargramostim (GM-CSF) by cytogenetic examination of the bone marrow in patients with chronic phase chronic myelogenous leukemia who are not in complete cytogenetic remission after initial therapy.\n\nOUTLINE: Patients receive sargramostim (GM-CSF) subcutaneously daily for 3 months in the absence of disease progression or unacceptable toxicity. Patients achieving no response receive GM-CSF for an additional 3 months. Patients failing to achieve a partial response or better after the second course of GM-CSF are removed from the study. Patients achieving a partial response after the first or second course of GM-CSF continue to receive GM-CSF for an additional 9 months. Patients are then re-evaluated. Patients achieving a complete cytologic response at 9 months then receive GM-CSF 3 times weekly in the absence of disease progression or unacceptable toxicity.\n\nPatients are followed every 2 weeks.\n\nPROJECTED ACCRUAL: A total of 9-24 patients will be accrued for this study within 3 years."
+        },
+        "conditionsModule": {
+          "conditions": ["Leukemia"],
+          "keywords": [
+            "chronic phase chronic myelogenous leukemia",
+            "chronic myelogenous leukemia, BCR-ABL1 positive"
+          ]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["PHASE2"],
+          "designInfo": {
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          }
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "type": "BIOLOGICAL",
+              "name": "sargramostim"
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Cytogenetic response (complete and partial)"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Toxicity as assessed by the Expanded Common Toxicity Criteria v2.0"
+            },
+            {
+              "measure": "Time to progression"
+            },
+            {
+              "measure": "Survival"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "DISEASE CHARACTERISTICS:\n\n* Histologically confirmed chronic phase chronic myelogenous leukemia (CML)\n\n  * Presence of t(9;22)(q34;q11) with at least 20 cells examined in metaphase by cytogenetic examination of the bone marrow\n* Complete hematologic remission during prior therapy\\* as seen on 2 separate blood count analyses, defined by the following:\n\n  * WBC no greater than 10,000/mm\\^3 AND platelet count no greater than 450,000/mm\\^3\n  * Disappearance of all signs and symptoms of disease, including palpable splenomegaly\n  * Normal differential counts (i.e., absence of blasts, promyelocytes, myelocytes, and metamyelocytes) NOTE: \\*Continuation of therapy that led to complete hematologic remission is required during study participation\n* Persistent cytogenetic disease despite 12 months of prior imatinib mesylate therapy, which may have included a trial dose-escalation OR intolerant of imatinib mesylate at a dose greater than 400 mg/day\n* Not in complete cytogenetic remission within 30 days of study entry\n\n  * Persistent Philadelphia chromosome by bone marrow exam\n\nPATIENT CHARACTERISTICS:\n\nAge\n\n* 18 and over\n\nPerformance status\n\n* ECOG 0-2\n\nLife expectancy\n\n* More than 6 months\n\nHematopoietic\n\n* See Disease Characteristics\n\nHepatic\n\n* Not specified\n\nRenal\n\n* Not specified\n\nOther\n\n* Not pregnant or nursing\n* Fertile patients must use effective contraception\n* No uncontrolled active infective\n* No serious medical or psychiatric illness that would prevent giving informed consent or limit survival to less than 6 months\n* No other malignancy not in remission except curatively treated basal cell skin cancer or carcinoma in situ of the cervix\n\nPRIOR CONCURRENT THERAPY:\n\nBiologic therapy\n\n* Prior sargramostim (GM-CSF) allowed\n* Prior interferon alfa for CML allowed\n* No prior stem cell transplantation\n* Concurrent interferon alfa\\* for CML allowed NOTE: \\*No dose increase during study participation\n\nChemotherapy\n\n* At least 4 weeks since prior chemotherapy\n\nEndocrine therapy\n\n* Not specified\n\nRadiotherapy\n\n* At least 4 weeks since prior radiotherapy\n* No concurrent radiotherapy\n\nSurgery\n\n* At least 4 weeks since prior surgery\n\nOther\n\n* Prior imatinib mesylate for CML allowed\n* No other concurrent medication for CML\n* Concurrent imatinib mesylate\\* for CML allowed NOTE: \\*No dose increase during study participation",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "18 Years",
+          "maximumAge": "120 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "Istvan Molnar, MD",
+              "affiliation": "Wake Forest University Health Sciences",
+              "role": "STUDY_CHAIR"
+            },
+            {
+              "name": "Bayard L. Powell, MD",
+              "affiliation": "Wake Forest University Health Sciences"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "CCOP - Western Regional, Arizona",
+              "city": "Phoenix",
+              "state": "Arizona",
+              "zip": "85006-2726",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 33.44838,
+                "lon": -112.07404
+              }
+            },
+            {
+              "facility": "CCOP - Bay Area Tumor Institute",
+              "city": "Oakland",
+              "state": "California",
+              "zip": "94609-3305",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 37.80437,
+                "lon": -122.2708
+              }
+            },
+            {
+              "facility": "CCOP - Mount Sinai Medical Center",
+              "city": "Miami Beach",
+              "state": "Florida",
+              "zip": "33140",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 25.79065,
+                "lon": -80.13005
+              }
+            },
+            {
+              "facility": "Regional Radiation Oncology Center at Rome",
+              "city": "Rome",
+              "state": "Georgia",
+              "zip": "30165",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.25704,
+                "lon": -85.16467
+              }
+            },
+            {
+              "facility": "CCOP - Central Illinois",
+              "city": "Decatur",
+              "state": "Illinois",
+              "zip": "62526",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 39.84031,
+                "lon": -88.9548
+              }
+            },
+            {
+              "facility": "Kentuckiana Cancer Institute, PLLC",
+              "city": "Louisville",
+              "state": "Kentucky",
+              "zip": "40202",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 38.25424,
+                "lon": -85.75941
+              }
+            },
+            {
+              "facility": "MBCCOP - LSU Health Sciences Center",
+              "city": "New Orleans",
+              "state": "Louisiana",
+              "zip": "70112",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 29.95465,
+                "lon": -90.07507
+              }
+            },
+            {
+              "facility": "Alamance Cancer Center",
+              "city": "Burlington",
+              "state": "North Carolina",
+              "zip": "27216",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.09569,
+                "lon": -79.4378
+              }
+            },
+            {
+              "facility": "Hugh Chatham Memorial Hospital",
+              "city": "Elkin",
+              "state": "North Carolina",
+              "zip": "28621",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.2443,
+                "lon": -80.8484
+              }
+            },
+            {
+              "facility": "Southeastern Medical Oncology Center",
+              "city": "Goldsboro",
+              "state": "North Carolina",
+              "zip": "27534-9479",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 35.38488,
+                "lon": -77.99277
+              }
+            },
+            {
+              "facility": "Brody School of Medicine at East Carolina University",
+              "city": "Greenville",
+              "state": "North Carolina",
+              "zip": "27858",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 35.61266,
+                "lon": -77.36635
+              }
+            },
+            {
+              "facility": "Comprehensive Cancer Center at Wake Forest University",
+              "city": "Winston-Salem",
+              "state": "North Carolina",
+              "zip": "27157-1096",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.09986,
+                "lon": -80.24422
+              }
+            },
+            {
+              "facility": "CCOP - Columbus",
+              "city": "Columbus",
+              "state": "Ohio",
+              "zip": "43206",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 39.96118,
+                "lon": -82.99879
+              }
+            },
+            {
+              "facility": "Cancer Centers of the Carolinas - Eastside",
+              "city": "Greenville",
+              "state": "South Carolina",
+              "zip": "29615",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.85262,
+                "lon": -82.39401
+              }
+            },
+            {
+              "facility": "CCOP - Upstate Carolina",
+              "city": "Spartanburg",
+              "state": "South Carolina",
+              "zip": "29303",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.94957,
+                "lon": -81.93205
+              }
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D007938",
+              "term": "Leukemia"
+            },
+            {
+              "id": "D007951",
+              "term": "Leukemia, Myeloid"
+            },
+            {
+              "id": "D015464",
+              "term": "Leukemia, Myelogenous, Chronic, BCR-ABL Positive"
+            },
+            {
+              "id": "D015466",
+              "term": "Leukemia, Myeloid, Chronic-Phase"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D009370",
+              "term": "Neoplasms by Histologic Type"
+            },
+            {
+              "id": "D009369",
+              "term": "Neoplasms"
+            },
+            {
+              "id": "D006402",
+              "term": "Hematologic Diseases"
+            },
+            {
+              "id": "D009196",
+              "term": "Myeloproliferative Disorders"
+            },
+            {
+              "id": "D001855",
+              "term": "Bone Marrow Diseases"
+            },
+            {
+              "id": "D002908",
+              "term": "Chronic Disease"
+            },
+            {
+              "id": "D020969",
+              "term": "Disease Attributes"
+            },
+            {
+              "id": "D010335",
+              "term": "Pathologic Processes"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M10945",
+              "name": "Leukemia",
+              "asFound": "Leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M10955",
+              "name": "Leukemia, Myeloid",
+              "asFound": "Myelogenous Leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M18123",
+              "name": "Leukemia, Myelogenous, Chronic, BCR-ABL Positive",
+              "asFound": "Chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M18125",
+              "name": "Leukemia, Myeloid, Chronic-Phase",
+              "asFound": "Chronic phase chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M12315",
+              "name": "Neoplasms by Histologic Type",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9490",
+              "name": "Hematologic Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M12149",
+              "name": "Myeloproliferative Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5134",
+              "name": "Bone Marrow Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M6147",
+              "name": "Chronic Disease",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M22700",
+              "name": "Disease Attributes",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T1303",
+              "name": "Chronic Graft Versus Host Disease",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T3995",
+              "name": "Myeloid Leukemia",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T1309",
+              "name": "Chronic Myeloid Leukemia",
+              "asFound": "Chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "T1311",
+              "name": "Chronic Myeloproliferative Disorders",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC04",
+              "name": "Neoplasms"
+            },
+            {
+              "abbrev": "BC15",
+              "name": "Blood and Lymph Conditions"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            },
+            {
+              "abbrev": "Rare",
+              "name": "Rare Diseases"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "C081222",
+              "term": "Sargramostim"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D007155",
+              "term": "Immunologic Factors"
+            },
+            {
+              "id": "D045505",
+              "term": "Physiological Effects of Drugs"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M257633",
+              "name": "Molgramostim",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M219218",
+              "name": "Sargramostim",
+              "asFound": "Pharmaceutical",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M10201",
+              "name": "Immunologic Factors",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "ANeo",
+              "name": "Antineoplastic Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01402479",
+          "orgStudyIdInfo": {
+            "id": "0408-131-005"
+          },
+          "organization": {
+            "fullName": "Seoul National University Hospital",
+            "class": "OTHER"
+          },
+          "briefTitle": "An Open-labeled Trial of Ramipril in Patients With Migraine",
+          "officialTitle": "An Open-labeled Trial of Ramipril in Patients With Migraine"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2011-07",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2004-10"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2005-07",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2005-07",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2011-07-24",
+          "studyFirstSubmitQcDate": "2011-07-24",
+          "studyFirstPostDateStruct": {
+            "date": "2011-07-26",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2011-08-05",
+          "lastUpdatePostDateStruct": {
+            "date": "2011-08-08",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "oldNameTitle": "Manho Kim, MD, PhD",
+            "oldOrganization": "Department of Neurology, Seoul National University Hospital"
+          },
+          "leadSponsor": {
+            "name": "Seoul National University Hospital",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "Physiology of migraine involving renin-angiotensin systems (RAS) has been implicated. Ramipril is a broadly-used angiotensin-converting enzyme inhibitor. The investigators attempt to test the efficacy of ramipril on the prophylaxis of migraine attacks."
+        },
+        "conditionsModule": {
+          "conditions": ["Migraine With Hypertension"],
+          "keywords": ["migraine,", "ramipril,", "hypertension"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["PHASE2"],
+          "designInfo": {
+            "allocation": "NON_RANDOMIZED",
+            "interventionModel": "SINGLE_GROUP",
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          },
+          "enrollmentInfo": {
+            "count": 50,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "ramipril",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "open label single arm trial",
+              "interventionNames": ["Drug: Ramipril"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DRUG",
+              "name": "Ramipril",
+              "description": "ramipril 2.5mg twice a day",
+              "armGroupLabels": ["ramipril"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "headache frequency",
+              "description": "headache days",
+              "timeFrame": "12 week"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* Patients with chronic migraine are included in this study. Migraineurs should be aged 20 to 70 years old with the ability to read and understand the self-report scales, including the headache diary, used in this study.\n\nExclusion Criteria:\n\n1. Medication overuse headache are excluded in this study.\n2. Treatment with other ACEI or medication that may affect ARS\n3. Treatment with migraine prophylactic medications or anti-hypertensive agents including \u03b2 adrenergic receptor or calcium channel blockers\n4. Past history of hepatic or renal dysfunction; an abnormal electrocardiography; a psychiatric disorder; a history of substance abuse; pregnancy or lactation; use of anti-psychotics, antidepressants, or anti-anxiety drugs.",
+          "sex": "ALL",
+          "minimumAge": "20 Years",
+          "maximumAge": "70 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "locations": [
+            {
+              "facility": "Seoul National University Hospital",
+              "city": "Seoul",
+              "zip": "110-744",
+              "country": "Korea, Republic of",
+              "geoPoint": {
+                "lat": 37.566,
+                "lon": 126.9784
+              }
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D008881",
+              "term": "Migraine Disorders"
+            },
+            {
+              "id": "D006973",
+              "term": "Hypertension"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D014652",
+              "term": "Vascular Diseases"
+            },
+            {
+              "id": "D002318",
+              "term": "Cardiovascular Diseases"
+            },
+            {
+              "id": "D051270",
+              "term": "Headache Disorders, Primary"
+            },
+            {
+              "id": "D020773",
+              "term": "Headache Disorders"
+            },
+            {
+              "id": "D001927",
+              "term": "Brain Diseases"
+            },
+            {
+              "id": "D002493",
+              "term": "Central Nervous System Diseases"
+            },
+            {
+              "id": "D009422",
+              "term": "Nervous System Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M10024",
+              "name": "Hypertension",
+              "asFound": "Hypertension",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M11852",
+              "name": "Migraine Disorders",
+              "asFound": "Migraine",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M17400",
+              "name": "Vascular Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9351",
+              "name": "Headache",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M22529",
+              "name": "Headache Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M26657",
+              "name": "Headache Disorders, Primary",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5204",
+              "name": "Brain Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5742",
+              "name": "Central Nervous System Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC14",
+              "name": "Heart and Blood Diseases"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC10",
+              "name": "Nervous System Diseases"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D017257",
+              "term": "Ramipril"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D000806",
+              "term": "Angiotensin-Converting Enzyme Inhibitors"
+            },
+            {
+              "id": "D011480",
+              "term": "Protease Inhibitors"
+            },
+            {
+              "id": "D004791",
+              "term": "Enzyme Inhibitors"
+            },
+            {
+              "id": "D045504",
+              "term": "Molecular Mechanisms of Pharmacological Action"
+            },
+            {
+              "id": "D000959",
+              "term": "Antihypertensive Agents"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M19553",
+              "name": "Ramipril",
+              "asFound": "Active treatment",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M4134",
+              "name": "Angiotensin-Converting Enzyme Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7951",
+              "name": "Enzyme Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M19609",
+              "name": "HIV Protease Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14343",
+              "name": "Protease Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4277",
+              "name": "Antihypertensive Agents",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "AnAg",
+              "name": "Antihypertensive Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            },
+            {
+              "abbrev": "Infe",
+              "name": "Anti-Infective Agents"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT00812279",
+          "orgStudyIdInfo": {
+            "id": "YVD-CS01-EU"
+          },
+          "organization": {
+            "fullName": "Philip Morris Products S.A.",
+            "class": "INDUSTRY"
+          },
+          "briefTitle": "Investigate the Exposure to Selected Smoke Constituents in Smokers Switching to Distillation Based Smoking Article",
+          "officialTitle": "A Controlled, Randomised, Open-label, 3-arm Parallel Single-centre Confinement Study to Investigate Exposure to Selected Smoke Constituents in Smokers Switching From Conventional Cigarettes to SMAR Cigarettes for 5 Days"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2019-11",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2008-11"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2009-02",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2009-02",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2008-12-19",
+          "studyFirstSubmitQcDate": "2008-12-19",
+          "studyFirstPostDateStruct": {
+            "date": "2008-12-22",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2019-11-05",
+          "lastUpdatePostDateStruct": {
+            "date": "2019-11-07",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Philip Morris Products S.A.",
+            "class": "INDUSTRY"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "The overall purpose of this clinical study conducted in confinement under well-defined conditions is to obtain initial data on the levels of human body exposure to selected smoked constituents of the SMAR cigarette.\n\nThe main objective of this study is to compare the biomarkers of exposure to cigarette smoke constituents in smokers switching to SMAR and to biomarkers in smokers of conventional cigarettes (CC). The biomarkers of exposure will be measured in blood and urine samples collected from the subjects. Moreover, the biomarkers in subjects smoking conventional or SMAR cigarettes will be compared with those biomarkers in smokers who stop smoking for 5 days. The short term safety of this new product will also be evaluated.",
+          "detailedDescription": "This is a controlled, randomised, open-label, 3-arm parallel single centre confinement study to investigate exposure to selected smoke constituents in smokers switching from CC to SMAR for 5 days.\n\n112 eligible subjects will be randomised to the 3 study arms: SMAR, conventional cigarettes (CC) and smoking cessation (SC) in a 2:1:1 ratio.\n\nFollowing the screening visit (within 4 weeks prior to the day of admission), the study will be run over an 8-day period in a confined environment, consisting of the admission day (D-2), a 2-day baseline period (D-1 and D0), and a 5-day exposure period (D1 to D5). Subjects will be discharged in the morning of D6. From the discharge of the subject, a 7-day safety follow-up period will be carried out (until D13)."
+        },
+        "conditionsModule": {
+          "conditions": ["Smoking"],
+          "keywords": ["Smokers with acceptable health conditions"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "primaryPurpose": "BASIC_SCIENCE",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          },
+          "enrollmentInfo": {
+            "count": 112,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "1. SMAR",
+              "type": "EXPERIMENTAL",
+              "description": "Subjects will be allowed to smoke SMAR without any limit on consumption during the designated smoking times.",
+              "interventionNames": ["Other: Distillation based smoking article (SMAR cigarette)"]
+            },
+            {
+              "label": "2 Conventional cigarette (CC)",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "Subjects will be allowed to smoke without any limit on consumption during the designated smoking times.",
+              "interventionNames": ["Other: conventional cigarette"]
+            },
+            {
+              "label": "3. smoking cessation (SC)",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "Subjects will not be allowed to smoke any cigarettes or to use any other nicotine/tobacco-containing products during the 5 days following randomisation.",
+              "interventionNames": ["Other: smoking cessation"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "OTHER",
+              "name": "Distillation based smoking article (SMAR cigarette)",
+              "description": "Subjects randomised to the SMAR arm will be trained by the site staff on the usage of SMAR and the corresponding lighter prior to smoking the first SMAR. Subjects will be allowed to smoke SMAR without any limit on consumption during the designated smoking times but have to request each SMAR from the site staff when they wish to smoke.",
+              "armGroupLabels": ["1. SMAR"]
+            },
+            {
+              "type": "OTHER",
+              "name": "conventional cigarette",
+              "description": "Subjects randomised to the CC arm will continue to smoke their preferred CC brand during the exposure period. Subjects will be allowed to smoke without any limit on consumption during the designated smoking times but will have to request each CC from the site staff when they wish to smoke.",
+              "armGroupLabels": ["2 Conventional cigarette (CC)"]
+            },
+            {
+              "type": "OTHER",
+              "name": "smoking cessation",
+              "description": "Subjects will not be allowed to smoke any cigarettes or to use any other nicotine/tobacco-containing products during the 5 days following randomisation.",
+              "armGroupLabels": ["3. smoking cessation (SC)"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "To demonstrate a reduction in the three primary biomarkers of exposure: Carboxyhaemoglobin concentration in blood, Urinary excretion of S-phenylmercapturic acid and urinary excretion of NNAL and NNAL-glucuronides (total NNAL)",
+              "timeFrame": "5 days"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "To explore changes from baseline COHb, S-PMA, and total NNAL in the three study arms in the course of the study",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To explore changes from baseline in the three study arms with regard to urinary excretion of biomarkers of exposure to several other smoke constituents.",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess urinary excretion of nicotine and its five major nicotine metabolites in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess nicotine and cotinine concentrations in plasma in the three study arms To compare levels of all biomarkers of exposure in the SMAR arm to those in the smoking cessation (SC) arm",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess the mutagenicity potential in urine at the end of the study in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To monitor blood pressure, pulse rate, electrocardiogram, clinical laboratory parameters (standard clinical biochemistry, standard haematology and urine analysis), and adverse events",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To investigate craving and withdrawal symptoms as well as pulmonary symptoms in all three study arms by means of questionnaires",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To investigate change in cytochrome P450 1A2 (CYP1A2) activity from D0 to D5 in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess and compare human smoking topography (HST) in smokers before and after switching to SMAR",
+              "timeFrame": "5 days"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* Caucasian adult smokers (male and female), with acceptable health conditions, aged from 23 to 55 years who usually smoke 10 to 30 non-mentholated conventional cigarettes (with a maximum ISO tar yield of 10 mg) per day, for at least the last 5 consecutive years, will be enrolled in this study.\n\nExclusion Criteria:\n\n* women of childbearing potential must be excluded if:Subject is pregnant (does not have negative pregnancy tests at screening and at D-2) or breastfeeding/ subject does not agree to use an acceptable method of effective contraception: intrauterine device, intrauterine system, established use of oral/injectable/implantable/ transdermal hormonal methods, barrier methods of contraception (condoms, occlusive caps) with spermicidal foam/gel/film/suppository, vasectomised partner or true abstinence (periodic abstinence and withdrawal are not effective methods) until the end of the safety follow-up period.",
+          "healthyVolunteers": true,
+          "sex": "ALL",
+          "minimumAge": "23 Years",
+          "maximumAge": "55 Years",
+          "stdAges": ["ADULT"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "Katarzyna Jarus-Dziedzic, MD",
+              "affiliation": "MTZ Clinical Research Inc (Warsaw, Poland)",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "MTZ Clinical Research Inc.",
+              "city": "Warsaw",
+              "zip": "02-106",
+              "country": "Poland",
+              "geoPoint": {
+                "lat": 52.22977,
+                "lon": 21.01178
+              }
+            }
+          ]
+        },
+        "referencesModule": {
+          "references": [
+            {
+              "pmid": "26817490",
+              "type": "RESULT",
+              "citation": "Ludicke F, Haziza C, Weitkunat R, Magnette J. Evaluation of Biomarkers of Exposure in Smokers Switching to a Carbon-Heated Tobacco Product: A Controlled, Randomized, Open-Label 5-Day Exposure Study. Nicotine Tob Res. 2016 Jul;18(7):1606-13. doi: 10.1093/ntr/ntw022. Epub 2016 Jan 27."
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M12478",
+              "name": "Nicotine",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05600179",
+          "orgStudyIdInfo": {
+            "id": "0110/2022"
+          },
+          "organization": {
+            "fullName": "Federico II University",
+            "class": "OTHER"
+          },
+          "briefTitle": "OCTA in Epivascular Glia After Dex Implant",
+          "officialTitle": "Evaluation of Changes in Epivascular Glia Before and After Intravitreal Dexamethasone Implant : an OCT Pilot Study"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2022-12",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2021-01-01",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2022-09-30",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2022-09-30",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2022-10-26",
+          "studyFirstSubmitQcDate": "2022-10-28",
+          "studyFirstPostDateStruct": {
+            "date": "2022-10-31",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2022-12-06",
+          "lastUpdatePostDateStruct": {
+            "date": "2022-12-08",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "PRINCIPAL_INVESTIGATOR",
+            "investigatorFullName": "Gilda Cennamo",
+            "investigatorTitle": "professor",
+            "investigatorAffiliation": "Federico II University"
+          },
+          "leadSponsor": {
+            "name": "Federico II University",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false,
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "The aim of this prospective study was for the first time, to analyze specific morphologic features in diabetic eyes with macular oedema, such as changes of the foveal avascular zone and the presence of epivascular glia, and see how they would change after dexamethasone intravitreal implant"
+        },
+        "conditionsModule": {
+          "conditions": ["Diabetic Retinopathy"]
+        },
+        "designModule": {
+          "studyType": "OBSERVATIONAL",
+          "patientRegistry": false,
+          "designInfo": {
+            "observationalModel": "COHORT",
+            "timePerspective": "PROSPECTIVE"
+          },
+          "enrollmentInfo": {
+            "count": 38,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "patients with diabetic macular edema",
+              "interventionNames": ["Drug: Dexamethasone intravitreal implant"]
+            },
+            {
+              "label": "healthy patients"
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DRUG",
+              "name": "Dexamethasone intravitreal implant",
+              "description": "Dexamethasone intravitreal implant",
+              "armGroupLabels": ["patients with diabetic macular edema"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Changes in epivascular glia after Dexamethasone implant in patients with diabetic retinopathy and inflammatory macular edema",
+              "timeFrame": "up to 6 months"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* diabetic retinopathy complicated by macular edema\n\nExclusion Criteria:\n\n* congenital eye disorders,\n* previous diagnosis of other ocular diseases\n* history of vitreous hemorrhage",
+          "healthyVolunteers": true,
+          "sex": "ALL",
+          "minimumAge": "18 Years",
+          "maximumAge": "80 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"],
+          "studyPopulation": "The participans were older than 18 years with diagnosis of inflammatory diabetic macular edema glaucoma..",
+          "samplingMethod": "NON_PROBABILITY_SAMPLE"
+        },
+        "contactsLocationsModule": {
+          "locations": [
+            {
+              "facility": "University of Naples \"Federico II\"",
+              "city": "Naples",
+              "zip": "80100",
+              "country": "Italy",
+              "geoPoint": {
+                "lat": 40.85216,
+                "lon": 14.26811
+              }
+            }
+          ]
+        },
+        "ipdSharingStatementModule": {
+          "ipdSharing": "YES"
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D003930",
+              "term": "Diabetic Retinopathy"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D012164",
+              "term": "Retinal Diseases"
+            },
+            {
+              "id": "D005128",
+              "term": "Eye Diseases"
+            },
+            {
+              "id": "D003925",
+              "term": "Diabetic Angiopathies"
+            },
+            {
+              "id": "D014652",
+              "term": "Vascular Diseases"
+            },
+            {
+              "id": "D002318",
+              "term": "Cardiovascular Diseases"
+            },
+            {
+              "id": "D048909",
+              "term": "Diabetes Complications"
+            },
+            {
+              "id": "D003920",
+              "term": "Diabetes Mellitus"
+            },
+            {
+              "id": "D004700",
+              "term": "Endocrine System Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M14999",
+              "name": "Retinal Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7125",
+              "name": "Diabetic Retinopathy",
+              "asFound": "Diabetic Retinopathy",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M8271",
+              "name": "Eye Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7120",
+              "name": "Diabetic Angiopathies",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M17400",
+              "name": "Vascular Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7115",
+              "name": "Diabetes Mellitus",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M26004",
+              "name": "Diabetes Complications",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7862",
+              "name": "Endocrine System Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC11",
+              "name": "Eye Diseases"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC14",
+              "name": "Heart and Blood Diseases"
+            },
+            {
+              "abbrev": "BC19",
+              "name": "Gland and Hormone Related Diseases"
+            },
+            {
+              "abbrev": "BC18",
+              "name": "Nutritional and Metabolic Diseases"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D003907",
+              "term": "Dexamethasone"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D000893",
+              "term": "Anti-Inflammatory Agents"
+            },
+            {
+              "id": "D000932",
+              "term": "Antiemetics"
+            },
+            {
+              "id": "D001337",
+              "term": "Autonomic Agents"
+            },
+            {
+              "id": "D018373",
+              "term": "Peripheral Nervous System Agents"
+            },
+            {
+              "id": "D045505",
+              "term": "Physiological Effects of Drugs"
+            },
+            {
+              "id": "D005765",
+              "term": "Gastrointestinal Agents"
+            },
+            {
+              "id": "D005938",
+              "term": "Glucocorticoids"
+            },
+            {
+              "id": "D006728",
+              "term": "Hormones"
+            },
+            {
+              "id": "D006730",
+              "term": "Hormones, Hormone Substitutes, and Hormone Antagonists"
+            },
+            {
+              "id": "D018931",
+              "term": "Antineoplastic Agents, Hormonal"
+            },
+            {
+              "id": "D000970",
+              "term": "Antineoplastic Agents"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M7102",
+              "name": "Dexamethasone",
+              "asFound": "High",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M235549",
+              "name": "Dexamethasone acetate",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4217",
+              "name": "Anti-Inflammatory Agents",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4251",
+              "name": "Antiemetics",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8881",
+              "name": "Gastrointestinal Agents",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9047",
+              "name": "Glucocorticoids",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9789",
+              "name": "Hormones",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9788",
+              "name": "Hormone Antagonists",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M20966",
+              "name": "Antineoplastic Agents, Hormonal",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "Infl",
+              "name": "Anti-Inflammatory Agents"
+            },
+            {
+              "abbrev": "ANeo",
+              "name": "Antineoplastic Agents"
+            },
+            {
+              "abbrev": "AnEm",
+              "name": "Antiemetics"
+            },
+            {
+              "abbrev": "Gast",
+              "name": "Gastrointestinal Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01511679",
+          "orgStudyIdInfo": {
+            "id": "BANC RFA-AA-12-006"
+          },
+          "organization": {
+            "fullName": "Boston Children's Hospital",
+            "class": "OTHER"
+          },
+          "briefTitle": "Brain-imaging and Adolescent Neuroscience Consortium",
+          "officialTitle": "Brain-imaging and Adolescent Neuroscience Consortium",
+          "acronym": "BANC"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2013-01",
+          "overallStatus": "WITHDRAWN",
+          "whyStopped": "The project was not funded.",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2012-09"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2017-03",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2017-09",
+            "type": "ESTIMATED"
+          },
+          "studyFirstSubmitDate": "2012-01-13",
+          "studyFirstSubmitQcDate": "2012-01-18",
+          "studyFirstPostDateStruct": {
+            "date": "2012-01-19",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2013-01-02",
+          "lastUpdatePostDateStruct": {
+            "date": "2013-01-03",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Boston Children's Hospital",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "Massachusetts General Hospital",
+              "class": "OTHER"
+            },
+            {
+              "name": "Mclean Hospital",
+              "class": "OTHER"
+            },
+            {
+              "name": "Massachusetts Institute of Technology",
+              "class": "OTHER"
+            }
+          ]
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "This is a multi-site study of adolescents 12-21 years-of-age to evaluate the long and shorter-term effect of adolescent alcohol use on the developing brain.",
+          "detailedDescription": "The overall specific aims of this study are to: 1) assess the short and long-term consequences of alcohol exposure on brain, cognitive, and emotional/regulatory development during preadolescence and adolescence; 2) determine the effects of timing, dose, and duration of alcohol on brain and cognitive development; 3) assess recovery of neural and behavioral function to determine if the plasticity of the adolescent brain makes it more or less vulnerable to alcohol's acute and chronic effects; 4) understand how other key covariates (e.g., existing or emerging psychopathology, family history of alcoholism, demographics, pubertal development) factor into alcohol's effects on the brain; and 5) identify early neural, cognitive, and affective markers that may predict alcohol abuse and dependence during adolescence and/or adulthood."
+        },
+        "conditionsModule": {
+          "conditions": ["Alcohol Abuse"],
+          "keywords": ["Alcohol abuse"]
+        },
+        "designModule": {
+          "studyType": "OBSERVATIONAL",
+          "designInfo": {
+            "observationalModel": "COHORT",
+            "timePerspective": "PROSPECTIVE"
+          },
+          "bioSpec": {
+            "retention": "SAMPLES_WITH_DNA",
+            "description": "Saliva DNA samples for future analyses."
+          },
+          "enrollmentInfo": {
+            "count": 0,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "Alcohol-naive adolescents",
+              "description": "A general population longitudinal cohort of alcohol-na\u00efve (or h/o minimal recent-onset drinking) adolescents in three specific age-groups: early (12-14 y/o), middle (15-17 y/o), and late (18-21 y/o)."
+            },
+            {
+              "label": "Treatment sample",
+              "description": "A sample of adolescents who have a \\>1 year history of heavy drinking but have agreed to stop drinking as part of their treatment plan"
+            },
+            {
+              "label": "High risk sample",
+              "description": "High-risk adolescents who have a family history of alcohol-use disorder and other risk factors (symptoms of Attention-Deficit/Hyperactivity Disorder (ADHD), Conduct Disorder, or Mood Disorder)"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* able to read and understand English\n* available for follow-up\n* parental consent/adolescent assent for those 12-17 years\n* consent for those 18-21 years\n\nExclusion Criteria:\n\n* Weight \\> 300 lbs\n* braces or unremovable embedded metal\n* claustrophobia or inability to lie still in MRI machine\n* current or past 12-mos pregnancy (females)\n* requires urgent medical/mental health care",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "12 Years",
+          "maximumAge": "21 Years",
+          "stdAges": ["CHILD", "ADULT"],
+          "studyPopulation": "Male and female adolescents 12-21 years-of-age presenting for care at one of the participating medical clinics",
+          "samplingMethod": "NON_PROBABILITY_SAMPLE"
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "John R Knight, MD",
+              "affiliation": "Boston Children's Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Gordon J Harris, PhD",
+              "affiliation": "Massachusetts General Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Simon Warfield, PhD",
+              "affiliation": "Boston Children's Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Avram Holmes, PhD",
+              "affiliation": "Harvard University",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Scott Lukas, PhD",
+              "affiliation": "Mclean Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Marisa Silveri, PhD",
+              "affiliation": "Mclean Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Marlene Oscar Berman, PhD",
+              "affiliation": "Boston University",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "John Gabrieli, PhD",
+              "affiliation": "Massachusetts Institute of Technology",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "McLean Hospital",
+              "city": "Belmont",
+              "state": "Massachusetts",
+              "zip": "02478",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.39593,
+                "lon": -71.17867
+              }
+            },
+            {
+              "facility": "Massachusetts General Hospital",
+              "city": "Boston",
+              "state": "Massachusetts",
+              "zip": "02114",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.35843,
+                "lon": -71.05977
+              }
+            },
+            {
+              "facility": "Boston University School of Medicine",
+              "city": "Boston",
+              "state": "Massachusetts",
+              "zip": "02118",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.35843,
+                "lon": -71.05977
+              }
+            },
+            {
+              "facility": "Massachusetts Institute of Technology",
+              "city": "Cambridge",
+              "state": "Massachusetts",
+              "zip": "02139",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.3751,
+                "lon": -71.10561
+              }
+            }
+          ]
+        },
+        "referencesModule": {
+          "seeAlsoLinks": [
+            {
+              "label": "Center for Adolescent Substance Abuse Research at Children's Hospital Boston",
+              "url": "http://www.ceasar.org"
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D000437",
+              "term": "Alcoholism"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D019973",
+              "term": "Alcohol-Related Disorders"
+            },
+            {
+              "id": "D019966",
+              "term": "Substance-Related Disorders"
+            },
+            {
+              "id": "D064419",
+              "term": "Chemically-Induced Disorders"
+            },
+            {
+              "id": "D001523",
+              "term": "Mental Disorders"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M3783",
+              "name": "Alcoholism",
+              "asFound": "Alcohol Abuse",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M21842",
+              "name": "Alcohol-Related Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M21837",
+              "name": "Substance-Related Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M30302",
+              "name": "Chemically-Induced Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4815",
+              "name": "Mental Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14473",
+              "name": "Psychotic Disorders",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC25",
+              "name": "Substance Related Disorders"
+            },
+            {
+              "abbrev": "BXM",
+              "name": "Behaviors and Mental Disorders"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M3777",
+              "name": "Ethanol",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "Infe",
+              "name": "Anti-Infective Agents"
+            },
+            {
+              "abbrev": "CNSDep",
+              "name": "Central Nervous System Depressants"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05602779",
+          "orgStudyIdInfo": {
+            "id": "22-08-7372"
+          },
+          "organization": {
+            "fullName": "University of Notre Dame",
+            "class": "OTHER"
+          },
+          "briefTitle": "Leverage Noninvasive Transcutaneous Vagus Nerve Stimulation to Reduce Suicidal Behaviors in Vulnerable Adolescents",
+          "officialTitle": "Leveraging Noninvasive Transcutaneous Vagus Nerve Stimulation and Smartphone Technology to Reduce Suicidal Behaviors and Suicide Among Highly Vulnerable Adolescents"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2025-02",
+          "overallStatus": "RECRUITING",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2024-11-15",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2027-04-15",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2027-09-30",
+            "type": "ESTIMATED"
+          },
+          "studyFirstSubmitDate": "2022-10-06",
+          "studyFirstSubmitQcDate": "2022-11-01",
+          "studyFirstPostDateStruct": {
+            "date": "2022-11-02",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2025-02-05",
+          "lastUpdatePostDateStruct": {
+            "date": "2025-02-07",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "PRINCIPAL_INVESTIGATOR",
+            "investigatorFullName": "Kristin Valentino",
+            "investigatorTitle": "Professor of Psychology",
+            "investigatorAffiliation": "University of Notre Dame"
+          },
+          "leadSponsor": {
+            "name": "University of Notre Dame",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "University of Rochester",
+              "class": "OTHER"
+            },
+            {
+              "name": "University of Wisconsin, Madison",
+              "class": "OTHER"
+            }
+          ]
+        },
+        "oversightModule": {
+          "oversightHasDmc": true,
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": true,
+          "isUsExport": false
+        },
+        "descriptionModule": {
+          "briefSummary": "Suicidal thoughts, suicide attempts, and suicide are increasingly common in adolescence.\n\nCurrent face-to-face prevention approaches are of limited effectiveness, rely on extensive resources, and are at odds with adolescents' digital preferences. We will evaluate two unconventional but promising interventions delivered to 13- to 17-year-olds: transcutaneous vagus nerve stimulation to target emotion dysregulation, and a peer-support smartphone app to combat social isolation. If effective, these digitally-delivered interventions could reach far more adolescents at far lower cost than current approaches.",
+          "detailedDescription": "Over the past two decades, suicide rates have increased nearly 35% in the U.S., with upward trends in nearly all demographic groups. Further increases have occurred since the COVID-19 pandemic began. Despite ambitious goals for reducing suicides and significant federal and private investment, suicide rates continue to rise unabated. To date, the predominant approach to mitigating suicide risk in the U.S. is secondary prevention. Typically, these programs identify risk of recurrence among those who have already attempted suicide at least once. Although secondary prevention is crucial, the majority of deaths by suicide occur on first attempt. Thus, targeted primary prevention earlier in development is essential. Most current primary prevention programs are intensive, expensive, and delivered by highly trained mental health providers, who are in short supply. Traditional face-to-face therapy is also unavailable to many who live in underserved communities, and disliked by adolescents, who much prefer digital delivery on their devices. This high-risk, high-reward proposal addresses these limitations and needs. We use an experimental therapeutics approach to evaluate the independent and combined efficacies of two unconventional but scalable interventions: transcutaneous vagus nerve stimulation (tVNS) to target emotion dysregulation, and a peer-support smartphone app to combat social isolation. These low-cost interventions, which hold strong promise but have not been used before, can reach large numbers of adolescents, with much potential to reduce prospective suicide risk. We will enroll 212 adolescents, ages 13-17 years, who show elevations on at least two prominent risk factors for suicide (e.g., self-injury, maltreatment).\n\nUsing a 2 \u00d7 2 design, adolescents will be assigned randomly to receive 30 days of treatment with:\n\n1. tVNS to target emotion dysregulation,\n2. a peer-support phone app to target social isolation,\n3. tVNS + a peer-support phone app, or\n4. enhanced treatment as usual with monitoring and access to resources.\n\nIntervention effects on mechanisms (emotion dysregulation, social isolation) proximal efficacy signals (e.g., physiological reactivity, self-harm) and target outcomes (suicidal ideation, suicidal behaviors) will be evaluated immediately post-intervention and at one-year follow-up. Treatment data will be monitored daily to fine-tune dosing of both interventions. This transformative and innovative proposal tests two novel, scalable preventive interventions designed to \"meet adolescents where they are\" by using digital technologies to address core mechanisms of suicide risk."
+        },
+        "conditionsModule": {
+          "conditions": ["Self Harm", "Suicidal Ideation"],
+          "keywords": ["Self Harm", "Suicide Prevention"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "interventionModelDescription": "There will be four distinct treatment groups, each participant will be randomly assigned to one of the four groups.",
+            "primaryPurpose": "PREVENTION",
+            "maskingInfo": {
+              "masking": "SINGLE",
+              "whoMasked": ["PARTICIPANT"]
+            }
+          },
+          "enrollmentInfo": {
+            "count": 200,
+            "type": "ESTIMATED"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "tVNS Program + Control app",
+              "type": "EXPERIMENTAL",
+              "description": "Adolescents will self-administer 30-minute tVNS (i.e., nerve stimulation) sessions daily for 30 days. They will receive a daily text message on their phone to remind them about their session. They will have access to MindTiles where they will complete daily puzzles on their own. In addition, they will answer a 2-3 minute self-report survey on their current thoughts, feelings, and behaviors once a day for 30 days. They will receive a text message with a link to Qualtrics, a secure online platform where they will complete the survey.",
+              "interventionNames": ["Device: tVNS Program"]
+            },
+            {
+              "label": "Phone App Program + Sham tVNS",
+              "type": "EXPERIMENTAL",
+              "description": "Adolescents will use a specially designed phone app (MindTiles) to communicate with peer to help them cope with emotions, and to foster connection with peers to establish social connections. In addition, they will answer a 2-3 minute self-report survey on their current thoughts, feelings, and behaviors once a day for 30 days. They will receive a text message with a link to Qualtrics, a secure online platform where they will complete the survey. Adolescents will also self-administer 30-minute sham tVNS (i.e., nerve stimulation) sessions daily for 30 days; these sessions will include no actual stimulation.",
+              "interventionNames": ["Other: Phone App Program"]
+            },
+            {
+              "label": "tVNS and Phone App Program",
+              "type": "EXPERIMENTAL",
+              "description": "Adolescents will self-administer 30-minute tVNS (i.e., nerve stimulation) sessions daily for 30 days. Adolescents will also use a specially designed phone app (MindTiles) to communicate with a peer to help them cope with emotions, and to foster connection with peers to establish social connections. They will receive a daily text message on their phone to remind them about their session. In addition, they will answer a 2-3 minute self-report survey on their current thoughts, feelings, and behaviors once a day for 30 days. They will receive a text message with a link to Qualtrics, a secure online platform where they will complete the survey.",
+              "interventionNames": ["Combination Product: tVNS and Phone App Program"]
+            },
+            {
+              "label": "Sham tVNS + Control App",
+              "type": "SHAM_COMPARATOR",
+              "description": "Adolescents will self-administer 30-minute sham tVNS (i.e., nerve stimulation) sessions daily for 30 days; these sessions will include no actual stimulation.They will receive a daily text message on their phone to remind them about their session. They will also have access to MindTiles where they will complete daily puzzles on their own. They will answer a 2-3 minute self-report survey on their current thoughts, feelings, and behaviors once a day for 30 days. They will receive a text message with a link to Qualtrics, a secure online platform where they will complete the survey.",
+              "interventionNames": ["Other: Sham tNVS and Control App"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DEVICE",
+              "name": "tVNS Program",
+              "description": "Participants will use the Neuvana Xen device 30 minutes a day for 30 days. The device delivers stimulation through the left ear via an ear bud. Participants can use the device at any time of day.",
+              "armGroupLabels": ["tVNS Program + Control app"]
+            },
+            {
+              "type": "OTHER",
+              "name": "Phone App Program",
+              "description": "Participants will have access to a specially designed phone app (MindTiles) in order to play a game designed for this study. Participants in the active intervention will be able to connect with a fellow participant who is matched as their peer for social support and they will complete a daily puzzle together and respond to a conversational prompt to encourage communication.",
+              "armGroupLabels": ["Phone App Program + Sham tVNS"]
+            },
+            {
+              "type": "COMBINATION_PRODUCT",
+              "name": "tVNS and Phone App Program",
+              "description": "Participants will have both the Neuvana Xen Device and the full version of our program's phone app. They will use the device and full app access for 30 days.",
+              "armGroupLabels": ["tVNS and Phone App Program"]
+            },
+            {
+              "type": "OTHER",
+              "name": "Sham tNVS and Control App",
+              "description": "Participants will have access to our program's phone app so the can complete the daily puzzle on their own. They will also engage in a sham tVNS session for 30min per day for 30 days during which no stimulation is provided.",
+              "armGroupLabels": ["Sham tVNS + Control App"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Changes from Baseline to Follow-up Assessments in Self-Injurious Thoughts and Behaviors over one year",
+              "description": "Teens will be assessed at baseline visits for self-injurious thoughts and behaviors (non-suicidal self-injury (NSSI), suicidal ideation (SI), suicide attempts (SA)). They will complete measures individually on the Qualtrics Survey (SIQ) as well as participate in a face-to-face interview with a trained staff member to assess their level of NSSI, SI, and SA (CSSRS, DSHI).\n\nAll participants will repeat these tasks at all visits (post-treatment, one-year follow-up). We expect teens who have used the active tVNS device will show improved responses (e.g., decreases in NSSI and SI). Teens who have engaged in the peer-matched MindTiles condition will show improved responses in SI, SA, and NSSI. For both conditions we will examine rates of self-injurious thoughts and behaviors in the treatment arms in relation to national norms. We plan to examine between group change across treatment groups as well as within-person change at 30 days and one year post intervention.",
+              "timeFrame": "30 Days; One Year"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Change from Baseline to Follow-up Assessments in Emotion Dysregulation",
+              "description": "Some teens will be randomized to the active tVNS condition where they will receive daily stimulation to their vagus nerve, which should modulate emotion dysregulation. Each participating teen will complete questionnaires regarding emotion dysregulation on the Qualtrics survey (Difficulties in Emotion Regulation Scale (DERS)) at all timepoints. We anticipate those who are randomized to the active tVNS condition will show improvement in emotion dysregulation at 30 days and one year post treatment relative to the other treatment arms, as well as show improved within-person change.",
+              "timeFrame": "30 Days; One Year"
+            },
+            {
+              "measure": "Change from Baseline to Follow-up Assessments in Social Connection and Loneliness",
+              "description": "Some teens will be assigned to using the peer support phone app where they will be matched with another teen in the study. They will play a cooperative game with each other, and be able to text and share thoughts, feelings, etc. with each other during the 30 days intervention period. The peer-matched MindTiles app is expected to improve teen's self-reported feelings of isolation and loneliness.\n\nEach participating teen will complete questions regarding feelings of loneliness and social isolation on the Qualtrics survey during all lab visits. We are using the 3 Item UCLA Loneliness scale and the INQ-15. We plan to examine between group change across treatment groups as well as within-person change at 30 days and one year post intervention.",
+              "timeFrame": "30 Days; One Year"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* Aged between 13 and 17 years,\n* Daily access to a smartphone\n* Attend in person meetings in South Bend, IN or Rochester, NY. and,\n\nTwo of the following which will be scored during the phone screen:\n\n* High scores on social isolation\n* High scores on emotion dysregulation\n* Has engaged in NSSI (inclusive of a single act)\n* High T-scores on impulsivity,\n* High T-scores on depression\n* Engages in alcohol or other substance use\n\nExclusion Criteria:\n\n* Parent reported autism or schizophrenia\n* Implanted pacemaker or cardiac defibrillator, other implanted or metallic device\n* Pregnant or breast feeding\n* History of seizures or epilepsy\n* TMJ Disorder\n* Bells' Palsy\n* Impaired cranial nerve function\n* Facial Pain",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "13 Years",
+          "maximumAge": "17 Years",
+          "stdAges": ["CHILD"]
+        },
+        "contactsLocationsModule": {
+          "centralContacts": [
+            {
+              "name": "Cheryl Lee, MS",
+              "role": "CONTACT",
+              "phone": "574-631-5097",
+              "email": "clee21@nd.edu"
+            }
+          ],
+          "overallOfficials": [
+            {
+              "name": "Kristin Valentino, PhD",
+              "affiliation": "University of Notre Dame",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "University of Notre Dame",
+              "status": "RECRUITING",
+              "city": "South Bend",
+              "state": "Indiana",
+              "zip": "46617",
+              "country": "United States",
+              "contacts": [
+                {
+                  "name": "Matthew Martinez",
+                  "role": "CONTACT",
+                  "email": "mmarti78@nd.edu"
+                },
+                {
+                  "name": "Cheryl Lee, MS",
+                  "role": "CONTACT",
+                  "phone": "(574) 631-0950",
+                  "email": "clee21@nd.edu"
+                },
+                {
+                  "name": "Kristin Valentino, PhD",
+                  "role": "PRINCIPAL_INVESTIGATOR"
+                }
+              ],
+              "geoPoint": {
+                "lat": 41.68338,
+                "lon": -86.25001
+              }
+            },
+            {
+              "facility": "University of Rochester Medical Center",
+              "status": "RECRUITING",
+              "city": "Rochester",
+              "state": "New York",
+              "zip": "14620",
+              "country": "United States",
+              "contacts": [
+                {
+                  "name": "Allan Shikh",
+                  "role": "CONTACT",
+                  "phone": "585-602-2381",
+                  "email": "Allan_Shikh@urmc.rochester.edu"
+                },
+                {
+                  "name": "Arielle Sheftall, PhD",
+                  "role": "PRINCIPAL_INVESTIGATOR"
+                }
+              ],
+              "geoPoint": {
+                "lat": 43.15478,
+                "lon": -77.61556
+              }
+            }
+          ]
+        },
+        "ipdSharingStatementModule": {
+          "ipdSharing": "NO",
+          "description": "There is no plan to share individual participant data outside of the study team."
+        }
+      },
+      "documentSection": {
+        "largeDocumentModule": {
+          "largeDocs": [
+            {
+              "typeAbbrev": "SAP",
+              "hasProtocol": false,
+              "hasSap": true,
+              "hasIcf": false,
+              "label": "Statistical Analysis Plan",
+              "date": "2025-02-03",
+              "uploadDate": "2025-02-05T09:16",
+              "filename": "SAP_000.pdf",
+              "size": 106011
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D059020",
+              "term": "Suicidal Ideation"
+            },
+            {
+              "id": "D016728",
+              "term": "Self-Injurious Behavior"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D013405",
+              "term": "Suicide"
+            },
+            {
+              "id": "D001526",
+              "term": "Behavioral Symptoms"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M19089",
+              "name": "Self-Injurious Behavior",
+              "asFound": "Self-harm",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M29364",
+              "name": "Suicidal Ideation",
+              "asFound": "Suicidal Ideation",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M16191",
+              "name": "Suicide",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M2958",
+              "name": "Suicide Prevention",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4818",
+              "name": "Behavioral Symptoms",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BXM",
+              "name": "Behaviors and Mental Disorders"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT04175379",
+          "orgStudyIdInfo": {
+            "id": "4-2019-0904"
+          },
+          "organization": {
+            "fullName": "Yonsei University",
+            "class": "OTHER"
+          },
+          "briefTitle": "The Effect of Permissive Hypercapnia on Oxygenation and Post-operative Pulmonary Complication During One-lung Ventilation",
+          "officialTitle": "The Effect of Permissive Hypercapnia on Oxygenation and Post-operative Pulmonary Complication During One-lung Ventilation : Prospective, Randomized Controlled Study"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2019-12",
+          "overallStatus": "UNKNOWN",
+          "lastKnownStatus": "ENROLLING_BY_INVITATION",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2019-11-25",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2021-08",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2021-10",
+            "type": "ESTIMATED"
+          },
+          "studyFirstSubmitDate": "2019-11-15",
+          "studyFirstSubmitQcDate": "2019-11-21",
+          "studyFirstPostDateStruct": {
+            "date": "2019-11-25",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2019-12-30",
+          "lastUpdatePostDateStruct": {
+            "date": "2020-01-02",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Yonsei University",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false,
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "Permissive hypercapnia increased the survival rate in patients with acute respiratory distress syndrome (ARDS) who required mechanical ventilation in critical care medicine. This has been explained by its association with ventilator induced lung injury. Since then, a protective lung ventilation strategy has been very important, with a low tidal volume of 4-6 ml/kg. Patients undergoing surgery will inevitably require mechanical ventilation. In particular, patients undergoing one lung ventilation for thoracic surgery may have increased airway pressure and a greater chance of ventilator induced lung injury. Recently, protective lung ventilation has been applied to patients undergoing one ung ventilation during thoracic surgery. The purpose of this study is to evaluate the difference in the degree of pulmonary oxygenation and the incidence of postoperative pulmonary complications in hypercapnia induced by controlling the respiratory rate with a constant tidal volume."
+        },
+        "conditionsModule": {
+          "conditions": ["Thoracic Surgery"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "interventionModelDescription": "Random sampling using random numbers is divided into three groups, and the ratio of each group is 1: 1: 1.",
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "TRIPLE",
+              "maskingDescription": "Patients, care givers and outcomes assessors are blinded. The investigator should not be included in the blind because they need to adjust the ventilator settings.",
+              "whoMasked": ["PARTICIPANT", "CARE_PROVIDER", "OUTCOMES_ASSESSOR"]
+            }
+          },
+          "enrollmentInfo": {
+            "count": 279,
+            "type": "ESTIMATED"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "group 40",
+              "type": "EXPERIMENTAL",
+              "description": "In group 40, target PaCO2 is 40 during surgery",
+              "interventionNames": ["Other: group 40"]
+            },
+            {
+              "label": "group 50",
+              "type": "EXPERIMENTAL",
+              "description": "In group 50, target PaCO2 is 50 during surgery",
+              "interventionNames": ["Other: group 50"]
+            },
+            {
+              "label": "group 60",
+              "type": "EXPERIMENTAL",
+              "description": "In group 60, target PaCO2 is 60 during surgery",
+              "interventionNames": ["Other: group 60"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "OTHER",
+              "name": "group 40",
+              "description": "During surgery, the TV(tidal volume) should maintain 6ml/kg (ideal body weight). After position change and OLV(one lung ventilation) for operation, each patient adjusts RR(respiratory rate) to reach target PaCO2 40 \u00b1 5mmHg. Hemodynamic records and arterial blood tests are performed at the following times: After tracheal intubation, 15 minutes after in two lung ventilatory state at the supine position (T0), after 30 minutes reaching to the target PaCO2 by adjusting RR at the lateral position starting one lung ventilation (T1), and after 60 minutes while maintaining target PaCO2 (T2).",
+              "armGroupLabels": ["group 40"]
+            },
+            {
+              "type": "OTHER",
+              "name": "group 50",
+              "description": "During surgery, the TV(tidal volume) should maintain 6ml/kg (ideal body weight). After position change and OLV(one lung ventilation) for operation, each patient adjusts RR(respiratory rate) to reach target PaCO2 50 \u00b1 5mmHg. Hemodynamic records and arterial blood tests are performed at the following times: After tracheal intubation, 15 minutes after in two lung ventilatory state at the supine position (T0), after 30 minutes reaching to the target PaCO2 by adjusting RR at the lateral position starting one lung ventilation (T1), and after 60 minutes while maintaining target PaCO2 (T2).",
+              "armGroupLabels": ["group 50"]
+            },
+            {
+              "type": "OTHER",
+              "name": "group 60",
+              "description": "During surgery, the TV(tidal volume) should maintain 6ml/kg (ideal body weight). After position change and OLV(one lung ventilation) for operation, each patient adjusts RR(respiratory rate) to reach target PaCO2 60 \u00b1 5mmHg. Hemodynamic records and arterial blood tests are performed at the following times: After tracheal intubation, 15 minutes after in two lung ventilatory state at the supine position (T0), after 30 minutes reaching to the target PaCO2 by adjusting RR at the lateral position starting one lung ventilation (T1), and after 60 minutes while maintaining target PaCO2 (T2).",
+              "armGroupLabels": ["group 60"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "PaO2/FiO2 ratio",
+              "description": "(arterial oxygen partial pressure / fractional inspired oxygen) at the time of T2 (PaO2 of ABGA/FiO2) T2",
+              "timeFrame": "about 60 minutes after reaching to the target PaCO2 (T2)"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Post-op complication: desaturation event",
+              "description": "desaturation event (\\<90%) the first 3 days after surgery",
+              "timeFrame": "first 3 days after surgery"
+            },
+            {
+              "measure": "Post-op complication: oxygen therapy",
+              "description": "necessity of oxygen therapy within the first 2\\~7 days after surgery hospitalized days, ICU days, expire",
+              "timeFrame": "first 2~7 days after surgery"
+            },
+            {
+              "measure": "Post-op complication",
+              "description": "The presence or absence of post operative complication like pneumonia, acute lung injury, re-intubation, ICU admission, ventilator care, empyema, broncho-pleura fistula, air-leakage, pleural effusion, pulmonary embolism, tracheostomy, wound infection, AKI, MI, etc.",
+              "timeFrame": "30 days after surgery"
+            },
+            {
+              "measure": "Post-op complication: hospitalized days",
+              "description": "length of hospitalized stays CU days, expire",
+              "timeFrame": "30 days after surgery"
+            },
+            {
+              "measure": "Post-op complication: ICU days",
+              "description": "length of ICU stays",
+              "timeFrame": "30 days after surgery"
+            },
+            {
+              "measure": "Dead",
+              "description": "patient has been dead or not",
+              "timeFrame": "30 days after surgery"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n1. Adult patients aged 40-80 years who are planning to have thoracoscopic single lobectomy or segmentectomy with one lung ventilation during surgery.\n2. American Society of Anesthesiologists (ASA) classification 1\\~3\n\nExclusion Criteria:\n\n1. patients with heart failure (NYHA class III\\~IV)\n2. patients who are having moderate obstructive lung disease or restrictive lung disease\n3. Low DLCO (\\< 75%)\n4. patients with brain disease history or increased ICP\n5. patients with pulmonary hypertension (mean PAP\\>25mmHg)\n6. patients with liver disease (AST level \u2265100 IU/mL or ALT \u2265 level 50 IU/L) or kidney disease (Creatine level \u2265 1.5 mg/dL)\n7. patients with pre-existing hypercapnia or metabolic acidosis\n8. body mass index (BMI) \\> 30 kg/m2\n9. patients who have had contralateral lung surgery\n10. patients who cannot read explanation and consent form\n11. patients who are pregnant",
+          "healthyVolunteers": true,
+          "sex": "ALL",
+          "minimumAge": "40 Years",
+          "maximumAge": "80 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "locations": [
+            {
+              "facility": "Department of Anaesthesiology and Pain Medicine, Anaesthesia and Pain Research Institute, Yonsei University College of Medicine",
+              "city": "Seoul",
+              "zip": "03722",
+              "country": "Korea, Republic of",
+              "geoPoint": {
+                "lat": 37.566,
+                "lon": 126.9784
+              }
+            }
+          ]
+        },
+        "ipdSharingStatementModule": {
+          "ipdSharing": "NO"
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D006935",
+              "term": "Hypercapnia"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D012818",
+              "term": "Signs and Symptoms, Respiratory"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M9986",
+              "name": "Hypercapnia",
+              "asFound": "Hypercapnia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M15623",
+              "name": "Signs and Symptoms, Respiratory",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M4854",
+              "name": "Benzocaine",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T433",
+              "name": "Tannic Acid",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "CNSDep",
+              "name": "Central Nervous System Depressants"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            },
+            {
+              "abbrev": "Ot",
+              "name": "Other Dietary Supplements"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01126879",
+          "orgStudyIdInfo": {
+            "id": "NCI 09U2"
+          },
+          "secondaryIdInfos": [
+            {
+              "id": "NCI-2010-00941"
+            },
+            {
+              "id": "STU00019487",
+              "type": "OTHER",
+              "domain": "Northwestern University IRB"
+            },
+            {
+              "id": "P50CA090386",
+              "type": "NIH",
+              "link": "https://reporter.nih.gov/quickSearch/P50CA090386"
+            }
+          ],
+          "organization": {
+            "fullName": "Northwestern University",
+            "class": "OTHER"
+          },
+          "briefTitle": "Genistein in Treating Patients With Prostate Cancer",
+          "officialTitle": "Phase 2 Trial of Genistein in Men With Circulating Prostate Cancer Cells"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2019-04",
+          "overallStatus": "TERMINATED",
+          "whyStopped": "Closed due to low accrual",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2011-02-03",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2013-05-09",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2013-12-28",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2010-05-18",
+          "studyFirstSubmitQcDate": "2010-05-18",
+          "studyFirstPostDateStruct": {
+            "date": "2010-05-20",
+            "type": "ESTIMATED"
+          },
+          "resultsFirstSubmitDate": "2019-05-01",
+          "resultsFirstSubmitQcDate": "2019-06-24",
+          "resultsFirstPostDateStruct": {
+            "date": "2019-07-02",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2019-08-27",
+          "lastUpdatePostDateStruct": {
+            "date": "2019-09-10",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Northwestern University",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "National Cancer Institute (NCI)",
+              "class": "NIH"
+            }
+          ]
+        },
+        "oversightModule": {
+          "oversightHasDmc": true,
+          "isFdaRegulatedDrug": true,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "RATIONALE: Genistein may stop the growth of tumor cells by blocking some of the enzymes needed for cell growth.\n\nPURPOSE: This randomized phase II trial is studying how well genistein works in treating patients with prostate cancer.",
+          "detailedDescription": "PRIMARY OBJECTIVES:\n\nI. Determine whether genistein treatment will decrease the number of circulating prostate cells (CPCs) in the peripheral blood as measured by qRT-PCR for PSA performed on RNA extracted from peripheral blood mononuclear cells (PBMNCs).\n\nSECONDARY OBJECTIVES:\n\nI. Determine the natural history of circulating prostate cells (CPCs) in a cohort of subjects prior to and post radical prostatectomy.\n\nII. Compare the measurement of PSA between three separate methods: in CPCs by qRT-PCR, in serum by the standard clinical chemistry assay (i.e., ELISA), and in plasma and serum by the nano-PSA assay.\n\nIII. Measure the effect of genistein on gene and protein expression in prostate tissue by qRT-PCR and immunohistochemistry, respectively, for the following genes and their respective protein products: HSP27, MMP-2, ALK-2, BASP1, and HCF2.\n\nOUTLINE:\n\nPatients are randomized to 1 of 2 treatment arms.\n\nARM I: Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nARM II: Patients receive oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nAll patients undergo radical prostatectomy at least 2 weeks, but not more than 3 months following the start of therapy.\n\nAfter completion of study treatment, patients are followed at 1, 6, and 12 months."
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Adenocarcinoma of the Prostate",
+            "Recurrent Prostate Cancer",
+            "Stage I Prostate Cancer",
+            "Stage II Prostate Cancer",
+            "Stage III Prostate Cancer"
+          ]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["PHASE2"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "DOUBLE",
+              "whoMasked": ["PARTICIPANT", "INVESTIGATOR"]
+            }
+          },
+          "enrollmentInfo": {
+            "count": 12,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "Arm I",
+              "type": "EXPERIMENTAL",
+              "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.",
+              "interventionNames": [
+                "Dietary Supplement: genistein",
+                "Procedure: therapeutic conventional surgery"
+              ]
+            },
+            {
+              "label": "Arm II",
+              "type": "PLACEBO_COMPARATOR",
+              "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.",
+              "interventionNames": ["Other: placebo", "Procedure: therapeutic conventional surgery"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DIETARY_SUPPLEMENT",
+              "name": "genistein",
+              "description": "Given orally",
+              "armGroupLabels": ["Arm I"],
+              "otherNames": [
+                "CI 75610",
+                "Genestein",
+                "genisteol",
+                "genisterin",
+                "prunetol",
+                "sophoricol"
+              ]
+            },
+            {
+              "type": "OTHER",
+              "name": "placebo",
+              "description": "Given orally",
+              "armGroupLabels": ["Arm II"],
+              "otherNames": ["PLCB"]
+            },
+            {
+              "type": "PROCEDURE",
+              "name": "therapeutic conventional surgery",
+              "description": "Radical prostatectomy for treatment of prostate cancer",
+              "armGroupLabels": ["Arm I", "Arm II"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Number of Circulating Prostate Cells (CPCs) in the Blood as Determined by qRT-PCR for PSA on RNA Extracted From PBMNCs",
+              "description": "Blood will be collected to analyze the number of CPC's at screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery.",
+              "timeFrame": "At screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Natural History of Circulating Prostate Cells (CPCs) in a Cohort of Subjects Prior to and Post Radical Prostatectomy",
+              "description": "Blood will be drawn to analyze the natural history of circulating prostate cells (CPCs) in a cohort of subjects at baseline and 1 and 12 months after surgery.",
+              "timeFrame": "At baseline, 1 and 12 months after surgery"
+            },
+            {
+              "measure": "Measure the Effect of Genistein on Select Gene and Protein Expressions in Prostate Tissue",
+              "description": "At baseline and time of surgery, tissue will be collected to measure the effect of genistein on select gene and protein expressions in prostate tissue.",
+              "timeFrame": "At baseline and at time of surgery"
+            },
+            {
+              "measure": "Measurement of PSA in Serum and Plasma by Nanotechnology",
+              "description": "Blood will be collected to measure PSA in serum and plasma by nanotechnology at screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery.",
+              "timeFrame": "At screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion\n\n* Participants must have a pathologic diagnosis of prostate cancer within the past 6 months, have clinical stage T1-3 disease, PSA \\>= 10, Gleason score \\>= 8, and have elected to undergo radical prostatectomy; those found to have detectable circulating prostate cancer cells in the blood as detected by qRT-PCR for PSA will be eligible to proceed onto the treatment phase of the protocol; pathology slides used for diagnosis will be submitted to the SPORE tissue pathology core for review\n* ECOG performance status 0-1\n* Hemoglobin \\> 9.0gm/dl\n* Platelets \\>= 100 K/uL\n* ANC \\> 1000/uL\n* AST (SGOT)/ALT (SGPT) \\< 3X upper limit of normal\n* Creatinine \\< 2.0 mg/dl\n* Total bilirubin \\< 2 mg/dl (Note: Subjects with a higher level of bilirubin due to a familial defect in bilirubin metabolism will be considered on an individual basis)\n* Participants must agree not to take soy supplements\n* Ability to understand and the willingness to sign a written informed consent document\n* Willingness to take study agent for at least 2 weeks prior to radical prostatectomy\n\nExclusion\n\n* History of venous thrombosis within past year\n* Participants must not be receiving active therapy for neoplastic disorders (including hormone or radiation therapy for prostate cancer)\n* Participants may not be receiving any other investigational agents\n* Known soy intolerance\n* Medical conditions that, in the opinion of the investigators, would jeopardize either the patient or the integrity of the data obtained",
+          "healthyVolunteers": false,
+          "sex": "MALE",
+          "minimumAge": "18 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "William Catalona",
+              "affiliation": "Northwestern University",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "Northwestern University",
+              "city": "Chicago",
+              "state": "Illinois",
+              "zip": "60611",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 41.85003,
+                "lon": -87.65005
+              }
+            }
+          ]
+        }
+      },
+      "resultsSection": {
+        "participantFlowModule": {
+          "preAssignmentDetails": "Patients entered the study and were treated in a double blinded fashion with a ration of 2:1 Genistein:Placebo. Unblinding occured if it was medically necessary otherwise blinding was maintained until the time of data review.",
+          "recruitmentDetails": "The study opened on October 21, 2010 with an accrual goal of 30 patients with firs the patient enrolled March 3, 2011. The study was designed as a randomized blinded drug/placebo study but was amended to a single arm drug study and accrual reduced to 18. Study closed permanently on May 28, 2014 due to low accrual with 12 patients treated on study.",
+          "groups": [
+            {
+              "id": "FG000",
+              "title": "Arm I - Genistein",
+              "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+            },
+            {
+              "id": "FG001",
+              "title": "Arm II - Placebo",
+              "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+            }
+          ],
+          "periods": [
+            {
+              "title": "Overall Study",
+              "milestones": [
+                {
+                  "type": "STARTED",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "8"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "4"
+                    }
+                  ]
+                },
+                {
+                  "type": "Started 3 Months of Genistein/Placebo",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "8"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "4"
+                    }
+                  ]
+                },
+                {
+                  "type": "Prostatectomy or Radiation",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "8"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "4"
+                    }
+                  ]
+                },
+                {
+                  "type": "Completed 3 Months Genistein/Placebo",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "4"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "2"
+                    }
+                  ]
+                },
+                {
+                  "type": "COMPLETED",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "3"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "2"
+                    }
+                  ]
+                },
+                {
+                  "type": "NOT COMPLETED",
+                  "achievements": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "5"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "2"
+                    }
+                  ]
+                }
+              ],
+              "dropWithdraws": [
+                {
+                  "type": "Progressive Disease",
+                  "reasons": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "3"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "1"
+                    }
+                  ]
+                },
+                {
+                  "type": "Withdrawal by Subject",
+                  "reasons": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "1"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "0"
+                    }
+                  ]
+                },
+                {
+                  "type": "Adverse Event",
+                  "reasons": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "0"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "1"
+                    }
+                  ]
+                },
+                {
+                  "type": "Physician Decision",
+                  "reasons": [
+                    {
+                      "groupId": "FG000",
+                      "numSubjects": "1"
+                    },
+                    {
+                      "groupId": "FG001",
+                      "numSubjects": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "baselineCharacteristicsModule": {
+          "groups": [
+            {
+              "id": "BG000",
+              "title": "Arm I - Genistein",
+              "description": "Patients receive oral genistein or placebo once daily for 3 months beginning at least 2 weeks prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+            },
+            {
+              "id": "BG001",
+              "title": "Arm II - Placebo",
+              "description": "Patients receive oral genistein or placebo once daily for 3 months beginning at least 2 weeks prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+            },
+            {
+              "id": "BG002",
+              "title": "Total",
+              "description": "Total of all reporting groups"
+            }
+          ],
+          "denoms": [
+            {
+              "units": "Participants",
+              "counts": [
+                {
+                  "groupId": "BG000",
+                  "value": "8"
+                },
+                {
+                  "groupId": "BG001",
+                  "value": "4"
+                },
+                {
+                  "groupId": "BG002",
+                  "value": "12"
+                }
+              ]
+            }
+          ],
+          "measures": [
+            {
+              "title": "Age, Categorical",
+              "paramType": "COUNT_OF_PARTICIPANTS",
+              "unitOfMeasure": "Participants",
+              "classes": [
+                {
+                  "categories": [
+                    {
+                      "title": "<=18 years",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Between 18 and 65 years",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "5"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "2"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "7"
+                        }
+                      ]
+                    },
+                    {
+                      "title": ">=65 years",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "3"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "2"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "5"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Sex: Female, Male",
+              "paramType": "COUNT_OF_PARTICIPANTS",
+              "unitOfMeasure": "Participants",
+              "classes": [
+                {
+                  "categories": [
+                    {
+                      "title": "Female",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Male",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "8"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "4"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "12"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Ethnicity (NIH/OMB)",
+              "paramType": "COUNT_OF_PARTICIPANTS",
+              "unitOfMeasure": "Participants",
+              "classes": [
+                {
+                  "categories": [
+                    {
+                      "title": "Hispanic or Latino",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "1"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Not Hispanic or Latino",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "8"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "3"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "11"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Unknown or Not Reported",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Race (NIH/OMB)",
+              "paramType": "COUNT_OF_PARTICIPANTS",
+              "unitOfMeasure": "Participants",
+              "classes": [
+                {
+                  "categories": [
+                    {
+                      "title": "American Indian or Alaska Native",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Asian",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Native Hawaiian or Other Pacific Islander",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Black or African American",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "White",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "8"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "4"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "12"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "More than one race",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "title": "Unknown or Not Reported",
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "0"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Region of Enrollment",
+              "paramType": "COUNT_OF_PARTICIPANTS",
+              "unitOfMeasure": "Participants",
+              "classes": [
+                {
+                  "title": "United States",
+                  "categories": [
+                    {
+                      "measurements": [
+                        {
+                          "groupId": "BG000",
+                          "value": "8"
+                        },
+                        {
+                          "groupId": "BG001",
+                          "value": "4"
+                        },
+                        {
+                          "groupId": "BG002",
+                          "value": "12"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "outcomeMeasuresModule": {
+          "outcomeMeasures": [
+            {
+              "type": "PRIMARY",
+              "title": "Number of Circulating Prostate Cells (CPCs) in the Blood as Determined by qRT-PCR for PSA on RNA Extracted From PBMNCs",
+              "description": "Blood will be collected to analyze the number of CPC's at screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery.",
+              "populationDescription": "Data was not collected for analysis of this endpoint due to the study closing before the accrual goal was met.",
+              "reportingStatus": "POSTED",
+              "timeFrame": "At screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery",
+              "groups": [
+                {
+                  "id": "OG000",
+                  "title": "Arm I - Genistein",
+                  "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                },
+                {
+                  "id": "OG001",
+                  "title": "Arm II - Placebo",
+                  "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                }
+              ],
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "OG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "OG001",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SECONDARY",
+              "title": "Natural History of Circulating Prostate Cells (CPCs) in a Cohort of Subjects Prior to and Post Radical Prostatectomy",
+              "description": "Blood will be drawn to analyze the natural history of circulating prostate cells (CPCs) in a cohort of subjects at baseline and 1 and 12 months after surgery.",
+              "populationDescription": "Data was not collected for analysis of this endpoint due to the study closing before the accrual goal was met.",
+              "reportingStatus": "POSTED",
+              "timeFrame": "At baseline, 1 and 12 months after surgery",
+              "groups": [
+                {
+                  "id": "OG000",
+                  "title": "Arm I - Genistein",
+                  "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                },
+                {
+                  "id": "OG001",
+                  "title": "Arm II - Placebo",
+                  "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                }
+              ],
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "OG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "OG001",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SECONDARY",
+              "title": "Measure the Effect of Genistein on Select Gene and Protein Expressions in Prostate Tissue",
+              "description": "At baseline and time of surgery, tissue will be collected to measure the effect of genistein on select gene and protein expressions in prostate tissue.",
+              "populationDescription": "Data was not collected for analysis of this endpoint due to the study closing before the accrual goal was met.",
+              "reportingStatus": "POSTED",
+              "timeFrame": "At baseline and at time of surgery",
+              "groups": [
+                {
+                  "id": "OG000",
+                  "title": "Arm I - Genistein",
+                  "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                },
+                {
+                  "id": "OG001",
+                  "title": "Arm II - Placebo",
+                  "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                }
+              ],
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "OG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "OG001",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SECONDARY",
+              "title": "Measurement of PSA in Serum and Plasma by Nanotechnology",
+              "description": "Blood will be collected to measure PSA in serum and plasma by nanotechnology at screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery.",
+              "populationDescription": "Data was not collected for analysis of this endpoint due to the study closing before the accrual goal was met.",
+              "reportingStatus": "POSTED",
+              "timeFrame": "At screening, after 1-month of treatment, at surgery and at 1 and 12 months after surgery",
+              "groups": [
+                {
+                  "id": "OG000",
+                  "title": "Arm I - Genistein",
+                  "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                },
+                {
+                  "id": "OG001",
+                  "title": "Arm II - Placebo",
+                  "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer"
+                }
+              ],
+              "denoms": [
+                {
+                  "units": "Participants",
+                  "counts": [
+                    {
+                      "groupId": "OG000",
+                      "value": "0"
+                    },
+                    {
+                      "groupId": "OG001",
+                      "value": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "adverseEventsModule": {
+          "frequencyThreshold": "0",
+          "timeFrame": "Adverse Events assessed at the following timepoints for the study: at the start of treatment, at surgery or radiation, at clinic visits occurring 1-3 months post-surgery, or post-initiation of radiation therapy, or at 3 months for those not undergoing surgery or radiation, as well as at a 4 month telephone contact.",
+          "description": "Adverse events were collected by patient reports",
+          "eventGroups": [
+            {
+              "id": "EG000",
+              "title": "Arm I - Genistein",
+              "description": "Patients receive oral genistein once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nGenistein: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer",
+              "deathsNumAffected": 0,
+              "deathsNumAtRisk": 8,
+              "seriousNumAffected": 1,
+              "seriousNumAtRisk": 8,
+              "otherNumAffected": 2,
+              "otherNumAtRisk": 8
+            },
+            {
+              "id": "EG001",
+              "title": "Arm II - Placebo",
+              "description": "Patients receive an oral placebo once daily for 3 months beginning at least 1 month prior to radical prostatectomy.\n\nPlacebo: Given orally\n\nTherapeutic conventional surgery: Radical prostatectomy for treatment of prostate cancer",
+              "deathsNumAffected": 0,
+              "deathsNumAtRisk": 4,
+              "seriousNumAffected": 0,
+              "seriousNumAtRisk": 4,
+              "otherNumAffected": 1,
+              "otherNumAtRisk": 4
+            }
+          ],
+          "seriousEvents": [
+            {
+              "term": "Atrial Fibrillation",
+              "organSystem": "Cardiac disorders",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 1,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 0,
+                  "numAtRisk": 4
+                }
+              ]
+            }
+          ],
+          "otherEvents": [
+            {
+              "term": "Pain in Extremity",
+              "organSystem": "Musculoskeletal and connective tissue disorders",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 0,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 1,
+                  "numAtRisk": 4
+                }
+              ]
+            },
+            {
+              "term": "Dizziness",
+              "organSystem": "Nervous system disorders",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 0,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 1,
+                  "numAtRisk": 4
+                }
+              ]
+            },
+            {
+              "term": "Large pimple",
+              "organSystem": "Skin and subcutaneous tissue disorders",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 0,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 1,
+                  "numAtRisk": 4
+                }
+              ]
+            },
+            {
+              "term": "Emergency right inguinal repair",
+              "organSystem": "Surgical and medical procedures",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 1,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 0,
+                  "numAtRisk": 4
+                }
+              ]
+            },
+            {
+              "term": "Atrial Fibrillation",
+              "organSystem": "Cardiac disorders",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 1,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 0,
+                  "numAtRisk": 4
+                }
+              ]
+            },
+            {
+              "term": "INR Increased",
+              "organSystem": "Investigations",
+              "sourceVocabulary": "CTCAE (3.0)",
+              "assessmentType": "SYSTEMATIC_ASSESSMENT",
+              "stats": [
+                {
+                  "groupId": "EG000",
+                  "numAffected": 1,
+                  "numAtRisk": 8
+                },
+                {
+                  "groupId": "EG001",
+                  "numAffected": 0,
+                  "numAtRisk": 4
+                }
+              ]
+            }
+          ]
+        },
+        "moreInfoModule": {
+          "limitationsAndCaveats": {
+            "description": "The study was closed by an internal safety and data monitoring committee due to slow accrual of the study."
+          },
+          "certainAgreement": {
+            "piSponsorEmployee": true
+          },
+          "pointOfContact": {
+            "title": "William Catalona, MD",
+            "organization": "Northwestern University",
+            "email": "WCatalona@nm.org",
+            "phone": "312-695-1301"
+          }
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D011471",
+              "term": "Prostatic Neoplasms"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D005834",
+              "term": "Genital Neoplasms, Male"
+            },
+            {
+              "id": "D014565",
+              "term": "Urogenital Neoplasms"
+            },
+            {
+              "id": "D009371",
+              "term": "Neoplasms by Site"
+            },
+            {
+              "id": "D009369",
+              "term": "Neoplasms"
+            },
+            {
+              "id": "D005832",
+              "term": "Genital Diseases, Male"
+            },
+            {
+              "id": "D000091662",
+              "term": "Genital Diseases"
+            },
+            {
+              "id": "D000091642",
+              "term": "Urogenital Diseases"
+            },
+            {
+              "id": "D011469",
+              "term": "Prostatic Diseases"
+            },
+            {
+              "id": "D052801",
+              "term": "Male Urogenital Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M3585",
+              "name": "Adenocarcinoma",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14335",
+              "name": "Prostatic Neoplasms",
+              "asFound": "Prostate Cancer",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M14850",
+              "name": "Recurrence",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8946",
+              "name": "Genital Neoplasms, Male",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M17315",
+              "name": "Urogenital Neoplasms",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M2876",
+              "name": "Genital Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8944",
+              "name": "Genital Diseases, Male",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M2875",
+              "name": "Urogenital Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14333",
+              "name": "Prostatic Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M27095",
+              "name": "Male Urogenital Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC04",
+              "name": "Neoplasms"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BXS",
+              "name": "Urinary Tract, Sexual Organs, and Pregnancy Conditions"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D019833",
+              "term": "Genistein"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D016588",
+              "term": "Anticarcinogenic Agents"
+            },
+            {
+              "id": "D020011",
+              "term": "Protective Agents"
+            },
+            {
+              "id": "D045505",
+              "term": "Physiological Effects of Drugs"
+            },
+            {
+              "id": "D000970",
+              "term": "Antineoplastic Agents"
+            },
+            {
+              "id": "D047428",
+              "term": "Protein Kinase Inhibitors"
+            },
+            {
+              "id": "D004791",
+              "term": "Enzyme Inhibitors"
+            },
+            {
+              "id": "D045504",
+              "term": "Molecular Mechanisms of Pharmacological Action"
+            },
+            {
+              "id": "D048789",
+              "term": "Phytoestrogens"
+            },
+            {
+              "id": "D004968",
+              "term": "Estrogens, Non-Steroidal"
+            },
+            {
+              "id": "D004967",
+              "term": "Estrogens"
+            },
+            {
+              "id": "D006728",
+              "term": "Hormones"
+            },
+            {
+              "id": "D006730",
+              "term": "Hormones, Hormone Substitutes, and Hormone Antagonists"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M21721",
+              "name": "Genistein",
+              "asFound": "Recommendations to",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M21869",
+              "name": "Protective Agents",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M25820",
+              "name": "Protein Kinase Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7951",
+              "name": "Enzyme Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M25995",
+              "name": "Phytoestrogens",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8116",
+              "name": "Estrogens",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9789",
+              "name": "Hormones",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9788",
+              "name": "Hormone Antagonists",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "ANeo",
+              "name": "Antineoplastic Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": true
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05865379",
+          "orgStudyIdInfo": {
+            "id": "BUFY01-CT-2101"
+          },
+          "organization": {
+            "fullName": "TRB Chemedica International SA",
+            "class": "INDUSTRY"
+          },
+          "briefTitle": "Efficacy and Safety of BUFY01 Versus SVS20 in the Treatment of Dry Eye Disease",
+          "officialTitle": "Efficacy and Safety of BUFY01 Versus SVS20 in the Treatment of Dry Eye Disease: a Non-inferiority Investigation",
+          "acronym": "BUSTON-01"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2025-01",
+          "overallStatus": "NOT_YET_RECRUITING",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2025-03",
+            "type": "ESTIMATED"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2026-02",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2026-03",
+            "type": "ESTIMATED"
+          },
+          "studyFirstSubmitDate": "2023-05-01",
+          "studyFirstSubmitQcDate": "2023-05-09",
+          "studyFirstPostDateStruct": {
+            "date": "2023-05-18",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2025-01-07",
+          "lastUpdatePostDateStruct": {
+            "date": "2025-01-09",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "TRB Chemedica International SA",
+            "class": "INDUSTRY"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false,
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "The goal of this interventional investigation is to compare BUFY01 with SVS20 in the treatment of patients with dry eye disease. The main questions it aims to answer are:\n\n* Is BUFY01 non-inferior to SVS20 in terms of signs of DED?\n* Is BUFY01 non-inferior to SVS20 in terms of symptoms of DED?\n\nParticipants will be asked to:\n\n* Visit the trial site at 4 different timepoints\n* Use the allocated study treatment everyday until the end of the study (during 3 months)\n* Be examined by the investigator\n* Complete several questionnaires\n* Return unused study treatment.\n\nResearchers will compare BUFY01 to SVS20 to see if both study treatments provide similar effects on signs and symptoms of the disease, together with comparable safety."
+        },
+        "conditionsModule": {
+          "conditions": ["Dry Eye Disease"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "QUADRUPLE",
+              "whoMasked": ["PARTICIPANT", "CARE_PROVIDER", "INVESTIGATOR", "OUTCOMES_ASSESSOR"]
+            }
+          },
+          "enrollmentInfo": {
+            "count": 80,
+            "type": "ESTIMATED"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "BUFY01",
+              "type": "EXPERIMENTAL",
+              "description": "0.18% Sodium Hyaluronate (trometamol buffer) in single-dose containers of 0.3 mL",
+              "interventionNames": ["Device: BUFY01 eye drops in single-dose containers"]
+            },
+            {
+              "label": "SVS20",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "0.18% Sodium Hyaluronate (phosphate buffer) in single-dose containers of 0.3 mL",
+              "interventionNames": ["Device: SVS20 eye drops in single-dose containers"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DEVICE",
+              "name": "BUFY01 eye drops in single-dose containers",
+              "description": "1 to 2 drops in each eye, as often as needed",
+              "armGroupLabels": ["BUFY01"]
+            },
+            {
+              "type": "DEVICE",
+              "name": "SVS20 eye drops in single-dose containers",
+              "description": "1 to 2 drops in each eye, as often as needed",
+              "armGroupLabels": ["SVS20"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Signs",
+              "description": "Change from baseline in Oxford score (0-15, a higher score meaning a worse outcome)",
+              "timeFrame": "Day 28"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Symptoms",
+              "description": "Change from baseline in Ocular Surface Disease Index",
+              "timeFrame": "Day 28"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria includes:\n\n* At least a 3-month documented history of bilateral dry eye syndrome needing artificial tears;\n* At least one eye with Oxford score \u2265 4 and \u2264 9;\n* At least one objective sign of tear deficiency (in at least one eligible eye);\n* Having a health insurance.\n\nExclusion Criteria includes:\n\n* Wear of contact lenses starting within the last 2 months;\n* Best-corrected visual acuity (BCVA) \\< 1/10;\n* Severe DED with one of the listed conditions:\n* Severe blepharitis;\n* Seasonal allergy;\n* Any issues of the ocular surface not related to DED;\n* History of ocular trauma, infection or inflammation not related to DED;\n* History of ocular surgery, including laser surgery;\n* Unstable glaucoma;\n* Use of artificial tears with preservative within the last 2 weeks;\n* Systemic (enteral or parenteral) or local (topical) use of one of the listed medications:\n* Known hypersensitivity to any constituent of the study treatments;\n* Pregnancy or breastfeeding;\n* Participation in another clinical study within the last 90 days;\n* Legally restricted autonomy, freedom of decision and action.",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "18 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "ipdSharingStatementModule": {
+          "ipdSharing": "NO"
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D015352",
+              "term": "Dry Eye Syndromes"
+            },
+            {
+              "id": "D007638",
+              "term": "Keratoconjunctivitis Sicca"
+            },
+            {
+              "id": "D005128",
+              "term": "Eye Diseases"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D007766",
+              "term": "Lacrimal Apparatus Diseases"
+            },
+            {
+              "id": "D007637",
+              "term": "Keratoconjunctivitis"
+            },
+            {
+              "id": "D003231",
+              "term": "Conjunctivitis"
+            },
+            {
+              "id": "D003229",
+              "term": "Conjunctival Diseases"
+            },
+            {
+              "id": "D007634",
+              "term": "Keratitis"
+            },
+            {
+              "id": "D003316",
+              "term": "Corneal Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M18040",
+              "name": "Dry Eye Syndromes",
+              "asFound": "Dry Eye Disease",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M10664",
+              "name": "Keratoconjunctivitis Sicca",
+              "asFound": "Dry Eye Disease",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M8271",
+              "name": "Eye Diseases",
+              "asFound": "Eye Disease",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M16355",
+              "name": "Syndrome",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M10663",
+              "name": "Keratoconjunctivitis",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M10786",
+              "name": "Lacrimal Apparatus Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M6455",
+              "name": "Conjunctivitis",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M6453",
+              "name": "Conjunctival Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M10660",
+              "name": "Keratitis",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M6539",
+              "name": "Corneal Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC11",
+              "name": "Eye Diseases"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D009883",
+              "term": "Ophthalmic Solutions"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D019999",
+              "term": "Pharmaceutical Solutions"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M9878",
+              "name": "Hyaluronic Acid",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M12814",
+              "name": "Ophthalmic Solutions",
+              "asFound": "Observational Study",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M21860",
+              "name": "Pharmaceutical Solutions",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            },
+            {
+              "abbrev": "PhSol",
+              "name": "Pharmaceutical Solutions"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT03791879",
+          "orgStudyIdInfo": {
+            "id": "MFM IR.18.11.322 - 2018/11/11"
+          },
+          "organization": {
+            "fullName": "Mansoura University",
+            "class": "OTHER"
+          },
+          "briefTitle": "Caudal Dexmedetomidine Analgesia in Pediatrics .",
+          "officialTitle": "The Analgesic Effectiveness and Safety of Upgraded Caudal Dexmedetomidine Doses in Pediatric Hypospadias Surgery."
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2021-02",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2019-01-01",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2020-10-01",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2020-10-15",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2018-12-29",
+          "studyFirstSubmitQcDate": "2018-12-31",
+          "studyFirstPostDateStruct": {
+            "date": "2019-01-03",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2021-02-26",
+          "lastUpdatePostDateStruct": {
+            "date": "2021-03-01",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "PRINCIPAL_INVESTIGATOR",
+            "investigatorFullName": "Mohamed Abd Latif Ghanim",
+            "investigatorTitle": "Associate Professor os anesthesia ICU & Pain medicine.",
+            "investigatorAffiliation": "Mansoura University"
+          },
+          "leadSponsor": {
+            "name": "Mansoura University",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "Dexmedetomidine (DEXM) is a highly selective \u03b12-adrenoceptor agonist that has been used increasingly in pediatric anesthesia. This prospective double blinded randomized comparative study is designed to evaluate the analgesic effect of caudal increasing doses of DEXM 0.5 , 1 , 1.5 , 2\u00b5g/kg combined with Levobupivacaine (Levob) 0.125% (ED95% =125%=least effective concentration) in providing pain relief over a 24-h period and lowest surgical stress peak. Study hypothesis: Levobupivacaine 0.125 %( ED95) combined with different increasing doses of dexamedatomedine \\>1 \u00b5g/kg could not add more analgesic \\& stress response obtundation outcome, but increase side effects (sedation and hemodynamic depression). The peak cortisol level during urology surgery was at the end of the 1st postoperative (PO) hour. Aim of the Study: To detect the optimal analgesic and safe caudal adjuvant DEXM dose associated with the least side effects\\& stress response modulation, guided by PO Cortisol peak difference in between the study groups during pediatric hypospadias surgery.",
+          "detailedDescription": "Background: Dexmedetomidine (DEXM) is a highly selective \u03b12-adrenoceptor agonist that has been used increasingly in pediatric anesthesia. This prospective double blinded randomized comparative study is designed to evaluate the analgesic effect of caudal increasing doses of DEXM 0.5 , 1 , 1.5 , 2\u00b5g/kg combined with Levobupivacaine (Levob) 0.125% (ED95% =125%=least effective concentration) in providing pain relief over a 24-h period and lowest surgical stress peak. Study hypothesis: Levobupivacaine 0.125 %( ED95) combined with different increasing doses of dexamedatomedine \\>1 \u00b5g/kg could not add more analgesic \\& stress response obtundation outcome, but increase side effects (sedation and hemodynamic depression).The peak cortisol level during urology surgery was at the end of the 1st postoperative (PO) hour. Aim of the Study: To detect the optimal analgesic and safe caudal adjuvant DEXM dose associated with the least side effects\\& stress response modulation, guided by PO Cortisol peak difference in between the study groups during pediatric hypospadias surgery.\n\nOptimal effective dose defined as; the least caudal DEXM dose which produce the best analgesic outcome \\[least time to 1st analgesic request and lowest rescue analgesic dose (24Hs)\\] associated with the least stress response (cortisol PO. first One hour peak), least PO sedation, and hemodynamic stability IO. \\&PO. HR \\& MAP. The peak cortisol level during urology surgery was at the end of the 1st postoperative (PO) hour.\n\n. Material \\& Methods A prospective randomized double blinded (drug injector and PO assessor) comparative study will be conducted in Mansoura university hospital after obtaining ethics committee approval and written informed parental consent 164 boys (age 1-6 years, ASA I) scheduled for hypospadias surgery. Exclusion criteria; (Operative time exceeding 3 hours, bodyweight \\>25kg, bleeding diathesis, infection at the site of block, pre-existing neurological or spinal disease or abnormalities of the sacrum, inability to palpate the sacral hiatus by anatomic landmark palpation technique) or those with a history of allergic reactions to local anesthetics were excluded from the study. Patients will fast for solids 6h and water and 2 hours before surgery. After Patient Preoperative preparation, General anesthesia induction, caudal block and caudal drug injection (Levob plus DEXM) bolus will be injected according to each group as follow;\n\n* Group A will take Caudal Levob 0. 125%+ DEXM 0.5\u00b5g/kg.\n* Group B will take Caudal Levob 0.125%+ DEXM 1\u00b5g/kg.\n* Group C will take Caudal Levob 0. 125%+ DEXM 1.5 \u00b5g/kg.\n* Group D will take Caudal Levob 0. 125%+ DEXM 2\u00b5g/kg.\n\nThe study outcomes recording:\n\n1ry outcome: Time to (1st analgesic request OPS \\>4). Secondary outcome: Total 24hours PO. Rescue analgesic dose IM pethidine 0.5mg/kg \\[2,3\\] based on local policy and protocol, Patients demographic data \\[age, weight, end tidal Sevoflurane (volume %) prior starting skin closure, intraoperative fentanyl total dose, recovery time (time from discontinuation of anesthesia to spontaneous eye opening)\\], Serum Cortisol level at basal before anesthesia and 1hour postoperative in between groups \\[1\\] , Apnea incidence (NO\\&%), and desaturation (NO\\&%), Objective pain score, Sedation score, Behavioral score for Agitation assessment, and Modified bromage score (residual Lower limb muscle weakness) recorded every 15 minutes for 1st hour then every 30 minutes for next 3 PO hours then at next 6th, 12th, 18th, 24th PO hours, hemodynamics, HR\\&SBP the incidence of bradycardia and hypotension per 50% percentile. Recorded every 10 minutes IO for maximum operative time 3 hours and every 30 min PO for next 2h in the recovery room until the child was discharged to the ward."
+        },
+        "conditionsModule": {
+          "conditions": [
+            "164 Boys for Hypospadias Surgery Under General Anesthesia With Caudal Block"
+          ],
+          "keywords": ["Caudal", "Dexmedetomidine", "Levobupivacaine", "hypospadias"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "primaryPurpose": "SUPPORTIVE_CARE",
+            "maskingInfo": {
+              "masking": "TRIPLE",
+              "whoMasked": ["PARTICIPANT", "CARE_PROVIDER", "OUTCOMES_ASSESSOR"]
+            }
+          },
+          "enrollmentInfo": {
+            "count": 164,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "\u2022 Group A will take Caudal Levob 0. 125%+ DEXM 0.5\u00b5g/k",
+              "type": "ACTIVE_COMPARATOR",
+              "interventionNames": ["Drug: Caudal dexamedatomidine analgesia"]
+            },
+            {
+              "label": "\u2022 Group B will take Caudal Levob 0.125%+ DEXM 1\u00b5g/kg.",
+              "type": "ACTIVE_COMPARATOR",
+              "interventionNames": ["Drug: Caudal dexamedatomidine analgesia"]
+            },
+            {
+              "label": "\u2022 Group C will take Caudal Levob 0. 125%+ DEXM 1.5 \u00b5g/",
+              "type": "ACTIVE_COMPARATOR",
+              "interventionNames": ["Drug: Caudal dexamedatomidine analgesia"]
+            },
+            {
+              "label": "\u2022 Group D will take Caudal Levob 0. 125%+ DEXM 2\u00b5g/kg.",
+              "type": "ACTIVE_COMPARATOR",
+              "interventionNames": ["Drug: Caudal dexamedatomidine analgesia"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DRUG",
+              "name": "Caudal dexamedatomidine analgesia",
+              "description": "Technique performance (Caudal block): classical technique; palpation, identification and puncture with the patients in the lateral position (permits easy access to the airway under general anesthesia) using a 22-G short-beveled needle under sterile conditions advancing needle pierces the sacrococcygeal ligament.\n\nAfter needle insertion, pre-calculated volume of Levob plus DEXM bolus was injected as follow; Group A Caudal Levob 0.125%+ DEXM 0.5\u00b5g/kg. Group B Caudal Levob 0.125%+ DEXM 1\u00b5g/kg. Group C Caudal Levob 0.125%+ DEXM 1. 5 \u00b5g/kg. Group D Caudal Levob 0.125%+ DEXM 2\u00b5g/kg.",
+              "armGroupLabels": [
+                "\u2022 Group A will take Caudal Levob 0. 125%+ DEXM 0.5\u00b5g/k",
+                "\u2022 Group B will take Caudal Levob 0.125%+ DEXM 1\u00b5g/kg.",
+                "\u2022 Group C will take Caudal Levob 0. 125%+ DEXM 1.5 \u00b5g/",
+                "\u2022 Group D will take Caudal Levob 0. 125%+ DEXM 2\u00b5g/kg."
+              ]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Time to (1st analgesic request objective pain score (OPS) \u22654)",
+              "description": "time from full recovery till child express moderate pain OPS 4 and ask for the first analgesic dose",
+              "timeFrame": "Basal (0) till 24 hours."
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* 164 boys (age 1-8 years, ASA I) scheduled for hypospadias surgery\n\nExclusion Criteria:\n\n* Operative time exceeding 3 hours, bodyweight \\>25kg, bleeding diathesis, infection at the site of block, pre-existing neurological or spinal disease or abnormalities of the sacrum, inability to palpate the sacral hiatus by anatomic landmark palpation technique) or those with a history of allergic reactions to local anesthetics were excluded from the study",
+          "healthyVolunteers": false,
+          "sex": "MALE",
+          "genderBased": true,
+          "minimumAge": "1 Year",
+          "maximumAge": "8 Years",
+          "stdAges": ["CHILD"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "mohamed A Ghanem, A professor",
+              "affiliation": "Mansoura Univeristy",
+              "role": "STUDY_CHAIR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "Anesthesia department,Faculty of medicine, Mansoura univerisety",
+              "city": "Mansoura",
+              "country": "Egypt",
+              "geoPoint": {
+                "lat": 31.03637,
+                "lon": 31.38069
+              }
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D007021",
+              "term": "Hypospadias"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D014564",
+              "term": "Urogenital Abnormalities"
+            },
+            {
+              "id": "D052776",
+              "term": "Female Urogenital Diseases"
+            },
+            {
+              "id": "D005261",
+              "term": "Female Urogenital Diseases and Pregnancy Complications"
+            },
+            {
+              "id": "D000091642",
+              "term": "Urogenital Diseases"
+            },
+            {
+              "id": "D010409",
+              "term": "Penile Diseases"
+            },
+            {
+              "id": "D005832",
+              "term": "Genital Diseases, Male"
+            },
+            {
+              "id": "D000091662",
+              "term": "Genital Diseases"
+            },
+            {
+              "id": "D052801",
+              "term": "Male Urogenital Diseases"
+            },
+            {
+              "id": "D000013",
+              "term": "Congenital Abnormalities"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M10071",
+              "name": "Hypospadias",
+              "asFound": "Hypospadias",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M12",
+              "name": "Congenital Abnormalities",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M17314",
+              "name": "Urogenital Abnormalities",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M2875",
+              "name": "Urogenital Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M27093",
+              "name": "Female Urogenital Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14127",
+              "name": "Pregnancy Complications",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8399",
+              "name": "Female Urogenital Diseases and Pregnancy Complications",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M13320",
+              "name": "Penile Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M2876",
+              "name": "Genital Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8944",
+              "name": "Genital Diseases, Male",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M27095",
+              "name": "Male Urogenital Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BXS",
+              "name": "Urinary Tract, Sexual Organs, and Pregnancy Conditions"
+            },
+            {
+              "abbrev": "BC16",
+              "name": "Diseases and Abnormalities at or Before Birth"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M4032",
+              "name": "Analgesics",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4107",
+              "name": "Anesthetics",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M22662",
+              "name": "Dexmedetomidine",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M1832",
+              "name": "Levobupivacaine",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "Analg",
+              "name": "Analgesics"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            },
+            {
+              "abbrev": "CNSDep",
+              "name": "Central Nervous System Depressants"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    }
+  ]
+}

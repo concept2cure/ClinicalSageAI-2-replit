@@ -1,0 +1,44 @@
+-- Step 2: Enhanced Stability Features and AI Integration
+-- Add missing indexes and constraints for production readiness
+
+-- Add missing created_by column if not exists
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stab_studies' AND column_name = 'created_by') THEN
+    ALTER TABLE stab_studies ADD COLUMN created_by text;
+  END IF;
+END $$;
+
+-- Add tenant_id for future multi-tenancy (optional for now)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stab_studies' AND column_name = 'tenant_id') THEN
+    ALTER TABLE stab_studies ADD COLUMN tenant_id text;
+  END IF;
+END $$;
+
+-- Add better indexes for performance
+CREATE INDEX IF NOT EXISTS idx_stab_studies_status ON stab_studies(status);
+CREATE INDEX IF NOT EXISTS idx_stab_studies_tenant ON stab_studies(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_stab_results_study_test ON stab_results(study_id, test_id);
+CREATE INDEX IF NOT EXISTS idx_stab_results_value ON stab_results(study_id, test_id, value) WHERE value ~ '^[0-9.]+$';
+
+-- Add constraints for data integrity
+ALTER TABLE stab_studies ADD CONSTRAINT chk_duration_positive CHECK (duration_months > 0);
+ALTER TABLE stab_timepoints ADD CONSTRAINT chk_month_non_negative CHECK (month >= 0);
+
+-- Add audit triggers for compliance tracking
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_stab_studies_updated_at
+    BEFORE UPDATE ON stab_studies
+    FOR EACH ROW
+    EXECUTE FUNCTION update_timestamp();
+
+-- Performance optimization note: Run VACUUM ANALYZE manually after migration if needed

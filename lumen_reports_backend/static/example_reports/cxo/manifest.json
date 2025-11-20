@@ -1,0 +1,117 @@
+{
+  "persona_id": "cxo",
+  "title": "Executive Intelligence Suite",
+  "description": "Comprehensive strategic intelligence for C-Suite executives focused on trial success metrics, competitive landscape analysis, and resource optimization.",
+  "target_role": "Chief Medical Officers, Chief Scientific Officers, CEOs",
+  "value_proposition": "Make critical go/no-go decisions based on competitive intelligence and success probability",
+  "short_description": "Strategic intelligence for executive decision makers",
+  "key_benefits": [
+    "Identify optimal trial designs with highest success probability",
+    "Compare performance against competitive benchmarks",
+    "Visualize resource allocation optimization opportunities",
+    "Generate executive summaries for board and investor presentations",
+    "Track portfolio-level success metrics across therapeutic areas"
+  ],
+  "reports": [
+    {
+      "id": "cxo_strategic_summary",
+      "title": "Executive Strategic Summary",
+      "description": "Comprehensive overview of trial landscape, success metrics, and competitive positioning for executive decision-making.",
+      "file_name": "Executive_Strategic_Summary.pdf",
+      "thumbnail": "strategic_summary_thumb.png",
+      "file_type": "PDF",
+      "page_count": 12,
+      "insights": [
+        "Cross-portfolio success probability analysis",
+        "Competitive landscape positioning map",
+        "Resource allocation optimization model",
+        "Key decision point timeline with recommendations"
+      ]
+    },
+    {
+      "id": "cxo_competitive_analysis",
+      "title": "Competitive Intelligence Report",
+      "description": "Detailed analysis of competitor trial performance, design approaches, and market positioning for strategic planning.",
+      "file_name": "Competitive_Intelligence_Report.pdf",
+      "thumbnail": "competitive_analysis_thumb.png",
+      "file_type": "PDF",
+      "page_count": 15,
+      "insights": [
+        "Competitor trial success rate benchmarking",
+        "Design approach comparison across therapeutic areas",
+        "Site selection and recruitment effectiveness analysis",
+        "Pipeline timeline comparison with strategic implications"
+      ]
+    },
+    {
+      "id": "cxo_resource_optimization",
+      "title": "Resource Optimization Model",
+      "description": "Predictive modeling for optimal resource allocation across trials based on success probability and strategic importance.",
+      "file_name": "Resource_Optimization_Model.xlsx",
+      "thumbnail": "resource_optimization_thumb.png",
+      "file_type": "Excel",
+      "insights": [
+        "Interactive budget allocation optimizer",
+        "Success probability vs. investment visualizations",
+        "Scenario planning for different portfolio strategies",
+        "Risk-adjusted ROI projections by therapeutic area"
+      ]
+    },
+    {
+      "id": "cxo_board_presentation",
+      "title": "Board Presentation Deck",
+      "description": "Ready-to-present slides with key metrics, visualizations, and strategic recommendations for board meetings.",
+      "file_name": "Executive_Board_Presentation.pdf",
+      "thumbnail": "board_presentation_thumb.png",
+      "file_type": "PDF",
+      "page_count": 18,
+      "insights": [
+        "High-level strategic dashboard visualizations",
+        "Success probability projections with confidence intervals",
+        "Key decision points with evidence-based recommendations",
+        "Competitor comparison in simplified executive format"
+      ]
+    },
+    {
+      "id": "cxo_portfolio_dashboard",
+      "title": "Portfolio Performance Dashboard",
+      "description": "Interactive visualization of trial portfolio with success metrics, resource allocation, and strategic importance scoring.",
+      "file_name": "Portfolio_Dashboard.xlsx",
+      "thumbnail": "portfolio_dashboard_thumb.png",
+      "file_type": "Excel",
+      "insights": [
+        "Portfolio-level success metrics tracking",
+        "Resource allocation visualization across programs",
+        "Strategic importance scoring and prioritization",
+        "What-if scenario modeling for portfolio adjustments"
+      ]
+    }
+  ],
+  "pricing": {
+    "monthly": 4999,
+    "annual": 49990,
+    "enterprise": "Custom pricing for enterprise deployment",
+    "features": [
+      "All reports in the Executive Intelligence Suite",
+      "Custom dashboards for your specific portfolio",
+      "Weekly updates based on new trial data",
+      "Quarterly strategic review sessions with our analysts",
+      "Integration with your internal portfolio management systems"
+    ]
+  },
+  "demo_video_url": "https://www.lumen-trialguide.ai/demos/cxo-suite-overview",
+  "testimonials": [
+    {
+      "quote": "The Executive Intelligence Suite has transformed our portfolio decision-making process, saving us millions in avoided trial failures and resource optimization.",
+      "author": "Michael T.",
+      "title": "Chief Medical Officer",
+      "company": "Leading Biotech Firm"
+    },
+    {
+      "quote": "The competitive intelligence reports provided insights we couldn't have generated internally even with our large data science team.",
+      "author": "Sarah L.",
+      "title": "CEO",
+      "company": "Emerging Pharma Company"
+    }
+  ]
+}

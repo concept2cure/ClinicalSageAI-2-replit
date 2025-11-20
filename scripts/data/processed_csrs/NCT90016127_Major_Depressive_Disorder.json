@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT90016127",
+  "indication": "Major Depressive Disorder",
+  "phase": "Phase 2",
+  "sample_size": 329,
+  "duration_weeks": 106,
+  "dropout_rate": 0.27,
+  "primary_endpoints": ["MADRS score"],
+  "secondary_endpoints": ["MADRS score", "Response rate"],
+  "blinding": "open-label",
+  "control_arm": "none",
+  "outcome_summary": "Study met its primary endpoint with MADRS score showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

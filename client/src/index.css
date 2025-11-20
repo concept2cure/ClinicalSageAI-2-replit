@@ -1,0 +1,2506 @@
+/* Import Modern Theme Styles - Must come first */
+@import './styles/modern-theme.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Switch styles for green (ON) and red (OFF) states */
+[role="switch"][aria-checked="true"] {
+  background-color: #22c55e !important; /* Green when ON */
+}
+
+[role="switch"][aria-checked="false"] {
+  background-color: #ef4444 !important; /* Red when OFF */
+}
+
+[role="switch"][aria-checked="true"] span {
+  background-color: white !important;
+}
+
+[role="switch"][aria-checked="false"] span {
+  background-color: white !important;
+}
+
+/* Hover states */
+[role="switch"][aria-checked="true"]:hover {
+  background-color: #16a34a !important; /* Darker green on hover */
+}
+
+[role="switch"][aria-checked="false"]:hover {
+  background-color: #dc2626 !important; /* Darker red on hover */
+}
+
+/* Fix for dropdown transparency issue */
+[data-radix-select-content] {
+  background-color: white !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-radix-select-viewport] {
+  background-color: white !important;
+}
+
+[data-radix-select-item] {
+  background-color: white !important;
+}
+
+[data-radix-select-item]:hover {
+  background-color: #f9fafb !important;
+}
+
+[data-radix-select-item]:focus {
+  background-color: #eff6ff !important;
+  color: #1e40af !important;
+}
+
+/* Fix for popover transparency issue (date picker calendar) - comprehensive fix */
+[data-radix-popover-content],
+[data-radix-popper-content-wrapper],
+.rdp {
+  background-color: white !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.375rem !important;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: none !important;
+  z-index: 9999 !important;
+}
+
+/* SharePoint/OneDrive Styles */
+.sp-command-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #FAF9F8;
+  gap: 0.25rem;
+}
+
+.sp-command-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  font-size: 14px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #323130;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.sp-command-button:hover:not(:disabled) {
+  background: #F3F2F1;
+}
+
+.sp-command-button:active:not(:disabled) {
+  background: #EDEBE9;
+}
+
+.sp-command-button:disabled {
+  color: #A19F9D;
+  cursor: not-allowed;
+}
+
+/* SharePoint Hub Navigation Bar */
+.sp-hub-nav {
+  height: 48px;
+  background: #323130;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: white;
+  font-size: 14px;
+  border-bottom: 1px solid #201F1E;
+}
+
+.sp-hub-nav-logo {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+}
+
+.sp-hub-nav-links {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  margin-left: 24px;
+}
+
+.sp-hub-nav-link {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.sp-hub-nav-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.sp-hub-nav-search {
+  width: 320px;
+  height: 32px;
+  background: #484644;
+  border: 1px solid #484644;
+  border-radius: 2px;
+  padding: 0 8px;
+  color: white;
+  margin-right: 16px;
+}
+
+.sp-hub-nav-search::placeholder {
+  color: #C8C6C4;
+}
+
+.sp-hub-nav-profile {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0078D4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* SharePoint Breadcrumb Navigation */
+.sp-breadcrumb {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #F3F2F1;
+  border-bottom: 1px solid #EDEBE9;
+  font-size: 14px;
+  min-height: 40px;
+}
+
+.sp-breadcrumb-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  transition: background 0.2s;
+  cursor: pointer;
+  color: #605E5C;
+}
+
+.sp-breadcrumb-home:hover {
+  background: #E1DFDD;
+}
+
+.sp-breadcrumb-separator {
+  color: #605E5C;
+  margin: 0 8px;
+  font-weight: normal;
+}
+
+.sp-breadcrumb-item {
+  color: #605E5C;
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sp-breadcrumb-item:hover {
+  color: #323130;
+  text-decoration: underline;
+}
+
+.sp-breadcrumb-item.current {
+  color: #323130;
+  font-weight: 600;
+  cursor: default;
+}
+
+.sp-breadcrumb-item.current:hover {
+  text-decoration: none;
+}
+
+.sp-breadcrumb-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #E1DFDD;
+  box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.132);
+  border-radius: 2px;
+  min-width: 200px;
+  z-index: 1000;
+  display: none;
+}
+
+.sp-breadcrumb-item:hover .sp-breadcrumb-dropdown {
+  display: block;
+}
+
+.sp-breadcrumb-dropdown-item {
+  padding: 8px 12px;
+  color: #323130;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sp-breadcrumb-dropdown-item:hover {
+  background: #F3F2F1;
+}
+
+/* SharePoint Folder Tree Navigation */
+.sp-folder-nav {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #EDEBE9;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-folder-nav-header {
+  padding: 16px;
+  border-bottom: 1px solid #EDEBE9;
+  font-weight: 600;
+  font-size: 14px;
+  color: #323130;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sp-folder-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.sp-folder-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+  color: #323130;
+  user-select: none;
+  position: relative;
+}
+
+.sp-folder-item:hover {
+  background: #F3F2F1;
+}
+
+.sp-folder-item.selected {
+  background: #E1F5FE;
+}
+
+.sp-folder-item-indent {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.sp-folder-item-chevron {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.sp-folder-item-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.sp-folder-item-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  color: #C8C6C4;
+}
+
+.sp-folder-item.folder .sp-folder-item-icon {
+  color: #FFB900;
+}
+
+.sp-folder-item-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-folder-item-count {
+  color: #605E5C;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* SharePoint Quick Access Panel */
+.sp-quick-access {
+  padding: 16px;
+  border-bottom: 1px solid #EDEBE9;
+}
+
+.sp-quick-access-section {
+  margin-bottom: 16px;
+}
+
+.sp-quick-access-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #605E5C;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-quick-access-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 2px;
+}
+
+.sp-quick-access-item:hover {
+  background: #F3F2F1;
+}
+
+.sp-quick-access-item-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.sp-quick-access-item-name {
+  font-size: 13px;
+  color: #323130;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* SharePoint Properties Panel */
+.sp-properties-panel {
+  width: 320px;
+  background: white;
+  border-left: 1px solid #EDEBE9;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s, transform 0.3s;
+}
+
+.sp-properties-panel.collapsed {
+  width: 0;
+  transform: translateX(320px);
+}
+
+.sp-properties-panel-header {
+  padding: 16px;
+  border-bottom: 1px solid #EDEBE9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sp-properties-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.sp-properties-panel-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sp-properties-panel-close:hover {
+  background: #F3F2F1;
+}
+
+.sp-properties-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.sp-properties-section {
+  margin-bottom: 24px;
+}
+
+.sp-properties-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #605E5C;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.sp-property-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.sp-property-label {
+  font-size: 12px;
+  color: #605E5C;
+  margin-bottom: 4px;
+}
+
+.sp-property-value {
+  font-size: 14px;
+  color: #323130;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: border-color 0.2s;
+}
+
+.sp-property-value.editable {
+  cursor: text;
+}
+
+.sp-property-value.editable:hover {
+  border-color: #C8C6C4;
+  background: #FAF9F8;
+}
+
+.sp-property-value.editing {
+  border-color: #0078D4;
+  background: white;
+  outline: none;
+}
+
+/* SharePoint Layout Container */
+.sp-layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #FAF9F8;
+}
+
+.sp-layout-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sp-layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+}
+
+.sp-layout-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* SharePoint Loading States */
+.sp-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.sp-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #EDEBE9;
+  border-top-color: #0078D4;
+  border-radius: 50%;
+  animation: sp-spin 0.6s linear infinite;
+}
+
+@keyframes sp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* SharePoint Empty State */
+.sp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+}
+
+.sp-empty-state-icon {
+  width: 48px;
+  height: 48px;
+  color: #C8C6C4;
+  margin-bottom: 16px;
+}
+
+.sp-empty-state-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #323130;
+  margin-bottom: 8px;
+}
+
+.sp-empty-state-description {
+  font-size: 14px;
+  color: #605E5C;
+}
+
+/* SharePoint-style table hover and selection */
+.sp-table-row {
+  transition: background 0.1s;
+}
+
+.sp-table-row:hover {
+  background: #F3F2F1;
+}
+
+.sp-table-row.selected {
+  background: #E1F5FE;
+}
+
+.sp-table-row.selected:hover {
+  background: #E1F5FE;
+}
+
+/* SharePoint-style checkboxes */
+input[type="checkbox"].sp-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #605E5C;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+input[type="checkbox"].sp-checkbox:checked {
+  background: #0078D4;
+  border-color: #0078D4;
+}
+
+/* SharePoint-style context menu */
+.sp-context-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #E1DFDD;
+  box-shadow: 0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132), 0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
+  border-radius: 2px;
+  min-width: 180px;
+  z-index: 1000;
+}
+
+.sp-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #323130;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.sp-context-menu-item:hover {
+  background: #F3F2F1;
+}
+
+.sp-context-menu-divider {
+  height: 1px;
+  background: #E1DFDD;
+  margin: 4px 0;
+}
+
+/* SharePoint-style presence indicator */
+.sp-presence-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #00B294;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 178, 148, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 178, 148, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 178, 148, 0);
+  }
+}
+
+/* Ensure calendar container has opaque background */
+.rdp,
+.rdp-months,
+.rdp-month,
+.rdp-table {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Fix all calendar cells and days */
+.rdp-cell,
+.rdp-day,
+.rdp-day_button {
+  background-color: white !important;
+  background: white !important;
+}
+
+.rdp-day:hover,
+.rdp-day_button:hover {
+  background-color: #f3f4f6 !important;
+  background: #f3f4f6 !important;
+}
+
+/* Fix calendar header */
+.rdp-caption,
+.rdp-nav,
+.rdp-head {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Additional fallback for any react-day-picker elements */
+[class*='rdp'],
+[class*='day-picker'] {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Fix bouncing animation in file browser */
+.embedded-file-browser * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.embedded-file-browser {
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+}
+
+/* Custom styles for CER V2 tab interface */
+.cer-tab-trigger {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+/* Fix for tab list spacing */
+.cer-tabs .cer-tabs-list {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+/* SOTA panel specific styles */
+.sota-panel .badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.sota-panel .competitor-badge {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border: 1px solid #e1dfdd;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.sota-panel .competitor-badge .remove-btn {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  color: #616161;
+  transition: color 0.2s ease;
+}
+
+.sota-panel .competitor-badge .remove-btn:hover {
+  color: #d83b01;
+}
+
+:root {
+  /* SharePoint/OneDrive Color Palette */
+  --color-primary: #0078D4; /* SharePoint Blue */
+  --color-primary-dark: #106EBE;
+  --color-primary-light: #2B88D8;
+  --color-primary-glow: rgba(0, 120, 212, 0.2);
+  --color-secondary: #0078D4; /* SharePoint Blue */
+  --color-secondary-dark: #106EBE;
+  --color-secondary-light: #2B88D8;
+  --color-secondary-glow: rgba(0, 120, 212, 0.2);
+  --color-accent: #0078D4; /* SharePoint Blue */
+  --color-accent-dark: #106EBE;
+  --color-accent-light: #2B88D8;
+  --color-accent-glow: rgba(0, 120, 212, 0.2);
+  --color-highlight: #107C10; /* SharePoint Success Green */
+  --color-highlight-glow: rgba(16, 124, 16, 0.2);
+  
+  /* SharePoint Status Colors */
+  --color-success: #107C10;
+  --gradient-success: linear-gradient(135deg, #107C10 0%, #0B6A0B 100%);
+  --color-warning: #FFB900;
+  --gradient-warning: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
+  --color-error: #D13438;
+  --gradient-error: linear-gradient(135deg, #D13438 0%, #A4262C 100%);
+  --color-info: #0078D4;
+  --gradient-info: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  
+  /* Dark Mode Premium Colors */
+  --dark-bg-primary: #0F0F23;
+  --dark-bg-secondary: #1A1A2E;
+  --dark-bg-tertiary: #16213E;
+  --dark-surface: rgba(255, 255, 255, 0.02);
+  --dark-surface-hover: rgba(255, 255, 255, 0.05);
+  --dark-glow: rgba(99, 102, 241, 0.15);
+  
+  /* SharePoint Neutral Palette */
+  --color-gray-50: #FAF9F8;
+  --color-gray-100: #F3F2F1;
+  --color-gray-200: #EDEBE9;
+  --color-gray-300: #E1DFDD;
+  --color-gray-400: #C8C6C4;
+  --color-gray-500: #979593;
+  --color-gray-600: #605E5C;
+  --color-gray-700: #484644;
+  --color-gray-800: #323130;
+  --color-gray-900: #201F1E;
+  --color-gray-950: #000000;
+  
+  /* SharePoint Gradients - Minimal/Flat */
+  --gradient-primary: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-secondary: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-accent: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-premium: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-warm: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
+  --gradient-cool: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-sunset: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
+  --gradient-ocean: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-aurora: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
+  --gradient-dark: linear-gradient(135deg, #323130 0%, #201F1E 100%);
+  --gradient-mesh: none;
+  --gradient-mesh-dark: none;
+  
+  /* Glass Morphism Effects */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-solid: rgba(255, 255, 255, 0.9);
+  --glass-bg-medium: rgba(255, 255, 255, 0.7);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-light: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(10px);
+  --glass-blur-heavy: blur(20px);
+  --glass-blur-ultra: blur(40px);
+  
+  /* SharePoint Shadow Collection */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
+  --shadow-md: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
+  --shadow-lg: 0 6.4px 14.4px rgba(0, 0, 0, 0.13);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.13);
+  --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.13);
+  --shadow-3xl: 0 24px 48px rgba(0, 0, 0, 0.13);
+  --shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-glow-primary: none;
+  --shadow-glow-secondary: none;
+  --shadow-glow-accent: none;
+  --shadow-3d: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
+  --shadow-sharepoint: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
+  --shadow-sharepoint-hover: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
+  
+  /* Modern Spacing Scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Typography - SharePoint Fonts */
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Typography Scale */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: #323130;
+  background: #FFFFFF;
+  position: relative;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Font Sizing System - Based on Professional Design System */
+.text-display {
+  font-size: 2.25rem; /* 36px */
+  line-height: 2.5rem; /* 40px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-h1 {
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-h2 {
+  font-size: 1.5rem; /* 24px */
+  line-height: 2rem; /* 32px */
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.text-h3 {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+.text-h4 {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+}
+
+.text-body {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+}
+
+.text-body-sm {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+}
+
+.text-caption {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+}
+
+/* Modern Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-fade {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes rotate-scale {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes morphing {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.5;
+  }
+  33% {
+    transform: translateY(-30px) translateX(10px);
+    opacity: 1;
+  }
+  66% {
+    transform: translateY(10px) translateX(-10px);
+    opacity: 0.7;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* SharePoint Card Styles */
+.card {
+  background: #FFFFFF;
+  border-radius: 2px;
+  box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
+  border: 1px solid #EDEBE9;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.card:hover {
+  box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
+  border-color: #C8C6C4;
+}
+
+.card-3d {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+  border-radius: 20px;
+  box-shadow: var(--shadow-3d);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-3d:hover {
+  transform: translateY(-8px) rotateX(-2deg) rotateY(2deg);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-gray-100);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(249, 250, 251, 0.5) 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--color-gray-100);
+  background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(249, 250, 251, 0.5) 100%);
+  border-radius: 0 0 16px 16px;
+}
+
+/* Glass Morphism Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+}
+
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth hover transitions */
+
+/* Enhanced tab styling */
+[role='tablist'] {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+[role='tab'] {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  color: #64748b;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+[role='tab'][data-state='active'] {
+  background-color: white;
+  color: #1e40af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+[role='tab']:hover:not([data-state='active']) {
+  background-color: rgba(241, 245, 249, 0.7);
+  color: #334155;
+}
+
+[role='tabpanel'] {
+  padding: 1rem 0;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Global dropdown and select component styling */
+div.select-content,
+div.popover-content,
+div.command-dialog,
+div.dialog-content,
+div.dropdown-menu-content {
+  --bg-color: white;
+  --text-color: #1a202c;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.15);
+
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: var(--shadow) !important;
+  z-index: 50 !important;
+  padding: 0.5rem !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Custom select trigger styling */
+.select-trigger {
+  border: 1px solid rgba(226, 232, 240, 1) !important;
+  background-color: white !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+/* Select items and dropdown items */
+.select-item,
+.dropdown-menu-item,
+.command-item {
+  color: #111827 !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.25rem !important;
+  margin-bottom: 0.125rem !important;
+  transition: background-color 0.15s ease-in-out !important;
+  font-size: 0.95rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Hover state for dropdown items */
+.select-item:hover,
+.dropdown-menu-item:hover,
+.command-item:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Selected/Checked state */
+.select-item[data-state='checked'],
+.dropdown-menu-item[data-state='checked'] {
+  background-color: #e0f2fe !important;
+  color: #1e40af !important;
+  font-weight: 500 !important;
+}
+
+/* Text elements inside dropdown items */
+:where(.select-item-text),
+:where(.dropdown-menu-item-text),
+:where(.command-item-text) {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* Selection indicator for selected items */
+:where(.select-item[data-state='checked']):after {
+  content: '✓';
+  display: inline-block;
+  margin-left: auto;
+  font-weight: bold;
+}
+
+/* Disabled state */
+:where(.select-item[data-disabled]),
+:where(.dropdown-menu-item[data-disabled]) {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Scrollable areas inside dropdowns */
+:where(.select-viewport),
+:where(.dropdown-menu-viewport),
+:where(.command-list) {
+  padding: 0.25rem !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+/* Group labels */
+:where(.select-group-label),
+:where(.dropdown-menu-group-label) {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+.hover-lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+/* Legacy CoAuthor styles - no longer needed */
+/*
+.coauthor-page {
+  background: #f7f7f7;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.section-editor {
+  background: white;
+  margin-top: 1rem;
+}
+
+.unified-top-nav {
+  margin-bottom: 0;
+}
+*/
+
+/* Legacy CoAuthor Two-Pane Layout - Superseded by newer styles below */
+/*
+.coauthor-content {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  flex: 1;
+}
+
+.editor-pane {
+  flex: 7;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 600px;
+  padding: 24px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.copilot-pane {
+  flex: 3;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 600px;
+  padding: 24px;
+  background: #fafafa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+*/
+
+.coauthor-footer {
+  margin-top: 16px;
+  text-align: right;
+  font-size: 12px;
+  color: #666;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* AI Copilot Panel */
+.ai-copilot-panel {
+  font-family: sans-serif;
+  color: #333;
+}
+
+.ai-copilot-panel h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1e293b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .coauthor-content {
+    flex-direction: column;
+  }
+
+  .editor-pane,
+  .copilot-pane {
+    flex: auto;
+    width: 100%;
+  }
+}
+
+/* UNIFIED TOP NAV V4 STYLES */
+/* HEADER */
+.utnv4-header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 12px 16px;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.utnv4-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.utnv4-controls button,
+.utnv4-controls .utnv4-home,
+.utnv4-controls .utnv4-switch {
+  margin-right: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #444;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+}
+.utnv4-controls button:hover,
+.utnv4-controls .utnv4-home:hover,
+.utnv4-controls .utnv4-switch:hover {
+  background: #e9e9e9;
+}
+.utnv4-breadcrumbs {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 8px 0;
+}
+.utnv4-breadcrumbs a {
+  color: #0078d4;
+  text-decoration: none;
+  margin: 0 3px;
+}
+.utnv4-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+.utnv4-tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.utnv4-tabs li {
+  list-style: none;
+}
+.utnv4-tabs a {
+  padding: 8px 0;
+  display: block;
+  color: #444;
+  text-decoration: none;
+  font-weight: 500;
+}
+.utnv4-tabs .active a {
+  border-bottom: 2px solid #0078d4;
+  color: #0078d4;
+}
+
+/* Coauthor styles moved to CoAuthor.css */
+
+/* Canvas Workbench Styles */
+.konvajs-content {
+  cursor: grab;
+}
+.konvajs-content:active {
+  cursor: grabbing;
+}
+
+/* Ensure annotation panel sits on top */
+.annotation-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 300px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* Canvas Workbench Custom Cursor Styles */
+.canvas-workbench {
+  cursor: grab;
+}
+.canvas-workbench:active {
+  cursor: grabbing;
+}
+
+/* CER Tab Styles */
+.cer-tab-trigger {
+  min-width: 110px;
+  margin-right: 6px;
+  padding-left: 16px;
+  padding-right: 16px;
+  text-align: center;
+  position: relative; /* Add positioning context */
+  z-index: 1; /* Ensure tabs stay on top */
+}
+
+/* Fix for tab content */
+.cer-tabs-content {
+  position: relative;
+  z-index: 0;
+  margin-top: 10px; /* Add some space below tabs */
+}
+
+/* Lumen AI Assistant Markdown Styling */
+.markdown-content {
+  color: inherit;
+}
+
+/* Headings */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.2em;
+}
+
+.markdown-content h3 {
+  font-size: 1.15em;
+}
+
+.markdown-content h4 {
+  font-size: 1.05em;
+}
+
+/* Lists */
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content li {
+  margin: 0.25em 0;
+}
+
+.markdown-content li p {
+  margin: 0.5em 0;
+}
+
+/* Links */
+.markdown-content a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* Code blocks */
+.markdown-content pre {
+  background-color: #f1f5f9;
+  border-radius: 0.375rem;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.markdown-content code {
+  background-color: #f1f5f9;
+  border-radius: 0.25rem;
+  padding: 0.2em 0.4em;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 4px solid #e2e8f0;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #64748b;
+}
+
+/* Tables */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.markdown-content tr:nth-of-type(even) {
+  background-color: #f8fafc;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5em 0;
+}
+
+/* Paragraphs */
+.markdown-content p {
+  margin: 0.75em 0;
+  line-height: 1.6;
+}
+
+/* Ensure proper spacing in the chat context */
+.markdown-content *:first-child {
+  margin-top: 0;
+}
+
+.markdown-content *:last-child {
+  margin-bottom: 0;
+}
+
+/* SharePoint Button Styles */
+.btn-sharepoint {
+  background: #0078D4;
+  color: white;
+  border: 1px solid #0078D4;
+  border-radius: 2px;
+  padding: 5px 16px;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.1s ease;
+  box-shadow: none;
+  font-family: 'Segoe UI', sans-serif;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sharepoint:hover {
+  background: #106EBE;
+  border-color: #106EBE;
+}
+
+.btn-sharepoint:active {
+  background: #004578;
+  border-color: #004578;
+}
+
+.btn-sharepoint-secondary {
+  background: white;
+  color: #323130;
+  border: 1px solid #C8C6C4;
+  border-radius: 2px;
+  padding: 5px 16px;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: none;
+  font-family: 'Segoe UI', sans-serif;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sharepoint-secondary:hover {
+  background: #F3F2F1;
+  border-color: #979593;
+}
+
+/* SharePoint Command Bar */
+.sp-command-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #EDEBE9;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sp-command-button {
+  background: transparent;
+  color: #323130;
+  border: none;
+  border-radius: 2px;
+  padding: 6px 8px;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+}
+
+.sp-command-button:hover {
+  background: #F3F2F1;
+}
+
+.sp-command-button:active {
+  background: #EDEBE9;
+}
+
+/* SharePoint List View */
+.sp-list-header {
+  background: #FAF9F8;
+  border-bottom: 1px solid #EDEBE9;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #605E5C;
+}
+
+.sp-list-row {
+  background: white;
+  border-bottom: 1px solid #F3F2F1;
+  padding: 12px 16px;
+  transition: background 0.1s ease;
+}
+
+.sp-list-row:hover {
+  background: #FAF9F8;
+}
+
+.sp-list-row.selected {
+  background: #E1F5FE;
+  border-left: 3px solid #0078D4;
+}
+
+/* SharePoint Document Icon */
+.sp-doc-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F2F1;
+  border-radius: 2px;
+}
+
+/* SharePoint Breadcrumb */
+.sp-breadcrumb {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #323130;
+}
+
+.sp-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  color: #323130;
+  text-decoration: none;
+}
+
+.sp-breadcrumb-item:hover {
+  color: #0078D4;
+  text-decoration: underline;
+}
+
+.sp-breadcrumb-separator {
+  margin: 0 8px;
+  color: #C8C6C4;
+}
+
+/* Modern Progress Rings */
+.progress-ring {
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 0.35s;
+}
+
+/* Floating Labels */
+.floating-label {
+  position: relative;
+}
+
+.floating-label input,
+.floating-label textarea {
+  padding-top: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.floating-label label {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  color: var(--color-gray-500);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.floating-label input:focus ~ label,
+.floating-label input:not(:placeholder-shown) ~ label,
+.floating-label textarea:focus ~ label,
+.floating-label textarea:not(:placeholder-shown) ~ label {
+  top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+}
+
+/* Toggle Switches */
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--color-gray-300);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: var(--gradient-primary);
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active::after {
+  transform: translateX(24px);
+}
+
+/* Skeleton Loaders */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Bento Grid Layout */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.bento-item {
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bento-item-sm {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.bento-item-md {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.bento-item-lg {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+@media (max-width: 768px) {
+  .bento-item-md,
+  .bento-item-lg {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.fab:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 10px;
+  border: 2px solid var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gradient-secondary);
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: relative;
+}
+
+.notification-badge::after {
+  content: attr(data-count);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Mobile-First Responsive Design */
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .card-3d {
+    border-radius: 16px;
+  }
+  
+  .card-3d:hover {
+    transform: translateY(-4px);
+  }
+  
+  .glass-panel {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .btn-gradient {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .fab {
+    width: 48px;
+    height: 48px;
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--color-gray-200);
+    padding: 0.5rem;
+    z-index: 999;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    color: var(--color-gray-600);
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-nav-item.active {
+    color: var(--color-primary);
+  }
+  
+  .mobile-nav-item svg {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 0.25rem;
+  }
+  
+  .mobile-nav-item span {
+    font-size: 0.625rem;
+    font-weight: 500;
+  }
+}
+
+/* Touch-optimized styles */
+@supports (hover: hover) and (pointer: fine) {
+  /* Desktop hover effects */
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@supports not (hover: hover) {
+  /* Touch device optimizations */
+  .card-3d:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-gradient:active {
+    transform: scale(0.95);
+  }
+  
+  button:active {
+    opacity: 0.9;
+  }
+}
+
+/* Swipe actions for mobile */
+.swipe-action {
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.swipe-action-content {
+  transition: transform 0.3s ease;
+}
+
+.swipe-action-buttons {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.swipe-action.swiped .swipe-action-content {
+  transform: translateX(-120px);
+}
+
+.swipe-action.swiped .swipe-action-buttons {
+  transform: translateX(0);
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  .text-display {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+  
+  .text-h1 {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-h2 {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+  }
+  
+  .text-h3 {
+    font-size: 1.125rem;
+    line-height: 1.375rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .bento-item-lg {
+    grid-column: span 2;
+  }
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-gray-50: #18181B;
+    --color-gray-100: #27272A;
+    --color-gray-200: #3F3F46;
+    --color-gray-300: #52525B;
+    --color-gray-400: #71717A;
+    --color-gray-500: #A1A1AA;
+    --color-gray-600: #D4D4D8;
+    --color-gray-700: #E4E4E7;
+    --color-gray-800: #F4F4F5;
+    --color-gray-900: #FAFAFA;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #0A0A0A 0%, #18181B 100%);
+  }
+  
+  .glass-card {
+    background: rgba(30, 30, 30, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-panel {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.1), rgba(30, 30, 30, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .card {
+    background: rgba(30, 30, 30, 0.98);
+    border-color: var(--color-gray-800);
+  }
+  
+  .card-3d {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.98) 0%, rgba(40, 40, 40, 0.98) 100%);
+  }
+}
+
+/* Performance optimizations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-gradient,
+  .animate-pulse,
+  .animate-float {
+    animation: none !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print,
+  .fab,
+  .mobile-nav,
+  button,
+  .notification-badge {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+  }
+  
+  .glass-card,
+  .glass-panel,
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
+/* ===== CERV2 Tab Navigation Polish ===== */
+/* Smooth transitions for all interactive elements - respects prefers-reduced-motion */
+.cerv2-tab {
+  position: relative;
+}
+
+.cerv2-tab:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Active tab indicator with smooth slide animation */
+.cerv2-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Focus visible for accessibility */
+button:focus-visible,
+.cerv2-tab:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ===== Animations - Only for users who don't prefer reduced motion ===== */
+@media (prefers-reduced-motion: no-preference) {
+  .cerv2-tab {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .cerv2-tab:hover {
+    transform: translateY(-1px);
+  }
+
+  .cerv2-tab:active {
+    transform: translateY(0);
+  }
+
+  .cerv2-tab-active::after {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* Completion checkmark animation */
+  .completion-checkmark {
+    animation: checkmarkPop 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+
+  @keyframes checkmarkPop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Progress badge pulse */
+  .progress-badge {
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes badgePulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Contextual help banner slide-in */
+  .context-banner-enter {
+    animation: slideDown 0.4s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Card hover effect for info panels */
+  .info-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .info-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Smooth button transitions */
+  button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Loading skeleton shimmer */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      #f3f4f6 0%,
+      #e5e7eb 50%,
+      #f3f4f6 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+/* ===== Reduced Motion Fallbacks ===== */
+@media (prefers-reduced-motion: reduce) {
+  .cerv2-tab,
+  .info-card,
+  button {
+    transition: none !important;
+  }
+  
+  .cerv2-tab:hover {
+    transform: none;
+  }
+  
+  .cerv2-tab-active::after,
+  .completion-checkmark,
+  .progress-badge,
+  .context-banner-enter,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+  
+  /* Still show the elements, just without animation */
+  .context-banner-enter {
+    opacity: 1;
+    transform: none;
+  }
+  
+  .completion-checkmark {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

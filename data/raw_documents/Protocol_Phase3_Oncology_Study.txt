@@ -1,0 +1,51 @@
+Clinical Protocol: Phase III Oncology Study
+Protocol ID: ONC-P3-2025-001
+Version: 3.0
+Effective Date: 2025-06-01
+
+1. Introduction
+This protocol details the conduct of a pivotal Phase III study for investigational drug 'OncoMab'. The study targets advanced solid tumors and represents a critical milestone in the development program.
+
+2. Objectives
+2.1 Primary Objective: To evaluate efficacy and safety of OncoMab compared to standard of care in patients with advanced solid tumors.
+2.2 Secondary Objective: Pharmacokinetics assessment and biomarker analysis.
+2.3 Exploratory Objective: Quality of life assessment using EORTC QLQ-C30.
+
+3. Study Design
+This is a multicenter, randomized, double-blind, placebo-controlled study with a planned enrollment of 450 patients across 25 international sites.
+
+3.1 Study Population
+Adults (≥18 years) with histologically confirmed advanced solid tumors who have failed at least one prior systemic therapy.
+
+3.2 Randomization
+Patients will be randomized 2:1 to receive either OncoMab or placebo.
+
+4. Treatment Plan
+4.1 Investigational Product
+OncoMab 10mg/kg IV every 3 weeks for up to 12 cycles or until disease progression.
+
+4.2 Concomitant Medications
+Standard supportive care is permitted per institutional guidelines.
+
+5. Adverse Events
+All adverse events must be reported to the IRB within 24 hours. Serious Adverse Events (SAEs) require immediate notification to FDA and EMA within 15 calendar days.
+
+5.1 Safety Monitoring
+- Monthly Data Safety Monitoring Board (DSMB) reviews
+- Interim safety analysis after 150 patients
+- Pre-specified stopping rules for efficacy and futility
+
+6. Patient Population
+Adults with confirmed diagnosis of advanced solid tumors, ECOG performance status 0-2, adequate organ function.
+
+7. Statistical Considerations
+7.1 Primary Endpoint: Overall Survival (OS)
+7.2 Secondary Endpoints: Progression-Free Survival (PFS), Objective Response Rate (ORR)
+7.3 Sample Size: 450 patients provide 90% power to detect HR=0.75
+
+8. Regulatory Considerations
+This study is conducted under IND 123456 and EudraCT 2025-001234-56.
+
+Appendix A: Informed Consent Form
+Appendix B: Case Report Form Completion Guidelines
+Appendix C: Laboratory Manual

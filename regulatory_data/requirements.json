@@ -1,0 +1,137 @@
+[
+  {
+    "agency": "FDA",
+    "guideline": "ICH E6(R2)",
+    "requirement": "Ensure adequate informed consent procedures are in place and properly documented.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "ICH E6(R2) Section 4.8",
+    "last_updated": "2023-01-15"
+  },
+  {
+    "agency": "FDA",
+    "guideline": "ICH E8(R1)",
+    "requirement": "Implement quality by design principles in the study design phase.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3"],
+    "compliance_level": "recommended",
+    "document_reference": "ICH E8(R1) Section 3.2",
+    "last_updated": "2023-02-20"
+  },
+  {
+    "agency": "FDA",
+    "guideline": "21 CFR Part 50",
+    "requirement": "Obtain IRB approval before initiating a clinical trial.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "21 CFR 50.20",
+    "last_updated": "2022-11-05"
+  },
+  {
+    "agency": "FDA",
+    "guideline": "ICH E9",
+    "requirement": "Define primary and secondary endpoints clearly in the protocol.",
+    "applicable_phases": ["Phase 2", "Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "ICH E9 Statistical Principles",
+    "last_updated": "2022-09-18"
+  },
+  {
+    "agency": "FDA",
+    "guideline": "FDORA 2022",
+    "requirement": "Include plans for ensuring diverse trial populations in the protocol.",
+    "applicable_phases": ["Phase 2", "Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "FDORA Section 5",
+    "last_updated": "2023-04-01"
+  },
+  {
+    "agency": "EMA",
+    "guideline": "GDPR Compliance",
+    "requirement": "Ensure data protection impact assessment is conducted for processing health data.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "GDPR Article 35",
+    "last_updated": "2023-03-10"
+  },
+  {
+    "agency": "EMA",
+    "guideline": "Clinical Trial Regulation (EU) No 536/2014",
+    "requirement": "Register all clinical trials in the EU Clinical Trials Information System (CTIS) before initiation.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "EU CTR Article 4",
+    "last_updated": "2023-05-15"
+  },
+  {
+    "agency": "EMA",
+    "guideline": "EMA/CHMP/ICH/135/1995",
+    "requirement": "Implementation of the estimand framework in the analysis of clinical trials in Europe.",
+    "applicable_phases": ["Phase 2", "Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "ICH E9(R1) Addendum",
+    "last_updated": "2023-02-10"
+  },
+  {
+    "agency": "EMA",
+    "guideline": "EMA/CHMP/292464/2014",
+    "requirement": "Follow the EMA guideline on the evaluation of anticancer medicinal products in humans.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "EMA Oncology Guideline Section 4",
+    "last_updated": "2022-12-05"
+  },
+  {
+    "agency": "PMDA",
+    "guideline": "Japanese GCP Ordinance",
+    "requirement": "Obtain approval from the heads of all medical institutions participating in the trial.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "JGCP Article 5",
+    "last_updated": "2023-01-20"
+  },
+  {
+    "agency": "PMDA",
+    "guideline": "Basic Principles on Global Clinical Trials",
+    "requirement": "Consider ethnic factors that might affect efficacy and safety for Japanese patients in global trials.",
+    "applicable_phases": ["Phase 2", "Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "PMDA Global CT Guidance Section 2.2",
+    "last_updated": "2023-06-12"
+  },
+  {
+    "agency": "NMPA",
+    "guideline": "Drug Registration Regulation",
+    "requirement": "Obtain Ethics Committee approval and NMPA Clinical Trial Authorization (CTA) before starting trials in China.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "mandatory",
+    "document_reference": "DRR Article 19",
+    "last_updated": "2023-07-01"
+  },
+  {
+    "agency": "NMPA",
+    "guideline": "Technical Guidelines for Clinical Trials",
+    "requirement": "For registration in China, include a minimum number of Chinese subjects in pivotal trials proportional to the Chinese population.",
+    "applicable_phases": ["Phase 3"],
+    "compliance_level": "mandatory",
+    "document_reference": "NMPA Technical Guidelines Section 3.4",
+    "last_updated": "2023-03-18"
+  },
+  {
+    "agency": "Academic",
+    "guideline": "CONSORT Statement",
+    "requirement": "Follow CONSORT guidelines for reporting randomized clinical trials in academic publications.",
+    "applicable_phases": ["Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "recommended",
+    "document_reference": "CONSORT 2024 Checklist",
+    "last_updated": "2024-01-10"
+  },
+  {
+    "agency": "Academic",
+    "guideline": "SPIRIT Statement",
+    "requirement": "Follow SPIRIT guidelines for complete protocol documentation.",
+    "applicable_phases": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"],
+    "compliance_level": "recommended",
+    "document_reference": "SPIRIT 2022 Checklist",
+    "last_updated": "2022-08-24"
+  }
+]

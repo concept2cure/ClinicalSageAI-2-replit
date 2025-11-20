@@ -1,0 +1,21 @@
+{
+  "project_id": "TEST001",
+  "sponsor": "TestPharma",
+  "drug_name": "TestDrug-001",
+  "protocol": "Phase 1 study of TestDrug-001 in healthy volunteers",
+  "pi_name": "Dr. Jane Smith",
+  "pi_address": "123 Research Way, Boston MA",
+  "nct_number": null,
+  "ind_number": "123456",
+  "serial_number": 2,
+  "created": "2025-04-18",
+  "updated": null,
+  "history": [
+    {
+      "type": "ectd_ga",
+      "serial": "0002",
+      "timestamp": "2025-04-18T23:04:08.912300",
+      "zip": "ectd_TEST001_0002.zip"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  ich-specialist:
+    build:
+      context: ../.. # Root of the project
+      dockerfile: services/ich_ingest/Dockerfile
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./guidelines:/app/services/ich_ingest/guidelines
+      - ./processed.json:/app/services/ich_ingest/processed.json
+      - ../../csr_uploads:/app/csr_uploads
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENV=${PINECONE_ENV:-us-west1-gcp}
+      - PINECONE_INDEX=${PINECONE_INDEX:-ich-specialist}
+      - ICH_BASE_URL=${ICH_BASE_URL:-https://www.ich.org/page/articles-procedures}
+      - CSR_DIR=/app/csr_uploads/
+      - GUIDELINES_DIR=/app/services/ich_ingest/guidelines/
+      - PROCESSED_LOG=/app/services/ich_ingest/processed.json
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/docs']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Separate service for ingestion only
+  ich-ingestion:
+    build:
+      context: ../.. # Root of the project
+      dockerfile: services/ich_ingest/Dockerfile
+    command: python -m services.ich_ingest.ingestion
+    volumes:
+      - ./guidelines:/app/services/ich_ingest/guidelines
+      - ./processed.json:/app/services/ich_ingest/processed.json
+      - ../../csr_uploads:/app/csr_uploads
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENV=${PINECONE_ENV:-us-west1-gcp}
+      - PINECONE_INDEX=${PINECONE_INDEX:-ich-specialist}
+      - ICH_BASE_URL=${ICH_BASE_URL:-https://www.ich.org/page/articles-procedures}
+      - CSR_DIR=/app/csr_uploads/
+      - GUIDELINES_DIR=/app/services/ich_ingest/guidelines/
+      - PROCESSED_LOG=/app/services/ich_ingest/processed.json
+      - INGEST_INTERVAL_SEC=${INGEST_INTERVAL_SEC:-86400}
+      - CSR_POLL_INTERVAL_SEC=${CSR_POLL_INTERVAL_SEC:-60}
+    restart: unless-stopped
+    depends_on:
+      - ich-specialist

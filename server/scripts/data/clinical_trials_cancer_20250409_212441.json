@@ -1,0 +1,1762 @@
+{
+  "metadata": {
+    "query": "cancer",
+    "phase": null,
+    "total_fetched": 5,
+    "fetch_date": "2025-04-09T21:24:41.593209",
+    "elapsed_seconds": 0.05472564697265625
+  },
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT00072579",
+          "orgStudyIdInfo": {
+            "id": "CCCWFU-23102"
+          },
+          "secondaryIdInfos": [
+            {
+              "id": "CDR0000340983",
+              "type": "REGISTRY",
+              "domain": "PDQ (Physician Data Query)"
+            },
+            {
+              "id": "BRLX-02153"
+            },
+            {
+              "id": "NCI-7350"
+            }
+          ],
+          "organization": {
+            "fullName": "Wake Forest University Health Sciences",
+            "class": "OTHER"
+          },
+          "briefTitle": "Sargramostim in Treating Patients With Chronic Phase Chronic Myelogenous Leukemia Who Are Not in Complete Cytogenetic Remission Following Initial Treatment",
+          "officialTitle": "Phase II Study of GM-CSF in Patients With Chronic Phase Chronic Myeloid Leukemia (CP-CML) Who Are Not in Complete Cytogenetic Remission After Initial Therapy"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2013-06",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2003-05"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2006-04",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2007-12",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2003-11-04",
+          "studyFirstSubmitQcDate": "2003-11-04",
+          "studyFirstPostDateStruct": {
+            "date": "2003-11-05",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2017-01-17",
+          "lastUpdatePostDateStruct": {
+            "date": "2017-01-19",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Wake Forest University Health Sciences",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "National Cancer Institute (NCI)",
+              "class": "NIH"
+            }
+          ]
+        },
+        "descriptionModule": {
+          "briefSummary": "RATIONALE: Colony-stimulating factors, such as sargramostim, may increase the number of immune cells found in bone marrow or peripheral blood and may bring about complete remission in patients who have chronic phase chronic myelogenous leukemia.\n\nPURPOSE: This phase II trial is studying sargramostim to see how well it works in treating patients with chronic phase chronic myelogenous leukemia that is not in complete cytogenetic remission after initial treatment.",
+          "detailedDescription": "OBJECTIVES:\n\n* Determine the efficacy and safety of sargramostim (GM-CSF) by cytogenetic examination of the bone marrow in patients with chronic phase chronic myelogenous leukemia who are not in complete cytogenetic remission after initial therapy.\n\nOUTLINE: Patients receive sargramostim (GM-CSF) subcutaneously daily for 3 months in the absence of disease progression or unacceptable toxicity. Patients achieving no response receive GM-CSF for an additional 3 months. Patients failing to achieve a partial response or better after the second course of GM-CSF are removed from the study. Patients achieving a partial response after the first or second course of GM-CSF continue to receive GM-CSF for an additional 9 months. Patients are then re-evaluated. Patients achieving a complete cytologic response at 9 months then receive GM-CSF 3 times weekly in the absence of disease progression or unacceptable toxicity.\n\nPatients are followed every 2 weeks.\n\nPROJECTED ACCRUAL: A total of 9-24 patients will be accrued for this study within 3 years."
+        },
+        "conditionsModule": {
+          "conditions": ["Leukemia"],
+          "keywords": [
+            "chronic phase chronic myelogenous leukemia",
+            "chronic myelogenous leukemia, BCR-ABL1 positive"
+          ]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["PHASE2"],
+          "designInfo": {
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          }
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "type": "BIOLOGICAL",
+              "name": "sargramostim"
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Cytogenetic response (complete and partial)"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "Toxicity as assessed by the Expanded Common Toxicity Criteria v2.0"
+            },
+            {
+              "measure": "Time to progression"
+            },
+            {
+              "measure": "Survival"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "DISEASE CHARACTERISTICS:\n\n* Histologically confirmed chronic phase chronic myelogenous leukemia (CML)\n\n  * Presence of t(9;22)(q34;q11) with at least 20 cells examined in metaphase by cytogenetic examination of the bone marrow\n* Complete hematologic remission during prior therapy\\* as seen on 2 separate blood count analyses, defined by the following:\n\n  * WBC no greater than 10,000/mm\\^3 AND platelet count no greater than 450,000/mm\\^3\n  * Disappearance of all signs and symptoms of disease, including palpable splenomegaly\n  * Normal differential counts (i.e., absence of blasts, promyelocytes, myelocytes, and metamyelocytes) NOTE: \\*Continuation of therapy that led to complete hematologic remission is required during study participation\n* Persistent cytogenetic disease despite 12 months of prior imatinib mesylate therapy, which may have included a trial dose-escalation OR intolerant of imatinib mesylate at a dose greater than 400 mg/day\n* Not in complete cytogenetic remission within 30 days of study entry\n\n  * Persistent Philadelphia chromosome by bone marrow exam\n\nPATIENT CHARACTERISTICS:\n\nAge\n\n* 18 and over\n\nPerformance status\n\n* ECOG 0-2\n\nLife expectancy\n\n* More than 6 months\n\nHematopoietic\n\n* See Disease Characteristics\n\nHepatic\n\n* Not specified\n\nRenal\n\n* Not specified\n\nOther\n\n* Not pregnant or nursing\n* Fertile patients must use effective contraception\n* No uncontrolled active infective\n* No serious medical or psychiatric illness that would prevent giving informed consent or limit survival to less than 6 months\n* No other malignancy not in remission except curatively treated basal cell skin cancer or carcinoma in situ of the cervix\n\nPRIOR CONCURRENT THERAPY:\n\nBiologic therapy\n\n* Prior sargramostim (GM-CSF) allowed\n* Prior interferon alfa for CML allowed\n* No prior stem cell transplantation\n* Concurrent interferon alfa\\* for CML allowed NOTE: \\*No dose increase during study participation\n\nChemotherapy\n\n* At least 4 weeks since prior chemotherapy\n\nEndocrine therapy\n\n* Not specified\n\nRadiotherapy\n\n* At least 4 weeks since prior radiotherapy\n* No concurrent radiotherapy\n\nSurgery\n\n* At least 4 weeks since prior surgery\n\nOther\n\n* Prior imatinib mesylate for CML allowed\n* No other concurrent medication for CML\n* Concurrent imatinib mesylate\\* for CML allowed NOTE: \\*No dose increase during study participation",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "18 Years",
+          "maximumAge": "120 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "Istvan Molnar, MD",
+              "affiliation": "Wake Forest University Health Sciences",
+              "role": "STUDY_CHAIR"
+            },
+            {
+              "name": "Bayard L. Powell, MD",
+              "affiliation": "Wake Forest University Health Sciences"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "CCOP - Western Regional, Arizona",
+              "city": "Phoenix",
+              "state": "Arizona",
+              "zip": "85006-2726",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 33.44838,
+                "lon": -112.07404
+              }
+            },
+            {
+              "facility": "CCOP - Bay Area Tumor Institute",
+              "city": "Oakland",
+              "state": "California",
+              "zip": "94609-3305",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 37.80437,
+                "lon": -122.2708
+              }
+            },
+            {
+              "facility": "CCOP - Mount Sinai Medical Center",
+              "city": "Miami Beach",
+              "state": "Florida",
+              "zip": "33140",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 25.79065,
+                "lon": -80.13005
+              }
+            },
+            {
+              "facility": "Regional Radiation Oncology Center at Rome",
+              "city": "Rome",
+              "state": "Georgia",
+              "zip": "30165",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.25704,
+                "lon": -85.16467
+              }
+            },
+            {
+              "facility": "CCOP - Central Illinois",
+              "city": "Decatur",
+              "state": "Illinois",
+              "zip": "62526",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 39.84031,
+                "lon": -88.9548
+              }
+            },
+            {
+              "facility": "Kentuckiana Cancer Institute, PLLC",
+              "city": "Louisville",
+              "state": "Kentucky",
+              "zip": "40202",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 38.25424,
+                "lon": -85.75941
+              }
+            },
+            {
+              "facility": "MBCCOP - LSU Health Sciences Center",
+              "city": "New Orleans",
+              "state": "Louisiana",
+              "zip": "70112",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 29.95465,
+                "lon": -90.07507
+              }
+            },
+            {
+              "facility": "Alamance Cancer Center",
+              "city": "Burlington",
+              "state": "North Carolina",
+              "zip": "27216",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.09569,
+                "lon": -79.4378
+              }
+            },
+            {
+              "facility": "Hugh Chatham Memorial Hospital",
+              "city": "Elkin",
+              "state": "North Carolina",
+              "zip": "28621",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.2443,
+                "lon": -80.8484
+              }
+            },
+            {
+              "facility": "Southeastern Medical Oncology Center",
+              "city": "Goldsboro",
+              "state": "North Carolina",
+              "zip": "27534-9479",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 35.38488,
+                "lon": -77.99277
+              }
+            },
+            {
+              "facility": "Brody School of Medicine at East Carolina University",
+              "city": "Greenville",
+              "state": "North Carolina",
+              "zip": "27858",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 35.61266,
+                "lon": -77.36635
+              }
+            },
+            {
+              "facility": "Comprehensive Cancer Center at Wake Forest University",
+              "city": "Winston-Salem",
+              "state": "North Carolina",
+              "zip": "27157-1096",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 36.09986,
+                "lon": -80.24422
+              }
+            },
+            {
+              "facility": "CCOP - Columbus",
+              "city": "Columbus",
+              "state": "Ohio",
+              "zip": "43206",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 39.96118,
+                "lon": -82.99879
+              }
+            },
+            {
+              "facility": "Cancer Centers of the Carolinas - Eastside",
+              "city": "Greenville",
+              "state": "South Carolina",
+              "zip": "29615",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.85262,
+                "lon": -82.39401
+              }
+            },
+            {
+              "facility": "CCOP - Upstate Carolina",
+              "city": "Spartanburg",
+              "state": "South Carolina",
+              "zip": "29303",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 34.94957,
+                "lon": -81.93205
+              }
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D007938",
+              "term": "Leukemia"
+            },
+            {
+              "id": "D007951",
+              "term": "Leukemia, Myeloid"
+            },
+            {
+              "id": "D015464",
+              "term": "Leukemia, Myelogenous, Chronic, BCR-ABL Positive"
+            },
+            {
+              "id": "D015466",
+              "term": "Leukemia, Myeloid, Chronic-Phase"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D009370",
+              "term": "Neoplasms by Histologic Type"
+            },
+            {
+              "id": "D009369",
+              "term": "Neoplasms"
+            },
+            {
+              "id": "D006402",
+              "term": "Hematologic Diseases"
+            },
+            {
+              "id": "D009196",
+              "term": "Myeloproliferative Disorders"
+            },
+            {
+              "id": "D001855",
+              "term": "Bone Marrow Diseases"
+            },
+            {
+              "id": "D002908",
+              "term": "Chronic Disease"
+            },
+            {
+              "id": "D020969",
+              "term": "Disease Attributes"
+            },
+            {
+              "id": "D010335",
+              "term": "Pathologic Processes"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M10945",
+              "name": "Leukemia",
+              "asFound": "Leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M10955",
+              "name": "Leukemia, Myeloid",
+              "asFound": "Myelogenous Leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M18123",
+              "name": "Leukemia, Myelogenous, Chronic, BCR-ABL Positive",
+              "asFound": "Chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M18125",
+              "name": "Leukemia, Myeloid, Chronic-Phase",
+              "asFound": "Chronic phase chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M12315",
+              "name": "Neoplasms by Histologic Type",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9490",
+              "name": "Hematologic Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M12149",
+              "name": "Myeloproliferative Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5134",
+              "name": "Bone Marrow Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M6147",
+              "name": "Chronic Disease",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M22700",
+              "name": "Disease Attributes",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T1303",
+              "name": "Chronic Graft Versus Host Disease",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T3995",
+              "name": "Myeloid Leukemia",
+              "relevance": "LOW"
+            },
+            {
+              "id": "T1309",
+              "name": "Chronic Myeloid Leukemia",
+              "asFound": "Chronic myelogenous leukemia",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "T1311",
+              "name": "Chronic Myeloproliferative Disorders",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC04",
+              "name": "Neoplasms"
+            },
+            {
+              "abbrev": "BC15",
+              "name": "Blood and Lymph Conditions"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            },
+            {
+              "abbrev": "Rare",
+              "name": "Rare Diseases"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "C081222",
+              "term": "Sargramostim"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D007155",
+              "term": "Immunologic Factors"
+            },
+            {
+              "id": "D045505",
+              "term": "Physiological Effects of Drugs"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M257633",
+              "name": "Molgramostim",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M219218",
+              "name": "Sargramostim",
+              "asFound": "Pharmaceutical",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M10201",
+              "name": "Immunologic Factors",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "ANeo",
+              "name": "Antineoplastic Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01402479",
+          "orgStudyIdInfo": {
+            "id": "0408-131-005"
+          },
+          "organization": {
+            "fullName": "Seoul National University Hospital",
+            "class": "OTHER"
+          },
+          "briefTitle": "An Open-labeled Trial of Ramipril in Patients With Migraine",
+          "officialTitle": "An Open-labeled Trial of Ramipril in Patients With Migraine"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2011-07",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2004-10"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2005-07",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2005-07",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2011-07-24",
+          "studyFirstSubmitQcDate": "2011-07-24",
+          "studyFirstPostDateStruct": {
+            "date": "2011-07-26",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2011-08-05",
+          "lastUpdatePostDateStruct": {
+            "date": "2011-08-08",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "oldNameTitle": "Manho Kim, MD, PhD",
+            "oldOrganization": "Department of Neurology, Seoul National University Hospital"
+          },
+          "leadSponsor": {
+            "name": "Seoul National University Hospital",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "Physiology of migraine involving renin-angiotensin systems (RAS) has been implicated. Ramipril is a broadly-used angiotensin-converting enzyme inhibitor. The investigators attempt to test the efficacy of ramipril on the prophylaxis of migraine attacks."
+        },
+        "conditionsModule": {
+          "conditions": ["Migraine With Hypertension"],
+          "keywords": ["migraine,", "ramipril,", "hypertension"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["PHASE2"],
+          "designInfo": {
+            "allocation": "NON_RANDOMIZED",
+            "interventionModel": "SINGLE_GROUP",
+            "primaryPurpose": "TREATMENT",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          },
+          "enrollmentInfo": {
+            "count": 50,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "ramipril",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "open label single arm trial",
+              "interventionNames": ["Drug: Ramipril"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DRUG",
+              "name": "Ramipril",
+              "description": "ramipril 2.5mg twice a day",
+              "armGroupLabels": ["ramipril"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "headache frequency",
+              "description": "headache days",
+              "timeFrame": "12 week"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* Patients with chronic migraine are included in this study. Migraineurs should be aged 20 to 70 years old with the ability to read and understand the self-report scales, including the headache diary, used in this study.\n\nExclusion Criteria:\n\n1. Medication overuse headache are excluded in this study.\n2. Treatment with other ACEI or medication that may affect ARS\n3. Treatment with migraine prophylactic medications or anti-hypertensive agents including \u03b2 adrenergic receptor or calcium channel blockers\n4. Past history of hepatic or renal dysfunction; an abnormal electrocardiography; a psychiatric disorder; a history of substance abuse; pregnancy or lactation; use of anti-psychotics, antidepressants, or anti-anxiety drugs.",
+          "sex": "ALL",
+          "minimumAge": "20 Years",
+          "maximumAge": "70 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"]
+        },
+        "contactsLocationsModule": {
+          "locations": [
+            {
+              "facility": "Seoul National University Hospital",
+              "city": "Seoul",
+              "zip": "110-744",
+              "country": "Korea, Republic of",
+              "geoPoint": {
+                "lat": 37.566,
+                "lon": 126.9784
+              }
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D008881",
+              "term": "Migraine Disorders"
+            },
+            {
+              "id": "D006973",
+              "term": "Hypertension"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D014652",
+              "term": "Vascular Diseases"
+            },
+            {
+              "id": "D002318",
+              "term": "Cardiovascular Diseases"
+            },
+            {
+              "id": "D051270",
+              "term": "Headache Disorders, Primary"
+            },
+            {
+              "id": "D020773",
+              "term": "Headache Disorders"
+            },
+            {
+              "id": "D001927",
+              "term": "Brain Diseases"
+            },
+            {
+              "id": "D002493",
+              "term": "Central Nervous System Diseases"
+            },
+            {
+              "id": "D009422",
+              "term": "Nervous System Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M10024",
+              "name": "Hypertension",
+              "asFound": "Hypertension",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M11852",
+              "name": "Migraine Disorders",
+              "asFound": "Migraine",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M17400",
+              "name": "Vascular Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9351",
+              "name": "Headache",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M22529",
+              "name": "Headache Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M26657",
+              "name": "Headache Disorders, Primary",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5204",
+              "name": "Brain Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M5742",
+              "name": "Central Nervous System Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC14",
+              "name": "Heart and Blood Diseases"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC10",
+              "name": "Nervous System Diseases"
+            },
+            {
+              "abbrev": "BC23",
+              "name": "Symptoms and General Pathology"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D017257",
+              "term": "Ramipril"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D000806",
+              "term": "Angiotensin-Converting Enzyme Inhibitors"
+            },
+            {
+              "id": "D011480",
+              "term": "Protease Inhibitors"
+            },
+            {
+              "id": "D004791",
+              "term": "Enzyme Inhibitors"
+            },
+            {
+              "id": "D045504",
+              "term": "Molecular Mechanisms of Pharmacological Action"
+            },
+            {
+              "id": "D000959",
+              "term": "Antihypertensive Agents"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M19553",
+              "name": "Ramipril",
+              "asFound": "Active treatment",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M4134",
+              "name": "Angiotensin-Converting Enzyme Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7951",
+              "name": "Enzyme Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M19609",
+              "name": "HIV Protease Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14343",
+              "name": "Protease Inhibitors",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4277",
+              "name": "Antihypertensive Agents",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "AnAg",
+              "name": "Antihypertensive Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            },
+            {
+              "abbrev": "Infe",
+              "name": "Anti-Infective Agents"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT00812279",
+          "orgStudyIdInfo": {
+            "id": "YVD-CS01-EU"
+          },
+          "organization": {
+            "fullName": "Philip Morris Products S.A.",
+            "class": "INDUSTRY"
+          },
+          "briefTitle": "Investigate the Exposure to Selected Smoke Constituents in Smokers Switching to Distillation Based Smoking Article",
+          "officialTitle": "A Controlled, Randomised, Open-label, 3-arm Parallel Single-centre Confinement Study to Investigate Exposure to Selected Smoke Constituents in Smokers Switching From Conventional Cigarettes to SMAR Cigarettes for 5 Days"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2019-11",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2008-11"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2009-02",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2009-02",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2008-12-19",
+          "studyFirstSubmitQcDate": "2008-12-19",
+          "studyFirstPostDateStruct": {
+            "date": "2008-12-22",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2019-11-05",
+          "lastUpdatePostDateStruct": {
+            "date": "2019-11-07",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Philip Morris Products S.A.",
+            "class": "INDUSTRY"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "The overall purpose of this clinical study conducted in confinement under well-defined conditions is to obtain initial data on the levels of human body exposure to selected smoked constituents of the SMAR cigarette.\n\nThe main objective of this study is to compare the biomarkers of exposure to cigarette smoke constituents in smokers switching to SMAR and to biomarkers in smokers of conventional cigarettes (CC). The biomarkers of exposure will be measured in blood and urine samples collected from the subjects. Moreover, the biomarkers in subjects smoking conventional or SMAR cigarettes will be compared with those biomarkers in smokers who stop smoking for 5 days. The short term safety of this new product will also be evaluated.",
+          "detailedDescription": "This is a controlled, randomised, open-label, 3-arm parallel single centre confinement study to investigate exposure to selected smoke constituents in smokers switching from CC to SMAR for 5 days.\n\n112 eligible subjects will be randomised to the 3 study arms: SMAR, conventional cigarettes (CC) and smoking cessation (SC) in a 2:1:1 ratio.\n\nFollowing the screening visit (within 4 weeks prior to the day of admission), the study will be run over an 8-day period in a confined environment, consisting of the admission day (D-2), a 2-day baseline period (D-1 and D0), and a 5-day exposure period (D1 to D5). Subjects will be discharged in the morning of D6. From the discharge of the subject, a 7-day safety follow-up period will be carried out (until D13)."
+        },
+        "conditionsModule": {
+          "conditions": ["Smoking"],
+          "keywords": ["Smokers with acceptable health conditions"]
+        },
+        "designModule": {
+          "studyType": "INTERVENTIONAL",
+          "phases": ["NA"],
+          "designInfo": {
+            "allocation": "RANDOMIZED",
+            "interventionModel": "PARALLEL",
+            "primaryPurpose": "BASIC_SCIENCE",
+            "maskingInfo": {
+              "masking": "NONE"
+            }
+          },
+          "enrollmentInfo": {
+            "count": 112,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "1. SMAR",
+              "type": "EXPERIMENTAL",
+              "description": "Subjects will be allowed to smoke SMAR without any limit on consumption during the designated smoking times.",
+              "interventionNames": ["Other: Distillation based smoking article (SMAR cigarette)"]
+            },
+            {
+              "label": "2 Conventional cigarette (CC)",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "Subjects will be allowed to smoke without any limit on consumption during the designated smoking times.",
+              "interventionNames": ["Other: conventional cigarette"]
+            },
+            {
+              "label": "3. smoking cessation (SC)",
+              "type": "ACTIVE_COMPARATOR",
+              "description": "Subjects will not be allowed to smoke any cigarettes or to use any other nicotine/tobacco-containing products during the 5 days following randomisation.",
+              "interventionNames": ["Other: smoking cessation"]
+            }
+          ],
+          "interventions": [
+            {
+              "type": "OTHER",
+              "name": "Distillation based smoking article (SMAR cigarette)",
+              "description": "Subjects randomised to the SMAR arm will be trained by the site staff on the usage of SMAR and the corresponding lighter prior to smoking the first SMAR. Subjects will be allowed to smoke SMAR without any limit on consumption during the designated smoking times but have to request each SMAR from the site staff when they wish to smoke.",
+              "armGroupLabels": ["1. SMAR"]
+            },
+            {
+              "type": "OTHER",
+              "name": "conventional cigarette",
+              "description": "Subjects randomised to the CC arm will continue to smoke their preferred CC brand during the exposure period. Subjects will be allowed to smoke without any limit on consumption during the designated smoking times but will have to request each CC from the site staff when they wish to smoke.",
+              "armGroupLabels": ["2 Conventional cigarette (CC)"]
+            },
+            {
+              "type": "OTHER",
+              "name": "smoking cessation",
+              "description": "Subjects will not be allowed to smoke any cigarettes or to use any other nicotine/tobacco-containing products during the 5 days following randomisation.",
+              "armGroupLabels": ["3. smoking cessation (SC)"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "To demonstrate a reduction in the three primary biomarkers of exposure: Carboxyhaemoglobin concentration in blood, Urinary excretion of S-phenylmercapturic acid and urinary excretion of NNAL and NNAL-glucuronides (total NNAL)",
+              "timeFrame": "5 days"
+            }
+          ],
+          "secondaryOutcomes": [
+            {
+              "measure": "To explore changes from baseline COHb, S-PMA, and total NNAL in the three study arms in the course of the study",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To explore changes from baseline in the three study arms with regard to urinary excretion of biomarkers of exposure to several other smoke constituents.",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess urinary excretion of nicotine and its five major nicotine metabolites in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess nicotine and cotinine concentrations in plasma in the three study arms To compare levels of all biomarkers of exposure in the SMAR arm to those in the smoking cessation (SC) arm",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess the mutagenicity potential in urine at the end of the study in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To monitor blood pressure, pulse rate, electrocardiogram, clinical laboratory parameters (standard clinical biochemistry, standard haematology and urine analysis), and adverse events",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To investigate craving and withdrawal symptoms as well as pulmonary symptoms in all three study arms by means of questionnaires",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To investigate change in cytochrome P450 1A2 (CYP1A2) activity from D0 to D5 in the three study arms",
+              "timeFrame": "5 days"
+            },
+            {
+              "measure": "To assess and compare human smoking topography (HST) in smokers before and after switching to SMAR",
+              "timeFrame": "5 days"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* Caucasian adult smokers (male and female), with acceptable health conditions, aged from 23 to 55 years who usually smoke 10 to 30 non-mentholated conventional cigarettes (with a maximum ISO tar yield of 10 mg) per day, for at least the last 5 consecutive years, will be enrolled in this study.\n\nExclusion Criteria:\n\n* women of childbearing potential must be excluded if:Subject is pregnant (does not have negative pregnancy tests at screening and at D-2) or breastfeeding/ subject does not agree to use an acceptable method of effective contraception: intrauterine device, intrauterine system, established use of oral/injectable/implantable/ transdermal hormonal methods, barrier methods of contraception (condoms, occlusive caps) with spermicidal foam/gel/film/suppository, vasectomised partner or true abstinence (periodic abstinence and withdrawal are not effective methods) until the end of the safety follow-up period.",
+          "healthyVolunteers": true,
+          "sex": "ALL",
+          "minimumAge": "23 Years",
+          "maximumAge": "55 Years",
+          "stdAges": ["ADULT"]
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "Katarzyna Jarus-Dziedzic, MD",
+              "affiliation": "MTZ Clinical Research Inc (Warsaw, Poland)",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "MTZ Clinical Research Inc.",
+              "city": "Warsaw",
+              "zip": "02-106",
+              "country": "Poland",
+              "geoPoint": {
+                "lat": 52.22977,
+                "lon": 21.01178
+              }
+            }
+          ]
+        },
+        "referencesModule": {
+          "references": [
+            {
+              "pmid": "26817490",
+              "type": "RESULT",
+              "citation": "Ludicke F, Haziza C, Weitkunat R, Magnette J. Evaluation of Biomarkers of Exposure in Smokers Switching to a Carbon-Heated Tobacco Product: A Controlled, Randomized, Open-Label 5-Day Exposure Study. Nicotine Tob Res. 2016 Jul;18(7):1606-13. doi: 10.1093/ntr/ntw022. Epub 2016 Jan 27."
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M12478",
+              "name": "Nicotine",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT05600179",
+          "orgStudyIdInfo": {
+            "id": "0110/2022"
+          },
+          "organization": {
+            "fullName": "Federico II University",
+            "class": "OTHER"
+          },
+          "briefTitle": "OCTA in Epivascular Glia After Dex Implant",
+          "officialTitle": "Evaluation of Changes in Epivascular Glia Before and After Intravitreal Dexamethasone Implant : an OCT Pilot Study"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2022-12",
+          "overallStatus": "COMPLETED",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2021-01-01",
+            "type": "ACTUAL"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2022-09-30",
+            "type": "ACTUAL"
+          },
+          "completionDateStruct": {
+            "date": "2022-09-30",
+            "type": "ACTUAL"
+          },
+          "studyFirstSubmitDate": "2022-10-26",
+          "studyFirstSubmitQcDate": "2022-10-28",
+          "studyFirstPostDateStruct": {
+            "date": "2022-10-31",
+            "type": "ACTUAL"
+          },
+          "lastUpdateSubmitDate": "2022-12-06",
+          "lastUpdatePostDateStruct": {
+            "date": "2022-12-08",
+            "type": "ACTUAL"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "PRINCIPAL_INVESTIGATOR",
+            "investigatorFullName": "Gilda Cennamo",
+            "investigatorTitle": "professor",
+            "investigatorAffiliation": "Federico II University"
+          },
+          "leadSponsor": {
+            "name": "Federico II University",
+            "class": "OTHER"
+          }
+        },
+        "oversightModule": {
+          "oversightHasDmc": false,
+          "isFdaRegulatedDrug": false,
+          "isFdaRegulatedDevice": false
+        },
+        "descriptionModule": {
+          "briefSummary": "The aim of this prospective study was for the first time, to analyze specific morphologic features in diabetic eyes with macular oedema, such as changes of the foveal avascular zone and the presence of epivascular glia, and see how they would change after dexamethasone intravitreal implant"
+        },
+        "conditionsModule": {
+          "conditions": ["Diabetic Retinopathy"]
+        },
+        "designModule": {
+          "studyType": "OBSERVATIONAL",
+          "patientRegistry": false,
+          "designInfo": {
+            "observationalModel": "COHORT",
+            "timePerspective": "PROSPECTIVE"
+          },
+          "enrollmentInfo": {
+            "count": 38,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "patients with diabetic macular edema",
+              "interventionNames": ["Drug: Dexamethasone intravitreal implant"]
+            },
+            {
+              "label": "healthy patients"
+            }
+          ],
+          "interventions": [
+            {
+              "type": "DRUG",
+              "name": "Dexamethasone intravitreal implant",
+              "description": "Dexamethasone intravitreal implant",
+              "armGroupLabels": ["patients with diabetic macular edema"]
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "Changes in epivascular glia after Dexamethasone implant in patients with diabetic retinopathy and inflammatory macular edema",
+              "timeFrame": "up to 6 months"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* diabetic retinopathy complicated by macular edema\n\nExclusion Criteria:\n\n* congenital eye disorders,\n* previous diagnosis of other ocular diseases\n* history of vitreous hemorrhage",
+          "healthyVolunteers": true,
+          "sex": "ALL",
+          "minimumAge": "18 Years",
+          "maximumAge": "80 Years",
+          "stdAges": ["ADULT", "OLDER_ADULT"],
+          "studyPopulation": "The participans were older than 18 years with diagnosis of inflammatory diabetic macular edema glaucoma..",
+          "samplingMethod": "NON_PROBABILITY_SAMPLE"
+        },
+        "contactsLocationsModule": {
+          "locations": [
+            {
+              "facility": "University of Naples \"Federico II\"",
+              "city": "Naples",
+              "zip": "80100",
+              "country": "Italy",
+              "geoPoint": {
+                "lat": 40.85216,
+                "lon": 14.26811
+              }
+            }
+          ]
+        },
+        "ipdSharingStatementModule": {
+          "ipdSharing": "YES"
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D003930",
+              "term": "Diabetic Retinopathy"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D012164",
+              "term": "Retinal Diseases"
+            },
+            {
+              "id": "D005128",
+              "term": "Eye Diseases"
+            },
+            {
+              "id": "D003925",
+              "term": "Diabetic Angiopathies"
+            },
+            {
+              "id": "D014652",
+              "term": "Vascular Diseases"
+            },
+            {
+              "id": "D002318",
+              "term": "Cardiovascular Diseases"
+            },
+            {
+              "id": "D048909",
+              "term": "Diabetes Complications"
+            },
+            {
+              "id": "D003920",
+              "term": "Diabetes Mellitus"
+            },
+            {
+              "id": "D004700",
+              "term": "Endocrine System Diseases"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M14999",
+              "name": "Retinal Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7125",
+              "name": "Diabetic Retinopathy",
+              "asFound": "Diabetic Retinopathy",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M8271",
+              "name": "Eye Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7120",
+              "name": "Diabetic Angiopathies",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M17400",
+              "name": "Vascular Diseases",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7115",
+              "name": "Diabetes Mellitus",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M26004",
+              "name": "Diabetes Complications",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M7862",
+              "name": "Endocrine System Diseases",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC11",
+              "name": "Eye Diseases"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            },
+            {
+              "abbrev": "BC14",
+              "name": "Heart and Blood Diseases"
+            },
+            {
+              "abbrev": "BC19",
+              "name": "Gland and Hormone Related Diseases"
+            },
+            {
+              "abbrev": "BC18",
+              "name": "Nutritional and Metabolic Diseases"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D003907",
+              "term": "Dexamethasone"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D000893",
+              "term": "Anti-Inflammatory Agents"
+            },
+            {
+              "id": "D000932",
+              "term": "Antiemetics"
+            },
+            {
+              "id": "D001337",
+              "term": "Autonomic Agents"
+            },
+            {
+              "id": "D018373",
+              "term": "Peripheral Nervous System Agents"
+            },
+            {
+              "id": "D045505",
+              "term": "Physiological Effects of Drugs"
+            },
+            {
+              "id": "D005765",
+              "term": "Gastrointestinal Agents"
+            },
+            {
+              "id": "D005938",
+              "term": "Glucocorticoids"
+            },
+            {
+              "id": "D006728",
+              "term": "Hormones"
+            },
+            {
+              "id": "D006730",
+              "term": "Hormones, Hormone Substitutes, and Hormone Antagonists"
+            },
+            {
+              "id": "D018931",
+              "term": "Antineoplastic Agents, Hormonal"
+            },
+            {
+              "id": "D000970",
+              "term": "Antineoplastic Agents"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M7102",
+              "name": "Dexamethasone",
+              "asFound": "High",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M235549",
+              "name": "Dexamethasone acetate",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4217",
+              "name": "Anti-Inflammatory Agents",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4251",
+              "name": "Antiemetics",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M8881",
+              "name": "Gastrointestinal Agents",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9047",
+              "name": "Glucocorticoids",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9789",
+              "name": "Hormones",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M9788",
+              "name": "Hormone Antagonists",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M20966",
+              "name": "Antineoplastic Agents, Hormonal",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "Infl",
+              "name": "Anti-Inflammatory Agents"
+            },
+            {
+              "abbrev": "ANeo",
+              "name": "Antineoplastic Agents"
+            },
+            {
+              "abbrev": "AnEm",
+              "name": "Antiemetics"
+            },
+            {
+              "abbrev": "Gast",
+              "name": "Gastrointestinal Agents"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT01511679",
+          "orgStudyIdInfo": {
+            "id": "BANC RFA-AA-12-006"
+          },
+          "organization": {
+            "fullName": "Boston Children's Hospital",
+            "class": "OTHER"
+          },
+          "briefTitle": "Brain-imaging and Adolescent Neuroscience Consortium",
+          "officialTitle": "Brain-imaging and Adolescent Neuroscience Consortium",
+          "acronym": "BANC"
+        },
+        "statusModule": {
+          "statusVerifiedDate": "2013-01",
+          "overallStatus": "WITHDRAWN",
+          "whyStopped": "The project was not funded.",
+          "expandedAccessInfo": {
+            "hasExpandedAccess": false
+          },
+          "startDateStruct": {
+            "date": "2012-09"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2017-03",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2017-09",
+            "type": "ESTIMATED"
+          },
+          "studyFirstSubmitDate": "2012-01-13",
+          "studyFirstSubmitQcDate": "2012-01-18",
+          "studyFirstPostDateStruct": {
+            "date": "2012-01-19",
+            "type": "ESTIMATED"
+          },
+          "lastUpdateSubmitDate": "2013-01-02",
+          "lastUpdatePostDateStruct": {
+            "date": "2013-01-03",
+            "type": "ESTIMATED"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR"
+          },
+          "leadSponsor": {
+            "name": "Boston Children's Hospital",
+            "class": "OTHER"
+          },
+          "collaborators": [
+            {
+              "name": "Massachusetts General Hospital",
+              "class": "OTHER"
+            },
+            {
+              "name": "Mclean Hospital",
+              "class": "OTHER"
+            },
+            {
+              "name": "Massachusetts Institute of Technology",
+              "class": "OTHER"
+            }
+          ]
+        },
+        "oversightModule": {
+          "oversightHasDmc": false
+        },
+        "descriptionModule": {
+          "briefSummary": "This is a multi-site study of adolescents 12-21 years-of-age to evaluate the long and shorter-term effect of adolescent alcohol use on the developing brain.",
+          "detailedDescription": "The overall specific aims of this study are to: 1) assess the short and long-term consequences of alcohol exposure on brain, cognitive, and emotional/regulatory development during preadolescence and adolescence; 2) determine the effects of timing, dose, and duration of alcohol on brain and cognitive development; 3) assess recovery of neural and behavioral function to determine if the plasticity of the adolescent brain makes it more or less vulnerable to alcohol's acute and chronic effects; 4) understand how other key covariates (e.g., existing or emerging psychopathology, family history of alcoholism, demographics, pubertal development) factor into alcohol's effects on the brain; and 5) identify early neural, cognitive, and affective markers that may predict alcohol abuse and dependence during adolescence and/or adulthood."
+        },
+        "conditionsModule": {
+          "conditions": ["Alcohol Abuse"],
+          "keywords": ["Alcohol abuse"]
+        },
+        "designModule": {
+          "studyType": "OBSERVATIONAL",
+          "designInfo": {
+            "observationalModel": "COHORT",
+            "timePerspective": "PROSPECTIVE"
+          },
+          "bioSpec": {
+            "retention": "SAMPLES_WITH_DNA",
+            "description": "Saliva DNA samples for future analyses."
+          },
+          "enrollmentInfo": {
+            "count": 0,
+            "type": "ACTUAL"
+          }
+        },
+        "armsInterventionsModule": {
+          "armGroups": [
+            {
+              "label": "Alcohol-naive adolescents",
+              "description": "A general population longitudinal cohort of alcohol-na\u00efve (or h/o minimal recent-onset drinking) adolescents in three specific age-groups: early (12-14 y/o), middle (15-17 y/o), and late (18-21 y/o)."
+            },
+            {
+              "label": "Treatment sample",
+              "description": "A sample of adolescents who have a \\>1 year history of heavy drinking but have agreed to stop drinking as part of their treatment plan"
+            },
+            {
+              "label": "High risk sample",
+              "description": "High-risk adolescents who have a family history of alcohol-use disorder and other risk factors (symptoms of Attention-Deficit/Hyperactivity Disorder (ADHD), Conduct Disorder, or Mood Disorder)"
+            }
+          ]
+        },
+        "eligibilityModule": {
+          "eligibilityCriteria": "Inclusion Criteria:\n\n* able to read and understand English\n* available for follow-up\n* parental consent/adolescent assent for those 12-17 years\n* consent for those 18-21 years\n\nExclusion Criteria:\n\n* Weight \\> 300 lbs\n* braces or unremovable embedded metal\n* claustrophobia or inability to lie still in MRI machine\n* current or past 12-mos pregnancy (females)\n* requires urgent medical/mental health care",
+          "healthyVolunteers": false,
+          "sex": "ALL",
+          "minimumAge": "12 Years",
+          "maximumAge": "21 Years",
+          "stdAges": ["CHILD", "ADULT"],
+          "studyPopulation": "Male and female adolescents 12-21 years-of-age presenting for care at one of the participating medical clinics",
+          "samplingMethod": "NON_PROBABILITY_SAMPLE"
+        },
+        "contactsLocationsModule": {
+          "overallOfficials": [
+            {
+              "name": "John R Knight, MD",
+              "affiliation": "Boston Children's Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Gordon J Harris, PhD",
+              "affiliation": "Massachusetts General Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Simon Warfield, PhD",
+              "affiliation": "Boston Children's Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Avram Holmes, PhD",
+              "affiliation": "Harvard University",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Scott Lukas, PhD",
+              "affiliation": "Mclean Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Marisa Silveri, PhD",
+              "affiliation": "Mclean Hospital",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "Marlene Oscar Berman, PhD",
+              "affiliation": "Boston University",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            },
+            {
+              "name": "John Gabrieli, PhD",
+              "affiliation": "Massachusetts Institute of Technology",
+              "role": "PRINCIPAL_INVESTIGATOR"
+            }
+          ],
+          "locations": [
+            {
+              "facility": "McLean Hospital",
+              "city": "Belmont",
+              "state": "Massachusetts",
+              "zip": "02478",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.39593,
+                "lon": -71.17867
+              }
+            },
+            {
+              "facility": "Massachusetts General Hospital",
+              "city": "Boston",
+              "state": "Massachusetts",
+              "zip": "02114",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.35843,
+                "lon": -71.05977
+              }
+            },
+            {
+              "facility": "Boston University School of Medicine",
+              "city": "Boston",
+              "state": "Massachusetts",
+              "zip": "02118",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.35843,
+                "lon": -71.05977
+              }
+            },
+            {
+              "facility": "Massachusetts Institute of Technology",
+              "city": "Cambridge",
+              "state": "Massachusetts",
+              "zip": "02139",
+              "country": "United States",
+              "geoPoint": {
+                "lat": 42.3751,
+                "lon": -71.10561
+              }
+            }
+          ]
+        },
+        "referencesModule": {
+          "seeAlsoLinks": [
+            {
+              "label": "Center for Adolescent Substance Abuse Research at Children's Hospital Boston",
+              "url": "http://www.ceasar.org"
+            }
+          ]
+        }
+      },
+      "derivedSection": {
+        "miscInfoModule": {
+          "versionHolder": "2025-04-09"
+        },
+        "conditionBrowseModule": {
+          "meshes": [
+            {
+              "id": "D000437",
+              "term": "Alcoholism"
+            }
+          ],
+          "ancestors": [
+            {
+              "id": "D019973",
+              "term": "Alcohol-Related Disorders"
+            },
+            {
+              "id": "D019966",
+              "term": "Substance-Related Disorders"
+            },
+            {
+              "id": "D064419",
+              "term": "Chemically-Induced Disorders"
+            },
+            {
+              "id": "D001523",
+              "term": "Mental Disorders"
+            }
+          ],
+          "browseLeaves": [
+            {
+              "id": "M3783",
+              "name": "Alcoholism",
+              "asFound": "Alcohol Abuse",
+              "relevance": "HIGH"
+            },
+            {
+              "id": "M21842",
+              "name": "Alcohol-Related Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M21837",
+              "name": "Substance-Related Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M30302",
+              "name": "Chemically-Induced Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M4815",
+              "name": "Mental Disorders",
+              "relevance": "LOW"
+            },
+            {
+              "id": "M14473",
+              "name": "Psychotic Disorders",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "BC25",
+              "name": "Substance Related Disorders"
+            },
+            {
+              "abbrev": "BXM",
+              "name": "Behaviors and Mental Disorders"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Conditions"
+            }
+          ]
+        },
+        "interventionBrowseModule": {
+          "browseLeaves": [
+            {
+              "id": "M3777",
+              "name": "Ethanol",
+              "relevance": "LOW"
+            }
+          ],
+          "browseBranches": [
+            {
+              "abbrev": "Infe",
+              "name": "Anti-Infective Agents"
+            },
+            {
+              "abbrev": "CNSDep",
+              "name": "Central Nervous System Depressants"
+            },
+            {
+              "abbrev": "All",
+              "name": "All Drugs and Chemicals"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    }
+  ]
+}

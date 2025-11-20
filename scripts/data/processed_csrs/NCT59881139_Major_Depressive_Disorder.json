@@ -1,0 +1,15 @@
+{
+  "nct_id": "NCT59881139",
+  "indication": "Major Depressive Disorder",
+  "phase": "Phase 2/3",
+  "sample_size": 340,
+  "duration_weeks": 117,
+  "dropout_rate": 0.23,
+  "primary_endpoints": ["Response rate"],
+  "secondary_endpoints": ["MADRS score", "HAM-D score"],
+  "blinding": "single-blind",
+  "control_arm": "active comparator",
+  "outcome_summary": "Study met its primary endpoint with Response rate showing statistically significant improvement.",
+  "success": true,
+  "failure_reason": ""
+}

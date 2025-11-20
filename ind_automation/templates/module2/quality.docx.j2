@@ -1,0 +1,10 @@
+{# Basic template for Module 2.3 Quality Overall Summary #}
+MODULE 2.3: QUALITY OVERALL SUMMARY
+
+Drug Product: {{ drug_name }}
+IND Number: {{ ind_number|default("Pending") }}
+Sponsor: {{ sponsor }}
+Date: {{ submission_date|default("") }}
+
+{{ narrative }}
+

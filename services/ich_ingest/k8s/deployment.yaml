@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ich-agent
+  labels:
+    app: ich-agent
+    component: regulatory-ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ich-agent
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ich-agent
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: '/metrics'
+        prometheus.io/port: '8000'
+    spec:
+      containers:
+        - name: ich-agent
+          image: trialsage/ich-agent:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ich-agent-secrets
+                  key: openai-api-key
+            - name: PINECONE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ich-agent-secrets
+                  key: pinecone-api-key
+            - name: ICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ich-agent-secrets
+                  key: api-key
+            - name: PINECONE_ENV
+              value: 'us-west1-gcp'
+            - name: PINECONE_INDEX
+              value: 'ich-specialist'
+            - name: CSR_UPLOAD_DIR
+              value: '/data/csr_uploads/'
+            - name: GUIDELINES_DIR
+              value: '/data/guidelines/'
+            - name: PROCESSED_LOG
+              value: '/data/processed.json'
+            - name: LOG_LEVEL
+              value: 'INFO'
+            - name: METRICS_ENABLED
+              value: 'true'
+          volumeMounts:
+            - name: csr-data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: csr-data
+          persistentVolumeClaim:
+            claimName: ich-agent-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ich-agent-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

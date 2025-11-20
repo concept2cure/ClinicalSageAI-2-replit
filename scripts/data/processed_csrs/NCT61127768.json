@@ -1,0 +1,17 @@
+{
+  "nct_id": "NCT61127768",
+  "indication": "Non-Small Cell Lung Cancer",
+  "phase": "Phase 4",
+  "sample_size": 1185,
+  "duration_weeks": 127,
+  "dropout_rate": 0.4,
+  "blinding": "double-blind",
+  "control_arm": "active comparator",
+  "primary_endpoints": ["Objective response rate"],
+  "secondary_endpoints": ["Progression-free survival", "Overall survival"],
+  "outcome_summary": "Failed to reach statistical significance on primary endpoint",
+  "success": 0,
+  "failure_reason": "High placebo response rate",
+  "start_date": "2018-05-03",
+  "completion_date": "2020-10-08"
+}

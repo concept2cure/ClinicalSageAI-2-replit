@@ -1,0 +1,20 @@
+language: nodejs
+runtime: nodejs20
+
+build:
+  commands:
+    - npm ci
+    - npm run build
+
+run:
+  commands:
+    - npm start
+
+environment:
+  NODE_ENV: production
+
+healthcheck:
+  path: /health
+  interval: 30s
+  timeout: 10s
+  retries: 3

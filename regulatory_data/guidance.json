@@ -1,0 +1,128 @@
+[
+  {
+    "title": "Guidance for Industry: E6(R2) Good Clinical Practice",
+    "agency": "FDA",
+    "year": 2023,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e6r2-good-clinical-practice-integrated-addendum-ich-e6r1",
+    "summary": "This guidance provides updated standards for the conduct of clinical trials of medical products.",
+    "relevance_score": 0.95,
+    "tags": ["GCP", "clinical trials", "quality", "ethics"]
+  },
+  {
+    "title": "Enhancing the Diversity of Clinical Trial Populations",
+    "agency": "FDA",
+    "year": 2023,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/enhancing-diversity-clinical-trial-populations-eligibility-criteria-enrollment-practices-and-trial",
+    "summary": "This guidance provides recommendations to sponsors on approaches to increasing diversity in clinical trial populations.",
+    "relevance_score": 0.9,
+    "tags": ["diversity", "inclusion", "clinical trials", "enrollment"]
+  },
+  {
+    "title": "Adaptive Designs for Clinical Trials of Drugs and Biologics",
+    "agency": "FDA",
+    "year": 2022,
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-design-clinical-trials-drugs-and-biologics-guidance-industry",
+    "summary": "This guidance describes adaptive design principles for clinical trials and provides recommendations for their implementation.",
+    "relevance_score": 0.85,
+    "tags": ["adaptive design", "clinical trials", "statistical methods"]
+  },
+  {
+    "title": "Guideline on strategies to identify and mitigate risks for first-in-human and early clinical trials with investigational medicinal products",
+    "agency": "EMA",
+    "year": 2023,
+    "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-strategies-identify-mitigate-risks-first-human-early-clinical-trials-investigational_en.pdf",
+    "summary": "This guideline provides strategies to calculate the first dose in humans, dose escalation, and risk mitigation for early phase trials.",
+    "relevance_score": 0.93,
+    "tags": ["Phase 1", "first-in-human", "dose escalation", "risk mitigation", "safety"]
+  },
+  {
+    "title": "ICH E9 (R1) addendum on estimands and sensitivity analysis in clinical trials",
+    "agency": "EMA",
+    "year": 2022,
+    "url": "https://www.ema.europa.eu/en/ich-e9-statistical-principles-clinical-trials",
+    "summary": "This guideline provides a framework to align clinical trial planning, design, conduct, analysis, and interpretation.",
+    "relevance_score": 0.9,
+    "tags": ["estimands", "statistical analysis", "clinical trials", "ICH"]
+  },
+  {
+    "title": "Guideline on the evaluation of anticancer medicinal products in man",
+    "agency": "EMA",
+    "year": 2023,
+    "url": "https://www.ema.europa.eu/en/evaluation-anticancer-medicinal-products-man",
+    "summary": "This guideline addresses methodological considerations for the development of anticancer medicinal products.",
+    "relevance_score": 0.87,
+    "tags": ["oncology", "anticancer", "clinical development", "efficacy endpoints"]
+  },
+  {
+    "title": "Guideline on clinical investigation of medicinal products for the treatment of Multiple Sclerosis",
+    "agency": "EMA",
+    "year": 2022,
+    "url": "https://www.ema.europa.eu/en/clinical-investigation-medicinal-products-treatment-multiple-sclerosis",
+    "summary": "This guideline provides specific considerations for clinical trials in multiple sclerosis.",
+    "relevance_score": 0.82,
+    "tags": ["multiple sclerosis", "neurology", "clinical trials", "endpoint selection"]
+  },
+  {
+    "title": "Basic Principles on Global Clinical Trials",
+    "agency": "PMDA",
+    "year": 2023,
+    "url": "https://www.pmda.go.jp/files/000156939.pdf",
+    "summary": "This document outlines considerations for conducting global clinical trials including Japanese subjects.",
+    "relevance_score": 0.88,
+    "tags": ["global clinical trials", "multiregional", "Japan", "ethnicity factors"]
+  },
+  {
+    "title": "Points to Consider for Drug Master Files",
+    "agency": "PMDA",
+    "year": 2022,
+    "url": "https://www.pmda.go.jp/english/review-services/regulations-standards/0009.html",
+    "summary": "This document provides guidance on preparation and submission of Drug Master Files in Japan.",
+    "relevance_score": 0.75,
+    "tags": ["drug master file", "chemistry manufacturing controls", "Japan", "quality"]
+  },
+  {
+    "title": "Technical Guidelines for Clinical Trials of Drugs in China",
+    "agency": "NMPA",
+    "year": 2023,
+    "url": "https://english.nmpa.gov.cn/",
+    "summary": "These guidelines provide technical requirements for conducting clinical trials in China.",
+    "relevance_score": 0.85,
+    "tags": ["China", "clinical trials", "NMPA", "regulatory requirements"]
+  },
+  {
+    "title": "Guidelines for Acceptance of Overseas Clinical Trial Data",
+    "agency": "NMPA",
+    "year": 2022,
+    "url": "https://english.nmpa.gov.cn/",
+    "summary": "This document provides guidance on the acceptance of foreign clinical trial data for drug registration in China.",
+    "relevance_score": 0.83,
+    "tags": ["China", "foreign data", "clinical trials", "drug registration"]
+  },
+  {
+    "title": "CONSORT 2024 Statement: Updated Guidelines for Reporting Randomized Trials",
+    "agency": "Academic",
+    "year": 2024,
+    "url": "https://www.consort-statement.org/",
+    "summary": "These updated guidelines provide best practices for reporting randomized controlled trials to ensure transparency and reproducibility.",
+    "relevance_score": 0.92,
+    "tags": ["reporting guidelines", "randomized trials", "transparency", "academic", "publication"]
+  },
+  {
+    "title": "SPIRIT 2022 Statement: Standard Protocol Items for Clinical Trials",
+    "agency": "Academic",
+    "year": 2022,
+    "url": "https://www.spirit-statement.org/",
+    "summary": "This academic guidance provides recommendations for minimum protocol items to include when designing clinical trials.",
+    "relevance_score": 0.9,
+    "tags": ["protocol design", "academic", "methodology", "clinical trial standards"]
+  },
+  {
+    "title": "Clinical Trials 2.0: A Vision for More Efficient, Informative, and Ethical Clinical Trials",
+    "agency": "Academic",
+    "year": 2023,
+    "url": "https://www.nejm.org/",
+    "summary": "This academic paper outlines a vision for next-generation clinical trials that are more efficient, participant-centered, and generate higher quality evidence.",
+    "relevance_score": 0.87,
+    "tags": ["clinical trial design", "innovation", "efficiency", "patient-centricity", "academic"]
+  }
+]

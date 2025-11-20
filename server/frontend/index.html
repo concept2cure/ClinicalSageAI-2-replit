@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrialSage - Clinical Trial Intelligence Platform</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .btn-primary {
+        @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+      }
+      .btn-secondary {
+        @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded;
+      }
+      .card {
+        @apply bg-white rounded-lg shadow-md p-6;
+      }
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0, 0, 0, 0.3);
+        border-radius: 50%;
+        border-top-color: #000;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-800 text-white shadow-md">
+      <div class="container mx-auto py-6 px-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="flex items-center mb-4 md:mb-0">
+            <h1 class="text-3xl font-bold mr-2">TrialSage</h1>
+            <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">BETA</span>
+          </div>
+          <div>
+            <span class="text-blue-200">Powered by OpenAI GPT-4o</span>
+          </div>
+        </div>
+        <p class="mt-2 text-xl">Clinical Trial Intelligence Platform</p>
+      </div>
+    </header>
+
+    <main class="container mx-auto flex-1 p-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+          <div class="card mb-6">
+            <h2 class="text-xl font-bold mb-4">Generate Protocol</h2>
+            <form id="protocol-form" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Indication</label>
+                <input
+                  type="text"
+                  id="indication"
+                  class="w-full p-2 border rounded"
+                  placeholder="e.g., NASH, Alzheimer's, NSCLC"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phase</label>
+                <select id="phase" class="w-full p-2 border rounded">
+                  <option value="Phase I">Phase I</option>
+                  <option value="Phase II" selected>Phase II</option>
+                  <option value="Phase III">Phase III</option>
+                  <option value="Phase IV">Phase IV</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Primary Endpoint (optional)</label
+                >
+                <input
+                  type="text"
+                  id="endpoint"
+                  class="w-full p-2 border rounded"
+                  placeholder="e.g., Overall Survival"
+                />
+              </div>
+              <button
+                type="submit"
+                id="generate-btn"
+                class="btn-primary w-full flex items-center justify-center"
+              >
+                <span>Generate Protocol</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="card mb-6">
+            <h2 class="text-xl font-bold mb-4">Weekly Intelligence</h2>
+            <p class="text-gray-600 mb-4">
+              Generate a comprehensive intelligence brief with protocol, IND modules, and risk
+              analysis.
+            </p>
+            <button
+              id="weekly-report-btn"
+              class="btn-primary w-full flex items-center justify-center"
+            >
+              <span>Generate Weekly Report</span>
+            </button>
+          </div>
+
+          <div class="card mb-6">
+            <h2 class="text-xl font-bold mb-4">Latest Report</h2>
+            <p class="text-gray-600 mb-4">View or download the most recent intelligence report.</p>
+            <div class="flex space-x-2">
+              <button
+                id="view-report-btn"
+                class="btn-secondary flex-1 flex items-center justify-center"
+              >
+                <span>View</span>
+              </button>
+              <a
+                href="/static/latest_report.pdf"
+                target="_blank"
+                id="download-report-btn"
+                class="btn-primary flex-1 flex items-center justify-center"
+              >
+                <span>Download</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="card" id="follow-up-container" style="display: none">
+            <h2 class="text-xl font-bold mb-4">Follow-up Questions</h2>
+            <div class="space-y-4">
+              <textarea
+                id="follow-up-question"
+                rows="3"
+                class="w-full p-2 border rounded"
+                placeholder="Ask a follow-up question about the protocol..."
+              ></textarea>
+              <button id="ask-btn" class="btn-primary w-full flex items-center justify-center">
+                <span>Ask Question</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+          <div id="loading-container" style="display: none" class="card mb-6">
+            <div class="flex items-center justify-center flex-col p-12">
+              <div class="loading mb-4"></div>
+              <p class="text-gray-600 text-center">Generating intelligence...</p>
+              <p class="text-gray-500 text-sm text-center mt-2">
+                This may take up to a minute as we analyze clinical trial data.
+              </p>
+            </div>
+          </div>
+
+          <div id="protocol-container" style="display: none" class="card mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold">Protocol Design</h2>
+              <div class="tabs flex space-x-2">
+                <button
+                  data-tab="protocol"
+                  class="tab-btn bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Protocol
+                </button>
+                <button
+                  data-tab="ind"
+                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
+                >
+                  IND 2.5
+                </button>
+                <button
+                  data-tab="risk"
+                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
+                >
+                  Risk
+                </button>
+                <button
+                  data-tab="evidence"
+                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
+                >
+                  Evidence
+                </button>
+              </div>
+            </div>
+
+            <div class="tab-content" id="protocol-tab">
+              <div id="protocol-content" class="prose max-w-none"></div>
+            </div>
+
+            <div class="tab-content" id="ind-tab" style="display: none">
+              <div id="ind-content" class="prose max-w-none"></div>
+            </div>
+
+            <div class="tab-content" id="risk-tab" style="display: none">
+              <div id="risk-content" class="prose max-w-none"></div>
+            </div>
+
+            <div class="tab-content" id="evidence-tab" style="display: none">
+              <h3 class="text-lg font-bold mb-2">Evidence Base</h3>
+              <ul id="citations-list" class="list-disc pl-5 mb-4"></ul>
+
+              <h3 class="text-lg font-bold mb-2">Supporting Quotes</h3>
+              <div id="quotes-content" class="prose max-w-none"></div>
+            </div>
+          </div>
+
+          <div id="follow-up-response-container" style="display: none" class="card mb-6">
+            <h2 class="text-xl font-bold mb-4">Response</h2>
+            <div id="follow-up-response" class="prose max-w-none"></div>
+          </div>
+
+          <div id="report-preview-container" style="display: none" class="card">
+            <h2 class="text-xl font-bold mb-4">Report Preview</h2>
+            <iframe
+              id="pdf-preview"
+              src=""
+              width="100%"
+              height="500"
+              style="border: 1px solid #ddd"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+      <div class="container mx-auto px-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="mb-4 md:mb-0">
+            <h2 class="text-xl font-bold">TrialSage</h2>
+            <p class="mt-1 text-gray-400 text-sm">
+              © 2025 TrialSage Intelligence Platform. All rights reserved.
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm">Powered by OpenAI Assistants API</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

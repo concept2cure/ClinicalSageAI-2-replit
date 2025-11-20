@@ -1,0 +1,30 @@
+{
+  "templateKey": "m3/p-8/stability",
+  "title": "3.2.P.8 — Stability",
+  "locale": ["en", "eu", "jp"],
+  "sections": [
+    {
+      "code": "3.2.P.8",
+      "title": "Stability",
+      "order_idx": 800,
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {"level": 2},
+            "content": [{"type": "text", "text": "3.2.P.8 Stability"}]
+          },
+          {
+            "type": "paragraph",
+            "content": [{"type": "text", "text": "The stability studies for the drug product have been conducted in accordance with ICH Q1A(R2) guidelines."}]
+          },
+          {
+            "type": "paragraph",
+            "content": [{"type": "text", "text": "Insert token → STABILITY.SUMMARY for comprehensive stability data."}]
+          }
+        ]
+      }
+    }
+  ]
+}

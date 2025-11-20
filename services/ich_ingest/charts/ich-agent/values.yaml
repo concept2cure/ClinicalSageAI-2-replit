@@ -1,0 +1,163 @@
+## Global values
+global:
+  imageRegistry: ''
+  imagePullSecrets: []
+  storageClass: ''
+
+## ICH Agent configuration
+replicaCount: 2
+
+image:
+  repository: trialsage/ich-agent
+  tag: latest
+  pullPolicy: Always
+
+## Security context
+podSecurityContext:
+  fsGroup: 1001
+securityContext:
+  runAsUser: 1001
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ['ALL']
+
+## Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '8000'
+
+## Ingress configuration
+ingress:
+  enabled: true
+  className: 'nginx'
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: '50m'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+  hosts:
+    - host: ich-agent.trialsage.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ich-agent-tls
+      hosts:
+        - ich-agent.trialsage.ai
+
+## Resources
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+## Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+## Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+## Node selector
+nodeSelector: {}
+
+## Tolerations
+tolerations: []
+
+## Affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ich-agent
+          topologyKey: kubernetes.io/hostname
+
+## Persistent storage
+persistence:
+  enabled: true
+  storageClass: ''
+  accessMode: ReadWriteMany
+  size: 10Gi
+  annotations: {}
+
+## Environment configuration
+env:
+  # Core settings
+  LOG_LEVEL: INFO
+  API_AUTH_ENABLED: 'true'
+  METRICS_ENABLED: 'true'
+  CORS_ORIGINS: 'trialsage.ai,*.trialsage.ai'
+
+  # Service URLs and paths
+  ICH_BASE_URL: https://www.ich.org/page/articles-procedures
+  CSR_UPLOAD_DIR: /data/csr_uploads/
+  GUIDELINES_DIR: /data/guidelines/
+  PROCESSED_LOG: /data/processed.json
+
+  # Scheduler settings
+  INGEST_INTERVAL_SEC: '86400'
+  CSR_POLL_INTERVAL_SEC: '60'
+
+  # OpenTelemetry (optional)
+  OTEL_ENABLED: 'false'
+
+  # Pinecone
+  PINECONE_ENV: us-west1-gcp
+  PINECONE_INDEX: ich-specialist
+
+## Secrets
+secrets:
+  # These will be created as Kubernetes secrets
+  openaiApiKey: ''
+  pineconeApiKey: ''
+  apiKey: ''
+
+## Pod annotations
+podAnnotations:
+  prometheus.io/scrape: 'true'
+  prometheus.io/path: '/metrics'
+  prometheus.io/port: '8000'
+
+## Health Checks
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: /health
+    port: http
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: /health
+    port: http

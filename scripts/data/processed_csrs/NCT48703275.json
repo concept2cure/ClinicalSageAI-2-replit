@@ -1,0 +1,16 @@
+{
+  "nct_id": "NCT48703275",
+  "indication": "Rheumatoid Arthritis",
+  "phase": "Phase 1",
+  "sample_size": 71,
+  "duration_weeks": 23,
+  "dropout_rate": 0.09,
+  "blinding": "open-label",
+  "control_arm": "standard of care",
+  "primary_endpoints": ["ACR20 response"],
+  "secondary_endpoints": ["HAQ-DI improvement"],
+  "outcome_summary": "Statistically significant clinical benefit observed",
+  "success": 1,
+  "start_date": "2019-12-27",
+  "completion_date": "2020-06-05"
+}
