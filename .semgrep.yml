@@ -1,0 +1,23 @@
+rules:
+  - id: jose-keys-in-repo
+    message: Private keys or JWT keys should not be committed
+    languages: [javascript, python]
+    severity: ERROR
+    patterns:
+      - pattern: "-----BEGIN PRIVATE KEY-----"
+      - pattern: "-----BEGIN RSA PRIVATE KEY-----"
+  - id: no-hardcoded-credentials
+    message: Hardcoded credentials detected
+    languages: [javascript, python]
+    severity: ERROR
+    patterns:
+      - pattern: "password = $SECRET"
+      - pattern: "AWS_SECRET_ACCESS_KEY"
+  - id: sql-injection-warning
+    message: SQL string concatenation may lead to injection
+    languages: [javascript, python]
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: "'SELECT ' + $EXPR"
+          - pattern: '"SELECT " + $EXPR'
