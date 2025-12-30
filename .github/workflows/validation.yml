@@ -1,0 +1,48 @@
+name: validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install python requirements
+        run: |
+          pip install -r analysis/requirements.txt
+
+      - name: Run analysis
+        run: |
+          python3 analysis/analysis.py data/sample_study/sample.csv
+
+      - name: Run checks
+        run: |
+          python3 analysis/check_metrics.py analysis/results/metrics.json 0.99 0.985
+
+      - name: Plot metrics
+        run: |
+          python3 analysis/plot_metrics.py data/sample_study/sample.csv analysis/results/plot.png
+
+      - name: Run unit tests
+        run: |
+          pip install pytest
+          pytest -q
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-artifacts
+          path: |
+            analysis/results/metrics.json
+            analysis/results/plot.png
