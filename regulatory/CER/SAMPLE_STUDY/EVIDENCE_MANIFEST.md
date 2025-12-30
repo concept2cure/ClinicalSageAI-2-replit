@@ -7,6 +7,7 @@ Files included in evidence_package.zip (paths are the archived file names):
 - metrics.json — SHA256: 8a625aa8e54c6c2e1186eac0dc99f1c0060ce213e62f5ad5317edffaaccb1006
 - plot.png — SHA256: 04e2134be8177eafb271dc1fdeefb82497da70e815d509300564fd338cb42ec2
 - CSR_DRAFT.md — SHA256: 0ae8312b0efa01ddf8b4d40008403cd08afa7f2e52b1a3669e4b36e436205b69
+- CSR_DRAFT.pdf — SHA256: c8e18680bd583af2f8b69631ada4f32615f4e8c4d630744b1f56de30f12c9bad
 - TRACEABILITY.md — SHA256: 8f84b8cb562928c7181d0784c9eebf2c778cc68607abec8ea197e23f2d82ee42
 - RISK_REGISTER.csv — SHA256: 45c77a5a51cd7e39b3fdaa56e577337af9f3fe21d42d4d0dd0fc7e7eedeb6c0f
 

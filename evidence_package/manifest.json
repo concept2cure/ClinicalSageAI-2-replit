@@ -1,5 +1,5 @@
 {
-  "created_at": "2025-12-30T03:07:39.297401Z",
+  "created_at": "2025-12-30T03:09:57.337813Z",
   "files": [
     {
       "path": "sample.csv",
@@ -16,6 +16,10 @@
     {
       "path": "CSR_DRAFT.md",
       "sha256": "0ae8312b0efa01ddf8b4d40008403cd08afa7f2e52b1a3669e4b36e436205b69"
+    },
+    {
+      "path": "CSR_DRAFT.pdf",
+      "sha256": "c8e18680bd583af2f8b69631ada4f32615f4e8c4d630744b1f56de30f12c9bad"
     },
     {
       "path": "TRACEABILITY.md",
