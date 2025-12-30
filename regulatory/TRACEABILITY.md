@@ -4,7 +4,7 @@ This file maps claims in generated submission templates to evidence stored in th
 
 Example entry:
 - Claim: '99.2% sensitivity for condition X'  
-  Evidence: `data/sample_study/sample.csv` (de-identified dataset), `analysis/analysis.py` (reproducible calculation), `analysis/results/metrics.json` (output), `regulatory/CER/<study>/CSR.pdf` (final report, not included here)
+  Evidence: `data/sample_study/sample.csv` (de-identified dataset), `analysis/analysis.py` (reproducible calculation), `analysis/results/metrics.json` (output), `regulatory/CER/SAMPLE_STUDY/CSR_DRAFT.md` (draft report)
 
 - Notebook: `analysis/validation_notebook.ipynb` demonstrates a reproducible run and plotting of results.
 - Risk register: `regulatory/RISK_REGISTER.csv` maps identified risks to mitigations and verification artifacts.
