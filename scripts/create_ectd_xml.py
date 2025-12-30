@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Create a minimal eCTD XML submission (sequence + module XML)
-This script generates a minimal eCTD-like XML structure suitable for review and further enrichment.
-It is NOT a full eCTD validator but provides a starting point for producing submission XML files.
-
-Usage: python3 scripts/create_ectd_xml.py --study SAMPLE_STUDY --seq 0000 --title "Study title" --applicant "Sponsor Name"
+"""Create an eCTD XML submission package from metadata.
+Reads `ectd_metadata.yml` in the study folder and maps assets to leaf nodes.
+Generates `submission.xml` and `sequence.xml` with file SHA256 checksums and zips the sequence.
 """
 import os
 import argparse
@@ -12,8 +10,13 @@ import hashlib
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-ET.register_namespace('', 'urn:ietf:params:xml:ns:eCTD-1.0')
+try:
+    import yaml
+except Exception:
+    print('PyYAML is required. Install via `pip install pyyaml`')
+    raise
 
+ET.register_namespace('', 'urn:ietf:params:xml:ns:eCTD-1.0')
 BASE_DIR = 'regulatory/CER'
 
 
@@ -28,75 +31,88 @@ def sha256(path):
     return h.hexdigest()
 
 
-def build_structure(study, seq, title, applicant):
+def load_metadata(study):
+    meta_path = os.path.join(BASE_DIR, study, 'ectd_metadata.yml')
+    if not os.path.exists(meta_path):
+        raise FileNotFoundError(f'Metadata file not found: {meta_path}')
+    with open(meta_path) as fh:
+        return yaml.safe_load(fh)
+
+
+def build_from_metadata(study, metadata):
+    seq = int(metadata.get('seq', 0))
+    title = metadata.get('title', f'{study} submission')
+    applicant = metadata.get('applicant', 'Unknown')
+
     base = os.path.join(BASE_DIR, study, 'ectd_xml')
     seqdir = os.path.join(base, f'seq{seq:04d}')
     if os.path.exists(seqdir):
         shutil.rmtree(seqdir)
     os.makedirs(seqdir, exist_ok=True)
 
-    # create simple module directories
-    modules = {'m1': 'm1', 'm4': 'm4', 'appendix': 'appendix'}
-    for m in modules.values():
+    # Prepare modules mentioned in metadata
+    modules = set([f.get('module', 'appendix') for f in metadata.get('files', [])])
+    for m in modules:
         os.makedirs(os.path.join(seqdir, m), exist_ok=True)
 
-    # copy CSR PDF to m4
-    csr_pdf = os.path.join(BASE_DIR, study, 'CSR_DRAFT.pdf')
-    if os.path.exists(csr_pdf):
-        shutil.copy2(csr_pdf, os.path.join(seqdir, 'm4', os.path.basename(csr_pdf)))
+    # Copy files into appropriate module folders as specified
+    for item in metadata.get('files', []):
+        src = item['src']
+        module = item.get('module', 'appendix')
+        dest_name = item.get('dest_name', os.path.basename(src))
+        if not os.path.exists(src):
+            print(f'Warning: source {src} not found, skipping')
+            continue
+        shutil.copy2(src, os.path.join(seqdir, module, dest_name))
 
-    # copy evidence package to appendix
-    evzip = 'evidence_package.zip'
-    if os.path.exists(evzip):
-        shutil.copy2(evzip, os.path.join(seqdir, 'appendix', os.path.basename(evzip)))
-
-    # generate index (submission.xml)
+    # Build submission.xml
     submission = ET.Element('submission', attrib={'xmlns': 'urn:ietf:params:xml:ns:eCTD-1.0'})
     header = ET.SubElement(submission, 'header')
     ET.SubElement(header, 'document-type').text = 'eCTD-1'
     ET.SubElement(header, 'submission-date').text = datetime.utcnow().isoformat()+'Z'
     ET.SubElement(header, 'submission-title').text = title
     ET.SubElement(header, 'applicant').text = applicant
+    ET.SubElement(header, 'country').text = metadata.get('country', 'US')
+    ET.SubElement(header, 'agency').text = metadata.get('agency', 'FDA')
+    ET.SubElement(header, 'submission-type').text = metadata.get('submission_type', '510(k)')
 
-    # add module refs
     modules_el = ET.SubElement(submission, 'modules')
-    for m in ['m1', 'm4', 'appendix']:
-        mod = ET.SubElement(modules_el, 'module')
-        ET.SubElement(mod, 'name').text = m
-        # list files for the module
-        list_el = ET.SubElement(mod, 'files')
-        modpath = os.path.join(seqdir, m)
-        for fname in sorted(os.listdir(modpath)) if os.path.exists(modpath) else []:
-            f_el = ET.SubElement(list_el, 'file')
-            ET.SubElement(f_el, 'href').text = os.path.join(m, fname)
-            ET.SubElement(f_el, 'sha256').text = sha256(os.path.join(modpath, fname))
 
-    # write submission.xml
-    tree = ET.ElementTree(submission)
+    # Add modules and leaf entries
+    for m in sorted(modules):
+        mod_el = ET.SubElement(modules_el, 'module')
+        ET.SubElement(mod_el, 'name').text = m
+        leaves_el = ET.SubElement(mod_el, 'leaves')
+        # find files for this module
+        module_path = os.path.join(seqdir, m)
+        for fname in sorted(os.listdir(module_path)) if os.path.exists(module_path) else []:
+            f_el = ET.SubElement(leaves_el, 'leaf')
+            ET.SubElement(f_el, 'title').text = fname
+            ET.SubElement(f_el, 'href').text = os.path.join(m, fname).replace('\\', '/')
+            ET.SubElement(f_el, 'sha256').text = sha256(os.path.join(module_path, fname))
+
     subpath = os.path.join(seqdir, 'submission.xml')
-    tree.write(subpath, encoding='utf-8', xml_declaration=True)
+    ET.ElementTree(submission).write(subpath, encoding='utf-8', xml_declaration=True)
 
-    # create a simple sequence manifest
+    # Create sequence.xml with file manifest
     manifest = ET.Element('sequence', attrib={'xmlns': 'urn:ietf:params:xml:ns:eCTD-1.0'})
-    ET.SubElement(manifest, 'sequence-number').text = str(int(seq))
+    ET.SubElement(manifest, 'sequence-number').text = str(seq)
     ET.SubElement(manifest, 'submission-title').text = title
     ET.SubElement(manifest, 'applicant').text = applicant
     ET.SubElement(manifest, 'created').text = datetime.utcnow().isoformat()+'Z'
 
-    # add file entries
     files_el = ET.SubElement(manifest, 'files')
     for root, dirs, files in os.walk(seqdir):
         for f in files:
             fpath = os.path.join(root, f)
-            rel = os.path.relpath(fpath, seqdir)
+            rel = os.path.relpath(fpath, seqdir).replace('\\', '/')
             fentry = ET.SubElement(files_el, 'file')
-            ET.SubElement(fentry, 'href').text = rel.replace('\\', '/')
+            ET.SubElement(fentry, 'href').text = rel
             ET.SubElement(fentry, 'sha256').text = sha256(fpath)
 
-    tree = ET.ElementTree(manifest)
-    tree.write(os.path.join(seqdir, 'sequence.xml'), encoding='utf-8', xml_declaration=True)
+    ET.ElementTree(manifest).write(os.path.join(seqdir, 'sequence.xml'), encoding='utf-8', xml_declaration=True)
 
-    # zip the seqdir
+    # Zip the sequence
     shutil.make_archive(os.path.join(base, f'seq{seq:04d}'), 'zip', seqdir)
     print(f'Created eCTD XML package at {os.path.join(base, f"seq{seq:04d}.zip")}')
     return os.path.join(base, f'seq{seq:04d}.zip')
@@ -105,9 +121,12 @@ def build_structure(study, seq, title, applicant):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--study', required=True)
-    p.add_argument('--seq', required=True, type=int)
-    p.add_argument('--title', required=True)
-    p.add_argument('--applicant', required=True)
+    p.add_argument('--meta', help='Path to metadata yaml inside study folder', default=None)
     args = p.parse_args()
-    out = build_structure(args.study, args.seq, args.title, args.applicant)
+    metadata = load_metadata(args.study) if args.meta is None else None
+    if args.meta:
+        import yaml as _yaml
+        with open(args.meta) as fh:
+            metadata = _yaml.safe_load(fh)
+    out = build_from_metadata(args.study, metadata)
     print('Done:', out)

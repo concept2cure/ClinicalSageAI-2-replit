@@ -1,0 +1,16 @@
+seq: 1
+country: US
+agency: FDA
+submission_type: 510(k)
+dossier_id: SAMPLE-001
+applicant: Concept2Cure
+title: Sample Validation Study for Condition X
+files:
+  - src: regulatory/CER/SAMPLE_STUDY/CSR_DRAFT.pdf
+    module: m4
+    dest_name: CSR_DRAFT.pdf
+    title: Clinical Study Report
+  - src: evidence_package.zip
+    module: appendix
+    dest_name: evidence_package.zip
+    title: Evidence package
