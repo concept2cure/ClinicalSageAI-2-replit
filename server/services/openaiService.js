@@ -2,10 +2,15 @@ import OpenAI from 'openai';
 
 class OpenAIService {
   constructor() {
-    this.client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
     this.isAvailable = !!process.env.OPENAI_API_KEY;
+    if (this.isAvailable) {
+      this.client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } else {
+      console.warn('⚠️  OpenAI API key not found. AI features will be disabled.');
+      this.client = null;
+    }
   }
 
   async analyzeRegulatoryDocument(text, documentType = 'CMC') {

@@ -91,8 +91,8 @@ while (missingPackages.length > 0 && attempts < maxAttempts) {
   console.log(`[Attempt ${attempts}/${maxAttempts}] Missing ${missingPackages.length} package(s): ${missingPackages.join(', ')}`);
   
   try {
-    // Install ALL missing packages at once
-    execSync(`npm install ${missingPackages.join(' ')} --no-audit --no-fund --save`, { 
+    // Install ALL missing packages at once (ignore scripts to avoid TensorFlow issues)
+    execSync(`npm install ${missingPackages.join(' ')} --no-audit --no-fund --ignore-scripts --save`, { 
       stdio: 'inherit', 
       cwd: __dirname 
     });
