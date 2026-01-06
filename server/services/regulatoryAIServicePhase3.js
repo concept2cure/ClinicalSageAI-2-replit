@@ -12,16 +12,27 @@ import { aiAuditLog } from '../../shared/schema.js';
 
 class RegulatoryAIServicePhase3 {
   constructor() {
-    // Initialize OpenAI with Replit AI integrations
-    this.openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY
-    });
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
     
-    // Direct OpenAI client for embeddings (not supported by Replit integration)
-    this.embeddingClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    if (!apiKey) {
+      console.warn('⚠️  OpenAI API key not found. Regulatory AI Phase 3 features will be disabled.');
+      this.openai = null;
+      this.embeddingClient = null;
+      this.isAvailable = false;
+    } else {
+      // Initialize OpenAI with Replit AI integrations
+      this.openai = new OpenAI({
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
+        apiKey: apiKey
+      });
+      
+      // Direct OpenAI client for embeddings (not supported by Replit integration)
+      this.embeddingClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      
+      this.isAvailable = true;
+    }
     
     // Token budget management - will be loaded from database
     this.tokenBudget = {
