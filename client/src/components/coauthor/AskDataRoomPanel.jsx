@@ -15,53 +15,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+  Collapsible, CollapsibleContent, CollapsibleTrigger, } from '@/components/ui/collapsible';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import {
-  Search,
-  MessageSquare,
-  FileText,
-  Database,
-  ChevronRight,
-  ChevronDown,
-  Copy,
-  ExternalLink,
-  Plus,
-  Sparkles,
-  BookOpen,
-  Filter,
-  Calendar,
-  User,
-  Tag,
-  Folder,
-  FileCode,
-  Table,
-  Image,
-  Link,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  ArrowRight,
-  Brain,
-  Zap,
-  Download,
-  Eye,
-  PlusCircle,
-  X,
-} from 'lucide-react';
+  Search, MessageSquare, FileText, Database, ChevronRight, ChevronDown, Copy, ExternalLink, Plus, Sparkles, BookOpen, Filter, Calendar, User, Tag, Folder, FileCode, Table, Image, Link, RefreshCw, AlertCircle, CheckCircle, Info, ArrowRight, Brain, Zap, Download, Eye, PlusCircle, X } from 'lucide-react'
 
 export default function AskDataRoomPanel({ 
   onContentInsert, 

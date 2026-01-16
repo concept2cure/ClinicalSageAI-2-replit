@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ZoomIn, ZoomOut, RefreshCw, Download } from 'lucide-react';
+import { ZoomIn, ZoomOut, RefreshCw, Download } from 'lucide-react'
 import CanvasNode from './CanvasNode';
 import NodeDetailPanel from './NodeDetailPanel';
 import CanvasSidePanel from './CanvasSidePanel';

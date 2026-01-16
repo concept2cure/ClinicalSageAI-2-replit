@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react'
 
 export default function SessionSummaryPanel({ sessionId }) {
   const [summary, setSummary] = useState(null);

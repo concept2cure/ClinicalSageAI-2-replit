@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, Eye, Settings, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, Eye, Settings, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';

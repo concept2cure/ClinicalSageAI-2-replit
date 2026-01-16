@@ -46,3 +46,6 @@ export const getAuthStatus = () => {
     user: userInfo,
   };
 };
+// Alias exports for compatibility
+export const signInWithGoogle = signIn;
+export const signOutFromGoogle = signOut;

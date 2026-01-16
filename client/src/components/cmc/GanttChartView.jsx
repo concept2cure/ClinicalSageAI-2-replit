@@ -3,35 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from '@/components/ui/tooltip';
 import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  GitBranch,
-  Clock,
-  User,
-  AlertTriangle,
-  CheckCircle,
-  Circle,
-  Square,
-  Diamond,
-} from 'lucide-react';
+  Calendar, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, GitBranch, Clock, User, AlertTriangle, CheckCircle, Circle, Square, Diamond } from 'lucide-react'
 import { format, addDays, differenceInDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWeekend, parseISO, isSameDay, isAfter, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShieldCheck, History, FileCheck, Download, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, History, FileCheck, Download, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import SignOffAuditTrail from './SignOffAuditTrail';
 import ManagerSignOffService from '../../services/ManagerSignOffService';

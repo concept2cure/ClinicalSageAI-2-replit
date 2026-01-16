@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+import { TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import { Highlight } from '@tiptap/extension-highlight';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mention } from '@tiptap/extension-mention';
 import CharacterCount from '@tiptap/extension-character-count';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import {
   Bold,
   Italic,
@@ -30,6 +31,9 @@ import { CitationsPlugin } from '../plugins/citationsPlugin';
 import { PlaceholdersPlugin } from '../plugins/placeholdersPlugin';
 import { RedlinePlugin } from '../plugins/redlinePlugin';
 import { RegionTerminologyPlugin } from '../plugins/regionTerminologyPlugin';
+import { SmartData, SmartDataInsertPayload } from '../extensions/SmartData';
+import { SmartTag } from '../extensions/SmartTag';
+import { SmartTable } from '@/components/editor/extensions/SmartTable';
 
 interface EditorCanvasProps {
   content: string;
@@ -62,12 +66,27 @@ export default function EditorCanvas({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Table.configure({
+      SmartTable.configure({
         resizable: true,
+        HTMLAttributes: {
+          class: 'w-full border-collapse text-sm my-6 font-sans border border-gray-300',
+        },
       }),
-      TableRow,
-      TableHeader,
-      TableCell,
+      TableRow.configure({
+        HTMLAttributes: {
+          class: 'even:bg-gray-50',
+        },
+      }),
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'border-b-2 border-black font-bold text-left p-2 bg-gray-100',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border-b border-gray-200 p-2 align-top',
+        },
+      }),
       Highlight.configure({
         multicolor: true,
       }),
@@ -116,6 +135,8 @@ export default function EditorCanvas({
       RegionTerminologyPlugin.configure({
         region,
       }),
+      SmartData,
+      SmartTag,
     ],
     content: content || getInitialTemplate(region),
     onUpdate: ({ editor }) => {
@@ -124,11 +145,106 @@ export default function EditorCanvas({
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl mx-auto focus:outline-none min-h-[400px] p-6',
+          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl mx-auto font-serif leading-relaxed tracking-normal focus:outline-none min-h-[400px] p-6',
         'data-testid': 'tiptap-editor',
+      },
+      handleDrop: (view, event) => {
+        // 1. SECURITY: Only accept Clinical Data
+        const dataString = event.dataTransfer?.getData('application/x-clinical-data');
+        if (!dataString) return false;
+
+        // 2. PARSE PAYLOAD
+        let payload: any;
+        try {
+          payload = JSON.parse(dataString);
+        } catch {
+          return false;
+        }
+
+        // 3. VALIDATE
+        if (payload?.type !== 'smartTag') return false;
+
+        // 4. INSERTION POINT
+        const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+        if (!coordinates) return false;
+
+        // Ensure schema has node
+        const smartTagType = view.state.schema.nodes.smartTag;
+        if (!smartTagType) return false;
+
+        // 5. CREATE ATOMIC NODE (The Smart Tag)
+        const node = smartTagType.create({
+          id: payload.id,
+          value: payload.value,
+          sourceId: payload.sourceId,
+          dataset: payload.dataset,
+          variable: payload.variable,
+          dataVersion: payload.dataVersion,
+          status: payload.status,
+          label: payload.label,
+        });
+
+        // 6. EXECUTE TRANSACTION
+        const tr = view.state.tr.insert(coordinates.pos, node);
+
+        // UX: Move cursor AFTER the tag so user can keep typing
+        // (Protects against "trapped cursor" bug)
+        const nextPos = coordinates.pos + node.nodeSize;
+        try {
+          tr.setSelection(TextSelection.near(tr.doc.resolve(nextPos)));
+        } catch {
+          // ignore
+        }
+
+        view.dispatch(tr);
+        view.focus();
+
+        event.preventDefault();
+        return true;
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const globalWindow = window as Window & { __indEditor?: Editor };
+    globalWindow.__indEditor = editor;
+
+    const emitSmartTableContext = () => {
+      const attributes = editor.getAttributes('table') as {
+        sourceId?: string;
+        sourceLabel?: string;
+        lastUpdated?: string;
+      };
+      const isLinked = editor.isActive('table') && Boolean(attributes?.sourceId);
+
+      window.dispatchEvent(
+        new CustomEvent('smart-table-context', {
+          detail: {
+            isLinked,
+            attributes,
+          },
+        }),
+      );
+    };
+
+    const handleSelectionUpdate = () => emitSmartTableContext();
+
+    editor.on('selectionUpdate', handleSelectionUpdate);
+    editor.on('transaction', handleSelectionUpdate);
+    emitSmartTableContext();
+
+    return () => {
+      if (globalWindow.__indEditor === editor) {
+        globalWindow.__indEditor = undefined;
+      }
+      editor.off('selectionUpdate', handleSelectionUpdate);
+      editor.off('transaction', handleSelectionUpdate);
+    };
+  }, [editor]);
 
   // Listen for section navigation events
   useEffect(() => {
@@ -146,6 +262,34 @@ export default function EditorCanvas({
       window.removeEventListener('navigateToSection', handleNavigateToSection as EventListener);
     };
   }, []);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const handleInsertSmartData = (event: Event) => {
+      const smartEvent = event as CustomEvent<SmartDataInsertPayload | undefined>;
+      const detail = smartEvent.detail;
+
+      if (!detail || !detail.value) {
+        return;
+      }
+
+      editor.chain().focus().run();
+      editor.commands.insertSmartData({
+        id: detail.id ?? null,
+        value: detail.value,
+        sourceLabel: detail.sourceLabel ?? 'Nonclinical Report',
+        confidence: detail.confidence ?? 0,
+      });
+    };
+
+    window.addEventListener('insert-smart-data', handleInsertSmartData as EventListener);
+    return () => {
+      window.removeEventListener('insert-smart-data', handleInsertSmartData as EventListener);
+    };
+  }, [editor]);
 
   // Auto-validation on content change
   useEffect(() => {

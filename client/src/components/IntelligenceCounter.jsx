@@ -2,7 +2,7 @@
 // Counter showcasing the platform's intelligence capabilities
 
 import React, { useState, useEffect } from 'react';
-import { Database, BookText, FlaskConical, TrendingUp, BrainCircuit } from 'lucide-react';
+import { Database, BookText, FlaskConical, TrendingUp, BrainCircuit } from 'lucide-react'
 
 const IntelligenceCounter = () => {
   // Use real data from the database

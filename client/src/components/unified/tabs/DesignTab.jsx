@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Package, Plus, X, CheckCircle2, Shield, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Package, Plus, X, CheckCircle2, Shield, Calendar, Loader2, AlertCircle } from 'lucide-react'
 
 export default function DesignTab({
   protocol,

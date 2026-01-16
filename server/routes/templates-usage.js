@@ -3,8 +3,12 @@ import { db } from '../db';
 import { ectdTemplates, indDocuments, indApplications } from '../../shared/schema.ts';
 import { eq, and, or, like, sql, inArray } from 'drizzle-orm';
 import OpenAI from 'openai';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = express.Router();
+
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use(requireTenant());
 
 // Initialize OpenAI if API key is available
 let openai = null;
@@ -19,17 +23,11 @@ if (apiKey) {
  */
 router.get('/templates/catalog', async (req, res) => {
   try {
-    const { 
-      category, 
-      region, 
-      module, 
-      search, 
-      tags,
-      organizationId = 6 
-    } = req.query;
+    const { category, region, module, search, tags } = req.query;
+    const organizationId = Number(req.organizationId);
     
     let conditions = [
-      eq(ectdTemplates.organizationId, parseInt(organizationId)),
+      eq(ectdTemplates.organizationId, organizationId),
       eq(ectdTemplates.isActive, true)
     ];
     
@@ -65,7 +63,6 @@ router.get('/templates/catalog', async (req, res) => {
         t.tags && t.tags.includes(region.toLowerCase())
       );
     }
-    
     // Filter by specific tags
     if (tags) {
       const tagArray = tags.split(',');
@@ -360,8 +357,7 @@ router.post('/ind/:id/apply-template', async (req, res) => {
       return '';
     });
     
-    // Get organizationId from headers or use default
-    const organizationId = parseInt(req.headers['x-organization-id'] || '6');
+    const organizationId = Number(req.organizationId);
     
     // Create a new document from the template
     const newDocument = await db

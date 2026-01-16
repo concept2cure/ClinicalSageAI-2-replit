@@ -5,15 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/toaster';
 import {
-  BarChart3,
-  FileText,
-  History,
-  Network,
-  Layers,
-  Download,
-  ClipboardCheck,
-  AlertCircle,
-} from 'lucide-react';
+  BarChart3, FileText, History, Network, Layers, Download, ClipboardCheck, AlertCircle } from 'lucide-react'
 import QmpAuditTrailPanel from './QmpAuditTrailPanel';
 import QmpTraceabilityHeatmap from './QmpTraceabilityHeatmap';
 

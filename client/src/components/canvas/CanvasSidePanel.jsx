@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PieChart, Workflow, Search, Settings } from 'lucide-react';
+import { PieChart, Workflow, Search, Settings } from 'lucide-react'
 import './CanvasSidePanel.css';
 
 /**

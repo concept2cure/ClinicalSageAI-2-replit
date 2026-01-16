@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Link, ExternalLink } from 'lucide-react';
+import { FileText, Download, Link, ExternalLink } from 'lucide-react'
 
 export default function DocumentViewer() {
   const [isLoading, setIsLoading] = useState(true);

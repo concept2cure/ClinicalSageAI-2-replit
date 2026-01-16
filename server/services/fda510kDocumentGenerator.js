@@ -9,7 +9,7 @@
 import PDFDocument from 'pdfkit';
 import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ShadingType } from 'docx';
 import { db } from '../db/index.js';
-import { fda510kSubmissions, medicalDevices, deviceSubmissionDocuments } from '../../shared/schema.js';
+import { fda510kSubmissions, medicalDevices, deviceSubmissionDocuments } from '../../shared/schema.ts';
 import { eq, and } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs/promises';

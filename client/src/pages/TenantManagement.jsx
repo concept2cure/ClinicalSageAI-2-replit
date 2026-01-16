@@ -7,78 +7,24 @@ import { useToast } from '../hooks/use-toast';
 import { useTenant } from '../contexts/TenantContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '../components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '../components/ui/dialog';
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '../components/ui/form';
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from '../components/ui/form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '../components/ui/dropdown-menu';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '../components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '../components/ui/select';
 import EnhancedSelect from '../components/ui/select-wrapper';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import {
-  Users,
-  UserPlus,
-  Settings,
-  MoreHorizontal,
-  Building,
-  Key,
-  RefreshCw,
-  Database,
-  Monitor,
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  Ban,
-  BarChart3,
-  HardDrive,
-  Plus,
-  Calendar,
-  Target,
-} from 'lucide-react';
+  Users, UserPlus, Settings, MoreHorizontal, Building, Key, RefreshCw, Database, Monitor, FileText, CheckCircle2, AlertTriangle, Ban, BarChart3, HardDrive, Plus, Calendar, Target } from 'lucide-react'
 import { apiRequest } from '../lib/queryClient';
 
 // Form schemas
@@ -549,7 +495,7 @@ export default function TenantManagement() {
     queryFn: async () => {
       const url = `/api/projects?organizationId=${selectedTenant?.id}`;
       console.log('🔍 Fetching projects from:', url);
-      const response = await fetch(url);
+      const response = await apiRequest('GET', url);
       const data = await response.json();
       console.log('🔍 Projects fetched:', data);
       return data;

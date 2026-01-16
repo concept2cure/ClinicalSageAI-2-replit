@@ -1,25 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from 'recharts';
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, } from 'recharts';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,24 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
-  AlertCircle,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Clock,
-  Target,
-  BarChart2,
-  AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle,
-  XCircle,
-  Award,
-  Calendar,
-  Users,
-  LogOut,
-  Info,
-} from 'lucide-react';
+  AlertCircle, TrendingUp, TrendingDown, Activity, Clock, Target, BarChart2, AlertTriangle, ArrowUpRight, ArrowDownRight, CheckCircle, XCircle, Award, Calendar, Users, LogOut, Info } from 'lucide-react'
 
 // Risk classification component with enhanced gradient colors
 const RiskIndicator = ({ level, text }: { level: 'low' | 'medium' | 'high'; text: string }) => {

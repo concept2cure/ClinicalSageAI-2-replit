@@ -7,14 +7,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -27,18 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Loader2,
-  BookOpen,
-  FileText,
-  Save,
-  Copy,
-  ArrowLeft,
-  RefreshCw,
-  BookMarked,
-  Lightbulb,
-  Scale,
-  Info,
-} from 'lucide-react';
+  Loader2, BookOpen, FileText, Save, Copy, ArrowLeft, RefreshCw, BookMarked, Lightbulb, Scale, Info } from 'lucide-react'
 
 import { useContext } from 'react';
 import { useTenant } from '../../contexts/TenantContext.tsx';

@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Database,
-  ArrowLeft,
-  X,
-  LayoutSidebar,
-  LayoutSidebarClose,
-  CornerUpLeft,
-  PanelLeft,
-} from 'lucide-react';
+import { Database, ArrowLeft, X, LayoutSidebar, LayoutSidebarClose, CornerUpLeft, PanelLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import NavigationBanner from '../components/common/NavigationBanner';
 import VaultDocumentBrowser from '../components/ectd/VaultDocumentBrowser';

@@ -6,19 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { 
-  AlertCircle, 
-  FileText, 
-  TestTube, 
-  Download, 
-  Microscope, 
-  ClipboardCheck, 
-  BookCheck,
-  ArrowRight,
-  Check,
-  Beaker,
-  Target,
-  Lightbulb
-} from "lucide-react";
+  AlertCircle, FileText, TestTube, Download, Microscope, ClipboardCheck, BookCheck, ArrowRight, Check, Beaker, Target, Lightbulb } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 // Temporarily commented out for landing page development
 // import { classifyTherapeuticArea } from "shared/utils/therapeutic-area-classifier";

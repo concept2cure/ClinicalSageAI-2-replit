@@ -12,7 +12,7 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
-const { authenticateJWT, requireSameOrganization } = require('../middleware/auth');
+const { authenticateJWT, requireSameOrganization } = require('../middleware/auth.cjs');
 const { OpenAI } = require('openai');
 const { handleApiError } = require('../utils/errorHandler');
 const logger = require('../utils/logger');

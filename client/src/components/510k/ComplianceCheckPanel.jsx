@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,45 +8,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toaster';
 import FDA510kService from '@/services/FDA510kService';
 import {
-  CheckSquare,
-  AlertCircle,
-  AlertTriangle,
-  BookOpen,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  FileCheck,
-  Loader2,
-  Save,
-  BarChart,
-  Gauge,
-  TrendingUp,
-  TrendingDown,
-  History,
-  ListChecks,
-  Award,
-  PieChart,
-  ClipboardCheck,
-  Target,
-  Search as SearchIcon,
-  FileText,
-  FileSymlink,
-  Sparkles,
-  ArrowRight,
-  WandSparkles,
-  ListChecks as ListChecksIcon,
-} from 'lucide-react';
+  CheckSquare, AlertCircle, AlertTriangle, BookOpen, CheckCircle, XCircle, RefreshCw, FileCheck, Loader2, Save, BarChart, Gauge, TrendingUp, TrendingDown, History, ListChecks, Award, PieChart, ClipboardCheck, Target, Search as SearchIcon, FileText, FileSymlink, Sparkles, ArrowRight, WandSparkles, ListChecks as ListChecksIcon } from 'lucide-react'
 
 /**
  * Compliance Check Panel for 510(k) Submissions

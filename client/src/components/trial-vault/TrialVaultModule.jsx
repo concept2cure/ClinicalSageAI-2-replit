@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Upload,
-  Search,
-  Filter,
-  FileText,
-  Shield,
-  Clock,
-  Plus,
-  ArrowUpDown,
-  FileCheck,
-  Download,
-} from 'lucide-react';
+import { Upload, Search, Filter, FileText, Shield, Clock, Plus, ArrowUpDown, FileCheck, Download } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 import UnifiedDocumentUpload from '../unified/UnifiedDocumentUpload';
 

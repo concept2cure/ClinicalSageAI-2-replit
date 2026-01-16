@@ -1,25 +1,13 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, RefreshCw, Check, X, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, RefreshCw, Check, X, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,

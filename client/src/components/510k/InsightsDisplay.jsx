@@ -7,20 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Search,
-  Filter,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Download,
-  FileText,
-  Tag,
-  Calendar,
-  User,
-  BarChart,
-} from 'lucide-react';
+  Search, Filter, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Download, FileText, Tag, Calendar, User, BarChart, Lightbulb } from 'lucide-react'
 
 /**
  * A component to display AI-generated insights with filtering and search capabilities

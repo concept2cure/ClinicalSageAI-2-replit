@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { File, Clock, Save, MessageCircle } from 'lucide-react';
+import { File, Clock, Save, MessageCircle } from 'lucide-react'
 
 export default function DocumentsPage() {
   const { session } = useAuth();

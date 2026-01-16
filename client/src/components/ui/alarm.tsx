@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AlertTriangle, ArrowUpCircle } from 'lucide-react';
+import { AlertTriangle, ArrowUpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';

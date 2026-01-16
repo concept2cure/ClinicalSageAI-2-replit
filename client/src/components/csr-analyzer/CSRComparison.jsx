@@ -4,29 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import {
-  Database,
-  Search,
-  Filter,
-  ArrowLeftRight,
-  ArrowRight,
-  FileText,
-  List,
-  BarChart2,
-  Download,
-  Table,
-  Layers,
-  Copy,
-  Dna,
-} from 'lucide-react';
+  Database, Search, Filter, ArrowLeftRight, ArrowRight, FileText, List, BarChart2, Download, Table, Layers, Copy, Dna } from 'lucide-react'
 
 // Sample CSR data for comparison
 const csrOptions = [

@@ -1,143 +1,64 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import {
-  Filter,
-  Plus,
-  Search,
-  MoreVertical,
-  Download,
-  FileText,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-} from 'lucide-react';
+  Filter, Plus, Search, MoreVertical, Download, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 
-/**
- * Analytical Methods Repository Stub Page
- *
- * This page displays a list of analytical methods without requiring API connection.
- * It includes:
- * - Method listing with key properties
- * - Search and filter functionality
- * - Status indicators for validation status
- */
 const AnalyticalMethodsStubPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [methods, setMethods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data for analytical methods
-  const mockMethods = [
-    {
-      id: 'AM-001',
-      name: 'HPLC Assay for API Quantification',
-      category: 'Chromatography',
-      technique: 'HPLC',
-      version: '2.3',
-      status: 'validated',
-      lastUpdated: '2025-03-15',
-      owner: 'Sarah Johnson',
-    },
-    {
-      id: 'AM-002',
-      name: 'Dissolution Testing Method',
-      category: 'Dissolution',
-      technique: 'USP Apparatus II',
-      version: '1.5',
-      status: 'validated',
-      lastUpdated: '2025-02-22',
-      owner: 'Michael Chen',
-    },
-    {
-      id: 'AM-003',
-      name: 'Particle Size Analysis by Laser Diffraction',
-      category: 'Physical Characterization',
-      technique: 'Laser Diffraction',
-      version: '3.0',
-      status: 'in_validation',
-      lastUpdated: '2025-04-05',
-      owner: 'Robert Smith',
-    },
-    {
-      id: 'AM-004',
-      name: 'Impurity Profile by LC-MS',
-      category: 'Chromatography',
-      technique: 'LC-MS',
-      version: '1.2',
-      status: 'in_validation',
-      lastUpdated: '2025-04-12',
-      owner: 'Amanda Wong',
-    },
-    {
-      id: 'AM-005',
-      name: 'Karl Fischer Titration for Water Content',
-      category: 'Titration',
-      technique: 'Karl Fischer',
-      version: '2.0',
-      status: 'validated',
-      lastUpdated: '2025-01-30',
-      owner: 'James Wilson',
-    },
-    {
-      id: 'AM-006',
-      name: 'DSC for Thermal Analysis',
-      category: 'Thermal Analysis',
-      technique: 'DSC',
-      version: '1.0',
-      status: 'draft',
-      lastUpdated: '2025-04-18',
-      owner: 'Emily Rodriguez',
-    },
-    {
-      id: 'AM-007',
-      name: 'NIR Method for Raw Material ID',
-      category: 'Spectroscopy',
-      technique: 'NIR',
-      version: '2.1',
-      status: 'validated',
-      lastUpdated: '2025-03-02',
-      owner: 'David Kim',
-    },
-    {
-      id: 'AM-008',
-      name: 'Microbial Limit Test',
-      category: 'Microbiology',
-      technique: 'Culture',
-      version: '3.2',
-      status: 'validated',
-      lastUpdated: '2025-02-10',
-      owner: 'Jessica Martinez',
-    },
-  ];
+  useEffect(() => {
+    const loadMethods = async () => {
+      try {
+        setLoading(true);
+        const tenantId =
+          localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/analytical-methods', {
+          headers: {
+            ...(tenantId ? { 'x-organization-id': tenantId } : {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Analytical methods service not configured');
+        }
+
+        const payload = await response.json();
+        setMethods(payload?.data || payload || []);
+      } catch (err) {
+        setError(err?.message || 'Failed to load analytical methods');
+        setMethods([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMethods();
+  }, []);
 
   // Filter methods based on search and category
-  const filteredMethods = mockMethods.filter(method => {
-    const matchesSearch =
-      method.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      method.id.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredMethods = methods.filter(method => {
+    const name = (method.name || method.title || '').toLowerCase();
+    const code = String(method.id || method.methodCode || '').toLowerCase();
+    const matchesSearch = name.includes(searchTerm.toLowerCase()) || code.includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || method.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   // Get unique categories for filter
-  const categories = ['All', ...new Set(mockMethods.map(method => method.category))];
+  const categories = ['All', ...new Set(methods.map(method => method.category).filter(Boolean))];
 
   // Render status badge with appropriate color
   const getStatusBadge = status => {
@@ -192,7 +113,7 @@ const AnalyticalMethodsStubPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockMethods.length}</div>
+            <div className="text-2xl font-bold">{methods.length}</div>
           </CardContent>
         </Card>
 
@@ -202,7 +123,7 @@ const AnalyticalMethodsStubPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockMethods.filter(m => m.status === 'validated').length}
+              {methods.filter(m => m.status === 'validated').length}
             </div>
           </CardContent>
         </Card>
@@ -215,7 +136,7 @@ const AnalyticalMethodsStubPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockMethods.filter(m => m.status === 'in_validation').length}
+              {methods.filter(m => m.status === 'in_validation').length}
             </div>
           </CardContent>
         </Card>
@@ -226,11 +147,18 @@ const AnalyticalMethodsStubPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockMethods.filter(m => m.status === 'draft').length}
+              {methods.filter(m => m.status === 'draft').length}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {loading && (
+        <div className="mb-4 text-sm text-muted-foreground">Loading analytical methods...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-sm text-red-600">{error}</div>
+      )}
 
       <Card>
         <CardHeader>
@@ -286,15 +214,15 @@ const AnalyticalMethodsStubPage = () => {
             </TableHeader>
             <TableBody>
               {filteredMethods.map(method => (
-                <TableRow key={method.id}>
-                  <TableCell className="font-medium">{method.id}</TableCell>
-                  <TableCell>{method.name}</TableCell>
-                  <TableCell>{method.category}</TableCell>
-                  <TableCell>{method.technique}</TableCell>
-                  <TableCell>v{method.version}</TableCell>
+                <TableRow key={method.id || method.methodCode}>
+                  <TableCell className="font-medium">{method.id || method.methodCode}</TableCell>
+                  <TableCell>{method.name || method.title || '—'}</TableCell>
+                  <TableCell>{method.category || '—'}</TableCell>
+                  <TableCell>{method.technique || '—'}</TableCell>
+                  <TableCell>{method.version || '—'}</TableCell>
                   <TableCell>{getStatusBadge(method.status)}</TableCell>
-                  <TableCell>{method.lastUpdated}</TableCell>
-                  <TableCell>{method.owner}</TableCell>
+                  <TableCell>{method.lastUpdated || '—'}</TableCell>
+                  <TableCell>{method.owner || 'Unassigned'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

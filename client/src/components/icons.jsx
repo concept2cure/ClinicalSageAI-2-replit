@@ -1,30 +1,5 @@
 import React from 'react';
-import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Command,
-  CreditCard,
-  File,
-  FileText,
-  HelpCircle,
-  Image,
-  Laptop,
-  Loader2,
-  Moon,
-  MoreVertical,
-  Pizza,
-  Plus,
-  Settings,
-  SunMedium,
-  Trash,
-  Twitter,
-  User,
-  X,
-  CheckCircle,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, ChevronLeft, ChevronRight, Command, CreditCard, File, FileText, HelpCircle, Image, Laptop, Loader2, Moon, MoreVertical, Pizza, Plus, Settings, SunMedium, Trash, Twitter, User, X, CheckCircle } from 'lucide-react'
 
 export const Icons = {
   logo: Command,

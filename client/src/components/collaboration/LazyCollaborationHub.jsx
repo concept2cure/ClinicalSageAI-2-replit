@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState } from 'react';
-import { Users, ChevronRight } from 'lucide-react';
+import { Users, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 // Lazy load the actual collaboration hub to reduce initial bundle size

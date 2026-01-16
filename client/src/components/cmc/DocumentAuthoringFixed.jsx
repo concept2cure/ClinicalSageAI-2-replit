@@ -8,115 +8,26 @@ import { TaskItem } from '@tiptap/extension-task-item';
 import CharacterCount from '@tiptap/extension-character-count';
 import TokenNode from './editor/extensions/TokenNode';
 import AISuggestionEngine, { 
-  useAISuggestionEngine, 
-  AIAssistantPanel, 
-  TextWithSuggestions 
+  useAISuggestionEngine, AIAssistantPanel, TextWithSuggestions 
 } from './AISuggestionEngine';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  ChevronDown,
-  FileText,
-  Search,
-  Plus,
-  Clock,
-  User,
-  Globe,
-  Sparkles,
-  Download,
-  Eye,
-  Edit3,
-  Save,
-  X,
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Zap,
-  BookOpen,
-  Filter,
-  Brain,
-  Target,
-  FileCheck,
-  Lightbulb,
-  TrendingUp,
-  Shield,
-  MessageSquare,
-  ChevronRight,
-  FolderOpen,
-  Database,
-  History,
-  Link,
-  GitBranch,
-  Lock,
-  Unlock,
-  FileType,
-  Table,
-  Award,
-  Calendar,
-  TestTube,
-  Upload,
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  List,
-  ListOrdered,
-  Quote,
-  Link2,
-  Image,
-  Type,
-  Maximize,
-  Minimize,
-  BarChart2,
-  Send,
-  PenTool,
-  Variable,
-  Hash,
-  FileDown,
-  Code,
-  Building2,
-  Package,
-} from 'lucide-react';
+  ChevronDown, FileText, Search, Plus, Clock, User, Globe, Sparkles, Download, Eye, Edit3, Save, X, ArrowLeft, AlertCircle, CheckCircle, Settings, Zap, BookOpen, Filter, Brain, Target, FileCheck, Lightbulb, TrendingUp, Shield, MessageSquare, ChevronRight, FolderOpen, Database, History, Link, GitBranch, Lock, Unlock, FileType, Table, Award, Calendar, TestTube, Upload, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Link2, Image, Type, Maximize, Minimize, BarChart2, Send, PenTool, Variable, Hash, FileDown, Code, Building2, Package } from 'lucide-react'
 
 const DocumentAuthoringComponent = () => {
   // Helper function to get current tenant ID consistently

@@ -6,31 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
-  ChevronRight,
-  ChevronDown,
-  Folder,
-  FileText,
-  Upload,
-  Download,
-  Search,
-  Plus,
-  File,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Loader2,
-  Trash2,
-  FolderPlus,
-  ArrowUp,
-  ArrowDown,
-  Home,
-  Check,
-  X,
-  SidebarClose,
-  List,
-  LayoutGrid,
-  MoreVertical,
-} from 'lucide-react';
+  ChevronRight, ChevronDown, Folder, FileText, Upload, Download, Search, Plus, File, CheckCircle2, Clock, AlertCircle, Loader2, Trash2, FolderPlus, ArrowUp, ArrowDown, Home, Check, X, SidebarClose, List, LayoutGrid, MoreVertical } from 'lucide-react'
 import cerv2SectionService from '@/services/CERV2SectionService';
 import { queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
@@ -249,6 +225,49 @@ const EnhancedDocumentVault = ({
   }
 
   // Transform database sections into SharePoint-style document tree
+  const getDemoFallbackSections = () => {
+    // Minimal, eSTAR-style-ish starter set to keep the vault usable even when DB tables are missing.
+    // Uses negative IDs to avoid collisions with real DB IDs.
+    return [
+      { id: -1, section_number: '1', section_title: 'Cover Letter', status: 'todo' },
+      { id: -2, section_number: '2', section_title: '510(k) Summary', status: 'todo' },
+      { id: -3, section_number: '3', section_title: 'Indications for Use', status: 'todo' },
+      { id: -4, section_number: '4', section_title: 'Truthful & Accuracy Statement', status: 'todo' },
+      { id: -5, section_number: '5', section_title: 'Administrative Information', status: 'todo' },
+      { id: -6, section_number: '11', section_title: 'Device Description', status: 'todo' },
+      { id: -7, section_number: '12', section_title: 'Principles of Operation', status: 'todo' },
+      { id: -8, section_number: '13', section_title: 'Substantial Equivalence Discussion', status: 'todo' },
+      { id: -9, section_number: '14', section_title: 'Labeling', status: 'todo' },
+      { id: -10, section_number: '16', section_title: 'Performance Testing - Bench', status: 'todo' },
+      { id: -11, section_number: '17', section_title: 'Performance Testing - Software', status: 'todo' },
+      { id: -12, section_number: '18', section_title: 'Performance Testing - EMC/ES', status: 'todo' },
+      { id: -13, section_number: '19', section_title: 'Biocompatibility (ISO 10993)', status: 'todo' },
+      { id: -14, section_number: '20', section_title: 'Sterilization & Shelf Life', status: 'todo' },
+      { id: -15, section_number: '21', section_title: 'Clinical Performance Data', status: 'todo' },
+      { id: -16, section_number: '22', section_title: 'Risk Management Summary', status: 'todo' },
+      { id: -17, section_number: '23', section_title: 'Cybersecurity Summary', status: 'todo' },
+      { id: -18, section_number: '24', section_title: 'Human Factors/Usability', status: 'todo' },
+    ];
+  };
+
+  const getEffectiveSectionsData = () => {
+    const sections = sectionsData?.sections;
+    if (Array.isArray(sections) && sections.length > 0) {
+      return sectionsData;
+    }
+
+    // If the API is unavailable or empty, keep the UI usable for demos.
+    if (sectionsData?.warning || error) {
+      return {
+        success: true,
+        sections: getDemoFallbackSections(),
+        warning: sectionsData?.warning || 'Using demo fallback sections (DB not initialized).',
+      };
+    }
+
+    return sectionsData;
+  };
+
   const buildDocumentTree = (sections) => {
     // Create a complete document management structure
     const tree = [
@@ -430,7 +449,7 @@ const EnhancedDocumentVault = ({
     ];
   };
 
-  const documentTree = buildDocumentTree(sectionsData);
+  const documentTree = buildDocumentTree(getEffectiveSectionsData());
 
   // Toggle folder expansion
   const toggleFolder = (folderId) => {
@@ -452,7 +471,7 @@ const EnhancedDocumentVault = ({
       
       toast({
         title: 'Document Opened',
-        description: `Editing ${item.name}`,
+        description: `Editing ${displayName}`,
       });
     } else if (item.type === 'file' && !item.sectionData) {
       toast({
@@ -1063,7 +1082,29 @@ const EnhancedDocumentVault = ({
               </div>
             ))}
           </div>
-          
+
+          <div className="flex items-center gap-2" data-testid="quick-jump">
+            <span className="text-xs text-gray-500">Quick jump:</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setCurrentFolder('folder-510k')}
+              data-testid="quick-jump-510k"
+            >
+              510(k)
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setCurrentFolder('folder-administrative')}
+              data-testid="quick-jump-admin"
+            >
+              Admin
+            </Button>
+          </div>
+
           {/* Right-side Toolbar Actions */}
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
@@ -1094,6 +1135,54 @@ const EnhancedDocumentVault = ({
               </Button>
             </div>
             
+            {/* Expand/Collapse */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const collect = (items, acc = []) => {
+                  for (const it of items || []) {
+                    if (it?.type === 'folder') {
+                      acc.push(it.id);
+                      if (it.children?.length) collect(it.children, acc);
+                    }
+                  }
+                  return acc;
+                };
+                const ids = collect(documentTree);
+                const next = {};
+                for (const id of ids) next[id] = true;
+                setExpandedFolders(prev => ({ ...prev, ...next }));
+              }}
+              data-testid="button-expand-all"
+            >
+              Expand All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const collect = (items, acc = []) => {
+                  for (const it of items || []) {
+                    if (it?.type === 'folder') {
+                      acc.push(it.id);
+                      if (it.children?.length) collect(it.children, acc);
+                    }
+                  }
+                  return acc;
+                };
+                const ids = collect(documentTree);
+                const next = {};
+                for (const id of ids) next[id] = false;
+                setExpandedFolders(prev => ({ ...prev, ...next }));
+              }}
+              data-testid="button-collapse-all"
+            >
+              Collapse
+            </Button>
+
             {/* Sort Dropdown - Simple button to cycle through options */}
             <Button
               variant="outline"
@@ -1233,6 +1322,9 @@ const EnhancedDocumentVault = ({
               ) : currentFolderContents.length > 0 ? (
                 currentFolderContents.map((item, index) => {
                   const isSelected = selectedItems.find(i => i.id === item.id);
+                  const displayName = item.sectionData?.section_number && !String(item.name).startsWith(String(item.sectionData.section_number))
+                    ? String(item.sectionData.section_number) + ' ' + item.name
+                    : item.name;
                   const isRenaming = renamingItem?.id === item.id;
                   const statusBadge = item.status ? getStatusBadge(item.status) : null;
                   const StatusIcon = statusBadge?.icon;
@@ -1403,6 +1495,20 @@ const EnhancedDocumentVault = ({
                           <p className="text-xs text-gray-500 mt-1">
                             {item.type === 'folder' ? 'Folder' : (item.format?.toUpperCase() || 'Document')}
                           </p>
+                          {item.sectionData?.section_number && (
+                            <div className="mt-2 text-xs text-gray-600" data-testid="properties-dependencies">
+                              <span className="font-semibold">Dependencies:</span>{' '}
+                              {(() => {
+                                const major = parseInt(String(item.sectionData.section_number).split('.')[0], 10);
+                                if (Number.isNaN(major)) return '—';
+                                if (major <= 1) return 'Intake';
+                                if (major === 2) return 'Intake → Predicates';
+                                if (major === 3) return 'Intake → Predicates → Evidence';
+                                if (major === 4) return 'Intake → Predicates → Evidence → Validate';
+                                return 'Intake → Predicates → Evidence → Validate → Package';
+                              })()}
+                            </div>
+                          )}
                         </div>
                       </div>
                       

@@ -5,50 +5,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import { useDropzone } from 'react-dropzone';
 import {
-  uploadDocument,
-  listDocuments,
-  downloadDocument,
-  lockDocument,
-  unlockDocument,
-  moveDocument,
-  deleteDocument,
-  createFolder,
-  listFolders,
-} from '@/services/DocuShareService';
+  uploadDocument, listDocuments, downloadDocument, lockDocument, unlockDocument, moveDocument, deleteDocument, createFolder, listFolders, } from '@/services/DocuShareService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Loader2,
-  DownloadCloud,
-  Lock,
-  Unlock,
-  Trash2,
-  FolderPlus,
-  FileText,
-  Search,
-  Filter,
-  RefreshCw,
-  Folder,
-  ArrowLeft,
-  ChevronRight,
-  MoveRight,
-  Eye,
-} from 'lucide-react';
+  Loader2, DownloadCloud, Lock, Unlock, Trash2, FolderPlus, FileText, Search, Filter, RefreshCw, Folder, ArrowLeft, ChevronRight, MoveRight, Eye } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const DEFAULT_FOLDER = '/';

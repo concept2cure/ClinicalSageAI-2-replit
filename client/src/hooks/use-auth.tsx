@@ -1,3 +1,4 @@
+import { User } from 'lucide-react'
 import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -74,28 +75,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     onSuccess: (data) => {
       setUser(data);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Login successful",
         description: `Welcome back, ${data.username}!`,
-      })
-  console.log('Toast would show:', {
-        title: "Login successful",
-        description: `Welcome back, ${data.username}!`,
-      });
+  });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again",
-        variant: "destructive",
-      });
+  });
     }
   });
 
@@ -110,28 +100,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     onSuccess: () => {
       setUser(null);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Logged out",
         description: "You have been successfully logged out",
-      })
-  console.log('Toast would show:', {
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
+  });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Logout failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
+  });
     }
   });
 
@@ -147,28 +126,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     onSuccess: (data) => {
       setUser(data);
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Registration successful",
         description: `Welcome to TrialSage, ${data.username}!`,
-      })
-  console.log('Toast would show:', {
-        title: "Registration successful",
-        description: `Welcome to TrialSage, ${data.username}!`,
-      });
+  });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Registration failed",
         description: error.message || "Please try again with different credentials",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Registration failed",
-        description: error.message || "Please try again with different credentials",
-        variant: "destructive",
-      });
+  });
     }
   });
 

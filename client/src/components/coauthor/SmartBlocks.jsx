@@ -12,51 +12,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import {
-  Zap,
-  Table,
-  FileText,
-  Activity,
-  Beaker,
-  Users,
-  Shield,
-  TrendingUp,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Database,
-  Plus,
-  RefreshCw,
-  Settings,
-  Hash,
-  BarChart,
-  Heart,
-  TestTube,
-  Package,
-  Microscope,
-  ChevronRight,
-  Clock,
-  Target,
-  Layers,
-} from 'lucide-react';
+  Zap, Table, FileText, Activity, Beaker, Users, Shield, TrendingUp, Calendar, AlertCircle, CheckCircle, Info, Database, Plus, RefreshCw, Settings, Hash, BarChart, Heart, TestTube, Package, Microscope, ChevronRight, Clock, Target, Layers } from 'lucide-react'
 
 // Smart Block Categories
 const SMART_BLOCK_CATEGORIES = {
@@ -312,15 +275,10 @@ export default function SmartBlocks({
     mutationFn: async (blockTemplate) => {
       setIsProcessing(true);
       
-      // Simulate API call to fetch data and format it
-      // In production, this would call the backend to:
-      // 1. Query the specified data source
-      // 2. Apply the template format
-      // 3. Generate the formatted content
-      
+      // Call backend to generate Smart Block content backed by Data Lineage
       return apiRequest('/api/smart-blocks/generate', {
         method: 'POST',
-        body: JSON.stringify({
+        data: {
           templateId: blockTemplate.id,
           dataSource: blockTemplate.dataSource,
           format: blockTemplate.format,
@@ -329,7 +287,7 @@ export default function SmartBlocks({
           projectId,
           organizationId,
           documentId,
-        }),
+        },
       });
     },
     onSuccess: (data, blockTemplate) => {

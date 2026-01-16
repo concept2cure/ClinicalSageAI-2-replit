@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X, Check, AlertCircle, Zap, Brain } from 'lucide-react';
+import { X, Check, AlertCircle, Zap, Brain } from 'lucide-react'
 
 const AIPanel = ({ processId, onClose, onRefresh }) => {
   const [suggestions, setSuggestions] = useState([]);

@@ -5,21 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Upload,
-  FileType,
-  FilePlus,
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Database,
-} from 'lucide-react';
+  Upload, FileType, FilePlus, AlertCircle, CheckCircle, FileText, Database, File } from 'lucide-react'
 import { useToast } from '../../hooks/use-toast';
 
 export default function CSRIngest() {

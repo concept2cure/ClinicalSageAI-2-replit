@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Mail, PieChart } from 'lucide-react';
+import { FileText, Download, Mail, PieChart } from 'lucide-react'
 
 export default function StudyDesignReport({ session }) {
   const [generating, setGenerating] = useState(false);

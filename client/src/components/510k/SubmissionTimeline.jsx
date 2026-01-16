@@ -5,17 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import GuidedTooltip from './GuidedTooltip';
 import {
-  Calendar,
-  ChevronRight,
-  FileText,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  HelpCircle,
-  Info,
-  Zap,
-} from 'lucide-react';
+  Calendar, ChevronRight, FileText, CheckCircle, XCircle, AlertTriangle, Clock, HelpCircle, Info, Zap } from 'lucide-react'
 
 /**
  * Interactive timeline for the 510(k) submission process

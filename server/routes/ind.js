@@ -1,6 +1,9 @@
 import express from 'express';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = express.Router();
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use(requireTenant());
 
 // Import template service for real document generation
 import templateService from '../services/templateUsageService.js';
@@ -1749,7 +1752,7 @@ router.post('/:draftId/apply-template', async (req, res) => {
     const { draftId } = req.params;
     const { templateId, userData, generateDocument, launchEditor } = req.body;
     const tenantId = req.headers['x-tenant-id'] || 'default';
-    const organizationId = parseInt(req.headers['x-organization-id'] || '6');
+    const organizationId = Number(req.organizationId);
 
     // Parse templateId to ensure it's a valid number
     console.log('[DEBUG] Raw templateId received:', templateId, 'Type:', typeof templateId);

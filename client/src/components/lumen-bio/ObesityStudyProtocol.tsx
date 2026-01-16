@@ -1,29 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  FileText,
-  Weight,
-  Microscope,
-  Target,
-  Users,
-  Calendar,
-  Pill,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  BookOpenCheck,
-  Download,
-} from 'lucide-react';
+  FileText, Weight, Microscope, Target, Users, Calendar, Pill, ChevronRight, AlertTriangle, CheckCircle, BookOpenCheck, Download } from 'lucide-react'
 import { Link } from 'wouter';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';

@@ -1,25 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  FileBarChart,
-  Clock3,
-} from 'lucide-react';
+  Loader2, CheckCircle, AlertTriangle, ArrowRight, ChevronDown, ChevronUp, Clock, FileBarChart, Clock3 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {

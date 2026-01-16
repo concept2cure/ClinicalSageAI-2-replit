@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, FileText, Brain, Beaker, BarChart2, Users, Shield } from 'lucide-react';
+import { ArrowRight, FileText, Brain, Beaker, BarChart2, Users, Shield } from 'lucide-react'
 
 // Use Case Card Component
 const UseCaseCard = ({

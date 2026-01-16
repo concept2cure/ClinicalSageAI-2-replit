@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Eye, EyeOff, User, Lock, UserPlus, LogIn, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, UserPlus, LogIn, ArrowRight, Layout } from 'lucide-react'
 import { useAuth } from '../hooks/use-auth';
 import Layout from '../components/Layout';
 

@@ -330,3 +330,5 @@ export default {
   assessRegulatoryCompliance,
   simulateOpenAIResponse,
 };
+// Alias exports for compatibility
+export const analyzeRegulatoryCompliance = assessRegulatoryCompliance;

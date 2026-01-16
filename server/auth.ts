@@ -5,7 +5,7 @@
  *
  * Note: This is a simplified version without JWT for development purposes
  */
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, Router } from 'express';
 import { eq } from 'drizzle-orm';
 import { users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
@@ -194,3 +194,29 @@ function verifyPassword(password: string, hash: string) {
   // For development, we'll just compare plaintext or return true if hash is empty
   return hash === '' || password === hash;
 }
+
+// --- Express Router export so `server/index.ts` can mount auth routes ---
+const router = Router();
+
+// POST /login -> { email, password }
+router.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res.status(400).json({ error: 'email and password are required' });
+  }
+
+  try {
+    const result = await login(email, password);
+    return res.json(result);
+  } catch (err: any) {
+    logger.error('Login route error', err);
+    return res.status(401).json({ error: err?.message || 'Login failed' });
+  }
+});
+
+// Simple healthcheck for auth
+router.get('/ping', (req: Request, res: Response) => {
+  res.json({ ok: true, service: 'auth' });
+});
+
+export { router };

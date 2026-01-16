@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-import { FileText, Folders, FileCheck, Database, Layout, FileStack, Rocket } from 'lucide-react';
+import { FileText, Folders, FileCheck, Database, Layout, FileStack, Rocket } from 'lucide-react'
 
 import CTDTemplateManager from '../components/document/CTDTemplateManager';
 import ECTDSubmissionBuilder from '../components/document/ECTDSubmissionBuilder';

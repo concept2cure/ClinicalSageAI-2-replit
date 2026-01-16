@@ -4,19 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 import { useTenant } from '../contexts/TenantContext';
 import {
-  Building2,
-  Plus,
-  Pencil,
-  Trash2,
-  MoreHorizontal,
-  RefreshCw,
-  Settings,
-  Users,
-  Layers,
-  Shield,
-  Cog,
-  FileCode,
-} from 'lucide-react';
+  Building2, Plus, Pencil, Trash2, MoreHorizontal, RefreshCw, Settings, Users, Layers, Shield, Cog, FileCode } from 'lucide-react'
 import ClientSecuritySettings from '../components/client/ClientSecuritySettings';
 import ClientWorkspaceSettings from '../components/client/ClientWorkspaceSettings';
 import ClientLicenseTab from '../components/client/ClientLicenseTab';

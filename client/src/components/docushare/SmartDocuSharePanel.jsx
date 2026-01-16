@@ -1,34 +1,15 @@
 // --- TrialSage Enterprise: Smart Search + Auto-Linking DocuShare Panel ---
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,102 +21,20 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { Slider } from '@/components/ui/slider';
 import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from '@/components/ui/command';
+  Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut, } from '@/components/ui/command';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import {
-  AlertCircle,
-  ArrowDown,
-  ArrowLeft,
-  ArrowUp,
-  BarChart3,
-  BookOpen,
-  Brain,
-  Braces,
-  Calendar,
-  Check,
-  ChevronRight,
-  CircleHelp,
-  ClipboardList,
-  Clock,
-  Copy,
-  Database,
-  Download,
-  Edit,
-  ExternalLink,
-  Eye,
-  File,
-  FileCheck,
-  FileDown,
-  FileSearch,
-  FileStack,
-  FileText,
-  Filter,
-  Folder,
-  FolderInput,
-  FolderOpen,
-  FolderPlus,
-  Folders,
-  HardDrive,
-  History,
-  Info,
-  Link,
-  ListFilter,
-  Lock,
-  LucideFileStack,
-  MenuSquare,
-  MoreHorizontal,
-  Network,
-  Package2,
-  Pencil,
-  Plus,
-  PlusCircle,
-  RefreshCw,
-  RotateCcw,
-  Save,
-  Search,
-  Server,
-  Settings,
-  SlidersHorizontal,
-  Sparkles,
-  Star,
-  StarHalf,
-  Tag,
-  ToggleLeft,
-  Trash2,
-  TrendingUp,
-  Unlock,
-  Upload,
-  UserCircle2,
-  X,
-  ZoomIn,
-} from 'lucide-react';
+  AlertCircle, ArrowDown, ArrowLeft, ArrowUp, BarChart3, BookOpen, Brain, Braces, Calendar, Check, ChevronRight, CircleHelp, ClipboardList, Clock, Copy, Database, Download, Edit, ExternalLink, Eye, File, FileCheck, FileDown, FileSearch, FileStack, FileText, Filter, Folder, FolderInput, FolderOpen, FolderPlus, Folders, HardDrive, History, Info, Link, ListFilter, Lock, LucideFileStack, MenuSquare, MoreHorizontal, Network, Package2, Pencil, Plus, PlusCircle, RefreshCw, RotateCcw, Save, Search, Server, Settings, SlidersHorizontal, Sparkles, Star, StarHalf, Tag, ToggleLeft, Trash2, TrendingUp, Unlock, Upload, UserCircle2, X, ZoomIn, Loader2, InfoIcon } from 'lucide-react'
 
 import {
   uploadDocument,

@@ -1,24 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Search,
-  Filter,
-  Download,
-  FileText,
-  TrendingUp,
-  Users,
-  Clock,
-  Star,
-  ArrowRight,
-  Database,
-  Zap,
-  BarChart3,
-  Activity,
-  Brain,
-  Target,
-  Eye,
-  ChevronRight,
-  CheckCircle,
-} from 'lucide-react';
+import { Search, Filter, Download, FileText, TrendingUp, Users, Clock, Star, ArrowRight, Database, Zap, BarChart3, Activity, Brain, Target, Eye, ChevronRight, CheckCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

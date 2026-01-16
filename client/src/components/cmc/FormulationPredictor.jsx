@@ -1,63 +1,27 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
 import {
-  RefreshCw,
-  Beaker,
-  FlaskConical,
-  BarChart4,
-  Download,
-  Clipboard,
-  Copy,
-  Plus,
-  Trash2,
-  ArrowRight,
-  Microscope,
-  Sparkles,
-  Clock,
-  LineChart,
-  ThermometerSnowflake,
-  ThermometerSun,
-  Shield,
-  Info,
-} from 'lucide-react';
+  RefreshCw, Beaker, FlaskConical, BarChart4, Download, Clipboard, Copy, Plus, Trash2, ArrowRight, Microscope, Sparkles, Clock, LineChart, ThermometerSnowflake, ThermometerSun, Shield, Info } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

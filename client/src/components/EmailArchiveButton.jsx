@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Mail } from "lucide-react";
+import { Mail } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 
 export default function EmailArchiveButton({ sessionId }) {

@@ -5,15 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { 
-  FileText, 
-  Brain, 
-  Beaker, 
-  BookOpen, 
-  BarChart, 
-  Database,
-  Shield,
-  Settings as SettingsIcon
-} from 'lucide-react';
+  FileText, Brain, Beaker, BookOpen, BarChart, Database, Shield, Settings as SettingsIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const ModuleSettings = () => {

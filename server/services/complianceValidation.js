@@ -3,7 +3,7 @@ import {
   componentVersions,
   coauthorValidationRules,
   coauthorValidationHistory
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, sql } from 'drizzle-orm';
 
 /**

@@ -8,18 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  Zap,
-  Users,
-  CheckCircle,
-  FileText,
-  Settings,
-  Target,
-  Users2,
-  Globe,
-} from 'lucide-react';
+  ChevronLeft, ChevronRight, Save, Zap, Users, CheckCircle, FileText, Settings, Target, Users2, Globe } from 'lucide-react'
 
 const NewProcessWizard = ({ draftId, onClose, onSuccess }) => {
   const [location, setLocation] = useLocation();

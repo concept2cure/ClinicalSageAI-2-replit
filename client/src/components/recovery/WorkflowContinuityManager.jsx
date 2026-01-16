@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, ArrowRight, ShieldCheck } from 'lucide-react';
+import { AlertCircle, RefreshCw, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import FDA510kService from '@/services/FDA510kService';
 

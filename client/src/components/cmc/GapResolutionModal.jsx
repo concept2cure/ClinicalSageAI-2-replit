@@ -8,14 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  FileText,
-  User,
-  Calendar,
-  ArrowRight,
-} from 'lucide-react';
+  CheckCircle2, Clock, AlertTriangle, FileText, User, Calendar, ArrowRight } from 'lucide-react'
 
 const GapResolutionModal = ({ isOpen, onClose, data }) => {
   const [currentStep, setCurrentStep] = useState(1);

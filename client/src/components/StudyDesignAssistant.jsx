@@ -4,14 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Loader2,
-  Send,
-  Download,
-  FileText,
-  AlertTriangle,
-  Calculator,
-  MessageSquare,
-} from 'lucide-react';
+  Loader2, Send, Download, FileText, AlertTriangle, Calculator, MessageSquare } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import SampleSizeCalculator from '@/components/SampleSizeCalculator';

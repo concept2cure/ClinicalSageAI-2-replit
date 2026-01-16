@@ -16,51 +16,13 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem, } from '@/components/ui/dropdown-menu';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Popover, PopoverContent, PopoverTrigger, } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
-  Bell,
-  BellOff,
-  Settings,
-  Check,
-  CheckCheck,
-  X,
-  AlertCircle,
-  Info,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  MessageSquare,
-  Share2,
-  UserPlus,
-  FileText,
-  Package,
-  Shield,
-  Clock,
-  Trash2,
-  Archive,
-  Eye,
-  EyeOff,
-  Mail,
-  Volume2,
-  VolumeX,
-  RefreshCw,
-  Filter,
-  Circle,
-} from 'lucide-react';
+  Bell, BellOff, Settings, Check, CheckCheck, X, AlertCircle, Info, CheckCircle, XCircle, AlertTriangle, MessageSquare, Share2, UserPlus, FileText, Package, Shield, Clock, Trash2, Archive, Eye, EyeOff, Mail, Volume2, VolumeX, RefreshCw, Filter, Circle } from 'lucide-react'
 
 /**
  * Get notification icon based on type

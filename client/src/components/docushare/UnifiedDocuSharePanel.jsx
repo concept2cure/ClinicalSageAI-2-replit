@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Upload, Search, History, Shield } from 'lucide-react';
+import { Loader2, Upload, Search, History, Shield } from 'lucide-react'
 import { DocuShareContext } from '@/contexts/DocuShareContext';
 import DocumentUpload from './components/DocumentUpload';
 import DocumentPreview from './components/DocumentPreview';

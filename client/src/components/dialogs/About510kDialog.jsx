@@ -1,23 +1,11 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, HelpCircle, BookOpen } from 'lucide-react';
+import { Info, HelpCircle, BookOpen } from 'lucide-react'
 
 function About510kDialog() {
   return (

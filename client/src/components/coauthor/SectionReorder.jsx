@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GripVertical, ChevronDown, ChevronUp, Plus, Trash2, Edit } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronUp, Plus, Trash2, Edit } from 'lucide-react'
 
 export default function SectionReorder({ submissionId }) {
   const [sections, setSections] = useState([

@@ -1,19 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Users,
-  Building,
-  FileText,
-  BookOpen,
-  BarChart,
-  Database,
-  Sparkles,
-  Beaker,
-  ClipboardList,
-  Clock,
-  Search,
-  Layout,
-  ArrowRight,
-} from 'lucide-react';
+import { Users, Building, FileText, BookOpen, BarChart, Database, Sparkles, Beaker, ClipboardList, Clock, Search, Layout, ArrowRight } from 'lucide-react'
 
 /**
  * SimplePortal Component

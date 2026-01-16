@@ -1,18 +1,12 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, ChartContainer, ChartTooltip, ChartBars } from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, Download, Info } from 'lucide-react';
+import { X, Download, Info } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query';
 import { trialsageApi } from '@/lib/api-connector';
 

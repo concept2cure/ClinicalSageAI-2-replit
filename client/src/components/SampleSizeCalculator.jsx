@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, BarChart3, RefreshCw, Users, ChevronDown, Info, BarChart2 } from "lucide-react";
+import { Calculator, BarChart3, RefreshCw, Users, ChevronDown, Info, BarChart2 } from 'lucide-react'
 
 export default function SampleSizeCalculator({ sessionId, onCalculationComplete = () => {} }) {
   const [calculationMode, setCalculationMode] = useState("standard");

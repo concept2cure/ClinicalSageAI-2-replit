@@ -1,50 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Input,
-  Label,
-  Textarea,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-  Separator,
-  Alert,
-  AlertTitle,
-  AlertDescription,
-} from '@/components/ui';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Separator, Alert, AlertTitle, AlertDescription, } from '@/components/ui';
 import {
-  FileText,
-  Plus,
-  Copy,
-  Sparkles,
-  Download,
-  FlaskConical,
-  FileSearch,
-  Check,
-  Clock,
-  X,
-  HelpCircle,
-  ChevronDown,
-  Loader2,
-  Beaker,
-} from 'lucide-react';
+  FileText, Plus, Copy, Sparkles, Download, FlaskConical, FileSearch, Check, Clock, X, HelpCircle, ChevronDown, Loader2, Beaker } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 

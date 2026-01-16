@@ -15,39 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { 
-  ChevronRight, 
-  Lock, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Upload, 
-  FileText,
-  Settings,
-  Search,
-  ClipboardCheck,
-  Target,
-  FlaskConical,
-  Edit,
-  Package,
-  Send,
-  Brain,
-  Info,
-  Building2,
-  Phone,
-  Mail,
-  Globe,
-  Hash,
-  Calendar,
-  Users,
-  Shield,
-  Cpu,
-  Heart,
-  Zap,
-  Activity,
-  Database,
-  Layers,
-  BookOpen,
-  FileCheck
-} from 'lucide-react';
+  ChevronRight, Lock, CheckCircle2, AlertTriangle, Upload, FileText, Settings, Search, ClipboardCheck, Target, FlaskConical, Edit, Package, Send, Brain, Info, Building2, Phone, Mail, Globe, Hash, Calendar, Users, Shield, Cpu, Heart, Zap, Activity, Database, Layers, BookOpen, FileCheck } from 'lucide-react'
 import PredicateFinderPanel from './PredicateFinderPanel';
 import { ComplianceOversightPanel } from './ComplianceOversightPanel';
 

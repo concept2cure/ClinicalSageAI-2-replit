@@ -7,16 +7,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  X,
-  FolderOpen,
-  Search,
-  AlertCircle,
-  Clock,
-  File,
-  FileCheck,
-  FileWarning,
-  ChevronRight,
-} from 'lucide-react';
+  X, FolderOpen, Search, AlertCircle, Clock, File, FileCheck, FileWarning, ChevronRight } from 'lucide-react'
 
 export default function DocDrawer({ onClose }) {
   const [documents, setDocuments] = useState([]);

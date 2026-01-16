@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, BookOpen, FileText, Globe, BarChart, Brain } from 'lucide-react';
+import { Database, BookOpen, FileText, Globe, BarChart, Brain } from 'lucide-react'
 
 // Fixed CSRLibraryMetrics component - no hooks to prevent React errors
 export default function CSRLibraryMetrics() {

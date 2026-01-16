@@ -18,18 +18,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import {
-  FileUpload,
-  Search,
-  FileCheck,
-  BookOpen,
-  Brain,
-  Shield,
-  BarChart4,
-  Settings,
-  AlertCircle,
-  Database,
-  Sparkles,
-} from 'lucide-react';
+  FileUpload, Search, FileCheck, BookOpen, Brain, Shield, BarChart4, Settings, AlertCircle, Database, Sparkles } from 'lucide-react'
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { toast } from '../ui/use-toast';

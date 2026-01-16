@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, ChevronDown, ChevronUp, Download, ExternalLink, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Download, ExternalLink, Sparkles } from 'lucide-react'
 import AIStudyConversation from './AIStudyConversation';
 
 const SimilarStudyResults = ({ results, searchQuery, onClear }) => {

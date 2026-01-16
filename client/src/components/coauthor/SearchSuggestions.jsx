@@ -11,27 +11,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  FileText, 
-  User, 
-  Package, 
-  GitBranch, 
-  Hash,
-  Book,
-  ArrowRight,
-  Search,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-  Eye,
-  Loader2,
-  FileIcon,
-  Users,
-  Building,
-  Shield,
-  Table,
-  Presentation
-} from 'lucide-react';
+  FileText, User, Package, GitBranch, Hash, Book, ArrowRight, Search, Clock, CheckCircle, AlertCircle, XCircle, Eye, Loader2, FileIcon, Users, Building, Shield, Table, Presentation } from 'lucide-react'
 
 // Helper function to get file icon based on type
 function getFileIcon(type, fileName) {

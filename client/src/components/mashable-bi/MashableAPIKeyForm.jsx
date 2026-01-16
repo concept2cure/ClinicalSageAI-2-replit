@@ -8,18 +8,12 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
-import { Lock, KeySquare, AlertTriangle } from 'lucide-react';
+import { Lock, KeySquare, AlertTriangle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function MashableAPIKeyForm({ onKeyConfigured }) {

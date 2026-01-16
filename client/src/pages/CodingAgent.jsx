@@ -1,29 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import {
-  Send,
-  Code,
-  Terminal,
-  FileText,
-  Loader2,
-  Bot,
-  Brain,
-  Zap,
-  Settings,
-  RefreshCw,
-  ArrowLeft,
-  Play,
-  Package,
-  GitBranch,
-  Database,
-  Globe,
-  Folder,
-  Search,
-  Download,
-  Upload,
-  Cpu,
-  Monitor,
-} from 'lucide-react';
+  Send, Code, Terminal, FileText, Loader2, Bot, Brain, Zap, Settings, RefreshCw, ArrowLeft, Play, Package, GitBranch, Database, Globe, Folder, Search, Download, Upload, Cpu, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,7 +22,7 @@ const CodingAgent = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [agentModel, setAgentModel] = useState('openai');
+  const [agentModel, setAgentModel] = useState('gemini');
   const [activeTab, setActiveTab] = useState('chat');
   const messagesEndRef = useRef(null);
   const { toast } = useToast();
@@ -192,7 +170,7 @@ const CodingAgent = () => {
                 <SelectItem value="gemini">
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4" />
-                    Gemini Pro
+                    Gemini 3 Flash (Preview)
                   </div>
                 </SelectItem>
               </SelectContent>

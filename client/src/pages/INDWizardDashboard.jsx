@@ -8,18 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  User,
-  Building,
-  Calendar,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Plus,
-  BarChart3,
-  Activity,
-} from 'lucide-react';
+  FileText, User, Building, Calendar, TrendingUp, AlertCircle, CheckCircle, Clock, Plus, BarChart3, Activity } from 'lucide-react'
 
 export default function INDWizardDashboard() {
   const [wizardData, setWizardData] = useState(null);

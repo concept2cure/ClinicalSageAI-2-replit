@@ -1,29 +1,12 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  FileText,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  ArrowRight,
-  Calendar,
-  Target,
-  TrendingUp,
-  Download,
-  Copy,
-  ExternalLink,
-} from 'lucide-react';
+  FileText, Clock, AlertTriangle, CheckCircle, ArrowRight, Calendar, Target, TrendingUp, Download, Copy, ExternalLink, DialogDescription } from 'lucide-react'
 
 const ContentPlanDialog = ({ isOpen, onClose, contentPlanData, isLoading }) => {
   const [activeTab, setActiveTab] = useState('overview');

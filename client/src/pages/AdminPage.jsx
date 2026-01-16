@@ -3,7 +3,7 @@ import React from 'react';
 import AdminEmbeddingPanel from '@/components/AdminEmbeddingPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Shield } from 'lucide-react';
+import { Shield } from 'lucide-react'
 
 export default function AdminPage() {
   return (

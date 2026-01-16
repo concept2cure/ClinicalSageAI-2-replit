@@ -1,17 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  FileText,
-  BookOpen,
-  CheckCircle,
-  AlertCircle,
-  Search,
-  Download,
-  FileSearch,
-  Highlighter,
-  NotebookPen,
-  Brain,
-} from 'lucide-react';
+  FileText, BookOpen, CheckCircle, AlertCircle, Search, Download, FileSearch, Highlighter, NotebookPen, Brain } from 'lucide-react'
 import {
   Card,
   CardContent,

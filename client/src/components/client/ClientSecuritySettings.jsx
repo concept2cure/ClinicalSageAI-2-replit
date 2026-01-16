@@ -4,13 +4,7 @@ import { apiRequest } from '../../lib/queryClient';
 import { useTenant } from '../../contexts/TenantContext';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,27 +12,11 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import EnhancedSelect from '@/components/ui/select-wrapper';
 import {
-  Shield,
-  AlertTriangle,
-  Key,
-  Lock,
-  Clock,
-  UserCheck,
-  FileText,
-  FileCheck,
-  ClipboardCheck,
-  CheckSquare,
-  Globe as GlobeIcon,
-} from 'lucide-react';
+  Shield, AlertTriangle, Key, Lock, Clock, UserCheck, FileText, FileCheck, ClipboardCheck, CheckSquare, Globe as GlobeIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 

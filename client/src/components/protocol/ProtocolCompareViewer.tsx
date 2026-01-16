@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 
 interface ProtocolCompareViewerProps {
   protocolId: string;
@@ -24,17 +24,11 @@ export default function ProtocolCompareViewer({ protocolId, userId }: ProtocolCo
       })
       .catch(err => {
         console.error('Error fetching protocol versions:', err);
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: 'Error',
           description: 'Failed to load protocol versions',
           variant: 'destructive'
-        })
-  console.log('Toast would show:', {
-          title: 'Error',
-          description: 'Failed to load protocol versions',
-          variant: 'destructive'
-        });
+  });
         setLoading(false);
       });
   }, [protocolId, userId]);
@@ -60,31 +54,20 @@ export default function ProtocolCompareViewer({ protocolId, userId }: ProtocolCo
       
       if (data.success && data.download_url) {
         window.open(data.download_url, '_blank');
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: 'Success',
           description: 'Comparison report generated successfully',
-        })
-  console.log('Toast would show:', {
-          title: 'Success',
-          description: 'Comparison report generated successfully',
-        });
+  });
       } else {
         throw new Error(data.message || 'Failed to generate comparison report');
       }
     } catch (error) {
       console.error('Error generating comparison:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to generate comparison report',
         variant: 'destructive'
-      })
-  console.log('Toast would show:', {
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate comparison report',
-        variant: 'destructive'
-      });
+  });
     } finally {
       setExporting(false);
     }

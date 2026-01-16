@@ -3,17 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Send,
-  Bot,
-  User,
-  Paperclip,
-  ListChecks,
-  RefreshCw,
-  ChevronDown,
-  Code,
-  Image,
-  Copy,
-} from 'lucide-react';
+  Send, Bot, User, Paperclip, ListChecks, RefreshCw, ChevronDown, Code, Image, Copy } from 'lucide-react'
 import {
   Card,
   CardContent,

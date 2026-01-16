@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Book,
-  MapPin,
-  CheckCircle,
-  ArrowRight,
-  Lightbulb,
-  Clock,
-  Award,
-  FileText,
-  AlertCircle,
-  X,
-} from 'lucide-react';
+import { Book, MapPin, CheckCircle, ArrowRight, Lightbulb, Clock, Award, FileText, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';

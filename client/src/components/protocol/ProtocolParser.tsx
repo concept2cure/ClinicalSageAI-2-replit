@@ -2,18 +2,12 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+  Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { FileUploader, UploadedFile } from '@/components/ui/file-uploader';
-import { AlertCircle, Upload, FileText, Zap, Loader2 } from 'lucide-react';
+import { AlertCircle, Upload, FileText, Zap, Loader2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast';
 
 interface ProtocolParserProps {

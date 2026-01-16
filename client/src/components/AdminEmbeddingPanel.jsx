@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle, RefreshCw, FileText, Database } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, RefreshCw, FileText, Database } from 'lucide-react'
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -31,10 +31,6 @@ const AdminEmbeddingPanel = () => {
       console.error('Failed to fetch embedding status:', err);
       // toast call replaced
   // Original: toast({
-        title: "Error fetching status",
-        description: "Could not retrieve document embedding status.",
-        variant: "destructive",
-      })
   console.log('Toast would show:', {
         title: "Error fetching status",
         description: "Could not retrieve document embedding status.",
@@ -75,10 +71,6 @@ const AdminEmbeddingPanel = () => {
     onSuccess: (data) => {
       // toast call replaced
   // Original: toast({
-        title: "Processing started",
-        description: `Document embedding process has been started in the background for ${data.documentsToProcess || 'pending'} documents.`,
-        variant: "default",
-      })
   console.log('Toast would show:', {
         title: "Processing started",
         description: `Document embedding process has been started in the background for ${data.documentsToProcess || 'pending'} documents.`,
@@ -95,10 +87,6 @@ const AdminEmbeddingPanel = () => {
       console.error('Failed to process documents:', err);
       // toast call replaced
   // Original: toast({
-        title: "Processing failed",
-        description: err.message || "Failed to start document embedding process.",
-        variant: "destructive",
-      })
   console.log('Toast would show:', {
         title: "Processing failed",
         description: err.message || "Failed to start document embedding process.",

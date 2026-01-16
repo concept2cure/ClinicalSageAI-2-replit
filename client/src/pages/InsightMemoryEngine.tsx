@@ -3,27 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import {
-  BookOpenCheck,
-  Brain,
-  BarChart,
-  Clock,
-  Database,
-  Filter,
-  LineChart,
-  Layers,
-  Lock,
-  Search,
-  Share,
-  Sparkles,
-  AlertCircle,
-  Dna,
-  FileText,
-  Lightbulb,
-  HelpCircle,
-  Check,
-  Flame,
-  BadgeAlert,
-} from 'lucide-react';
+  BookOpenCheck, Brain, BarChart, Clock, Database, Filter, LineChart, Layers, Lock, Search, Share, Sparkles, AlertCircle, Dna, FileText, Lightbulb, HelpCircle, Check, Flame, BadgeAlert } from 'lucide-react'
 
 import { Button } from '@/components/ui/button';
 import {

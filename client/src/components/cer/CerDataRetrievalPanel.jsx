@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Loader2,
-  RefreshCw,
-  Zap,
-  AlertCircle,
-  CheckCircle,
-  Bookmark,
-  Book,
-  Database,
-} from 'lucide-react';
+  Loader2, RefreshCw, Zap, AlertCircle, CheckCircle, Bookmark, Book, Database } from 'lucide-react'
 import { cerApiService } from '@/services/CerAPIService';
 import { useToast } from '@/components/ui/toaster';
 import DataRetrievalStatus from './DataRetrievalStatus';

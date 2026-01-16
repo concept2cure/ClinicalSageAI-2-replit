@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle as AlertCircleIcon, CheckCircle as CheckCircleIcon, ClipboardCopy as ClipboardCopyIcon, Lightbulb as LightbulbIcon } from 'lucide-react';
+import { AlertCircle as AlertCircleIcon, CheckCircle as CheckCircleIcon, ClipboardCopy as ClipboardCopyIcon, Lightbulb as LightbulbIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
@@ -160,31 +160,20 @@ const ProtocolCorrectionSuggestions: React.FC<ProtocolCorrectionSuggestionsProps
 
   const copySuggestion = (text: string): void => {
     navigator.clipboard.writeText(text);
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Copied to clipboard",
       description: "Suggestion copied for easy insertion into protocol",
-    })
-  console.log('Toast would show:', {
-      title: "Copied to clipboard",
-      description: "Suggestion copied for easy insertion into protocol",
-    });
+  });
   };
 
   const acceptSuggestion = (id: string): void => {
     // This would typically update the protocol with the suggested change
     // For now, just show a toast confirmation
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Suggestion accepted",
       description: "The suggested change will be applied to the protocol",
       icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />
-    })
-  console.log('Toast would show:', {
-      title: "Suggestion accepted",
-      description: "The suggested change will be applied to the protocol",
-      icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />
-    });
+  });
     
     // In a real implementation, this would update the protocol document
   };

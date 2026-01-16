@@ -3,16 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
-  CheckSquare,
-  FileSignature,
-  UserCheck,
-  Clock,
-  CheckCircle,
-  XCircle,
-  User,
-  Shield,
-  Mail,
-} from 'lucide-react';
+  CheckSquare, FileSignature, UserCheck, Clock, CheckCircle, XCircle, User, Shield, Mail } from 'lucide-react'
 import indWizardService from '@/services/indWizardService';
 
 export default function SignoffDrawer({ submissionId }) {

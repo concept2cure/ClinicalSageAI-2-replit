@@ -7,17 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Lightbulb,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  BookOpen,
-  MessageSquare,
-  TrendingUp,
-  FileText,
-  Sparkles,
-  Target,
-} from 'lucide-react';
+  Lightbulb, AlertTriangle, CheckCircle, Clock, BookOpen, MessageSquare, TrendingUp, FileText, Sparkles, Target } from 'lucide-react'
 
 export const ContextualGuidancePanel = ({
   moduleId,

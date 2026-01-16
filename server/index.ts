@@ -1,4 +1,14 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
+
+// Prefer .env.local for dev/demo, then fall back to .env.
+// This keeps Codespaces and local runs consistent without requiring shell exports.
+const envLocalPath = resolve(process.cwd(), '.env.local');
+if (existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath });
+}
+dotenv.config();
 import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
@@ -12,6 +22,7 @@ import fs from 'fs';
 import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 
 // Import enterprise services
 import openaiService from './services/openaiService.js';
@@ -20,8 +31,19 @@ import rbacService from './services/roleBasedAccess.js';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { and, eq } from 'drizzle-orm';
-import { fda510kStageProgress, fda510kProjects } from '@shared/schema';
+import { and, desc, eq } from 'drizzle-orm';
+import {
+  clientWorkspaces,
+  fda510kDocuments,
+  fda510kStageProgress,
+  fda510kProjects,
+  organizations,
+  projects,
+  sharepoint_audit_log,
+} from '@shared/schema';
+import sourceDataIngestRoutes from './routes/source-data-ingest.routes';
+import regulaiIngestV1Routes from './routes/regulai-ingest-v1.routes';
+import canadaIngestRoutes from './api/ingest/canada';
 
 // Debug mode configuration
 const DEBUG = process.env.DEBUG || process.env.NODE_ENV === 'development';
@@ -190,13 +212,375 @@ const db = drizzle(pool);
 // Test database connection and log status
 pool
   .connect()
-  .then(client => {
+  .then(async client => {
     console.log('✅ Database connection successful');
     client.release();
+
+    // Ensure core tables exist to prevent runtime 'relation does not exist' errors
+    try {
+      console.log('🔧 Ensuring core database tables exist...');
+      await pool.query(`
+        -- -------------------------------------------------------------------
+        -- Tenancy + Workspaces + Projects (minimum viable subset to run CERV2)
+        -- -------------------------------------------------------------------
+
+        CREATE TABLE IF NOT EXISTS organizations (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL UNIQUE,
+          domain TEXT,
+          logo TEXT,
+          settings JSONB,
+          api_key TEXT UNIQUE,
+          tier TEXT DEFAULT 'standard' NOT NULL,
+          status TEXT DEFAULT 'active' NOT NULL,
+          max_users INTEGER DEFAULT 5,
+          max_projects INTEGER DEFAULT 10,
+          max_storage INTEGER DEFAULT 5,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        );
+
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug TEXT;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS domain TEXT;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo TEXT;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS api_key TEXT;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'standard';
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS max_users INTEGER DEFAULT 5;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS max_projects INTEGER DEFAULT 10;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS max_storage INTEGER DEFAULT 5;
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organizations_slug_key') THEN
+            -- ignore if a different unique constraint already exists
+            BEGIN
+              ALTER TABLE organizations ADD CONSTRAINT organizations_slug_key UNIQUE (slug);
+            EXCEPTION WHEN others THEN
+              NULL;
+            END;
+          END IF;
+        END $$;
+
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM organizations WHERE id = 1) THEN
+            INSERT INTO organizations (id, name, slug, tier, status, created_at, updated_at)
+            VALUES (1, 'Demo Organization', 'demo-organization', 'standard', 'active', NOW(), NOW());
+          END IF;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS client_workspaces (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL REFERENCES organizations(id),
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL,
+          description TEXT,
+          logo TEXT,
+          status TEXT DEFAULT 'active' NOT NULL,
+          quota_projects INTEGER DEFAULT 20,
+          quota_storage INTEGER DEFAULT 1,
+          contact_name TEXT,
+          contact_email TEXT,
+          contact_phone TEXT,
+          industry TEXT,
+          settings JSONB,
+          metadata JSONB,
+          created_by_id INTEGER,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          CONSTRAINT unique_org_slug UNIQUE (organization_id, slug)
+        );
+
+        CREATE TABLE IF NOT EXISTS projects (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL REFERENCES organizations(id),
+          client_workspace_id INTEGER NOT NULL REFERENCES client_workspaces(id),
+          name TEXT NOT NULL,
+          code TEXT,
+          description TEXT,
+          status TEXT DEFAULT 'planning' NOT NULL,
+          priority TEXT DEFAULT 'medium' NOT NULL,
+          type TEXT NOT NULL,
+          start_date TIMESTAMP,
+          target_end_date TIMESTAMP,
+          actual_end_date TIMESTAMP,
+          progress INTEGER DEFAULT 0,
+          settings JSONB,
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        );
+
+        -- If an older bootstrap created projects.client_workspace_id as TEXT, attempt to coerce.
+        DO $$
+        DECLARE
+          dt TEXT;
+        BEGIN
+          SELECT data_type INTO dt
+          FROM information_schema.columns
+          WHERE table_name = 'projects' AND column_name = 'client_workspace_id';
+
+          IF dt IS NOT NULL AND dt <> 'integer' THEN
+            BEGIN
+              ALTER TABLE projects
+                ALTER COLUMN client_workspace_id TYPE INTEGER
+                USING NULLIF(client_workspace_id::text, '')::integer;
+            EXCEPTION WHEN others THEN
+              -- If conversion fails, leave as-is; the Drizzle routes will still fail,
+              -- but this prevents startup crashes in partially migrated DBs.
+              NULL;
+            END;
+          END IF;
+        END $$;
+
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'planning';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS type TEXT;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS code TEXT;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date TIMESTAMP;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS target_end_date TIMESTAMP;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS actual_end_date TIMESTAMP;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS progress INTEGER DEFAULT 0;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget INTEGER;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget_currency TEXT DEFAULT 'USD';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget_status TEXT DEFAULT 'within-budget';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by_id INTEGER;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id INTEGER;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS sponsors TEXT[];
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS tags TEXT[];
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS critical_to_quality_factors JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS risk_level TEXT DEFAULT 'medium';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS risk_assessment JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS quality_targets JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS module_references JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS metadata JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings JSONB;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+
+        -- Ensure at least one client workspace for org 1.
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM client_workspaces WHERE organization_id = 1) THEN
+            INSERT INTO client_workspaces (organization_id, name, slug, status, created_at, updated_at)
+            VALUES (1, 'Default Workspace', 'default', 'active', NOW(), NOW());
+          END IF;
+        END $$;
+
+        -- Ensure the demo/default workspace has a usable project quota for normal CERV2 usage.
+        UPDATE client_workspaces
+        SET quota_projects = GREATEST(COALESCE(quota_projects, 0), 20)
+        WHERE organization_id = 1;
+
+        -- -------------------------------------------------------------------
+        -- Module subscriptions (for /api/modules/*)
+        -- -------------------------------------------------------------------
+        CREATE TABLE IF NOT EXISTS available_modules (
+          id SERIAL PRIMARY KEY,
+          module_id TEXT NOT NULL UNIQUE,
+          name TEXT NOT NULL,
+          description TEXT,
+          category TEXT,
+          path TEXT,
+          icon TEXT,
+          is_new BOOLEAN DEFAULT false,
+          is_highlight BOOLEAN DEFAULT false,
+          sort_order INTEGER DEFAULT 0,
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS module_subscriptions (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+          module_id TEXT NOT NULL REFERENCES available_modules(module_id) ON DELETE CASCADE,
+          enabled BOOLEAN DEFAULT true NOT NULL,
+          enabled_at TIMESTAMP,
+          disabled_at TIMESTAMP,
+          enabled_by TEXT,
+          disabled_by TEXT,
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          CONSTRAINT module_subscriptions_org_module_unique UNIQUE (organization_id, module_id)
+        );
+
+        -- -------------------------------------------------------------------
+        -- 510(k) workflow + documents (for stage + CERV2 document persistence)
+        -- -------------------------------------------------------------------
+        CREATE TABLE IF NOT EXISTS fda_510k_projects (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL REFERENCES organizations(id),
+          project_id INTEGER NOT NULL REFERENCES projects(id),
+          submission_id INTEGER,
+          current_stage TEXT DEFAULT 'setup',
+          current_stage_progress INTEGER DEFAULT 0,
+          overall_progress INTEGER DEFAULT 0,
+          device_name TEXT NOT NULL DEFAULT 'Untitled Device',
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        );
+
+        -- Keep the dev DB compatible with shared/schema.ts expectations.
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_software BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_cybersecurity BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_sterility BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_biocompatibility BOOLEAN DEFAULT true;
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_clinical_data BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_projects ADD COLUMN IF NOT EXISTS has_ai BOOLEAN DEFAULT false;
+
+        CREATE TABLE IF NOT EXISTS fda_510k_documents (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL REFERENCES organizations(id),
+          project_id INTEGER NOT NULL REFERENCES fda_510k_projects(id),
+          template_id INTEGER,
+          document_id TEXT NOT NULL UNIQUE,
+          document_type TEXT NOT NULL,
+          document_name TEXT NOT NULL,
+          content TEXT,
+          form_data JSONB,
+          attachments JSONB,
+          status TEXT DEFAULT 'draft',
+          version INTEGER DEFAULT 1,
+          created_by INTEGER,
+          updated_by INTEGER,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        );
+
+        -- Align dev DB with shared/schema.ts for fda_510k_documents
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS locked_by INTEGER;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS previous_version_id INTEGER;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS change_log JSONB;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS signatures JSONB;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS signature_required BOOLEAN DEFAULT false;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS validation_status TEXT DEFAULT 'pending';
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS validation_errors JSONB;
+        ALTER TABLE fda_510k_documents ADD COLUMN IF NOT EXISTS compliance_score INTEGER;
+
+        CREATE TABLE IF NOT EXISTS ectd_templates (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          metadata JSONB,
+          content JSONB,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS ectd_modules (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          template_id INTEGER REFERENCES ectd_templates(id),
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        -- Append-only audit trail table (Part 11 oriented)
+        -- NOTE: This table is used by /api/audit/events and is intentionally generic.
+        CREATE TABLE IF NOT EXISTS sharepoint_audit_log (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL,
+          file_id INTEGER,
+          action TEXT NOT NULL,
+          details JSONB,
+          user_id TEXT NOT NULL,
+          user_name TEXT NOT NULL,
+          ip_address TEXT,
+          user_agent TEXT,
+          timestamp TIMESTAMP DEFAULT NOW() NOT NULL,
+          signature TEXT
+        );
+      `);
+      console.log('✅ Core database tables ensured');
+    } catch (e) {
+      console.error('❌ Failed to ensure core tables:', e);
+    }
   })
   .catch(err => {
     console.error('❌ Database connection failed:', err.message);
   });
+
+// -----------------------------------------------------------------------------
+// Audit Trail (append-only) API
+// -----------------------------------------------------------------------------
+
+// Accepts client-side events and writes an append-only audit record.
+// This is v1: it provides the backbone for Part 11. E-signatures and record hashes
+// will be layered on in a later phase.
+app.post('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const orgHeader = (req.headers['x-organization-id'] ?? req.headers['x-organizationid']) as string | undefined;
+    const organizationId = Number.parseInt(String(req.body?.organizationId ?? orgHeader ?? '1'), 10);
+
+    const action = String(req.body?.action ?? '').trim();
+    if (!action) {
+      return res.status(400).json({ success: false, error: 'Missing required field: action' });
+    }
+
+    const userId = String(req.body?.userId ?? req.headers['x-user-id'] ?? 'unknown');
+    const userName = String(req.body?.userName ?? req.headers['x-user-name'] ?? 'Unknown User');
+
+    const details = req.body?.details ?? null;
+    const fileIdRaw = req.body?.fileId ?? null;
+    const fileId = fileIdRaw === null || fileIdRaw === undefined || fileIdRaw === '' ? null : Number(fileIdRaw);
+
+    const ipAddress = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.ip || null;
+    const userAgent = (req.headers['user-agent'] as string | undefined) ?? null;
+
+    const inserted = await db
+      .insert(sharepoint_audit_log)
+      .values({
+        organizationId: Number.isFinite(organizationId) ? organizationId : 1,
+        fileId,
+        action,
+        details,
+        userId,
+        userName,
+        ipAddress,
+        userAgent,
+        timestamp: new Date(),
+        signature: null,
+      })
+      .returning({ id: sharepoint_audit_log.id, timestamp: sharepoint_audit_log.timestamp });
+
+    return res.status(201).json({ success: true, event: inserted?.[0] ?? null });
+  } catch (error: any) {
+    console.error('Error writing audit event:', error);
+    return res.status(500).json({ success: false, error: 'Failed to write audit event' });
+  }
+});
+
+// Query audit events (v1: basic org filter + pagination).
+app.get('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const orgHeader = (req.headers['x-organization-id'] ?? req.headers['x-organizationid']) as string | undefined;
+    const organizationId = Number.parseInt(String(req.query?.organizationId ?? orgHeader ?? '1'), 10);
+    const limit = Math.min(Number.parseInt(String(req.query?.limit ?? '100'), 10) || 100, 500);
+    const offset = Math.max(Number.parseInt(String(req.query?.offset ?? '0'), 10) || 0, 0);
+
+    const rows = await db
+      .select()
+      .from(sharepoint_audit_log)
+      .where(eq(sharepoint_audit_log.organizationId, Number.isFinite(organizationId) ? organizationId : 1))
+      .orderBy(desc(sharepoint_audit_log.timestamp))
+      .limit(limit)
+      .offset(offset);
+
+    return res.json({ success: true, events: rows, limit, offset });
+  } catch (error: any) {
+    console.error('Error reading audit events:', error);
+    return res.status(500).json({ success: false, error: 'Failed to read audit events' });
+  }
+});
 
 // Initialize VaultDMSService
 import VaultDMSService from './services/VaultDMSService.js';
@@ -234,6 +618,69 @@ app.get('/api/health', async (req: Request, res: Response) => {
   res.json(healthData);
 });
 
+// OpenFDA connectivity health check (optional api key; never returns the key)
+app.get('/api/health/openfda', async (_req: Request, res: Response) => {
+  const apiKeyConfigured = Boolean(process.env.OPENFDA_API_KEY);
+  const baseUrl = 'https://api.fda.gov/device/510k.json?limit=1';
+  const url = apiKeyConfigured
+    ? `${baseUrl}&api_key=${encodeURIComponent(process.env.OPENFDA_API_KEY as string)}`
+    : baseUrl;
+
+  const start = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const resp = await fetch(url, { method: 'GET', signal: controller.signal });
+    const responseTimeMs = Date.now() - start;
+
+    // Keep response payload free of secrets; never echo full url when key is configured.
+    const checkedUrl = apiKeyConfigured ? baseUrl : baseUrl;
+
+    if (resp.ok) {
+      return res.status(200).json({
+        status: 'green',
+        ok: true,
+        apiKeyConfigured,
+        httpStatus: resp.status,
+        responseTimeMs,
+        checkedUrl,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Common failure modes: 429 rate limit, 5xx upstream issues, 4xx query issues.
+    const rateLimited = resp.status === 429;
+    const status = rateLimited ? 'yellow' : resp.status >= 500 ? 'red' : 'yellow';
+    return res.status(status === 'red' ? 503 : 200).json({
+      status,
+      ok: false,
+      apiKeyConfigured,
+      httpStatus: resp.status,
+      responseTimeMs,
+      checkedUrl,
+      rateLimited,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e: any) {
+    const responseTimeMs = Date.now() - start;
+    const checkedUrl = baseUrl;
+
+    return res.status(503).json({
+      status: 'red',
+      ok: false,
+      apiKeyConfigured,
+      httpStatus: 0,
+      responseTimeMs,
+      checkedUrl,
+      error: String(e?.name === 'AbortError' ? 'timeout' : e?.message || e),
+      timestamp: new Date().toISOString(),
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+});
+
 // Mount authentication routes (SECURE)
 try {
   const { router: authRouter } = await import('./auth.js');
@@ -243,51 +690,653 @@ try {
   console.error('❌ Failed to mount auth routes:', error);
 }
 
+// ---------------------------------------------------------------------------
+// Legacy auth/user endpoints used by the SPA (must return JSON, never HTML).
+// ---------------------------------------------------------------------------
+function getUserFromBearerToken(req: Request) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) return null;
+
+  const token = authHeader.slice('bearer '.length);
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+
+  try {
+    return jwt.verify(token, secret);
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/user', (req: Request, res: Response) => {
+  const tokenUser: any = getUserFromBearerToken(req);
+  if (!tokenUser) return res.json(null);
+
+  const username =
+    typeof tokenUser.email === 'string'
+      ? tokenUser.email.split('@')[0]
+      : typeof tokenUser.name === 'string'
+        ? tokenUser.name
+        : 'user';
+
+  return res.json({ id: tokenUser.id ?? 0, username, email: tokenUser.email });
+});
+
+app.get('/api/user/me', (req: Request, res: Response) => {
+  const tokenUser: any = getUserFromBearerToken(req);
+  if (!tokenUser) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+  return res.json({ success: true, user: tokenUser });
+});
+
+app.post('/api/login', (_req: Request, res: Response) => {
+  return res.status(501).json({
+    success: false,
+    message: 'Use POST /api/auth/login (JWT-based authentication)'
+  });
+});
+
+app.post('/api/logout', (_req: Request, res: Response) => {
+  // JWT logout is client-side token removal.
+  return res.json({ success: true, message: 'Logout successful' });
+});
+
+app.post('/api/register', (_req: Request, res: Response) => {
+  return res.status(501).json({
+    success: false,
+    message: 'Registration endpoint not implemented. Use enterprise user provisioning.'
+  });
+});
+
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
 });
 
 // Mount basic routes including /api/projects
-// Direct mount /api/projects here to ensure it works
-app.get('/api/projects', async (req, res) => {
+// NOTE: /api/projects is served by routes/projects-management with tenant enforcement.
+
+// Dev-only seed endpoint: Insert demo organization and projects for local development/testing
+app.post('/api/dev/seed-demo', async (_req, res) => {
   try {
-    // Check multiple sources for organization/workspace context  
-    const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
-    
-    // Import database connection dynamically
-    const dbModule = await import('./db.js');
-    const { pool } = dbModule;
-    
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
     }
-    
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
-    
-    // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
-      query += ` AND client_workspace_id = $${params.length}`;
+
+    const orgName = 'Demo Org';
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Ensure organization exists
+      const orgLookup = await client.query('SELECT * FROM organizations WHERE name = $1 LIMIT 1', [orgName]);
+      let organization;
+      if (orgLookup.rows.length > 0) {
+        organization = orgLookup.rows[0];
+      } else {
+        const insertOrg = await client.query('INSERT INTO organizations (name, type) VALUES ($1, $2) RETURNING *', [orgName, 'CLIENT']);
+        organization = insertOrg.rows[0];
+      }
+
+      // Create demo projects if missing
+      const projectNames = ['Demo Project 1', 'Demo Project 2', 'Demo Project 3'];
+      const projects: any[] = [];
+      for (const name of projectNames) {
+        const projLookup = await client.query('SELECT * FROM projects WHERE name = $1 AND organization_id = $2 LIMIT 1', [name, organization.id]);
+        if (projLookup.rows.length > 0) {
+          projects.push(projLookup.rows[0]);
+        } else {
+          const insertProj = await client.query(
+            'INSERT INTO projects (name, organization_id, status) VALUES ($1, $2, $3) RETURNING *',
+            [name, organization.id, 'active']
+          );
+          projects.push(insertProj.rows[0]);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      return res.json({ organization, projects });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('❌ Failed to seed demo data:', err);
+      return res.status(500).json({ error: 'Failed to seed demo data' });
+    } finally {
+      client.release();
     }
-    
-    query += ' ORDER BY created_at DESC';
-    
-    console.log('Fetching projects with query:', query, 'params:', params);
-    const result = await pool.query(query, params);
-    console.log('Found projects:', result.rows?.length || 0);
-    
-    res.json(result.rows || []);
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    res.status(500).json({ error: 'Failed to fetch projects' });
+  } catch (err) {
+    console.error('❌ Unexpected error in seed endpoint:', err);
+    return res.status(500).json({ error: 'Unexpected error' });
   }
 });
-console.log('✅ /api/projects route mounted directly');
+
+// Alternate dev-only seed endpoint (non-/api path) to bypass any organization middleware that may be applied to /api
+app.post('/__dev/seed-demo', async (_req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
+    }
+
+    const orgName = 'Demo Org';
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Ensure organization exists
+      const orgLookup = await client.query('SELECT * FROM organizations WHERE name = $1 LIMIT 1', [orgName]);
+      let organization;
+      if (orgLookup.rows.length > 0) {
+        organization = orgLookup.rows[0];
+      } else {
+        const insertOrg = await client.query('INSERT INTO organizations (name, type) VALUES ($1, $2) RETURNING *', [orgName, 'CLIENT']);
+        organization = insertOrg.rows[0];
+      }
+
+      // Create demo projects if missing
+      const projectNames = ['Demo Project 1', 'Demo Project 2', 'Demo Project 3'];
+      const projects: any[] = [];
+      for (const name of projectNames) {
+        const projLookup = await client.query('SELECT * FROM projects WHERE name = $1 AND organization_id = $2 LIMIT 1', [name, organization.id]);
+        if (projLookup.rows.length > 0) {
+          projects.push(projLookup.rows[0]);
+        } else {
+          const insertProj = await client.query(
+            'INSERT INTO projects (name, organization_id, status) VALUES ($1, $2, $3) RETURNING *',
+            [name, organization.id, 'active']
+          );
+          projects.push(insertProj.rows[0]);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      return res.json({ organization, projects });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('❌ Failed to seed demo data (__dev):', err);
+      return res.status(500).json({ error: 'Failed to seed demo data' });
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('❌ Unexpected error in seed endpoint (__dev):', err);
+    return res.status(500).json({ error: 'Unexpected error' });
+  }
+});
+
+// Public dev seed endpoint that bypasses /api auth/tenant middleware (exempt via middleware setup)
+app.post('/api/public/dev/seed-demo', async (_req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
+    }
+
+    const orgName = 'Demo Org';
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Ensure organization exists
+      const orgLookup = await client.query('SELECT * FROM organizations WHERE name = $1 LIMIT 1', [orgName]);
+      let organization;
+      if (orgLookup.rows.length > 0) {
+        organization = orgLookup.rows[0];
+      } else {
+        const insertOrg = await client.query('INSERT INTO organizations (name, type) VALUES ($1, $2) RETURNING *', [orgName, 'CLIENT']);
+        organization = insertOrg.rows[0];
+      }
+
+      // Create demo projects if missing
+      const projectNames = ['Demo Project 1', 'Demo Project 2', 'Demo Project 3'];
+      const projects: any[] = [];
+      for (const name of projectNames) {
+        const projLookup = await client.query('SELECT * FROM projects WHERE name = $1 AND organization_id = $2 LIMIT 1', [name, organization.id]);
+        if (projLookup.rows.length > 0) {
+          projects.push(projLookup.rows[0]);
+        } else {
+          const insertProj = await client.query(
+            'INSERT INTO projects (name, organization_id, status) VALUES ($1, $2, $3) RETURNING *',
+            [name, organization.id, 'active']
+          );
+          projects.push(insertProj.rows[0]);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      return res.json({ organization, projects });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('❌ Failed to seed demo data (public):', err);
+      return res.status(500).json({ error: 'Failed to seed demo data' });
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('❌ Unexpected error in seed endpoint (public):', err);
+    return res.status(500).json({ error: 'Unexpected error' });
+  }
+});
+
+// Public dev seed endpoint: creates realistic medical-device companies (client workspaces)
+// and multiple 510(k) project examples that appear in the Tenant/Client selectors.
+// Idempotent: re-running will re-use existing records where possible.
+app.post('/api/public/dev/seed-cerv2-examples', async (_req: Request, res: Response) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
+    }
+
+    const slugify = (value: string) =>
+      value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+    const now = new Date();
+
+    const seedSpec = [
+      {
+        organization: {
+          name: 'RegOps CRO',
+          slug: 'regops-cro',
+          tier: 'enterprise',
+        },
+        clients: [
+          {
+            name: 'CardioPulse Medical',
+            slug: 'cardiopulse-medical',
+            industry: 'Medical Devices',
+            projects: [
+              {
+                name: 'CardioPulse Wearable ECG Patch - 510(k) Submission',
+                code: 'CP-510K-ECG-2025',
+                deviceProfile: {
+                  deviceName: 'CardioPulse Wearable ECG Patch',
+                  manufacturer: 'CardioPulse Medical',
+                  intendedUse:
+                    'A single-use wearable ECG patch intended to record, store, and transfer ECG data for the detection of cardiac arrhythmias in adult patients.',
+                  productCode: 'DWJ',
+                  regulationNumber: '21 CFR 870.2340',
+                  deviceClass: 'II',
+                  submissionType: 'Traditional 510(k)',
+                  description:
+                    'Disposable adhesive patch with integrated electrodes and Bluetooth-enabled recorder.',
+                },
+                workflow: { workflowStep: 2, activeTab: 'predicates', currentStage: '2' },
+                predicates: [
+                  {
+                    id: 'K203159',
+                    kNumber: 'K203159',
+                    deviceName: 'Mobile Cardiac Telemetry System',
+                    manufacturer: 'Cardiac Monitoring Systems Inc.',
+                    clearanceDate: '2021-02-17',
+                    productCode: 'DWJ',
+                    deviceClass: 'II',
+                    matchScore: 0.86,
+                    matchReason: 'Same product code and similar intended use',
+                    source: 'Seed',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'NeuroLens Diagnostics',
+            slug: 'neurolens-diagnostics',
+            industry: 'Diagnostics',
+            projects: [
+              {
+                name: 'NeuroLens Retinal Imaging System - 510(k) Submission',
+                code: 'NL-510K-IMG-2025',
+                deviceProfile: {
+                  deviceName: 'NeuroLens Retinal Imaging System',
+                  manufacturer: 'NeuroLens Diagnostics',
+                  intendedUse:
+                    'A non-mydriatic retinal camera intended to capture digital images of the retina for use by qualified healthcare professionals.',
+                  productCode: 'HJR',
+                  regulationNumber: '21 CFR 886.1120',
+                  deviceClass: 'II',
+                  submissionType: 'Traditional 510(k)',
+                  description: 'Retinal imaging system with automated image quality checks.',
+                },
+                workflow: { workflowStep: 1, activeTab: 'device-intake', currentStage: '1' },
+                predicates: [],
+              },
+            ],
+          },
+          {
+            name: 'OrthoForge Devices',
+            slug: 'orthoforge-devices',
+            industry: 'Orthopedics',
+            projects: [
+              {
+                name: 'OrthoForge Surgical Guide System - 510(k) Submission',
+                code: 'OF-510K-GUIDE-2025',
+                deviceProfile: {
+                  deviceName: 'OrthoForge Surgical Guide System',
+                  manufacturer: 'OrthoForge Devices',
+                  intendedUse:
+                    'Patient-specific surgical guides intended for use in orthopedic procedures to assist in alignment and placement of cutting guides.',
+                  productCode: 'MBI',
+                  regulationNumber: '21 CFR 888.4540',
+                  deviceClass: 'II',
+                  submissionType: 'Traditional 510(k)',
+                  description: '3D-printed guides with accompanying planning software (SaMD).',
+                  toggles: { hasSoftware: true, isCyberDevice: false, isSterile: false },
+                },
+                workflow: { workflowStep: 2, activeTab: 'predicates', currentStage: '2' },
+                predicates: [
+                  {
+                    id: 'K191234',
+                    kNumber: 'K191234',
+                    deviceName: 'Orthopedic Surgical Guide',
+                    manufacturer: 'Ortho Systems Inc.',
+                    clearanceDate: '2019-10-11',
+                    productCode: 'MBI',
+                    deviceClass: 'II',
+                    matchScore: 0.82,
+                    matchReason: 'Similar technology and same product code',
+                    source: 'Seed',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        organization: {
+          name: 'MedTech Accelerator',
+          slug: 'medtech-accelerator',
+          tier: 'professional',
+        },
+        clients: [
+          {
+            name: 'RespiraSense Systems',
+            slug: 'respirasense-systems',
+            industry: 'Respiratory',
+            projects: [
+              {
+                name: 'AeroSpire Smart Spirometer - 510(k) Submission',
+                code: 'AS-510K-2025',
+                deviceProfile: {
+                  deviceName: 'AeroSpire Smart Spirometer',
+                  manufacturer: 'RespiraSense Systems',
+                  intendedUse:
+                    'A spirometry system intended to measure lung function parameters for diagnostic spirometry in clinical and home settings.',
+                  productCode: 'BZG',
+                  regulationNumber: '21 CFR 868.1840',
+                  deviceClass: 'II',
+                  submissionType: 'Traditional 510(k)',
+                  description: 'Handheld spirometer with cloud analytics and patient coaching features.',
+                },
+                workflow: { workflowStep: 3, activeTab: 'se-strategy', currentStage: '3' },
+                predicates: [
+                  {
+                    id: 'K201876',
+                    kNumber: 'K201876',
+                    deviceName: 'Digital Spirometry System',
+                    manufacturer: 'Respiratory Innovations LLC',
+                    clearanceDate: '2020-08-20',
+                    productCode: 'BZG',
+                    deviceClass: 'II',
+                    matchScore: 0.88,
+                    matchReason: 'Same product code with similar indications',
+                    source: 'Seed',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'DermaLight Aesthetics',
+            slug: 'dermalight-aesthetics',
+            industry: 'Dermatology',
+            projects: [
+              {
+                name: 'DermaLight LED Therapy System - 510(k) Submission',
+                code: 'DL-510K-LED-2025',
+                deviceProfile: {
+                  deviceName: 'DermaLight LED Therapy System',
+                  manufacturer: 'DermaLight Aesthetics',
+                  intendedUse:
+                    'An LED phototherapy system intended for adjunctive treatment of inflammatory acne and temporary relief of minor muscle and joint pain.',
+                  productCode: 'ILY',
+                  regulationNumber: '21 CFR 878.4810',
+                  deviceClass: 'II',
+                  submissionType: 'Traditional 510(k)',
+                  description: 'Multi-wavelength LED panel with configurable protocols.',
+                },
+                workflow: { workflowStep: 2, activeTab: 'predicates', currentStage: '2' },
+                predicates: [],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const results = {
+      organizations: [],
+      clientWorkspaces: [],
+      projects: [],
+      documents: 0,
+    } as any;
+
+    await db.transaction(async tx => {
+      for (const orgSpec of seedSpec) {
+        // Ensure organization
+        let orgRow = await tx
+          .select({ id: organizations.id, slug: organizations.slug, name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.slug, orgSpec.organization.slug))
+          .limit(1);
+
+        let orgId: number;
+        if (orgRow.length) {
+          orgId = orgRow[0].id;
+        } else {
+          const created = await tx
+            .insert(organizations)
+            .values({
+              name: orgSpec.organization.name,
+              slug: orgSpec.organization.slug,
+              tier: orgSpec.organization.tier,
+              status: 'active',
+              createdAt: now,
+              updatedAt: now,
+            })
+            .returning({ id: organizations.id, slug: organizations.slug, name: organizations.name });
+          orgId = created[0].id;
+        }
+
+        results.organizations.push({ id: orgId, name: orgSpec.organization.name, slug: orgSpec.organization.slug });
+
+        for (const clientSpec of orgSpec.clients) {
+          const clientSlug = clientSpec.slug || slugify(clientSpec.name);
+          let wsRow = await tx
+            .select({ id: clientWorkspaces.id, name: clientWorkspaces.name, slug: clientWorkspaces.slug })
+            .from(clientWorkspaces)
+            .where(and(eq(clientWorkspaces.organizationId, orgId), eq(clientWorkspaces.slug, clientSlug)))
+            .limit(1);
+
+          let wsId: number;
+          if (wsRow.length) {
+            wsId = wsRow[0].id;
+          } else {
+            const createdWs = await tx
+              .insert(clientWorkspaces)
+              .values({
+                organizationId: orgId,
+                name: clientSpec.name,
+                slug: clientSlug,
+                description: `Client workspace for ${clientSpec.name}`,
+                industry: clientSpec.industry || 'Medical Devices',
+                status: 'active',
+                quotaProjects: 25,
+                quotaStorage: 10,
+                createdAt: now,
+                updatedAt: now,
+              })
+              .returning({ id: clientWorkspaces.id, name: clientWorkspaces.name, slug: clientWorkspaces.slug });
+            wsId = createdWs[0].id;
+          }
+
+          results.clientWorkspaces.push({ id: wsId, organizationId: orgId, name: clientSpec.name, slug: clientSlug });
+
+          for (const projectSpec of clientSpec.projects) {
+            const existingProject = await tx
+              .select({ id: projects.id })
+              .from(projects)
+              .where(
+                and(
+                  eq(projects.organizationId, orgId),
+                  eq(projects.clientWorkspaceId, wsId),
+                  eq(projects.code, projectSpec.code)
+                )
+              )
+              .limit(1);
+
+            let projectId: number;
+            if (existingProject.length) {
+              projectId = existingProject[0].id;
+            } else {
+              const createdProject = await tx
+                .insert(projects)
+                .values({
+                  organizationId: orgId,
+                  clientWorkspaceId: wsId,
+                  name: projectSpec.name,
+                  code: projectSpec.code,
+                  description: `Seeded example project for ${clientSpec.name}`,
+                  status: 'active',
+                  priority: 'high',
+                  type: 'regulatory',
+                  progress: 0,
+                  riskLevel: 'medium',
+                  tags: ['510k', 'cerv2', 'seed'],
+                  settings: {
+                    deviceClass: projectSpec.deviceProfile?.deviceClass,
+                    productCode: projectSpec.deviceProfile?.productCode,
+                    regulationNumber: projectSpec.deviceProfile?.regulationNumber,
+                    regulatoryPathway: '510(k)',
+                    currentStage: projectSpec.workflow?.currentStage,
+                    deviceName: projectSpec.deviceProfile?.deviceName,
+                    manufacturer: projectSpec.deviceProfile?.manufacturer,
+                    submissionType: projectSpec.deviceProfile?.submissionType,
+                  },
+                  metadata: { seeded: true, seedName: 'cerv2-examples' },
+                  createdAt: now,
+                  updatedAt: now,
+                })
+                .returning({ id: projects.id });
+              projectId = createdProject[0].id;
+            }
+
+            results.projects.push({
+              id: projectId,
+              organizationId: orgId,
+              clientWorkspaceId: wsId,
+              name: projectSpec.name,
+              code: projectSpec.code,
+            });
+
+            // Ensure fda_510k_projects row exists (used by CERV2 document persistence)
+            const existing510k = await tx
+              .select({ id: fda510kProjects.id })
+              .from(fda510kProjects)
+              .where(and(eq(fda510kProjects.organizationId, orgId), eq(fda510kProjects.projectId, projectId)))
+              .limit(1);
+
+            let fdaProjectId: number;
+            if (existing510k.length) {
+              fdaProjectId = existing510k[0].id;
+            } else {
+              const created510k = await tx
+                .insert(fda510kProjects)
+                .values({
+                  organizationId: orgId,
+                  projectId,
+                  deviceName: projectSpec.deviceProfile?.deviceName || projectSpec.name,
+                  currentStage: String(projectSpec.workflow?.currentStage || 'setup'),
+                  currentStageProgress: 0,
+                  overallProgress: 0,
+                  status: 'active',
+                  productCode: projectSpec.deviceProfile?.productCode,
+                  regulationNumber: projectSpec.deviceProfile?.regulationNumber,
+                  deviceClassification: projectSpec.deviceProfile?.deviceClass,
+                  metadata: { seeded: true, seedName: 'cerv2-examples' },
+                  createdAt: now,
+                  updatedAt: now,
+                })
+                .returning({ id: fda510kProjects.id });
+              fdaProjectId = created510k[0].id;
+            }
+
+            // Seed CERV2 document state (server-backed) so the page has real examples to load.
+            const documentType = 'cerv2_510k';
+            const documentId = `${projectId}:${documentType}`;
+
+            const sections = {
+              deviceProfile: {
+                id: projectId,
+                ...projectSpec.deviceProfile,
+                regulationNumber: projectSpec.deviceProfile?.regulationNumber,
+                productCode: projectSpec.deviceProfile?.productCode,
+                deviceClass: projectSpec.deviceProfile?.deviceClass,
+                primaryPredicate:
+                  projectSpec.deviceProfile?.primaryPredicate || projectSpec.predicates?.[0]?.kNumber || null,
+              },
+              predicateDevices: Array.isArray(projectSpec.predicates) ? projectSpec.predicates : [],
+              predicatesFound: Array.isArray(projectSpec.predicates) && projectSpec.predicates.length > 0,
+            };
+
+            const metadata = {
+              workflowStep: projectSpec.workflow?.workflowStep || 1,
+              activeTab: projectSpec.workflow?.activeTab || 'device-intake',
+              seeded: true,
+              seedName: 'cerv2-examples',
+            };
+
+            await tx
+              .insert(fda510kDocuments)
+              .values({
+                organizationId: orgId,
+                projectId: fdaProjectId,
+                documentId,
+                documentType,
+                documentName: 'FDA 510(k) Submission',
+                formData: { sections, metadata },
+                status: 'draft',
+                version: 1,
+                updatedAt: now,
+              })
+              .onConflictDoUpdate({
+                target: [fda510kDocuments.documentId],
+                set: {
+                  formData: { sections, metadata },
+                  updatedAt: now,
+                },
+              });
+
+            results.documents += 1;
+          }
+        }
+      }
+    });
+
+    return res.json({ success: true, ...results });
+  } catch (err: any) {
+    console.error('❌ Failed to seed CERV2 examples:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to seed CERV2 examples' });
+  }
+});
 
 // Register template routes
 import templateRoutes from './api/templates/routes.js';
@@ -297,319 +1346,81 @@ app.use('/api/templates', templateRoutes);
 import templatesUsageRoutes from './routes/templates-usage.js';
 app.use('/api', templatesUsageRoutes);
 
+// Projects API (enterprise, no mock data)
+import projectsRoutes from './routes/projects.js';
+app.use('/api', projectsRoutes);
+
+// Analytical and comparability services (enterprise)
+import analyticalRoutes from './routes/analytical.js';
+app.use('/api', analyticalRoutes);
+
+// Risk register API (enterprise)
+import risksRoutes from './api/risks.js';
+app.use('/api/risks', risksRoutes);
+
+// Source data ingestion upload endpoint
+app.use('/api/ingest', sourceDataIngestRoutes);
+
+// Canada CSR ingestion pipeline
+app.use('/api/ingest/canada', canadaIngestRoutes);
+
+// Pillar 1.1: versioned ingestion surface (wraps /api/ingest)
+app.use('/api/v1/regulai/ingest', regulaiIngestV1Routes);
+
+// Smart References & Assets API
+import smartRefsRoutes from './routes/smart_refs.js';
+app.use('/api', smartRefsRoutes);
+
 // Import and mount AI routes
 import aiRoutes from './api/ai/routes.js';
 import phase3Routes from './api/ai/phase3-routes.js';
-app.use('/api/ai', aiRoutes);
-// Mount Phase 3 AI routes
-app.use('/api', phase3Routes);
 
-// Mount enterprise routes
-app.use('/api/enterprise', enterpriseRoutes);
+// Lumen unified gateway (query/generate/preferences + governance)
+import lumenRoutes from './routes/lumen.js';
+app.use('/api/lumen', lumenRoutes);
 
-// Mount enhanced RBAC routes
-import rbacRoutes from './api/enterprise/rbac-routes.js';
-app.use('/api/enterprise/rbac', rbacRoutes);
+// Lumen Cortex admin router (hunters)
+import lumenRouter from './api/lumen/router.js';
+app.use('/api/lumen', lumenRouter);
 
-// Mount ForesightAI routes
+// Lumen System telemetry + audit stream
+import systemRoutes from './api/system.js';
+app.use('/api/lumen/system', systemRoutes);
+
+// Lumen Guardrails router (active defense)
+import lumenGuardrailsRouter from './api/lumen/guardrails.js';
+app.use('/api/lumen/guardrails', lumenGuardrailsRouter);
+
+// Lumen Genome Viewer API
+import lumenGenomeRouter from './api/lumen/genome.js';
+app.use('/api/lumen/genome', lumenGenomeRouter);
+
+// Lumen Deep Intelligence API
+import lumenIntelligenceRouter from './api/lumen/intelligence.js';
+app.use('/api/vault', lumenIntelligenceRouter);
+
+// Lumen Synapse comparator API
+import lumenSynapseRouter from './api/lumen/synapse.js';
+app.use('/api/lumen/synapse', lumenSynapseRouter);
+
+import { DataHunterService } from './workers/scheduler.js';
+DataHunterService.startScheduledHunt();
+
+// CSR Intelligence Library routes (real engine)
 try {
-  app.use('/api/foresight', foresightApiRoutes);
-  app.use('/api/foresight-ai', foresightAIAdvancedRoutes);
-  console.log('✅ ForesightAI™ API routes mounted successfully');
+  const csrIntelligenceModule = await import('./routes/csr-intelligence.js');
+  app.use('/api/csr-intelligence', csrIntelligenceModule.default);
+  console.log('✅ CSR Intelligence Library routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount ForesightAI routes:', error);
+  console.error('❌ Failed to mount CSR Intelligence routes:', error);
 }
-
-// Mount ForesightAI RAG routes
 try {
-  const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  app.use('/api/foresight/rag', foresightRagRoutes.default);
-  console.log('✅ ForesightAI RAG API routes mounted successfully');
+  const exportModule = await import('./routes/export.js');
+  const exportRoutes = exportModule.default;
+  app.use('/api/export', exportRoutes);
+  console.log('✅ Export API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount ForesightAI routes:', error);
-}
-
-// Mount Biotech AI Intelligence RAG routes
-try {
-  const biotechRagRoutes = await import('./routes/biotech-rag.js');
-  app.use('/api/biotech-rag', biotechRagRoutes.default);
-  console.log('✅ Biotech AI Intelligence RAG API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Biotech RAG routes:', error);
-}
-
-// Mount FDA 510(k) routes
-try {
-  const fda510kModule = await import('./routes/fda510k-routes.js');
-  const fda510kRoutes = fda510kModule.default;
-  app.use('/api/fda510k', fda510kRoutes);
-  console.log('✅ FDA 510(k) API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) routes:', error);
-}
-
-// Mount Document Orchestration routes for 510(k) auto-population
-try {
-  const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
-  const docOrchestrationRoutes = docOrchestrationModule.default;
-  app.use(docOrchestrationRoutes);
-  console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
-} catch (error) {
-  console.error('❌ Failed to mount Document Orchestration routes:', error);
-}
-
-// Mount ESG Submission routes for FDA Electronic Submission Gateway
-try {
-  const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
-  const esgSubmissionRoutes = esgSubmissionModule.default;
-  app.use(esgSubmissionRoutes);
-  console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
-} catch (error) {
-  console.error('❌ Failed to mount ESG Submission routes:', error);
-}
-
-// Mount Medical Device Management routes
-try {
-  const medicalDeviceModule = await import('./routes/medical-device-routes.js');
-  const medicalDeviceRoutes = medicalDeviceModule.default;
-  app.use('/api/medical-devices', medicalDeviceRoutes);
-  console.log('✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)');
-} catch (error) {
-  console.error('❌ Failed to mount Medical Device routes:', error);
-}
-
-// Mount FDA Integration routes
-try {
-  const fdaIntegrationModule = await import('./routes/fda-integration-simple.js');
-  const fdaIntegrationRoutes = fdaIntegrationModule.default;
-  app.use('/api/fda', fdaIntegrationRoutes);
-  console.log('✅ FDA Integration API routes mounted successfully (ESG-ready)');
-} catch (error) {
-  console.error('❌ Failed to mount FDA Integration routes:', error);
-}
-
-// Mount CER (Clinical Evaluation Report) routes
-try {
-  const cerModule = await import('./routes/cer-routes.js');
-  const cerRoutes = cerModule.default;
-  app.use('/api/cer', cerRoutes);
-  console.log('✅ CER (Clinical Evaluation Report) API routes mounted successfully (MDR/IVDR compliant)');
-} catch (error) {
-  console.error('❌ Failed to mount CER routes:', error);
-}
-
-// CERV2 Unified Document Routes
-try {
-  const cerv2DocumentModule = await import('./routes/cerv2-document-routes.js');
-  const cerv2DocumentRoutes = cerv2DocumentModule.default;
-  app.use('/api/cerv2', cerv2DocumentRoutes);
-  console.log('✅ CERV2 unified document routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 document routes:', error);
-}
-
-// Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
-try {
-  const pubmedModule = await import('./routes/pubmed.js');
-  const pubmedRoutes = pubmedModule.default;
-  app.use('/api/pubmed', pubmedRoutes);
-  console.log('✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)');
-} catch (error) {
-  console.error('❌ Failed to mount PubMed routes:', error);
-}
-
-// Mount Literature Review routes
-try {
-  const literatureReviewModule = await import('./routes/literature-review.js');
-  const literatureReviewRoutes = literatureReviewModule.default;
-  app.use('/api/literature-review', literatureReviewRoutes);
-  console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
-} catch (error) {
-  console.error('❌ Failed to mount Literature Review routes:', error);
-}
-
-// Mount License Management routes
-try {
-  const licenseModule = await import('./routes/license-routes.js');
-  const licenseRoutes = licenseModule.default;
-  app.use('/', licenseRoutes);
-  console.log('✅ License Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount License routes:', error);
-}
-
-// Mount stability routes
-try {
-  const stabilityModule = await import('./src/routes/stability.router.js');
-  const stabilityRouter = stabilityModule.default;
-  app.use('/api/stability', stabilityRouter);
-  console.log('✅ Stability API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Stability routes:', error);
-}
-
-// Mount strategy routes
-// Disabled due to missing AI services - import strategyRouter from './src/routes/strategy.router.js';
-// app.use('/api/strategy', strategyRouter);
-
-console.log('✅ Enterprise API routes mounted successfully');
-
-// Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
-try {
-  const supplyChainModule = await import('./routes/supplyChain.routes.js');
-  const createSupplyChainRoutes = supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
-  app.use('/api/supply-chain', createSupplyChainRoutes());
-  console.log('✅ Supply Chain Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Supply Chain routes:', error);
-}
-
-// Mount Document Authoring routes with 21 CFR Part 11 compliance
-try {
-  const documentAuthoringModule = await import('./routes/documentAuthoring.routes.js');
-  const documentAuthoringRoutes = documentAuthoringModule.default;
-  app.use('/api/document-authoring', documentAuthoringRoutes);
-  console.log('✅ Document Authoring API routes mounted successfully (21 CFR Part 11 compliant)');
-} catch (error) {
-  console.error('❌ Failed to mount Document Authoring routes:', error);
-}
-
-// Mount eCTD Co-Author routes with database persistence
-try {
-  const coauthorModule = await import('./routes/coauthor.js');
-  const coauthorRoutes = coauthorModule.default;
-  app.use('/api/coauthor', coauthorRoutes);
-  console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Co-Author routes:', error);
-}
-
-// Mount eCTD Document Management routes with version control
-try {
-  const ectdDocumentsModule = await import('./routes/ectd-documents.js');
-  const ectdDocumentsRoutes = ectdDocumentsModule.default;
-  app.use('/api/ectd-documents', ectdDocumentsRoutes);
-  console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Documents routes:', error);
-}
-
-// Mount Document Data Center routes (integrated vault + 3-axis tagging for 510(k) file management)
-try {
-  const documentDataCenterModule = await import('./routes/document-data-center.js');
-  const documentDataCenterRoutes = documentDataCenterModule.default;
-  app.use('/api/device-data-center', documentDataCenterRoutes);
-  console.log('✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)');
-} catch (error) {
-  console.error('❌ Failed to mount Document Data Center routes:', error);
-}
-
-// Mount Data Room API routes
-try {
-  const evidenceModule = await import('./routes/evidence.js');
-  const evidenceRoutes = evidenceModule.default;
-  app.use('/api/evidence', evidenceRoutes);
-  console.log('✅ Evidence Management API routes mounted successfully (Data Room evidence search)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence routes:', error);
-}
-
-try {
-  const contentPlanModule = await import('./routes/content-plan.js');
-  const contentPlanRoutes = contentPlanModule.default;
-  app.use('/api/content-plan', contentPlanRoutes);
-  console.log('✅ Content Plan API routes mounted successfully (section tracking & evidence linking)');
-} catch (error) {
-  console.error('❌ Failed to mount Content Plan routes:', error);
-}
-
-try {
-  const smartBlocksModule = await import('./routes/smart-blocks.js');
-  const smartBlocksRoutes = smartBlocksModule.default;
-  app.use('/api/smart-blocks', smartBlocksRoutes);
-  console.log('✅ Smart Blocks API routes mounted successfully (auto-populated content)');
-} catch (error) {
-  console.error('❌ Failed to mount Smart Blocks routes:', error);
-}
-
-// Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
-try {
-  const evidenceManagementModule = await import('./routes/evidence-management.routes.js');
-  const evidenceManagementRoutes = evidenceManagementModule.default;
-  app.use('/api/evidence-management', evidenceManagementRoutes);
-  console.log('✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Management routes:', error);
-}
-
-// Mount Demo Seed routes (for creating demo projects)
-try {
-  const seedDemoModule = await import('./routes/seed-demo.js');
-  const seedDemoRoutes = seedDemoModule.default;
-  app.use('/api/demo', seedDemoRoutes);
-  console.log('✅ Demo seeding API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Demo seed routes:', error);
-}
-
-// Mount Collaboration Center routes for 510(k) activity tracking
-try {
-  const collaborationModule = await import('./routes/collaboration.js');
-  const collaborationRoutes = collaborationModule.default;
-  app.use('/api/collaboration', collaborationRoutes);
-  console.log('✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)');
-} catch (error) {
-  console.error('❌ Failed to mount Collaboration Center routes:', error);
-}
-
-// Mount CERV2 Sections routes for 510(k) section management
-try {
-  const cerv2SectionsModule = await import('./routes/cerv2-sections.js');
-  const cerv2SectionsRoutes = cerv2SectionsModule.default;
-  app.use('/api/cerv2-sections', cerv2SectionsRoutes);
-  console.log('✅ CERV2 Sections API routes mounted successfully (510(k) section tree navigation)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 Sections routes:', error);
-}
-
-// Mount CERV2 Versions routes for version tracking and multi-section editing
-try {
-  const cerv2VersionsModule = await import('./routes/cerv2-versions.js');
-  const cerv2VersionsRoutes = cerv2VersionsModule.default;
-  app.use('/api/cerv2-versions', cerv2VersionsRoutes);
-  console.log('✅ CERV2 Versions API routes mounted successfully (version history & sessions)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 Versions routes:', error);
-}
-
-// Mount Content Atoms API routes
-try {
-  const atomsModule = await import('./routes/atoms.js');
-  const atomsRoutes = atomsModule.default;
-  app.use('/api/atoms', atomsRoutes);
-  console.log('✅ Content Atoms API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Atoms routes:', error);
-}
-
-// Mount Workflow API routes
-try {
-  const workflowModule = await import('./routes/workflow.js');
-  const workflowRoutes = workflowModule.default;
-  app.use('/api/workflow', workflowRoutes);
-  console.log('✅ Workflow API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Workflow routes:', error);
-}
-
-// Mount AI Drafting API routes
-try {
-  const draftingModule = await import('./routes/drafting.js');
-  const draftingRoutes = draftingModule.default;
-  app.use('/api/v1/drafting', draftingRoutes);
-  console.log('✅ AI Drafting API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount AI Drafting routes:', error);
+  console.error('❌ Failed to mount Export routes:', error);
 }
 
 // Mount Unified Document Management System routes
@@ -1010,7 +1821,24 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
 // Add missing Lumen AI endpoint
 app.post('/api/ask-lumen', async (req: Request, res: Response) => {
   try {
-    const { query, context, sessionId, documentContent, model = 'openai' } = req.body;
+    // Shared in-memory provider health (used by /api/ai/status in phase3 routes).
+    const nowMs = Date.now();
+    const health = (globalThis as any).__aiProviderHealth || {
+      gemini: { ok: null, lastErrorAt: null, lastError: null },
+      openai: { ok: null, lastErrorAt: null, lastError: null },
+    };
+    (globalThis as any).__aiProviderHealth = health;
+
+    const disableGemini = String(process.env.DISABLE_GEMINI || '').toLowerCase() === 'true' || process.env.DISABLE_GEMINI === '1';
+    const geminiApiKey = disableGemini ? undefined : (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    // Prefer OpenAI by default when configured (lets users "skip Google" without changing keys).
+    const defaultModel = openaiApiKey ? 'openai' : geminiApiKey ? 'gemini' : 'openai';
+    const { query, context, sessionId, documentContent, model: requestedModel = defaultModel } = req.body;
+    const model =
+      disableGemini && requestedModel === 'gemini'
+        ? (openaiApiKey ? 'openai' : 'fallback')
+        : requestedModel;
     debugLog('Lumen AI request received', {
       query: query?.substring(0, 100),
       context,
@@ -1030,28 +1858,150 @@ app.post('/api/ask-lumen', async (req: Request, res: Response) => {
     Provide detailed, accurate, and actionable regulatory guidance. Always cite relevant regulations when possible.`;
 
     let response;
+    let providerUsed: 'gemini' | 'openai' | 'local' | 'fallback' = 'fallback';
+    let modelUsed: string = 'fallback';
 
     // Choose AI model based on user preference
-    if (model === 'gemini' && process.env.GOOGLE_API_KEY) {
-      // Use Google Gemini Pro
+    if (model === 'gemini' && geminiApiKey) {
+      // Use Gemini (platform default when GEMINI_API_KEY/GOOGLE_API_KEY is present)
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-      const geminiModel = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp',
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 4000,
-        },
-      });
+      const genAI = new GoogleGenerativeAI(geminiApiKey);
+      const requestedModel = process.env.GEMINI_MODEL || process.env.GEMINI_DEFAULT_MODEL || 'gemini-3-flash-preview';
+      const fallbackModel = 'gemini-2.0-flash-exp';
+
+      providerUsed = 'gemini';
+      modelUsed = requestedModel;
 
       const prompt = documentContent
         ? `${systemPrompt}\n\nDocument context: ${documentContent}\n\nUser question: ${query}`
         : `${systemPrompt}\n\nUser question: ${query}`;
 
-      const result = await geminiModel.generateContent(prompt);
-      response = result.response.text();
+      const runGemini = async (modelName: string) => {
+        const geminiModel = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4000,
+          },
+        });
+        const result = await geminiModel.generateContent(prompt);
+        return result.response.text();
+      };
+
+      try {
+        response = await runGemini(requestedModel);
+        health.gemini = { ok: true, lastErrorAt: null, lastError: null };
+      } catch (e) {
+        // If preview model is unavailable in the current project/key, fall back to a known working Flash model.
+        try {
+          modelUsed = fallbackModel;
+          response = await runGemini(fallbackModel);
+          health.gemini = { ok: true, lastErrorAt: null, lastError: null };
+        } catch (e2) {
+          console.warn('[Lumen] Gemini request failed; falling back to template guidance:', e2);
+          health.gemini = {
+            ok: false,
+            lastErrorAt: nowMs,
+            lastError: String((e2 as any)?.message || (e2 as any)?.statusText || 'Gemini request failed'),
+          };
+          providerUsed = 'fallback';
+          modelUsed = 'fallback';
+          response = undefined;
+        }
+      }
+    } else if (model === 'openai' && process.env.OPENAI_API_KEY) {
+      // Use OpenAI when explicitly requested and configured.
+      // If the key is invalid or the call fails, fail soft to fallback guidance.
+      try {
+        const OpenAI = (await import('openai')).default;
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+        providerUsed = 'openai';
+        modelUsed = 'gpt-4o';
+
+        const userPrompt = documentContent
+          ? `Document context: ${documentContent}\n\nUser question: ${query}`
+          : String(query || '');
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.2,
+          max_tokens: 2000,
+        });
+
+        response = completion.choices[0]?.message?.content || '';
+        health.openai = { ok: true, lastErrorAt: null, lastError: null };
+      } catch (e) {
+        console.warn('[Lumen] OpenAI request failed; falling back to template guidance:', e);
+        health.openai = {
+          ok: false,
+          lastErrorAt: nowMs,
+          lastError: String((e as any)?.message || (e as any)?.statusText || 'OpenAI request failed'),
+        };
+        providerUsed = 'fallback';
+        modelUsed = 'fallback';
+        response = undefined;
+      }
+    } else if (model === 'local') {
+      // Opt-in local model (no external API keys/quota). Useful when hosted providers are down.
+      try {
+        const { generateLocalTextResponse } = await import('./services/localAiService');
+        const userPrompt = documentContent
+          ? `Document context: ${documentContent}\n\nUser question: ${query}`
+          : String(query || '');
+        const local = await generateLocalTextResponse({ systemPrompt, userPrompt });
+        providerUsed = 'local';
+        modelUsed = local.modelUsed;
+        response = local.text;
+      } catch (e) {
+        console.warn('[Lumen] Local model failed; falling back to template guidance:', e);
+        providerUsed = 'fallback';
+        modelUsed = 'fallback';
+        response = undefined;
+      }
     } else {
-      // Fallback to contextual regulatory guidance (when no AI service available)
+      // Fallback to contextual regulatory guidance (when no hosted AI service available)
+      const contextualResponses: Record<string, string> = {
+        regulatory_affairs: `Based on current FDA guidelines, I recommend focusing on the following key areas for your regulatory submission:
+
+1. **Clinical Data Package**: Ensure your clinical study reports include comprehensive efficacy and safety analyses with appropriate statistical methods.
+
+2. **Quality Information**: Manufacturing controls, analytical methods validation, and stability data should align with ICH Q guidelines.
+
+3. **Risk Management**: Implement a robust pharmacovigilance plan and risk evaluation and mitigation strategies (REMS) if applicable.
+
+For your specific query about "${query}", I'd recommend consulting the most recent FDA guidance documents and considering pre-submission meetings to align on regulatory expectations.`,
+
+        clinical_documentation: `For clinical documentation best practices:
+
+1. **Protocol Design**: Ensure endpoints are clinically meaningful and align with FDA guidance for your therapeutic area.
+
+2. **Statistical Analysis Plan**: Pre-specify all analyses, including sensitivity analyses and handling of missing data.
+
+3. **Clinical Study Report**: Follow ICH E3 structure with clear presentation of results and benefit-risk assessment.
+
+Regarding "${query}", consider reviewing recent FDA approvals in your therapeutic area for benchmark standards.`,
+
+        default: `As your regulatory AI expert, I recommend:
+
+1. **Regulatory Strategy**: Develop a comprehensive regulatory strategy early in development.
+2. **Quality by Design**: Implement QbD principles throughout development.
+3. **Stakeholder Engagement**: Maintain regular communication with regulatory agencies.
+
+For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance documents relevant to your therapeutic area.`,
+      };
+
+      response = contextualResponses[context as string] || contextualResponses['default'];
+      providerUsed = 'fallback';
+      modelUsed = 'fallback';
+    }
+
+    // If any provider path fails soft (e.g., OpenAI key invalid), ensure we still return a usable response.
+    if (!response) {
       const contextualResponses: Record<string, string> = {
         regulatory_affairs: `Based on current FDA guidelines, I recommend focusing on the following key areas for your regulatory submission:
 
@@ -1089,7 +2039,10 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
       success: true,
       response: response,
       answer: response, // Also provide as 'answer' for compatibility
-      confidence: model === 'gemini' ? 0.95 : 0.85,
+      provider: providerUsed, // legacy field
+      providerUsed, // explicit field so UI can prove what actually ran
+      modelUsed,
+      confidence: providerUsed === 'gemini' ? 0.95 : 0.85,
       timestamp: new Date().toISOString(),
       context: context || 'regulatory_affairs',
       sessionId: sessionId,
@@ -1103,6 +2056,7 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
     });
   }
 });
+
 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
@@ -1120,6 +2074,7 @@ import { TemplateMapper } from './services/documentTemplateMapper';
 import { MemStorage } from './storage';
 import FDA510kComplianceTracker from './services/510kComplianceTracker';
 import DocumentOrchestrationService from './services/DocumentOrchestrationService';
+import { requireTenant } from './middleware/tenant.js';
 
 // Import field synchronization routes
 import fieldSyncRoutes from './routes/fieldSync.routes';
@@ -1130,12 +2085,15 @@ import contentAssemblyRoutes from './routes/contentAssembly.routes';
 const memStorage = new MemStorage();
 const getStorage = async () => memStorage;
 
+const require510kTenant = requireTenant();
+
 // 510k Workflow Routes
-app.post('/api/510k-workflow/:projectId', async (req, res) => {
+app.post('/api/510k-workflow/:projectId', require510kTenant, async (req, res) => {
   const { projectId } = req.params;
-  const { organizationId, stage, section, data, completedSteps, validationCheckpoints } = req.body;
+  const { stage, section, data, completedSteps, validationCheckpoints } = req.body;
+  const organizationId = Number((req as any).organizationId);
   
-  if (!organizationId || !stage || !data) {
+  if (!stage || !data) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
   }
 
@@ -1192,7 +2150,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
         console.log(`Creating FDA 510(k) project entry for project ${projectId}`);
         try {
           await db!.insert(fda510kProjects).values({
-            organizationId: parseInt(organizationId),
+            organizationId,
             projectId: parseInt(projectId),
             deviceName: data.deviceName || `Device ${projectId}`,
             currentStage: stage,
@@ -1316,7 +2274,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
         projectId,
         req.headers['x-user-id'] as string || '1',
-        organizationId
+        String(organizationId)
       );
       autoPopulated = true;
       console.log(`✅ [510k-workflow] Documents auto-generated for project ${projectId}`);
@@ -1354,8 +2312,8 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
 });
 
 // GET all 510k workflows
-app.get('/api/510k-workflow', async (req, res) => {
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'] || '1';
+app.get('/api/510k-workflow', require510kTenant, async (req, res) => {
+  const organizationId = Number((req as any).organizationId);
   
   try {
     // For now, return empty workflows array to avoid database errors
@@ -1373,20 +2331,16 @@ app.get('/api/510k-workflow', async (req, res) => {
 });
 
 // GET 510k workflow data
-app.get('/api/510k-workflow/:projectId', async (req, res) => {
+app.get('/api/510k-workflow/:projectId', require510kTenant, async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
-  
-  if (!organizationId) {
-    return res.status(400).json({ success: false, error: 'Organization ID required' });
-  }
+  const organizationId = Number((req as any).organizationId);
   
   try {
     const storage = await getStorage();
     // Return workflow data based on project
     const workflowData = {
       id: parseInt(projectId),
-      organizationId: parseInt(organizationId),
+      organizationId,
       projectId: parseInt(projectId),
       submissionType: '510k',
       workflowStatus: 'active'
@@ -1407,9 +2361,9 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
 });
 
 // Generate 510k Document
-app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => {
+app.post('/api/510k-workflow/:projectId/generate-document', require510kTenant, async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.body.organizationId || req.headers['x-organization-id'];
+  const organizationId = Number((req as any).organizationId);
   
   try {
     const storage = await getStorage();
@@ -1417,7 +2371,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     // Create workflow data based on project
     const workflowData = {
       id: parseInt(projectId),
-      organizationId: parseInt(organizationId),
+      organizationId,
       projectId: parseInt(projectId),
       submissionType: '510k',
       workflowStatus: 'active',
@@ -1441,7 +2395,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     
     // Save the mapped template data
     await storage.createCerv2510kSection({
-      organizationId: parseInt(organizationId),
+      organizationId,
       submissionId: parseInt(projectId),
       sectionCode: 'TEMPLATE_MAPPING',
       sectionTitle: 'Template Mapping Metadata',
@@ -3617,7 +4571,85 @@ app.post('/api/workflow/progression/create', async (req: Request, res: Response)
       });
     }
 
-    // Generate comprehensive workflow progression plan
+    const isBLA = targetType === 'BLA';
+    const nowIso = new Date().toISOString();
+    const depth: 'standard' | 'deep' | 'comprehensive' =
+      analysisMode === 'deep' || analysisMode === 'comprehensive' ? analysisMode : 'standard';
+
+    const phaseTasks = {
+      discovery: [
+        'Assemble IND submission inventory (modules, amendments, information requests, meeting minutes)',
+        'Compile agency interaction log and commitments register',
+        'Confirm target label/indication and pivotal evidence strategy',
+      ],
+      cmc: isBLA
+        ? [
+            'Define biologics-specific CMC strategy (potency, identity, purity, comparability)',
+            'Assess process changes since IND and plan comparability / bridging packages',
+            'Confirm viral safety and adventitious agent control strategy',
+            'Validate critical methods and ensure lifecycle management plan',
+          ]
+        : [
+            'Finalize full Module 3 CMC (DS/DP) packages and validation status',
+            'Confirm stability strategy and shelf-life justification',
+            'Align analytical validation with ICH Q2/Q14 expectations',
+          ],
+      clinical: [
+        'Confirm integrated summaries approach (ISS/ISE where applicable)',
+        'Lock clinical database(s) and finalize SAP-to-CSR traceability',
+        'Compile safety database and signal management narrative',
+      ],
+      regulatory: [
+        `Plan key meetings (e.g., pre-${targetType}, CMC, label discussion) and briefing books`,
+        'Build eCTD backbone and publishing plan (module sequencing, leaf lifecycle)',
+        'Run completeness checks and cross-module consistency review',
+      ],
+      readiness: [
+        'Perform filing-readiness audit (content, hyperlinks, TOCs, study tagging)',
+        'Perform QC for datasets, appendices, and source-to-submission traceability',
+        `Prepare ${targetType} submission package and response playbooks`,
+      ],
+    } as const;
+
+    const extraDeepTasks = [
+      'Create evidence map: each major claim → source study → CSR section/table/figure',
+      'Create change-control map: manufacturing changes → impacted Module 3/5 sections → commitments',
+      'Perform gap review against applicable ICH/FDA guidances for the product class',
+    ];
+
+    const makeDuration = (min: number, max: number) => `${min}-${max} months`;
+
+    const phases = [
+      {
+        id: 'phase-1',
+        title: 'Inventory, Evidence, and Agency History',
+        duration: makeDuration(1, 2),
+        tasks: depth === 'standard' ? phaseTasks.discovery : [...phaseTasks.discovery, ...extraDeepTasks],
+      },
+      {
+        id: 'phase-2',
+        title: 'Module 3 CMC Completion',
+        duration: makeDuration(3, 6),
+        tasks: phaseTasks.cmc,
+      },
+      {
+        id: 'phase-3',
+        title: 'Clinical/Safety Integrated Story',
+        duration: makeDuration(3, 6),
+        tasks: phaseTasks.clinical,
+      },
+      {
+        id: 'phase-4',
+        title: `eCTD Build, Review, and Submission Readiness (${targetType})`,
+        duration: makeDuration(2, 4),
+        tasks:
+          depth === 'comprehensive'
+            ? [...phaseTasks.regulatory, ...phaseTasks.readiness]
+            : [...phaseTasks.regulatory],
+      },
+    ];
+
+    // Generate rule-based workflow progression plan
     const workflowPlan = {
       id: `workflow_${Date.now()}`,
       sourceSubmissionId,
@@ -3625,136 +4657,189 @@ app.post('/api/workflow/progression/create', async (req: Request, res: Response)
       targetType,
       therapeuticArea,
       indication,
-      analysisMode,
-      created: new Date().toISOString(),
-      phases: [
-        {
-          id: 'phase-1',
-          title: 'IND Data Review and Analysis',
-          duration: '2-3 months',
-          tasks: [
-            'Review existing IND safety data',
-            'Analyze clinical trial results',
-            'Assess manufacturing changes',
-            'Evaluate regulatory feedback',
-          ],
-        },
-        {
-          id: 'phase-2',
-          title: `${targetType} Preparation`,
-          duration: '4-6 months',
-          tasks: [
-            'Prepare comprehensive clinical package',
-            'Complete manufacturing documentation',
-            'Conduct risk assessment',
-            'Prepare regulatory submissions',
-          ],
-        },
-        {
-          id: 'phase-3',
-          title: 'Submission and Review',
-          duration: '6-12 months',
-          tasks: [
-            `Submit ${targetType} application`,
-            'Respond to regulatory queries',
-            'Conduct advisory meetings',
-            'Complete regulatory review process',
-          ],
-        },
+      analysisMode: depth,
+      created: nowIso,
+      templateId: templateId || null,
+      phases,
+      assumptions: [
+        'Assumes IND content exists but requires BLA/NDA-grade completeness and integration.',
+        'Assumes prior agency interactions must be reconciled into actionable commitments and responses.',
       ],
     };
+
+    const mappedModules = [
+      {
+        sourceModule: `${sourceType} Module 1`,
+        targetModule: `${targetType} Module 1`,
+        contentGap:
+          'Region-specific administrative content, forms, labeling components, and submission metadata',
+        reusePercentage: sourceType === 'IND' ? 45 : 55,
+      },
+      {
+        sourceModule: `${sourceType} Module 2`,
+        targetModule: `${targetType} Module 2`,
+        contentGap: 'Integrated summaries (quality/nonclinical/clinical) with consistent claims and citations',
+        reusePercentage: sourceType === 'IND' ? 55 : 65,
+      },
+      {
+        sourceModule: `${sourceType} Module 3`,
+        targetModule: `${targetType} Module 3`,
+        contentGap: isBLA
+          ? 'Biologics CMC: potency strategy, comparability, viral safety, control strategy lifecycle'
+          : 'Full CMC completeness: validation, stability, and control strategy justification',
+        reusePercentage: isBLA ? 40 : 50,
+      },
+      {
+        sourceModule: `${sourceType} Module 4`,
+        targetModule: `${targetType} Module 4`,
+        contentGap: 'Nonclinical narrative integration and bridging to clinical relevance',
+        reusePercentage: 70,
+      },
+      {
+        sourceModule: `${sourceType} Module 5`,
+        targetModule: `${targetType} Module 5`,
+        contentGap:
+          'Clinical integration for marketing application (ISS/ISE, pooled analyses, label-supporting tables)',
+        reusePercentage: 75,
+      },
+    ];
+
+    const overallReuseRate = Math.round(
+      mappedModules.reduce((acc, m) => acc + m.reusePercentage, 0) / mappedModules.length
+    );
 
     const contentMapping = {
-      mappedModules: [
-        {
-          sourceModule: 'IND Module 1',
-          targetModule: `${targetType} Module 1`,
-          contentGap: 'Expand administrative information',
-          reusePercentage: 85,
-        },
-        {
-          sourceModule: 'IND Module 2',
-          targetModule: `${targetType} Module 2`,
-          contentGap: 'Add comprehensive clinical overview',
-          reusePercentage: 65,
-        },
-        {
-          sourceModule: 'IND Module 3',
-          targetModule: `${targetType} Module 3`,
-          contentGap: 'Complete quality documentation',
-          reusePercentage: 70,
-        },
-      ],
-      overallReuseRate: 73,
+      mappedModules,
+      overallReuseRate,
+      notes:
+        depth === 'standard'
+          ? []
+          : [
+              'Deep mode includes evidence-mapping expectations (claim → citation → section/table/figure).',
+              'CMC mapping reflects typical scale-up/comparability requirements rather than simple reuse.',
+            ],
     };
 
+    const gapItems = [
+      {
+        id: 'gap-iss-ise',
+        severity: 'CRITICAL',
+        area: 'Clinical Integration',
+        requirement: 'Integrated summaries (ISS/ISE where applicable) and label-supporting analyses',
+        rationale: 'Marketing applications require integrated evidence beyond IND stage narratives.',
+        recommendedActions: [
+          'Build claim-evidence map and ensure each claim has CSR/analysis support',
+          'Draft and QC Module 2.5 / 2.7 with consistent endpoints and denominators',
+        ],
+      },
+      {
+        id: 'gap-cmc',
+        severity: 'CRITICAL',
+        area: 'CMC / Module 3',
+        requirement: isBLA
+          ? 'Potency strategy, comparability, viral safety, and control strategy lifecycle management'
+          : 'Full CMC validation status, stability justification, and control strategy completeness',
+        rationale: 'CMC expectations increase substantially from IND to marketing application.',
+        recommendedActions: [
+          'Perform CMC gap audit against ICH Q8/Q9/Q10 and FDA/CBER expectations',
+          'Create comparability / change-control matrix for all process changes since IND',
+        ],
+      },
+      {
+        id: 'gap-commitments',
+        severity: 'MAJOR',
+        area: 'Regulatory Commitments',
+        requirement: 'Complete reconciliation of all agency requests and commitments with owners and due dates',
+        rationale: 'Untracked commitments drive late-cycle deficiencies and review delays.',
+        recommendedActions: [
+          'Extract commitments from correspondence and meeting minutes',
+          'Create response tracker and link each item to impacted eCTD sections',
+        ],
+      },
+      {
+        id: 'gap-label',
+        severity: 'MAJOR',
+        area: 'Labeling',
+        requirement: 'Target labeling strategy with substantiation and risk/benefit alignment',
+        rationale: 'Label negotiations require tightly supported claims and consistent safety messaging.',
+        recommendedActions: ['Draft label core and align with clinical summaries', 'Prepare label justification pack'],
+      },
+    ];
+
     const gapAnalysis = {
-      criticalGaps: [
-        'Comprehensive efficacy data required',
-        'Complete safety database needed',
-        'Manufacturing scale-up documentation',
-      ],
-      mediumGaps: [
-        'Additional pharmacokinetic studies',
-        'Risk evaluation and mitigation strategies',
-      ],
-      minorGaps: ['Updated labeling information', 'Additional regulatory correspondence'],
+      // Backward-compatible arrays
+      criticalGaps: gapItems.filter((g: any) => g.severity === 'CRITICAL').map((g: any) => g.requirement),
+      mediumGaps: gapItems.filter((g: any) => g.severity === 'MAJOR').map((g: any) => g.requirement),
+      minorGaps: gapItems.filter((g: any) => g.severity === 'MINOR').map((g: any) => g.requirement),
+      // Structured detail for enterprise UI
+      items: gapItems,
     };
 
     const timeline = {
-      totalDuration: '12-21 months',
+      totalDuration: depth === 'comprehensive' ? '12-24 months' : '10-20 months',
       milestones: [
         {
           id: 'milestone-1',
-          title: 'IND Review Complete',
-          targetDate: '3 months',
+          title: 'Evidence + CMC gap audit complete',
+          targetDate: depth === 'comprehensive' ? '6-8 weeks' : '4-6 weeks',
           status: 'pending',
         },
         {
           id: 'milestone-2',
-          title: `${targetType} Submission Ready`,
-          targetDate: '9 months',
+          title: `Pre-${targetType} readiness (briefing package + agenda)`,
+          targetDate: '3-5 months',
           status: 'pending',
         },
         {
           id: 'milestone-3',
-          title: 'Regulatory Approval',
-          targetDate: '21 months',
+          title: `${targetType} publishing + QC complete`,
+          targetDate: '7-12 months',
+          status: 'pending',
+        },
+        {
+          id: 'milestone-4',
+          title: `${targetType} submission`,
+          targetDate: '8-14 months',
           status: 'pending',
         },
       ],
     };
 
-    const costAnalysis = {
-      totalEstimatedCost: '$2.5M - $4.2M',
-      breakdown: [
-        { category: 'Clinical Studies', cost: '$1.5M - $2.5M' },
-        { category: 'Regulatory Support', cost: '$500K - $800K' },
-        { category: 'Manufacturing', cost: '$300K - $600K' },
-        { category: 'Quality Assurance', cost: '$200K - $300K' },
-      ],
-    };
+    const costAnalysis = includeCostAnalysis
+      ? {
+          totalEstimatedCost: isBLA ? '$3.0M - $6.5M' : '$2.0M - $5.0M',
+          breakdown: [
+            { category: 'Clinical / Analyses', cost: isBLA ? '$1.5M - $3.5M' : '$1.0M - $3.0M' },
+            { category: 'Regulatory Writing & Publishing', cost: '$400K - $900K' },
+            { category: 'CMC / Quality', cost: isBLA ? '$700K - $1.6M' : '$500K - $1.2M' },
+            { category: 'Program Management / QC', cost: '$200K - $500K' },
+          ],
+          notes: ['Ranges depend on study status, manufacturing changes, and agency feedback cadence.'],
+        }
+      : null;
 
-    const riskAssessment = {
-      overallRisk: 'Medium',
-      riskFactors: [
-        {
-          factor: 'Clinical Data Adequacy',
-          level: 'Medium',
-          mitigation: 'Conduct additional studies if needed',
-        },
-        {
-          factor: 'Manufacturing Complexity',
-          level: 'Low',
-          mitigation: 'Established manufacturing process',
-        },
-        {
-          factor: 'Regulatory Timeline',
-          level: 'Medium',
-          mitigation: 'Early FDA engagement recommended',
-        },
-      ],
-    };
+    const riskAssessment = includeRiskAssessment
+      ? {
+          overallRisk: depth === 'comprehensive' ? 'Medium-High' : 'Medium',
+          riskFactors: [
+            {
+              factor: 'Evidence integration for label claims',
+              level: depth === 'comprehensive' ? 'High' : 'Medium',
+              mitigation: 'Create claim-evidence map early; lock endpoints/denominators; run QC across Module 2/5.',
+            },
+            {
+              factor: isBLA ? 'Potency / comparability readiness' : 'CMC validation and control strategy',
+              level: isBLA ? 'High' : 'Medium',
+              mitigation: 'Run CMC gap audit; build comparability/change-control matrix; confirm method validation status.',
+            },
+            {
+              factor: 'Commitments and agency requests tracking',
+              level: 'Medium',
+              mitigation: 'Extract commitments from correspondence/minutes; assign owners and link to eCTD impacts.',
+            },
+          ],
+        }
+      : null;
 
     res.json({
       success: true,
@@ -3878,9 +4963,51 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  // JSON 404 for unknown API routes (prevents Vite from serving index.html for /api/*).
+  app.use('/api', (req: Request, res: Response) => {
+    res.status(404).json({ success: false, error: 'Not Found', path: req.originalUrl });
+  });
+
+  // Root route should be handled by Vite/Static server to render the client SPA
+  // Removing the redirect to prevent "Cannot GET" issues
+  /*
+  app.get('/', (_req: Request, res: Response) => {
+    res.redirect('/client-portal');
+  });
+  */
+
+  // Create raw HTTP server so we can integrate Vite HMR middleware correctly
+  const server = createServer(app);
+
+  // In development, mount Vite middleware for client dev server
+  try {
+    if (process.env.NODE_ENV !== 'production') {
+      await setupVite(app, server);
+      console.log('✅ Vite dev middleware mounted');
+    } else {
+      // In production, serve static built client files
+      const { serveStatic } = await import('./vite');
+      serveStatic(app);
+      console.log('✅ Static client serving enabled');
+    }
+  } catch (e) {
+    console.error('Failed to set up client serving (Vite/static):', e);
+  }
+
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on port " + PORT);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log('Server running on port ' + PORT);
+
+    // Attempt to also open a small proxy on port 2000 if possible, to support previews expecting :2000
+    // PROXY REMOVED TO PREVENT EADDRINUSE CONFLICTS
+    // Port 5000 is the primary entry point
+    console.log(`✅ Platform listening on 0.0.0.0:${PORT}`);
   });
 
 }
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  // Exit after a short delay to allow logs to flush
+  setTimeout(() => process.exit(1), 1000);
+});

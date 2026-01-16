@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Folder, File, CheckCircle, Upload } from 'lucide-react';
+import { Folder, File, CheckCircle, Upload } from 'lucide-react'
 
 const EmbeddedFileBrowser = ({ onFileSelect, selectedFiles = [] }) => {
   const [files, setFiles] = useState([]);

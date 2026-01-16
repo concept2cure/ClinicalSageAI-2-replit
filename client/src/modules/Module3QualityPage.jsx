@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Beaker, Box, FileText, Globe } from 'lucide-react';
+import { Beaker, Box, FileText, Globe } from 'lucide-react'
 
 // Import Module 3 components
 import InfoTooltipModule3 from '@/components/ind-wizard/InfoTooltipModule3';

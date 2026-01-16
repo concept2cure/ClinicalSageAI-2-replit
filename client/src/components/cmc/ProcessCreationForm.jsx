@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, Zap, FileText } from 'lucide-react';
+import { Settings, Zap, FileText } from 'lucide-react'
 import NewProcessWizard from './NewProcessWizard';
 
 const ProcessCreationForm = ({ onCancel, onSuccess }) => {

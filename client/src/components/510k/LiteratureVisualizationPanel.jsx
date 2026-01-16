@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -14,26 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Calendar,
-  BookOpen,
-  FileText,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  ExternalLink,
-  Bookmark,
-  Check,
-  BarChart2,
-} from 'lucide-react';
+  Calendar, BookOpen, FileText, ChevronDown, ChevronUp, Eye, ExternalLink, Bookmark, Check, BarChart2 } from 'lucide-react'
 import { literatureAPIService } from '@/services/LiteratureAPIService';
 
 /**

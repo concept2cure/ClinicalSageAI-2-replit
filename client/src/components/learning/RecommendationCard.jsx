@@ -1,18 +1,5 @@
 import React from 'react';
-import {
-  Clock,
-  ArrowRight,
-  Video,
-  FileText,
-  GraduationCap,
-  Globe,
-  Sparkles,
-  CheckCircle2,
-  Award,
-  Zap,
-  Bookmark,
-  Star,
-} from 'lucide-react';
+import { Clock, ArrowRight, Video, FileText, GraduationCap, Globe, Sparkles, CheckCircle2, Award, Zap, Bookmark, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {

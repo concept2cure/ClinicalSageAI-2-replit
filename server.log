@@ -1,0 +1,140 @@
+nohup: ignoring input
+
+> rest-express@1.0.0 dev
+> node cleanup-toastify.js && NODE_OPTIONS="--trace-warnings" tsx --inspect server/index.ts
+
+react-toastify not found in node_modules (good!)
+Vite cache not found or already cleared
+Toast dependency cleanup complete!
+Checking critical dependencies...
+✅ All critical dependencies verified and ready
+Starting build size optimization...
+Build size optimization complete!
+Debugger listening on ws://127.0.0.1:9229/c95123b4-18cb-4205-8390-d408f545add9
+For help, see: https://nodejs.org/en/docs/inspector
+{
+  "timestamp": "2026-01-01T22:52:55.612Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-01-01T22:52:56.918Z",
+  "level": "info",
+  "message": "[storage] Using database storage implementation",
+  "context": {}
+}
+✅ Smart Field Linking initialized with 10 field mappings
+✅ VaultDMSService initialized with 21 CFR Part 11 audit logging and CCMS integration.
+✅ VaultDMSService initialized
+✅ Authentication API routes mounted successfully (JWT-based with organizationId)
+✅ /api/projects route mounted directly
+✅ ForesightAI™ API routes mounted successfully
+✅ ForesightAI RAG API routes mounted successfully
+✅ Database connection successful
+🔧 Ensuring core database tables exist...
+{
+  "timestamp": "2026-01-01T22:52:57.684Z",
+  "level": "info",
+  "message": "[database] Database connection successful",
+  "context": {
+    "timestamp": "2026-01-01T22:52:57.633Z",
+    "poolSize": 1
+  }
+}
+✅ Core database tables ensured
+✅ Audit logging tables initialized
+✅ Biotech AI Intelligence RAG API routes mounted successfully
+✅ Document Editor API routes mounted successfully
+FDA 510(k) API routes initialized (simplified version) {
+  version: '2.0.0-simplified',
+  features: [
+    'Input validation',
+    'Simple caching with Map',
+    'Basic logging with console.log',
+    'Error handling',
+    'Real openFDA API integration'
+  ]
+}
+✅ FDA 510(k) API routes mounted successfully
+✅ Enhanced 510(k) Workflow API routes mounted successfully
+✅ Document Orchestration API routes mounted successfully (510k auto-population)
+✅ ESG Submission API routes mounted successfully (FDA gateway integration)
+✅ Demo Data API routes mounted successfully (client presentations ready)
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+JWT_SECRET_DEV not found, using default development secret
+✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)
+✅ FDA Integration API routes mounted successfully (ESG-ready)
+✅ CER (Clinical Evaluation Report) API routes mounted successfully (MDR/IVDR compliant)
+✅ CERV2 unified document routes mounted successfully
+✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)
+✅ Literature Review API routes mounted successfully (AI-powered appraisal)
+✅ License Management API routes mounted successfully
+✅ Stability API routes mounted successfully
+✅ Enterprise API routes mounted successfully
+✅ Supply Chain Management API routes mounted successfully
+✅ Document Authoring API routes mounted successfully (21 CFR Part 11 compliant)
+✅ eCTD Co-Author API routes mounted successfully (database-backed)
+✅ eCTD Documents routes loaded (version control & lineage tracking)
+✅ OpenAI configured for intelligent tagging
+✅ DocumentDataCenterService initialized with AI-powered tagging
+✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)
+✅ Evidence Management API routes mounted successfully (Data Room evidence search)
+✅ Content Plan API routes mounted successfully (section tracking & evidence linking)
+✅ Smart Blocks API routes mounted successfully (auto-populated content)
+✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)
+✅ Demo seeding API routes mounted successfully
+✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)
+✅ CERV2 Sections API routes mounted successfully (510(k) section tree navigation)
+✅ CERV2 Versions API routes mounted successfully (version history & sessions)
+✅ Content Atoms API routes mounted successfully
+✅ Workflow API routes mounted successfully
+✅ AI Drafting API routes mounted successfully
+✅ Document Management System routes mounted successfully
+✅ Basic API routes mounted
+✅ Submission Center API routes mounted successfully
+✅ 510k-workflow API routes mounted successfully
+✅ FDA compliance tracking enabled with full audit trails
+✅ 510k-project API routes mounted successfully
+✅ FDA forms API routes mounted successfully
+✅ Field Synchronization API routes mounted successfully
+✅ Dynamic Content Assembly API routes mounted successfully
+✅ Tenants routes mounted successfully
+✅ Multi-agency validation routes mounted successfully
+✅ Organizations routes mounted successfully
+✅ Clients routes mounted successfully
+✅ IND routes mounted successfully
+✅ Leaves routes mounted successfully
+✅ Sections real-time sync routes mounted successfully
+✅ Validation routes mounted successfully
+✅ Docs routes mounted successfully
+✅ Tenant-users routes mounted successfully
+✅ Vite dev middleware mounted
+Server running on port 5000
+Could not start preview proxy on port 2000: listen EADDRINUSE: address already in use 0.0.0.0:2000
+✅ Role-based access control tables initialized
+Error:   Failed to scan for dependencies from entries:
+  /workspaces/ClinicalSageAI-2-replit/client/index.html
+
+  [31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mExpected identifier but found "/"[0m
+
+    client/src/components/ectd/EnhancedDocumentEditor.jsx:1766:17:
+[37m      1766 │                 <[32m/[37mdiv>
+           ╵                  [32m^[0m
+
+
+    at failureErrorWithLog (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:945:25
+    at runOnEndCallbacks (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:1315:45)
+    at buildResponseToResult (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:943:7)
+    at /workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:955:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:954:54)
+    at handleRequest (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:647:17)
+    at handleIncomingPacket (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:672:7)
+    at Socket.readFromStdout (/workspaces/ClinicalSageAI-2-replit/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

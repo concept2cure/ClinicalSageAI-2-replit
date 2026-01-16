@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Database, ExternalLink } from 'lucide-react';
+import { Database, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 

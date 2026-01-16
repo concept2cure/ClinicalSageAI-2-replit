@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.jsx';
-import { BarChart, FileText, Users, Search } from 'lucide-react';
+import { BarChart, FileText, Users, Search } from 'lucide-react'
 
 // Sample data - in a real implementation, this would come from an API
 const sampleReports = [

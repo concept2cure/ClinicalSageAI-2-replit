@@ -5,50 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  FileText,
-  TestTube,
-  Package,
-  Microscope,
-  Shield,
-  ExternalLink,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  BarChart3,
-  FlaskConical,
-  Users,
-  Calendar,
-  FileCheck,
-} from 'lucide-react';
+  FileText, TestTube, Package, Microscope, Shield, ExternalLink, Plus, Edit, Trash2, Eye, AlertCircle, CheckCircle, Clock, BarChart3, FlaskConical, Users, Calendar, FileCheck } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 export default function CMCModule() {

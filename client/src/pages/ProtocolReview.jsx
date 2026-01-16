@@ -1,56 +1,14 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import {
-  Upload,
-  FileText,
-  RefreshCw,
-  Download,
-  Sparkles,
-  Microscope,
-  ClipboardList,
-  BookOpen,
-  ArrowRight,
-  CheckCircle,
-  BarChart4,
-  XCircle,
-  Clock,
-  AlertCircle,
-  Info,
-  Scale,
-  Check,
-  Plus,
-  ChevronRight,
-  ArrowUpDown,
-  ChevronDown,
-  Loader2,
-  HelpCircle,
-  ShieldCheck,
-  Beaker,
-  BookMarked,
-  Copy,
-  LineChart,
-  Users,
-} from 'lucide-react';
+  Upload, FileText, RefreshCw, Download, Sparkles, Microscope, ClipboardList, BookOpen, ArrowRight, CheckCircle, BarChart4, XCircle, Clock, AlertCircle, Info, Scale, Check, Plus, ChevronRight, ArrowUpDown, ChevronDown, Loader2, HelpCircle, ShieldCheck, Beaker, BookMarked, Copy, LineChart, Users } from 'lucide-react'
 
 // Import the subcomponents we created
 import ProtocolBlueprintGenerator from '../components/protocol/ProtocolBlueprintGenerator';

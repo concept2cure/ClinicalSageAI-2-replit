@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Database,
-  FileText,
-  BarChart,
-  Shield,
-  Zap,
-  Globe,
-  Code,
-  PieChart,
-  Server,
-  GitBranch,
-  FileLock,
-  BarChart2,
-} from 'lucide-react';
+import { Database, FileText, BarChart, Shield, Zap, Globe, Code, PieChart, Server, GitBranch, FileLock, BarChart2 } from 'lucide-react'
 import { motion } from 'framer-motion';
 
 const EnhancedVisionCards = () => {

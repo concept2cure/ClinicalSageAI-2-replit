@@ -8,17 +8,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Send,
-  RefreshCw,
-  Clipboard,
-  Download,
-  Bot,
-  User,
-  Database,
-  BookOpen,
-  Wand2,
-  AlertCircle,
-} from 'lucide-react';
+  Send, RefreshCw, Clipboard, Download, Bot, User, Database, BookOpen, Wand2, AlertCircle } from 'lucide-react'
 import regulatoryIntelligenceCore from '../services/RegulatoryIntelligenceCore';
 import { useModuleIntegration } from './integration/ModuleIntegrationLayer';
 

@@ -4,7 +4,7 @@ import Navbar from '@/components/navbar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { ChevronRight, BarChart4, FileText, MessageCircle } from 'lucide-react';
+import { ChevronRight, BarChart4, FileText, MessageCircle } from 'lucide-react'
 import UseCaseLibraryComponent from '@/components/use-case-library/UseCaseLibrary';
 
 export default function UseCaseLibrary() {

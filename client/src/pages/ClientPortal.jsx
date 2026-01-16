@@ -4,34 +4,7 @@ import { useAuth } from '../hooks/use-auth';
 import Layout from '../components/Layout';
 import UnifiedDocumentUpload from '../components/unified/UnifiedDocumentUpload';
 import {
-  CheckCircle,
-  ChevronRight,
-  FileText,
-  PieChart,
-  Layers,
-  Beaker,
-  Brain,
-  LineChart,
-  BarChart2,
-  HelpCircle,
-  Upload,
-  Folder,
-  FilePlus,
-  Clock,
-  Tag,
-  Search,
-  Filter,
-  AlertCircle,
-  Lock,
-  Download,
-  ExternalLink,
-  BookOpen,
-  Share2,
-  CheckCircle as CheckCircleIcon,
-  FileCheck,
-  History,
-  Progress,
-} from 'lucide-react';
+  CheckCircle, ChevronRight, FileText, PieChart, Layers, Beaker, Brain, LineChart, BarChart2, HelpCircle, Upload, Folder, FilePlus, Clock, Tag, Search, Filter, AlertCircle, Lock, Download, ExternalLink, BookOpen, Share2, CheckCircle as CheckCircleIcon, FileCheck, History, Progress, Layout } from 'lucide-react'
 
 const ClientPortal = () => {
   const { user } = useAuth();

@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Check, Hourglass, FileDown, AlertTriangle, Zap } from 'lucide-react';
+import { Check, Hourglass, FileDown, AlertTriangle, Zap } from 'lucide-react'
 import OpenAI from 'openai';
 import realtimeService from '../../services/realtimeService';
 

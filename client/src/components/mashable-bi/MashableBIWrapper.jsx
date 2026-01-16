@@ -15,22 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2,
-  BarChart2,
-  PieChart,
-  LineChart,
-  RefreshCw,
-  Download,
-  Share2,
-  Filter,
-  Maximize2,
-  Layers,
-  Calendar,
-  RotateCw,
-  ChevronDown,
-  Settings,
-  AlertTriangle,
-} from 'lucide-react';
+  Loader2, BarChart2, PieChart, LineChart, RefreshCw, Download, Share2, Filter, Maximize2, Layers, Calendar, RotateCw, ChevronDown, Settings, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import MashableAPIKeyForm from './MashableAPIKeyForm';
 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Eye, FileText, Calendar, User, Tag, Shield, ExternalLink } from 'lucide-react';
+import { Download, Eye, FileText, Calendar, User, Tag, Shield, ExternalLink } from 'lucide-react'
 
 const DocumentPreview = ({ selectedDocument, onDocumentSelect, loading }) => {
   const [previewUrl, setPreviewUrl] = useState(null);

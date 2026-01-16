@@ -1,6 +1,6 @@
 import React from 'react';
 import TrialSuccessPredictorV2 from '@/components/TrialSuccessPredictorV2';
-import { Beaker, Brain, TrendingUp, BarChart3 } from 'lucide-react';
+import { Beaker, Brain, TrendingUp, BarChart3 } from 'lucide-react'
 
 export default function TrialPredictorPage() {
   return (

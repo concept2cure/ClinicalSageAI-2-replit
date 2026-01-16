@@ -1,33 +1,6 @@
 // SubmissionBuilder.jsx – simplified version without drag-drop tree
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  CheckCircle,
-  XCircle,
-  Info,
-  AlertTriangle,
-  Settings,
-  Shield,
-  Building,
-  Users,
-  FileText,
-  FileX,
-  Plus,
-  ArrowUpDown,
-  FileSearch,
-  InfoIcon,
-  Eye,
-  Pencil,
-  Trash,
-  Files,
-  RefreshCw,
-  ClipboardCheck,
-  FolderTree,
-  FileArchive,
-  Upload,
-  FileDown,
-  Loader2,
-  Wand2,
-} from 'lucide-react';
+import { CheckCircle, XCircle, Info, AlertTriangle, Settings, Shield, Building, Users, FileText, FileX, Plus, ArrowUpDown, FileSearch, InfoIcon, Eye, Pencil, Trash, Files, RefreshCw, ClipboardCheck, FolderTree, FileArchive, Upload, FileDown, Loader2, Wand2 } from 'lucide-react'
 import { useQCWebSocket } from '../hooks/useQCWebSocket';
 import { useTenant } from '../contexts/TenantContext.tsx';
 import { OrganizationSwitcher } from '../components/tenant/OrganizationSwitcher.tsx';

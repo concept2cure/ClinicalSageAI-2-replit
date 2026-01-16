@@ -37,37 +37,20 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async credentials => {
     try {
-      // HARDCODED SUCCESS - This ensures login always works without backend dependencies
-      // In a real app, this would call the API instead
+      const response = await api.post('/auth/login', {
+        email: credentials.email || credentials.username,
+        password: credentials.password,
+      });
 
-      // Create a hardcoded successful response
-      const mockSuccessfulResponse = {
-        token: 'TS_1',
-        user: {
-          id: 1,
-          username: credentials.username || 'admin',
-          email: 'admin@trialsage.com',
-          role: 'admin',
-          name: 'TrialSage Admin',
-          subscribed: true,
-        },
-      };
+      const { token, user } = response.data;
 
-      // Extract data from our mock response
-      const { token, user } = mockSuccessfulResponse;
-
-      // Save token to localStorage
       localStorage.setItem('token', token);
-
-      // Update user state
       setUser(user);
-
-      // Set token on the API instance
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       toast({
         title: 'Login successful',
-        description: `Welcome back, ${user.username}!`,
+        description: `Welcome back, ${user?.name || user?.email || 'user'}!`,
         variant: 'default',
       });
 
@@ -77,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
       toast({
         title: 'Login failed',
-        description: error.response?.data?.detail || 'Invalid username or password',
+        description: error.response?.data?.message || 'Invalid username or password',
         variant: 'destructive',
       });
 
@@ -86,54 +69,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
-  const register = async userData => {
-    try {
-      // HARDCODED SUCCESS - This ensures registration always works without backend dependencies
-      // In a real app, this would call the API instead
+  const register = async () => {
+    toast({
+      title: 'Registration disabled',
+      description: 'Enterprise provisioning required. Contact your administrator.',
+      variant: 'destructive',
+    });
 
-      // Create a hardcoded successful response
-      const mockSuccessfulResponse = {
-        token: 'TS_2',
-        user: {
-          id: 2,
-          username: userData.username || 'user',
-          email: 'user@trialsage.com',
-          role: 'user',
-          name: userData.username || 'New User',
-          subscribed: true,
-        },
-      };
-
-      // Extract data from our mock response
-      const { token, user } = mockSuccessfulResponse;
-
-      // Save token to localStorage
-      localStorage.setItem('token', token);
-
-      // Update user state
-      setUser(user);
-
-      // Set token on the API instance
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      toast({
-        title: 'Registration successful',
-        description: `Welcome, ${user.username}!`,
-        variant: 'default',
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-
-      toast({
-        title: 'Registration failed',
-        description: error.response?.data?.detail || 'Registration failed. Please try again.',
-        variant: 'destructive',
-      });
-
-      return false;
-    }
+    return false;
   };
 
   // Logout function

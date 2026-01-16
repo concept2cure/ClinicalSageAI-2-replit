@@ -1,38 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ArrowLeft,
-  Beaker,
-  FileText,
-  Download,
-  CheckCircle2,
-  Brain,
-  Shield,
-  Database,
-  Workflow,
-  ChevronRight,
-  AlertTriangle,
-  TrendingUp,
-  BarChart3,
-  Globe,
-  Settings,
-  Clock,
-  Users,
-  Target,
-  Zap,
-  Activity,
-  LineChart,
-  PieChart,
-  FlaskConical,
-  Microscope,
-  BookOpen,
-  Award,
-  Eye,
-  Search,
-  Filter,
-  Calendar,
-  Bell,
-  Star,
-} from 'lucide-react';
+import { ArrowLeft, Beaker, FileText, Download, CheckCircle2, Brain, Shield, Database, Workflow, ChevronRight, AlertTriangle, TrendingUp, BarChart3, Globe, Settings, Clock, Users, Target, Zap, Activity, LineChart, PieChart, FlaskConical, Microscope, BookOpen, Award, Eye, Search, Filter, Calendar, Bell, Star } from 'lucide-react'
 import SmartWorkflowsInterface from '@/components/cmc/SmartWorkflowsInterface';
 import CMCBlueprintGenerator from '@/components/cmc/CMCBlueprintGenerator';
 import CMCDocumentManager from '@/components/cmc/CMCDocumentManager';

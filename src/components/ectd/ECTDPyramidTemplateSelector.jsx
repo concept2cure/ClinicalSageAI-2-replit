@@ -5,6 +5,136 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { CheckCircle, Circle, FileText, AlertTriangle, Info } from 'lucide-react';
 
+const FALLBACK_TEMPLATES = [
+  {
+    id: 'pyr-ind',
+    type: 'IND',
+    title: 'FDA IND (CTD) Pyramid',
+    description: 'Investigation-stage dossier: admin + summaries + quality + nonclinical + clinical.',
+  },
+  {
+    id: 'pyr-nda',
+    type: 'NDA',
+    title: 'FDA NDA (CTD) Pyramid',
+    description: 'Marketing application dossier with full quality/nonclinical/clinical packages.',
+  },
+  {
+    id: 'pyr-bla',
+    type: 'BLA',
+    title: 'FDA BLA (CTD) Pyramid',
+    description: 'Biologics application dossier with CMC + nonclinical + clinical submissions.',
+  },
+  {
+    id: 'pyr-510k',
+    type: '510K',
+    title: 'FDA 510(k) (Device) Structure',
+    description: 'Device submission structure including predicates, testing, and labeling.',
+  },
+];
+
+function fallbackTemplateDetails(templateType) {
+  const base = FALLBACK_TEMPLATES.find((t) => t.type === templateType);
+  return {
+    type: templateType,
+    title: base?.title || `${templateType} Template`,
+    description: base?.description || 'Template structure preview (offline fallback).',
+    modules: [
+      {
+        number: 1,
+        title: 'Administrative Information',
+        sections: [
+          {
+            id: 'm1-1',
+            title: 'Cover Letter / Forms',
+            required: true,
+            guidance: 'Provide application forms and administrative correspondence.',
+          },
+        ],
+      },
+      {
+        number: 2,
+        title: 'Summaries',
+        sections: [
+          {
+            id: 'm2-5',
+            title: 'Clinical Overview',
+            required: true,
+            guidance: 'High-level clinical narrative aligned to study reports and endpoints.',
+          },
+        ],
+      },
+      {
+        number: 3,
+        title: 'Quality',
+        sections: [
+          {
+            id: 'm3-2',
+            title: 'Drug Substance / Drug Product',
+            required: true,
+            guidance: 'CMC quality sections with manufacturing, controls, and stability.',
+          },
+        ],
+      },
+      {
+        number: 4,
+        title: 'Nonclinical Study Reports',
+        sections: [
+          {
+            id: 'm4-1',
+            title: 'Pharmacology / Toxicology',
+            required: false,
+            guidance: 'Nonclinical evidence package supporting safety and mechanism.',
+          },
+        ],
+      },
+      {
+        number: 5,
+        title: 'Clinical Study Reports',
+        sections: [
+          {
+            id: 'm5-3',
+            title: 'Study Reports (CSR)',
+            required: true,
+            guidance: 'Complete CSR package with traceable data-to-text linking.',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function fallbackChecklist(templateType) {
+  return {
+    templateType,
+    items: [
+      {
+        id: 'ck-1',
+        title: 'Module 1 administrative forms present',
+        required: true,
+        completed: false,
+      },
+      {
+        id: 'ck-2',
+        title: 'Summaries map to source evidence',
+        required: true,
+        completed: false,
+      },
+      {
+        id: 'ck-3',
+        title: 'CMC sections include controls + stability',
+        required: true,
+        completed: false,
+      },
+      {
+        id: 'ck-4',
+        title: `Clinical evidence package ready (${templateType})`,
+        required: true,
+        completed: false,
+      },
+    ],
+  };
+}
+
 const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateDetails, setSelectedTemplateDetails] = useState(null);
@@ -36,12 +166,13 @@ const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => 
         setTemplates(data.templates);
       } else {
         console.error('Failed to load templates:', data.error);
-        setError('Failed to load templates'); // Set error message
+        setError('Failed to load templates (using fallback)');
+        setTemplates(FALLBACK_TEMPLATES);
       }
     } catch (error) {
       console.error('Error loading templates:', error);
-      setError('Error loading templates'); // Set error message
-      setTemplates([]); // Ensure templates is empty on error
+      setError('Error loading templates (using fallback)');
+      setTemplates(FALLBACK_TEMPLATES);
     } finally {
       setLoading(false);
     }
@@ -59,11 +190,13 @@ const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => 
         setSelectedTemplateDetails(data.template);
       } else {
         console.error('Error loading template details:', data.error);
-        setError('Error loading template details');
+        setError('Error loading template details (using fallback)');
+        setSelectedTemplateDetails(fallbackTemplateDetails(templateType));
       }
     } catch (error) {
       console.error('Error loading template details:', error);
-      setError('Error loading template details');
+      setError('Error loading template details (using fallback)');
+      setSelectedTemplateDetails(fallbackTemplateDetails(templateType));
     }
   };
 
@@ -79,11 +212,13 @@ const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => 
         setChecklist(data.checklist);
       } else {
         console.error('Error loading template checklist:', data.error);
-        setError('Error loading template checklist');
+        setError('Error loading template checklist (using fallback)');
+        setChecklist(fallbackChecklist(templateType));
       }
     } catch (error) {
       console.error('Error loading template checklist:', error);
-      setError('Error loading template checklist');
+      setError('Error loading template checklist (using fallback)');
+      setChecklist(fallbackChecklist(templateType));
     }
   };
 

@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,47 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from '@/components/ui/tooltip';
 import {
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Lightbulb,
-  Sparkles,
-  TrendingUp,
-  Shield,
-  FileCheck,
-  AlertTriangle,
-  Info,
-  Check,
-  X,
-  ChevronRight,
-  Brain,
-  Target,
-  BookOpen,
-  ClipboardCheck,
-  RefreshCw,
-  Zap,
-  MessageSquare,
-  ThumbsUp,
-  ThumbsDown,
-  Eye,
-  EyeOff,
-  Filter,
-  Download,
-  ChevronDown,
-  ChevronUp,
-  PenTool,
-  Type,
-  Hash,
-  FileText,
-  Search,
-  Settings,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, XCircle, Lightbulb, Sparkles, TrendingUp, Shield, FileCheck, AlertTriangle, Info, Check, X, ChevronRight, Brain, Target, BookOpen, ClipboardCheck, RefreshCw, Zap, MessageSquare, ThumbsUp, ThumbsDown, Eye, EyeOff, Filter, Download, ChevronDown, ChevronUp, PenTool, Type, Hash, FileText, Search, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 // Types and Interfaces

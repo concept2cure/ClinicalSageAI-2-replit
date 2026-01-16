@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { FileCheck } from 'lucide-react';
+import { FileCheck } from 'lucide-react'
 
 const CERDashboardAccessButton = () => {
   return (

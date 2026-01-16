@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuid } from 'uuid';
-import { Send, Loader } from 'lucide-react';
+import { Send, Loader } from 'lucide-react'
 import DocumentViewerModal from '../components/modals/DocumentViewerModal';
 
 export default function AssistantPage() {

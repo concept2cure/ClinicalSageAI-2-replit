@@ -8,6 +8,7 @@
  */
 import express from 'express';
 import multer from 'multer';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = express.Router();
 
@@ -16,7 +17,10 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Middleware to log access and prepare tenantId
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use(requireTenant());
+
+// Middleware to log access and validate service availability
 router.use((req, res, next) => {
   console.log(`[Vault API] Request received for: ${req.method} ${req.originalUrl}`);
   if (!req.app.locals.vaultDmsService) {
@@ -24,8 +28,6 @@ router.use((req, res, next) => {
       error: 'VaultDMSService is not available. Check server initialization.',
     });
   }
-  // Hardcoding tenantId for now. Will be replaced by auth middleware.
-  req.organizationId = 'default-tenant';
   next();
 });
 

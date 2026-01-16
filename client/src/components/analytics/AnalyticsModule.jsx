@@ -6,17 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  BarChart3,
-  PieChart,
-  LineChart,
-  Calendar,
-  Download,
-  Filter,
-  FileText,
-  Search,
-  RefreshCw,
-} from 'lucide-react';
+import { BarChart3, PieChart, LineChart, Calendar, Download, Filter, FileText, Search, RefreshCw } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 
 const AnalyticsModule = () => {

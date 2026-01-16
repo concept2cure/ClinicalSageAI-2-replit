@@ -1,34 +1,15 @@
 // --- TrialSage Enterprise: AI-Enhanced DocuShare with Auto-Tagging and Summarization ---
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,59 +21,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 
 import {
-  AlertCircle,
-  ArrowDown,
-  ArrowLeft,
-  ArrowUp,
-  BarChart3,
-  BookOpen,
-  Calendar,
-  Check,
-  ChevronRight,
-  ClipboardList,
-  Copy,
-  Download,
-  Edit,
-  Eye,
-  File,
-  FileCheck,
-  FileText,
-  Folder,
-  FolderOpen,
-  FolderPlus,
-  Folders,
-  HardDrive,
-  History,
-  Info,
-  ListFilter,
-  Lock,
-  LucideFileStack,
-  MoreHorizontal,
-  Pencil,
-  RefreshCw,
-  RotateCcw,
-  Search,
-  Settings,
-  Sparkles,
-  Tag,
-  Trash2,
-  Unlock,
-  Upload,
-  UserCircle2,
-  X,
-  ZoomIn,
-  Braces,
-  Brain,
-} from 'lucide-react';
+  AlertCircle, ArrowDown, ArrowLeft, ArrowUp, BarChart3, BookOpen, Calendar, Check, ChevronRight, ClipboardList, Copy, Download, Edit, Eye, File, FileCheck, FileText, Folder, FolderOpen, FolderPlus, Folders, HardDrive, History, Info, ListFilter, Lock, LucideFileStack, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Search, Settings, Sparkles, Tag, Trash2, Unlock, Upload, UserCircle2, X, ZoomIn, Braces, Brain } from 'lucide-react'
 
 import {
   uploadDocument,

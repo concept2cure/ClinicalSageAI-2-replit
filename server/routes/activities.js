@@ -20,7 +20,7 @@ import {
   insertNotificationPreferencesSchema,
   insertUserPresenceSchema,
   insertActivityReactionSchema,
-} from '@shared/schema.js';
+} from '@shared/schema.ts';
 import { eq, and, or, desc, asc, gte, lte, like, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createServer } from 'http';
@@ -722,6 +722,6 @@ async function createNotificationsForActivity(activity) {
 }
 
 // Import required for organizationUsers
-import { organizationUsers } from '@shared/schema.js';
+import { organizationUsers } from '@shared/schema.ts';
 
 export default router;

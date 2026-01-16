@@ -9,113 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, } from '@/components/ui/alert-dialog';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ScatterChart,
-  Scatter,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Area,
-  AreaChart,
-} from 'recharts';
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Area, AreaChart, } from 'recharts';
 import {
-  ChevronRight,
-  Zap,
-  FileText,
-  Play,
-  Settings,
-  RefreshCw,
-  Edit,
-  Download,
-  CheckCircle,
-  AlertTriangle,
-  Activity,
-  Target,
-  Shield,
-  Clock,
-  TrendingUp,
-  Database,
-  FileCheck,
-  Package,
-  Factory,
-  Gauge,
-  BarChart4,
-  Users,
-  Calendar,
-  Bell,
-  Plus,
-  Upload,
-  Search,
-  Filter,
-  Eye,
-  Trash2,
-  Save,
-  X,
-  Check,
-  Info,
-  AlertCircle,
-  CheckCircle2,
-  Clipboard,
-  TestTube,
-  Microscope,
-  FlaskConical,
-  Building2,
-  Wrench,
-  Timer,
-  PieChart,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-  ExternalLink,
-  HelpCircle,
-  GitBranch,
-  Brain,
-} from 'lucide-react';
+  ChevronRight, Zap, FileText, Play, Settings, RefreshCw, Edit, Download, CheckCircle, AlertTriangle, Activity, Target, Shield, Clock, TrendingUp, Database, FileCheck, Package, Factory, Gauge, BarChart4, Users, Calendar, Bell, Plus, Upload, Search, Filter, Eye, Trash2, Save, X, Check, Info, AlertCircle, CheckCircle2, Clipboard, TestTube, Microscope, FlaskConical, Building2, Wrench, Timer, PieChart, ArrowUp, ArrowDown, Minus, ExternalLink, HelpCircle, GitBranch, Brain } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import PortfolioDashboard from './PortfolioDashboard';
 

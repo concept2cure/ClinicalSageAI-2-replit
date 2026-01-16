@@ -2,14 +2,8 @@ import React, { useState } from 'react';
 import { useTenant, Tenant } from '../../contexts/TenantContext';
 import { Button } from '../ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { Building2, Check, ChevronsUpDown } from 'lucide-react';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '../ui/dropdown-menu';
+import { Building2, Check, ChevronsUpDown } from 'lucide-react'
 import {
   Dialog,
   DialogContent,

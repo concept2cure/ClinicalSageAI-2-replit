@@ -1,27 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  LayoutDashboard,
-  Database,
-  FileText,
-  FlaskConical,
-  BookOpen,
-  ShieldCheck,
-  PieChart,
-  Users,
-  Settings,
-  Bookmark,
-  HelpCircle,
-  FileQuestion,
-  Activity,
-  Edit,
-  Library,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  ChevronLeft,
-} from 'lucide-react';
+  LayoutDashboard, Database, FileText, FlaskConical, BookOpen, ShieldCheck, PieChart, Users, Settings, Bookmark, HelpCircle, FileQuestion, Activity, Edit, Library, Search, ChevronDown, ChevronRight, ChevronUp, ChevronLeft } from 'lucide-react'
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 import HelpButton from './HelpButton';
 

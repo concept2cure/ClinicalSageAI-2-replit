@@ -1,0 +1,215 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  SmartTag Visual Workflow Demonstration                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─ STEP 1: STATISTICAL DATA GENERATION ──────────────────────────────────────┐
+│                                                                             │
+│  SAS Statistical Programmer                                                 │
+│  ↓                                                                          │
+│  PROC MEANS data=ADSL;                                                      │
+│    VAR AGE;                                                                 │
+│    OUTPUT OUT=demographics                                                  │
+│      MEAN=MEAN_AGE;                                                         │
+│  RUN;                                                                       │
+│                                                                             │
+│  Result: MEAN_AGE = 45.287623                                               │
+│  Formatted: 45.3 (per ICH E3 rounding rules)                                │
+│  Dataset: ADSL v1.0                                                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─ STEP 2: DATA IMPORT TO DOCUMENT ──────────────────────────────────────────┐
+│                                                                             │
+│  Medical Writer clicks "Import from SAS"                                    │
+│  ↓                                                                          │
+│  Backend parses ADSL dataset                                                │
+│  ↓                                                                          │
+│  SmartTag inserted:                                                         │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │ The mean age was [45.3] years.                                  │       │
+│  │                  ^^^^^^                                         │       │
+│  │                  Draft (amber/yellow)                           │       │
+│  │                                                                 │       │
+│  │ Hover tooltip:                                                  │       │
+│  │ "ADSL/AGE v1.0 | Raw: 45.287623 | Status: Draft"               │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─ STEP 3: QC REVIEW ────────────────────────────────────────────────────────┐
+│                                                                             │
+│  Medical Writer reviews tag:                                                │
+│  ✓ Compares 45.3 vs source table                                           │
+│  ✓ Confirms ADSL dataset v1.0                                               │
+│  ✓ Validates rounding per ICH E3                                            │
+│  ↓                                                                          │
+│  Clicks "Mark as Verified"                                                  │
+│  ↓                                                                          │
+│  Tag status updates:                                                        │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │ The mean age was [45.3] years.                                  │       │
+│  │                  ^^^^^^                                         │       │
+│  │                  Verified (GREEN) ✓                             │       │
+│  │                                                                 │       │
+│  │ Hover tooltip:                                                  │       │
+│  │ "ADSL/AGE v1.0 | Raw: 45.287623 | Verified: 2025-01-15 14:30"  │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─ STEP 4: DATA UPDATE (Version Change) ─────────────────────────────────────┐
+│                                                                             │
+│  Statistical team discovers data error                                      │
+│  ↓                                                                          │
+│  Corrects 2 subject records in ADSL                                         │
+│  ↓                                                                          │
+│  Releases ADSL v1.1                                                         │
+│  ↓                                                                          │
+│  New MEAN_AGE = 45.3129 → Formatted: 45.3 (same display, different raw)    │
+│  ↓                                                                          │
+│  System detects version mismatch                                            │
+│  ↓                                                                          │
+│  Tag auto-flagged as STALE:                                                 │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │ The mean age was [45.3] years.                                  │       │
+│  │                  ^^^^^^                                         │       │
+│  │                  Stale (RED, pulsing) ⚠                         │       │
+│  │                                                                 │       │
+│  │ Hover tooltip:                                                  │       │
+│  │ "ADSL/AGE v1.0 | OUTDATED - v1.1 available | Action required"  │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                             │
+│  ⚠ SUBMISSION BLOCKED until tag re-verified                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─ STEP 5: RE-VERIFICATION ──────────────────────────────────────────────────┐
+│                                                                             │
+│  Medical Writer reviews stale tag:                                          │
+│  ↓                                                                          │
+│  Compares v1.0 vs v1.1:                                                     │
+│  - v1.0: 45.287623 → 45.3                                                   │
+│  - v1.1: 45.312900 → 45.3                                                   │
+│  ↓                                                                          │
+│  Display value unchanged → No edit needed                                   │
+│  ↓                                                                          │
+│  Updates tag to v1.1:                                                       │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │ The mean age was [45.3] years.                                  │       │
+│  │                  ^^^^^^                                         │       │
+│  │                  Verified (GREEN) ✓                             │       │
+│  │                                                                 │       │
+│  │ Hover tooltip:                                                  │       │
+│  │ "ADSL/AGE v1.1 | Raw: 45.312900 | Verified: 2025-01-15 16:00"  │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─ STEP 6: SUBMISSION LOCK ──────────────────────────────────────────────────┐
+│                                                                             │
+│  Document ready for eCTD submission                                         │
+│  ↓                                                                          │
+│  Medical Writer clicks "Freeze All Tags"                                    │
+│  ↓                                                                          │
+│  All tags locked (prevent further edits):                                   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │ The mean age was [45.3 🔒] years.                               │       │
+│  │                  ^^^^^^^^^^                                     │       │
+│  │                  Frozen (BLUE, locked)                          │       │
+│  │                                                                 │       │
+│  │ Hover tooltip:                                                  │       │
+│  │ "ADSL/AGE v1.1 | Frozen for eCTD Submission | Read-Only"       │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                             │
+│  ✅ Document ready for regulatory review                                    │
+│  ✅ Complete audit trail preserved                                          │
+│  ✅ FDA can trace every value back to source                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ COMPLETE EFFICACY SECTION EXAMPLE ────────────────────────────────────────┐
+│                                                                             │
+│  12.2 Efficacy Analysis                                                     │
+│                                                                             │
+│  The primary efficacy endpoint was overall survival (OS). In the            │
+│  intent-to-treat (ITT) population (N = [312]🔒), the median OS was          │
+│  [24.5 🔒] months (95% CI: [21.3 🔒] - [27.8 🔒]) in the treatment          │
+│  group versus [18.2 🔒] months (95% CI: [15.9 🔒] - [20.4 🔒]) in           │
+│  the control group.                                                         │
+│                                                                             │
+│  The hazard ratio for death was [0.73 🔒] (95% CI: [0.58 🔒] -              │
+│  [0.91 🔒]; stratified log-rank p = [0.0342 🔒]), indicating a              │
+│  statistically significant improvement in OS with the treatment             │
+│  regimen (p < 0.05).                                                        │
+│                                                                             │
+│  ───────────────────────────────────────────────────────────────────        │
+│                                                                             │
+│  Every bracketed value [X 🔒] is a SmartTag with:                           │
+│  • Complete Chain of Custody (dataset/variable/version)                     │
+│  • Raw value stored for QC audit                                            │
+│  • Verification timestamp                                                   │
+│  • Frozen status (locked for submission)                                    │
+│                                                                             │
+│  If FDA inspector asks: "Where did 0.0342 come from?"                       │
+│  Answer: Hover over tag → Shows "ADTTE/PVAL_OS v1.1 verified 2025-01-15"   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ HTML EXPORT (for eCTD Module 2.7.3) ──────────────────────────────────────┐
+│                                                                             │
+│  <p>The mean age was                                                        │
+│    <smart-tag                                                               │
+│      data-id="tag-1735678901234-abc123"                                     │
+│      data-value="45.3"                                                      │
+│      data-raw-value="45.312900"                                             │
+│      data-dataset="ADSL"                                                    │
+│      data-variable="AGE"                                                    │
+│      data-version="v1.1"                                                    │
+│      data-verified="2025-01-15T16:00:00Z"                                   │
+│      data-status="frozen"                                                   │
+│      data-source-id="DEMO-TABLE-01"                                         │
+│      class="smart-tag-chip status-frozen"                                   │
+│      title="ADSL/AGE v1.1"                                                  │
+│    >45.3</smart-tag>                                                        │
+│  years.</p>                                                                 │
+│                                                                             │
+│  ✅ All regulatory metadata preserved in HTML                               │
+│  ✅ FDA reviewers can inspect source attributes                             │
+│  ✅ Fully compliant with 21 CFR Part 11                                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ RISK MITIGATION COMPARISON ───────────────────────────────────────────────┐
+│                                                                             │
+│  WITHOUT SmartTag (Traditional):                                            │
+│  ❌ Writer types "45.3" manually → Possible typo: "45.8"                    │
+│  ❌ Data updates v1.0 → v1.1 → No alert, stale value remains                │
+│  ❌ FDA asks for source → Writer searches emails/notes (hours)              │
+│  ❌ Audit finding: "Cannot trace value to source dataset"                   │
+│  ❌ Refusal to File → 3-6 month delay → Market launch impact                │
+│                                                                             │
+│  WITH SmartTag (Compliant):                                                 │
+│  ✅ Writer cannot type manually → Atom protection prevents errors           │
+│  ✅ Data updates v1.0 → v1.1 → Tag turns red, submission blocked            │
+│  ✅ FDA asks for source → Hover shows metadata (seconds)                    │
+│  ✅ Complete audit trail → Passes inspection                                │
+│  ✅ Clean filing → On-time approval → Faster patient access                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  SmartTag transforms regulatory writing from error-prone manual process     ║
+║  to compliant, traceable, audit-ready data management.                      ║
+║                                                                              ║
+║  Every number has a story. SmartTag tells it.                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝

@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,40 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  User,
-  Link2,
-  Calendar,
-  Target,
-  BarChart3,
-  Shield,
-  Database,
-  Search,
-  Filter,
-  Download,
-  Plus,
-  Edit,
-  ChevronRight,
-  AlertTriangle,
-} from 'lucide-react';
+  FileText, CheckCircle, AlertCircle, Clock, User, Link2, Calendar, Target, BarChart3, Shield, Database, Search, Filter, Download, Plus, Edit, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';

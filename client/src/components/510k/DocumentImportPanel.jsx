@@ -1,45 +1,15 @@
 import React, { useState, useRef } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import {
-  FileUp,
-  FileText,
-  File,
-  Upload,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  Download,
-  RefreshCw,
-  Eye,
-  Edit,
-  ArrowRight,
-  Info,
-  Loader2,
-} from 'lucide-react';
+  FileUp, FileText, File, Upload, CheckCircle2, XCircle, AlertTriangle, Download, RefreshCw, Eye, Edit, ArrowRight, Info, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import mammoth from 'mammoth';
 

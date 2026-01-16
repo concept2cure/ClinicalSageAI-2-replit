@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Lightbulb, ChevronsRight, RefreshCw, ThumbsUp, Copy } from 'lucide-react';
+import { Lightbulb, ChevronsRight, RefreshCw, ThumbsUp, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 // Mock guidance data by section

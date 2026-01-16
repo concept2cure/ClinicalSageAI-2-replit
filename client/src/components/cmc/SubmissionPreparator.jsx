@@ -1,93 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import {
-  FileText,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  Download,
-  Upload,
-  PlusCircle,
-  Pencil,
-  Trash2,
-  FileCheck,
-  FolderClosed,
-  FolderOpen,
-  ClipboardCheck,
-  Archive,
-  ArrowRight,
-  ArrowUpDown,
-  RefreshCw,
-  Layers,
-  BookOpen,
-  FileSymlink,
-  ChevronsRight,
-  BarChart,
-  Share,
-  Paperclip,
-  Check,
-  X,
-  Globe,
-  Info,
-  HelpCircle,
-  Eye,
-  Tag,
-  Folders,
-  Sparkles,
-  ArrowRightLeft,
-  MessageSquare,
-  GitMerge,
-  GitMerge as Workflow,
-  Settings,
-  Zap,
-  Calendar,
-  Circle,
-} from 'lucide-react';
+  FileText, CheckCircle, AlertTriangle, Search, Download, Upload, PlusCircle, Pencil, Trash2, FileCheck, FolderClosed, FolderOpen, ClipboardCheck, Archive, ArrowRight, ArrowUpDown, RefreshCw, Layers, BookOpen, FileSymlink, ChevronsRight, BarChart, Share, Paperclip, Check, X, Globe, Info, HelpCircle, Eye, Tag, Folders, Sparkles, ArrowRightLeft, MessageSquare, GitMerge, GitMerge as Workflow, Settings, Zap, Calendar, Circle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

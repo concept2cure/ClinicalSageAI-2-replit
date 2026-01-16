@@ -5,38 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  FileText,
-  Upload,
-  Download,
-  Eye,
-  Edit,
-  Share,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Folder,
-  Search,
-  Filter,
-  Plus,
-  Archive,
-  FileCheck,
-  FileX,
-  Calendar,
-  User,
-  Tag,
-  BookOpen,
-  Microscope,
-  FlaskConical,
-  BarChart3,
-} from 'lucide-react';
+  FileText, Upload, Download, Eye, Edit, Share, CheckCircle2, Clock, AlertTriangle, Folder, Search, Filter, Plus, Archive, FileCheck, FileX, Calendar, User, Tag, BookOpen, Microscope, FlaskConical, BarChart3 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 export function CMCDocumentManager() {

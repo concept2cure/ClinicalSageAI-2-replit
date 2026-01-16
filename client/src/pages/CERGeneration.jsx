@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  FileText,
-  Database,
-  BarChart2,
-  PlusCircle,
-  AlertTriangle,
-  Loader2,
-  Microscope,
-  FileDown,
-} from 'lucide-react';
+  FileText, Database, BarChart2, PlusCircle, AlertTriangle, Loader2, Microscope, FileDown } from 'lucide-react'
 import CERStreamingGenerator from '@/components/cer/CERStreamingGenerator';
 import { FAERSIntegration } from '@/components/cer/FAERSIntegration';
 import { Button } from '@/components/ui/button';

@@ -8,7 +8,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Calendar, FileCheck, Users } from 'lucide-react';
+import { Building2, Calendar, FileCheck, Users } from 'lucide-react'
 
 /**
  * Client Header Component

@@ -2,14 +2,92 @@ import express from 'express';
 
 const router = express.Router();
 
+// Dev-only debugging helper (kept lightweight)
+router.post('/debug/echo', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  return res.json({
+    query: req.query,
+    headers: {
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length'],
+    },
+    bodyType: typeof req.body,
+    body: req.body,
+  });
+});
+
+function normalizeBody(body) {
+  if (!body) return null;
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return null;
+    }
+  }
+  if (Buffer.isBuffer(body)) {
+    try {
+      return JSON.parse(body.toString('utf8'));
+    } catch {
+      return null;
+    }
+  }
+
+  // Some clients wrap payloads.
+  if (typeof body === 'object' && body !== null) {
+    if (body.data && typeof body.data === 'object') return body.data;
+    if (body.payload && typeof body.payload === 'object') return body.payload;
+  }
+
+  return body;
+}
+
 /**
  * POST /api/v1/drafting/start_task - Start an AI drafting task
  */
 router.post('/start_task', async (req, res) => {
   try {
-    const { 
-      documentType, 
-      module, 
+    const body = normalizeBody(req.body) || {};
+
+    // Compatibility mode: CoAuthor.jsx uses { project_id, ectd_section, document_title, template }
+    // and expects a 202 response with { task_id }.
+    const coauthorProjectId = body?.project_id ?? body?.projectId;
+    const coauthorSection = body?.ectd_section ?? body?.ectdSection;
+    const coauthorTitle = body?.document_title ?? body?.documentTitle;
+    const coauthorTemplate = body?.template;
+
+    if (coauthorProjectId && coauthorSection && coauthorTitle) {
+      const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+      const draftContent = `# ${coauthorTitle}
+
+Module/Section: ${coauthorSection}
+Template: ${coauthorTemplate || 'default'}
+
+This is a demo drafting result generated in NO_DB mode.
+Replace with real generation when AI services are enabled.`;
+
+      global.draftingTasks = global.draftingTasks || {};
+      global.draftingTasks[taskId] = {
+        id: taskId,
+        project_id: coauthorProjectId,
+        ectd_section: coauthorSection,
+        document_title: coauthorTitle,
+        template: coauthorTemplate,
+        status: 'COMPLETED',
+        draft_content: draftContent,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      return res.status(202).json({ task_id: taskId });
+    }
+
+    const {
+      documentType,
+      module,
       section,
       requirements,
       context,
@@ -17,11 +95,22 @@ router.post('/start_task', async (req, res) => {
       language = 'en',
       tone = 'formal',
       length = 'standard'
-    } = req.body;
+    } = body;
     
     if (!documentType || !module) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: documentType, module' 
+      const debug = req.query && String(req.query.debug || '') === '1';
+      return res.status(400).json({
+        error: 'Missing required fields: documentType, module',
+        ...(debug
+          ? {
+              received: {
+                bodyType: typeof req.body,
+                normalizedBodyType: typeof body,
+                normalizedKeys: body && typeof body === 'object' ? Object.keys(body) : null,
+                normalizedBody: body,
+              },
+            }
+          : null),
       });
     }
     

@@ -9,26 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Users,
-  MessageSquare,
-  Activity,
-  Circle,
-  Edit3,
-  Clock,
-  Check,
-  AtSign,
-  Send,
-  Lock,
-  Unlock,
-  Eye,
-  ChevronRight,
-  UserCheck,
-  MessageCircle,
-  FileEdit,
-  GitBranch,
-  Save,
-  CircleOff
-} from 'lucide-react';
+  Users, MessageSquare, Activity, Circle, Edit3, Clock, Check, AtSign, Send, Lock, Unlock, Eye, ChevronRight, UserCheck, MessageCircle, FileEdit, GitBranch, Save, CircleOff } from 'lucide-react'
 
 const CollaborationSidebar = ({ 
   collaborators = [], 

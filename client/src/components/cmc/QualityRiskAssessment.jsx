@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, FileSearch, Shield } from 'lucide-react';
+import { AlertTriangle, FileSearch, Shield } from 'lucide-react'
 
 export default function QualityRiskAssessment() {
   return (

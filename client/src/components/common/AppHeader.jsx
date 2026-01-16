@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Bell, ChevronDown, Menu, Search, User, X } from 'lucide-react';
+import { Bell, ChevronDown, Menu, Search, User, X } from 'lucide-react'
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 
 const AppHeader = () => {

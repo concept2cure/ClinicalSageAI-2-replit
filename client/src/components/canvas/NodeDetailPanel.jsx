@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X } from 'lucide-react'
 import { fetchSectionGuidance } from '../../api/coauthor';
 import './NodeDetailPanel.css';
 

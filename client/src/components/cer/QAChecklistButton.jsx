@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { generateQAChecklistPDF } from '@/utils/generateQAChecklistPDF';
 import {

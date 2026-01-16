@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 
 /**
  * FAERS Risk Badge Component

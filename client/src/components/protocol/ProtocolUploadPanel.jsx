@@ -1,13 +1,7 @@
 // client/src/components/protocol/ProtocolUploadPanel.jsx
 import { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,20 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  FileText,
-  Upload,
-  AlertTriangle,
-  CheckCircle,
-  Loader2,
-  Clipboard,
-  ClipboardCheck,
-  Download,
-  BarChart4,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldX,
-  FileOutput,
-} from 'lucide-react';
+  FileText, Upload, AlertTriangle, CheckCircle, Loader2, Clipboard, ClipboardCheck, Download, BarChart4, ShieldCheck, ShieldAlert, ShieldX, FileOutput } from 'lucide-react'
 import { toast } from '@/hooks/use-toast';
 
 const RiskLevel = ({ level, children }) => {

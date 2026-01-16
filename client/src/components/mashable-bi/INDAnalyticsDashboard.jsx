@@ -15,21 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  BarChart2,
-  FileBarChart,
-  Clock,
-  Users,
-  PieChart,
-  LineChart,
-  ListChecks,
-  Lightbulb,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-} from 'lucide-react';
+  BarChart2, FileBarChart, Clock, Users, PieChart, LineChart, ListChecks, Lightbulb, ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import MashableBIWrapper from './MashableBIWrapper';

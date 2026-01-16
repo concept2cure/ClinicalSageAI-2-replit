@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react'
 
 const Collapsible = CollapsiblePrimitive.Root;
 

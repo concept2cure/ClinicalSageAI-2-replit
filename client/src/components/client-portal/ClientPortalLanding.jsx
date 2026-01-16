@@ -18,7 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filter, LayoutDashboard, Plus, Search } from 'lucide-react';
+import { Filter, LayoutDashboard, Plus, Search, Badge } from 'lucide-react'
 
 // Custom components
 import ClientHeader from './ClientHeader';

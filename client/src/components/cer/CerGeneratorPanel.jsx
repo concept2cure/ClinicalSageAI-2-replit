@@ -1,22 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileText,
-  Search,
-  Download,
-  Check,
-  AlertTriangle,
-  BookOpen,
-  ChevronRight,
-  Loader2,
-  Brain,
-  BarChart4,
-  ListFilter,
-  Bell,
-  Settings,
-  XCircle,
-  RefreshCcw,
-  Info,
-} from 'lucide-react';
+import { FileText, Search, Download, Check, AlertTriangle, BookOpen, ChevronRight, Loader2, Brain, BarChart4, ListFilter, Bell, Settings, XCircle, RefreshCcw, Info, FilePlus, Plus, X } from 'lucide-react'
 import {
   Card,
   CardContent,

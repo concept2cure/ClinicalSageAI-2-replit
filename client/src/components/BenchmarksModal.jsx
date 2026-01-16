@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import ModalPortal from './ModalPortal';
-import { X, Download, Search, TrendingUp } from 'lucide-react';
+import { X, Download, Search, TrendingUp } from 'lucide-react'
 import { SparklineChart, SparkLine, SparkPoint } from 'recharts';
 import Fuse from 'fuse.js';
 import { saveAs } from 'file-saver';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, X, Info, CheckCircle } from 'lucide-react';
+import { HelpCircle, X, Info, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 /**

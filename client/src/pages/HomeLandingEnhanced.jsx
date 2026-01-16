@@ -3,25 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  FileText,
-  BarChart2,
-  Clock,
-  Check,
-  Zap,
-  Shield,
-  Globe,
-  Sparkles,
-  Users,
-  ArrowRight,
-  Database,
-  FileSymlink,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  PieChart,
-  DollarSign,
-  BarChart,
-} from 'lucide-react';
+  FileText, BarChart2, Clock, Check, Zap, Shield, Globe, Sparkles, Users, ArrowRight, Database, FileSymlink, Loader2, ChevronDown, ChevronUp, PieChart, DollarSign, BarChart } from 'lucide-react'
 
 // Interactive Disruption Card Component with expandable case studies
 const DisruptionCard = ({ icon, title, legacy, summary, caseStudies }) => {

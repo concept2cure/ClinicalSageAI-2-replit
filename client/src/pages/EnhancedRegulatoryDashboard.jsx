@@ -4,7 +4,7 @@ import { getAdvisorReadiness } from '../lib/advisorService';
 import AdvisorRiskHeatmapV2 from '../components/advisor/AdvisorRiskHeatmapV2';
 import TimelineSimulator from '../components/advisor/TimelineSimulator';
 import AskLumenCopilot from '../components/advisor/AskLumenCopilot';
-import { AlertTriangle, Clock, DollarSign, BarChart2 } from 'lucide-react';
+import { AlertTriangle, Clock, DollarSign, BarChart2 } from 'lucide-react'
 
 export default function EnhancedRegulatoryDashboard() {
   const [selectedPlaybook, setSelectedPlaybook] = useState('Fast IND Playbook');

@@ -15,81 +15,18 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from '@/components/ui/command';
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable';
+  ResizableHandle, ResizablePanel, ResizablePanelGroup, } from '@/components/ui/resizable';
 import { useToast } from '@/hooks/use-toast';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { useEvidenceGraph } from '@/contexts/EvidenceGraphContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  Database,
-  FileText,
-  Upload,
-  Search,
-  Filter,
-  Download,
-  Eye,
-  Tags,
-  Shield,
-  Clock,
-  Package,
-  Users,
-  Activity,
-  Factory,
-  AlertTriangle,
-  ChevronRight,
-  Folder,
-  FolderOpen,
-  CheckCircle,
-  Sparkles,
-  Bot,
-  Brain,
-  BookOpen,
-  GitBranch,
-  Link2,
-  MessageCircle,
-  FileSearch,
-  Target,
-  Layers,
-  Info,
-  Award,
-  FileCheck,
-  Copy,
-  Settings,
-  HelpCircle,
-  Home,
-  X,
-  Plus,
-  BarChart3,
-  TrendingUp,
-  Zap,
-  RefreshCw,
-  Archive,
-  History,
-  Lock,
-  Share2,
-  Workflow,
-} from 'lucide-react';
+  Database, FileText, Upload, Search, Filter, Download, Eye, Tags, Shield, Clock, Package, Users, Activity, Factory, AlertTriangle, ChevronRight, Folder, FolderOpen, CheckCircle, Sparkles, Bot, Brain, BookOpen, GitBranch, Link2, MessageCircle, FileSearch, Target, Layers, Info, Award, FileCheck, Copy, Settings, HelpCircle, Home, X, Plus, BarChart3, TrendingUp, Zap, RefreshCw, Archive, History, Lock, Share2, Workflow } from 'lucide-react'
 
 // Import existing components
 import DocumentDataCenter from '../components/DocumentDataCenter';

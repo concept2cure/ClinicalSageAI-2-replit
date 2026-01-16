@@ -1,28 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Sparkles,
-  Brain,
-  Lightbulb,
-  FileText,
-  BookOpenCheck,
-  Filter,
-  Clock,
-  ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-  LineChart,
-  BookOpen,
-  Beaker,
-  Scale,
-  BrainCircuit,
-  Network,
-  FileSearch,
-  MessageSquare,
-  Activity,
-  Link,
-  ArrowUpRight,
-} from 'lucide-react';
+  Sparkles, Brain, Lightbulb, FileText, BookOpenCheck, Filter, Clock, ArrowRight, CheckCircle2, AlertCircle, LineChart, BookOpen, Beaker, Scale, BrainCircuit, Network, FileSearch, MessageSquare, Activity, Link, ArrowUpRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button';
 import {

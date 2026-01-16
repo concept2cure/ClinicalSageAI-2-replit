@@ -1,18 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, AlertCircle, Check, X, ArrowRight } from 'lucide-react';
+import { Loader2, AlertCircle, Check, X, ArrowRight } from 'lucide-react'
 
 /**
  * DocumentGapAnalysis Component

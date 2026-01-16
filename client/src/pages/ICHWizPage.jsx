@@ -9,30 +9,12 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Icons
 import {
-  BookOpen,
-  Search,
-  FileText,
-  UploadCloud,
-  MessageSquare,
-  Send,
-  Info,
-  AlertTriangle,
-  Loader2,
-} from 'lucide-react';
+  BookOpen, Search, FileText, UploadCloud, MessageSquare, Send, Info, AlertTriangle, Loader2 } from 'lucide-react'
 
 // Style definitions
 const globalStyles = {

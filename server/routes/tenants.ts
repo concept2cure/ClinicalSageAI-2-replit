@@ -24,6 +24,66 @@ import crypto from 'crypto';
 const logger = createScopedLogger('tenant-api');
 const router = Router();
 
+const demoTenants = [
+  {
+    id: 1,
+    name: 'Northstar Diagnostics, Inc.',
+    slug: 'northstar-diagnostics',
+    domain: 'northstar.example.com',
+    logo: null,
+    tier: 'professional',
+    maxUsers: 25,
+    maxProjects: 50,
+    maxStorage: 100,
+    status: 'active',
+    settings: {
+      industryType: 'meddevice',
+      complianceLevel: 'enhanced',
+      region: 'US',
+      primaryRegulatoryPathway: '510k',
+      deviceFocus: ['IVD', 'Point-of-Care'],
+    },
+  },
+  {
+    id: 2,
+    name: 'Apex Orthopedics, LLC',
+    slug: 'apex-orthopedics',
+    domain: 'apex-ortho.example.com',
+    logo: null,
+    tier: 'enterprise',
+    maxUsers: 75,
+    maxProjects: 150,
+    maxStorage: 500,
+    status: 'active',
+    settings: {
+      industryType: 'meddevice',
+      complianceLevel: 'enhanced',
+      region: 'US/EU',
+      primaryRegulatoryPathway: '510k',
+      deviceFocus: ['Implant', 'Instrument'],
+    },
+  },
+  {
+    id: 3,
+    name: 'ClearWave Cardio Systems',
+    slug: 'clearwave-cardio',
+    domain: 'clearwave.example.com',
+    logo: null,
+    tier: 'standard',
+    maxUsers: 10,
+    maxProjects: 20,
+    maxStorage: 25,
+    status: 'active',
+    settings: {
+      industryType: 'meddevice',
+      complianceLevel: 'standard',
+      region: 'US',
+      primaryRegulatoryPathway: '510k',
+      deviceFocus: ['Cardiology', 'Software as a Medical Device'],
+    },
+  },
+];
+
 // Schema for tenant creation
 const createTenantSchema = z.object({
   name: z.string().min(3).max(100),
@@ -45,56 +105,15 @@ const createTenantSchema = z.object({
 // Schema for tenant update
 const updateTenantSchema = createTenantSchema.partial();
 
-// Apply auth middleware to all tenant routes
-router.use(authMiddleware);
-
 /**
  * GET /api/tenants
  * Get all tenants the current user has access to
  */
 router.get('/', async (req, res) => {
   try {
-    // For development, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      return res.json([
-        {
-          id: 1,
-          name: 'Acme Medical Devices',
-          slug: 'acme-medical',
-          domain: 'acme-medical.example.com',
-          logo: null,
-          tier: 'professional',
-          maxUsers: 10,
-          maxProjects: 20,
-          maxStorage: 50,
-          status: 'active',
-        },
-        {
-          id: 2,
-          name: 'BioTech Solutions',
-          slug: 'biotech',
-          domain: null,
-          logo: null,
-          tier: 'enterprise',
-          maxUsers: 50,
-          maxProjects: 100,
-          maxStorage: 200,
-          status: 'active',
-        },
-        {
-          id: 3,
-          name: 'MedSoft Research',
-          slug: 'medsoft',
-          domain: 'research.medsoft.com',
-          logo: null,
-          tier: 'standard',
-          maxUsers: 5,
-          maxProjects: 10,
-          maxStorage: 5,
-          status: 'active',
-        },
-      ]);
-    }
+    // Dev/demo: always return seeded tenants so the UI can function without manual setup.
+    // NOTE: This is intentionally unauthenticated in development only.
+    if (process.env.NODE_ENV === 'development') return res.json(demoTenants);
 
     // If user is super admin, get all tenants
     if (req.userRole === 'super_admin') {
@@ -123,6 +142,30 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve tenants' });
   }
 });
+
+/**
+ * GET /api/tenants/:id
+ * Get details for a specific tenant
+ */
+router.get('/:id', async (req, res, next) => {
+  if (process.env.NODE_ENV !== 'development') return next();
+  const tenantId = parseInt(req.params.id);
+  const tenant = demoTenants.find(t => t.id === tenantId);
+  if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+  return res.json({
+    ...tenant,
+    apiKey: 'demo-dev-api-key',
+    settings: {
+      ...(tenant as any).settings,
+      brandColor: '#10b981',
+      enableNotifications: true,
+      allowGuests: false,
+    },
+  });
+});
+
+// Apply auth middleware to tenant routes (except dev-only listing endpoints above)
+router.use(authMiddleware);
 
 /**
  * GET /api/tenants/:id

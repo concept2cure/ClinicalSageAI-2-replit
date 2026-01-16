@@ -3,16 +3,10 @@ import ChatPanel from '../components/ChatPanel';
 import TopNavigation from '../components/TopNavigation';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Book, Box, FileText, Beaker, CheckCheck, ChevronsDown, Bot } from 'lucide-react';
+import { Book, Box, FileText, Beaker, CheckCheck, ChevronsDown, Bot, Layout } from 'lucide-react'
 
 export default function ChatPanelPage() {
   const [selectedContext, setSelectedContext] = useState('general');

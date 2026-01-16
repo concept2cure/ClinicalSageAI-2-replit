@@ -5,17 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  TestTube,
-  FileSearch,
-  BarChart3,
-  Package,
-  Shield,
-  Microscope,
-  FlaskConical,
-  GitBranch,
-  Download,
-  Loader2,
-} from 'lucide-react';
+  TestTube, FileSearch, BarChart3, Package, Shield, Microscope, FlaskConical, GitBranch, Download, Loader2 } from 'lucide-react'
 import SSTPanel from '../quality/SSTPanel';
 import DissolutionPanel from '../quality/DissolutionPanel';
 import GenealogyGraph from '../quality/GenealogyGraph';

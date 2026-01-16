@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, FileText, AlertTriangle, Check } from 'lucide-react';
+import { X, Download, FileText, AlertTriangle, Check } from 'lucide-react'
 
 const REGULATORY_FORMATS = [
   {

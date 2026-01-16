@@ -1,6 +1,6 @@
 // client/src/components/advisor/TimelineSimulator.jsx
 import { useState } from 'react';
-import { Calendar, ChevronRight, RefreshCcw } from 'lucide-react';
+import { Calendar, ChevronRight, RefreshCcw } from 'lucide-react'
 
 export default function TimelineSimulator({ readinessData, onSimulate, simulationData, onReset }) {
   const [selectedSection, setSelectedSection] = useState('');

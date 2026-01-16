@@ -13,100 +13,19 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from '@/components/ui/tooltip';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import {
-  Brain,
-  Activity,
-  FileText,
-  BarChart2,
-  Shield,
-  TrendingUp,
-  Users,
-  Calendar,
-  Target,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Database,
-  Package,
-  Send,
-  Bot,
-  Sparkles,
-  Layers,
-  LineChart,
-  PieChart,
-  GitBranch,
-  Microscope,
-  FlaskConical,
-  Beaker,
-  Upload,
-  Download,
-  Search,
-  Settings,
-  RefreshCw,
-  X,
-  Plus,
-  Minus,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Loader2,
-  Zap,
-  Award,
-  Lightbulb,
-  AlertTriangle,
-  Info,
-  MessageSquare,
-  HelpCircle,
-  DollarSign,
-  Heart,
-  Pill,
-  TestTube,
-  Stethoscope,
-  Share2,
-  Eye,
-  Filter,
-  Play,
-  Pause,
-  Bell,
-  Gauge,
-  Workflow,
-  ArrowRight,
-  ArrowUpRight,
-} from 'lucide-react';
+  Brain, Activity, FileText, BarChart2, Shield, TrendingUp, Users, Calendar, Target, AlertCircle, CheckCircle2, Clock, Database, Package, Send, Bot, Sparkles, Layers, LineChart, PieChart, GitBranch, Microscope, FlaskConical, Beaker, Upload, Download, Search, Settings, RefreshCw, X, Plus, Minus, ChevronRight, ChevronDown, ChevronUp, ExternalLink, Loader2, Zap, Award, Lightbulb, AlertTriangle, Info, MessageSquare, HelpCircle, DollarSign, Heart, Pill, TestTube, Stethoscope, Share2, Eye, Filter, Play, Pause, Bell, Gauge, Workflow, ArrowRight, ArrowUpRight } from 'lucide-react'
 
 // API imports
 import * as protocolAPI from '@/api/protocol';

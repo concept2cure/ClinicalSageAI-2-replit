@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react'
 
 export default function NLPQuery({ onFilterResults }) {
   const [query, setQuery] = useState('');

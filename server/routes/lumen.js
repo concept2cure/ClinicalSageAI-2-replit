@@ -1,7 +1,9 @@
 // Enhanced Lumen AI Chat endpoint with document processing integration
 app.post('/api/ask-lumen', async (req, res) => {
   try {
-    const { query, context, sessionId, documentContent, model = 'openai' } = req.body;
+    const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const defaultModel = geminiApiKey ? 'gemini' : 'openai';
+    const { query, context, sessionId, documentContent, model = defaultModel } = req.body;
 
     console.log('🤖 Lumen AI Request:', {
       query: query?.substring(0, 100) + '...',
@@ -24,24 +26,34 @@ app.post('/api/ask-lumen', async (req, res) => {
     let response;
 
     // Choose AI model based on user preference
-    if (model === 'gemini' && process.env.GEMINI_API_KEY) {
-      // Use Google Gemini Pro
+    if (model === 'gemini' && geminiApiKey) {
+      // Use Gemini (platform default when key is present)
       const { GoogleGenerativeAI } = require('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const geminiModel = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp',
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 4000,
-        },
-      });
+      const genAI = new GoogleGenerativeAI(geminiApiKey);
+      const requestedModel = process.env.GEMINI_MODEL || process.env.GEMINI_DEFAULT_MODEL || 'gemini-3-flash-preview';
+      const fallbackModel = 'gemini-2.0-flash-exp';
 
       const prompt = documentContent
         ? `${systemPrompt}\n\nDocument context: ${documentContent}\n\nUser question: ${query}`
         : `${systemPrompt}\n\nUser question: ${query}`;
 
-      const result = await geminiModel.generateContent(prompt);
-      response = result.response.text();
+      const runGemini = async (modelName) => {
+        const geminiModel = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4000,
+          },
+        });
+        const result = await geminiModel.generateContent(prompt);
+        return result.response.text();
+      };
+
+      try {
+        response = await runGemini(requestedModel);
+      } catch (e) {
+        response = await runGemini(fallbackModel);
+      }
     } else {
       // Use OpenAI service (default)
       if (documentContent) {

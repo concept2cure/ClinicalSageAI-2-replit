@@ -4,7 +4,7 @@ import React from 'react';
 import { useLocation, Link } from 'wouter';
 import { OrganizationSwitcher } from '../tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../tenant/ClientWorkspaceSwitcher';
-import { Settings, Users, Building2, SwitchCamera, Sparkles } from 'lucide-react';
+import { Settings, Users, Building2, SwitchCamera, Sparkles } from 'lucide-react'
 import { useLumenAiAssistant } from '../../contexts/LumenAiAssistantContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import HelpButton from '../common/HelpButton';

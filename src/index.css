@@ -2,6 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VISUAL BEACON ANIMATION */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.highlight-beacon {
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Editor focus pulse (used after deep-link / teleport) */
+@keyframes cs-focus-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0.35),
+      0 0 0 0 rgba(59, 130, 246, 0.25);
+    outline-color: rgba(239, 68, 68, 0);
+  }
+  20% {
+    outline-color: rgba(239, 68, 68, 0.55);
+  }
+  70% {
+    box-shadow:
+      0 0 0 10px rgba(239, 68, 68, 0),
+      0 0 0 16px rgba(59, 130, 246, 0);
+    outline-color: rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0),
+      0 0 0 0 rgba(59, 130, 246, 0);
+    outline-color: rgba(239, 68, 68, 0);
+  }
+}
+
+.cs-focus-pulse {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-radius: 6px;
+  animation: cs-focus-pulse 1.4s ease-out 1;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
 /* Fix for dropdown transparency issue */
 [data-radix-select-content] {
   background-color: white !important;

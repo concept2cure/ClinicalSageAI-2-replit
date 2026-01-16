@@ -5,37 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  Package,
-  Truck,
-  Factory,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  BarChart3,
-  Users,
-  MapPin,
-  Award,
-  Eye,
-  Edit,
-  Plus,
-  Search,
-  Filter,
-  Download,
-  Upload,
-  RefreshCcw,
-  Globe,
-  Shield,
-} from 'lucide-react';
+  Package, Truck, Factory, AlertTriangle, CheckCircle2, Clock, TrendingUp, BarChart3, Users, MapPin, Award, Eye, Edit, Plus, Search, Filter, Download, Upload, RefreshCcw, Globe, Shield } from 'lucide-react'
 
 const CMCSupplyChain = () => {
   const [activeTab, setActiveTab] = useState('overview');

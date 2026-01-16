@@ -8,30 +8,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,19 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import {
-  Globe,
-  Book,
-  Languages,
-  FileText,
-  RefreshCw,
-  ChevronDown,
-  FileUp,
-  FileDown,
-  Sparkles,
-  AlertTriangle,
-  GraduationCap,
-  FileCog,
-} from "lucide-react";
+  Globe, Book, Languages, FileText, RefreshCw, ChevronDown, FileUp, FileDown, Sparkles, AlertTriangle, GraduationCap, FileCog, CsrReport } from 'lucide-react'
 import type { CsrReport } from "@/lib/types";
 
 // Translation form schema
@@ -145,27 +115,17 @@ export default function Translation() {
     },
     onSuccess: (response) => {
       setTranslatedText(response.translatedText);
-      // toast call replaced
-  // Original: toast({
-        title: "Translation Complete",
-        description: `Translated to ${getLanguageName(response.targetLanguage)
-  console.log('Toast would show:', {
+  toast({
         title: "Translation Complete",
         description: `Translated to ${getLanguageName(response.targetLanguage)}`,
-      });
+  });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Translation Failed",
         description: error.message || "Failed to translate text",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Translation Failed",
-        description: error.message || "Failed to translate text",
-        variant: "destructive",
-      });
+  });
     },
   });
 
@@ -180,28 +140,17 @@ export default function Translation() {
       setCsrTranslatedDetails(response.details);
       setCsrReport(response.report);
       setCsrTranslationInfo(response.translationInfo);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "CSR Translation Complete",
         description: `Translated to ${response.translationInfo.targetLanguageName}`,
-      })
-  console.log('Toast would show:', {
-        title: "CSR Translation Complete",
-        description: `Translated to ${response.translationInfo.targetLanguageName}`,
-      });
+  });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "CSR Translation Failed",
         description: error.message || "Failed to translate CSR report",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "CSR Translation Failed",
-        description: error.message || "Failed to translate CSR report",
-        variant: "destructive",
-      });
+  });
     },
   });
 
@@ -218,28 +167,17 @@ export default function Translation() {
     },
     onSuccess: (response) => {
       setTranslatedGuidance(response.translatedGuidance);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Regulatory Translation Complete",
         description: `Translated to ${response.targetLanguageName}`,
-      })
-  console.log('Toast would show:', {
-        title: "Regulatory Translation Complete",
-        description: `Translated to ${response.targetLanguageName}`,
-      });
+  });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Regulatory Translation Failed",
         description: error.message || "Failed to translate regulatory guidance",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Regulatory Translation Failed",
-        description: error.message || "Failed to translate regulatory guidance",
-        variant: "destructive",
-      });
+  });
     },
   });
 
@@ -537,15 +475,10 @@ export default function Translation() {
                     size="sm"
                     onClick={() => {
                       navigator.clipboard.writeText(translatedText);
-                      // toast call replaced
-  // Original: toast({
+  toast({
                         title: "Copied to clipboard",
                         description: "The translated text has been copied to your clipboard",
-                      })
-  console.log('Toast would show:', {
-                        title: "Copied to clipboard",
-                        description: "The translated text has been copied to your clipboard",
-                      });
+  });
                     }}
                   >
                     <FileDown className="h-4 w-4 mr-1" /> Copy
@@ -910,15 +843,10 @@ export default function Translation() {
                     size="sm"
                     onClick={() => {
                       navigator.clipboard.writeText(translatedGuidance);
-                      // toast call replaced
-  // Original: toast({
+  toast({
                         title: "Copied to clipboard",
                         description: "The translated guidance has been copied to your clipboard",
-                      })
-  console.log('Toast would show:', {
-                        title: "Copied to clipboard",
-                        description: "The translated guidance has been copied to your clipboard",
-                      });
+  });
                     }}
                   >
                     <FileDown className="h-4 w-4 mr-1" /> Copy

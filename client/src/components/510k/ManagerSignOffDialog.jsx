@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toaster';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, ClipboardSignature, AlertTriangle, User, CalendarClock } from 'lucide-react';
+import { CheckCircle2, ClipboardSignature, AlertTriangle, User, CalendarClock } from 'lucide-react'
 
 /**
  * Manager Sign-Off Dialog Component

@@ -1,64 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import {
-  Search,
-  Plus,
-  Trash2,
-  FileText,
-  Save,
-  Download,
-  AlertCircle,
-  Check,
-  FileCheck,
-  Filter,
-  Database,
-  Calendar,
-  BookOpen,
-  BarChart2,
-  Star,
-  CheckCircle,
-  Clock,
-  HelpCircle,
-  ExternalLink,
-} from 'lucide-react';
+  Search, Plus, Trash2, FileText, Save, Download, AlertCircle, Check, FileCheck, Filter, Database, Calendar, BookOpen, BarChart2, Star, CheckCircle, Clock, HelpCircle, ExternalLink } from 'lucide-react'
 import CerTooltipWrapper from './CerTooltipWrapper';
 import { literatureAPIService } from '@/services/LiteratureAPIService';
 

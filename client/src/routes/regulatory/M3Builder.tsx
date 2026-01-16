@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Loader2 } from 'lucide-react'
 
 export default function M3Builder({ subId }: { subId: string }) {
   const [data, setData] = React.useState<any>({ sections: [], leaves: [] });

@@ -4,19 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Search,
-  Upload,
-  BarChart2,
-  FileText,
-  Layers,
-  Database,
-  Zap,
-  BookOpen,
-  ArrowUpRight,
-  Box,
-  Package2,
-  Brain,
-} from 'lucide-react';
+  Search, Upload, BarChart2, FileText, Layers, Database, Zap, BookOpen, ArrowUpRight, Box, Package2, Brain } from 'lucide-react'
 
 // Import CSR Analyzer Components
 import CSRDashboard from '@/components/csr-analyzer/CSRDashboard';

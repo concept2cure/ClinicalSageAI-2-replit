@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 // import "@xyflow/react/dist/style.css";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GitBranch, RefreshCw } from 'lucide-react';
+import { GitBranch, RefreshCw } from 'lucide-react'
 
 export default function ImpactGraphTab({ processId }) {
   const [data, setData] = useState(null);

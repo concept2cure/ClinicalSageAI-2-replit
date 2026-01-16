@@ -1,27 +1,10 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Search,
-  Filter,
-  FileText,
-  Download,
-  ArrowUpRight,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Clock,
-  CalendarRange,
-} from 'lucide-react';
+  Search, Filter, FileText, Download, ArrowUpRight, CheckCircle2, XCircle, AlertCircle, Clock, CalendarRange } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Select,

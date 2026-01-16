@@ -99,6 +99,81 @@ router.post('/api/ai/generate', async (req, res) => {
   }
 });
 
+// STAGE 3: ENRICH
+// POST /api/ai-generate-section
+// Body: { projectId: string, section: string }
+// Response: { text: string, confidence: number, citations: string[] }
+router.post('/api/ai-generate-section', async (req, res) => {
+  try {
+    const { projectId, section } = req.body || {};
+    if (!section || typeof section !== 'string') {
+      return res.status(400).json({ error: 'section is required' });
+    }
+
+    const sectionKey = String(section).trim();
+    const systemPrompt =
+      'You are an FDA regulatory writing assistant. Produce concise, defensible 510(k) section prose. ' +
+      'Avoid hallucinating citations: if unsure, output generic placeholders like "FDA Guidance (year)".';
+
+    const userPrompt =
+      `Generate a 510(k) section draft for: ${sectionKey}.\n` +
+      `ProjectId: ${projectId || 'N/A'}.\n` +
+      'Return STRICT JSON with keys: text (string), confidence (number 0-1), citations (array of strings).';
+
+    if (initOpenAI()) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 900,
+          temperature: 0.3,
+        });
+
+        const content = completion.choices[0]?.message?.content || '';
+        try {
+          const parsed = JSON.parse(content);
+          if (parsed && typeof parsed.text === 'string') {
+            return res.json({
+              text: parsed.text,
+              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.87,
+              citations: Array.isArray(parsed.citations) ? parsed.citations : [],
+              source: 'ai',
+              model: 'gpt-4',
+            });
+          }
+        } catch (_e) {
+          // If model didn't return JSON, fall through to template.
+        }
+      } catch (aiError) {
+        console.error('OpenAI section generation error:', aiError);
+      }
+    }
+
+    // Template fallback
+    const templates = {
+      device_description:
+        'Device Description (Draft)\n\nThe subject device is a medical device intended to [INTENDED USE]. It consists of [KEY COMPONENTS] and operates by [PRINCIPLE OF OPERATION]. The device is manufactured under a quality system compliant with 21 CFR 820.\n\nKey design features include [FEATURES]. Performance characteristics relevant to safety and effectiveness are supported by bench testing, software verification/validation (if applicable), and risk management per ISO 14971.',
+    };
+
+    const text =
+      templates[sectionKey] ||
+      `Section ${sectionKey} (Draft)\n\nProvide a clear, test-supported narrative for ${sectionKey}. Include device context, rationale, and supporting evidence references.`;
+
+    return res.json({
+      text,
+      confidence: 0.87,
+      citations: ['21 CFR 807.87', '21 CFR 820', 'FDA Guidance (year)'],
+      source: 'template',
+    });
+  } catch (error) {
+    console.error('AI generate section error:', error);
+    res.status(500).json({ error: 'Failed to generate section' });
+  }
+});
+
 // AI File Tagging - Extract keywords and suggest tags
 router.post('/api/ai/tag-file', async (req, res) => {
   try {

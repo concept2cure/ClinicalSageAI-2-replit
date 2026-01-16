@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Brain, CheckCircle2, Award, Lightbulb, Bookmark } from 'lucide-react';
+import { BookOpen, Brain, CheckCircle2, Award, Lightbulb, Bookmark } from 'lucide-react'
 
 const SimpleLearningInterface = () => {
   const [activeTab, setActiveTab] = useState('insights');

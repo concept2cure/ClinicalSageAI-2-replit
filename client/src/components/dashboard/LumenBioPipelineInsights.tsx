@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, FileText, Beaker, Brain, FlaskConical } from 'lucide-react';
+import { ArrowRight, FileText, Beaker, Brain, FlaskConical } from 'lucide-react'
 
 const LumenBioPipelineInsights = ({ className }: { className?: string }) => {
   return (

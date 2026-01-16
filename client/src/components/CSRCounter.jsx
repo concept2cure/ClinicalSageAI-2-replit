@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 
 /**
  * CSRCounter component for displaying the number of CSRs in the system

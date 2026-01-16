@@ -3,14 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2,
-  Download,
-  ChevronDown,
-  FileText,
-  BarChart,
-  PieChart,
-  LineChart,
-} from 'lucide-react';
+  Loader2, Download, ChevronDown, FileText, BarChart, PieChart, LineChart } from 'lucide-react'
 
 // Mock data for visualization
 const MOCK_DATA = {

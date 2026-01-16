@@ -2,18 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, FileText, CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, AlertCircle, BookOpen } from 'lucide-react'
 import { isFeatureEnabled } from '../../flags/featureFlags';
 import DocumentSectionRecommenderService from '../../services/DocumentSectionRecommenderService';
 import { ContentSuggestionPanel } from './ContentSuggestionPanel';

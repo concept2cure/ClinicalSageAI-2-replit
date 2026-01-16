@@ -4,18 +4,7 @@ import { Helmet } from '../lightweight-wrappers.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  CheckCircle,
-  Database,
-  FileText,
-  Brain,
-  BarChart,
-  Lock,
-  Zap,
-  Globe,
-  Shield,
-  Beaker,
-  FileSpreadsheet,
-} from 'lucide-react';
+  CheckCircle, Database, FileText, Brain, BarChart, Lock, Zap, Globe, Shield, Beaker, FileSpreadsheet } from 'lucide-react'
 
 const HomeMarketingPage = () => {
   return (

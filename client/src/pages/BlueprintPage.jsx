@@ -3,16 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Loader2,
-  FolderTree,
-  Download,
-  FileText,
-  ArrowRight,
-  CheckCircle2,
-  AlertTriangle,
-  Upload,
-  ExternalLink,
-} from 'lucide-react';
+  Loader2, FolderTree, Download, FileText, ArrowRight, CheckCircle2, AlertTriangle, Upload, ExternalLink } from 'lucide-react'
 
 /**
  * Blueprint Generator - Create folder structures and XML manifest for submission packages

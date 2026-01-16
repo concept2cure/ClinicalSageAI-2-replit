@@ -13,52 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  FileText,
-  Upload,
-  Search,
-  Filter,
-  Download,
-  Eye,
-  Tags,
-  FileCheck,
-  Heart,
-  Zap,
-  Code,
-  Shield,
-  Clock,
-  Package,
-  Users,
-  Activity,
-  Factory,
-  AlertTriangle,
-  Plus,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  Sparkles,
-  UploadCloud,
-  Database,
-  LinkIcon,
-  Target,
-  BookOpen,
-  FileX,
-  GitCompare,
-  MessageCircle,
-  FileSignature,
-  History,
-  TrendingUp,
-  BarChart3,
-  Brain,
-  Layers,
-  ClipboardCopy,
-  FileOutput,
-  UserCheck,
-  Calendar,
-  Settings,
-  ChevronRight,
-  XCircle,
-  MessageSquare
-} from 'lucide-react';
+  FileText, Upload, Search, Filter, Download, Eye, Tags, FileCheck, Heart, Zap, Code, Shield, Clock, Package, Users, Activity, Factory, AlertTriangle, Plus, CheckCircle, AlertCircle, RefreshCw, Sparkles, UploadCloud, Database, LinkIcon, Target, BookOpen, FileX, GitCompare, MessageCircle, FileSignature, History, TrendingUp, BarChart3, Brain, Layers, ClipboardCopy, FileOutput, UserCheck, Calendar, Settings, ChevronRight, XCircle, MessageSquare } from 'lucide-react'
 
 // FDA Requirement Categories
 const FDA_REQUIREMENTS = {

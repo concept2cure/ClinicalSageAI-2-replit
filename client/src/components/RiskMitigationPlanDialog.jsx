@@ -2,29 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Sparkles,
-  Clock,
-  User,
-  FileText,
-  Calendar,
-  Mail,
-  Bell,
-  Target,
-  Users,
-  PlayCircle,
-  DollarSign,
-  BarChart3,
-  Shield,
-  Zap,
-  TrendingUp,
-  AlertCircle,
-  Download,
-  Share2,
-  BookOpen,
-} from 'lucide-react';
+  CheckCircle, XCircle, AlertTriangle, Sparkles, Clock, User, FileText, Calendar, Mail, Bell, Target, Users, PlayCircle, DollarSign, BarChart3, Shield, Zap, TrendingUp, AlertCircle, Download, Share2, BookOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';

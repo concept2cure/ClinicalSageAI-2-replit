@@ -51,14 +51,11 @@ import NavigationBanner from '../components/common/NavigationBanner';
 
 // Service imports with fallbacks
 const googleDocsService = {
-  createDocument: () => Promise.resolve({ id: 'mock-doc-id' }),
-  openDocument: () => Promise.resolve()
+  createDocument: () => Promise.resolve({ id: 'mock-doc-id' }), openDocument: () => Promise.resolve()
 };
 
 const googleAuthService = {
-  signIn: () => Promise.resolve({ success: true }),
-  signOut: () => Promise.resolve(),
-  isAuthenticated: () => false
+  signIn: () => Promise.resolve({ success: true }), signOut: () => Promise.resolve(), isAuthenticated: () => false
 };
 
 const copilotService = {
@@ -74,70 +71,7 @@ const EnhancedDocumentEditor = () => <div>Enhanced Document Editor</div>;
 const Office365WordEmbed = () => <div>Office 365 Word Embed</div>;
 const GoogleDocsEmbed = () => <div>Google Docs Embed</div>;
 import { 
-  FileText, 
-  Edit, 
-  Search, 
-  LayoutTemplate, 
-  FolderOpen, 
-  CheckCircle, 
-  Eye,
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  Table,
-  BarChart3,
-  Plus,
-  Loader2,
-  ExternalLink,
-  FilePlus2,
-  Upload,
-  Download,
-  History,
-  Share2,
-  AlertCircle,
-  Clock,
-  GitMerge,
-  GitBranch,
-  Minus,
-  Info,
-  UserCheck,
-  RefreshCw,
-  Save,
-  Lock,
-  Users,
-  ClipboardCheck,
-  FileCheck,
-  Link,
-  BookOpen,
-  ArrowUpRight,
-  Filter,
-  Wand2,
-  Database,
-  CheckSquare,
-  FileWarning,
-  HelpCircle,
-  MessageSquare,
-  Sparkles,
-  Lightbulb,
-  Check,
-  X,
-  Settings,
-  ListChecks,
-  Bot,
-  Clipboard,
-  ShieldCheck,
-  File,
-  Sliders,
-  Globe,
-  PlusCircle,
-  SearchX,
-  Send,
-  Copy,
-  Zap,
-  FileText as TextSelect,
-  RefreshCcw,
-  BarChart
-} from 'lucide-react';
+  FileText, Edit, Search, LayoutTemplate, FolderOpen, CheckCircle, Eye, ChevronDown, ChevronRight, ChevronLeft, Table, BarChart3, Plus, Loader2, ExternalLink, FilePlus2, Upload, Download, History, Share2, AlertCircle, Clock, GitMerge, GitBranch, Minus, Info, UserCheck, RefreshCw, Save, Lock, Users, ClipboardCheck, FileCheck, Link, BookOpen, ArrowUpRight, Filter, Wand2, Database, CheckSquare, FileWarning, HelpCircle, MessageSquare, Sparkles, Lightbulb, Check, X, Settings, ListChecks, Bot, Clipboard, ShieldCheck, File, Sliders, Globe, PlusCircle, SearchX, Send, Copy, Zap, FileText as TextSelect, RefreshCcw, BarChart, User, SlidersHorizontal, FileType } from 'lucide-react'
 
 // Custom Google icon component
 const GoogleIcon = ({ className }) => (

@@ -7,7 +7,7 @@
 
 const express = require('express');
 const { pool } = require('../db');
-const config = require('../config/environment').config;
+const config = require('../config/environment.cjs').config;
 
 const router = express.Router();
 

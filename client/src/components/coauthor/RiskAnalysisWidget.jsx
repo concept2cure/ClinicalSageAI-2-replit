@@ -3,14 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
-  CheckCircle,
-  Shield,
-  PieChart,
-} from 'lucide-react';
+  AlertTriangle, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Shield, PieChart } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 

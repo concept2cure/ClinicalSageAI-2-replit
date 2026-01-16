@@ -4,41 +4,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import {
-  Search,
-  Filter,
-  Plus,
-  MoreVertical,
-  FileText,
-  Download,
-  Eye,
-  ArrowUpDown,
-  Clock,
-  CheckCircle,
-  History,
-  Lock,
-  Trash2,
-  Edit,
-  FileUp,
-} from 'lucide-react';
+  Search, Filter, Plus, MoreVertical, FileText, Download, Eye, ArrowUpDown, Clock, CheckCircle, History, Lock, Trash2, Edit, FileUp } from 'lucide-react'
 
 /**
  * Document Browser Component

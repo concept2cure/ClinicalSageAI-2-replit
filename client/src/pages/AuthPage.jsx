@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useIntegration } from '../components/integration/ModuleIntegrationLayer';
-import { Shield, User, Lock, Mail, ChevronRight, ArrowRight } from 'lucide-react';
+import { Shield, User, Lock, Mail, ChevronRight, ArrowRight } from 'lucide-react'
 
 const AuthPage = () => {
   const [activeForm, setActiveForm] = useState('login');

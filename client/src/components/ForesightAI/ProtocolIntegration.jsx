@@ -5,17 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import {
-  Brain,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Target,
-  Activity,
-  Zap,
-  Info,
-  ChevronRight,
-  RefreshCw
-} from 'lucide-react';
+  Brain, TrendingUp, AlertTriangle, CheckCircle, Target, Activity, Zap, Info, ChevronRight, RefreshCw } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 

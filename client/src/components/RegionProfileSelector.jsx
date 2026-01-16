@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ChevronsUpDown, Globe } from 'lucide-react';
+import { Check, ChevronsUpDown, Globe } from 'lucide-react'
 import {
   Button,
   Command,

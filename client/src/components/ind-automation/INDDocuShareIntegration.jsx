@@ -4,17 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import EnhancedDocuSharePanel from './EnhancedDocuSharePanel';
 import { Badge } from '@/components/ui/badge';
 import {
-  ArrowUpDown,
-  FileText,
-  Folder,
-  Info,
-  Download,
-  Upload,
-  Sparkles,
-  Database,
-  BarChart,
-  CheckCircle,
-} from 'lucide-react';
+  ArrowUpDown, FileText, Folder, Info, Download, Upload, Sparkles, Database, BarChart, CheckCircle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';

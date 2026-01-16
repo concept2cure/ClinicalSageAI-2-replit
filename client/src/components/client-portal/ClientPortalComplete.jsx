@@ -19,39 +19,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link } from 'wouter';
 import {
-  Users,
-  Building,
-  ArrowLeft,
-  FileText,
-  BookOpen,
-  BarChart2,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Calendar,
-  Search,
-  Plus,
-  RefreshCw,
-  Shield,
-  Zap,
-  Layout,
-  Layers,
-  Activity,
-  Folder,
-  Database,
-  BarChartHorizontal,
-  BookMarked,
-  ClipboardList,
-  Lightbulb,
-  Beaker,
-  Network,
-  Share2,
-  ListChecks,
-  Settings,
-  Briefcase,
-  ArrowUpRight,
-  ChevronRight,
-} from 'lucide-react';
+  Users, Building, ArrowLeft, FileText, BookOpen, BarChart2, CheckCircle, AlertCircle, Clock, Calendar, Search, Plus, RefreshCw, Shield, Zap, Layout, Layers, Activity, Folder, Database, BarChartHorizontal, BookMarked, ClipboardList, Lightbulb, Beaker, Network, Share2, ListChecks, Settings, Briefcase, ArrowUpRight, ChevronRight } from 'lucide-react'
 import securityService from '../../services/SecurityService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 import { useToast } from '@/hooks/use-toast';

@@ -3,17 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  Users,
-  BarChart3,
-  Target,
-  RefreshCw,
-  Zap,
-} from 'lucide-react';
+  Activity, AlertTriangle, CheckCircle2, Clock, TrendingUp, Users, BarChart3, Target, RefreshCw, Zap } from 'lucide-react'
 
 // 5. Real-time Validation Monitoring Dashboard
 const RealTimeMonitoringDashboard = () => {

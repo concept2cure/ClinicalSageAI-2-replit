@@ -3,18 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/toaster';
 import {
-  FolderOpen,
-  File,
-  ChevronRight,
-  ChevronDown,
-  FilePlus,
-  FolderPlus,
-  FileText,
-  X,
-  Search,
-  FolderTree,
-  Loader2,
-} from 'lucide-react';
+  FolderOpen, File, ChevronRight, ChevronDown, FilePlus, FolderPlus, FileText, X, Search, FolderTree, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input';
 import docuShareService from '@/services/DocuShareService';
 import { apiRequest } from '@/lib/queryClient';

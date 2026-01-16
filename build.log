@@ -1,0 +1,272 @@
+
+> rest-express@1.0.0 build
+> node cleanup-toastify.js && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+react-toastify not found in node_modules (good!)
+Vite cache not found or already cleared
+Toast dependency cleanup complete!
+Checking critical dependencies...
+✅ All critical dependencies verified and ready
+Starting build size optimization...
+Build size optimization complete!
+vite v5.4.21 building for production...
+transforming...
+
+/assets/particle-bg.svg referenced in /assets/particle-bg.svg didn't resolve at build time, it will remain unchanged to be resolved at runtime
+lucide-compat.js (9:62): "LayoutSidebar" is not exported by "node_modules/lucide-react/dist/esm/lucide-react.js", imported by "lucide-compat.js".
+✓ 4287 modules transformed.
+rendering chunks...
+warnings when minifying css:
+▲ [WARNING] Expected identifier but found "-" [css-syntax-error]
+
+    <stdin>:7334:2:
+      7334 │   -: \.T;
+           ╵   ^
+
+
+computing gzip size...
+dist/index.html                                           0.88 kB │ gzip:   0.51 kB
+dist/assets/ModuleDashboard-D9t45dGp.css                  2.09 kB │ gzip:   0.69 kB
+dist/assets/TimelinePage-KZ6mysz1.css                     3.61 kB │ gzip:   1.10 kB
+dist/assets/CanvasPage-gTJWuCWO.css                      11.47 kB │ gzip:   2.58 kB
+dist/assets/index-BYLGNZwB.css                          267.59 kB │ gzip:  37.29 kB
+dist/assets/InfoTooltip-B4dJ4fiZ.js                       0.09 kB │ gzip:   0.11 kB
+dist/assets/CsrAnalyzer-DnykJX95.js                       0.29 kB │ gzip:   0.24 kB
+dist/assets/Vault-vEJqQcTt.js                             0.29 kB │ gzip:   0.24 kB
+dist/assets/AnalyticsDashboard-DyJXHhfM.js                0.29 kB │ gzip:   0.24 kB
+dist/assets/CerGenerator-DvoA_Epg.js                      0.30 kB │ gzip:   0.25 kB
+dist/assets/loader-circle-BC2aDvSw.js                     0.31 kB │ gzip:   0.26 kB
+dist/assets/VaultDocumentBrowser-ChIvqtql.js              0.33 kB │ gzip:   0.25 kB
+dist/assets/filter-9pR8U6tN.js                            0.33 kB │ gzip:   0.26 kB
+dist/assets/arrow-right-COOALuo0.js                       0.33 kB │ gzip:   0.26 kB
+dist/assets/arrow-up-right-B0oeeOBB.js                    0.33 kB │ gzip:   0.26 kB
+dist/assets/circle-check-Dl7Wyj6T.js                      0.34 kB │ gzip:   0.27 kB
+dist/assets/gauge-n8TsAuGL.js                             0.35 kB │ gzip:   0.27 kB
+dist/assets/chart-line-BLUt3Dcv.js                        0.35 kB │ gzip:   0.28 kB
+dist/assets/book-BP_Edq40.js                              0.36 kB │ gzip:   0.28 kB
+dist/assets/trending-up-CFWuCm9f.js                       0.37 kB │ gzip:   0.28 kB
+dist/assets/lock-C2XrTqfD.js                              0.38 kB │ gzip:   0.29 kB
+dist/assets/bell-aOj1ZKNI.js                              0.38 kB │ gzip:   0.29 kB
+dist/assets/dollar-sign-DtFVHMCa.js                       0.39 kB │ gzip:   0.30 kB
+dist/assets/target-DPNdUrPd.js                            0.39 kB │ gzip:   0.26 kB
+dist/assets/beaker-wLSzP7Cp.js                            0.39 kB │ gzip:   0.29 kB
+dist/assets/panels-top-left-DXIsgdKR.js                   0.40 kB │ gzip:   0.30 kB
+dist/assets/copy-D5B0N1qi.js                              0.40 kB │ gzip:   0.31 kB
+dist/assets/history-9cwIes4N.js                           0.41 kB │ gzip:   0.30 kB
+dist/assets/globe-ChUa3xOQ.js                             0.41 kB │ gzip:   0.29 kB
+dist/assets/trash-DXn_xnq2.js                             0.41 kB │ gzip:   0.31 kB
+dist/assets/file-warning-_sE5RqFm.js                      0.42 kB │ gzip:   0.30 kB
+dist/assets/test-tube-B99tTn48.js                         0.42 kB │ gzip:   0.30 kB
+dist/assets/chart-column-DxClvkf4.js                      0.42 kB │ gzip:   0.30 kB
+dist/assets/cloud-upload-uzxnxvXp.js                      0.42 kB │ gzip:   0.31 kB
+dist/assets/archive-CDqwAQMc.js                           0.42 kB │ gzip:   0.31 kB
+dist/assets/link-DHEDu3JQ.js                              0.43 kB │ gzip:   0.30 kB
+dist/assets/monitor-BhL6sTM9.js                           0.43 kB │ gzip:   0.31 kB
+dist/assets/chart-column-increasing-BCby-nnu.js           0.43 kB │ gzip:   0.31 kB
+dist/assets/key-DC26aFGI.js                               0.43 kB │ gzip:   0.32 kB
+dist/assets/file-check-wushrFT8.js                        0.43 kB │ gzip:   0.30 kB
+dist/assets/workflow-CXoFIMjS.js                          0.43 kB │ gzip:   0.31 kB
+dist/assets/award-BFVq0YFF.js                             0.44 kB │ gzip:   0.33 kB
+dist/assets/book-open-Bz-QyHQL.js                         0.45 kB │ gzip:   0.31 kB
+dist/assets/git-compare-BWySNJe1.js                       0.45 kB │ gzip:   0.31 kB
+dist/assets/lightbulb-D0pScl_e.js                         0.46 kB │ gzip:   0.33 kB
+dist/assets/file-symlink-c1WWoJ-V.js                      0.46 kB │ gzip:   0.32 kB
+dist/assets/folder-open-B_4NjpAz.js                       0.46 kB │ gzip:   0.32 kB
+dist/assets/LoadingSpinner-C2_oAkU8.js                    0.47 kB │ gzip:   0.32 kB
+dist/assets/clipboard-check-B4tmbk3k.js                   0.47 kB │ gzip:   0.34 kB
+dist/assets/factory-DVMP9K4n.js                           0.47 kB │ gzip:   0.31 kB
+dist/assets/flask-conical-DC3bcjGA.js                     0.48 kB │ gzip:   0.34 kB
+dist/assets/square-pen-BwnSXTrr.js                        0.49 kB │ gzip:   0.34 kB
+dist/assets/shield-check-DXRsO4tQ.js                      0.49 kB │ gzip:   0.35 kB
+dist/assets/refresh-ccw-BJYQgOGj.js                       0.49 kB │ gzip:   0.33 kB
+dist/assets/tag-CnShJS5k.js                               0.50 kB │ gzip:   0.35 kB
+dist/assets/file-chart-column-Ci7jo1mo.js                 0.51 kB │ gzip:   0.33 kB
+dist/assets/trash-2-CZWAkTeI.js                           0.53 kB │ gzip:   0.35 kB
+dist/assets/file-output-DhP_EEEU.js                       0.53 kB │ gzip:   0.35 kB
+dist/assets/layers-CZaL6e5a.js                            0.53 kB │ gzip:   0.34 kB
+dist/assets/file-spreadsheet-IoNxII2v.js                  0.54 kB │ gzip:   0.33 kB
+dist/assets/network-BplUX6Ld.js                           0.55 kB │ gzip:   0.34 kB
+dist/assets/package-Ce0zF6s8.js                           0.56 kB │ gzip:   0.36 kB
+dist/assets/file-archive-c6H8ETUV.js                      0.57 kB │ gzip:   0.36 kB
+dist/assets/clipboard-list-Bi2wtDGV.js                    0.58 kB │ gzip:   0.36 kB
+dist/assets/file-json-D0wtnVfw.js                         0.58 kB │ gzip:   0.34 kB
+dist/assets/rocket-DzQ1b9Zy.js                            0.62 kB │ gzip:   0.41 kB
+dist/assets/folder-tree-CP3W4dmP.js                       0.65 kB │ gzip:   0.37 kB
+dist/assets/calculator-BComk818.js                        0.70 kB │ gzip:   0.39 kB
+dist/assets/star-BXFfwscr.js                              0.70 kB │ gzip:   0.37 kB
+dist/assets/StudyArchitectPage-BS0FU6Xo.js                0.76 kB │ gzip:   0.43 kB
+dist/assets/panel-left-BgIzByeF.js                        0.79 kB │ gzip:   0.40 kB
+dist/assets/GoogleDocsEmbed-B1-teScS.js                   0.82 kB │ gzip:   0.42 kB
+dist/assets/Office365WordEmbed-B6byx_D6.js                0.83 kB │ gzip:   0.42 kB
+dist/assets/cog-Bo588N12.js                               0.88 kB │ gzip:   0.45 kB
+dist/assets/separator-DvKSDZ3y.js                         1.02 kB │ gzip:   0.59 kB
+dist/assets/wand-sparkles-C7xgbF5F.js                     1.08 kB │ gzip:   0.47 kB
+dist/assets/play-CdQqdlR5.js                              1.20 kB │ gzip:   0.48 kB
+dist/assets/Module5ClinicalPage-CIbuXgue.js               1.38 kB │ gzip:   0.59 kB
+dist/assets/table-CHBtnlJx.js                             1.48 kB │ gzip:   0.51 kB
+dist/assets/wrench-BT-NIEZl.js                            1.53 kB │ gzip:   0.58 kB
+dist/assets/select-wrapper-CeQNgxdm.js                    1.70 kB │ gzip:   0.83 kB
+dist/assets/DocumentViewer-C7WQwWkF.js                    1.91 kB │ gzip:   0.91 kB
+dist/assets/advisorService-DGifszYl.js                    2.01 kB │ gzip:   0.79 kB
+dist/assets/Module4NonclinicalPage-H8IA3a8Q.js            2.24 kB │ gzip:   0.92 kB
+dist/assets/csr-D_qnPPos.js                               2.40 kB │ gzip:   1.01 kB
+dist/assets/VaultBrowser-CZ1PUOxW.js                      2.42 kB │ gzip:   1.06 kB
+dist/assets/switch-BIrMHkav.js                            2.45 kB │ gzip:   1.23 kB
+dist/assets/CSRSearch-3iL__zeu.js                         2.46 kB │ gzip:   1.21 kB
+dist/assets/Module2SummaryPage-BoSFQZJ6.js                2.64 kB │ gzip:   0.94 kB
+dist/assets/VaultDocumentViewer-H0CyUdzT.js               2.71 kB │ gzip:   1.19 kB
+dist/assets/SimpleDocumentCreator-Cj5y18Is.js             2.78 kB │ gzip:   1.36 kB
+dist/assets/useMutation-Cf4PTmrO.js                       2.97 kB │ gzip:   1.24 kB
+dist/assets/NavigationBanner-D9ASugQH.js                  3.09 kB │ gzip:   1.11 kB
+dist/assets/errorHandling-DI9wVhSl.js                     3.36 kB │ gzip:   1.52 kB
+dist/assets/avatar-BSYSXSG-.js                            3.60 kB │ gzip:   1.61 kB
+dist/assets/Module3QualityPage-JBn1XGcB.js                3.65 kB │ gzip:   1.15 kB
+dist/assets/checkbox-BxhnyepP.js                          3.84 kB │ gzip:   1.70 kB
+dist/assets/AdvisorSidebarV3-DxR5kNWp.js                  3.99 kB │ gzip:   1.37 kB
+dist/assets/RegulatoryRiskDashboard-DgNZ4d8x.js           4.11 kB │ gzip:   1.44 kB
+dist/assets/ModuleDashboard-BMj4CRLq.js                   4.20 kB │ gzip:   1.44 kB
+dist/assets/Module1AdminPage-CXtZKMbB.js                  5.46 kB │ gzip:   1.66 kB
+dist/assets/VaultPage-CGTa_bk9.js                         5.72 kB │ gzip:   1.78 kB
+dist/assets/RegulatoryAITesting-CcmgQLZK.js               6.36 kB │ gzip:   2.31 kB
+dist/assets/AnalyticalMethodsStubPage-DVywyssA.js         6.70 kB │ gzip:   2.08 kB
+dist/assets/ModuleSectionEditor-nQVOzM2s.js               6.72 kB │ gzip:   2.36 kB
+dist/assets/SignaturePage-k9tKEJYA.js                     7.42 kB │ gzip:   2.46 kB
+dist/assets/ReportsDashboard-QJ48E2qn.js                  7.64 kB │ gzip:   2.45 kB
+dist/assets/AdvisorRiskHeatmapV2-fEavlbW4.js              7.96 kB │ gzip:   2.61 kB
+dist/assets/TimelinePage-ByHq3UEc.js                      8.07 kB │ gzip:   2.33 kB
+dist/assets/CodingAgent-1RKFoHqw.js                       8.22 kB │ gzip:   2.74 kB
+dist/assets/slider-Bbs-bf0b.js                            8.25 kB │ gzip:   3.34 kB
+dist/assets/CitationManagerPage-BStGXWIT.js               8.84 kB │ gzip:   2.60 kB
+dist/assets/CSRDetail-Bg2QKqYO.js                         9.16 kB │ gzip:   2.07 kB
+dist/assets/RealTimeMonitoringDashboard-D8FviBjY.js       9.84 kB │ gzip:   2.67 kB
+dist/assets/ProtocolDesignerPage-DQ1v3I8-.js              9.85 kB │ gzip:   2.51 kB
+dist/assets/useQuery-DTYCzi-S.js                         10.38 kB │ gzip:   3.67 kB
+dist/assets/ComparabilityStudiesStubPage-DQEmuWGm.js     10.43 kB │ gzip:   2.44 kB
+dist/assets/AuditPage-DJxcryNc.js                        10.52 kB │ gzip:   2.64 kB
+dist/assets/StabilityStudiesStubPage-Bj_iubYR.js         10.88 kB │ gzip:   2.86 kB
+dist/assets/INDWizardDashboard-B5hqLW1m.js               11.58 kB │ gzip:   2.66 kB
+dist/assets/PredictiveVaultPage-C42aoeaW.js              13.16 kB │ gzip:   3.55 kB
+dist/assets/CmcWizard-D3nyTWrH.js                        13.67 kB │ gzip:   2.64 kB
+dist/assets/ShelfLifePredictorStubPage-xdKRYQRM.js       13.70 kB │ gzip:   3.72 kB
+dist/assets/CSRPage-BoTMPRpG.js                          15.53 kB │ gzip:   3.29 kB
+dist/assets/CSRLibraryPage-D41rsWoo.js                   16.06 kB │ gzip:   3.05 kB
+dist/assets/RealCoAuthor-Bg3uVeYs.js                     18.60 kB │ gzip:   5.19 kB
+dist/assets/CMCPage-BHret0n_.js                          19.44 kB │ gzip:   3.38 kB
+dist/assets/CanvasPage-DhR4TvQR.js                       19.69 kB │ gzip:   5.67 kB
+dist/assets/RegulatoryDashboard-CKuQH9Rw.js              21.70 kB │ gzip:   5.81 kB
+dist/assets/dropdown-menu-DFJxKHKf.js                    22.40 kB │ gzip:   6.80 kB
+dist/assets/FulleCTDCoAuthor-F3164ar1.js                 23.29 kB │ gzip:   5.06 kB
+dist/assets/EmbeddedVaultBrowser-CCt9HaW8.js             24.21 kB │ gzip:   6.70 kB
+dist/assets/BlueprintPage-YjQYCdSe.js                    24.60 kB │ gzip:   5.73 kB
+dist/assets/DocumentTemplates-MrsTMhiB.js                25.87 kB │ gzip:   5.38 kB
+dist/assets/form-qleOcz6S.js                             28.28 kB │ gzip:  10.51 kB
+dist/assets/ResponsiveContainer-5U8ijh3E.js              29.22 kB │ gzip:  11.12 kB
+dist/assets/EnhancedRegulatoryDashboard-DYpv0hr-.js      30.44 kB │ gzip:   7.70 kB
+dist/assets/IndWizardLayout-CfcJrcUl.js                  31.64 kB │ gzip:  10.25 kB
+dist/assets/Settings-BhdL1l_7.js                         33.08 kB │ gzip:   7.12 kB
+dist/assets/ReportsPage-Dtu3G6SN.js                      38.46 kB │ gzip:  10.15 kB
+dist/assets/EnhancedDocumentEditor-CYYa3bnX.js           38.65 kB │ gzip:  10.69 kB
+dist/assets/TenantManagement-DEI6LHmm.js                 39.40 kB │ gzip:   8.36 kB
+dist/assets/INDFullSolution-BzalfTtD.js                  46.85 kB │ gzip:   9.17 kB
+dist/assets/types-BdANZka5.js                            55.24 kB │ gzip:  12.91 kB
+dist/assets/RegulatoryIntelligenceHub-gWtZdOzx.js        56.47 kB │ gzip:  12.20 kB
+dist/assets/InternalClinicalDataPanel-CDRu6_bS.js        68.85 kB │ gzip:  16.31 kB
+dist/assets/CMCGenerator-BQveIG8s.js                     73.12 kB │ gzip:  16.35 kB
+dist/assets/CSRIntelligence-CEownO9-.js                  73.88 kB │ gzip:  14.90 kB
+dist/assets/ClientManagement-DpLEl5EL.js                102.77 kB │ gzip:  19.36 kB
+dist/assets/CerPage-DpOD0zQN.js                         105.67 kB │ gzip:  24.08 kB
+dist/assets/proxy-Ds5if7Ae.js                           111.57 kB │ gzip:  36.67 kB
+dist/assets/ValidationDashboard-BZ3HgN5l.js             129.51 kB │ gzip:  33.82 kB
+dist/assets/StudyArchitect-BKov6zlZ.js                  141.46 kB │ gzip:  27.92 kB
+dist/assets/CMCBlueprintGenerator-CkiaS_c2.js           234.24 kB │ gzip:  53.06 kB
+dist/assets/CoAuthor-_EXp_-d-.js                        296.41 kB │ gzip:  62.56 kB
+dist/assets/ComposedChart-D98JWuJn.js                   369.99 kB │ gzip:  98.12 kB
+dist/assets/index-DJDavTRm.js                           595.29 kB │ gzip: 175.90 kB
+dist/assets/CERV2Page-CmOWD9v7.js                     1,013.23 kB │ gzip: 234.18 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1m 15s
+▲ [WARNING] Duplicate member "calculateBayesianMTD" in class body [duplicate-class-member]
+
+    server/services/foresight-ai-engine.ts:1135:16:
+      1135 │   private async calculateBayesianMTD(cohorts: any[], dlts: any[]) {
+           ╵                 ~~~~~~~~~~~~~~~~~~~~
+
+  The original member "calculateBayesianMTD" is here:
+
+    server/services/foresight-ai-engine.ts:664:16:
+      664 │   private async calculateBayesianMTD(cohorts: any[], dlts: any[]) {
+          ╵                 ~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "calculateSafetyMargin" in class body [duplicate-class-member]
+
+    server/services/foresight-ai-engine.ts:1162:10:
+      1162 │   private calculateSafetyMargin(mtd: number) {
+           ╵           ~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "calculateSafetyMargin" is here:
+
+    server/services/foresight-ai-engine.ts:678:10:
+      678 │   private calculateSafetyMargin(estimatedMTD: number) {
+          ╵           ~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "checkDoseEscalationCompliance" in class body [duplicate-class-member]
+
+    server/services/foresight-ai-engine.ts:1171:16:
+      1171 │   private async checkDoseEscalationCompliance(study: any, recomm...
+           ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "checkDoseEscalationCompliance" is here:
+
+    server/services/foresight-ai-engine.ts:692:16:
+      692 │   private async checkDoseEscalationCompliance(study: any, recomme...
+          ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "performCrossSpeciesAnalysis" in class body [duplicate-class-member]
+
+    server/services/foresight-ai-engine.ts:1217:8:
+      1217 │   async performCrossSpeciesAnalysis(params: {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "performCrossSpeciesAnalysis" is here:
+
+    server/services/foresight-ai-engine.ts:984:8:
+      984 │   async performCrossSpeciesAnalysis(params: {
+          ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] The CommonJS "module" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    server/middleware/auth.js:230:0:
+      230 │ module.exports = {
+          ╵ ~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:4:10:
+      4 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+▲ [WARNING] The CommonJS "module" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    server/utils/monitoring.js:189:0:
+      189 │ module.exports = {
+          ╵ ~~~~~~
+
+  This file is considered to be an ECMAScript module because the enclosing "package.json" file sets the type of this file to "module":
+
+    package.json:4:10:
+      4 │   "type": "module",
+        ╵           ~~~~~~~~
+
+  Node's package format requires that CommonJS files in a "type": "module" package use the ".cjs" file extension.
+
+6 warnings
+
+  dist/index.js  2.7mb ⚠️
+
+⚡ Done in 623ms

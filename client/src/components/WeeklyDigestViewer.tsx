@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowDown, ArrowUp, ArrowRight, AlertTriangle, Clock, Brain } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowRight, AlertTriangle, Clock, Brain } from 'lucide-react'
 
 // Mock data for the digest - in production, this would come from the backend
 const mockDigestData = {

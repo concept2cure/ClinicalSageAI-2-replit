@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Folder,
-  File,
-  FileText,
-  Upload,
-  Download,
-  Trash2,
-  RefreshCw,
-  Search,
-  Plus,
-  Grid,
-  List,
-} from 'lucide-react';
+import { Folder, File, FileText, Upload, Download, Trash2, RefreshCw, Search, Plus, Grid, List } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

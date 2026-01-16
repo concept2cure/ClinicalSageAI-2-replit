@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Download } from 'lucide-react';
+import { Download } from 'lucide-react'
 
 interface CompetitiveIntelligenceFormProps {
   protocol: string;
@@ -21,17 +21,11 @@ const CompetitiveIntelligenceForm: React.FC<CompetitiveIntelligenceFormProps> = 
 
   const runAnalysis = async () => {
     if (!protocol) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please provide a protocol summary",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please provide a protocol summary",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -54,17 +48,11 @@ const CompetitiveIntelligenceForm: React.FC<CompetitiveIntelligenceFormProps> = 
         throw new Error(data.message || "Failed to generate competitive analysis");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate competitive analysis",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate competitive analysis",
-        variant: "destructive"
-      });
+  });
     } finally {
       setLoading(false);
     }

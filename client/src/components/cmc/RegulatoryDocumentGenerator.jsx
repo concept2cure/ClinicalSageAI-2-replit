@@ -1,26 +1,15 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LumenShield from '@/components/common/LumenShield';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Download, CheckCircle2, Clipboard, ClipboardCheck } from 'lucide-react';
+import { FileText, Download, CheckCircle2, Clipboard, ClipboardCheck, AlertTriangle } from 'lucide-react'
 
 const RegulatoryDocumentGenerator = () => {
   const [activeTab, setActiveTab] = useState('module3');
@@ -48,6 +37,11 @@ const RegulatoryDocumentGenerator = () => {
   });
   const [generatedContent, setGeneratedContent] = useState('');
   const [generationComplete, setGenerationComplete] = useState(false);
+  const [supplierRisk, setSupplierRisk] = useState(null);
+  const [supplierRiskError, setSupplierRiskError] = useState(null);
+
+  const supplierRiskLevel = supplierRisk?.riskLevel;
+  const supplierHighRisk = supplierRiskLevel === 'CRITICAL' || supplierRiskLevel === 'HIGH';
 
   const handleProductDetailsChange = (field, value) => {
     setProductDetails(prev => ({
@@ -406,11 +400,53 @@ One production batch per year will be placed on long-term stability as part of t
                 </div>
                 <div>
                   <Label htmlFor="manufacturer">Manufacturer</Label>
-                  <Input
-                    id="manufacturer"
-                    value={productDetails.manufacturer}
-                    onChange={e => handleProductDetailsChange('manufacturer', e.target.value)}
-                    placeholder="e.g., Pharma Company Ltd."
+                  <div className="relative">
+                    <Input
+                      id="manufacturer"
+                      value={productDetails.manufacturer}
+                      onChange={e => handleProductDetailsChange('manufacturer', e.target.value)}
+                      placeholder="e.g., Pharma Company Ltd."
+                      className={supplierHighRisk ? 'border-red-500 focus-visible:ring-red-500 pr-10' : ''}
+                    />
+                    {supplierHighRisk && (
+                      <AlertTriangle className="h-4 w-4 text-red-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                  {supplierHighRisk && supplierRisk?.matches?.length > 0 && (
+                    <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                      <div className="font-semibold uppercase tracking-wide text-[10px]">
+                        {supplierRisk.matches[0]?.source_system || 'Regulatory Alert'}
+                      </div>
+                      <div className="mt-1 text-sm font-medium">
+                        {supplierRisk.matches[0]?.insight || 'Critical supplier signal detected.'}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.location.href = '/lumen-cortex';
+                        }}
+                        className="mt-2 inline-flex items-center gap-2 rounded border border-red-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100"
+                      >
+                        VIEW EVIDENCE
+                      </button>
+                    </div>
+                  )}
+                  {supplierRiskError && !supplierHighRisk && (
+                    <div className="mt-2 text-xs text-red-600">{supplierRiskError}</div>
+                  )}
+                </div>
+                <div className="sm:col-span-2">
+                  <LumenShield
+                    supplierName={productDetails.manufacturer}
+                    productName={productDetails.productName}
+                    material={productDetails.dosageForm}
+                    onResult={(result) => {
+                      setSupplierRisk(result);
+                      setSupplierRiskError(null);
+                    }}
+                    onError={(message) => {
+                      setSupplierRiskError(message);
+                    }}
                   />
                 </div>
                 <div>

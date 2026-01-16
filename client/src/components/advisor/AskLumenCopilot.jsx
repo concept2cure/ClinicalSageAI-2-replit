@@ -1,6 +1,6 @@
 // client/src/components/advisor/AskLumenCopilot.jsx
 import { useState, useEffect, useRef } from 'react';
-import { Send, PlusCircle, Paperclip, Trash2, Bot, User } from 'lucide-react';
+import { Send, PlusCircle, Paperclip, Trash2, Bot, User } from 'lucide-react'
 
 export default function AskLumenCopilot({ readinessData, playbook }) {
   const [messages, setMessages] = useState([

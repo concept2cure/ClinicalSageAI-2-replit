@@ -5,21 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  Brain, 
-  BarChart3,
-  Zap,
-  Target,
-  Shield,
-  Download,
-  RefreshCw,
-  Eye,
-  ExternalLink,
-  Loader2
-} from 'lucide-react';
+  AlertTriangle, CheckCircle2, Clock, FileText, Brain, BarChart3, Zap, Target, Shield, Download, RefreshCw, Eye, ExternalLink, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import DraftResponseEditor from './DraftResponseEditor';
 

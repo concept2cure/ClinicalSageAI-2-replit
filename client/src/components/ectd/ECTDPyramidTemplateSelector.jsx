@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { CheckCircle, Circle, FileText, AlertTriangle, Info } from 'lucide-react';
+import { CheckCircle, Circle, FileText, AlertTriangle, Info } from 'lucide-react'
 
 const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => {
   const [templates, setTemplates] = useState([]);

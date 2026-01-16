@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-12-30T22:12:52.099Z",
+  "dataExports": {
+    "clients": 3,
+    "devices": 8,
+    "documents": 3,
+    "predicateDevices": 3,
+    "equivalenceAnalyses": 1,
+    "complianceChecks": 1,
+    "submissionPackages": 1,
+    "fdaSubmissions": 2,
+    "scenarios": 3
+  },
+  "completionStages": {
+    "stage1_startup": {
+      "name": "Just Started",
+      "completion": "5%",
+      "description": "Basic device name only",
+      "deviceId": "device_1"
+    },
+    "stage2_profile": {
+      "name": "Device Profile Complete",
+      "completion": "20%",
+      "description": "All device specs filled in",
+      "deviceId": "device_2"
+    },
+    "stage3_predicate": {
+      "name": "Predicate Selected",
+      "completion": "35%",
+      "description": "Found matching predicate device",
+      "deviceId": "device_3"
+    },
+    "stage4_equivalence": {
+      "name": "Equivalence Complete",
+      "completion": "50%",
+      "description": "Equivalence analysis completed",
+      "deviceId": "device_4"
+    },
+    "stage5_compliance": {
+      "name": "Compliance Check Complete",
+      "completion": "65%",
+      "description": "Regulatory requirements validated",
+      "deviceId": "device_5"
+    },
+    "stage6_package": {
+      "name": "Submission Package Complete",
+      "completion": "80%",
+      "description": "All documents assembled",
+      "deviceId": "device_6"
+    },
+    "stage7_submitted": {
+      "name": "Submitted to FDA",
+      "completion": "90%",
+      "description": "Under FDA review",
+      "deviceId": "device_7"
+    },
+    "stage8_approved": {
+      "name": "FDA Approved",
+      "completion": "100%",
+      "description": "Cleared to market",
+      "deviceId": "device_8"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "startup",
+      "description": "Startup company just getting started with their first submission",
+      "devices": 1,
+      "organizations": 1,
+      "documents": 1
+    },
+    {
+      "name": "midstage",
+      "description": "Mid-stage company working on predicate equivalence",
+      "devices": 2,
+      "organizations": 2,
+      "documents": 2
+    },
+    {
+      "name": "advanced",
+      "description": "Advanced company with completed submissions and FDA clearances",
+      "devices": 8,
+      "organizations": 3,
+      "documents": 3
+    }
+  ]
+}

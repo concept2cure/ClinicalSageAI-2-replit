@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, AlertCircle, Clock, FileText, Download, Share2 } from 'lucide-react';
+import { Check, AlertCircle, Clock, FileText, Download, Share2 } from 'lucide-react'
 
 const workflowSteps = [
   { id: 'dataPreparation', name: 'Data Preparation', icon: <FileText size={16} /> },

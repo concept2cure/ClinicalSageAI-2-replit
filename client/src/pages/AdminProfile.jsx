@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  BarChart3,
-  Building2,
-  CheckCircle,
-  LogOut,
-  Settings,
-  Shield,
-  User,
-  UserCog,
-  Users,
-  Key,
-} from 'lucide-react';
+  BarChart3, Building2, CheckCircle, LogOut, Settings, Shield, User, UserCog, Users, Key } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

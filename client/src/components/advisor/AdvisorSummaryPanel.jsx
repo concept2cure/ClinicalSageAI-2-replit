@@ -1,7 +1,7 @@
 // /client/src/components/advisor/AdvisorSummaryPanel.jsx
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Clock, DollarSign } from 'lucide-react'
 
 export default function AdvisorSummaryPanel() {
   const [advisorData, setAdvisorData] = useState({

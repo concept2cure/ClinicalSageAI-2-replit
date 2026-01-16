@@ -3,23 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText,
-  Lightbulb,
-  BookOpen,
-  BarChart2,
-  Database,
-  Brain,
-  Settings,
-  Target,
-  Users,
-  Activity,
-  Download,
-  Share2,
-  Plus,
-  Search,
-  LineChart,
-  PieChart,
-} from 'lucide-react';
+  FileText, Lightbulb, BookOpen, BarChart2, Database, Brain, Settings, Target, Users, Activity, Download, Share2, Plus, Search, LineChart, PieChart } from 'lucide-react'
 
 // Import Study Architect Components
 import StudyWorkspace from '@/components/studyArchitect/StudyWorkspace';

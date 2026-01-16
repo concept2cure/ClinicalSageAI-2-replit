@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Sparkles, FileText, ArrowRight } from 'lucide-react';
+import { Sparkles, FileText, ArrowRight, Layout } from 'lucide-react'
 import Layout from '../components/Layout';
 import OnboardingTour from '../components/OnboardingTour';
 

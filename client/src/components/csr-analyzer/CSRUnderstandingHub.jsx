@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,27 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Brain,
-  Search,
-  Zap,
-  MessageSquare,
-  Database,
-  Layers,
-  BookOpen,
-  FileText,
-  Target,
-  Globe,
-  Lightbulb,
-  ChevronRight,
-  BarChart2,
-  Dna,
-  Microscope,
-  Download,
-  Share2,
-  Clock,
-  ArrowRight,
-  Crosshair,
-} from 'lucide-react';
+  Brain, Search, Zap, MessageSquare, Database, Layers, BookOpen, FileText, Target, Globe, Lightbulb, ChevronRight, BarChart2, Dna, Microscope, Download, Share2, Clock, ArrowRight, Crosshair } from 'lucide-react'
 
 // Sample data for knowledge entities
 const knowledgeEntities = [

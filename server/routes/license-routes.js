@@ -3,14 +3,301 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { db } from '../db/index.js';
+import { availableModules, moduleSubscriptions } from '../../shared/schema.ts';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 const router = Router();
+
+// -----------------------------------------------------------------------------
+// Module Subscription System (SaaS licensing)
+// -----------------------------------------------------------------------------
+
+const DEFAULT_MODULES = [
+  {
+    moduleId: 'cerv2',
+    name: 'Medical Device & Diagnostics RA™',
+    description: 'End-to-end regulatory automation for 510(k), CER, MDR/IVDR evidence, and diagnostics workflows.',
+    category: 'submissions',
+    path: '/cerv2',
+    icon: 'shield-check',
+    isNew: false,
+    isHighlight: true,
+    sortOrder: 10,
+    metadata: {
+      defaultEnabled: false,
+      pricing: {
+        currency: 'USD',
+        display: '$999/mo',
+        planId: 'mdx_pro',
+      },
+      includes: ['510(k) workflow', 'Predicate search', 'CER authoring', 'FAERS + PubMed integration'],
+    },
+  },
+  {
+    moduleId: 'coauthor',
+    name: 'eCTD Co-Author',
+    description: 'AI-assisted eCTD authoring and compilation.',
+    category: 'authoring',
+    path: '/coauthor',
+    icon: 'file-text',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 20,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'ind_wizard',
+    name: 'IND Wizard',
+    description: 'Guided IND application creation and planning.',
+    category: 'submissions',
+    path: '/ind-wizard',
+    icon: 'beaker',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 30,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'vault',
+    name: 'Document Vault',
+    description: 'Secure document vault and evidence room.',
+    category: 'authoring',
+    path: '/vault',
+    icon: 'folder',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 40,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'editor',
+    name: 'Document Editor',
+    description: 'Structured authoring with validation-aware editing.',
+    category: 'authoring',
+    path: '/editor',
+    icon: 'edit',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 50,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'analytics',
+    name: 'Analytics',
+    description: 'Operational and content analytics dashboards.',
+    category: 'analytics',
+    path: '/analytics',
+    icon: 'bar-chart',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 60,
+    metadata: { defaultEnabled: true },
+  },
+];
+
+async function ensureDefaultModulesSeeded() {
+  // If DB isn't available, let the caller handle the resulting exception.
+  const countRows = await db.select({ count: sql`count(*)` }).from(availableModules);
+  const rawCount = countRows?.[0]?.count;
+  const count = typeof rawCount === 'string' ? parseInt(rawCount, 10) : Number(rawCount ?? 0);
+  if (Number.isFinite(count) && count > 0) return;
+
+  const values = DEFAULT_MODULES.map((mod) => ({
+    moduleId: mod.moduleId,
+    name: mod.name,
+    description: mod.description,
+    category: mod.category,
+    path: mod.path,
+    icon: mod.icon,
+    isNew: Boolean(mod.isNew),
+    isHighlight: Boolean(mod.isHighlight),
+    sortOrder: Number(mod.sortOrder ?? 0),
+    metadata: mod.metadata ?? {},
+  }));
+
+  await db
+    .insert(availableModules)
+    .values(values)
+    .onConflictDoNothing({ target: availableModules.moduleId });
+}
+
+function getOrgIdFromRequest(req) {
+  const orgHeader =
+    req.headers['x-organization-id'] ||
+    req.headers['x-organizationid'] ||
+    req.headers['x-org-id'] ||
+    req.headers['x-orgid'];
+  const parsed = parseInt(String(orgHeader ?? '1'), 10);
+  return Number.isFinite(parsed) ? parsed : 1;
+}
+
+function getDefaultEnabledFromMetadata(metadata) {
+  if (!metadata) return false;
+  if (typeof metadata.defaultEnabled === 'boolean') return metadata.defaultEnabled;
+  return false;
+}
 
 // Generate a unique private URL for a client
 function generatePrivateUrl(clientId, baseUrl) {
   const token = crypto.randomBytes(32).toString('hex');
   return `${baseUrl}/client-access/${clientId}/${token}`;
 }
+
+// -----------------------------------------------------------------------------
+// Module Subscription APIs
+// -----------------------------------------------------------------------------
+
+// Returns the module catalog + effective enabled status for the org.
+router.get('/api/modules/catalog', async (req, res) => {
+  try {
+    const organizationId = getOrgIdFromRequest(req);
+
+    await ensureDefaultModulesSeeded();
+
+    const modulesRows = await db
+      .select()
+      .from(availableModules)
+      .orderBy(asc(availableModules.sortOrder), asc(availableModules.name));
+
+    const subsRows = await db
+      .select()
+      .from(moduleSubscriptions)
+      .where(eq(moduleSubscriptions.organizationId, organizationId));
+
+    const subsByModuleId = new Map();
+    for (const sub of subsRows || []) {
+      subsByModuleId.set(sub.moduleId, sub);
+    }
+
+    const modules = (modulesRows || []).map((m) => {
+      const subscription = subsByModuleId.get(m.moduleId) || null;
+      const metadata = m.metadata || null;
+      const defaultEnabled = getDefaultEnabledFromMetadata(metadata);
+      const enabled = subscription ? Boolean(subscription.enabled) : Boolean(defaultEnabled);
+      return {
+        id: m.id,
+        moduleId: m.moduleId,
+        name: m.name,
+        description: m.description,
+        category: m.category,
+        path: m.path,
+        icon: m.icon,
+        isNew: Boolean(m.isNew),
+        isHighlight: Boolean(m.isHighlight),
+        sortOrder: m.sortOrder,
+        metadata,
+        enabled,
+        subscription,
+      };
+    });
+
+    return res.json({ success: true, organizationId, modules });
+  } catch (error) {
+    console.error('Error fetching module catalog:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch module catalog' });
+  }
+});
+
+// Fast access check for a single module.
+router.get('/api/modules/access/:moduleId', async (req, res) => {
+  try {
+    const organizationId = getOrgIdFromRequest(req);
+    const { moduleId } = req.params;
+
+    await ensureDefaultModulesSeeded();
+
+    const modRows = await db
+      .select()
+      .from(availableModules)
+      .where(eq(availableModules.moduleId, moduleId))
+      .limit(1);
+    const mod = modRows?.[0];
+    if (!mod) {
+      return res.status(404).json({ success: false, allowed: false, moduleId, reason: 'MODULE_NOT_FOUND' });
+    }
+
+    const subRows = await db
+      .select()
+      .from(moduleSubscriptions)
+      .where(and(eq(moduleSubscriptions.organizationId, organizationId), eq(moduleSubscriptions.moduleId, moduleId)))
+      .limit(1);
+    const subscription = subRows?.[0] || null;
+
+    const defaultEnabled = getDefaultEnabledFromMetadata(mod.metadata);
+    const allowed = subscription ? Boolean(subscription.enabled) : Boolean(defaultEnabled);
+
+    return res.json({
+      success: true,
+      organizationId,
+      moduleId,
+      allowed,
+      reason: allowed ? null : 'SUBSCRIPTION_REQUIRED',
+      subscription,
+      module: {
+        moduleId: mod.moduleId,
+        name: mod.name,
+        path: mod.path,
+        metadata: mod.metadata || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error checking module access:', error);
+    return res.status(500).json({ success: false, allowed: false, reason: 'ERROR' });
+  }
+});
+
+// Enable/disable a module for the org (self-serve subscription toggle; billing integration can be layered later).
+router.post('/api/modules/subscribe', async (req, res) => {
+  try {
+    const organizationId = getOrgIdFromRequest(req);
+    const { moduleId, enabled = true, metadata = null, actor = null } = req.body || {};
+
+    if (!moduleId) {
+      return res.status(400).json({ success: false, error: 'moduleId is required' });
+    }
+
+    await ensureDefaultModulesSeeded();
+
+    const now = new Date();
+    const enabledBool = Boolean(enabled);
+    const enabledAt = enabledBool ? now : null;
+    const disabledAt = enabledBool ? null : now;
+    const enabledBy = enabledBool ? String(actor ?? 'self_serve') : null;
+    const disabledBy = enabledBool ? null : String(actor ?? 'self_serve');
+
+    const [subscription] = await db
+      .insert(moduleSubscriptions)
+      .values({
+        organizationId,
+        moduleId,
+        enabled: enabledBool,
+        enabledAt,
+        disabledAt,
+        enabledBy,
+        disabledBy,
+        metadata: metadata || null,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [moduleSubscriptions.organizationId, moduleSubscriptions.moduleId],
+        set: {
+          enabled: enabledBool,
+          enabledAt,
+          disabledAt,
+          enabledBy,
+          disabledBy,
+          metadata: metadata || sql`${moduleSubscriptions.metadata}`,
+          updatedAt: now,
+        },
+      })
+      .returning();
+
+    return res.json({ success: true, organizationId, subscription: subscription ?? null });
+  } catch (error) {
+    console.error('Error updating module subscription:', error);
+    return res.status(500).json({ success: false, error: 'Failed to update module subscription' });
+  }
+});
 
 // Generate a license key
 function generateLicenseKey() {

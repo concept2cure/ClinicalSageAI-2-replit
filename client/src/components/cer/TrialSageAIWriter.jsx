@@ -5,13 +5,7 @@ import { useToast } from '@/components/ui/toaster';
 
 // UI Components
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,49 +15,17 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Icons
 import {
-  Sparkles,
-  RotateCw,
-  ThumbsUp,
-  ThumbsDown,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  History,
-  FileText,
-  ArrowRight,
-  Bot,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  Clock,
-  PenTool,
-  RotateCcw,
-  Eye,
-  Save,
-  Zap,
-  Lightbulb,
-  MessageSquare,
-  MoreHorizontal,
-} from 'lucide-react';
+  Sparkles, RotateCw, ThumbsUp, ThumbsDown, AlertCircle, CheckCircle, Loader2, History, FileText, ArrowRight, Bot, ChevronDown, ChevronUp, Edit, Clock, PenTool, RotateCcw, Eye, Save, Zap, Lightbulb, MessageSquare, MoreHorizontal, FileJson, Globe } from 'lucide-react'
 
 /**
  * TrialSage AI Writer Panel Component

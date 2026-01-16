@@ -5,19 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Upload,
-  Folder,
-  FileText,
-  Search,
-  ArrowRight,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  Cloud,
-  Building2,
-  BarChart3,
-  Brain,
-} from 'lucide-react';
+  Upload, Folder, FileText, Search, ArrowRight, CheckCircle, AlertCircle, Loader2, Cloud, Building2, BarChart3, Brain } from 'lucide-react'
 
 /**
  * Python Analytics Upload Section

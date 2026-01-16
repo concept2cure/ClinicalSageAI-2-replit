@@ -3,13 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '../../lib/queryClient.js';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -19,32 +13,9 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Key,
-  Link,
-  Copy,
-  Check,
-  Shield,
-  Activity,
-  FileText,
-  AlertTriangle,
-  Calendar,
-  Package,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Lock,
-  Unlock,
-  Stethoscope,
-  TestTube2,
-  FileBox,
-} from 'lucide-react';
+  Key, Link, Copy, Check, Shield, Activity, FileText, AlertTriangle, Calendar, Package, Eye, EyeOff, RefreshCw, Lock, Unlock, Stethoscope, TestTube2, FileBox } from 'lucide-react'
 
 const ClientLicenseTab = ({ clientId, clientDetail }) => {
   const [showPrivateKey, setShowPrivateKey] = useState(false);

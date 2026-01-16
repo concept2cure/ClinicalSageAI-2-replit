@@ -2,14 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
-  BarChart,
-  CheckCircle,
-  AlertTriangle,
-  Clock,
-  FileText,
-  Users,
-  MessageSquare,
-} from 'lucide-react';
+  BarChart, CheckCircle, AlertTriangle, Clock, FileText, Users, MessageSquare } from 'lucide-react'
 
 export default function SubmissionDashboardPanel({ submissionId }) {
   // In a real implementation, this data would come from an API call

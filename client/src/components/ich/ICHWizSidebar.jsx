@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { BookOpen, MessageSquare, FileText, UploadCloud, Info } from 'lucide-react';
+import { BookOpen, MessageSquare, FileText, UploadCloud, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {

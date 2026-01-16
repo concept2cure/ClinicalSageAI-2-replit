@@ -18,56 +18,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  FileText,
-  Package,
-  MessageSquare,
-  GitBranch,
-  CheckCircle,
-  AlertCircle,
-  User,
-  Users,
-  Clock,
-  RefreshCw,
-  Filter,
-  Heart,
-  ThumbsUp,
-  Smile,
-  Star,
-  Award,
-  MoreVertical,
-  Link,
-  Eye,
-  Calendar,
-  Hash,
-  Folder,
-  Shield,
-  Share2,
-  Edit,
-  Trash2,
-  UserPlus,
-  Bell,
-  BellOff,
-  Activity,
-  X,
-  Table,
-  Presentation,
-} from 'lucide-react';
+  FileText, Package, MessageSquare, GitBranch, CheckCircle, AlertCircle, User, Users, Clock, RefreshCw, Filter, Heart, ThumbsUp, Smile, Star, Award, MoreVertical, Link, Eye, Calendar, Hash, Folder, Shield, Share2, Edit, Trash2, UserPlus, Bell, BellOff, Activity, X, Table, Presentation } from 'lucide-react'
 
 /**
  * Get icon for entity type

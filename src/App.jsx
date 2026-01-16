@@ -3,7 +3,15 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Switch, Route, useLocation, Link } from 'wouter';
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import EnhancedDocumentEditor from './components/ectd/EnhancedDocumentEditor';
+import TipTapEnhancedDocumentEditor from './components/ectd/TipTapEnhancedDocumentEditor';
+import { MissionControl } from './components/dashboard/MissionControl';
+import { DataManager } from './components/data-lake/DataManager';
+import { db } from './lib/database';
+import { SaaSLayout } from './components/layout/SaaSLayout';
+import { ToastProvider } from './components/ui/ToastSystem';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
 import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
@@ -149,6 +157,130 @@ const CodingAgent = lazy(() => import('./pages/CodingAgent'));
 // 510(k) Automation is now fully integrated into CERV2Page
 // Standalone FDA510k pages have been permanently removed
 
+const mockClinicalProtocols = [
+  {
+    id: 'prot_101',
+    title: 'Protocol 101 — Phase II Oncology Study',
+    phase: 'Phase II',
+    sponsor: 'Acme BioPharma',
+    owner: 'Clinical Ops',
+    status: 'draft',
+    updatedAt: '2d ago',
+    summary: 'Primary endpoint and SAP alignment in progress. Pending data traceability checks.',
+  },
+  {
+    id: 'prot_203',
+    title: 'Protocol 203 — First-in-Human PK/PD',
+    phase: 'Phase I',
+    sponsor: 'Northstar Therapeutics',
+    owner: 'Regulatory',
+    status: 'review',
+    updatedAt: '5d ago',
+    summary: 'Safety sections updated; awaiting final protocol amendments and vendor confirmation.',
+  },
+  {
+    id: 'prot_412',
+    title: 'Protocol 412 — Pivotal Device Trial',
+    phase: 'Pivotal',
+    sponsor: 'MedDevice Co',
+    owner: 'QA/RA',
+    status: 'sealed',
+    updatedAt: '1w ago',
+    summary: 'Sealed package ready for submission packaging and final publishing checks.',
+  },
+];
+
+const mockECTDTemplates = [
+  {
+    id: 'tmpl_m2_5',
+    title: 'eCTD Module 2.5 — Clinical Overview',
+    module: '2.5',
+    region: 'FDA',
+    status: 'draft',
+    updatedAt: '3d ago',
+    eta: '7 days',
+    lastRun: 'Yesterday',
+    summary: 'Auto-assembled from protocol metadata + study registry extracts. Needs narrative review.',
+  },
+  {
+    id: 'tmpl_m3_2',
+    title: 'eCTD Module 3.2 — Quality Overall Summary',
+    module: '3.2',
+    region: 'EMA',
+    status: 'published',
+    updatedAt: '2w ago',
+    eta: null,
+    lastRun: '2w ago',
+    summary: 'Published template baseline with CMC placeholders and variance tracking.',
+  },
+];
+
+function MissionControlPage() {
+  const [view, setView] = useState('dashboard'); // 'dashboard' | 'editor'
+  const [activeDoc, setActiveDoc] = useState(null);
+
+  const handleOpenEditor = (id) => {
+    // In real app, fetch doc by ID. Here we mock it.
+    setActiveDoc(id === 'new' ? 'New Protocol' : `Protocol ${id}`);
+    setView('editor');
+  };
+
+  const handleBack = () => {
+    setView('dashboard');
+    setActiveDoc(null);
+  };
+
+  // --- EDITOR VIEW ---
+  if (view === 'editor') {
+    return (
+      <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+        {/* APP SHELL HEADER FOR EDITOR */}
+        <div className="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 shrink-0 shadow-sm z-20">
+           <div className="flex items-center gap-4">
+              <button 
+                onClick={handleBack} 
+                className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
+              <div className="h-6 w-px bg-gray-300"></div>
+              <div>
+                 <div className="text-sm font-bold text-gray-900">{activeDoc}</div>
+                 <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live Sync
+                 </div>
+              </div>
+           </div>
+           
+           <div className="flex items-center gap-3">
+              <div className="text-xs text-gray-400 mr-2">Auto-saved 2s ago</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xs border border-blue-200">
+                  ME
+              </div>
+           </div>
+        </div>
+
+        {/* EDITOR CANVAS */}
+        <div className="flex-1 overflow-hidden relative">
+            {/* USE THE TIPTAP VERSION IF AVAILABLE, ELSE LEGACY */}
+            <TipTapEnhancedDocumentEditor
+              document={{
+                title: activeDoc,
+                html: `<p><strong>${activeDoc}</strong></p><p>Start authoring…</p>`,
+              }}
+              onBack={handleBack}
+              backLabel="Back"
+              BackIcon={ChevronLeft}
+            /> 
+        </div>
+      </div>
+    );
+  }
+
+  // --- DASHBOARD VIEW ---
+  return <MissionControl onOpenEditor={handleOpenEditor} />;
+}
+
 function App() {
   // Default tab for the UnifiedTopNavV3 component
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
@@ -187,12 +319,12 @@ function App() {
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/client-portal';
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
     location === '/coauthor' || location.startsWith('/coauthor/') || location === '/canvas';
-  const isDashboardPage = location === '/dashboard';
+  const isDashboardPage = location === '/dashboard' || location === '/';
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
 
@@ -283,9 +415,9 @@ function App() {
                   <main className="min-h-screen bg-gray-100">
                     <Switch>
                       {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
-                      <Route path="/" component={ClientPortalLanding} />
+                      <Route path="/" component={MissionControlPage} />
                       <Route path="/client-portal" component={ClientPortalLanding} />
-                      <Route path="/dashboard" component={ClientPortalLanding} />
+                      <Route path="/dashboard" component={MissionControlPage} />
                       {/* Client Portal becomes a secondary entry point */}
                       <Route path="/client-portal" component={ClientPortalLanding} />
                       {/* Client Portal Sub-Pages */}
@@ -394,7 +526,7 @@ function App() {
                         )}
                       </Route>
                       {/* Route for viewing existing applications */}
-                      <Route path="/dashboard">
+                      <Route path="/dashboard/ind">
                         <INDWizardModule />
                       </Route>
                       {/* Route for starting a new IND application - Legacy route, redirects to client portal */}
@@ -1024,4 +1156,114 @@ function App() {
   );
 }
 
-export default App;
+function SaaSApp() {
+  const [session, setSession] = useState(null);
+  const [activeModule, setActiveModule] = useState('dashboard');
+  const [activeDocId, setActiveDocId] = useState(null);
+  const [focusRequest, setFocusRequest] = useState(null);
+  const [activeDocument, setActiveDocument] = useState(null);
+
+  // 1. BOOTSTRAP SESSION (Simulate Auth Provider)
+  useEffect(() => {
+    const init = async () => {
+       // Log in as Dr. Sarah (Acme Tenant)
+       const s = await db.login('u1');
+       // Make the build usable immediately: seed demo IND workspace + templates (persisted in localStorage)
+       try {
+         await db.seedDemoWorkspace(s.tenant.id);
+       } catch {
+         // ignore
+       }
+       setSession(s);
+    };
+    init();
+  }, []);
+
+  const handleNavigate = (module) => {
+    setActiveModule(module);
+    setActiveDocId(null);
+    setFocusRequest(null);
+  };
+
+  const handleOpenDoc = (id) => {
+    setActiveDocId(id);
+    setActiveModule('co-author');
+    setFocusRequest(null);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!session?.tenant?.id || !activeDocId) {
+        setActiveDocument(null);
+        return;
+      }
+
+      try {
+        const doc = await db.getDocument(activeDocId, session.tenant.id);
+        if (!cancelled) setActiveDocument(doc);
+      } catch {
+        if (!cancelled) setActiveDocument({ id: String(activeDocId), title: `Protocol ${activeDocId}` });
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeDocId, session?.tenant?.id]);
+
+  useEffect(() => {
+    // Listen for "Deep Links" from Toasts
+    const handleNav = (e) => {
+      const detail = e?.detail;
+      if (detail && typeof detail === 'object') {
+        handleOpenDoc(detail.docId);
+        setFocusRequest({
+          anchorId: detail.anchorId ?? null,
+          threadId: detail.threadId ?? null,
+        });
+        return;
+      }
+      // Back-compat: detail is a docId string
+      handleOpenDoc(detail);
+    };
+    window.addEventListener('NAVIGATE_DOC', handleNav);
+    return () => window.removeEventListener('NAVIGATE_DOC', handleNav);
+  }, []);
+
+  if (!session) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={40}/></div>;
+
+  return (
+    <ToastProvider>
+    <SaaSLayout 
+      user={session.user} 
+      tenant={session.tenant} 
+      activeModule={activeModule} 
+      onNavigate={handleNavigate}
+    >
+      {activeModule === 'dashboard' && (
+        <MissionControl onOpenEditor={handleOpenDoc} tenantId={session.tenant.id} />
+      )}
+      
+      {activeModule === 'co-author' &&
+        (activeDocId ? (
+          <EnhancedDocumentEditor
+            docId={activeDocId}
+            document={activeDocument}
+            focusRequest={focusRequest}
+            tenantId={session.tenant.id}
+            onOpenDoc={handleOpenDoc}
+          />
+        ) : (
+          <MissionControl onOpenEditor={handleOpenDoc} tenantId={session.tenant.id} />
+        ))}
+      
+      {activeModule === 'data-lake' && <DataManager tenantId={session?.tenant?.id} />}
+      {activeModule === 'admin' && <div className="p-12 text-center text-gray-400">Admin Console</div>}
+    </SaaSLayout>
+    </ToastProvider>
+  );
+}
+
+export default SaaSApp;

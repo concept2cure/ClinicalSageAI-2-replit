@@ -1,26 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  CircleXIcon,
-  CircleCheckIcon,
-  ArchiveIcon,
-  RotateCcwIcon,
-  RotateCwIcon,
-  CalendarIcon,
-  AlertTriangleIcon,
-  ClockIcon,
-} from 'lucide-react';
+  CircleXIcon, CircleCheckIcon, ArchiveIcon, RotateCcwIcon, RotateCwIcon, CalendarIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const RetentionDashboard = () => {

@@ -6,32 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from '@/components/ui/form';
 import { DialogFooter } from '@/components/ui/dialog';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, HelpCircle, Info, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, HelpCircle, Info, CheckCircle, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import deviceProfileSchema from './schemas/deviceProfile.json';
 import { useTenant } from '@/contexts/TenantContext.tsx';

@@ -1,105 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import {
-  RefreshCw,
-  FileText,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  Download,
-  FileQuestion,
-  BookOpen,
-  Clock,
-  Calendar,
-  User,
-  Users,
-  Activity,
-  BellRing,
-  PlusCircle,
-  XCircle,
-  CheckSquare,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  MessageSquare,
-  Link,
-  FileCheck,
-  FileCog,
-  ArrowRight,
-  ArrowLeft,
-  ArrowUpDown,
-  Calendar as CalendarIcon,
-  CalendarDays,
-  CalendarClock,
-  ClipboardCheck,
-  ClipboardList,
-  Paperclip,
-  Megaphone,
-  ListChecks,
-  Kanban,
-  ListTodo,
-  Timer,
-  BarChart,
-  PieChart,
-  Lightbulb,
-  Brain,
-  Bot,
-  Tag,
-  Tags,
-  Filter,
-  Sparkles,
-  Zap,
-  Play,
-} from 'lucide-react';
+  RefreshCw, FileText, CheckCircle, AlertTriangle, Search, Download, FileQuestion, BookOpen, Clock, Calendar, User, Users, Activity, BellRing, PlusCircle, XCircle, CheckSquare, MoreHorizontal, Eye, Pencil, Trash2, MessageSquare, Link, FileCheck, FileCog, ArrowRight, ArrowLeft, ArrowUpDown, Calendar as CalendarIcon, CalendarDays, CalendarClock, ClipboardCheck, ClipboardList, Paperclip, Megaphone, ListChecks, Kanban, ListTodo, Timer, BarChart, PieChart, Lightbulb, Brain, Bot, Tag, Tags, Filter, Sparkles, Zap, Play } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

@@ -8,15 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Save, Download, Send, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Save, Download, Send, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 
 export default function FunctionalINDWizard() {
   const [currentStep, setCurrentStep] = useState(1);

@@ -1,18 +1,5 @@
 import React from 'react';
-import {
-  Beaker,
-  Database,
-  LineChart,
-  PieChart,
-  Search,
-  FileText,
-  Brain,
-  Award,
-  Microscope,
-  Users,
-  Clipboard,
-  Zap,
-} from 'lucide-react';
+import { Beaker, Database, LineChart, PieChart, Search, FileText, Brain, Award, Microscope, Users, Clipboard, Zap } from 'lucide-react'
 
 import { PageContainer, HeaderSection, ContentSection } from '@/components/layout';
 import Navbar from '@/components/navbar';

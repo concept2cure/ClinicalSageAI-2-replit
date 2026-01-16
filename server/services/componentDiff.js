@@ -3,7 +3,7 @@ import { db } from '../db/index.js';
 import { 
   components, 
   componentVersions 
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, sql, desc } from 'drizzle-orm';
 
 /**

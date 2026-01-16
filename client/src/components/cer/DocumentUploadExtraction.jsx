@@ -5,13 +5,7 @@ import { useToast } from '@/components/ui/toaster';
 
 // UI Components
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -24,23 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 // Icons
 import {
-  FileUp,
-  FileText,
-  FileSearch,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  Upload,
-  FileOutput,
-  Database,
-  Zap,
-  ListFilter,
-  FileJson,
-  Bot,
-  Table,
-  Sparkles,
-  Braces,
-} from 'lucide-react';
+  FileUp, FileText, FileSearch, AlertCircle, CheckCircle, Loader2, Upload, FileOutput, Database, Zap, ListFilter, FileJson, Bot, Table, Sparkles, Braces } from 'lucide-react'
 
 /**
  * Document Upload + Extraction Component

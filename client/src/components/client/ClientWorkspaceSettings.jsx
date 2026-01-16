@@ -10,25 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import EnhancedSelect from '@/components/ui/select-wrapper';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
-  Settings,
-  AlertTriangle,
-  Building2,
-  Users,
-  Database,
-  Folder,
-  Clock,
-  FileBox,
-} from 'lucide-react';
+  Settings, AlertTriangle, Building2, Users, Database, Folder, Clock, FileBox } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';

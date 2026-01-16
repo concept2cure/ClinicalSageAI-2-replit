@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProtocolValidator({ sessionId, onValidationComplete = () => {} }) {

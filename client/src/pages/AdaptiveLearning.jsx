@@ -1,27 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BookOpen,
-  GraduationCap,
-  BarChart3,
-  Search,
-  Filter,
-  Lightbulb,
-  Smile,
-  Award,
-  FileText,
-  Video,
-  Clock,
-  CalendarDays,
-  ChevronRight,
-  ChevronDown,
-  ArrowRight,
-  Settings,
-  RefreshCw,
-  Sparkles,
-  Flame,
-  ThumbsUp,
-  Star,
-} from 'lucide-react';
+import { BookOpen, GraduationCap, BarChart3, Search, Filter, Lightbulb, Smile, Award, FileText, Video, Clock, CalendarDays, ChevronRight, ChevronDown, ArrowRight, Settings, RefreshCw, Sparkles, Flame, ThumbsUp, Star } from 'lucide-react'
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useLearningProfile } from '@/hooks/useLearningProfile';

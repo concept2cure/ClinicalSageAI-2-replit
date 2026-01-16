@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FDA510kService from '../../services/FDA510kService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, X, Check, Search, FileText, Download, Copy, Plus } from 'lucide-react';
+import { Loader2, X, Check, Search, FileText, Download, Copy, Plus } from 'lucide-react'
 import {
   Table,
   TableBody,

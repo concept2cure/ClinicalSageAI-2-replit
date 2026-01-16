@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '../ui/badge';
-import { Building2 } from 'lucide-react';
+import { Building2 } from 'lucide-react'
 import { useTenant } from '../../contexts/TenantContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 

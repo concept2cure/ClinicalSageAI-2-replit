@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { LinkIcon } from 'lucide-react'
+
 
 // Simple clock icon
 const ClockIcon = () => (

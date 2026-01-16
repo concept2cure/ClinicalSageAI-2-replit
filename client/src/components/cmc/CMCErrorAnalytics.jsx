@@ -2,17 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import { AlertTriangle, FileWarning, RefreshCw } from 'lucide-react';
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, } from 'recharts';
+import { AlertTriangle, FileWarning, RefreshCw } from 'lucide-react'
 
 const CMCErrorAnalytics = () => {
   const [errorData, setErrorData] = useState({

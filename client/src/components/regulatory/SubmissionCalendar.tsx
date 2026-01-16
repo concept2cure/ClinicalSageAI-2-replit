@@ -5,21 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Calendar as CalendarIcon, Clock, AlertCircle, Filter, Loader2 } from 'lucide-react';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Calendar as CalendarIcon, Clock, AlertCircle, Filter, Loader2 } from 'lucide-react'
 import { format, addDays, differenceInDays, isSameDay, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 
 interface Submission {

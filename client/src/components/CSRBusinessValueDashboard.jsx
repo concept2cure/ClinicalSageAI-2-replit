@@ -6,19 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  DollarSign,
-  TrendingUp,
-  Clock,
-  Shield,
-  Target,
-  Brain,
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
-  Users,
-  Calendar,
-  Award,
-} from 'lucide-react';
+  DollarSign, TrendingUp, Clock, Shield, Target, Brain, CheckCircle, AlertTriangle, BarChart3, Users, Calendar, Award } from 'lucide-react'
 
 const CSRBusinessValueDashboard = () => {
   const [factualInsights, setFactualInsights] = useState(null);

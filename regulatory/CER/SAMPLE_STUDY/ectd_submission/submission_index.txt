@@ -1,0 +1,11 @@
+Submission assembled: 2025-12-30T03:10:18.807544Z
+m1: Administrative information and prescribing information
+m2: Quality (not used in this demo)
+m3: Nonclinical (not used in this demo)
+m4: Clinical study reports and evidence
+appendix: Appendices and supporting evidence
+
+Contents:
+regulatory/CER/SAMPLE_STUDY/ectd_submission/submission_index.txt
+m4/CSR_DRAFT.pdf
+appendix/evidence_package.zip

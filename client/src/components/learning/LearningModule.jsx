@@ -1,25 +1,5 @@
 import React, { useState } from 'react';
-import {
-  CheckCircle2,
-  BookOpen,
-  Video,
-  FileText,
-  Download,
-  Award,
-  Clock,
-  Play,
-  Pause,
-  ChevronRight,
-  BarChart2,
-  Bookmark,
-  Share2,
-  ThumbsUp,
-  ThumbsDown,
-  PenTool,
-  FolderOpen,
-  RefreshCw,
-  XCircle,
-} from 'lucide-react';
+import { CheckCircle2, BookOpen, Video, FileText, Download, Award, Clock, Play, Pause, ChevronRight, BarChart2, Bookmark, Share2, ThumbsUp, ThumbsDown, PenTool, FolderOpen, RefreshCw, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {

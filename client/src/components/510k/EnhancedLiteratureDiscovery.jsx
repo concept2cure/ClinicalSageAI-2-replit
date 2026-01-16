@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toaster';
 import { useTenant } from '../../contexts/TenantContext.tsx';
-import { Newspaper, BookCopy, FileText } from 'lucide-react';
+import { Newspaper, BookCopy, FileText } from 'lucide-react'
 
 import EnhancedLiteratureSearch from './EnhancedLiteratureSearch';
 import CitationManager from './CitationManager';

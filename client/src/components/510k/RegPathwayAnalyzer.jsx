@@ -1,43 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  BarChart4,
-  Check,
-  AlertTriangle,
-  X,
-  Flag,
-  Lightbulb,
-  Route,
-  RefreshCw,
-  Download,
-  ClipboardCheck,
-  ArrowRight,
-  Clock,
-} from 'lucide-react';
+  BarChart4, Check, AlertTriangle, X, Flag, Lightbulb, Route, RefreshCw, Download, ClipboardCheck, ArrowRight, Clock } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import FDA510kService from '../../services/FDA510kService';
 import { isFeatureEnabled } from '@/flags/featureFlags';

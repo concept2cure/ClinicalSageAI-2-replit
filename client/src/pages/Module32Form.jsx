@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import withAuthGuard from '../utils/withAuthGuard';
 import axiosWithToken from '../utils/axiosWithToken';
 import { Link } from 'wouter';
-import { ExternalLink, History, FileText, Download } from 'lucide-react';
+import { ExternalLink, History, FileText, Download, Layout } from 'lucide-react'
 import toast from '../lightweight-wrappers.js';
 import Layout from '../components/Layout';
 import Module32Tour from '../components/Module32Tour';

@@ -4,22 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { 
-  Microscope, 
-  BarChart, 
-  PieChart, 
-  FileText, 
-  TrendingUp, 
-  ChevronDown, 
-  ChevronUp, 
-  Download, 
-  Calendar, 
-  Users, 
-  Beaker,
-  ExternalLink,
-  Search,
-  Lightbulb,
-  AlertTriangle
-} from 'lucide-react';
+  Microscope, BarChart, PieChart, FileText, TrendingUp, ChevronDown, ChevronUp, Download, Calendar, Users, Beaker, ExternalLink, Search, Lightbulb, AlertTriangle } from 'lucide-react'
 
 // Unified Strategic Intelligence Engine
 import StrategicRecommendations from '@/components/competitive/StrategicRecommendations';
@@ -280,42 +265,26 @@ export default function CompetitiveIntelligence() {
   });
 
   const handleDownloadReport = (reportId: string) => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Report Download Started",
       description: "Your report is being prepared for download.",
-    })
-  console.log('Toast would show:', {
-      title: "Report Download Started",
-      description: "Your report is being prepared for download.",
-    });
+  });
   };
 
   const handleRequestAnalysis = () => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Analysis Request Submitted",
       description: "Your custom competitive analysis request has been submitted.",
-    })
-  console.log('Toast would show:', {
-      title: "Analysis Request Submitted",
-      description: "Your custom competitive analysis request has been submitted.",
-    });
+  });
   };
   
   const handleAnalyzeProtocol = async () => {
     if (!protocolSummary) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please provide a protocol summary to analyze.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please provide a protocol summary to analyze.",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -331,46 +300,29 @@ export default function CompetitiveIntelligence() {
       
       if (data.success && data.analysisResult) {
         setGeneratedReport(data.analysisResult.analysis.fullText);
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Analysis Complete",
           description: "Strategic analysis has been generated successfully.",
-        })
-  console.log('Toast would show:', {
-          title: "Analysis Complete",
-          description: "Strategic analysis has been generated successfully.",
-        });
+  });
       } else {
         throw new Error(data.message || "Failed to generate strategic analysis");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate analysis",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate analysis",
-        variant: "destructive"
-      });
+  });
     }
   };
   
   const handleExportPdf = async () => {
     if (!generatedReport) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No Report Available",
         description: "Please generate a strategic analysis first.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No Report Available",
-        description: "Please generate a strategic analysis first.",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -390,46 +342,29 @@ export default function CompetitiveIntelligence() {
         // Open download in new tab
         window.open(data.download_url, '_blank');
         
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "PDF Export Complete",
           description: "Your strategic report PDF is ready for download.",
-        })
-  console.log('Toast would show:', {
-          title: "PDF Export Complete",
-          description: "Your strategic report PDF is ready for download.",
-        });
+  });
       } else {
         throw new Error(data.message || "Failed to generate PDF");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Export Error",
         description: error instanceof Error ? error.message : "Failed to export PDF",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Export Error",
-        description: error instanceof Error ? error.message : "Failed to export PDF",
-        variant: "destructive"
-      });
+  });
     }
   };
   
   const handleSaveToDossier = async () => {
     if (!generatedReport) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No Report Available",
         description: "Please generate a strategic analysis first.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No Report Available",
-        description: "Please generate a strategic analysis first.",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -442,30 +377,19 @@ export default function CompetitiveIntelligence() {
       const data = await response.json();
       
       if (data.success) {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Saved to Dossier",
           description: "Strategic analysis has been saved to your study dossier.",
-        })
-  console.log('Toast would show:', {
-          title: "Saved to Dossier",
-          description: "Strategic analysis has been saved to your study dossier.",
-        });
+  });
       } else {
         throw new Error(data.message || "Failed to save to dossier");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Save Error",
         description: error instanceof Error ? error.message : "Failed to save to dossier",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Save Error",
-        description: error instanceof Error ? error.message : "Failed to save to dossier",
-        variant: "destructive"
-      });
+  });
     }
   };
 

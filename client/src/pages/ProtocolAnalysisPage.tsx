@@ -3,20 +3,13 @@ import { useParams } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+  Card, CardContent, CardDescription, CardHeader, CardTitle 
 } from '@/components/ui/card';
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+  Tabs, TabsContent, TabsList, TabsTrigger 
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ProtocolAnalysis {
@@ -71,17 +64,11 @@ export default function ProtocolAnalysisPage() {
       } catch (err) {
         console.error('Error fetching protocol analysis:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: 'Error',
           description: 'Failed to load protocol analysis. Please try again.',
           variant: 'destructive',
-        })
-  console.log('Toast would show:', {
-          title: 'Error',
-          description: 'Failed to load protocol analysis. Please try again.',
-          variant: 'destructive',
-        });
+  });
       } finally {
         setLoading(false);
       }

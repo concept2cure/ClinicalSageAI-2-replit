@@ -2,76 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Loader2,
-  Plus,
-  Trash2,
-  Edit2,
-  Save,
-  FileText,
-  Settings,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Info,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  BarChart,
-  FileCheck,
-  Fingerprint,
-  Key,
-} from 'lucide-react';
+  Loader2, Plus, Trash2, Edit2, Save, FileText, Settings, X, CheckCircle2, AlertCircle, Copy, Info, Shield, ShieldCheck, ShieldAlert, BarChart, FileCheck, Fingerprint, Key } from 'lucide-react'
 
 // Define feature categories based on MEDDEV 2.7/1 Rev 4 requirements and EU MDR
 const featureCategories = [

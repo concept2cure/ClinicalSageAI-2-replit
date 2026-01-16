@@ -6,14 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { 
-  FileText, 
-  Beaker, 
-  Microscope, 
-  TrendingUp, 
-  ChevronDown, 
-  ChevronUp,
-  Download 
-} from 'lucide-react';
+  FileText, Beaker, Microscope, TrendingUp, ChevronDown, ChevronUp, Download, GraduationCap } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -80,17 +73,11 @@ const StrategicRecommendations: React.FC<StrategicRecommendationsProps> = ({
 
   const generateStrategicAnalysis = async () => {
     if (!protocolSummary) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please provide a protocol summary.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please provide a protocol summary.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -112,17 +99,11 @@ const StrategicRecommendations: React.FC<StrategicRecommendationsProps> = ({
         throw new Error(data.message || "Failed to generate strategic analysis");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate strategic analysis",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate strategic analysis",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsLoading(false);
     }
@@ -156,30 +137,19 @@ const StrategicRecommendations: React.FC<StrategicRecommendationsProps> = ({
         // Open download in new tab
         window.open(data.download_url, '_blank');
         
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Export Successful",
           description: "Your strategic report PDF has been generated.",
-        })
-  console.log('Toast would show:', {
-          title: "Export Successful",
-          description: "Your strategic report PDF has been generated.",
-        });
+  });
       } else {
         throw new Error(data.message || "Failed to export PDF");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Export Failed",
         description: error instanceof Error ? error.message : "Failed to export report to PDF",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Export Failed",
-        description: error instanceof Error ? error.message : "Failed to export report to PDF",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsLoading(false);
     }

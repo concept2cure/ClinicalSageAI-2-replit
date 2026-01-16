@@ -472,4 +472,54 @@ Return your analysis as JSON in this exact format:
   }
 });
 
+/**
+ * POST /api/ai/chat
+ * General AI Chat Assistant for Regulatory Context
+ *
+ * Body: { messages: Array<{role: string, content: string}>, context?: string }
+ * Response: { success: boolean, message: string }
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { messages, context } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Messages array is required',
+      });
+    }
+
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const systemPrompt = `
+You are an expert Regulatory Affairs Co-Pilot for the pharmaceutical industry.
+You assist users in writing, reviewing, and understanding complex regulatory documents (eCTD, IND, NDA, CSR).
+Your tone should be professional, precise, and helpful.
+${context ? `\nCurrent Document Context:\n${context}` : ''}
+`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+      temperature: 0.7,
+    });
+
+    res.json({
+      success: true,
+      message: response.choices[0].message.content,
+    });
+  } catch (error) {
+    console.error('Error in AI chat:', error);
+    res.status(500).json({
+      success: false,
+      error: 'AI Chat failed: ' + error.message,
+    });
+  }
+});
+
 export default router;

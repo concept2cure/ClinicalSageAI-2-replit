@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Shield, CheckCircle2, XCircle, AlertTriangle, 
-  FileCheck, Database, Upload, Download, Play,
-  RefreshCw, ChevronRight, Activity, BarChart3
-} from 'lucide-react';
+  Shield, CheckCircle2, XCircle, AlertTriangle, FileCheck, Database, Upload, Download, Play, RefreshCw, ChevronRight, Activity, BarChart3, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

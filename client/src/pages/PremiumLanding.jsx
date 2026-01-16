@@ -1,20 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import {
-  Beaker,
-  FileText,
-  Microscope,
-  BookOpen,
-  Shield,
-  Database,
-  BarChart3,
-  ArrowRight,
-  Award,
-  Line,
-  Lightbulb,
-  ClipboardCheck,
-  FlaskConical,
-} from 'lucide-react';
+  Beaker, FileText, Microscope, BookOpen, Shield, Database, BarChart3, ArrowRight, Award, Line, Lightbulb, ClipboardCheck, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 // Inline layout components since we're having import issues

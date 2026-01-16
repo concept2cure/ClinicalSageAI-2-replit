@@ -1,48 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Library,
-  ClipboardCheck,
-  FileSearch,
-  ShieldCheck,
-  FileText,
-  FolderCheck,
-  FileDigit,
-  Users,
-  Clock,
-  Lock,
-  Certificate,
-  FileSpreadsheet,
-  Upload,
-  Download,
-  Eye,
-  Search,
-  Filter,
-  BarChart4,
-  FileSignature,
-  History,
-  ClipboardList,
-  LifeBuoy,
-} from 'lucide-react';
+  Library, ClipboardCheck, FileSearch, ShieldCheck, FileText, FolderCheck, FileDigit, Users, Clock, Lock, Certificate, FileSpreadsheet, Upload, Download, Eye, Search, Filter, BarChart4, FileSignature, History, ClipboardList, LifeBuoy, Workflow } from 'lucide-react'
 
 /**
  * Enterprise DocuShare Vault Component

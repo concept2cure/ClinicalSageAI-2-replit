@@ -9,20 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { 
-  FileText, 
-  Download, 
-  RefreshCw, 
-  Loader2, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock,
-  Search,
-  Filter,
-  Zap,
-  FileCheck,
-  Brain,
-  Package
-} from 'lucide-react';
+  FileText, Download, RefreshCw, Loader2, CheckCircle, AlertCircle, Clock, Search, Filter, Zap, FileCheck, Brain, Package } from 'lucide-react'
 
 interface SmartFormDefinition {
   formId: string;

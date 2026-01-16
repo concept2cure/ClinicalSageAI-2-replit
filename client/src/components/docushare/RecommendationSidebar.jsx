@@ -8,18 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Star,
-  FileText,
-  Users,
-  TrendingUp,
-  Clock,
-  AlertCircle,
-  Sparkles,
-  RefreshCw,
-  BookOpen,
-  Eye,
-  User,
-} from 'lucide-react';
+  Star, FileText, Users, TrendingUp, Clock, AlertCircle, Sparkles, RefreshCw, BookOpen, Eye, User } from 'lucide-react'
 
 import {
   getPersonalizedRecommendations,

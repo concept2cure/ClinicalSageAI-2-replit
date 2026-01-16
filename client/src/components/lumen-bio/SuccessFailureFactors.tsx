@@ -1,35 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  FileText,
-  Users,
-  Clipboard,
-  Beaker,
-  ArrowRight,
-  BarChart,
-  Briefcase,
-  Scale,
-  Database,
-  BookOpen,
-  Droplet,
-  Target,
-} from 'lucide-react';
+  CheckCircle, XCircle, AlertTriangle, Clock, FileText, Users, Clipboard, Beaker, ArrowRight, BarChart, Briefcase, Scale, Database, BookOpen, Droplet, Target } from 'lucide-react'
 // Custom circular progress component instead of using react-circular-progressbar
 
 // Data model for success/failure factors

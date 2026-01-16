@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card';
 
 const CSRAnalyticsDashboard = lazy(() => import('@/components/CSRAnalyticsDashboard'));

@@ -6,46 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  ScatterChart,
-  Scatter,
-  ReferenceLine,
-  BarChart,
-  Bar,
-} from 'recharts';
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ScatterChart, Scatter, ReferenceLine, BarChart, Bar, } from 'recharts';
 import {
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Settings,
-  RefreshCw,
-  Download,
-  Bell,
-  Eye,
-  Activity,
-  Target,
-  BarChart3,
-  AlertCircle,
-} from 'lucide-react';
+  TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Settings, RefreshCw, Download, Bell, Eye, Activity, Target, BarChart3, AlertCircle } from 'lucide-react'
 
 const SystemSuitabilityTrending = ({ methodId, onClose }) => {
   const [trendingData, setTrendingData] = useState(null);

@@ -1,7 +1,7 @@
 // client/src/components/KnowledgeBasePanel.jsx
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Brain, Database, Lightbulb, TrendingUp } from 'lucide-react';
+import { FileText, Brain, Database, Lightbulb, TrendingUp } from 'lucide-react'
 import { Progress } from '@/components/ui/progress';
 
 export default function KnowledgeBasePanel() {

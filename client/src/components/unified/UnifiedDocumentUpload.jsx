@@ -1,15 +1,7 @@
 import React, { useState, useCallback } from 'react';
 // import { useDropzone } from 'react-dropzone';
 import {
-  Upload,
-  File,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  History,
-  Shield,
-  Tag,
-} from 'lucide-react';
+  Upload, File, CheckCircle, AlertCircle, Loader2, History, Shield, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';

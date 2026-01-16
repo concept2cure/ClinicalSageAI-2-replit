@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { useHealthCheck } from '@/hooks/useHealthCheck';
-import { AlertCircle, Database, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Database, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';

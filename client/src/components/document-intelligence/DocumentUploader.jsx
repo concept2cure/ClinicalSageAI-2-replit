@@ -1,49 +1,18 @@
 import React, { useState, useRef, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import UnifiedDocumentUpload from '../unified/UnifiedDocumentUpload';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  Upload,
-  FileText,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  FileUp,
-  RotateCw,
-  Trash2,
-  Layers,
-  Zap,
-  Settings,
-  FileType,
-  Cpu,
-  BarChart,
-  Eye,
-} from 'lucide-react';
+  Upload, FileText, AlertTriangle, CheckCircle, Info, FileUp, RotateCw, Trash2, Layers, Zap, Settings, FileType, Cpu, BarChart, Eye } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
 

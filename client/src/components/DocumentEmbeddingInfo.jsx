@@ -1,17 +1,6 @@
 // DocumentEmbeddingInfo.jsx - Component for displaying detailed document embedding information
 import React, { useState } from 'react';
-import {
-  ChevronDown,
-  ChevronUp,
-  File,
-  FileText,
-  FileCode,
-  Database,
-  Layers,
-  Clock,
-  RotateCw,
-  AlertTriangle,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, File, FileText, FileCode, Database, Layers, Clock, RotateCw, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

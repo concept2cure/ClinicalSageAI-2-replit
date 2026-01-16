@@ -5,19 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { 
-  Globe, 
-  Activity, 
-  TrendingUp, 
-  AlertTriangle, 
-  Settings,
-  Play,
-  Pause,
-  RotateCcw,
-  Maximize,
-  Eye,
-  Download,
-  RefreshCw
-} from 'lucide-react';
+  Globe, Activity, TrendingUp, AlertTriangle, Settings, Play, Pause, RotateCcw, Maximize, Eye, Download, RefreshCw } from 'lucide-react'
 
 const PROCESS_STEPS = [
   {

@@ -3,25 +3,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import CSRLibraryMetrics from './CSRLibraryMetrics';
 import {
-  FileText,
-  Database,
-  Beaker,
-  FileSymlink,
-  Folder,
-  BarChart2,
-  BarChart,
-  FileArchive,
-  Shield,
-  LogIn,
-  User,
-  ChevronRight,
-  ExternalLink,
-  Globe,
-  Library,
-  Bot,
-  Sparkles,
-  BookOpen,
-} from 'lucide-react';
+  FileText, Database, Beaker, FileSymlink, Folder, BarChart2, BarChart, FileArchive, Shield, LogIn, User, ChevronRight, ExternalLink, Globe, Library, Bot, Sparkles, BookOpen } from 'lucide-react'
 
 // Clean, simplified module tile component
 const ModuleTile = ({ icon, title, description, to, highlight }) => (

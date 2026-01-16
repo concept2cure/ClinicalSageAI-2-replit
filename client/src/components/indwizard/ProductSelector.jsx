@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, ChevronRight } from 'lucide-react';
+import { Search, Plus, ChevronRight } from 'lucide-react'
 import indWizardService from '@/services/indWizardService';
 
 export default function ProductSelector({ onSelect }) {

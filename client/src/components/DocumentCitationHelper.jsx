@@ -7,40 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from '@/components/ui/command';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Popover, PopoverContent, PopoverTrigger, } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  Search,
-  Copy,
-  Link2,
-  ChevronRight,
-  Database,
-  FileSearch,
-  Check,
-  Plus,
-  X,
-} from 'lucide-react';
+  FileText, Search, Copy, Link2, ChevronRight, Database, FileSearch, Check, Plus, X } from 'lucide-react'
 
 /**
  * Citation Helper Component

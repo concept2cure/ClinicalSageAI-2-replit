@@ -1,19 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import {
-  ArrowRight,
-  FileCheck,
-  LayoutDashboard,
-  FileText,
-  Database,
-  Sparkles,
-  Clock,
-  BarChart4,
-  CheckCircle,
-  Building2,
-  CalendarRange,
-  ArrowUpRight,
-} from 'lucide-react';
+  ArrowRight, FileCheck, LayoutDashboard, FileText, Database, Sparkles, Clock, BarChart4, CheckCircle, Building2, CalendarRange, ArrowUpRight } from 'lucide-react'
 
 // Case Studies page with authentic examples without naming specific clients
 export default function CaseStudies() {

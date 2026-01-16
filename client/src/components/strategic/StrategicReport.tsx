@@ -3,14 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Download,
-  Info,
-  AlertCircle,
-  CheckCircle,
-  TrendingUp,
-  FileText,
-  Target,
-} from 'lucide-react';
+  Download, Info, AlertCircle, CheckCircle, TrendingUp, FileText, Target } from 'lucide-react'
 
 export interface ReportSection {
   title: string;

@@ -9,17 +9,7 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  FileText,
-  BookOpen,
-  BarChart2,
-  Database,
-  Settings,
-  AlertTriangle,
-  BookMarked,
-  ClipboardCheck,
-  Layout,
-  Beaker,
-} from 'lucide-react';
+  FileText, BookOpen, BarChart2, Database, Settings, AlertTriangle, BookMarked, ClipboardCheck, Layout, Beaker } from 'lucide-react'
 
 const modules = [
   { id: 'dashboard', name: 'Dashboard', path: '/dashboard', color: 'blue', icon: Layout },

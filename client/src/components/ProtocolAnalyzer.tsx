@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, BarChart, BookOpen, CheckCircle, Download, ExternalLink, FileText, GanttChart, RotateCcw, Search, Upload } from 'lucide-react';
+import { AlertCircle, BarChart, BookOpen, CheckCircle, Download, ExternalLink, FileText, GanttChart, RotateCcw, Search, Upload, File } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/lib/queryClient";
@@ -114,29 +114,18 @@ export default function ProtocolAnalyzer() {
     onSuccess: (data) => {
       setCurrentAnalysisId(data.id);
       setActiveTab('overview');
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Protocol uploaded successfully',
         description: 'Your protocol is now being analyzed.',
-      })
-  console.log('Toast would show:', {
-        title: 'Protocol uploaded successfully',
-        description: 'Your protocol is now being analyzed.',
-      });
+  });
       queryClient.invalidateQueries({ queryKey: ['/api/protocol-analyses'] });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Upload failed',
         description: error.message,
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Upload failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+  });
     },
   });
 
@@ -157,28 +146,17 @@ export default function ProtocolAnalyzer() {
       document.body.removeChild(a);
     },
     onSuccess: () => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Report exported',
         description: 'Your protocol assessment report has been downloaded.',
-      })
-  console.log('Toast would show:', {
-        title: 'Report exported',
-        description: 'Your protocol assessment report has been downloaded.',
-      });
+  });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Export failed',
         description: error.message,
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Export failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+  });
     },
   });
 
@@ -190,17 +168,11 @@ export default function ProtocolAnalyzer() {
 
   const handleUpload = () => {
     if (!file) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'No file selected',
         description: 'Please select a protocol file to upload.',
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'No file selected',
-        description: 'Please select a protocol file to upload.',
-        variant: 'destructive',
-      });
+  });
       return;
     }
 

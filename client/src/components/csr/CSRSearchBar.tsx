@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Search, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, ArrowRight, Sparkles } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import debounce from 'lodash/debounce';
 import { Input } from '@/components/ui/input';

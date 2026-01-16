@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, ExternalLink, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Download, ExternalLink, Clock, CheckCircle } from 'lucide-react'
 
 export default function DocumentExportsPanel() {
   const [dirty, setDirty] = React.useState([]);

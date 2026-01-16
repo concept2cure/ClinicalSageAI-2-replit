@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { Info, Settings, HelpCircle, EyeOff, RefreshCw } from 'lucide-react';
+import { Info, Settings, HelpCircle, EyeOff, RefreshCw } from 'lucide-react'
 import {
   Dialog,
   DialogContent,

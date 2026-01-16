@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Bell, User, Search, Settings, Database, Bot } from 'lucide-react';
+import { Menu, Bell, User, Search, Settings, Database, Bot } from 'lucide-react'
 import { useResearchCompanion } from '@/hooks/use-research-companion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

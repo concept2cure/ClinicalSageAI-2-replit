@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, Home, BarChart2, FileText, User, Settings, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Home, BarChart2, FileText, User, Settings, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 /**

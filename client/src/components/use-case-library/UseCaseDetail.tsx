@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Download, Play, CheckCircle, PieChart, FileText, Clock } from 'lucide-react';
+import { Download, Play, CheckCircle, PieChart, FileText, Clock } from 'lucide-react'
 import { UseCase } from './UseCaseLibrary';
 
 interface UseCaseDetailProps {

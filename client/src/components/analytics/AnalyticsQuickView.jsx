@@ -8,17 +8,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight, BarChart3, ChevronUp, Clock, FileCheck, TrendingUp } from 'lucide-react';
+import { ArrowRight, BarChart3, ChevronUp, Clock, FileCheck, TrendingUp } from 'lucide-react'
 
 /**
  * Analytics Quick View Component

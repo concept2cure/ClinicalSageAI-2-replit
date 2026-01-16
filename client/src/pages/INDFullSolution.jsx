@@ -1,31 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import {
-  FileText,
-  ChevronRight,
-  Package,
-  Check,
-  BookOpen,
-  FilePlus,
-  FileSymlink,
-  AlertCircle,
-  Zap,
-  Workflow,
-  Clock,
-  BarChart,
-  Activity,
-  HeartPulse,
-  ArrowRight,
-  Share2,
-  Globe,
-  CheckSquare,
-  FileCheck,
-  Rocket,
-  Building,
-  Briefcase,
-  Users,
-  Loader2,
-} from 'lucide-react';
+  FileText, ChevronRight, Package, Check, BookOpen, FilePlus, FileSymlink, AlertCircle, Zap, Workflow, Clock, BarChart, Activity, HeartPulse, ArrowRight, Share2, Globe, CheckSquare, FileCheck, Rocket, Building, Briefcase, Users, Loader2 } from 'lucide-react'
 import { useToast } from '../hooks/use-toast';
 import { apiRequest } from '../lib/queryClient';
 import ExampleReportPackages from '../components/ExampleReportPackages';

@@ -5,16 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import {
-  FileText,
-  AlertTriangle,
-  ArrowRight,
-  Package,
-  CheckCircle,
-  XCircle,
-  Clock,
-  ChevronRight,
-  Globe,
-} from 'lucide-react';
+  FileText, AlertTriangle, ArrowRight, Package, CheckCircle, XCircle, Clock, ChevronRight, Globe } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,

@@ -1,25 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  LayoutDashboard,
-  FileText,
-  Upload,
-  BarChart2,
-  Settings,
-  HelpCircle,
-  Lightbulb,
-  BookOpen,
-  XCircle,
-  Menu,
-  ClipboardList,
-  Globe,
-  Database,
-  FileSymlink,
-  Microscope,
-  Building2,
-  FileCheck,
-  Briefcase,
-} from 'lucide-react';
+  LayoutDashboard, FileText, Upload, BarChart2, Settings, HelpCircle, Lightbulb, BookOpen, XCircle, Menu, ClipboardList, Globe, Database, FileSymlink, Microscope, Building2, FileCheck, Briefcase } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LineChart, BarChart2, PieChart, Settings, ExternalLink } from 'lucide-react';
+import { LineChart, BarChart2, PieChart, Settings, ExternalLink } from 'lucide-react'
 import {
   Card,
   CardContent,

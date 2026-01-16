@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { SwitchCamera } from 'lucide-react';
+import { SwitchCamera } from 'lucide-react'
 import { DocumentContextProvider } from '@/contexts/DocumentContext';
 import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
 

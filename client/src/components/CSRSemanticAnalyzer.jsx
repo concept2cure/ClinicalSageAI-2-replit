@@ -7,20 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Brain,
-  FileSearch,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Lightbulb,
-  Target,
-  BarChart3,
-  Network,
-  Zap,
-  FileText,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+  Brain, FileSearch, TrendingUp, AlertCircle, CheckCircle, Lightbulb, Target, BarChart3, Network, Zap, FileText, ChevronRight, Loader2 } from 'lucide-react'
 
 const CSRSemanticAnalyzer = () => {
   const [activeAnalysis, setActiveAnalysis] = useState('similarity');

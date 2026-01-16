@@ -1,22 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import {
-  ArrowLeft,
-  Building2,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
-  CreditCard,
-  Globe,
-  Mail,
-  Phone,
-  Plus,
-  Sparkles,
-  Trash2,
-  User,
-  Users,
-} from 'lucide-react';
+  ArrowLeft, Building2, Check, CheckCircle, ChevronDown, ChevronRight, CreditCard, Globe, Mail, Phone, Plus, Sparkles, Trash2, User, Users, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

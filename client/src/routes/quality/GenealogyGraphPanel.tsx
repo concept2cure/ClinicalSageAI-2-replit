@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GitBranch, Package, Leaf, Truck, Download } from 'lucide-react';
+import { GitBranch, Package, Leaf, Truck, Download } from 'lucide-react'
 
 interface GenealogyGraphPanelProps {
   batchId: string;

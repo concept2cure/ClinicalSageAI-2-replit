@@ -8,52 +8,13 @@ import SuccessFailureFactors from '@/components/lumen-bio/SuccessFailureFactors'
 import CsrIntelligenceInsights from '@/components/lumen-bio/CsrIntelligenceInsights';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useQuery } from '@tanstack/react-query';
 import {
-  FileText,
-  Microscope,
-  BarChart,
-  PieChart,
-  ChartBar,
-  BookOpen,
-  Download,
-  Share,
-  AlertCircle,
-  Beaker,
-  Target,
-  Weight,
-  ChevronRight,
-  ArrowUpRight,
-  Clock,
-  Users,
-  TrendingUp,
-  Layers,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  FileCheck,
-  ExternalLink,
-  LineChart,
-  BellDot,
-  Sparkles,
-  Award,
-  Activity,
-  Database,
-  Brain,
-  ArrowDownRight,
-  Lightbulb,
-  Dna,
-} from 'lucide-react';
+  FileText, Microscope, BarChart, PieChart, ChartBar, BookOpen, Download, Share, AlertCircle, Beaker, Target, Weight, ChevronRight, ArrowUpRight, Clock, Users, TrendingUp, Layers, Loader2, CheckCircle, XCircle, FileCheck, ExternalLink, LineChart, BellDot, Sparkles, Award, Activity, Database, Brain, ArrowDownRight, Lightbulb, Dna } from 'lucide-react'
 
 export default function LumenBioDashboard() {
   const [activeTab, setActiveTab] = useState<string>('overview');

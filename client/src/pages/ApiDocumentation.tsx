@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Server, Key, Database, Code, Braces, Copy, ExternalLink, FileJson, Check } from "lucide-react";
+import { Server, Key, Database, Code, Braces, Copy, ExternalLink, FileJson, Check } from 'lucide-react'
 
 import { PageContainer, HeaderSection, ContentSection } from "@/components/layout";
 import Navbar from "@/components/navbar";
@@ -19,15 +19,10 @@ export default function ApiDocumentation() {
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
     
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Copied to clipboard",
       description: "Code snippet has been copied to your clipboard",
-    })
-  console.log('Toast would show:', {
-      title: "Copied to clipboard",
-      description: "Code snippet has been copied to your clipboard",
-    });
+  });
   };
 
   return (

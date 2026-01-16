@@ -16,6 +16,29 @@ class FDA510kService {
     };
   }
 
+  async lookupRegulationByProductCode(productCode) {
+    if (!productCode) {
+      throw new Error('productCode is required');
+    }
+
+    const response = await fetch(
+      `/api/fda510k/product-code/${encodeURIComponent(productCode)}/regulation`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Regulation lookup failed: ${errorText || response.status}`);
+    }
+
+    return response.json();
+  }
+
   /**
    * Search for predicate devices in the FDA database
    *

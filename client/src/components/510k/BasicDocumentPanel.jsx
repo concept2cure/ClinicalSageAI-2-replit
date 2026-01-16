@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, FolderTree, FolderOpen } from 'lucide-react';
+import { X, FolderTree, FolderOpen } from 'lucide-react'
 
 /**
  * A very basic document panel with minimal dependencies

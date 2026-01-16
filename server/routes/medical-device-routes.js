@@ -10,10 +10,11 @@ import quotaService from '../services/quotaEnforcementService.js';
 import multer from 'multer';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { authenticateJWT } from '../middleware/auth.js';
 
-const require = createRequire(import.meta.url);
-const { authenticateJWT } = require('../middleware/auth');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -51,8 +52,8 @@ const requireOrganization = (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
-  // Get organization ID from various sources
-  const organizationId = req.headers['x-organization-id'] || req.body?.organizationId || req.user?.organizationId;
+  // Prefer server-derived tenant context (set by authenticateJWT)
+  const organizationId = req.organizationId || req.user?.organizationId || req.headers['x-organization-id'] || req.body?.organizationId;
   if (!organizationId) {
     return res.status(400).json({ error: 'Organization ID required' });
   }

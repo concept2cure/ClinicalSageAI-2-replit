@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UserIcon, Users, AlertCircle, Video, VideoOff } from 'lucide-react';
+import { UserIcon, Users, AlertCircle, Video, VideoOff } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

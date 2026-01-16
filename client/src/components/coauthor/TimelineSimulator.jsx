@@ -5,16 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import {
-  Calendar,
-  Clock,
-  CalendarDays,
-  Check,
-  Edit,
-  Plus,
-  Trash2,
-  Calendar as CalendarIcon,
-  ArrowRight,
-} from 'lucide-react';
+  Calendar, Clock, CalendarDays, Check, Edit, Plus, Trash2, Calendar as CalendarIcon, ArrowRight } from 'lucide-react'
 
 export default function TimelineSimulator() {
   const [duration, setDuration] = useState(120); // Default 120 days

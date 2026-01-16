@@ -20,38 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Mark from 'mark.js';
 import { 
-  Search,
-  Filter,
-  Download,
-  Share2,
-  Eye,
-  Clock,
-  User,
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  X,
-  FileText,
-  Folder,
-  AlertCircle,
-  Info,
-  CheckCircle,
-  Sparkles,
-  TrendingUp,
-  RefreshCw,
-  Grid,
-  List,
-  MoreVertical,
-  Copy,
-  Link,
-  Star,
-  Loader2,
-  FileIcon,
-  Hash,
-  GitBranch,
-  Table,
-  Presentation
-} from 'lucide-react';
+  Search, Filter, Download, Share2, Eye, Clock, User, ChevronRight, ChevronLeft, ChevronDown, X, FileText, Folder, AlertCircle, Info, CheckCircle, Sparkles, TrendingUp, RefreshCw, Grid, List, MoreVertical, Copy, Link, Star, Loader2, FileIcon, Hash, GitBranch, Table, Presentation } from 'lucide-react'
 import { GlobalSearchComponent } from '@/components/coauthor/GlobalSearchComponent';
 import { AdvancedSearchPanel } from '@/components/coauthor/AdvancedSearchPanel';
 

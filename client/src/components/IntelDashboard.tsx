@@ -3,10 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, BookOpen, ClipboardCheck, Brain, FileText, BarChart2, ArrowRight, 
-  Zap, FileSearch, Award, Clock, Activity, Link, Save, Filter, BrainCircuit, BarChart3, 
-  ScrollText, FileQuestion, Sparkles, RefreshCw, ChevronRight, ChevronDown, Check,
-  Microscope, FileSymlink, Database } from 'lucide-react';
+import { AlertCircle, BookOpen, ClipboardCheck, Brain, FileText, BarChart2, ArrowRight, Zap, FileSearch, Award, Clock, Activity, Link, Save, Filter, BrainCircuit, BarChart3, ScrollText, FileQuestion, Sparkles, RefreshCw, ChevronRight, ChevronDown, Check, Microscope, FileSymlink, Database } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, 
@@ -56,17 +53,11 @@ export default function IntelDashboard() {
 
   const fetchIntel = async () => {
     if (!indication) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Input Required",
         description: "Please enter an indication to generate insights",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Input Required",
-        description: "Please enter an indication to generate insights",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -82,28 +73,17 @@ export default function IntelDashboard() {
       
       const data = await res.json();
       setBrief(data.brief || 'Intelligence brief generation is ready using OpenAI with persistent contexts. Enter a valid indication and click "Generate Insight Brief" to see real results.');
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Intelligence Brief Generated",
         description: "Weekly intelligence brief has been successfully generated",
-      })
-  console.log('Toast would show:', {
-        title: "Intelligence Brief Generated",
-        description: "Weekly intelligence brief has been successfully generated",
-      });
+  });
     } catch (error) {
       console.error("Error fetching intel:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to generate intelligence brief. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to generate intelligence brief. Please try again.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setLoading(false);
     }
@@ -143,28 +123,17 @@ export default function IntelDashboard() {
           ]
         }
       });
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "KPI Dashboard Updated",
         description: "Global key performance indicators have been refreshed",
-      })
-  console.log('Toast would show:', {
-        title: "KPI Dashboard Updated",
-        description: "Global key performance indicators have been refreshed",
-      });
+  });
     } catch (error) {
       console.error("Error fetching KPI:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to load KPI dashboard. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to load KPI dashboard. Please try again.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setLoading(false);
     }
@@ -172,17 +141,11 @@ export default function IntelDashboard() {
 
   const fetchProtocol = async () => {
     if (!indication) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Input Required",
         description: "Please enter an indication to generate protocol suggestions",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Input Required",
-        description: "Please enter an indication to generate protocol suggestions",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -223,14 +186,10 @@ export default function IntelDashboard() {
         }
         
         // Alert user about the successful real generation
-        // toast call replaced
-  // Original: toast({
-          title: "Protocol Generation Successful",
-          description: "Generated high-quality protocol using OpenAI with thread ID: " + (data.thread_id || "Not Available")
-  console.log('Toast would show:', {
+  toast({
           title: "Protocol Generation Successful",
           description: "Generated high-quality protocol using OpenAI with thread ID: " + (data.thread_id || "Not Available"),
-        });
+  });
       } else {
         // Fallback to demo content with clear indication this is demo/fallback data
         console.warn("API returned invalid data - using demo fallback");
@@ -253,31 +212,19 @@ export default function IntelDashboard() {
         setThreadId(tempThreadId);
         
         // Alert user they're seeing demo content
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Using Demo Content",
           description: "Unable to generate AI protocol - showing demonstration content instead. Check console for details.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Using Demo Content",
-          description: "Unable to generate AI protocol - showing demonstration content instead. Check console for details.",
-          variant: "destructive"
-        });
+  });
       }
     } catch (error) {
       console.error("Error fetching protocol:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to generate protocol suggestions. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to generate protocol suggestions. Please try again.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setLoading(false);
     }
@@ -285,32 +232,20 @@ export default function IntelDashboard() {
 
   const sendFollowUpQuestion = async () => {
     if (!followUpQuestion) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Input Required",
         description: "Please enter a follow-up question",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Input Required",
-        description: "Please enter a follow-up question",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
     if (!threadId) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No Active Session",
         description: "Please generate a protocol first to establish a conversation thread",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No Active Session",
-        description: "Please generate a protocol first to establish a conversation thread",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -332,28 +267,17 @@ export default function IntelDashboard() {
       setFollowUpResponse(data.answer || `This is a sample response to your question: "${followUpQuestion}"\n\nThe actual implementation would use OpenAI to provide a detailed answer based on the protocol context and the conversation history maintained in the thread (thread_id: ${threadId}).`);
       setFollowUpQuestion('');
       
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Response Generated",
         description: "Your follow-up question has been processed",
-      })
-  console.log('Toast would show:', {
-        title: "Response Generated",
-        description: "Your follow-up question has been processed",
-      });
+  });
     } catch (error) {
       console.error("Error with follow-up:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to process your follow-up question. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to process your follow-up question. Please try again.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setLoading(false);
     }
@@ -366,15 +290,10 @@ export default function IntelDashboard() {
 
   const exportPDF = () => {
     if (pdfRef.current) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Exporting PDF",
         description: "Preparing your report for download...",
-      })
-  console.log('Toast would show:', {
-        title: "Exporting PDF",
-        description: "Preparing your report for download...",
-      });
+  });
       
       html2pdf()
         .set({ 
@@ -386,15 +305,10 @@ export default function IntelDashboard() {
         .from(pdfRef.current)
         .save()
         .then(() => {
-          // toast call replaced
-  // Original: toast({
+  toast({
             title: "Export Complete",
             description: "Your PDF report has been downloaded",
-          })
-  console.log('Toast would show:', {
-            title: "Export Complete",
-            description: "Your PDF report has been downloaded",
-          });
+  });
         });
     }
   };

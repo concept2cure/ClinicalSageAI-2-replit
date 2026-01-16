@@ -1,26 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Badge, Button, Alert, AlertDescription, AlertTitle } from '@/components/ui/button';
 import { Alert as AlertComponent } from '@/components/ui/alert';
 import {
-  BookOpen,
-  Brain,
-  CheckCircle2,
-  Award,
-  Lightbulb,
-  ChevronRight,
-  Clock,
-  Bookmark,
-  BookMarked,
-  Info,
-} from 'lucide-react';
+  BookOpen, Brain, CheckCircle2, Award, Lightbulb, ChevronRight, Clock, Bookmark, BookMarked, Info, Tabs, TabsList, TabsTrigger, TabsContent } from 'lucide-react'
 import { useLearningService } from '@/hooks/useLearningService';
 import { Progress } from '@/components/ui/progress';
 

@@ -2,14 +2,23 @@ import OpenAI from 'openai';
 
 class OpenAIService {
   constructor() {
-    this.client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    this.isAvailable = !!process.env.OPENAI_API_KEY;
+    // NOTE: env vars may be loaded after imports in server/index.ts.
+    // Keep initialization lazy so availability reflects runtime env.
+    this.isAvailable = false;
+    this.client = null;
+  }
+
+  ensureClient() {
+    const apiKey = process.env.OPENAI_API_KEY;
+    this.isAvailable = !!apiKey;
+    if (this.isAvailable && !this.client) {
+      this.client = new OpenAI({ apiKey });
+    }
+    return this.isAvailable;
   }
 
   async analyzeRegulatoryDocument(text, documentType = 'CMC') {
-    if (!this.isAvailable) {
+    if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
     }
 
@@ -50,7 +59,7 @@ class OpenAIService {
   }
 
   async generateRegulatoryContent(prompt, documentType = 'CMC', requirements = {}) {
-    if (!this.isAvailable) {
+    if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
     }
 
@@ -81,7 +90,7 @@ class OpenAIService {
   }
 
   async enhanceRegulatoryText(text, improvements = []) {
-    if (!this.isAvailable) {
+    if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
     }
 

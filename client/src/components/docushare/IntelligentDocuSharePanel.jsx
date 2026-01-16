@@ -8,18 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useDropzone } from 'react-dropzone';
 import { Separator } from '@/components/ui/separator';
 import {
-  FolderPlus,
-  RefreshCw,
-  Eye,
-  Download,
-  Trash2,
-  History,
-  Search,
-  Upload,
-  FileText,
-  FolderOpen,
-  MoreHorizontal,
-} from 'lucide-react';
+  FolderPlus, RefreshCw, Eye, Download, Trash2, History, Search, Upload, FileText, FolderOpen, MoreHorizontal } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 import {

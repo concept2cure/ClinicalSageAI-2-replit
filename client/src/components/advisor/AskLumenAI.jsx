@@ -1,7 +1,7 @@
 // /client/src/components/advisor/AskLumenAI.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, UserRound, Bot } from 'lucide-react';
+import { Send, UserRound, Bot } from 'lucide-react'
 
 export default function AskLumenAI() {
   const [messages, setMessages] = useState([

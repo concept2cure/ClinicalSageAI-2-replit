@@ -1,5 +1,5 @@
 import { db } from '../db.js';
-import { csrReports } from 'shared/schema.js';
+import { csrReports } from 'shared/schema.ts';
 import { sql } from 'drizzle-orm';
 
 async function checkDatabaseCounts() {

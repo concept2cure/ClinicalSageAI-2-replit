@@ -7,31 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from '@/components/ui/select';
 import {
-  Search,
-  Brain,
-  Layers,
-  Network,
-  Target,
-  ArrowRight,
-  Dna,
-  Microscope,
-  Database,
-  MessageSquare,
-  Eye,
-  FileText,
-  Sigma,
-  PanelLeft,
-  PanelRight,
-  Lightbulb,
-  BarChart2,
-} from 'lucide-react';
+  Search, Brain, Layers, Network, Target, ArrowRight, Dna, Microscope, Database, MessageSquare, Eye, FileText, Sigma, PanelLeft, PanelRight, Lightbulb, BarChart2, PieChart } from 'lucide-react'
 
 // Sample data for semantic model status
 const semanticModels = [

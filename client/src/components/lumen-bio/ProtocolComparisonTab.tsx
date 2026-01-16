@@ -5,17 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  Lightbulb,
-  CheckCircle,
-  AlertTriangle,
-  ArrowRight,
-  BarChart3,
-  ListChecks,
-  Users,
-  Clock,
-  Download,
-  FileText,
-} from 'lucide-react';
+  Lightbulb, CheckCircle, AlertTriangle, ArrowRight, BarChart3, ListChecks, Users, Clock, Download, FileText } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 
 interface ProtocolComparisonTabProps {

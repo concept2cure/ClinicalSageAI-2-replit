@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, ShieldCheck, FileCheck, CheckCircle, FileBarChart2 } from 'lucide-react';
+import { Trophy, ShieldCheck, FileCheck, CheckCircle, FileBarChart2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 /**

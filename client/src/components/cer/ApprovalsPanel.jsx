@@ -7,41 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  UserCheck,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  AlertCircle,
-  FileCheck,
-  Send,
-  MessageSquare,
-  CheckCircle,
-  User,
-  Edit,
-  Plus,
-  FileText,
-  Mail,
-  Smartphone,
-  Users,
-} from 'lucide-react';
+  UserCheck, Calendar, CheckCircle2, XCircle, Clock, AlertCircle, FileCheck, Send, MessageSquare, CheckCircle, User, Edit, Plus, FileText, Mail, Smartphone, Users } from 'lucide-react'
 
 export default function ApprovalsPanel() {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);

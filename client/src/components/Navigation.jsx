@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { FileText, Clock, Home } from 'lucide-react';
+import { FileText, Clock, Home } from 'lucide-react'
 
 export default function Navigation() {
   const [location] = useLocation();

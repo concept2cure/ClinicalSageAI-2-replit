@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from 'axios';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Loader2, TrendingUp, Activity, FileText, Users, Award, PieChart as PieChartIcon } from 'lucide-react';
+import { Loader2, TrendingUp, Activity, FileText, Users, Award, PieChart as PieChartIcon } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 

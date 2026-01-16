@@ -7,15 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText,
-  BarChart2,
-  Check,
-  Sparkles,
-  RotateCcw,
-  Save,
-  Clipboard,
-  Plus,
-} from 'lucide-react';
+  FileText, BarChart2, Check, Sparkles, RotateCcw, Save, Clipboard, Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast';
 
 export default function ProtocolForm({ draft, onChange, onRegenerate }) {

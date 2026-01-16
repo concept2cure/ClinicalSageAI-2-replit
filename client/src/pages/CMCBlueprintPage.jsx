@@ -6,13 +6,7 @@ import CmcNavigation from '@/components/cmc-module/CmcNavigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  Beaker,
-  FlaskConical,
-  Factory,
-  FileCheck,
-  ArrowRightCircle,
-  MessageSquare,
-} from 'lucide-react';
+  Beaker, FlaskConical, Factory, FileCheck, ArrowRightCircle, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { LumenAssistantButton } from '@/components/assistant';
 import PortfolioDashboard from '../components/cmc/PortfolioDashboard';

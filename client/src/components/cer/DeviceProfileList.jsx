@@ -1,38 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Pencil,
-  Trash2,
-  ChevronRight,
-  PlusCircle,
-  Search,
-  Filter,
-  SlidersHorizontal,
-  FileText,
-  Download,
-  BarChart4,
-  RefreshCw,
-  CheckCircle,
-} from 'lucide-react';
+  Pencil, Trash2, ChevronRight, PlusCircle, Search, Filter, SlidersHorizontal, FileText, Download, BarChart4, RefreshCw, CheckCircle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,

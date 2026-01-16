@@ -1,40 +1,13 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  TrendingUp,
-  BarChart2,
-  Database,
-  Brain,
-  AlertTriangle,
-  Download,
-  FileText,
-  ChevronDown,
-  ChevronUp,
-  Info,
-  CheckCircle2,
-  PieChart,
-  Lightbulb,
-  Gauge,
-  Crosshair,
-} from 'lucide-react';
+  TrendingUp, BarChart2, Database, Brain, AlertTriangle, Download, FileText, ChevronDown, ChevronUp, Info, CheckCircle2, PieChart, Lightbulb, Gauge, Crosshair } from 'lucide-react'
 
 const ProtocolSuccessPredictor = () => {
   const [loadingResults, setLoadingResults] = useState(false);

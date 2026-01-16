@@ -1,0 +1,1435 @@
+{
+  "mockDemoClients": [
+    {
+      "id": "org_1",
+      "name": "MedTech Innovations Inc.",
+      "industry": "Medical Devices",
+      "city": "Boston",
+      "state": "MA",
+      "country": "USA",
+      "phone": "(617) 555-0123",
+      "email": "regulatory@medtechinno.com",
+      "createdAt": "2025-10-15"
+    },
+    {
+      "id": "org_2",
+      "name": "CardiovascularSolutions Ltd.",
+      "industry": "Cardiac Devices",
+      "city": "San Francisco",
+      "state": "CA",
+      "country": "USA",
+      "phone": "(415) 555-0456",
+      "email": "compliance@cardiova.com",
+      "createdAt": "2025-11-01"
+    },
+    {
+      "id": "org_3",
+      "name": "DiagnosticTech Global",
+      "industry": "Diagnostic Devices",
+      "city": "Cambridge",
+      "state": "UK",
+      "country": "United Kingdom",
+      "phone": "+44 (0)1223 555789",
+      "email": "regulatory@diagnotech.co.uk",
+      "createdAt": "2025-09-20"
+    }
+  ],
+  "mockDeviceProfiles": [
+    {
+      "id": "device_1",
+      "organizationId": "org_1",
+      "deviceName": "CardioMonitor Pro",
+      "deviceClass": "II",
+      "productCode": "DMG",
+      "manufacturer": "MedTech Innovations Inc.",
+      "intendedUse": "Device intended for...",
+      "status": "started",
+      "completionPercentage": 5,
+      "createdAt": "2025-12-20",
+      "updatedAt": "2025-12-20"
+    },
+    {
+      "id": "device_2",
+      "organizationId": "org_1",
+      "deviceName": "HeartFlow Monitor",
+      "deviceClass": "II",
+      "productCode": "DIJ",
+      "manufacturer": "MedTech Innovations Inc.",
+      "intendedUse": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity. It is intended for use by healthcare professionals in clinical settings including hospitals, physician offices, and emergency departments.",
+      "modelNumber": "HFM-2000",
+      "technicalCharacteristics": {
+        "displayType": "Digital LCD",
+        "sampleRate": "500 Hz",
+        "channels": 12,
+        "wireless": true,
+        "battery": "8 hours"
+      },
+      "status": "device_profile_complete",
+      "completionPercentage": 20,
+      "createdAt": "2025-12-10",
+      "updatedAt": "2025-12-25"
+    },
+    {
+      "id": "device_3",
+      "organizationId": "org_2",
+      "deviceName": "VascuCheck Pro",
+      "deviceClass": "II",
+      "productCode": "OCT",
+      "manufacturer": "CardiovascularSolutions Ltd.",
+      "intendedUse": "Non-invasive vascular assessment device for measuring blood flow and vessel compliance in peripheral and central circulation.",
+      "modelNumber": "VCP-3100",
+      "predicateSelected": true,
+      "predicateDeviceId": "K043210",
+      "predicateDeviceName": "Vascularity Monitor 2000",
+      "status": "predicate_selected",
+      "completionPercentage": 35,
+      "createdAt": "2025-11-15",
+      "updatedAt": "2025-12-22"
+    },
+    {
+      "id": "device_4",
+      "organizationId": "org_3",
+      "deviceName": "RapidDiag Test System",
+      "deviceClass": "II",
+      "productCode": "CHR",
+      "manufacturer": "DiagnosticTech Global",
+      "intendedUse": "In vitro diagnostic device for rapid detection of multiple biomarkers in clinical specimens.",
+      "modelNumber": "RDS-5000",
+      "predicateSelected": true,
+      "predicateDeviceId": "K040156",
+      "predicateDeviceName": "QuickTest Analyzer",
+      "equivalenceAnalysis": {
+        "score": 82,
+        "similarities": [
+          "Same intended use for rapid biomarker detection",
+          "Similar analytical methodology and algorithms",
+          "Equivalent safety profile based on literature review",
+          "Comparable performance specifications"
+        ],
+        "differences": [
+          "Improved sample processing speed (2x faster)",
+          "Enhanced user interface with touchscreen",
+          "Wireless connectivity added"
+        ],
+        "narrative": "The RapidDiag Test System is substantially equivalent to the QuickTest Analyzer. Both devices share the same intended use for rapid detection of multiple biomarkers. The technological characteristics are similar in that both utilize spectrophotometric analysis with advanced data processing algorithms.",
+        "createdAt": "2025-12-10"
+      },
+      "status": "equivalence_complete",
+      "completionPercentage": 50,
+      "createdAt": "2025-11-01",
+      "updatedAt": "2025-12-23"
+    },
+    {
+      "id": "device_5",
+      "organizationId": "org_1",
+      "deviceName": "MediGuard Safety Monitor",
+      "deviceClass": "II",
+      "productCode": "CMP",
+      "manufacturer": "MedTech Innovations Inc.",
+      "intendedUse": "Real-time patient safety monitoring and alert system for post-operative recovery environments.",
+      "modelNumber": "MGS-2500",
+      "predicateSelected": true,
+      "predicateDeviceId": "K042890",
+      "equivalenceAnalysis": {
+        "score": 78,
+        "narrative": "Substantially equivalent based on intended use and technological characteristics"
+      },
+      "complianceCheck": {
+        "score": 91,
+        "passed": true,
+        "issues": [],
+        "warnings": [
+          "Consider additional biocompatibility data for prolonged skin contact"
+        ],
+        "criticalDeficiencies": [],
+        "recommendations": [
+          "Include performance testing data per ASTM F2100",
+          "Clinical validation study recommended for enhanced confidence"
+        ],
+        "lastChecked": "2025-12-24"
+      },
+      "status": "compliance_complete",
+      "completionPercentage": 65,
+      "createdAt": "2025-11-20",
+      "updatedAt": "2025-12-24"
+    },
+    {
+      "id": "device_6",
+      "organizationId": "org_2",
+      "deviceName": "ArterialFlow Sensor",
+      "deviceClass": "II",
+      "productCode": "DME",
+      "manufacturer": "CardiovascularSolutions Ltd.",
+      "intendedUse": "Non-invasive arterial blood flow measurement for cardiovascular assessment.",
+      "modelNumber": "AFS-1200",
+      "predicateSelected": true,
+      "predicateDeviceId": "K041567",
+      "equivalenceAnalysis": {
+        "score": 85,
+        "narrative": "Substantially equivalent device"
+      },
+      "complianceCheck": {
+        "score": 94,
+        "passed": true,
+        "issues": []
+      },
+      "submissionPackage": {
+        "assembled": true,
+        "packageId": "pkg_1702915200001",
+        "contents": {
+          "mainSummary": "Complete",
+          "predicateComparison": "Complete",
+          "equivalenceStatement": "Complete",
+          "technicalData": "Complete",
+          "attachments": 5
+        },
+        "size": 15728640,
+        "createdAt": "2025-12-24"
+      },
+      "status": "package_complete",
+      "completionPercentage": 80,
+      "createdAt": "2025-11-05",
+      "updatedAt": "2025-12-24"
+    },
+    {
+      "id": "device_7",
+      "organizationId": "org_3",
+      "deviceName": "BioMarker Pro Analyzer",
+      "deviceClass": "II",
+      "productCode": "LDT",
+      "manufacturer": "DiagnosticTech Global",
+      "intendedUse": "Advanced laboratory diagnostic analysis system for comprehensive biomarker profiling.",
+      "modelNumber": "BPA-7000",
+      "predicateSelected": true,
+      "predicateDeviceId": "K039876",
+      "equivalenceAnalysis": {
+        "score": 87,
+        "narrative": "Substantially equivalent device with enhanced capabilities"
+      },
+      "complianceCheck": {
+        "score": 96,
+        "passed": true
+      },
+      "submissionPackage": {
+        "assembled": true,
+        "packageId": "pkg_1702828800002",
+        "contents": {
+          "mainSummary": "Complete",
+          "predicateComparison": "Complete",
+          "equivalenceStatement": "Complete",
+          "technicalData": "Complete",
+          "attachments": 8
+        },
+        "submitted": true
+      },
+      "fdaSubmission": {
+        "submissionNumber": "K252845",
+        "submissionDate": "2025-12-15",
+        "confirmationNumber": "CONF1702721800001",
+        "status": "under_review",
+        "estimatedDecisionDate": "2026-03-15",
+        "progressPercentage": 45
+      },
+      "status": "submitted",
+      "completionPercentage": 90,
+      "createdAt": "2025-10-15",
+      "updatedAt": "2025-12-24"
+    },
+    {
+      "id": "device_8",
+      "organizationId": "org_1",
+      "deviceName": "NetCare Monitoring System",
+      "deviceClass": "II",
+      "productCode": "OIJ",
+      "manufacturer": "MedTech Innovations Inc.",
+      "intendedUse": "Network-based patient monitoring and clinical data management system.",
+      "modelNumber": "NCS-4000",
+      "predicateSelected": true,
+      "predicateDeviceId": "K038765",
+      "equivalenceAnalysis": {
+        "score": 81
+      },
+      "complianceCheck": {
+        "score": 95,
+        "passed": true
+      },
+      "submissionPackage": {
+        "assembled": true,
+        "packageId": "pkg_1702656000003"
+      },
+      "fdaSubmission": {
+        "submissionNumber": "K251234",
+        "submissionDate": "2025-09-10",
+        "confirmationNumber": "CONF1702570800001",
+        "status": "cleared",
+        "decisionDate": "2025-12-10",
+        "decisionLetter": "CLEARED_TO_MARKET",
+        "progressPercentage": 100
+      },
+      "status": "approved",
+      "completionPercentage": 100,
+      "approvalDate": "2025-12-10",
+      "createdAt": "2025-08-01",
+      "updatedAt": "2025-12-10"
+    }
+  ],
+  "mockDocuments": [
+    {
+      "id": "doc_1",
+      "organizationId": "org_1",
+      "deviceId": "device_1",
+      "documentType": "510k",
+      "title": "CardioMonitor Pro - 510(k) Submission",
+      "status": "in_progress",
+      "completionPercentage": 15,
+      "sections": [
+        {
+          "id": "device-name",
+          "title": "Device Name",
+          "content": "CardioMonitor Pro",
+          "completed": true
+        },
+        {
+          "id": "intended-use",
+          "title": "Intended Use",
+          "content": "",
+          "completed": false
+        },
+        {
+          "id": "device-description",
+          "title": "Device Description",
+          "content": "",
+          "completed": false
+        }
+      ],
+      "lastModified": "2025-12-20",
+      "createdAt": "2025-12-20"
+    },
+    {
+      "id": "doc_2",
+      "organizationId": "org_1",
+      "deviceId": "device_2",
+      "documentType": "510k",
+      "title": "HeartFlow Monitor - 510(k) Submission",
+      "status": "in_progress",
+      "completionPercentage": 60,
+      "sections": [
+        {
+          "id": "device-name",
+          "title": "Device Name",
+          "content": "HeartFlow Monitor",
+          "completed": true,
+          "complianceScore": 100
+        },
+        {
+          "id": "intended-use",
+          "title": "Intended Use",
+          "content": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity.",
+          "completed": true,
+          "complianceScore": 85
+        },
+        {
+          "id": "device-description",
+          "title": "Device Description",
+          "content": "12-lead ECG monitoring device with wireless transmission capabilities. Digital display, 500 Hz sampling rate, 8-hour battery life.",
+          "completed": true,
+          "complianceScore": 78
+        },
+        {
+          "id": "substantial-equivalence",
+          "title": "Substantial Equivalence",
+          "content": "",
+          "completed": false,
+          "complianceScore": 0
+        },
+        {
+          "id": "performance-standards",
+          "title": "Performance Standards",
+          "content": "",
+          "completed": false
+        }
+      ],
+      "lastModified": "2025-12-25",
+      "createdAt": "2025-12-10"
+    },
+    {
+      "id": "doc_3",
+      "organizationId": "org_3",
+      "deviceId": "device_4",
+      "documentType": "510k",
+      "title": "RapidDiag Test System - Complete Submission",
+      "status": "ready_for_submission",
+      "completionPercentage": 100,
+      "sections": [
+        {
+          "id": "device-name",
+          "title": "Device Name",
+          "content": "RapidDiag Test System",
+          "completed": true,
+          "complianceScore": 100
+        },
+        {
+          "id": "intended-use",
+          "title": "Intended Use",
+          "content": "In vitro diagnostic device for rapid detection of multiple biomarkers in clinical specimens including blood, plasma, and serum samples.",
+          "completed": true,
+          "complianceScore": 92
+        },
+        {
+          "id": "device-description",
+          "title": "Device Description",
+          "content": "Automated spectrophotometric analyzer with integrated sample processing. Supports multiple assay formats. Results available in 15 minutes.",
+          "completed": true,
+          "complianceScore": 88
+        },
+        {
+          "id": "substantial-equivalence",
+          "title": "Substantial Equivalence",
+          "content": "Substantially equivalent to QuickTest Analyzer (K040156) in intended use and technological characteristics...",
+          "completed": true,
+          "complianceScore": 82
+        },
+        {
+          "id": "performance-standards",
+          "title": "Performance Standards",
+          "content": "Complies with CLSI, CAP, and FDA guidance documents...",
+          "completed": true,
+          "complianceScore": 95
+        },
+        {
+          "id": "manufacturing-info",
+          "title": "Manufacturing Information",
+          "content": "Manufactured at ISO 13485 certified facility in Cambridge, UK...",
+          "completed": true,
+          "complianceScore": 90
+        }
+      ],
+      "lastModified": "2025-12-23",
+      "createdAt": "2025-11-01"
+    }
+  ],
+  "mockPredicateDevices": [
+    {
+      "id": "K043210",
+      "kNumber": "K043210",
+      "deviceName": "Vascularity Monitor 2000",
+      "deviceClass": "II",
+      "productCode": "OCT",
+      "manufacturer": "Vascular Systems Corp",
+      "intendedUse": "Non-invasive vascular assessment device",
+      "submissionDate": "2015-06-10",
+      "clearanceDate": "2015-08-20",
+      "relevanceScore": 92
+    },
+    {
+      "id": "K040156",
+      "kNumber": "K040156",
+      "deviceName": "QuickTest Analyzer",
+      "deviceClass": "II",
+      "productCode": "CHR",
+      "manufacturer": "DiagnoSys International",
+      "intendedUse": "In vitro diagnostic system for biomarker detection",
+      "submissionDate": "2013-03-15",
+      "clearanceDate": "2013-05-22",
+      "relevanceScore": 87
+    },
+    {
+      "id": "K042890",
+      "kNumber": "K042890",
+      "deviceName": "SafeAlert Monitoring System",
+      "deviceClass": "II",
+      "productCode": "CMP",
+      "manufacturer": "MedGuard Systems",
+      "intendedUse": "Post-operative patient monitoring",
+      "submissionDate": "2014-11-20",
+      "clearanceDate": "2015-01-15",
+      "relevanceScore": 85
+    }
+  ],
+  "mockEquivalenceAnalyses": [
+    {
+      "id": "equiv_1",
+      "deviceId": "device_4",
+      "predicateId": "K040156",
+      "status": "completed",
+      "equivalenceScore": 82,
+      "similarities": [
+        "Same intended use for rapid biomarker detection",
+        "Similar analytical methodology",
+        "Equivalent safety profile",
+        "Comparable performance specifications"
+      ],
+      "differences": [
+        "Improved sample processing speed (2x faster)",
+        "Enhanced user interface with touchscreen",
+        "Wireless connectivity capability"
+      ],
+      "riskAssessment": {
+        "overallRisk": "LOW",
+        "biocompatibility": "Not applicable - non-contact",
+        "performanceRisk": "Low - exceeds predicate specifications",
+        "manufacturingRisk": "Low - established processes"
+      },
+      "narrative": "The RapidDiag Test System is substantially equivalent to the QuickTest Analyzer predicate device...",
+      "createdAt": "2025-12-10",
+      "reviewedBy": "Dr. Smith"
+    }
+  ],
+  "mockComplianceChecks": [
+    {
+      "id": "comp_1",
+      "deviceId": "device_5",
+      "status": "passed",
+      "complianceScore": 91,
+      "checkDate": "2025-12-24",
+      "results": {
+        "deviceNameComplete": true,
+        "intendedUseComplete": true,
+        "deviceDescriptionComplete": true,
+        "substantialEquivalenceComplete": true,
+        "performanceStandardsComplete": true,
+        "manufacturingInfoComplete": true,
+        "predicateSelected": true,
+        "equivalenceScoreAcceptable": true,
+        "noSignificantDifferences": false
+      },
+      "issues": [],
+      "warnings": [
+        "Consider additional biocompatibility data for prolonged skin contact"
+      ],
+      "criticalDeficiencies": [],
+      "recommendations": [
+        "Include performance testing data per ASTM F2100",
+        "Clinical validation study recommended"
+      ],
+      "canProceedToSubmission": true
+    }
+  ],
+  "mockSubmissionPackages": [
+    {
+      "id": "pkg_1702915200001",
+      "deviceId": "device_6",
+      "status": "assembled",
+      "createdDate": "2025-12-24",
+      "contents": {
+        "mainSummary": {
+          "sections": 5,
+          "wordCount": 2847,
+          "status": "complete"
+        },
+        "predicateComparison": {
+          "sections": 3,
+          "tables": 5,
+          "status": "complete"
+        },
+        "equivalenceStatement": {
+          "sections": 4,
+          "wordCount": 1562,
+          "status": "complete"
+        },
+        "technicalData": {
+          "specs": 12,
+          "diagrams": 3,
+          "status": "complete"
+        },
+        "attachments": {
+          "count": 5,
+          "size": 5242880
+        }
+      },
+      "totalSize": 15728640,
+      "validationStatus": "passed"
+    }
+  ],
+  "mockFDASubmissions": [
+    {
+      "id": "sub_1",
+      "deviceId": "device_7",
+      "submissionNumber": "K252845",
+      "status": "under_review",
+      "submissionDate": "2025-12-15",
+      "confirmationNumber": "CONF1702721800001",
+      "estimatedDecisionDate": "2026-03-15",
+      "daysInReview": 10,
+      "expectedDaysForDecision": 90,
+      "progressPercentage": 45,
+      "timeline": [
+        {
+          "date": "2025-12-15",
+          "event": "Submission Received"
+        },
+        {
+          "date": "2025-12-20",
+          "event": "Completeness Review In Progress"
+        },
+        {
+          "date": "2026-01-15",
+          "event": "Expected: Deficiency Letter or Acceptance"
+        },
+        {
+          "date": "2026-03-15",
+          "event": "Expected: Final Decision"
+        }
+      ]
+    },
+    {
+      "id": "sub_2",
+      "deviceId": "device_8",
+      "submissionNumber": "K251234",
+      "status": "cleared",
+      "submissionDate": "2025-09-10",
+      "confirmationNumber": "CONF1702570800001",
+      "decisionDate": "2025-12-10",
+      "decisionLetter": "CLEARED_TO_MARKET",
+      "daysFromSubmissionToDecision": 91,
+      "progressPercentage": 100,
+      "timeline": [
+        {
+          "date": "2025-09-10",
+          "event": "Submission Received"
+        },
+        {
+          "date": "2025-09-15",
+          "event": "Completeness Review Passed"
+        },
+        {
+          "date": "2025-12-10",
+          "event": "Cleared for Market"
+        }
+      ]
+    }
+  ],
+  "mockDemoScenarios": {
+    "startup": {
+      "description": "Startup company just getting started with their first submission",
+      "organizations": [
+        {
+          "id": "org_1",
+          "name": "MedTech Innovations Inc.",
+          "industry": "Medical Devices",
+          "city": "Boston",
+          "state": "MA",
+          "country": "USA",
+          "phone": "(617) 555-0123",
+          "email": "regulatory@medtechinno.com",
+          "createdAt": "2025-10-15"
+        }
+      ],
+      "devices": [
+        {
+          "id": "device_1",
+          "organizationId": "org_1",
+          "deviceName": "CardioMonitor Pro",
+          "deviceClass": "II",
+          "productCode": "DMG",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "Device intended for...",
+          "status": "started",
+          "completionPercentage": 5,
+          "createdAt": "2025-12-20",
+          "updatedAt": "2025-12-20"
+        }
+      ],
+      "documents": [
+        {
+          "id": "doc_1",
+          "organizationId": "org_1",
+          "deviceId": "device_1",
+          "documentType": "510k",
+          "title": "CardioMonitor Pro - 510(k) Submission",
+          "status": "in_progress",
+          "completionPercentage": 15,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "CardioMonitor Pro",
+              "completed": true
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "",
+              "completed": false
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "",
+              "completed": false
+            }
+          ],
+          "lastModified": "2025-12-20",
+          "createdAt": "2025-12-20"
+        }
+      ],
+      "progress": "Just beginning the journey - device name entered"
+    },
+    "midstage": {
+      "description": "Mid-stage company working on predicate equivalence",
+      "organizations": [
+        {
+          "id": "org_1",
+          "name": "MedTech Innovations Inc.",
+          "industry": "Medical Devices",
+          "city": "Boston",
+          "state": "MA",
+          "country": "USA",
+          "phone": "(617) 555-0123",
+          "email": "regulatory@medtechinno.com",
+          "createdAt": "2025-10-15"
+        },
+        {
+          "id": "org_2",
+          "name": "CardiovascularSolutions Ltd.",
+          "industry": "Cardiac Devices",
+          "city": "San Francisco",
+          "state": "CA",
+          "country": "USA",
+          "phone": "(415) 555-0456",
+          "email": "compliance@cardiova.com",
+          "createdAt": "2025-11-01"
+        }
+      ],
+      "devices": [
+        {
+          "id": "device_2",
+          "organizationId": "org_1",
+          "deviceName": "HeartFlow Monitor",
+          "deviceClass": "II",
+          "productCode": "DIJ",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity. It is intended for use by healthcare professionals in clinical settings including hospitals, physician offices, and emergency departments.",
+          "modelNumber": "HFM-2000",
+          "technicalCharacteristics": {
+            "displayType": "Digital LCD",
+            "sampleRate": "500 Hz",
+            "channels": 12,
+            "wireless": true,
+            "battery": "8 hours"
+          },
+          "status": "device_profile_complete",
+          "completionPercentage": 20,
+          "createdAt": "2025-12-10",
+          "updatedAt": "2025-12-25"
+        },
+        {
+          "id": "device_3",
+          "organizationId": "org_2",
+          "deviceName": "VascuCheck Pro",
+          "deviceClass": "II",
+          "productCode": "OCT",
+          "manufacturer": "CardiovascularSolutions Ltd.",
+          "intendedUse": "Non-invasive vascular assessment device for measuring blood flow and vessel compliance in peripheral and central circulation.",
+          "modelNumber": "VCP-3100",
+          "predicateSelected": true,
+          "predicateDeviceId": "K043210",
+          "predicateDeviceName": "Vascularity Monitor 2000",
+          "status": "predicate_selected",
+          "completionPercentage": 35,
+          "createdAt": "2025-11-15",
+          "updatedAt": "2025-12-22"
+        }
+      ],
+      "documents": [
+        {
+          "id": "doc_2",
+          "organizationId": "org_1",
+          "deviceId": "device_2",
+          "documentType": "510k",
+          "title": "HeartFlow Monitor - 510(k) Submission",
+          "status": "in_progress",
+          "completionPercentage": 60,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "HeartFlow Monitor",
+              "completed": true,
+              "complianceScore": 100
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity.",
+              "completed": true,
+              "complianceScore": 85
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "12-lead ECG monitoring device with wireless transmission capabilities. Digital display, 500 Hz sampling rate, 8-hour battery life.",
+              "completed": true,
+              "complianceScore": 78
+            },
+            {
+              "id": "substantial-equivalence",
+              "title": "Substantial Equivalence",
+              "content": "",
+              "completed": false,
+              "complianceScore": 0
+            },
+            {
+              "id": "performance-standards",
+              "title": "Performance Standards",
+              "content": "",
+              "completed": false
+            }
+          ],
+          "lastModified": "2025-12-25",
+          "createdAt": "2025-12-10"
+        },
+        {
+          "id": "doc_3",
+          "organizationId": "org_3",
+          "deviceId": "device_4",
+          "documentType": "510k",
+          "title": "RapidDiag Test System - Complete Submission",
+          "status": "ready_for_submission",
+          "completionPercentage": 100,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "RapidDiag Test System",
+              "completed": true,
+              "complianceScore": 100
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "In vitro diagnostic device for rapid detection of multiple biomarkers in clinical specimens including blood, plasma, and serum samples.",
+              "completed": true,
+              "complianceScore": 92
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "Automated spectrophotometric analyzer with integrated sample processing. Supports multiple assay formats. Results available in 15 minutes.",
+              "completed": true,
+              "complianceScore": 88
+            },
+            {
+              "id": "substantial-equivalence",
+              "title": "Substantial Equivalence",
+              "content": "Substantially equivalent to QuickTest Analyzer (K040156) in intended use and technological characteristics...",
+              "completed": true,
+              "complianceScore": 82
+            },
+            {
+              "id": "performance-standards",
+              "title": "Performance Standards",
+              "content": "Complies with CLSI, CAP, and FDA guidance documents...",
+              "completed": true,
+              "complianceScore": 95
+            },
+            {
+              "id": "manufacturing-info",
+              "title": "Manufacturing Information",
+              "content": "Manufactured at ISO 13485 certified facility in Cambridge, UK...",
+              "completed": true,
+              "complianceScore": 90
+            }
+          ],
+          "lastModified": "2025-12-23",
+          "createdAt": "2025-11-01"
+        }
+      ],
+      "predicates": [
+        {
+          "id": "K043210",
+          "kNumber": "K043210",
+          "deviceName": "Vascularity Monitor 2000",
+          "deviceClass": "II",
+          "productCode": "OCT",
+          "manufacturer": "Vascular Systems Corp",
+          "intendedUse": "Non-invasive vascular assessment device",
+          "submissionDate": "2015-06-10",
+          "clearanceDate": "2015-08-20",
+          "relevanceScore": 92
+        },
+        {
+          "id": "K040156",
+          "kNumber": "K040156",
+          "deviceName": "QuickTest Analyzer",
+          "deviceClass": "II",
+          "productCode": "CHR",
+          "manufacturer": "DiagnoSys International",
+          "intendedUse": "In vitro diagnostic system for biomarker detection",
+          "submissionDate": "2013-03-15",
+          "clearanceDate": "2013-05-22",
+          "relevanceScore": 87
+        }
+      ],
+      "progress": "Document significantly progressed, working on substantial equivalence"
+    },
+    "advanced": {
+      "description": "Advanced company with completed submissions and FDA clearances",
+      "organizations": [
+        {
+          "id": "org_1",
+          "name": "MedTech Innovations Inc.",
+          "industry": "Medical Devices",
+          "city": "Boston",
+          "state": "MA",
+          "country": "USA",
+          "phone": "(617) 555-0123",
+          "email": "regulatory@medtechinno.com",
+          "createdAt": "2025-10-15"
+        },
+        {
+          "id": "org_2",
+          "name": "CardiovascularSolutions Ltd.",
+          "industry": "Cardiac Devices",
+          "city": "San Francisco",
+          "state": "CA",
+          "country": "USA",
+          "phone": "(415) 555-0456",
+          "email": "compliance@cardiova.com",
+          "createdAt": "2025-11-01"
+        },
+        {
+          "id": "org_3",
+          "name": "DiagnosticTech Global",
+          "industry": "Diagnostic Devices",
+          "city": "Cambridge",
+          "state": "UK",
+          "country": "United Kingdom",
+          "phone": "+44 (0)1223 555789",
+          "email": "regulatory@diagnotech.co.uk",
+          "createdAt": "2025-09-20"
+        }
+      ],
+      "devices": [
+        {
+          "id": "device_1",
+          "organizationId": "org_1",
+          "deviceName": "CardioMonitor Pro",
+          "deviceClass": "II",
+          "productCode": "DMG",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "Device intended for...",
+          "status": "started",
+          "completionPercentage": 5,
+          "createdAt": "2025-12-20",
+          "updatedAt": "2025-12-20"
+        },
+        {
+          "id": "device_2",
+          "organizationId": "org_1",
+          "deviceName": "HeartFlow Monitor",
+          "deviceClass": "II",
+          "productCode": "DIJ",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity. It is intended for use by healthcare professionals in clinical settings including hospitals, physician offices, and emergency departments.",
+          "modelNumber": "HFM-2000",
+          "technicalCharacteristics": {
+            "displayType": "Digital LCD",
+            "sampleRate": "500 Hz",
+            "channels": 12,
+            "wireless": true,
+            "battery": "8 hours"
+          },
+          "status": "device_profile_complete",
+          "completionPercentage": 20,
+          "createdAt": "2025-12-10",
+          "updatedAt": "2025-12-25"
+        },
+        {
+          "id": "device_3",
+          "organizationId": "org_2",
+          "deviceName": "VascuCheck Pro",
+          "deviceClass": "II",
+          "productCode": "OCT",
+          "manufacturer": "CardiovascularSolutions Ltd.",
+          "intendedUse": "Non-invasive vascular assessment device for measuring blood flow and vessel compliance in peripheral and central circulation.",
+          "modelNumber": "VCP-3100",
+          "predicateSelected": true,
+          "predicateDeviceId": "K043210",
+          "predicateDeviceName": "Vascularity Monitor 2000",
+          "status": "predicate_selected",
+          "completionPercentage": 35,
+          "createdAt": "2025-11-15",
+          "updatedAt": "2025-12-22"
+        },
+        {
+          "id": "device_4",
+          "organizationId": "org_3",
+          "deviceName": "RapidDiag Test System",
+          "deviceClass": "II",
+          "productCode": "CHR",
+          "manufacturer": "DiagnosticTech Global",
+          "intendedUse": "In vitro diagnostic device for rapid detection of multiple biomarkers in clinical specimens.",
+          "modelNumber": "RDS-5000",
+          "predicateSelected": true,
+          "predicateDeviceId": "K040156",
+          "predicateDeviceName": "QuickTest Analyzer",
+          "equivalenceAnalysis": {
+            "score": 82,
+            "similarities": [
+              "Same intended use for rapid biomarker detection",
+              "Similar analytical methodology and algorithms",
+              "Equivalent safety profile based on literature review",
+              "Comparable performance specifications"
+            ],
+            "differences": [
+              "Improved sample processing speed (2x faster)",
+              "Enhanced user interface with touchscreen",
+              "Wireless connectivity added"
+            ],
+            "narrative": "The RapidDiag Test System is substantially equivalent to the QuickTest Analyzer. Both devices share the same intended use for rapid detection of multiple biomarkers. The technological characteristics are similar in that both utilize spectrophotometric analysis with advanced data processing algorithms.",
+            "createdAt": "2025-12-10"
+          },
+          "status": "equivalence_complete",
+          "completionPercentage": 50,
+          "createdAt": "2025-11-01",
+          "updatedAt": "2025-12-23"
+        },
+        {
+          "id": "device_5",
+          "organizationId": "org_1",
+          "deviceName": "MediGuard Safety Monitor",
+          "deviceClass": "II",
+          "productCode": "CMP",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "Real-time patient safety monitoring and alert system for post-operative recovery environments.",
+          "modelNumber": "MGS-2500",
+          "predicateSelected": true,
+          "predicateDeviceId": "K042890",
+          "equivalenceAnalysis": {
+            "score": 78,
+            "narrative": "Substantially equivalent based on intended use and technological characteristics"
+          },
+          "complianceCheck": {
+            "score": 91,
+            "passed": true,
+            "issues": [],
+            "warnings": [
+              "Consider additional biocompatibility data for prolonged skin contact"
+            ],
+            "criticalDeficiencies": [],
+            "recommendations": [
+              "Include performance testing data per ASTM F2100",
+              "Clinical validation study recommended for enhanced confidence"
+            ],
+            "lastChecked": "2025-12-24"
+          },
+          "status": "compliance_complete",
+          "completionPercentage": 65,
+          "createdAt": "2025-11-20",
+          "updatedAt": "2025-12-24"
+        },
+        {
+          "id": "device_6",
+          "organizationId": "org_2",
+          "deviceName": "ArterialFlow Sensor",
+          "deviceClass": "II",
+          "productCode": "DME",
+          "manufacturer": "CardiovascularSolutions Ltd.",
+          "intendedUse": "Non-invasive arterial blood flow measurement for cardiovascular assessment.",
+          "modelNumber": "AFS-1200",
+          "predicateSelected": true,
+          "predicateDeviceId": "K041567",
+          "equivalenceAnalysis": {
+            "score": 85,
+            "narrative": "Substantially equivalent device"
+          },
+          "complianceCheck": {
+            "score": 94,
+            "passed": true,
+            "issues": []
+          },
+          "submissionPackage": {
+            "assembled": true,
+            "packageId": "pkg_1702915200001",
+            "contents": {
+              "mainSummary": "Complete",
+              "predicateComparison": "Complete",
+              "equivalenceStatement": "Complete",
+              "technicalData": "Complete",
+              "attachments": 5
+            },
+            "size": 15728640,
+            "createdAt": "2025-12-24"
+          },
+          "status": "package_complete",
+          "completionPercentage": 80,
+          "createdAt": "2025-11-05",
+          "updatedAt": "2025-12-24"
+        },
+        {
+          "id": "device_7",
+          "organizationId": "org_3",
+          "deviceName": "BioMarker Pro Analyzer",
+          "deviceClass": "II",
+          "productCode": "LDT",
+          "manufacturer": "DiagnosticTech Global",
+          "intendedUse": "Advanced laboratory diagnostic analysis system for comprehensive biomarker profiling.",
+          "modelNumber": "BPA-7000",
+          "predicateSelected": true,
+          "predicateDeviceId": "K039876",
+          "equivalenceAnalysis": {
+            "score": 87,
+            "narrative": "Substantially equivalent device with enhanced capabilities"
+          },
+          "complianceCheck": {
+            "score": 96,
+            "passed": true
+          },
+          "submissionPackage": {
+            "assembled": true,
+            "packageId": "pkg_1702828800002",
+            "contents": {
+              "mainSummary": "Complete",
+              "predicateComparison": "Complete",
+              "equivalenceStatement": "Complete",
+              "technicalData": "Complete",
+              "attachments": 8
+            },
+            "submitted": true
+          },
+          "fdaSubmission": {
+            "submissionNumber": "K252845",
+            "submissionDate": "2025-12-15",
+            "confirmationNumber": "CONF1702721800001",
+            "status": "under_review",
+            "estimatedDecisionDate": "2026-03-15",
+            "progressPercentage": 45
+          },
+          "status": "submitted",
+          "completionPercentage": 90,
+          "createdAt": "2025-10-15",
+          "updatedAt": "2025-12-24"
+        },
+        {
+          "id": "device_8",
+          "organizationId": "org_1",
+          "deviceName": "NetCare Monitoring System",
+          "deviceClass": "II",
+          "productCode": "OIJ",
+          "manufacturer": "MedTech Innovations Inc.",
+          "intendedUse": "Network-based patient monitoring and clinical data management system.",
+          "modelNumber": "NCS-4000",
+          "predicateSelected": true,
+          "predicateDeviceId": "K038765",
+          "equivalenceAnalysis": {
+            "score": 81
+          },
+          "complianceCheck": {
+            "score": 95,
+            "passed": true
+          },
+          "submissionPackage": {
+            "assembled": true,
+            "packageId": "pkg_1702656000003"
+          },
+          "fdaSubmission": {
+            "submissionNumber": "K251234",
+            "submissionDate": "2025-09-10",
+            "confirmationNumber": "CONF1702570800001",
+            "status": "cleared",
+            "decisionDate": "2025-12-10",
+            "decisionLetter": "CLEARED_TO_MARKET",
+            "progressPercentage": 100
+          },
+          "status": "approved",
+          "completionPercentage": 100,
+          "approvalDate": "2025-12-10",
+          "createdAt": "2025-08-01",
+          "updatedAt": "2025-12-10"
+        }
+      ],
+      "documents": [
+        {
+          "id": "doc_1",
+          "organizationId": "org_1",
+          "deviceId": "device_1",
+          "documentType": "510k",
+          "title": "CardioMonitor Pro - 510(k) Submission",
+          "status": "in_progress",
+          "completionPercentage": 15,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "CardioMonitor Pro",
+              "completed": true
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "",
+              "completed": false
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "",
+              "completed": false
+            }
+          ],
+          "lastModified": "2025-12-20",
+          "createdAt": "2025-12-20"
+        },
+        {
+          "id": "doc_2",
+          "organizationId": "org_1",
+          "deviceId": "device_2",
+          "documentType": "510k",
+          "title": "HeartFlow Monitor - 510(k) Submission",
+          "status": "in_progress",
+          "completionPercentage": 60,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "HeartFlow Monitor",
+              "completed": true,
+              "complianceScore": 100
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "The HeartFlow Monitor is an electrocardiographic (ECG) monitoring device intended for non-invasive measurement and display of patients cardiac electrical activity.",
+              "completed": true,
+              "complianceScore": 85
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "12-lead ECG monitoring device with wireless transmission capabilities. Digital display, 500 Hz sampling rate, 8-hour battery life.",
+              "completed": true,
+              "complianceScore": 78
+            },
+            {
+              "id": "substantial-equivalence",
+              "title": "Substantial Equivalence",
+              "content": "",
+              "completed": false,
+              "complianceScore": 0
+            },
+            {
+              "id": "performance-standards",
+              "title": "Performance Standards",
+              "content": "",
+              "completed": false
+            }
+          ],
+          "lastModified": "2025-12-25",
+          "createdAt": "2025-12-10"
+        },
+        {
+          "id": "doc_3",
+          "organizationId": "org_3",
+          "deviceId": "device_4",
+          "documentType": "510k",
+          "title": "RapidDiag Test System - Complete Submission",
+          "status": "ready_for_submission",
+          "completionPercentage": 100,
+          "sections": [
+            {
+              "id": "device-name",
+              "title": "Device Name",
+              "content": "RapidDiag Test System",
+              "completed": true,
+              "complianceScore": 100
+            },
+            {
+              "id": "intended-use",
+              "title": "Intended Use",
+              "content": "In vitro diagnostic device for rapid detection of multiple biomarkers in clinical specimens including blood, plasma, and serum samples.",
+              "completed": true,
+              "complianceScore": 92
+            },
+            {
+              "id": "device-description",
+              "title": "Device Description",
+              "content": "Automated spectrophotometric analyzer with integrated sample processing. Supports multiple assay formats. Results available in 15 minutes.",
+              "completed": true,
+              "complianceScore": 88
+            },
+            {
+              "id": "substantial-equivalence",
+              "title": "Substantial Equivalence",
+              "content": "Substantially equivalent to QuickTest Analyzer (K040156) in intended use and technological characteristics...",
+              "completed": true,
+              "complianceScore": 82
+            },
+            {
+              "id": "performance-standards",
+              "title": "Performance Standards",
+              "content": "Complies with CLSI, CAP, and FDA guidance documents...",
+              "completed": true,
+              "complianceScore": 95
+            },
+            {
+              "id": "manufacturing-info",
+              "title": "Manufacturing Information",
+              "content": "Manufactured at ISO 13485 certified facility in Cambridge, UK...",
+              "completed": true,
+              "complianceScore": 90
+            }
+          ],
+          "lastModified": "2025-12-23",
+          "createdAt": "2025-11-01"
+        }
+      ],
+      "predicates": [
+        {
+          "id": "K043210",
+          "kNumber": "K043210",
+          "deviceName": "Vascularity Monitor 2000",
+          "deviceClass": "II",
+          "productCode": "OCT",
+          "manufacturer": "Vascular Systems Corp",
+          "intendedUse": "Non-invasive vascular assessment device",
+          "submissionDate": "2015-06-10",
+          "clearanceDate": "2015-08-20",
+          "relevanceScore": 92
+        },
+        {
+          "id": "K040156",
+          "kNumber": "K040156",
+          "deviceName": "QuickTest Analyzer",
+          "deviceClass": "II",
+          "productCode": "CHR",
+          "manufacturer": "DiagnoSys International",
+          "intendedUse": "In vitro diagnostic system for biomarker detection",
+          "submissionDate": "2013-03-15",
+          "clearanceDate": "2013-05-22",
+          "relevanceScore": 87
+        },
+        {
+          "id": "K042890",
+          "kNumber": "K042890",
+          "deviceName": "SafeAlert Monitoring System",
+          "deviceClass": "II",
+          "productCode": "CMP",
+          "manufacturer": "MedGuard Systems",
+          "intendedUse": "Post-operative patient monitoring",
+          "submissionDate": "2014-11-20",
+          "clearanceDate": "2015-01-15",
+          "relevanceScore": 85
+        }
+      ],
+      "equivalences": [
+        {
+          "id": "equiv_1",
+          "deviceId": "device_4",
+          "predicateId": "K040156",
+          "status": "completed",
+          "equivalenceScore": 82,
+          "similarities": [
+            "Same intended use for rapid biomarker detection",
+            "Similar analytical methodology",
+            "Equivalent safety profile",
+            "Comparable performance specifications"
+          ],
+          "differences": [
+            "Improved sample processing speed (2x faster)",
+            "Enhanced user interface with touchscreen",
+            "Wireless connectivity capability"
+          ],
+          "riskAssessment": {
+            "overallRisk": "LOW",
+            "biocompatibility": "Not applicable - non-contact",
+            "performanceRisk": "Low - exceeds predicate specifications",
+            "manufacturingRisk": "Low - established processes"
+          },
+          "narrative": "The RapidDiag Test System is substantially equivalent to the QuickTest Analyzer predicate device...",
+          "createdAt": "2025-12-10",
+          "reviewedBy": "Dr. Smith"
+        }
+      ],
+      "compliance": [
+        {
+          "id": "comp_1",
+          "deviceId": "device_5",
+          "status": "passed",
+          "complianceScore": 91,
+          "checkDate": "2025-12-24",
+          "results": {
+            "deviceNameComplete": true,
+            "intendedUseComplete": true,
+            "deviceDescriptionComplete": true,
+            "substantialEquivalenceComplete": true,
+            "performanceStandardsComplete": true,
+            "manufacturingInfoComplete": true,
+            "predicateSelected": true,
+            "equivalenceScoreAcceptable": true,
+            "noSignificantDifferences": false
+          },
+          "issues": [],
+          "warnings": [
+            "Consider additional biocompatibility data for prolonged skin contact"
+          ],
+          "criticalDeficiencies": [],
+          "recommendations": [
+            "Include performance testing data per ASTM F2100",
+            "Clinical validation study recommended"
+          ],
+          "canProceedToSubmission": true
+        }
+      ],
+      "submissions": [
+        {
+          "id": "sub_1",
+          "deviceId": "device_7",
+          "submissionNumber": "K252845",
+          "status": "under_review",
+          "submissionDate": "2025-12-15",
+          "confirmationNumber": "CONF1702721800001",
+          "estimatedDecisionDate": "2026-03-15",
+          "daysInReview": 10,
+          "expectedDaysForDecision": 90,
+          "progressPercentage": 45,
+          "timeline": [
+            {
+              "date": "2025-12-15",
+              "event": "Submission Received"
+            },
+            {
+              "date": "2025-12-20",
+              "event": "Completeness Review In Progress"
+            },
+            {
+              "date": "2026-01-15",
+              "event": "Expected: Deficiency Letter or Acceptance"
+            },
+            {
+              "date": "2026-03-15",
+              "event": "Expected: Final Decision"
+            }
+          ]
+        },
+        {
+          "id": "sub_2",
+          "deviceId": "device_8",
+          "submissionNumber": "K251234",
+          "status": "cleared",
+          "submissionDate": "2025-09-10",
+          "confirmationNumber": "CONF1702570800001",
+          "decisionDate": "2025-12-10",
+          "decisionLetter": "CLEARED_TO_MARKET",
+          "daysFromSubmissionToDecision": 91,
+          "progressPercentage": 100,
+          "timeline": [
+            {
+              "date": "2025-09-10",
+              "event": "Submission Received"
+            },
+            {
+              "date": "2025-09-15",
+              "event": "Completeness Review Passed"
+            },
+            {
+              "date": "2025-12-10",
+              "event": "Cleared for Market"
+            }
+          ]
+        }
+      ],
+      "progress": "Multiple devices at various stages including FDA approved devices"
+    }
+  }
+}

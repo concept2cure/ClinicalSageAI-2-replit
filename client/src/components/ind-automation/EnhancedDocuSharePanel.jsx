@@ -4,32 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import { useDropzone } from 'react-dropzone';
 import {
-  Loader2,
-  DownloadCloud,
-  Sparkles,
-  UploadCloud,
-  Filter,
-  Search,
-  Grid,
-  List,
-  Folder,
-  FileText,
-  File,
-  Clock,
-  ChevronRight,
-  ChevronDown,
-  Check,
-  X,
-} from 'lucide-react';
+  Loader2, DownloadCloud, Sparkles, UploadCloud, Filter, Search, Grid, List, Folder, FileText, File, Clock, ChevronRight, ChevronDown, Check, X } from 'lucide-react'
 import { summarizeDocumentAI } from '@/services/OpenAIService';
 import { Badge } from '@/components/ui/badge';
 import {

@@ -7,17 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
-  Activity, 
-  Brain, 
-  Target, 
-  TrendingUp, 
-  AlertTriangle,
-  ChevronRight,
-  CheckCircle2,
-  Circle,
-  Clock,
-  Zap
-} from 'lucide-react';
+  Activity, Brain, Target, TrendingUp, AlertTriangle, ChevronRight, CheckCircle2, Circle, Clock, Zap } from 'lucide-react'
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 const phaseConfig = {

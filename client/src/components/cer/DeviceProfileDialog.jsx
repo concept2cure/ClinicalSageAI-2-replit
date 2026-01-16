@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Clock, FileSymlink, Plus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Clock, FileSymlink, Plus, RefreshCw } from 'lucide-react'
 import DeviceProfileForm from './DeviceProfileForm';
 import { FDA510kService } from '@/services/FDA510kService';
 

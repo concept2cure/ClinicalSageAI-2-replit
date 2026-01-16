@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react'
 import useMemoryOptimization from '../../hooks/useMemoryOptimization';
 import useHealthMonitor from '../../hooks/useHealthMonitor';
 

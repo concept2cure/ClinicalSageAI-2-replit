@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Home, RefreshCw } from 'lucide-react';
+import { AlertCircle, Home, RefreshCw } from 'lucide-react'
 
 /**
  * Error Boundary Component

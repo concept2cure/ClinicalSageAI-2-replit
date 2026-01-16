@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, RefreshCw, Save, Copy, BookOpenCheck, FileText, ArrowDown } from 'lucide-react';
+import { Sparkles, RefreshCw, Save, Copy, BookOpenCheck, FileText, ArrowDown } from 'lucide-react'
 
 export default function TemplateEditor({ sectionId, initialValues = {}, template, onSave }) {
   const [values, setValues] = useState({});

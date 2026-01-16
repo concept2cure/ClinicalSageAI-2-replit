@@ -22,29 +22,7 @@ import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { 
-  Search,
-  Filter,
-  Calendar as CalendarIcon,
-  User,
-  FileText,
-  Package,
-  Shield,
-  Building,
-  Tag,
-  Clock,
-  ChevronRight,
-  ChevronDown,
-  X,
-  RotateCcw,
-  Save,
-  Bell,
-  Star,
-  Download,
-  Upload,
-  SlidersHorizontal,
-  Table,
-  Presentation
-} from 'lucide-react';
+  Search, Filter, Calendar as CalendarIcon, User, FileText, Package, Shield, Building, Tag, Clock, ChevronRight, ChevronDown, X, RotateCcw, Save, Bell, Star, Download, Upload, SlidersHorizontal, Table, Presentation } from 'lucide-react'
 
 export function AdvancedSearchPanel({ onSearch, onClose, initialQuery = '' }) {
   const { toast } = useToast();

@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { XCircle } from 'lucide-react';
+import { XCircle } from 'lucide-react'
 import EndpointRecommender from '@/components/EndpointRecommender';
 import EndpointEvaluator from '@/components/EndpointEvaluator';
 import { apiRequest } from '@/lib/queryClient';

@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
-  HelpCircle,
-  X,
-  Info,
-  LightbulbIcon,
-  CheckCircle,
-  ChevronRight,
-  ChevronLeft,
-} from 'lucide-react';
+  HelpCircle, X, Info, LightbulbIcon, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 /**

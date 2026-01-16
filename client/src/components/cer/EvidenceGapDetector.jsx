@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search, AlertTriangle, Book, Database, ArrowRight } from 'lucide-react';
+import { Loader2, Search, AlertTriangle, Book, Database, ArrowRight } from 'lucide-react'
 import CerTooltipWrapper from './CerTooltipWrapper';
 import { useToast } from '@/components/ui/toaster';
 

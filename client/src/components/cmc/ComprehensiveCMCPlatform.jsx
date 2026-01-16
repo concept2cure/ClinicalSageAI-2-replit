@@ -10,13 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
-  FlaskConical, BarChart3, Shield, Clock, Users, Target, AlertTriangle, CheckCircle2,
-  Plus, Edit, Download, Upload, Search, Filter, Microscope, TestTube, Activity,
-  Clipboard, Settings, Database, FileCheck, TrendingUp, AlertCircle, Calendar,
-  User, Eye, Trash2, Save, X, Package, Pill, ArrowRight, FileText, PlayCircle,
-  Award, Globe, Archive, Edit3, BookOpen, GitBranch, Link, Zap, Languages,
-  Flag, History, RefreshCw, Brain, Sparkles, PenTool
-} from 'lucide-react';
+  FlaskConical, BarChart3, Shield, Clock, Users, Target, AlertTriangle, CheckCircle2, Plus, Edit, Download, Upload, Search, Filter, Microscope, TestTube, Activity, Clipboard, Settings, Database, FileCheck, TrendingUp, AlertCircle, Calendar, User, Eye, Trash2, Save, X, Package, Pill, ArrowRight, FileText, PlayCircle, Award, Globe, Archive, Edit3, BookOpen, GitBranch, Link, Zap, Languages, Flag, History, RefreshCw, Brain, Sparkles, PenTool } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import DocumentAuthoringComponent from './DocumentAuthoringFixed';
 

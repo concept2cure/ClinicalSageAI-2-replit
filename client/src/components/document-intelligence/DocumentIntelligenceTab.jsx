@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, FileText, Microscope, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Brain, FileText, Microscope, ExternalLink, AlertTriangle } from 'lucide-react'
 import DocumentUploader from './DocumentUploader';
 import DocumentAnalyzer from './DocumentAnalyzer';
 import DocumentIntakeForm from './DocumentIntakeForm';

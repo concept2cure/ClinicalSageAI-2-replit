@@ -4,14 +4,7 @@ import axios from 'axios';
 // Only import icons that are used in the initial render
 // Other icons will be imported dynamically as needed
 import {
-  MessageSquare,
-  CheckSquare,
-  PlayCircle,
-  FileCheck,
-  ChevronDown,
-  Clock,
-  Info,
-} from 'lucide-react';
+  MessageSquare, CheckSquare, PlayCircle, FileCheck, ChevronDown, Clock, Info, Lightbulb, CheckCircle, AlertTriangle, X, UserCheck, ChevronRight, Calendar, PlusCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

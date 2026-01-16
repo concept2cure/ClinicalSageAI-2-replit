@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, ChevronRight, ChevronLeft, X, Info } from 'lucide-react';
+import { HelpCircle, ChevronRight, ChevronLeft, X, Info } from 'lucide-react'
 
 /**
  * Enhanced tooltip component with multi-step walkthrough capabilities

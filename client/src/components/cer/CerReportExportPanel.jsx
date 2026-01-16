@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/toaster';
-import { FileDown, Loader2 } from 'lucide-react';
+import { FileDown, Loader2 } from 'lucide-react'
 
 /**
  * CER Report Export Panel - Allows batch exporting of multiple CER reports

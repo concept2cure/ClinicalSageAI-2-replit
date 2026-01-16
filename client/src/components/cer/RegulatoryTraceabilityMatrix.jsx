@@ -3,13 +3,7 @@ import { cerApiService } from '@/services/CerAPIService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,15 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  Info,
-  ShieldCheck,
-  FileText,
-  ListChecks,
-  CircleDot,
-} from 'lucide-react';
+  Loader2, CheckCircle, AlertCircle, Info, ShieldCheck, FileText, ListChecks, CircleDot } from 'lucide-react'
 import CerTooltipWrapper from './CerTooltipWrapper';
 import QmpIntegrationHelp from './QmpIntegrationHelp';
 import {

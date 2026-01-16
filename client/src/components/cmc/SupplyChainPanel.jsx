@@ -5,50 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from '@/components/ui/tooltip';
 import {
-  Download,
-  ShoppingCart,
-  FileCheck,
-  TestTube,
-  Plane,
-  Shield,
-  AlertTriangle,
-  CheckCircle2,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-  Factory,
-  Thermometer,
-  TrendingUp,
-  ExternalLink,
-  RefreshCw,
-  Bell,
-  Play,
-  DollarSign,
-  Truck,
-  Scan,
-  MapPin,
-  Timer,
-  TrendingDown,
-  Gauge,
-  BarChart4,
-  PieChart,
-  Building2,
-  Boxes,
-  Ship,
-  Circle,
-  Copy,
-  FileText,
-  Settings,
-  Package,
-  Clock,
-  Building,
-} from 'lucide-react';
+  Download, ShoppingCart, FileCheck, TestTube, Plane, Shield, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, Minus, Factory, Thermometer, TrendingUp, ExternalLink, RefreshCw, Bell, Play, DollarSign, Truck, Scan, MapPin, Timer, TrendingDown, Gauge, BarChart4, PieChart, Building2, Boxes, Ship, Circle, Copy, FileText, Settings, Package, Clock, Building, Brain, Info } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 // Import utility functions from the main component

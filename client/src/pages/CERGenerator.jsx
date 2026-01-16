@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, FileText, CheckCircle, Download } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle, Download } from 'lucide-react'
 
 export default function CERGenerator() {
   return (

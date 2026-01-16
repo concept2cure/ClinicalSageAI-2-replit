@@ -11,6 +11,8 @@
  * - Guidance notes based on ICH requirements
  */
 
+import { indTemplates } from './ind-templates';
+
 // Helper function to generate a template ID
 const generateTemplateId = moduleSection => {
   return `ctd-${moduleSection.toLowerCase().replace(/\./g, '-')}`;
@@ -552,6 +554,7 @@ export const ctdTemplates = [
   ...module3Templates,
   ...module4Templates,
   ...module5Templates,
+  ...indTemplates,
 ];
 
 export default ctdTemplates;

@@ -3,33 +3,9 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Badge,
-} from '@/components/ui';
+  Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Badge, } from '@/components/ui';
 import {
-  Download,
-  FileText,
-  Microscope,
-  Beaker,
-  Users,
-  PieChart,
-  BarChart,
-  Search,
-  Filter,
-  ChevronDown,
-  Calendar,
-  LineChart,
-} from 'lucide-react';
+  Download, FileText, Microscope, Beaker, Users, PieChart, BarChart, Search, Filter, ChevronDown, Calendar, LineChart } from 'lucide-react'
 
 export default function LumenBioReport() {
   const [selectedDrug, setSelectedDrug] = useState('all');

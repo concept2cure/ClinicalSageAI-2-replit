@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trash2, Plus } from 'lucide-react';
+import { Save, Trash2, Plus } from 'lucide-react'
 
 export default function ControlStrategyTab({ processId }) {
   const [paramName, setParam] = useState('');

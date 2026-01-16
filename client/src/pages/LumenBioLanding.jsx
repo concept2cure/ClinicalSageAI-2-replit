@@ -3,47 +3,15 @@ import { Helmet } from '../lightweight-wrappers.js';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  FileText,
-  BarChart3,
-  CheckCircle2,
-  ArrowRight,
-  FileBarChart,
-  Microscope,
-  BookOpen,
-  ChevronRight,
-  Upload,
-  Database,
-  Brain,
-  Layout,
-  Folder,
-  FileUp,
-  FileQuestion,
-  Settings,
-  Users,
-  Info,
-  Search,
-} from 'lucide-react';
+  FileText, BarChart3, CheckCircle2, ArrowRight, FileBarChart, Microscope, BookOpen, ChevronRight, Upload, Database, Brain, Layout, Folder, FileUp, FileQuestion, Settings, Users, Info, Search } from 'lucide-react'
 
 const LumenBioLanding = () => {
   const [selectedFile, setSelectedFile] = useState(null);

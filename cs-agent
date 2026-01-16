@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Repo-local CLI wrapper.
+node "$(dirname "$0")/scripts/agent-cli.mjs" "$@"

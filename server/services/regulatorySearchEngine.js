@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { documentVersions, components, ragChunks, ragDocuments } from '../../shared/schema.js';
+import { documentVersions, components, ragChunks, ragDocuments } from '../../shared/schema.ts';
 import { sql, and, or, ilike, eq, desc } from 'drizzle-orm';
 import regulatoryAIPhase3 from './regulatoryAIServicePhase3.js';
 

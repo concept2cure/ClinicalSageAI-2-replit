@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, AlertCircle, Info, CheckCircle, Clock, Database, BookOpen } from 'lucide-react';
+import { X, AlertCircle, Info, CheckCircle, Clock, Database, BookOpen } from 'lucide-react'
 
 /**
  * Render a text-based progress bar using block characters

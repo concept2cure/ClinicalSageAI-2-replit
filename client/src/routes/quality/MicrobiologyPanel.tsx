@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Microscope, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Microscope, AlertTriangle, CheckCircle } from 'lucide-react'
 import InfoTip from '@/components/InfoTip';
 
 interface MicrobiologyPanelProps {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react'
 
 // Create the context
 const TourContext = createContext(null);

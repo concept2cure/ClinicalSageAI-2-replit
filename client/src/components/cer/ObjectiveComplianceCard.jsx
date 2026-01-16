@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertTriangle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { getObjectiveCompliance } from '@/services/CerComplianceService';
 

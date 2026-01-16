@@ -9,13 +9,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -27,30 +21,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  FileDown,
-  AlertCircle,
-  CheckCircle,
-  ChevronRight,
-  Loader2,
-  Eye,
-  FileText,
-  Package,
-  Shield,
-  Calendar,
-  User,
-  TrendingUp,
-  GitMerge,
-  FileWarning,
-  ArrowRight,
-  Search,
-} from 'lucide-react';
+  FileDown, AlertCircle, CheckCircle, ChevronRight, Loader2, Eye, FileText, Package, Shield, Calendar, User, TrendingUp, GitMerge, FileWarning, ArrowRight, Search } from 'lucide-react'
 
 const ImportFromINDDialog = ({ isOpen, onClose, targetDocumentId, onImportComplete }) => {
   const { toast } = useToast();

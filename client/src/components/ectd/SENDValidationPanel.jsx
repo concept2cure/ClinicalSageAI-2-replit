@@ -1,9 +1,6 @@
 import { useState, useCallback } from 'react';
 import { 
-  AlertCircle, CheckCircle2, XCircle, Upload, 
-  FileText, Download, Zap, AlertTriangle,
-  ShieldCheck, FileSearch, Settings
-} from 'lucide-react';
+  AlertCircle, CheckCircle2, XCircle, Upload, FileText, Download, Zap, AlertTriangle, ShieldCheck, FileSearch, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

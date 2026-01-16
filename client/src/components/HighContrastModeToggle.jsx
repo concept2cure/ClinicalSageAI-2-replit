@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { SunMoon } from 'lucide-react';
+import { SunMoon } from 'lucide-react'
 
 const HighContrastModeToggle = () => {
   // Get initial state from localStorage if available

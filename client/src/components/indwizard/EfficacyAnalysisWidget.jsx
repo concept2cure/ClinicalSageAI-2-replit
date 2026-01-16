@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  BarChart2,
-  Activity,
-  FileText,
-  XCircle,
-  PieChart,
-  CheckCircle,
-  Clock,
-  HelpCircle,
-} from 'lucide-react';
+  BarChart2, Activity, FileText, XCircle, PieChart, CheckCircle, Clock, HelpCircle } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import indWizardService from '@/services/indWizardService';

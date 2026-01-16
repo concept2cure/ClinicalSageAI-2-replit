@@ -5,7 +5,7 @@
  * module-level readiness dropdown, and predictive insights
  */
 
-import { Gauge, ShieldCheck, UploadCloud, ChevronUp, ChevronDown, DollarSign } from 'lucide-react';
+import { Gauge, ShieldCheck, UploadCloud, ChevronUp, ChevronDown, DollarSign } from 'lucide-react'
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../utils/i18n-stub.js';

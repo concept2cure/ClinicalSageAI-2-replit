@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 

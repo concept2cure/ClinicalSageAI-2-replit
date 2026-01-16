@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 
 interface ProtocolData {

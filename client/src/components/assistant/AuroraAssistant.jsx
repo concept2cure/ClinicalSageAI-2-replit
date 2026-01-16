@@ -1,24 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Bot,
-  Search,
-  X,
-  SendHorizontal,
-  Sparkles,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  ClipboardCheck,
-  FileSearch,
-  Database,
-  BookOpen,
-  Lightbulb,
-  Settings,
-  ExternalLink,
-  FilePlus,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
+  Bot, Search, X, SendHorizontal, Sparkles, AlertCircle, ChevronDown, ChevronUp, ClipboardCheck, FileSearch, Database, BookOpen, Lightbulb, Settings, ExternalLink, FilePlus, CheckCircle, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns';
 
 // Aurora Assistant Component

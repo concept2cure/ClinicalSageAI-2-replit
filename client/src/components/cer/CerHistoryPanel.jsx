@@ -6,32 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from '@/components/ui/dialog';
 import {
-  Search,
-  FileText,
-  History,
-  Download,
-  Eye,
-  ArrowUpDown,
-  CalendarDays,
-  Users,
-  GitCompare,
-  Clock,
-} from 'lucide-react';
+  Search, FileText, History, Download, Eye, ArrowUpDown, CalendarDays, Users, GitCompare, Clock } from 'lucide-react'
 import axios from 'axios';
 
 export default function CerHistoryPanel() {

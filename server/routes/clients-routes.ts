@@ -8,10 +8,22 @@ import {
   projects,
   projectModules,
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 // Create a new router for client endpoints
 const router = Router();
+
+const isDbUnavailable = (error: unknown) => {
+  const anyErr: any = error;
+  const code = anyErr?.code;
+  const message = String(anyErr?.message || '');
+  if (code === 'NO_DB' || code === 'ECONNREFUSED') return true;
+  if (message.includes('DATABASE_URL') && message.includes('not set')) return true;
+  if (message.includes('ECONNREFUSED')) return true;
+  const nested = anyErr?.errors;
+  if (Array.isArray(nested) && nested.some((e: any) => e?.code === 'ECONNREFUSED')) return true;
+  return false;
+};
 
 // Note: We now save clients directly to the database
 
@@ -22,6 +34,13 @@ const router = Router();
 router.get('/all', async (req, res) => {
   try {
     console.log('Fetching ALL client workspaces from ALL organizations');
+
+    if (!db) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
 
     // Fetch ALL client workspaces from database regardless of organization
     const clients = await db
@@ -47,6 +66,18 @@ router.get('/all', async (req, res) => {
 
     console.log(`Found ${clients.length} total client workspaces across all organizations`);
 
+    const projectCounts = await db
+      .select({
+        clientWorkspaceId: projects.clientWorkspaceId,
+        count: sql<number>`count(*)`,
+      })
+      .from(projects)
+      .groupBy(projects.clientWorkspaceId);
+
+    const projectCountMap = new Map(
+      projectCounts.map(entry => [String(entry.clientWorkspaceId), Number(entry.count || 0)])
+    );
+
     // Transform data to match frontend expectations
     const transformedClients = clients.map(client => ({
       id: String(client.id),
@@ -55,7 +86,7 @@ router.get('/all', async (req, res) => {
       organizationId: String(client.organizationId),
       organizationName: client.organizationName,
       logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: projectCountMap.get(String(client.id)) || 0,
       quotaProjects: client.quotaProjects || 5,
       storageUsedGB: 0, // TODO: Calculate actual storage usage
       quotaStorageGB: client.quotaStorage || 1,
@@ -71,6 +102,14 @@ router.get('/all', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching all clients:', error);
+
+    if (isDbUnavailable(error)) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch clients',
@@ -94,6 +133,13 @@ router.get('/', async (req, res) => {
     }
 
     console.log(`Fetching client workspaces for organization: ${organizationId}`);
+
+    if (!db) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
 
     // Fetch client workspaces from database
     const clients = await db
@@ -120,6 +166,19 @@ router.get('/', async (req, res) => {
 
     console.log(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
+    const projectCounts = await db
+      .select({
+        clientWorkspaceId: projects.clientWorkspaceId,
+        count: sql<number>`count(*)`,
+      })
+      .from(projects)
+      .where(eq(projects.organizationId, parseInt(organizationId as string)))
+      .groupBy(projects.clientWorkspaceId);
+
+    const projectCountMap = new Map(
+      projectCounts.map(entry => [String(entry.clientWorkspaceId), Number(entry.count || 0)])
+    );
+
     // Transform data to match frontend expectations
     const transformedClients = clients.map(client => ({
       id: String(client.id),
@@ -127,7 +186,7 @@ router.get('/', async (req, res) => {
       slug: client.slug,
       organizationId: String(client.organizationId),
       logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: projectCountMap.get(String(client.id)) || 0,
       quotaProjects: client.quotaProjects || 5,
       storageUsedGB: 0, // TODO: Calculate actual storage usage
       quotaStorageGB: client.quotaStorage || 1,
@@ -143,6 +202,14 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching clients:', error);
+
+    if (isDbUnavailable(error)) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch client workspaces',
@@ -167,6 +234,13 @@ router.post('/', async (req, res) => {
     }
 
     console.log('Creating new client workspace:', { name, slug, organizationId });
+
+    if (!db) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
 
     // Create new client in database
     const [newClient] = await db
@@ -220,6 +294,13 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating client:', error);
+
+    if (isDbUnavailable(error)) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
 
     // Handle duplicate slug error specifically
     if (error.code === '23505' && error.constraint === 'unique_org_slug') {
@@ -280,14 +361,19 @@ router.get('/:id', async (req, res) => {
 
     console.log(`Client found:`, client.name);
 
-    // Transform data to match frontend expectations with mock project data
+    const [projectCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(projects)
+      .where(eq(projects.clientWorkspaceId, parseInt(id)));
+
+    // Transform data to match frontend expectations
     const clientData = {
       id: String(client.id),
       name: client.name,
       slug: client.slug,
       organizationId: String(client.organizationId),
       logo: client.logo || '/logos/default-client.png',
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: Number(projectCount?.count || 0),
       quotaProjects: client.quotaProjects || 5,
       storageUsedGB: 0, // TODO: Calculate actual storage usage
       quotaStorageGB: client.quotaStorage || 1,
@@ -758,17 +844,28 @@ router.get('/:id/settings', async (req, res) => {
 
     console.log(`Fetching workspace settings for client: ${id}`);
 
-    // Try to fetch existing workspace settings from database
-    const [existingSettings] = await db
-      .select()
-      .from(clientWorkspaceSettings)
-      .where(eq(clientWorkspaceSettings.clientWorkspaceId, parseInt(id)));
+    const isNumericId = /^\d+$/.test(id);
+    let existingSettings: any = undefined;
+    let clientWorkspace: any = undefined;
 
-    // Get current client workspace for defaults
-    const [clientWorkspace] = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.id, parseInt(id)));
+    if (db && isNumericId) {
+      // Try to fetch existing workspace settings from database
+      [existingSettings] = await db
+        .select()
+        .from(clientWorkspaceSettings)
+        .where(eq(clientWorkspaceSettings.clientWorkspaceId, parseInt(id)));
+
+      // Get current client workspace for defaults
+      [clientWorkspace] = await db
+        .select()
+        .from(clientWorkspaces)
+        .where(eq(clientWorkspaces.id, parseInt(id)));
+    } else {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable',
+      });
+    }
 
     const defaultSettings = {
       general: {
@@ -876,6 +973,14 @@ router.patch('/:id/settings', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Client ID is required',
+      });
+    }
+
+    const isNumericId = /^\d+$/.test(id);
+    if (!db || !isNumericId) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database unavailable: settings cannot be updated',
       });
     }
 

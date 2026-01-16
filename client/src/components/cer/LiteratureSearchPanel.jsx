@@ -1,43 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  searchPubMed,
-  searchLiterature,
-  generateCitations,
-  summarizePaper,
-  generateLiteratureReview,
-  analyzePaperPDF,
-} from '@/services/LiteratureAPIService';
+import { searchPubMed, searchLiterature, generateCitations, summarizePaper, generateLiteratureReview, analyzePaperPDF, } from '@/services/LiteratureAPIService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toaster';
 import {
-  AlertCircle,
-  BookOpen,
-  BookOpenCheck,
-  BookmarkCheck,
-  Check,
-  Download,
-  FileCheck,
-  FileText,
-  FileUp,
-  Loader2,
-  Plus,
-  Search,
-  Sparkles,
-  Upload,
-  Zap,
-} from 'lucide-react';
+  AlertCircle, BookOpen, BookOpenCheck, BookmarkCheck, Check, Download, FileCheck, FileText, FileUp, Loader2, Plus, Search, Sparkles, Upload, Zap } from 'lucide-react'
 
 /**
  * Literature Search Panel Component for CER Generator

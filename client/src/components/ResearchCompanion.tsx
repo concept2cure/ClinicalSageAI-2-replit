@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { XCircle, Send, Bot, BookOpen, Lightbulb, ExternalLink } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { XCircle, Send, Bot, BookOpen, Lightbulb, ExternalLink, Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useResearchCompanion } from '@/hooks/use-research-companion';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
+
+
 
 type Message = {
   id: string;

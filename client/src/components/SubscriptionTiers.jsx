@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
-import { CheckCircle, AlertCircle, FileText, BarChart, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertCircle, FileText, BarChart, ChevronRight } from 'lucide-react'
 
 // Report bundles for each persona
 const SUBSCRIPTION_TIERS = [

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 
 const signupSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email' }),
@@ -43,28 +43,17 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       await signup(data.email, data.username, data.password);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Account created successfully',
         description: 'Welcome to TrialSage!',
-      })
-  console.log('Toast would show:', {
-        title: 'Account created successfully',
-        description: 'Welcome to TrialSage!',
-      });
+  });
       setLocation('/dashboard');
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Signup failed',
         description: error instanceof Error ? error.message : 'An error occurred during signup',
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Signup failed',
-        description: error instanceof Error ? error.message : 'An error occurred during signup',
-        variant: 'destructive',
-      });
+  });
     } finally {
       setIsSubmitting(false);
     }

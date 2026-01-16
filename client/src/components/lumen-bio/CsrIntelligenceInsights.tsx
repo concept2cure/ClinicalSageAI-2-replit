@@ -1,18 +1,10 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
 } from "@/components/ui/card";
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+  Tabs, TabsContent, TabsList, TabsTrigger 
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,79 +13,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  ScatterChart,
-  Scatter,
-  ZAxis
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis
 } from "recharts";
 import {
-  FileText,
-  Microscope,
-  BarChart2,
-  PieChart as PieChartIcon,
-  ChartBar,
-  BookOpen,
-  Download,
-  Share,
-  AlertCircle,
-  Beaker,
-  Target,
-  ArrowUpRight,
-  Clock,
-  Users,
-  TrendingUp,
-  Layers,
-  CheckCircle,
-  ArrowDownRight,
-  FileCheck,
-  ExternalLink,
-  LineChart as LineChartIcon,
-  BellDot,
-  Sparkles,
-  Award,
-  Brain,
-  Lightbulb,
-  Dna,
-  Upload,
-  FileUp,
-  Loader2,
-  UploadCloud,
-  Info,
-  File,
-  Lock
-} from "lucide-react";
+  FileText, Microscope, BarChart2, PieChart as PieChartIcon, ChartBar, BookOpen, Download, Share, AlertCircle, Beaker, Target, ArrowUpRight, Clock, Users, TrendingUp, Layers, CheckCircle, ArrowDownRight, FileCheck, ExternalLink, LineChart as LineChartIcon, BellDot, Sparkles, Award, Brain, Lightbulb, Dna, Upload, FileUp, Loader2, UploadCloud, Info, File, Lock } from 'lucide-react'
 import {
   HoverCard,
   HoverCardContent,
@@ -298,17 +229,11 @@ const DocumentUploadForm = () => {
   // Simulate a file upload with progress
   const simulateUpload = () => {
     if (fileInputRef.current?.files?.length === 0) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No file selected",
         description: "Please select a file to upload",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "No file selected",
-        description: "Please select a file to upload",
-        variant: "destructive",
-      });
+  });
       return;
     }
 
@@ -338,15 +263,10 @@ const DocumentUploadForm = () => {
   // Simulate starting the analysis
   const startAnalysis = () => {
     setAnalysisStarted(true);
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Analysis Started",
       description: "Your document is being analyzed. You'll be notified when it's complete.",
-    })
-  console.log('Toast would show:', {
-      title: "Analysis Started",
-      description: "Your document is being analyzed. You'll be notified when it's complete.",
-    });
+  });
   };
 
   return (

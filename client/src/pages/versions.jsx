@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Download, Clock, Eye, X, GitCompare, RefreshCw } from 'lucide-react';
+import { FileText, Download, Clock, Eye, X, GitCompare, RefreshCw, Navigation } from 'lucide-react'
 import Navigation from '../components/Navigation';
 import ReactDiffViewer from '../lightweight-wrappers.js';
 import withAuthGuard from '../utils/withAuthGuard';

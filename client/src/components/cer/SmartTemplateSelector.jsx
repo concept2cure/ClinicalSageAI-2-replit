@@ -5,13 +5,7 @@ import { useToast } from '@/components/ui/toaster';
 
 // UI Components
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,31 +14,13 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Icons
 import {
-  FileText,
-  FileSearch,
-  CheckCircle,
-  AlertCircle,
-  ListFilter,
-  ChevronRight,
-  Layout,
-  FileJson,
-  Globe,
-  Sparkles,
-  Beaker,
-  Package,
-  Shield,
-  Table,
-} from 'lucide-react';
+  FileText, FileSearch, CheckCircle, AlertCircle, ListFilter, ChevronRight, Layout, FileJson, Globe, Sparkles, Beaker, Package, Shield, Table } from 'lucide-react'
 
 /**
  * Smart Template Selector Component

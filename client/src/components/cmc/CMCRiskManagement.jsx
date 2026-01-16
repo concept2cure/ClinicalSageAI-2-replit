@@ -6,47 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  AlertTriangle,
-  Shield,
-  TrendingUp,
-  BarChart3,
-  Target,
-  Eye,
-  Plus,
-  Edit,
-  CheckCircle2,
-  Clock,
-  ArrowUp,
-  ArrowDown,
-  Activity,
-  FileText,
-  Users,
-  Calendar,
-  AlertCircle,
-  Award,
-  Settings,
-  Filter,
-  Download,
-  Upload,
-} from 'lucide-react';
+  AlertTriangle, Shield, TrendingUp, BarChart3, Target, Eye, Plus, Edit, CheckCircle2, Clock, ArrowUp, ArrowDown, Activity, FileText, Users, Calendar, AlertCircle, Award, Settings, Filter, Download, Upload } from 'lucide-react'
 
 const CMCRiskManagement = () => {
   const [activeTab, setActiveTab] = useState('matrix');

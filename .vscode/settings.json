@@ -1,0 +1,23 @@
+{
+    "robotcode.disableExtension": true,
+    "chat.allowAnonymousAccess": true,
+    "chat.checkpoints.showFileChanges": false,
+    "chat.customAgentInSubagent.enabled": true,
+    "chat.disableAIFeatures": false,
+    "chat.mcp.assisted.nuget.enabled": true,
+    "chat.mcp.discovery.enabled": {
+        "claude-desktop": true,
+        "windsurf": true,
+        "cursor-global": true,
+        "cursor-workspace": true
+    },
+    "chat.mcp.gallery.enabled": true,
+    "chat.renderRelatedFiles": true,
+    "chat.restoreLastPanelSession": true,
+    "chat.todoListTool.descriptionField": true,
+    "chat.tools.terminal.autoReplyToPrompts": false,
+    "chat.tools.terminal.terminalProfile.linux": {
+
+    },
+    "inlineChat.notebookAgent": true
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Shield } from 'lucide-react';
+import { Shield } from 'lucide-react'
 
 export default function SSOButton({ projectId, className }) {
   const handleSSO = () => {

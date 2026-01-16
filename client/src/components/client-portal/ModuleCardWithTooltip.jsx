@@ -9,7 +9,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, HelpCircle } from 'lucide-react';
+import { ExternalLink, HelpCircle } from 'lucide-react'
 import { useLocation } from 'wouter';
 import INDWizardTooltip from '../ind-wizard/INDWizardTooltip';
 

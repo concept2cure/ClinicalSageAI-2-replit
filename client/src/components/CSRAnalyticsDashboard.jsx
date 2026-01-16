@@ -4,19 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  TrendingUp,
-  Activity,
-  Users,
-  Target,
-  BarChart3,
-  PieChart,
-  LineChart,
-  Database,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Calendar,
-} from 'lucide-react';
+  TrendingUp, Activity, Users, Target, BarChart3, PieChart, LineChart, Database, Clock, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
 
 const CSRAnalyticsDashboard = ({ metrics }) => {
   const [analyticsData, setAnalyticsData] = useState(null);

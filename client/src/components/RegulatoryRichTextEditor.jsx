@@ -13,29 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Table as TableIcon,
-  Highlighter,
-  Undo,
-  Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Code,
-  Quote,
-  Minus,
-  CheckSquare,
-  Eye,
-  Edit3
-} from 'lucide-react';
+  Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Table as TableIcon, Highlighter, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Code, Quote, Minus, CheckSquare, Eye, Edit3 } from 'lucide-react'
 
 /**
  * Rich Text Editor for FDA 510(k) and Medical Device Regulatory Documents

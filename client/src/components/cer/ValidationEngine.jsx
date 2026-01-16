@@ -17,37 +17,14 @@ import React, { useState, useEffect } from 'react';
 import { cerApiService } from '@/services/CerAPIService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  AlertCircle,
-  CheckCircle,
-  AlertTriangle,
-  FileCheck,
-  BookOpen,
-  Gauge,
-  RefreshCw,
-  ClipboardList,
-  Shield,
-  Download,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, AlertTriangle, FileCheck, BookOpen, Gauge, RefreshCw, ClipboardList, Shield, Download } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toaster';
 

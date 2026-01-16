@@ -39,20 +39,17 @@ export const toast = {
     });
   },
 
-  // Promise-based toast
   promise: (promise, messages) => {
     if (!toastFn) {
       console.error('Toast not initialized');
       return promise;
     }
 
-    // Show loading message
     toastFn({
       title: 'Loading',
       description: messages.loading,
     });
 
-    // Handle promise resolution
     return promise
       .then(data => {
         toastFn({
@@ -77,11 +74,9 @@ export const toast = {
   },
 };
 
-// Hook to initialize toast in components
 export const useToast = () => {
   const shadcnToast = useShadcnToast();
 
-  // Initialize toast if not already done
   if (!toastFn) {
     toastFn = shadcnToast.toast;
   }
@@ -89,4 +84,12 @@ export const useToast = () => {
   return {
     toast: toastFn,
   };
+};
+
+export const Sparklines = ({ children, data }) => {
+  return children || null;
+};
+
+export const SparklinesLine = ({ color = '#000', dataKey = 'value' }) => {
+  return null;
 };

@@ -1,4 +1,4 @@
-import { Bot, MessageSquare } from 'lucide-react';
+import { Bot, MessageSquare } from 'lucide-react'
 import { useAuroraAssistant } from './AuroraAssistantProvider';
 
 // Aurora Assistant Button Component - Can be placed in any module

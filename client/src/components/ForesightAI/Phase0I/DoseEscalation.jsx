@@ -9,30 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-  ScatterChart,
-  Scatter
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ScatterChart, Scatter
 } from 'recharts';
 import {
-  Activity,
-  AlertTriangle,
-  Brain,
-  Calculator,
-  ChevronRight,
-  Download,
-  Info,
-  TrendingUp,
-  Zap
-} from 'lucide-react';
+  Activity, AlertTriangle, Brain, Calculator, ChevronRight, Download, Info, TrendingUp, Zap } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 

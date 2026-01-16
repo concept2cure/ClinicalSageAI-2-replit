@@ -26,9 +26,17 @@ export const Navigate = ({ to }: { to: string }) => {
 };
 
 // Compatibility hooks
-export const useNavigate = () => (path: string) => {
-  console.warn(`[compatibility] useNavigate() called - please update to use wouter hooks`);
-  window.location.href = path;
+export const useNavigate = () => {
+  return (path: string, options?: { state?: any }) => {
+    console.warn(`[compatibility] useNavigate() called - please update to use wouter hooks`);
+    if (options?.state) {
+      window.history.pushState(options.state, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return;
+    }
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 };
 
 export const useParams = () => {

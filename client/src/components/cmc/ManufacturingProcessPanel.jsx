@@ -8,33 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Settings,
-  Save,
-  Download,
-  RefreshCw,
-  FileText,
-  Shield,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Bell,
-  Menu,
-  X,
-  ChevronRight,
-  Users,
-  Globe,
-  Zap,
-  Target,
-  Activity,
-  Brain,
-  Factory,
-  BookOpen,
-  Archive,
-  Sparkles,
-  Loader2,
-  HelpCircle,
-  Eye
-} from 'lucide-react';
+  Settings, Save, Download, RefreshCw, FileText, Shield, AlertCircle, CheckCircle2, Clock, Bell, Menu, X, ChevronRight, Users, Globe, Zap, Target, Activity, Brain, Factory, BookOpen, Archive, Sparkles, Loader2, HelpCircle, Eye, AlertTriangle, GitBranch, TrendingUp, Edit } from 'lucide-react'
 
 import ManufacturingStepperWorkflow from './ManufacturingStepperWorkflow';
 import ManufacturingKPICards from './ManufacturingKPICards';

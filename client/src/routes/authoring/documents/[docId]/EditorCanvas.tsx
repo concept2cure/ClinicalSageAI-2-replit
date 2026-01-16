@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { EditorContent, useEditor } from '@tiptap/react';
+import React, { useEffect, useState } from 'react';
+import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import type { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+import { TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import { Highlight } from '@tiptap/extension-highlight';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
@@ -9,18 +10,7 @@ import { Mention } from '@tiptap/extension-mention';
 import CharacterCount from '@tiptap/extension-character-count';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react';
 import {
-  Bold,
-  Italic,
-  List,
-  Table2,
-  Plus,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Quote,
-  Code,
-  Link,
-} from 'lucide-react';
+  Bold, Italic, List, Table2, Plus, AlertCircle, CheckCircle, Info, Quote, Code, Link } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -30,6 +20,8 @@ import { CitationsPlugin } from '../plugins/citationsPlugin';
 import { PlaceholdersPlugin } from '../plugins/placeholdersPlugin';
 import { RedlinePlugin } from '../plugins/redlinePlugin';
 import { RegionTerminologyPlugin } from '../plugins/regionTerminologyPlugin';
+import { SmartData, SmartDataInsertPayload } from '../extensions/SmartData';
+import { SmartTable } from '@/components/editor/extensions/SmartTable';
 
 interface EditorCanvasProps {
   content: string;
@@ -62,12 +54,27 @@ export default function EditorCanvas({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Table.configure({
+      SmartTable.configure({
         resizable: true,
+        HTMLAttributes: {
+          class: 'w-full border-collapse text-sm my-6 font-sans border border-gray-300',
+        },
       }),
-      TableRow,
-      TableHeader,
-      TableCell,
+      TableRow.configure({
+        HTMLAttributes: {
+          class: 'even:bg-gray-50',
+        },
+      }),
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'border-b-2 border-black font-bold text-left p-2 bg-gray-100',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border-b border-gray-200 p-2 align-top',
+        },
+      }),
       Highlight.configure({
         multicolor: true,
       }),
@@ -116,6 +123,7 @@ export default function EditorCanvas({
       RegionTerminologyPlugin.configure({
         region,
       }),
+      SmartData,
     ],
     content: content || getInitialTemplate(region),
     onUpdate: ({ editor }) => {
@@ -129,6 +137,78 @@ export default function EditorCanvas({
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    if (content === undefined || content === null) {
+      return;
+    }
+
+    if (typeof content === 'string') {
+      if (editor.getHTML() !== content) {
+        editor.commands.setContent(content, { emitUpdate: false });
+      }
+      return;
+    }
+
+    if (typeof content === 'object') {
+      const incoming = content as JSONContent;
+      try {
+        const current = editor.getJSON();
+        if (JSON.stringify(current) === JSON.stringify(incoming)) {
+          return;
+        }
+      } catch (error) {
+        console.warn('Failed to compare editor content JSON:', error);
+      }
+
+      editor.commands.setContent(incoming, { emitUpdate: false });
+    }
+  }, [editor, content]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const globalWindow = window as Window & { __indEditor?: Editor };
+    globalWindow.__indEditor = editor;
+
+    const emitSmartTableContext = () => {
+      const attributes = editor.getAttributes('table') as {
+        sourceId?: string;
+        sourceLabel?: string;
+        lastUpdated?: string;
+      };
+      const isLinked = editor.isActive('table') && Boolean(attributes?.sourceId);
+
+      window.dispatchEvent(
+        new CustomEvent('smart-table-context', {
+          detail: {
+            isLinked,
+            attributes,
+          },
+        }),
+      );
+    };
+
+    const handleSelectionUpdate = () => emitSmartTableContext();
+
+    editor.on('selectionUpdate', handleSelectionUpdate);
+    editor.on('transaction', handleSelectionUpdate);
+    emitSmartTableContext();
+
+    return () => {
+      if (globalWindow.__indEditor === editor) {
+        globalWindow.__indEditor = undefined;
+      }
+      editor.off('selectionUpdate', handleSelectionUpdate);
+      editor.off('transaction', handleSelectionUpdate);
+    };
+  }, [editor]);
 
   // Listen for section navigation events
   useEffect(() => {
@@ -146,6 +226,34 @@ export default function EditorCanvas({
       window.removeEventListener('navigateToSection', handleNavigateToSection as EventListener);
     };
   }, []);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const handleInsertSmartData = (event: Event) => {
+      const smartEvent = event as CustomEvent<SmartDataInsertPayload | undefined>;
+      const detail = smartEvent.detail;
+
+      if (!detail || !detail.value) {
+        return;
+      }
+
+      editor.chain().focus().run();
+      editor.commands.insertSmartData({
+        id: detail.id ?? null,
+        value: detail.value,
+        sourceLabel: detail.sourceLabel ?? 'Nonclinical Report',
+        confidence: detail.confidence ?? 0,
+      });
+    };
+
+    window.addEventListener('insert-smart-data', handleInsertSmartData as EventListener);
+    return () => {
+      window.removeEventListener('insert-smart-data', handleInsertSmartData as EventListener);
+    };
+  }, [editor]);
 
   // Auto-validation on content change
   useEffect(() => {

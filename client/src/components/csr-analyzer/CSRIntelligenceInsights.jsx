@@ -1,34 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  Lightbulb,
-  ArrowRight,
-  BarChart2,
-  TrendingUp,
-  ChevronRight,
-  Brain,
-  Target,
-  LineChart,
-  Filter,
-  Download,
-  Share2,
-  Sparkles,
-  Microscope,
-  Database,
-  BookOpen,
-  Info,
-} from 'lucide-react';
+  Lightbulb, ArrowRight, BarChart2, TrendingUp, ChevronRight, Brain, Target, LineChart, Filter, Download, Share2, Sparkles, Microscope, Database, BookOpen, Info } from 'lucide-react'
 import {
   Select,
   SelectTrigger,

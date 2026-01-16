@@ -1,23 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listDocs, uploadDoc } from '../hooks/useDocuShare';
 import {
-  FolderOpen,
-  FileText,
-  Search,
-  Download,
-  Share2,
-  Edit,
-  Trash2,
-  Filter,
-  Clock,
-  Tag,
-  AlertCircle,
-  Check,
-  Lock,
-  Upload,
-  FileUp,
-  ChevronRight,
-} from 'lucide-react';
+  FolderOpen, FileText, Search, Download, Share2, Edit, Trash2, Filter, Clock, Tag, AlertCircle, Check, Lock, Upload, FileUp, ChevronRight } from 'lucide-react'
 
 // Sample documents for demo mode when backend is unavailable
 const SAMPLE_DOCUMENTS = [

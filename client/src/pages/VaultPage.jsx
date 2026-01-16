@@ -6,7 +6,7 @@ import DocumentDataCenter from '../components/DocumentDataCenter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, Search, Filter, Download, Eye, HardDrive, FolderOpen } from 'lucide-react';
+import { FileText, Upload, Search, Filter, Download, Eye, HardDrive, FolderOpen } from 'lucide-react'
 
 export default function VaultPage() {
   const [activeTab, setActiveTab] = useState('vault');

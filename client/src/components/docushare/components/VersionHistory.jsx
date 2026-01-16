@@ -4,15 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  History,
-  Calendar,
-  User,
-  FileText,
-  Download,
-  Eye,
-  RotateCcw,
-  GitBranch,
-} from 'lucide-react';
+  History, Calendar, User, FileText, Download, Eye, RotateCcw, GitBranch } from 'lucide-react'
 
 const VersionHistory = ({ selectedDocument, onVersionSelect, loading }) => {
   const [versions, setVersions] = useState([]);

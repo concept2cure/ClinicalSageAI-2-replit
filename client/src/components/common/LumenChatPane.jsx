@@ -1,16 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import lumenService from '@/services/lumenService';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, RefreshCw } from 'lucide-react';
+import { Bot, User, Send, RefreshCw } from 'lucide-react'
 
 export default function LumenChatPane({ contextId }) {
   const [history, setHistory] = useState([

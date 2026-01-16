@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, UploadCloud } from 'lucide-react';
+import { Upload, X, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 /**

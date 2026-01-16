@@ -1,4 +1,4 @@
-import { Sun, Moon, Bot } from 'lucide-react';
+import { Sun, Moon, Bot } from 'lucide-react'
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { useLumenAssistant } from './assistant';

@@ -5,17 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
-  ShieldCheck,
-  Clock,
-  User,
-  CalendarClock,
-  MailCheck,
-  ClipboardList,
-  FileCheck,
-  Download,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+  ShieldCheck, Clock, User, CalendarClock, MailCheck, ClipboardList, FileCheck, Download, ChevronDown, ChevronUp } from 'lucide-react'
 import ManagerSignOffService from '../../services/ManagerSignOffService';
 
 /**

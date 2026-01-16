@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { X, Bell, CheckCircle, AlertTriangle, Info, Clock, ExternalLink } from 'lucide-react';
+import { X, Bell, CheckCircle, AlertTriangle, Info, Clock, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Notification types

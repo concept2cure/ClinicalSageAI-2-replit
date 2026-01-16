@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Search, 
-  Upload, 
-  FileText, 
-  BarChart2,
-  Filter,
-  SlidersHorizontal,
-  Loader2
-} from 'lucide-react';
+  Search, Upload, FileText, BarChart2, Filter, SlidersHorizontal, Loader2 } from 'lucide-react'
 import { trialsageApi } from '@/lib/api-connector';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -88,15 +81,10 @@ export default function CsrIntelligence() {
   }) || [];
 
   const handleUploadClick = () => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Upload functionality",
       description: "This feature would allow uploading new CSR documents for analysis.",
-    })
-  console.log('Toast would show:', {
-      title: "Upload functionality",
-      description: "This feature would allow uploading new CSR documents for analysis.",
-    });
+  });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,15 +160,10 @@ export default function CsrIntelligence() {
                   size="sm"
                   className="flex items-center gap-1"
                   onClick={() => {
-                    // toast call replaced
-  // Original: toast({
+  toast({
                       title: "Advanced Filters",
                       description: "This would open a modal with advanced filtering options",
-                    })
-  console.log('Toast would show:', {
-                      title: "Advanced Filters",
-                      description: "This would open a modal with advanced filtering options",
-                    });
+  });
                   }}
                 >
                   <Filter size={16} />
@@ -191,15 +174,10 @@ export default function CsrIntelligence() {
                   size="sm"
                   className="flex items-center gap-1"
                   onClick={() => {
-                    // toast call replaced
-  // Original: toast({
+  toast({
                       title: "Sort Options",
                       description: "This would open sort options",
-                    })
-  console.log('Toast would show:', {
-                      title: "Sort Options",
-                      description: "This would open sort options",
-                    });
+  });
                   }}
                 >
                   <SlidersHorizontal size={16} />

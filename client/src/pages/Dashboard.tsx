@@ -1,104 +1,128 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  SearchIcon,
-  FileText,
-  Send,
-  Clipboard,
-  PieChart,
-  BarChart,
-  FileCheck,
-  ChevronRight,
-} from 'lucide-react';
-
-// Dashboard cards data
-const usageCards = [
-  {
-    title: 'CSR Uploads',
-    icon: <FileText className="h-5 w-5 text-blue-500" />,
-    used: 42,
-    total: 100,
-    color: 'bg-blue-500',
-  },
-  {
-    title: 'Protocol Analyses',
-    icon: <Clipboard className="h-5 w-5 text-emerald-500" />,
-    used: 7,
-    total: 20,
-    color: 'bg-emerald-500',
-  },
-  {
-    title: 'IND Submissions',
-    icon: <Send className="h-5 w-5 text-amber-500" />,
-    used: 3,
-    total: 5,
-    color: 'bg-amber-500',
-  },
-  {
-    title: 'CER Reports',
-    icon: <FileCheck className="h-5 w-5 text-purple-500" />,
-    used: 12,
-    total: 25,
-    color: 'bg-purple-500',
-  },
-];
-
-const featureCards = [
-  {
-    title: 'CSR Intelligence',
-    icon: <FileText className="h-8 w-8 text-blue-500" />,
-    description:
-      'Search, analyze, and compare 3,021 clinical study reports across 34 therapeutic areas',
-    actions: [
-      {
-        label: 'Search Library',
-        icon: <SearchIcon className="mr-2 h-4 w-4" />,
-        path: '/csr-intelligence',
-      },
-      {
-        label: 'Upload CSR',
-        icon: <FileText className="mr-2 h-4 w-4" />,
-        path: '/csr-intelligence/upload',
-      },
-      {
-        label: 'Analytics',
-        icon: <BarChart className="mr-2 h-4 w-4" />,
-        path: '/csr-intelligence/analytics',
-      },
-    ],
-    launchPath: '/csr-intelligence',
-  },
-  {
-    title: 'Protocol Optimizer',
-    icon: <Clipboard className="h-8 w-8 text-emerald-500" />,
-    description:
-      'Optimize clinical trial protocols with intelligence from 3,021 successful studies',
-    actions: [
-      {
-        label: 'New Protocol',
-        icon: <FileText className="mr-2 h-4 w-4" />,
-        path: '/protocol-optimizer/new',
-      },
-      {
-        label: 'Analyze Protocol',
-        icon: <Clipboard className="mr-2 h-4 w-4" />,
-        path: '/protocol-optimizer/analyze',
-      },
-      {
-        label: 'Intelligence Panel',
-        icon: <PieChart className="mr-2 h-4 w-4" />,
-        path: '/protocol-optimizer/intelligence',
-      },
-    ],
-    launchPath: '/protocol-optimizer',
-  },
-];
+  SearchIcon, FileText, Send, Clipboard, PieChart, BarChart, FileCheck, ChevronRight } from 'lucide-react'
 
 export default function Dashboard() {
+  const [csrTotal, setCsrTotal] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadStats = async () => {
+      try {
+        const response = await fetch('/api/csr-intelligence/stats');
+        const payload = await response.json();
+        const total = Number(payload?.data?.overview?.total_reports);
+        if (isMounted && !Number.isNaN(total)) {
+          setCsrTotal(total);
+        }
+      } catch (error) {
+        console.error('Failed to load CSR Intelligence stats', error);
+      }
+    };
+
+    loadStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const usageCards = useMemo(() => {
+    const csrCount = csrTotal ?? 0;
+
+    return [
+      {
+        title: 'CSR Uploads',
+        icon: <FileText className="h-5 w-5 text-blue-500" />,
+        used: csrCount,
+        total: Math.max(csrCount, 1),
+        color: 'bg-blue-500',
+      },
+      {
+        title: 'Protocol Analyses',
+        icon: <Clipboard className="h-5 w-5 text-emerald-500" />,
+        used: 7,
+        total: 20,
+        color: 'bg-emerald-500',
+      },
+      {
+        title: 'IND Submissions',
+        icon: <Send className="h-5 w-5 text-amber-500" />,
+        used: 3,
+        total: 5,
+        color: 'bg-amber-500',
+      },
+      {
+        title: 'CER Reports',
+        icon: <FileCheck className="h-5 w-5 text-purple-500" />,
+        used: 12,
+        total: 25,
+        color: 'bg-purple-500',
+      },
+    ];
+  }, [csrTotal]);
+
+  const featureCards = useMemo(() => {
+    const csrLabel = csrTotal
+      ? `Search, analyze, and compare ${csrTotal.toLocaleString()} clinical study reports across regulatory sources`
+      : 'Search, analyze, and compare clinical study reports across regulatory sources';
+
+    return [
+      {
+        title: 'CSR Intelligence',
+        icon: <FileText className="h-8 w-8 text-blue-500" />,
+        description: csrLabel,
+        actions: [
+          {
+            label: 'Search Library',
+            icon: <SearchIcon className="mr-2 h-4 w-4" />,
+            path: '/csr-intelligence',
+          },
+          {
+            label: 'Upload CSR',
+            icon: <FileText className="mr-2 h-4 w-4" />,
+            path: '/csr-intelligence/upload',
+          },
+          {
+            label: 'Analytics',
+            icon: <BarChart className="mr-2 h-4 w-4" />,
+            path: '/csr-intelligence/analytics',
+          },
+        ],
+        launchPath: '/csr-intelligence',
+      },
+      {
+        title: 'Protocol Optimizer',
+        icon: <Clipboard className="h-8 w-8 text-emerald-500" />,
+        description:
+          'Optimize clinical trial protocols with intelligence from prior submissions',
+        actions: [
+          {
+            label: 'New Protocol',
+            icon: <FileText className="mr-2 h-4 w-4" />,
+            path: '/protocol-optimizer/new',
+          },
+          {
+            label: 'Analyze Protocol',
+            icon: <Clipboard className="mr-2 h-4 w-4" />,
+            path: '/protocol-optimizer/analyze',
+          },
+          {
+            label: 'Intelligence Panel',
+            icon: <PieChart className="mr-2 h-4 w-4" />,
+            path: '/protocol-optimizer/intelligence',
+          },
+        ],
+        launchPath: '/protocol-optimizer',
+      },
+    ];
+  }, [csrTotal]);
+
   return (
     <div className="space-y-6">
       {/* Welcome banner */}

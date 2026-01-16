@@ -1,7 +1,7 @@
 // ROICalculator.jsx - Interactive ROI calculator for marketing leads
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, Calculator, DollarSign, Clock, Users } from 'lucide-react';
+import { ChevronLeft, Calculator, DollarSign, Clock, Users } from 'lucide-react'
 
 export default function ROICalculator() {
   const [formData, setFormData] = useState({

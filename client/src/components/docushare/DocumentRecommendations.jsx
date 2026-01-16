@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -14,23 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  BarChart,
-  BookOpen,
-  Clock,
-  FileText,
-  Loader2,
-  Settings,
-  Star,
-  TrendingUp,
-  Users,
-  Calendar,
-  Eye,
-  Download,
-  Edit,
-  Share2,
-  Zap,
-  LayoutGrid,
-} from 'lucide-react';
+  BarChart, BookOpen, Clock, FileText, Loader2, Settings, Star, TrendingUp, Users, Calendar, Eye, Download, Edit, Share2, Zap, LayoutGrid, AlertCircle, RefreshCw } from 'lucide-react'
 
 import {
   getPersonalizedRecommendations,

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Mail, Send, Loader2 } from "lucide-react";
+import { Mail, Send, Loader2 } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProtocolEmailer() {

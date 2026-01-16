@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { Database, Globe, Shield, Server, FileText, BarChart, ArrowRight } from 'lucide-react';
+import { Database, Globe, Shield, Server, FileText, BarChart, ArrowRight } from 'lucide-react'
 
 // Compact, professional component for features section
 const AdvancedFeatureCards = () => {

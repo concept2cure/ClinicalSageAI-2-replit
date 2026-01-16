@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, User, Tag, Check, Clock } from 'lucide-react';
+import { FileText, Calendar, User, Tag, Check, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { fetchCERHistory } from '../../services/documentService';
 

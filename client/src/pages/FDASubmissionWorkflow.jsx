@@ -6,29 +6,12 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  Upload,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  ArrowRight,
-  Download,
-  Send,
-  Globe,
-  Shield,
-  Target,
-  Zap,
-} from 'lucide-react';
+  FileText, Upload, CheckCircle, Clock, AlertTriangle, ArrowRight, Download, Send, Globe, Shield, Target, Zap } from 'lucide-react'
 
 function FDASubmissionWorkflow() {
   const [location, setLocation] = useLocation();

@@ -11,21 +11,7 @@ import FadeTransition from '../components/common/FadeTransition';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ThinkingDots from '../components/common/ThinkingDots';
 import {
-  AlertTriangle,
-  CheckCircle,
-  RefreshCcw,
-  Clock,
-  FileText,
-  AlertCircle,
-  Send,
-  Upload,
-  Monitor,
-  Database,
-  Cloud,
-  RefreshCw,
-  Loader2,
-  Brain,
-} from 'lucide-react';
+  AlertTriangle, CheckCircle, RefreshCcw, Clock, FileText, AlertCircle, Send, Upload, Monitor, Database, Cloud, RefreshCw, Loader2, Brain } from 'lucide-react'
 import {
   Select,
   SelectContent,

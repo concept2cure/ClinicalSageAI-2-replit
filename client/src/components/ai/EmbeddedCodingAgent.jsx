@@ -1,16 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import {
-  FileText,
-  Brain,
-  FileUp,
-  Upload,
-  Download,
-  RefreshCw,
-  Sparkles,
-  AlertCircle,
-  Code,
-} from 'lucide-react';
+import { FileText, Brain, FileUp, Upload, Download, RefreshCw, Sparkles, AlertCircle, Code } from 'lucide-react'
 
 const EmbeddedCodingAgent = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +14,7 @@ const EmbeddedCodingAgent = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
-  const [selectedModel, setSelectedModel] = useState('openai');
+  const [selectedModel, setSelectedModel] = useState('gemini');
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [analyzingFile, setAnalyzingFile] = useState(false);
   const [extractingRelationships, setExtractingRelationships] = useState(false);
@@ -1005,7 +995,7 @@ const EmbeddedCodingAgent = () => {
               className="text-xs border border-gray-300 rounded px-2 py-1"
             >
               <option value="openai">OpenAI Pro (GPT-4o)</option>
-              <option value="gemini">Gemini Pro</option>
+              <option value="gemini">Gemini 3 Flash (Preview)</option>
             </select>
           </div>
         </div>

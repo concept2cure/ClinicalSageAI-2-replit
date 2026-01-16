@@ -55,8 +55,11 @@ router.post('/api/export/sequence/:sequenceId', async (req, res) => {
       file_name: exportResult.fileName,
     });
   } catch (error) {
+    const statusCode = error?.statusCode || 500;
     console.error('Error generating export:', error);
-    return res.status(500).json({ error: 'Failed to generate export' });
+    return res.status(statusCode).json({
+      error: error?.message || 'Failed to generate export',
+    });
   }
 });
 
@@ -82,40 +85,30 @@ router.get('/api/export/download/:exportId', async (req, res) => {
 
     res.download(filePath, exportData.originalFileName);
   } catch (error) {
+    const statusCode = error?.statusCode || 500;
     console.error('Error downloading export:', error);
-    return res.status(500).json({ error: 'Failed to download export' });
+    return res.status(statusCode).json({
+      error: error?.message || 'Failed to download export',
+    });
   }
 });
 
 /**
- * Fetch sequence data from the database (mock implementation)
+ * Fetch sequence data from the database
  */
 async function getSequenceData(sequenceId) {
-  // This would be replaced with an actual database query
-  return {
-    id: sequenceId,
-    name: `Sequence ${sequenceId}`,
-    documents: [
-      { id: 1, title: 'Study Protocol', module: 'm5.3.5.1' },
-      { id: 2, title: 'Statistical Analysis Plan', module: 'm5.3.5.3' },
-      { id: 3, title: 'Clinical Study Report', module: 'm5.3.5.4' },
-    ],
-    // Additional data would be included here
-  };
+  const error = new Error(`Real sequence lookup not configured for ${sequenceId}`);
+  error.statusCode = 501;
+  throw error;
 }
 
 /**
- * Fetch export metadata (mock implementation)
+ * Fetch export metadata
  */
 async function getExportData(exportId) {
-  // This would be replaced with an actual database query
-  return {
-    id: exportId,
-    fileName: `export_${exportId}.zip`,
-    originalFileName: 'submission_package.zip',
-    fileSize: 1024 * 1024 * 10, // 10MB
-    format: 'fda',
-  };
+  const error = new Error(`Real export lookup not configured for ${exportId}`);
+  error.statusCode = 501;
+  throw error;
 }
 
 /**

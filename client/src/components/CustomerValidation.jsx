@@ -1,5 +1,5 @@
 import React from 'react';
-import { User } from 'lucide-react';
+import { User } from 'lucide-react'
 
 // Testimonial Component with improved styling
 const Testimonial = ({

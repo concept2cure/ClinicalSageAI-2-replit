@@ -7,39 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  FolderOpen,
-  Search,
-  UploadCloud,
-  Download,
-  FileText,
-  File,
-  FileLock2,
-  FileArchive,
-  Share2,
-  Trash2,
-  CalendarDays,
-  Info,
-  Grid3X3,
-  LayoutList,
-  User,
-  Link2,
-  CheckCircle2,
-} from 'lucide-react';
+  FolderOpen, Search, UploadCloud, Download, FileText, File, FileLock2, FileArchive, Share2, Trash2, CalendarDays, Info, Grid3X3, LayoutList, User, Link2, CheckCircle2 } from 'lucide-react'
 
 export default function DocumentVaultPanel({ 
   jobId, 

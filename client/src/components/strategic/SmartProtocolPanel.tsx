@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2, Download, FileText, FileCode, PackageOpen } from 'lucide-react';
+import { Loader2, Download, FileText, FileCode, PackageOpen } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -44,17 +44,11 @@ const SmartProtocolPanel: React.FC = () => {
   // Function to get CSR benchmark metrics
   const getBenchmarkMetrics = async () => {
     if (!indication || !phase) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please enter both indication and phase to get metrics.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please enter both indication and phase to get metrics.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -67,43 +61,27 @@ const SmartProtocolPanel: React.FC = () => {
       const data = await response.json();
       
       if (data.message === "No matches found" || !data.metrics) {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "No Matches Found",
           description: "No CSR data found for the selected indication and phase.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "No Matches Found",
-          description: "No CSR data found for the selected indication and phase.",
-          variant: "destructive"
-        });
+  });
         setBenchmarkMetrics(null);
       } else {
         setBenchmarkMetrics(data.metrics);
         setCurrentTab('metrics');
-        // toast call replaced
-  // Original: toast({
-          title: "Success",
-          description: `Found ${data.metrics.total_trials} matching clinical trial(s)
-  console.log('Toast would show:', {
+  toast({
           title: "Success",
           description: `Found ${data.metrics.total_trials} matching clinical trial(s)`,
-        });
+  });
       }
     } catch (error) {
       console.error('Error fetching benchmark metrics:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to fetch CSR benchmark metrics.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to fetch CSR benchmark metrics.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsLoading(false);
     }
@@ -112,17 +90,11 @@ const SmartProtocolPanel: React.FC = () => {
   // Function to generate smart protocol draft
   const generateProtocolDraft = async () => {
     if (!benchmarkMetrics) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Metrics",
         description: "Please fetch benchmark metrics first.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Metrics",
-        description: "Please fetch benchmark metrics first.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -187,41 +159,24 @@ aligns with industry best practices while incorporating evidence-based optimizat
 - No interim analyses planned for efficacy
 - Safety data will be reviewed periodically by an independent DSMB`);
 
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Success",
           description: "Smart protocol draft generated successfully.",
-        })
-  console.log('Toast would show:', {
-          title: "Success",
-          description: "Smart protocol draft generated successfully.",
-        });
+  });
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Error",
           description: "Failed to generate protocol draft.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Error",
-          description: "Failed to generate protocol draft.",
-          variant: "destructive"
-        });
+  });
       }
     } catch (error) {
       console.error('Error generating protocol draft:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to generate protocol draft.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to generate protocol draft.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsLoading(false);
     }
@@ -230,17 +185,11 @@ aligns with industry best practices while incorporating evidence-based optimizat
   // Function to export protocol draft as PDF
   const exportProtocolPDF = async () => {
     if (!protocolDraft) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Draft",
         description: "Please generate a protocol draft first.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Draft",
-        description: "Please generate a protocol draft first.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -261,41 +210,24 @@ aligns with industry best practices while incorporating evidence-based optimizat
         // Open the download URL in a new tab
         window.open(data.download_url, '_blank');
         
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Success",
           description: "Protocol draft PDF generated and ready for download.",
-        })
-  console.log('Toast would show:', {
-          title: "Success",
-          description: "Protocol draft PDF generated and ready for download.",
-        });
+  });
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Error",
           description: "Failed to generate PDF.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Error",
-          description: "Failed to generate PDF.",
-          variant: "destructive"
-        });
+  });
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to export protocol draft as PDF.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to export protocol draft as PDF.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsExporting(false);
     }
@@ -304,17 +236,11 @@ aligns with industry best practices while incorporating evidence-based optimizat
   // Function to export full bundle (Protocol + Strategic + SAP)
   const exportFullBundle = async () => {
     if (!protocolDraft || !strategicSummary || !sapSection) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Content",
         description: "Please generate all components first.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Content",
-        description: "Please generate all components first.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -338,41 +264,24 @@ aligns with industry best practices while incorporating evidence-based optimizat
         // Open the download URL in a new tab
         window.open(data.pdf_url, '_blank');
         
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Success",
           description: "Full bundle generated and ready for download.",
-        })
-  console.log('Toast would show:', {
-          title: "Success",
-          description: "Full bundle generated and ready for download.",
-        });
+  });
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Error",
           description: "Failed to generate bundle.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Error",
-          description: "Failed to generate bundle.",
-          variant: "destructive"
-        });
+  });
       }
     } catch (error) {
       console.error('Error exporting bundle:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to export full bundle.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to export full bundle.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setIsExporting(false);
     }

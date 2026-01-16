@@ -3,15 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
-  FileText,
-  Download,
-  Eye,
-  CheckCircle,
-  Clock,
-  FileSearch,
-  Printer,
-  Share2,
-} from 'lucide-react';
+  FileText, Download, Eye, CheckCircle, Clock, FileSearch, Printer, Share2 } from 'lucide-react'
 import indWizardService from '@/services/indWizardService';
 
 export default function SubmissionPreview({ submissionId }) {

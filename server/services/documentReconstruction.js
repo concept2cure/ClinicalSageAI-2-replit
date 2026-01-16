@@ -5,7 +5,7 @@ import {
   documentComponents, 
   components, 
   componentVersions 
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, sql, asc } from 'drizzle-orm';
 
 /**

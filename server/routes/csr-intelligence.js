@@ -9,7 +9,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { csrIntelligenceLibrary } from '../services/CSRIntelligenceLibrary.js';
-import CSRAnalyticsService from '../services/CSRAnalyticsService.js';
+import { db } from '../../lib/database.js';
 // Simple tenant context extraction function
 function extractTenantContext(req) {
   return {
@@ -21,11 +21,7 @@ function extractTenantContext(req) {
 
 const router = express.Router();
 
-// Initialize CSR Analytics Service
-const csrAnalytics = new CSRAnalyticsService();
-
-// Import business insights service
-import csrBusinessInsights from '../services/CSRBusinessInsightsService.js';
+// Real CSR Intelligence routes (DB-backed)
 
 // Configure multer for CSR file uploads
 const storage = multer.memoryStorage();
@@ -142,79 +138,47 @@ router.get('/query', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     console.log('[CSR Intelligence Library] Fetching stats using CSR Analytics Service');
+    const overviewResult = await db.query(`
+      SELECT
+        COUNT(*) as total_reports,
+        COUNT(DISTINCT report_type) as unique_report_types,
+        COUNT(DISTINCT regulatory_agency) as unique_agencies,
+        COUNT(DISTINCT status) as unique_statuses
+      FROM csr_reports
+    `);
 
-    // Get real analytics data from CSR Analytics Service
-    const dashboardData = csrAnalytics.getDashboardAnalytics();
+    const statusDistribution = await db.query(`
+      SELECT status, COUNT(*) as count
+      FROM csr_reports
+      GROUP BY status
+      ORDER BY count DESC
+    `);
 
-    const stats = {
-      overview: {
-        total_reports: dashboardData.overview.totalCSRs,
-        processed_reports: dashboardData.overview.totalCSRs,
-        unique_indications: dashboardData.overview.uniqueIndications,
-        unique_phases: 4,
-        unique_sponsors: dashboardData.overview.uniqueSponsors,
-        unique_drugs: 234,
-        unique_regions: 3,
-        average_success_rate: dashboardData.overview.averageSuccessRate,
-        data_quality_score: dashboardData.overview.dataQualityScore,
-      },
-      topIndications: Object.keys(dashboardData.therapeuticAreas).map(area => ({
-        indication: area.charAt(0).toUpperCase() + area.slice(1),
-        count: dashboardData.therapeuticAreas[area].count,
-      })),
-      phaseDistribution: Object.keys(dashboardData.temporalTrends).map(year => ({
-        phase: `Year ${year}`,
-        count: dashboardData.temporalTrends[year].count,
-      })),
-      therapeuticAreas: Object.keys(dashboardData.therapeuticAreas).map(area => ({
-        area,
-        count: dashboardData.therapeuticAreas[area].count,
-        avgSuccessRate: dashboardData.therapeuticAreas[area].avgSuccessRate,
-        avgSampleSize: dashboardData.therapeuticAreas[area].avgSampleSize,
-      })),
-      recentActivity: dashboardData.recentActivity,
-      qualityMetrics: dashboardData.qualityMetrics,
-      lastUpdated: new Date().toISOString(),
-      source: 'csr-analytics-service',
-    };
+    const agencyDistribution = await db.query(`
+      SELECT regulatory_agency, COUNT(*) as count
+      FROM csr_reports
+      WHERE regulatory_agency IS NOT NULL
+      GROUP BY regulatory_agency
+      ORDER BY count DESC
+    `);
 
     res.json({
       success: true,
-      data: stats,
+      data: {
+        overview: overviewResult.rows[0] || {},
+        statusDistribution: statusDistribution.rows,
+        agencyDistribution: agencyDistribution.rows,
+        lastUpdated: new Date().toISOString(),
+        source: 'database',
+      },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('[CSR Intelligence Library] Stats query failed:', error);
-    // Return fallback data when analytics service is unavailable
-    res.json({
-      success: true,
-      data: {
-        overview: {
-          total_reports: 779,
-          unique_indications: 85,
-          unique_phases: 4,
-          unique_sponsors: 156,
-          unique_drugs: 234,
-          unique_regions: 3,
-          average_success_rate: 76,
-          data_quality_score: 94,
-        },
-        topIndications: [
-          { indication: 'Oncology', count: 245 },
-          { indication: 'Cardiology', count: 178 },
-          { indication: 'Neurology', count: 142 },
-          { indication: 'Immunology', count: 98 },
-          { indication: 'Endocrinology', count: 116 },
-        ],
-        phaseDistribution: [
-          { phase: 'Phase III', count: 312 },
-          { phase: 'Phase II', count: 267 },
-          { phase: 'Phase I', count: 156 },
-          { phase: 'Phase IV', count: 44 },
-        ],
-        lastUpdated: new Date().toISOString(),
-        source: 'fallback',
-      },
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'CSR Intelligence Library query failed',
     });
   }
 });
@@ -238,19 +202,24 @@ router.get('/search', async (req, res) => {
 
     console.log(`[CSR Intelligence] Searching for: "${q}"`);
 
-    // Get search results from CSR Analytics Service
-    const searchResults = await csrAnalytics.searchCSRs({
-      query: q.trim(),
-      indication: indication && indication !== 'all' ? indication.trim() : null,
-      phase: phase && phase !== 'all' ? phase.trim() : null,
-      sponsor: sponsor ? sponsor.trim() : null,
-      limit: parseInt(limit) || 20,
-    });
+    const searchTerm = `%${q.trim()}%`;
+    const result = await db.query(
+      `
+      SELECT id, report_id, report_title, report_type, study_id, status, upload_date, regulatory_agency
+      FROM csr_reports
+      WHERE report_title ILIKE $1
+         OR report_id ILIKE $1
+         OR content::text ILIKE $1
+      ORDER BY updated_at DESC
+      LIMIT $2
+      `,
+      [searchTerm, parseInt(limit) || 20]
+    );
 
     res.json({
       success: true,
-      data: searchResults,
-      count: searchResults.length,
+      data: result.rows,
+      count: result.rows.length,
       query: q,
       filters: { indication, phase, sponsor },
     });
@@ -271,20 +240,8 @@ router.get('/search', async (req, res) => {
 router.get('/report/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { pool } = await import('../db.js');
 
-    const reportQuery = `
-      SELECT 
-        r.*,
-        d.study_design, d.primary_objective, d.inclusion_criteria, d.exclusion_criteria,
-        d.treatment_arms, d.study_duration, d.endpoints, d.results, d.safety,
-        d.adverse_events, d.efficacy_results, d.sample_size
-      FROM csr_reports r
-      LEFT JOIN csr_details d ON r.id = d.report_id
-      WHERE r.id = $1
-    `;
-
-    const result = await pool.query(reportQuery, [id]);
+    const result = await db.query('SELECT * FROM csr_reports WHERE id = $1', [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -314,11 +271,8 @@ router.get('/report/:id', async (req, res) => {
  */
 router.get('/health', async (req, res) => {
   try {
-    const { pool } = await import('../db.js');
-
-    // Test database connectivity
     const healthQuery = 'SELECT COUNT(*) as count FROM csr_reports LIMIT 1';
-    const result = await pool.query(healthQuery);
+    const result = await db.query(healthQuery);
 
     res.json({
       success: true,
@@ -345,35 +299,19 @@ router.get('/health', async (req, res) => {
  */
 router.get('/analytics', async (req, res) => {
   try {
-    const { type } = req.query;
-
-    console.log(`[CSR Analytics] Fetching analytics type: ${type}`);
-
-    let analyticsData;
-
-    switch (type) {
-      case 'therapeutic-areas':
-        analyticsData = csrAnalytics.getTherapeuticAreaAnalytics();
-        break;
-      case 'temporal-trends':
-        analyticsData = csrAnalytics.getTemporalTrends();
-        break;
-      case 'biomarkers':
-        analyticsData = csrAnalytics.getBiomarkerAnalytics();
-        break;
-      case 'efficacy':
-        analyticsData = csrAnalytics.getEfficacyAnalytics();
-        break;
-      case 'dashboard':
-      default:
-        analyticsData = csrAnalytics.getDashboardAnalytics();
-        break;
-    }
+    const overviewResult = await db.query(`
+      SELECT
+        COUNT(*) as total_reports,
+        COUNT(DISTINCT report_type) as unique_report_types,
+        COUNT(DISTINCT regulatory_agency) as unique_agencies,
+        COUNT(DISTINCT status) as unique_statuses
+      FROM csr_reports
+    `);
 
     res.json({
       success: true,
-      data: analyticsData,
-      type: type || 'dashboard',
+      data: { overview: overviewResult.rows[0] || {} },
+      type: 'database',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -392,24 +330,9 @@ router.get('/analytics', async (req, res) => {
  */
 router.post('/predict', async (req, res) => {
   try {
-    const { studyParams } = req.body;
-
-    console.log(`[CSR Analytics] Predicting trial success for:`, studyParams);
-
-    const prediction = csrAnalytics.predictTrialSuccess
-      ? csrAnalytics.predictTrialSuccess(studyParams)
-      : {
-          successProbability: Math.floor(Math.random() * 30) + 65,
-          timeline: Math.floor(Math.random() * 12) + 18,
-          riskFactors: ['Recruitment challenges', 'Regulatory complexity', 'Competitive landscape'],
-          successFactors: ['Strong biomarker strategy', 'Experienced team', 'Novel mechanism'],
-          confidence: Math.floor(Math.random() * 20) + 75,
-        };
-
-    res.json({
-      success: true,
-      prediction,
-      timestamp: new Date().toISOString(),
+    res.status(501).json({
+      success: false,
+      error: 'Predictive analytics not yet configured for production.',
     });
   } catch (error) {
     console.error('Error predicting trial success:', error);
@@ -427,44 +350,9 @@ router.post('/predict', async (req, res) => {
  */
 router.get('/search-analytics', async (req, res) => {
   try {
-    const { query, therapeutic_area, phase, limit } = req.query;
-
-    console.log(`[CSR Analytics] Advanced search with analytics:`, {
-      query,
-      therapeutic_area,
-      phase,
-      limit,
-    });
-
-    const filters = {
-      therapeutic_area,
-      study_phase: phase,
-      limit: parseInt(limit) || 20,
-    };
-
-    // Use the existing search functionality with analytics integration
-    const searchResults = csrAnalytics.searchWithAnalytics
-      ? csrAnalytics.searchWithAnalytics(query, filters)
-      : {
-          results: csrAnalytics.csrData
-            .filter(
-              csr =>
-                csr.title.toLowerCase().includes(query.toLowerCase()) ||
-                csr.therapeutic_area.toLowerCase().includes(query.toLowerCase()) ||
-                csr.indication.toLowerCase().includes(query.toLowerCase())
-            )
-            .slice(0, parseInt(limit) || 20),
-          totalResults: csrAnalytics.csrData.length,
-          analytics: {
-            keyPatterns: ['Biomarker-driven design', 'Adaptive trials', 'Digital endpoints'],
-            relevanceScore: 0.85,
-          },
-        };
-
-    res.json({
-      success: true,
-      ...searchResults,
-      timestamp: new Date().toISOString(),
+    res.status(501).json({
+      success: false,
+      error: 'Search analytics not yet configured for production.',
     });
   } catch (error) {
     console.error('Error in advanced search:', error);
@@ -476,91 +364,29 @@ router.get('/search-analytics', async (req, res) => {
   }
 });
 
-// Business insights and use case endpoints
-router.get('/business-insights', async (req, res) => {
-  try {
-    const { useCase } = req.query;
-
-    const insights = useCase
-      ? csrBusinessInsights.getUseCaseInsights(useCase)
-      : csrBusinessInsights.getAllHighValueUseCases();
-
-    res.json({
-      success: true,
-      data: insights,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Error fetching business insights:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch business insights',
-      details: error.message,
-    });
-  }
-});
-
-router.get('/use-cases', async (req, res) => {
-  try {
-    const allUseCases = csrBusinessInsights.getAllHighValueUseCases();
-
-    res.json({
-      success: true,
-      data: {
-        useCases: Object.keys(allUseCases).filter(key => key !== 'totalBusinessImpact'),
-        totalBusinessImpact: allUseCases.totalBusinessImpact,
-        categories: [
-          {
-            id: 'protocol-optimization',
-            title: 'Protocol Design Optimization',
-            description: 'Optimize protocol design using historical success patterns',
-            businessImpact: '$2.1M average savings per study',
-          },
-          {
-            id: 'risk-mitigation',
-            title: 'Predictive Risk Assessment',
-            description: 'Identify and mitigate study risks before they occur',
-            businessImpact: '$2.4M average risk avoidance per study',
-          },
-          {
-            id: 'competitive-intelligence',
-            title: 'Competitive Intelligence',
-            description: 'Gain strategic insights from competitor study designs',
-            businessImpact: '$2.8M market advantage per indication',
-          },
-          {
-            id: 'regulatory-strategy',
-            title: 'Regulatory Strategy Intelligence',
-            description: 'Optimize regulatory submissions and interactions',
-            businessImpact: '$2.7M faster approval pathway',
-          },
-        ],
-      },
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Error fetching use cases:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch use cases',
-      details: error.message,
-    });
-  }
-});
 
 // Get factual business insights based on verified CSR data
 router.get('/factual-insights', async (req, res) => {
   try {
-    const insights = csrAnalytics.getFactualBusinessInsights();
+    const overviewResult = await db.query(`
+      SELECT
+        COUNT(*) as total_reports,
+        COUNT(DISTINCT report_type) as unique_report_types,
+        COUNT(DISTINCT regulatory_agency) as unique_agencies
+      FROM csr_reports
+    `);
 
     res.json({
       success: true,
-      data: insights,
-      metadata: {
-        dataSource: 'verified_csr_repository',
-        totalStudies: csrAnalytics.csrData.length,
+      data: {
+        overview: overviewResult.rows[0] || {},
+        dataSource: 'csr_reports',
         lastUpdated: new Date().toISOString(),
-        disclaimer: 'All metrics calculated from actual CSR data in system',
+      },
+      metadata: {
+        dataSource: 'csr_reports',
+        lastUpdated: new Date().toISOString(),
+        disclaimer: 'All metrics calculated from CSR reports in the database',
       },
     });
   } catch (error) {

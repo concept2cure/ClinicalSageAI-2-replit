@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { Search, X, Clock, Star, TrendingUp, ChevronDown, Filter, HelpCircle } from 'lucide-react';
+import { Search, X, Clock, Star, TrendingUp, ChevronDown, Filter, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

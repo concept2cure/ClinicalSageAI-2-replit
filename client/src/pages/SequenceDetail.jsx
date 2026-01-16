@@ -13,21 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { 
-  FileText, 
-  Package, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  SendIcon, 
-  DownloadIcon, 
-  FolderIcon, 
-  BookIcon, 
-  ClipboardList, 
-  FileCheck, 
-  Info,
-  AlertCircle,
-  Loader2
-} from 'lucide-react';
+  FileText, Package, CheckCircle, XCircle, AlertTriangle, SendIcon, DownloadIcon, FolderIcon, BookIcon, ClipboardList, FileCheck, Info, AlertCircle, Loader2 } from 'lucide-react'
 
 const SequenceDetail = ({ params }) => {
   const [, setLocation] = useLocation();

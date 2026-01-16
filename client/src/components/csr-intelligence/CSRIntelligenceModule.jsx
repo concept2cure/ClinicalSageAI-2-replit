@@ -1,31 +1,5 @@
 import React, { useState } from 'react';
-import {
-  FileText,
-  BookOpen,
-  Zap,
-  Users,
-  BarChart2,
-  Layout,
-  Search,
-  CheckCircle,
-  FileQuestion,
-  Pen,
-  Brain,
-  AlignLeft,
-  FileDown,
-  AlertTriangle,
-  Activity,
-  TrendingUp,
-  Shield,
-  Radar,
-  Target,
-  Eye,
-  Clock,
-  AlertCircle,
-  GitBranch,
-  Database,
-  Pulse,
-} from 'lucide-react';
+import { FileText, BookOpen, Zap, Users, BarChart2, Layout, Search, CheckCircle, FileQuestion, Pen, Brain, AlignLeft, FileDown, AlertTriangle, Activity, TrendingUp, Shield, Radar, Target, Eye, Clock, AlertCircle, GitBranch, Database, Pulse } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 
 const CSRIntelligenceModule = () => {

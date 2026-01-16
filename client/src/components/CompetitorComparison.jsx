@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, XCircle, AlertCircle, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Zap } from 'lucide-react'
 
 // Check mark component
 const CheckMark = ({ type = 'full' }) => {

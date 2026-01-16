@@ -4,15 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import {
-  FileText,
-  BookOpen,
-  BarChart3,
-  FileOutput,
-  History,
-  Settings,
-  CheckSquare,
-  Database,
-} from 'lucide-react';
+  FileText, BookOpen, BarChart3, FileOutput, History, Settings, CheckSquare, Database } from 'lucide-react'
 
 import GenerateFullCerButton from './GenerateFullCerButton';
 import InputDataPanel from './InputDataPanel';

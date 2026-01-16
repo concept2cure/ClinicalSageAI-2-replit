@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link } from 'wouter';
-import { FileArchive, Database, Globe, Beaker, ChevronRight } from 'lucide-react';
+import { FileArchive, Database, Globe, Beaker, ChevronRight } from 'lucide-react'
 
 function AppPackagesBanner() {
   return (

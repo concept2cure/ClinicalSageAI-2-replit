@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Lightbulb, ChevronUp, ChevronDown } from 'lucide-react';
+import { Lightbulb, ChevronUp, ChevronDown } from 'lucide-react'
 import clsx from 'clsx';
 
 export default function AiTipsPanel({ step }) {

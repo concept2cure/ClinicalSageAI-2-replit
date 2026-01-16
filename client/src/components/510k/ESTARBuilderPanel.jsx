@@ -1,34 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  CheckCircle,
-  AlertCircle,
-  FileCheck,
-  Download,
-  RefreshCw,
-  Shield,
-  CheckSquare,
-  Save,
-  AlertTriangle,
-} from 'lucide-react';
+  CheckCircle, AlertCircle, FileCheck, Download, RefreshCw, Shield, CheckSquare, Save, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { FDA510kService } from '@/services/FDA510kService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

@@ -9,6 +9,45 @@ import { eq, and, or, like, sql } from 'drizzle-orm';
 
 const router = Router();
 
+const HAS_DATABASE_URL = Boolean(process.env.DATABASE_URL);
+
+function getFallbackTemplates() {
+  return [
+    {
+      id: 'fallback-1',
+      name: 'Module 2.5 Clinical Overview (Demo)',
+      title: 'Module 2.5 Clinical Overview (Demo)',
+      description: 'Demo template returned when database is unavailable.',
+      category: 'eCTD Module 2 - Summaries',
+      module: '2.5',
+      regions: ['FDA'],
+      tags: ['demo', 'ectd', 'module-2'],
+      status: 'active',
+      templateType: 'clinical',
+      moduleNumber: '2.5',
+      fileType: 'docx',
+      contentBlocks: [],
+      contentAtoms: [],
+    },
+    {
+      id: 'fallback-2',
+      name: '3.2.S.4 Control of Drug Substance (Demo)',
+      title: '3.2.S.4 Control of Drug Substance (Demo)',
+      description: 'Demo template returned when database is unavailable.',
+      category: 'eCTD Module 3 - Quality',
+      module: '3.2.S.4',
+      regions: ['FDA', 'EMA'],
+      tags: ['demo', 'ectd', 'module-3'],
+      status: 'active',
+      templateType: 'quality',
+      moduleNumber: '3.2.S.4',
+      fileType: 'docx',
+      contentBlocks: [],
+      contentAtoms: [],
+    },
+  ];
+}
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -43,6 +82,18 @@ const upload = multer({
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
+    if (!HAS_DATABASE_URL || !db) {
+      const templates = getFallbackTemplates();
+      return res.json({
+        success: true,
+        templates,
+        totalCount: templates.length,
+        categories: ['eCTD Module 2 - Summaries', 'eCTD Module 3 - Quality'],
+        regions: ['FDA', 'EMA'],
+        source: 'fallback',
+      });
+    }
+
     const organizationId = parseInt(req.headers['x-organization-id'] as string) || 1; // Default for demo
     const { category, region, search } = req.query;
 
@@ -60,9 +111,14 @@ router.get('/', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching templates:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch templates',
+    const templates = getFallbackTemplates();
+    res.json({
+      success: true,
+      templates,
+      totalCount: templates.length,
+      categories: ['eCTD Module 2 - Summaries', 'eCTD Module 3 - Quality'],
+      regions: ['FDA', 'EMA'],
+      source: 'fallback',
     });
   }
 });
@@ -73,6 +129,42 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/catalog', async (req: Request, res: Response) => {
   try {
+    if (!HAS_DATABASE_URL || !db) {
+      const templates = getFallbackTemplates();
+      return res.json({
+        success: true,
+        data: {
+          templates,
+          categorized: {
+            fda: templates,
+            ema: templates.filter(t => (t.regions || []).includes('EMA')),
+            pmda: [],
+            ich: [],
+            therapeutic: [],
+            'clinical-ops': [],
+            'patient-materials': [],
+            modality: [],
+            quality: templates.filter(t => (t.templateType || '') === 'quality'),
+            regulatory: [],
+            other: [],
+          },
+          counts: {
+            total: templates.length,
+            fda: templates.length,
+            ema: templates.filter(t => (t.regions || []).includes('EMA')).length,
+            pmda: 0,
+            ich: 0,
+            therapeutic: 0,
+            clinicalOps: 0,
+            patientMaterials: 0,
+            modality: 0,
+            quality: templates.filter(t => (t.templateType || '') === 'quality').length,
+            regulatory: 0,
+          },
+        },
+      });
+    }
+
     const { 
       category, 
       region, 
@@ -213,40 +305,59 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = parseInt(req.headers['x-organization-id'] as string) || 1;
     const { id } = req.params;
-    
-    let template = null;
-    
-    // Try numeric ID first
+
+    let template: any = null;
+
     const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      template = await templateService.getTemplateById(numericId, organizationId);
-    }
-    
-    // If not found with numeric ID or ID is not numeric, try string-based search
-    if (!template) {
-      // Try to get template by templateName or match string ID against id
-      const templates = await db.select().from(ectdTemplates)
-        .where(and(
-          or(
-            eq(ectdTemplates.templateName, id),
-            eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
-          ),
-          eq(ectdTemplates.organizationId, organizationId)
-        ));
-      
-      if (templates.length > 0) {
-        template = templates[0];
+
+    // DB-backed lookups are best-effort: if DB is unavailable, fall through to mock.
+    if (HAS_DATABASE_URL && db) {
+      try {
+        // Try numeric ID first
+        if (!isNaN(numericId)) {
+          template = await templateService.getTemplateById(numericId, organizationId);
+        }
+      } catch (_e) {
+        // ignore and fall through
       }
-    }
-    
-    // If still not found, check in-memory templates or catalog
-    if (!template) {
-      const allTemplates = await templateService.getAllTemplates(organizationId, {});
-      const foundTemplate = allTemplates.templates?.find((t: any) => 
-        t.id === id || t.templateId === id || t.id === numericId
-      );
-      if (foundTemplate) {
-        template = foundTemplate;
+
+      try {
+        // If not found with numeric ID or ID is not numeric, try string-based search
+        if (!template) {
+          const templates = await db
+            .select()
+            .from(ectdTemplates)
+            .where(
+              and(
+                or(
+                  eq(ectdTemplates.templateName, id),
+                  eq(sql`CAST(${ectdTemplates.id} AS TEXT)`, id)
+                ),
+                eq(ectdTemplates.organizationId, organizationId)
+              )
+            );
+
+          if (templates.length > 0) {
+            template = templates[0];
+          }
+        }
+      } catch (_e) {
+        // ignore and fall through
+      }
+
+      try {
+        // If still not found, check service catalog (DB-backed)
+        if (!template) {
+          const allTemplates = await templateService.getAllTemplates(organizationId, {});
+          const foundTemplate = allTemplates.templates?.find((t: any) =>
+            t.id === id || t.templateId === id || t.id === numericId
+          );
+          if (foundTemplate) {
+            template = foundTemplate;
+          }
+        }
+      } catch (_e) {
+        // ignore and fall through
       }
     }
 

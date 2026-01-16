@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Save, RefreshCw, FileText } from 'lucide-react';
+import { Save, RefreshCw, FileText } from 'lucide-react'
 
 export default function StudyEditorForm({ session }) {
   const [activeTab, setActiveTab] = useState('objectives');

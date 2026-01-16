@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  BarChart3,
-  CheckCircle,
-  AlertTriangle,
-  AlertCircle,
-  XCircle,
-  RefreshCw,
-} from 'lucide-react';
+  BarChart3, CheckCircle, AlertTriangle, AlertCircle, XCircle, RefreshCw } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { getComplianceMetrics, getDashboardMetrics } from '@/services/CerComplianceService';
 

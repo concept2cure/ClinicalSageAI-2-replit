@@ -1,15 +1,8 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, AlertCircle, ShieldCheck, FileClock } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, FileClock } from 'lucide-react'
 import { FaersRiskBadge } from './FaersRiskBadge';
 import { FaersDemographicsCharts } from './FaersDemographicsCharts';
 import { FaersComparativeChart } from './FaersComparativeChart';

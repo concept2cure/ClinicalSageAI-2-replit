@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { TestTube, Settings, AlertCircle } from 'lucide-react';
+import { TestTube, Settings, AlertCircle } from 'lucide-react'
 
 export default function SSTTemplatesPanel() {
   const [rows, setRows] = useState<any[]>([]);

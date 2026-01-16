@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { Building, ChevronDown } from 'lucide-react';
+import { Building, ChevronDown } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 import OrganizationSwitcher from './OrganizationSwitcher';
 

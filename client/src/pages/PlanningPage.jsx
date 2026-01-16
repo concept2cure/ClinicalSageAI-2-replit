@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import ProtocolPlanningDashboard from '@/components/ProtocolPlanningDashboard';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 
 export default function PlanningPage() {
   const [location] = useLocation();

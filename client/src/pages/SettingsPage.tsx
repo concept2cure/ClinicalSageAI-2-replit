@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Lock, User, Globe, Eye, Database, Shield, Mail, Bot, RefreshCw, Key, Copy } from "lucide-react";
+import { Bell, Lock, User, Globe, Eye, Database, Shield, Mail, Bot, RefreshCw, Key, Copy } from 'lucide-react'
 import { useResearchCompanion } from "@/hooks/use-research-companion";
 
 // Research Companion Settings Component
@@ -28,15 +28,10 @@ function ResearchCompanionSettings() {
   const handleCopy = () => {
     if (apiKey) {
       navigator.clipboard.writeText(apiKey);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Copied to clipboard",
         description: "API key copied to clipboard",
-      })
-  console.log('Toast would show:', {
-        title: "Copied to clipboard",
-        description: "API key copied to clipboard",
-      });
+  });
     }
   };
   
@@ -178,27 +173,16 @@ export default function SettingsPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Settings updated",
         description: "Your settings have been successfully updated.",
-      })
-  console.log('Toast would show:', {
-        title: "Settings updated",
-        description: "Your settings have been successfully updated.",
-      });
+  });
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to update settings. Please try again.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to update settings. Please try again.",
-        variant: "destructive",
-      });
+  });
     } finally {
       setIsSaving(false);
     }

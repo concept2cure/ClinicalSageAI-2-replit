@@ -14,17 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  TrendingUp, 
-  AlertTriangle, 
-  Calculator, 
-  Brain,
-  Activity,
-  Users,
-  ChevronRight,
-  Info,
-  FileText,
-  Download
-} from 'lucide-react';
+  TrendingUp, AlertTriangle, Calculator, Brain, Activity, Users, ChevronRight, Info, FileText, Download } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';

@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Building, Globe, X, CheckCircle } from 'lucide-react';
+import { Search, Building, Globe, X, CheckCircle } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 
 const OrganizationSwitcher = ({ onClose, onSwitchOrg }) => {

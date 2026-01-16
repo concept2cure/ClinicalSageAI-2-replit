@@ -1,25 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  ArrowRight,
-  Download,
-  Check,
-  X,
-  AlertTriangle,
-  Lightbulb,
-  FileText,
-  HelpCircle,
-  Plus,
-  Minus,
-  Filter,
-  BarChart,
-  Printer,
-  Share2,
-  Star,
-  ChevronsUpDown,
-  ExternalLink,
-  Search,
-  Copy,
-} from 'lucide-react';
+import { ArrowRight, Download, Check, X, AlertTriangle, Lightbulb, FileText, HelpCircle, Plus, Minus, Filter, BarChart, Printer, Share2, Star, ChevronsUpDown, ExternalLink, Search, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import {
   Card,

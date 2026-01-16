@@ -6,25 +6,9 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  BarChart3,
-  TrendingUp,
-  Target,
-  Search,
-  Filter,
-  Download,
-  Brain,
-  Activity,
-  Zap,
-  Calendar,
-  Users,
-} from 'lucide-react';
+  BarChart3, TrendingUp, Target, Search, Filter, Download, Brain, Activity, Zap, Calendar, Users } from 'lucide-react'
 
 const CSRAnalyticsTab = () => {
   const [analyticsData, setAnalyticsData] = useState(null);

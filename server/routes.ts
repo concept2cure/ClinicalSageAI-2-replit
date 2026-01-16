@@ -23,10 +23,16 @@ import sharePointFilesRoutes from './routes/sharepoint-files.js';
 import vaultDmsRoutes from './routes/vault-dms.js';
 // @ts-ignore - JavaScript route file
 import cerv2SectionsRoutes from './routes/cerv2-sections.js';
+import cerv2JourneyRoutes from './routes/cerv2-journey.js';
 // @ts-ignore - JavaScript route file
 import aiAssistanceRoutes from './routes/ai-assistance.js';
 // @ts-ignore - JavaScript route file
 import contentPlanRoutes from './routes/content-plan.js';
+import factsRoutes from './routes/facts.js';
+import smartBlocksRoutes from './routes/smart-blocks.js';
+import aiCoAuthorRoutes from './routes/ai-coauthor.js';
+import regulatoryPythonBridge from './routes/regulatory-python-bridge.js';
+import { requireTenant } from './middleware/tenant.js';
 
 // Create a simple router for basic API routes
 const router = express.Router();
@@ -40,17 +46,21 @@ router.get('/health', (req, res) => {
 // 510(k) Workflow Routes
 // ============================================================================
 
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use('/510k-workflow', requireTenant());
+
 // Save/update 510(k) workflow data with automatic document generation
 router.post('/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const { stage, section, data, organizationId } = req.body;
+  const { stage, section, data } = req.body;
+  const organizationId = Number((req as any).organizationId);
   
   try {
     // Save workflow data to database - using storage directly
     
     // Check if a workflow already exists for this project
     const workflows = await storage.getDeviceSubmissionWorkflows({
-      organizationId: parseInt(organizationId),  // Ensure it's a number
+      organizationId,
       submissionId: parseInt(projectId),
       submissionType: '510k'
     });
@@ -67,7 +77,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
     } else {
       // Create new workflow
       workflow = await storage.createDeviceSubmissionWorkflow({
-        organizationId: parseInt(organizationId),  // Ensure it's a number
+        organizationId,
         workflowType: '510k_submission',
         submissionType: '510k',
         submissionId: parseInt(projectId),
@@ -80,7 +90,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
     // Save section data if provided
     if (section) {
       const sections = await storage.getCerv2510kSections({
-        organizationId: parseInt(organizationId),  // Ensure it's a number
+        organizationId,
         submissionId: parseInt(projectId)
       });
       
@@ -92,7 +102,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
         });
       } else {
         await storage.createCerv2510kSection({
-          organizationId: parseInt(organizationId),  // Ensure it's a number
+          organizationId,
           submissionId: parseInt(projectId),
           sectionCode: section,
           sectionTitle: section,
@@ -110,7 +120,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
         
         // Get all sections to update them with auto-populated data
         const sections = await storage.getCerv2510kSections({
-          organizationId: parseInt(organizationId),
+          organizationId,
           submissionId: parseInt(projectId)
         });
         
@@ -139,7 +149,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
           });
         } else {
           await storage.createCerv2510kSection({
-            organizationId: parseInt(organizationId),
+            organizationId,
             submissionId: parseInt(projectId),
             sectionCode: 'TEMPLATE_MAPPING',
             sectionTitle: 'Auto-Generated Template Mapping',
@@ -178,12 +188,12 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
 // Get 510(k) workflow data
 router.get('/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const { organizationId } = req.query;
+  const organizationId = Number((req as any).organizationId);
   
   try {
     // Get workflow data - using storage directly
     const workflows = await storage.getDeviceSubmissionWorkflows({
-      organizationId: parseInt(organizationId as string),
+      organizationId,
       submissionId: parseInt(projectId),
       submissionType: '510k'
     });
@@ -197,7 +207,7 @@ router.get('/510k-workflow/:projectId', async (req, res) => {
     
     // Get all sections for this submission
     const sections = await storage.getCerv2510kSections({
-      organizationId: parseInt(organizationId as string),
+      organizationId,
       submissionId: parseInt(projectId)
     });
     
@@ -218,12 +228,13 @@ router.get('/510k-workflow/:projectId', async (req, res) => {
 // Generate 510(k) document from workflow data
 router.post('/510k-workflow/:projectId/generate-document', async (req, res) => {
   const { projectId } = req.params;
-  const { organizationId, templateId } = req.body;
+  const { templateId } = req.body;
+  const organizationId = Number((req as any).organizationId);
   
   try {
     // Get workflow data - using storage directly
     const workflows = await storage.getDeviceSubmissionWorkflows({
-      organizationId: parseInt(organizationId),  // Ensure it's a number
+      organizationId,
       submissionId: parseInt(projectId),
       submissionType: '510k'
     });
@@ -237,7 +248,7 @@ router.post('/510k-workflow/:projectId/generate-document', async (req, res) => {
     
     // Get all sections
     const sections = await storage.getCerv2510kSections({
-      organizationId: parseInt(organizationId),  // Ensure it's a number
+      organizationId,
       submissionId: parseInt(projectId)
     });
     
@@ -255,7 +266,7 @@ router.post('/510k-workflow/:projectId/generate-document', async (req, res) => {
     
     // Save the mapped template data
     await storage.createCerv2510kSection({
-      organizationId: parseInt(organizationId),  // Ensure it's a number
+      organizationId,
       submissionId: parseInt(projectId),
       sectionCode: 'TEMPLATE_MAPPING',
       sectionTitle: 'Template Mapping Metadata',
@@ -401,6 +412,10 @@ export default function registerRoutes(app: Express): void {
   
   // Mount regulatory management routes
   app.use('/api/regulatory', regulatoryRoutes);
+  app.use('/api/regulatory', regulatoryPythonBridge);
+  app.use('/api/facts', factsRoutes);
+  app.use('/api/smart-blocks', smartBlocksRoutes);
+  app.use('/api/ai', aiCoAuthorRoutes); // Enhanced Co-Author with Data Lineage
   
   // Mount IND documents routes
   app.use('/api', indDocumentsRoutes);
@@ -457,6 +472,10 @@ export default function registerRoutes(app: Express): void {
   
   // Mount CERV2 510(k) Section routes
   app.use('/api/cerv2-sections', cerv2SectionsRoutes);
+
+  // Mount CERV2 workflow journey compatibility endpoints
+  // Provides: /api/upload, /api/ai-generate-section, /api/simulate-review, /api/export-pdf
+  app.use('/api', cerv2JourneyRoutes);
   
   // Mount AI assistance routes for 510(k) content generation
   app.use(aiAssistanceRoutes);
@@ -488,11 +507,10 @@ export default function registerRoutes(app: Express): void {
   });
 
   // Add projects API endpoint (bug fix for CERV2 project loading)
-  app.get('/api/projects', async (req, res) => {
+  app.get('/api/projects', requireTenant(), async (req, res) => {
     try {
-      // Check multiple sources for organization/workspace context
       const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-      const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
+      const organization_id = String((req as any).organizationId);
       
       // Import database connection
       const { pool } = require('./db');

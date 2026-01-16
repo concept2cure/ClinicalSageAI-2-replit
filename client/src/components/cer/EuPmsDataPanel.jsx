@@ -2,30 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { cerApiService } from '@/services/CerAPIService';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Upload,
-  Database,
-  FileSpreadsheet,
-  UploadCloud,
-  RefreshCw,
-  Globe,
-  AlertTriangle,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, FileText, Upload, Database, FileSpreadsheet, UploadCloud, RefreshCw, Globe, AlertTriangle } from 'lucide-react'
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 const EuPmsDataPanel = ({ jobId, deviceName, manufacturer, onAddToCER }) => {

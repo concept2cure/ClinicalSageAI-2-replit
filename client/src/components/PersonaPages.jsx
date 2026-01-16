@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'lucide-react'
+
 import { useRoute, useLocation } from 'wouter';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';

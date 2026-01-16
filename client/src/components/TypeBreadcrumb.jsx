@@ -1,7 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
-import { ChevronRight } from 'lucide-react';
+import { Loader2, ChevronRight } from 'lucide-react'
+
+
 
 /**
  * TypeBreadcrumb Component

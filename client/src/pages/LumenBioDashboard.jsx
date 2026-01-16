@@ -2,19 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import AppPackagesBanner from '../components/AppPackagesBanner';
 import {
-  FileText,
-  BarChart2,
-  Clock,
-  Calendar,
-  ChevronRight,
-  Download,
-  Filter,
-  PieChart,
-  Search,
-  Bookmark,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react';
+  FileText, BarChart2, Clock, Calendar, ChevronRight, Download, Filter, PieChart, Search, Bookmark, CheckCircle2, AlertCircle } from 'lucide-react'
 
 // Mock data - would come from API in production
 const RECENT_TRIALS = [

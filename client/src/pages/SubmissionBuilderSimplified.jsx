@@ -1,6 +1,6 @@
 // SubmissionBuilderSimplified.jsx – Simplified version without DnD dependencies
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 
 // Region-specific folder hierarchy definitions (simplified)
 const REGION_FOLDERS = {

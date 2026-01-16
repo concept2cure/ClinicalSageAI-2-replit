@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Download, Calculator, TrendingUp } from 'lucide-react';
+import { Download, Calculator, TrendingUp } from 'lucide-react'
 
 export default function DOETab({ processId }) {
   const [factors, setFactors] = useState('');

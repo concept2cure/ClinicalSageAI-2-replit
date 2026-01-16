@@ -1,31 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  Loader2,
-  FileText,
-  CheckIcon,
-  ArrowLeft,
-  Save,
-  Copy,
-  Download,
-  BookOpen,
-  FileCheck,
-  ExternalLink,
-  Search,
-  AlertTriangle,
-  CheckCircle,
-} from 'lucide-react';
+  Loader2, FileText, CheckIcon, ArrowLeft, Save, Copy, Download, BookOpen, FileCheck, ExternalLink, Search, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';

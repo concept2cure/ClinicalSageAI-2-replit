@@ -2,22 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import {
-  ArrowRight,
-  Clock,
-  DollarSign,
-  ShieldCheck,
-  Brain,
-  FileText,
-  FileCheck,
-  BarChart2,
-  Zap,
-  CheckCircle,
-  X,
-  ArrowUpRight,
-  BookOpen,
-  LayoutDashboard,
-  Beaker,
-} from 'lucide-react';
+  ArrowRight, Clock, DollarSign, ShieldCheck, Brain, FileText, FileCheck, BarChart2, Zap, CheckCircle, X, ArrowUpRight, BookOpen, LayoutDashboard, Beaker } from 'lucide-react'
 
 // The Status Quo Problems - based on customer pain points
 const statusQuoProblems = [

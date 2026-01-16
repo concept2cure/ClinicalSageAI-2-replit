@@ -5,13 +5,8 @@ import { TenantContext } from '../../contexts/TenantContext.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/card';
-import { InfoIcon, Shield, Lock, FileText } from 'lucide-react';
+  Card, CardContent, CardDescription, CardHeader, CardTitle, } from '../../components/ui/card';
+import { InfoIcon, Shield, Lock, FileText } from 'lucide-react'
 
 const SecuritySettingsPanel = () => {
   const { toast } = useToast();

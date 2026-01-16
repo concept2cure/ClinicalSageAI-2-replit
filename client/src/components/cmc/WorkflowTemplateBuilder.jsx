@@ -5,23 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Plus,
-  Trash2,
-  Save,
-  Copy,
-  Eye,
-  GripVertical,
-  Clock,
-  User,
-  CheckCircle2,
-} from 'lucide-react';
+  Plus, Trash2, Save, Copy, Eye, GripVertical, Clock, User, CheckCircle2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 export function WorkflowTemplateBuilder({ onSave, existingTemplate = null }) {

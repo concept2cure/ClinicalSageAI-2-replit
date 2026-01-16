@@ -16,103 +16,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectLabel,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from '@/components/ui/command';
 import {
-  FileText,
-  Edit,
-  Search,
-  LayoutTemplate,
-  FolderOpen,
-  CheckCircle,
-  Eye,
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  ChevronUp,
-  Table,
-  BarChart3,
-  Plus,
-  Loader2,
-  ExternalLink,
-  FilePlus2,
-  Upload,
-  Download,
-  History,
-  Share2,
-  Database,
-  BarChart,
-  AlertCircle,
-  Clock,
-  GitMerge,
-  GitBranch,
-  Minus,
-  Info,
-  UserCheck,
-  RefreshCw,
-  Save,
-  Lock,
-  Users,
-  ClipboardCheck,
-  FileCheck,
-  Link,
-  BookOpen,
-  ArrowUpRight,
-  Filter,
-  CheckSquare,
-  FileWarning,
-  HelpCircle,
-  MessageSquare,
-  Sparkles,
-  Lightbulb,
-  Check,
-  X,
-  Settings,
-  ListChecks,
-  Bot,
-  Clipboard,
-  Wand2,
-  ShieldCheck,
-  File,
-  Sliders,
-  Globe,
-  PlusCircle,
-  SearchX,
-  Send,
-  Copy,
-  Zap,
-  RefreshCcw,
-  AlertTriangle,
-} from 'lucide-react';
+  FileText, Edit, Search, LayoutTemplate, FolderOpen, CheckCircle, Eye, ChevronDown, ChevronRight, ChevronLeft, ChevronUp, Table, BarChart3, Plus, Loader2, ExternalLink, FilePlus2, Upload, Download, History, Share2, Database, BarChart, AlertCircle, Clock, GitMerge, GitBranch, Minus, Info, UserCheck, RefreshCw, Save, Lock, Users, ClipboardCheck, FileCheck, Link, BookOpen, ArrowUpRight, Filter, CheckSquare, FileWarning, HelpCircle, MessageSquare, Sparkles, Lightbulb, Check, X, Settings, ListChecks, Bot, Clipboard, Wand2, ShieldCheck, File, Sliders, Globe, PlusCircle, SearchX, Send, Copy, Zap, RefreshCcw, AlertTriangle } from 'lucide-react'
 
 // Google icon component
 const GoogleIcon = ({ className }) => (

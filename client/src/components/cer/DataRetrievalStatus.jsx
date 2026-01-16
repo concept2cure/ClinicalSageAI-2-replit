@@ -1,16 +1,9 @@
 import React from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, RefreshCw, Zap, AlertCircle, Database, BookOpen, ArrowRight } from 'lucide-react';
+import { Loader2, RefreshCw, Zap, AlertCircle, Database, BookOpen, ArrowRight } from 'lucide-react'
 import CerTooltipWrapper from './CerTooltipWrapper';
 
 /**

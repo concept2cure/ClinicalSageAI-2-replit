@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft, Home } from 'lucide-react'
 
 export default function NavigationBanner() {
   return (

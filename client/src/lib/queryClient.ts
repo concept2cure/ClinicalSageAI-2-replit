@@ -12,14 +12,20 @@ export const apiRequest = async (
   body?: any,
   customHeaders?: Record<string, string>
 ): Promise<Response> => {
-  // Get organization ID from localStorage
-  const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-  
-  const headers: HeadersInit = {
+  const demoOrganizationId = (import.meta as any).env?.VITE_DEMO_ORG_ID as string | undefined;
+  const organizationId =
+    localStorage.getItem('currentOrganizationId') ||
+    localStorage.getItem('organizationId') ||
+    demoOrganizationId;
+
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-organization-id': organizationId,
-    ...customHeaders,
+    ...(customHeaders ?? {}),
   };
+
+  if (organizationId) {
+    headers['x-organization-id'] = organizationId;
+  }
 
   const options: RequestInit = {
     method,
@@ -44,11 +50,7 @@ export const apiRequest = async (
 export const getQueryFn = (options: GetQueryFnOptions = {}) => {
   return async ({ queryKey }: { queryKey: string[] }) => {
     const [url] = queryKey;
-    // Get organization ID from localStorage
-    const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-    const response = await apiRequest('GET', url, undefined, {
-      'x-organization-id': organizationId
-    });
+    const response = await apiRequest('GET', url);
 
     if (response.status === 401) {
       if (options.on401 === 'returnNull') {

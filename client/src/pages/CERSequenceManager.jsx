@@ -1,7 +1,7 @@
 // CERSequenceManager.jsx – plan & build CER submission sequence
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, AlertTriangle, Globe, ArrowRight } from 'lucide-react';
+import { FileText, AlertTriangle, Globe, ArrowRight } from 'lucide-react'
 
 const REGIONS = ['EU', 'UK', 'FDA'];
 

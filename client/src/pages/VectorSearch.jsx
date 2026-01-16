@@ -1,6 +1,6 @@
 // VectorSearch.jsx - Vector search component with citations
 import React, { useState } from 'react';
-import { Search, FileText, FilePlus, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Search, FileText, FilePlus, AlertTriangle, ArrowRight } from 'lucide-react'
 
 export default function VectorSearch() {
   const [query, setQuery] = useState('');

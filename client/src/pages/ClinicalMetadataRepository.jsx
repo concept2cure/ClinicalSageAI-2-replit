@@ -3,13 +3,7 @@ import { Helmet } from '../lightweight-wrappers.js';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,25 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Database,
-  Search,
-  History,
-  FileText,
-  ArrowRight,
-  Layers,
-  CheckCircle2,
-  GitBranch,
-  Clipboard,
-  RefreshCw,
-  AlertTriangle,
-  BarChart,
-  Brain,
-  Sparkles,
-  Wand2,
-  Zap,
-  FileJson,
-  AlertCircle,
-} from 'lucide-react';
+  Database, Search, History, FileText, ArrowRight, Layers, CheckCircle2, GitBranch, Clipboard, RefreshCw, AlertTriangle, BarChart, Brain, Sparkles, Wand2, Zap, FileJson, AlertCircle } from 'lucide-react'
 
 const ClinicalMetadataRepository = () => {
   const { toast } = useToast();

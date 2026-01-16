@@ -9,30 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSectionSync } from '@/hooks/useSectionSync';
 import ContextPreview from './ai/ContextPreview';
 import {
-  AlertCircle,
-  CheckCircle,
-  Link,
-  Loader2,
-  RefreshCw,
-  Users,
-  Zap,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Brain,
-  AlertTriangle,
-  Activity,
-  Wifi,
-  WifiOff,
-  Check,
-  X,
-  GitBranch,
-  Sparkles,
-  ArrowRight,
-  Clock,
-  UserCheck,
-  Shield
-} from 'lucide-react';
+  AlertCircle, CheckCircle, Link, Loader2, RefreshCw, Users, Zap, ChevronDown, ChevronUp, FileText, Brain, AlertTriangle, Activity, Wifi, WifiOff, Check, X, GitBranch, Sparkles, ArrowRight, Clock, UserCheck, Shield } from 'lucide-react'
 
 /**
  * Module Section Editor - Enhanced with cross-document synchronization and AI impact analysis

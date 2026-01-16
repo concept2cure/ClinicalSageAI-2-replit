@@ -12,7 +12,7 @@
  * This service ensures both storage layers are populated and linked properly.
  */
 
-import { pool } from '../db.js';
+import { db } from '../../lib/database.js';
 import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';
@@ -290,41 +290,55 @@ Only return valid JSON.`;
     } = options;
 
     const fileSize = fileBuffer ? fileBuffer.length : filePath ? fs.statSync(filePath).size : 0;
-    const documentId = uuidv4();
 
-    const insertResult = await pool.query(
-      `
-      INSERT INTO unified_documents (
-        id, processing_id, original_name, file_path, file_size, mime_type, 
-        module, context, text_content, processed_text, ai_analysis, 
-        module_specific_data, content_hash, document_type, tenant_id, 
-        created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
-      ) RETURNING id
-    `,
-      [
-        documentId,
-        processingId,
-        fileName,
-        filePath,
-        fileSize,
-        mimeType,
-        module,
-        context,
-        extractedContent.fullText,
-        JSON.stringify(extractedContent),
-        JSON.stringify(csrAnalysis),
-        JSON.stringify({ csrIntelligenceLibrary: true }),
-        contentHash,
-        'CSR',
-        tenantId,
-        new Date(),
-        new Date(),
-      ]
-    );
+    const metadata = {
+      processingId,
+      originalName: fileName,
+      filePath,
+      fileSize,
+      mimeType,
+      module,
+      context,
+      contentHash,
+      extractedContent,
+      csrAnalysis,
+    };
 
-    return documentId;
+    try {
+      const insertResult = await db.query(
+        `
+        INSERT INTO unified_documents (
+          title,
+          document_type,
+          status,
+          created_by,
+          created_at,
+          updated_at,
+          organization_id,
+          latest_version,
+          metadata
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9
+        ) RETURNING id
+        `,
+        [
+          fileName,
+          'csr',
+          'draft',
+          String(userId || 'system'),
+          new Date(),
+          new Date(),
+          String(tenantId || 'default'),
+          1,
+          metadata,
+        ]
+      );
+
+      return insertResult.rows[0]?.id || null;
+    } catch (error) {
+      console.error('[CSR Intelligence Library] unified_documents insert failed:', error);
+      return null;
+    }
   }
 
   /**
@@ -342,122 +356,130 @@ Only return valid JSON.`;
     } = options;
 
     // Insert into csr_reports
-    const csrReportResult = await pool.query(
+    const contentPayload = {
+      extractedContent,
+      csrAnalysis,
+      source: 'csr-intelligence-library',
+    };
+
+    const metadata = {
+      fileName,
+      filePath,
+      studyDesign: csrAnalysis.studyDesign || null,
+      primaryEndpoint: csrAnalysis.primaryEndpoint || null,
+      sampleSize: csrAnalysis.sampleSize || null,
+      region: csrAnalysis.region || null,
+      sponsor: csrAnalysis.sponsor || null,
+    };
+
+    const csrReportResult = await db.query(
       `
       INSERT INTO csr_reports (
-        title, sponsor, indication, phase, status, date, summary, 
-        file_name, file_size, file_path, study_id, drug_name, 
-        region, upload_date, last_updated
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-      ) RETURNING id
-    `,
-      [
-        csrAnalysis.indication || fileName,
-        csrAnalysis.sponsor || 'Unknown',
-        csrAnalysis.indication || 'Unknown',
-        csrAnalysis.phase || 'Unknown',
-        csrAnalysis.regulatoryStatus || 'Ingested',
-        new Date().toISOString().split('T')[0],
-        csrAnalysis.conclusions || 'Summary pending',
-        fileName,
-        extractedContent.fullText.length,
-        filePath,
-        csrAnalysis.studyId || null,
-        csrAnalysis.drugName || null,
-        csrAnalysis.region || 'Unknown',
-        new Date(),
-        new Date(),
-      ]
-    );
-
-    const csrReportId = csrReportResult.rows[0].id;
-
-    // Insert into csr_details
-    await pool.query(
-      `
-      INSERT INTO csr_details (
-        report_id, study_design, primary_objective, inclusion_criteria, 
-        exclusion_criteria, treatment_arms, study_duration, endpoints, 
-        results, safety, sample_size, adverse_events, efficacy_results, 
-        processing_status, extraction_date, last_updated
+        organization_id,
+        client_workspace_id,
+        report_id,
+        report_title,
+        report_type,
+        study_id,
+        status,
+        submission_date,
+        due_date,
+        upload_date,
+        content,
+        metadata,
+        compliance_status,
+        regulatory_agency,
+        created_at,
+        updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-      )
-    `,
+      ) RETURNING id
+      `,
       [
-        csrReportId,
-        csrAnalysis.studyDesign || 'Unknown',
-        csrAnalysis.primaryEndpoint || 'Unknown',
-        JSON.stringify(csrAnalysis.inclusionCriteria || []),
-        JSON.stringify(csrAnalysis.exclusionCriteria || []),
-        JSON.stringify({ primary: csrAnalysis.drugName || 'Unknown' }),
-        csrAnalysis.duration || 'Unknown',
-        JSON.stringify({
-          primary: csrAnalysis.primaryEndpoint,
-          secondary: csrAnalysis.secondaryEndpoints || [],
-        }),
-        JSON.stringify({ summary: csrAnalysis.efficacyResults || 'Pending' }),
-        JSON.stringify({ adverse_events: csrAnalysis.adverseEvents || 'Pending' }),
-        csrAnalysis.sampleSize || null,
-        JSON.stringify({ summary: csrAnalysis.adverseEvents || 'Pending' }),
-        JSON.stringify({ summary: csrAnalysis.efficacyResults || 'Pending' }),
-        'completed',
+        Number(tenantId) || 1,
+        null,
+        `${csrAnalysis.studyId || fileName}-${Date.now()}`,
+        fileName,
+        'csr',
+        csrAnalysis.studyId || null,
+        csrAnalysis.regulatoryStatus || 'ingested',
+        null,
+        null,
+        new Date(),
+        contentPayload,
+        metadata,
+        csrAnalysis.regulatoryStatus || null,
+        csrAnalysis.region || null,
         new Date(),
         new Date(),
       ]
     );
 
-    return csrReportId;
+    return csrReportResult.rows[0]?.id || null;
   }
 
   /**
    * Create explicit link between unified_documents and CSR Intelligence Library
    */
   async createCSRIntelligenceLink(unifiedDocumentId, csrReportId) {
-    // Update unified_documents with CSR Intelligence Library reference
-    await pool.query(
-      `
-      UPDATE unified_documents 
-      SET module_specific_data = module_specific_data || $1
-      WHERE id = $2
-    `,
-      [JSON.stringify({ csrIntelligenceLibraryId: csrReportId }), unifiedDocumentId]
-    );
+    if (!unifiedDocumentId || !csrReportId) return;
 
-    console.log(
-      `[CSR Intelligence Library] Created explicit link: ${unifiedDocumentId} -> ${csrReportId}`
-    );
+    try {
+      await db.query(
+        `
+        UPDATE unified_documents
+        SET metadata = COALESCE(metadata, '{}'::json) || $1
+        WHERE id = $2
+        `,
+        [JSON.stringify({ csrReportId }), unifiedDocumentId]
+      );
+    } catch (error) {
+      console.warn('[CSR Intelligence Library] Link update skipped:', error);
+    }
   }
 
   /**
    * Log CSR ingestion completion in audit trail
    */
   async logCSRIngestionComplete(processingId, unifiedDocumentId, csrReportId, tenantId, userId) {
-    await pool.query(
-      `
-      INSERT INTO document_audit_trail (
-        id, document_id, tenant_id, user_id, action, details, timestamp
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7
-      )
-    `,
-      [
-        uuidv4(),
-        unifiedDocumentId,
-        tenantId,
-        userId,
-        'CSR_INTELLIGENCE_LIBRARY_INGESTION_COMPLETE',
-        JSON.stringify({
-          processingId,
-          unifiedDocumentId,
-          csrReportId,
-          message:
-            'CSR document successfully ingested into Intelligence Library with hard-wired data governance',
-        }),
-        new Date(),
-      ]
-    );
+    try {
+      const organizationId = Number(tenantId);
+      const userIdNum = Number(userId);
+      if (!organizationId || !userIdNum) return;
+
+      await db.query(
+        `
+        INSERT INTO document_audit_trail (
+          organization_id,
+          document_id,
+          action_type,
+          action_category,
+          action_description,
+          action_result,
+          user_id,
+          user_name,
+          user_email,
+          created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+        )
+        `,
+        [
+          organizationId,
+          unifiedDocumentId || null,
+          'create',
+          'document',
+          'CSR Intelligence Library ingestion completed',
+          'success',
+          userIdNum,
+          'system',
+          'system@concept2cure.ai',
+          new Date(),
+        ]
+      );
+    } catch (error) {
+      console.warn('[CSR Intelligence Library] Audit trail skipped:', error);
+    }
   }
 
   /**
@@ -486,39 +508,36 @@ Only return valid JSON.`;
     let paramIndex = 1;
 
     if (indication) {
-      whereClause += ` AND LOWER(indication) LIKE LOWER($${paramIndex})`;
+      whereClause += ` AND content::text ILIKE $${paramIndex}`;
       params.push(`%${indication}%`);
       paramIndex++;
     }
 
     if (phase) {
-      whereClause += ` AND LOWER(phase) LIKE LOWER($${paramIndex})`;
+      whereClause += ` AND content::text ILIKE $${paramIndex}`;
       params.push(`%${phase}%`);
       paramIndex++;
     }
 
     if (sponsor) {
-      whereClause += ` AND LOWER(sponsor) LIKE LOWER($${paramIndex})`;
+      whereClause += ` AND content::text ILIKE $${paramIndex}`;
       params.push(`%${sponsor}%`);
       paramIndex++;
     }
 
     const query = `
       SELECT 
-        r.id, r.title, r.sponsor, r.indication, r.phase, r.status, r.date,
-        r.study_id, r.drug_name, r.region, r.summary, r.file_name,
-        d.study_design, d.primary_objective, d.sample_size, d.study_duration,
-        d.endpoints, d.results, d.safety, d.adverse_events, d.efficacy_results
-      FROM csr_reports r
-      LEFT JOIN csr_details d ON r.id = d.report_id
+        id, report_id, report_title, report_type, study_id, status,
+        upload_date, regulatory_agency, content, metadata
+      FROM csr_reports
       ${whereClause}
-      ORDER BY r.last_updated DESC
+      ORDER BY updated_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
     params.push(limit, offset);
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     return result.rows;
   }
 }

@@ -8,18 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import {
-  Users,
-  Building,
-  ArrowLeft,
-  FileText,
-  BookOpen,
-  BarChart2,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Calendar,
-  Search,
-} from 'lucide-react';
+  Users, Building, ArrowLeft, FileText, BookOpen, BarChart2, CheckCircle, AlertCircle, Clock, Calendar, Search } from 'lucide-react'
 import securityService from '../../services/SecurityService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 

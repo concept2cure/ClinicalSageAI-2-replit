@@ -2,29 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '../hooks/use-auth';
 import {
-  BarChart2,
-  Brain,
-  FileText,
-  Home,
-  Search,
-  Settings,
-  Database,
-  Beaker,
-  BarChart,
-  FileSearch,
-  Upload,
-  TrendingUp,
-  Package,
-  Coffee,
-  Bell,
-  Microscope,
-  Users,
-  BookOpen,
-  ArrowUpRight,
-  Files,
-  MessageSquare,
-  Shield,
-} from 'lucide-react';
+  BarChart2, Brain, FileText, Home, Search, Settings, Database, Beaker, BarChart, FileSearch, Upload, TrendingUp, Package, Coffee, Bell, Microscope, Users, BookOpen, ArrowUpRight, Files, MessageSquare, Shield } from 'lucide-react'
 
 // Import translation function (replace with i18next when properly installed)
 const t = text => text;

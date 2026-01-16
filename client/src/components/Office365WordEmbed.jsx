@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react'
 
 function Office365WordEmbed({ documentId, title }) {
   return (

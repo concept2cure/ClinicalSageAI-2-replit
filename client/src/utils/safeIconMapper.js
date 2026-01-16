@@ -1,6 +1,6 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
-import { Circle } from 'lucide-react';
+import { Circle } from 'lucide-react'
 
 /**
  * Safe Icon Mapper

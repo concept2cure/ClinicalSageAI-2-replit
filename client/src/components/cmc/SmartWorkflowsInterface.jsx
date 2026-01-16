@@ -9,39 +9,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import WorkflowTemplateBuilder from './WorkflowTemplateBuilder';
 import WorkflowCollaboration from './WorkflowCollaboration';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Workflow,
-  Play,
-  Pause,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Plus,
-  FileText,
-  Settings,
-  Users,
-  Calendar,
-  Target,
-  Activity,
-  Brain,
-  Zap,
-  TrendingUp,
-  BookOpen,
-  Download,
-  Upload,
-  Search,
-  Filter,
-  MoreVertical,
-  ChevronRight,
-  ChevronDown,
-  Sparkles,
-} from 'lucide-react';
+  Workflow, Play, Pause, CheckCircle2, Clock, AlertTriangle, Plus, FileText, Settings, Users, Calendar, Target, Activity, Brain, Zap, TrendingUp, BookOpen, Download, Upload, Search, Filter, MoreVertical, ChevronRight, ChevronDown, Sparkles } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const WORKFLOW_TEMPLATES = {

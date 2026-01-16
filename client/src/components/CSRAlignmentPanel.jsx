@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { ScaleIcon, AlertTriangleIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react';
+import { ScaleIcon, AlertTriangleIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react'
 
 /**
  * CSRAlignmentPanel component displays protocol alignment with CSR precedents

@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { FullAuditDashboard } from '../components/FullAuditDashboard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react'
 
 const FullAuditDashboardPage: React.FC = () => {
   const [, setLocation] = useLocation();

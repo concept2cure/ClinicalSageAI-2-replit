@@ -8,18 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import {
-  FileText,
-  FileCheck,
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  BarChart2,
-  Users,
-  ExternalLink,
-  ChevronRight,
-  Bookmark,
-} from 'lucide-react';
+  FileText, FileCheck, Calendar, Clock, AlertTriangle, CheckCircle, BarChart2, Users, ExternalLink, ChevronRight, Bookmark } from 'lucide-react'
 import securityService from '../../services/SecurityService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 

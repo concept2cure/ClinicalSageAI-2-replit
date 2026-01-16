@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -15,19 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 
 import {
-  AlertTriangle,
-  Check,
-  Info,
-  Shield,
-  ShieldAlert,
-  Database,
-  FileText,
-  BarChart4,
-  ExternalLink,
-  DollarSign,
-  ThumbsUp,
-  ThumbsDown,
-} from 'lucide-react';
+  AlertTriangle, Check, Info, Shield, ShieldAlert, Database, FileText, BarChart4, ExternalLink, DollarSign, ThumbsUp, ThumbsDown, RefreshCw } from 'lucide-react'
 
 /**
  * Fact-Based Validator

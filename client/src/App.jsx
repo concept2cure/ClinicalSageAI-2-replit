@@ -10,26 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  LayoutGrid,
-  FileText,
-  FlaskConical,
-  Activity,
-  BookOpen,
-  Archive,
-  Shield,
-  ArrowRight,
-  CheckCircle,
-  ChevronRight,
-  BarChart3,
-  Users,
-  Clock,
-  PlayCircle,
-  Edit,
-  Package,
-  Send,
-  CheckSquare,
-  UserPlus
-} from 'lucide-react';
+  LayoutGrid, FileText, FlaskConical, Activity, BookOpen, Archive, Shield, ArrowRight, CheckCircle, ChevronRight, BarChart3, Users, Clock, PlayCircle, Edit, Package, Send, CheckSquare, UserPlus } from 'lucide-react'
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
 import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
@@ -39,6 +20,7 @@ import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
 import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantContainer';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 import { AnimatedPipeline } from './components/ModernDashboardUI';
+import ClientPortalLanding from './pages/ClientPortalLanding';
 
 // Initialize memory optimization
 memoryOptimizer.startPeriodicCleanup();
@@ -83,8 +65,10 @@ initializeDependencyHardening();
 import UnifiedTopNavV3 from './components/navigation/UnifiedTopNavV3';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { ModuleErrorBoundary } from './components/ui/error-boundary.jsx';
-import EnhancedDocumentEditor from './components/EnhancedDocumentEditor';
+import EnhancedDocumentEditor from './components/ectd/EnhancedDocumentEditor';
 import UnifiedTaskDashboard from './components/UnifiedTaskDashboard';
+import ProjectDashboard from './components/dashboard/ProjectDashboard';
+import DashboardLayout from './components/DashboardLayout';
 
 // Loading component for lazy-loaded routes
 const LoadingPage = () => (
@@ -94,9 +78,13 @@ const LoadingPage = () => (
   </div>
 );
 
+const ProjectDashboardPage = () => (
+  <DashboardLayout>
+    <ProjectDashboard />
+  </DashboardLayout>
+);
+
 // Eagerly load the landing pages for faster initial render
-import ClientPortalLanding from './pages/ClientPortalLanding';
-import HomeLanding from './pages/HomeLanding';
 import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 
 // Lazy load all other pages grouped by related functionality
@@ -106,6 +94,9 @@ import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 const CERPage = lazy(() => import('./pages/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
 const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+
+// Subscriptions / billing entry point
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
@@ -162,6 +153,8 @@ const RegulatoryRiskDashboard = lazy(() => import('./pages/RegulatoryRiskDashboa
 const EnhancedRegulatoryDashboard = lazy(() => import('./pages/EnhancedRegulatoryDashboard'));
 const RegulatoryDashboard = lazy(() => import('./pages/RegulatoryDashboard'));
 const RegulatoryAITesting = lazy(() => import('./pages/RegulatoryAITesting'));
+const RegulatoryProjectDetails = lazy(() => import('./pages/RegulatoryProjectDetails'));
+const LumenRiskRecord = lazy(() => import('./pages/LumenRiskRecord'));
 // RegulatoryAITestPage removed - was test content
 
 // Unified Study & Regulatory Intelligence Suite - comprehensive module combining all features
@@ -201,6 +194,8 @@ const AnalyticalMethodsStubPage = lazy(() => import('./pages/AnalyticalMethodsSt
 const ComparabilityStudiesStubPage = lazy(() => import('./pages/ComparabilityStudiesStubPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ReportsDashboard = lazy(() => import('./pages/ReportsDashboard'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const LumenCortexPage = lazy(() => import('./pages/LumenCortexPage'));
 
 // Tenant Management, Client Management and Settings Pages
 const TenantManagement = lazy(() => import('./pages/TenantManagement'));
@@ -234,12 +229,14 @@ function App() {
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/client-portal' || location === '/client-portal/';
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
     location === '/coauthor' || location.startsWith('/coauthor/') || location === '/canvas';
   const isDashboardPage = location === '/dashboard';
+  const isProjectDashboard =
+    location === '/client-portal' || location === '/client-portal/' || location === '/dashboard';
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
 
@@ -326,12 +323,20 @@ function App() {
                   <main className="min-h-screen bg-gray-100">
                     <Switch>
                       {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
-                      <Route path="/" component={ClientPortalLanding} />
+                      <Route path="/">
+                        {() => <Redirect to="/client-portal" />}
+                      </Route>
                       <Route path="/submission-center" component={UnifiedSubmissionCenter} />
-                      <Route path="/client-portal" component={ClientPortalLanding} />
+                      <Route path="/subscriptions">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <SubscriptionsPage />
+                          </Suspense>
+                        )}
+                      </Route>
         <Route path="/module-settings" component={() => import('./pages/ModuleSettingsPage')} />
         <Route path="/pre-submission-validation" component={() => import('./pages/PreSubmissionValidation')} />
-                      <Route path="/dashboard" component={ClientPortalLanding} />
+                      <Route path="/dashboard" component={ProjectDashboardPage} />
                       {/* Client Portal Sub-Pages */}
                       <Route path="/client-portal/vault">
                         {() => (
@@ -421,6 +426,30 @@ function App() {
                             <ClientManagement />
                           </Suspense>
                         )}
+                      </Route>
+                      <Route path="/projects/:id">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <RegulatoryProjectDetails />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/risk-records/:id">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LumenRiskRecord />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/client-portal/lumen-cortex">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LumenCortexPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/client-portal">
+                        {() => <ClientPortalLanding />}
                       </Route>
                       {/* IND Dashboard route DELETED per user request */}
                       {/* Unified eCTD System - combines IND Wizard and Co-Author */}
@@ -1499,11 +1528,7 @@ function App() {
                         )}
                       </Route>
                       <Route path="/working-coauthor">
-                        {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RealCoAuthor />
-                          </Suspense>
-                        )}
+                        {() => <Redirect to="/ectd-co-author" />}
                       </Route>
                       {/* Alias routes for compatibility */}
                       <Route path="/rih">
@@ -1763,6 +1788,19 @@ function App() {
                       <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
                       <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
                       {/* Enhanced Document Editor Route for IND Wizard Integration */}
+                      <Route path="/editor/:id">
+                        {params => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <EnhancedDocumentEditor
+                              document={{
+                                id: params.id,
+                                title: `Document ${params.id}`,
+                              }}
+                              onBack={() => window.history.back()}
+                            />
+                          </Suspense>
+                        )}
+                      </Route>
                       <Route path="/editor">
                         {() => {
                           const params = new URLSearchParams(window.location.search);

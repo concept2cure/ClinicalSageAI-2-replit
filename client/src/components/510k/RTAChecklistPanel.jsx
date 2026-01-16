@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,40 +8,11 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from '@/components/ui/tooltip';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from '@/components/ui/alert-dialog';
 import {
-  ClipboardCheck,
-  Check,
-  X,
-  AlertTriangle,
-  FileText,
-  Download,
-  Upload,
-  Info,
-  CheckCircle2,
-  XCircle,
-  Circle,
-  Save,
-  RefreshCw,
-  Printer,
-  ExternalLink,
-  AlertCircle,
-  Clock,
-} from 'lucide-react';
+  ClipboardCheck, Check, X, AlertTriangle, FileText, Download, Upload, Info, CheckCircle2, XCircle, Circle, Save, RefreshCw, Printer, ExternalLink, AlertCircle, Clock } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 

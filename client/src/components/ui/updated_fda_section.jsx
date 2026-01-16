@@ -1,3 +1,4 @@
+import { Badge } from 'lucide-react'
 {
   /* International Regulatory Compliance Section */
 }

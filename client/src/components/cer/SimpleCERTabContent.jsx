@@ -14,7 +14,7 @@ import LiteratureMethodologyPanel from './LiteratureMethodologyPanel';
 import LiteratureReviewWorkflow from './LiteratureReviewWorkflow';
 import CerAssistantPanel from './CerAssistantPanel';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SimpleCERTabContent({

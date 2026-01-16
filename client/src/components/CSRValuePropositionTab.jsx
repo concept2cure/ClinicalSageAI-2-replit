@@ -5,19 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  TrendingUp,
-  DollarSign,
-  Clock,
-  AlertTriangle,
-  Target,
-  Users,
-  ChartBar,
-  Lightbulb,
-  Shield,
-  Zap,
-  Award,
-  FileText,
-} from 'lucide-react';
+  TrendingUp, DollarSign, Clock, AlertTriangle, Target, Users, ChartBar, Lightbulb, Shield, Zap, Award, FileText } from 'lucide-react'
 
 const CSRValuePropositionTab = () => {
   const [selectedUseCase, setSelectedUseCase] = useState('protocol-optimization');

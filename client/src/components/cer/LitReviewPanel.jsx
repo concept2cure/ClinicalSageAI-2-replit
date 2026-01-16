@@ -9,24 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import {
-  Search,
-  Filter,
-  Calendar,
-  FileText,
-  Plus,
-  Check,
-  X,
-  ExternalLink,
-  Clock,
-  Upload,
-  Trash,
-  BookOpen,
-  GraduationCap,
-  Beaker,
-  Database,
-  FileCheck,
-  FileWarning,
-} from 'lucide-react';
+  Search, Filter, Calendar, FileText, Plus, Check, X, ExternalLink, Clock, Upload, Trash, BookOpen, GraduationCap, Beaker, Database, FileCheck, FileWarning } from 'lucide-react'
 
 export default function LitReviewPanel() {
   const [searchQuery, setSearchQuery] = useState('');

@@ -8,8 +8,14 @@ import multer from 'multer';
 import crypto from 'crypto';
 import { db } from '../db/index.js';
 import { sql } from 'drizzle-orm';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = express.Router();
+
+function isMissingRelationError(error) {
+  // Postgres: undefined_table
+  return Boolean(error && (error.code === '42P01' || String(error.message || '').includes('does not exist')));
+}
 
 // Configure Multer for file uploads
 const storage = multer.memoryStorage();
@@ -20,11 +26,8 @@ const upload = multer({
   }
 });
 
-// Middleware to get organizationId from headers
-router.use((req, res, next) => {
-  req.organizationId = parseInt(req.headers['x-organization-id']) || 7;
-  next();
-});
+// Tenant enforcement (JWT in prod; header fallback in dev/demo)
+router.use(requireTenant());
 
 // GET /api/device-data-center/files - List all device files with filtering
 router.get('/files', async (req, res) => {
@@ -118,6 +121,16 @@ router.get('/files', async (req, res) => {
       offset: parseInt(offset)
     });
   } catch (error) {
+    if (isMissingRelationError(error)) {
+      return res.json({
+        success: true,
+        files: [],
+        total: 0,
+        limit: parseInt(req.query.limit || 50),
+        offset: parseInt(req.query.offset || 0),
+        warning: 'Device Data Center tables not initialized. Run `npm run db:push` to enable persistent evidence storage.',
+      });
+    }
     console.error('[Device Data Center] Error listing files:', error);
     res.status(500).json({ error: 'Failed to list device files' });
   }
@@ -160,6 +173,14 @@ router.get('/categories', async (req, res) => {
       hierarchicalCategories: hierarchicalCategories // Return hierarchical tree
     });
   } catch (error) {
+    if (isMissingRelationError(error)) {
+      return res.json({
+        success: true,
+        categories: [],
+        hierarchicalCategories: [],
+        warning: 'Device Data Categories table not initialized. Run `npm run db:push` to enable persistent categories.',
+      });
+    }
     console.error('[Device Data Center] Error getting categories:', error);
     res.status(500).json({ error: 'Failed to get categories' });
   }

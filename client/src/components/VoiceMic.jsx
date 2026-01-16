@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Mic, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { Mic, Loader2, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

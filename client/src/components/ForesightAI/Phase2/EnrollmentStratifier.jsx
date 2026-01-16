@@ -8,24 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  MapPin,
-  Users,
-  TrendingUp,
-  Target,
-  Brain,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  BarChart3,
-  Activity
-} from 'lucide-react';
+  MapPin, Users, TrendingUp, Target, Brain, AlertCircle, CheckCircle, Clock, BarChart3, Activity } from 'lucide-react'
 import {
   BarChart,
   Bar,

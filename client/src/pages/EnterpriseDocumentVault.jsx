@@ -3,24 +3,7 @@ import { Layout } from '@/components/ui/layout';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  FileText,
-  Lock,
-  FileCheck,
-  Database,
-  Shield,
-  BookOpen,
-  Layers,
-  Clock,
-  CheckCircle,
-  ListChecks,
-  BookType,
-  FileArchive,
-  Folder,
-  Search,
-  FileSearch,
-  Filter,
-  Sparkles,
-} from 'lucide-react';
+  FileText, Lock, FileCheck, Database, Shield, BookOpen, Layers, Clock, CheckCircle, ListChecks, BookType, FileArchive, Folder, Search, FileSearch, Filter, Sparkles } from 'lucide-react'
 import DocuShareIntegration from '@/components/document-management/DocuShareIntegration';
 import { Button } from '@/components/ui/button';
 import SemanticSearchBar from '@/components/search/SemanticSearchBar';

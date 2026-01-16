@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileCheck, FileSearch, BookOpen, ListChecks } from 'lucide-react';
+import { FileCheck, FileSearch, BookOpen, ListChecks } from 'lucide-react'
 
 export default function SpecificationsTable() {
   return (

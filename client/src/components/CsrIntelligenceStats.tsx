@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Database, FileText, BookOpen, Activity, BrainCircuit } from 'lucide-react';
+import { Database, FileText, BookOpen, Activity, BrainCircuit } from 'lucide-react'
 import { trialsageApi } from '@/lib/api-connector';
 import StatCard from './StatCard';
 import BenchmarksModal from './BenchmarksModal';

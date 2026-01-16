@@ -1,19 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Bot,
-  Send,
-  Brain,
-  Zap,
-  RotateCcw,
-  Upload,
-  Microscope,
-  Loader2,
-  Sparkles,
-  UserRound,
-  Paperclip,
-  File,
-  X,
-} from 'lucide-react';
+import { Bot, Send, Brain, Zap, RotateCcw, Upload, Microscope, Loader2, Sparkles, UserRound, Paperclip, File, X } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +31,8 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [agentModel, setAgentModel] = useState('openai');
+  const [agentModel, setAgentModel] = useState('gemini');
+  const [aiStatus, setAiStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const messagesEndRef = useRef(null);
@@ -60,13 +47,45 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Fetch provider/model status when Lumen opens
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const resp = await fetch('/api/ai/status');
+        const json = await resp.json();
+        if (cancelled) return;
+        if (json?.success) {
+          setAiStatus(json);
+
+          // Align UI selection to the server's default provider.
+          if (json?.defaultProvider === 'openai' || json?.defaultProvider === 'gemini' || json?.defaultProvider === 'local') {
+            setAgentModel(json.defaultProvider);
+          } else if (json?.providers?.gemini?.enabled === false && json?.providers?.openai?.enabled) {
+            // Back-compat safety.
+            setAgentModel('openai');
+          }
+        }
+      } catch {
+        // Non-fatal: UI just won't show status.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   // Execute regulatory request
-  const executeRegulatoryRequest = async () => {
-    if (!input.trim() || isLoading) return;
+  const executeRegulatoryRequest = async promptOverride => {
+    const prompt = (promptOverride ?? input).trim();
+    if (!prompt || isLoading) return;
 
     const userMessage = {
       role: 'user',
-      content: input.trim(),
+      content: prompt,
       timestamp: new Date().toLocaleTimeString(),
     };
 
@@ -75,16 +94,15 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai/regulatory-guidance', {
+      const response = await fetch('/api/ask-lumen', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: userMessage.content,
+          query: userMessage.content,
           model: agentModel,
-          context: 'regulatory_compliance',
-          module,
+          context: module === 'general' ? 'regulatory_affairs' : module,
           contextData: context,
         }),
       });
@@ -101,7 +119,9 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
           data.response ||
           'I apologize, but I was unable to generate a response at this time. Please try again.',
         timestamp: new Date().toLocaleTimeString(),
-        model: agentModel,
+        providerUsed: data?.providerUsed || data?.provider || agentModel,
+        modelUsed: data?.modelUsed,
+        confidence: data?.confidence,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -153,8 +173,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     };
 
     const fullQuestion = questionMap[question] || question;
-    setInput(fullQuestion);
-    executeRegulatoryRequest();
+    executeRegulatoryRequest(fullQuestion);
   };
 
   // Handle file attachment
@@ -192,9 +211,42 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                 </SheetDescription>
               </div>
             </div>
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              Live
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                Live
+              </Badge>
+              {aiStatus?.success && (
+                <Badge
+                  variant="secondary"
+                  className={
+                    aiStatus.defaultProvider === 'gemini'
+                      ? 'bg-purple-100 text-purple-700'
+                      : aiStatus.defaultProvider === 'openai'
+                      ? 'bg-blue-100 text-blue-700'
+                      : aiStatus.defaultProvider === 'local'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }
+                  title={
+                    aiStatus.defaultProvider === 'gemini'
+                      ? `Gemini default: ${aiStatus?.providers?.gemini?.defaultModel} (fallback: ${aiStatus?.providers?.gemini?.fallbackModel})`
+                      : aiStatus.defaultProvider === 'openai'
+                      ? `OpenAI default: ${aiStatus?.providers?.openai?.defaultModel}`
+                      : aiStatus.defaultProvider === 'local'
+                      ? 'Local default: Xenova/flan-t5-small (no external key)'
+                      : 'No AI provider keys configured'
+                  }
+                >
+                  {aiStatus.defaultProvider === 'gemini'
+                    ? 'Gemini 3 Flash (Preview)'
+                    : aiStatus.defaultProvider === 'openai'
+                    ? 'OpenAI'
+                    : aiStatus.defaultProvider === 'local'
+                    ? 'Local (No Key)'
+                    : 'No AI Key'}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Model Selector and Controls */}
@@ -213,7 +265,13 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                 <SelectItem value="gemini">
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4" />
-                    Gemini Pro
+                    Gemini 3 Flash (Preview)
+                  </div>
+                </SelectItem>
+                <SelectItem value="local">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Local (No Key)
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -303,6 +361,25 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                   <div>
                     <p className="text-xs font-medium mb-1">
                       {message.role === 'user' ? 'You' : 'Lumen AI'}
+                      {message.role !== 'user' && message.providerUsed && (
+                        <span className="ml-2 inline-flex items-center">
+                          <Badge
+                            variant="secondary"
+                            className={
+                              message.providerUsed === 'gemini'
+                                ? 'bg-purple-100 text-purple-700'
+                                : message.providerUsed === 'openai'
+                                ? 'bg-blue-100 text-blue-700'
+                                : message.providerUsed === 'local'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }
+                            title={message.modelUsed ? `Model: ${message.modelUsed}` : undefined}
+                          >
+                            {String(message.providerUsed).toUpperCase()}
+                          </Badge>
+                        </span>
+                      )}
                     </p>
                     <p className="text-sm xl:text-sm 2xl:text-base whitespace-pre-line leading-relaxed">
                       {message.content}

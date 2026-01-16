@@ -15,79 +15,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter
 } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import queryClient, { apiRequest } from '@/lib/queryClient';
 import {
-  Search,
-  Upload,
-  FileText,
-  Download,
-  BookOpen,
-  Brain,
-  Network,
-  Filter,
-  RefreshCw,
-  ChevronRight,
-  ChevronDown,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  X,
-  File,
-  Loader2,
-  Send,
-  Copy,
-  ExternalLink,
-  Star,
-  StarOff,
-  ThumbsUp,
-  ThumbsDown,
-  Microscope,
-  Pill,
-  Dna,
-  FlaskConical,
-  TestTube,
-  Activity,
-  ShieldCheck,
-  FileSearch,
-  MessageSquare,
-  Sparkles,
-  Hash,
-  Target,
-  Zap,
-  GitBranch,
-  BarChart3,
-  PieChart,
-  TrendingUp,
-  Clock,
-  Calendar,
-  Settings,
-  HelpCircle,
-  ChevronLeft,
-  MoreVertical,
-  Maximize2,
-  Share2,
-  Save,
-  Trash2
-} from 'lucide-react';
+  Search, Upload, FileText, Download, BookOpen, Brain, Network, Filter, RefreshCw, ChevronRight, ChevronDown, AlertCircle, CheckCircle2, Info, X, File, Loader2, Send, Copy, ExternalLink, Star, StarOff, ThumbsUp, ThumbsDown, Microscope, Pill, Dna, FlaskConical, TestTube, Activity, ShieldCheck, FileSearch, MessageSquare, Sparkles, Hash, Target, Zap, GitBranch, BarChart3, PieChart, TrendingUp, Clock, Calendar, Settings, HelpCircle, ChevronLeft, MoreVertical, Maximize2, Share2, Save, Trash2, ArrowRight, Eye } from 'lucide-react'
 import {
   LineChart,
   Line,

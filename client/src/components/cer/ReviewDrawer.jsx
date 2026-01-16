@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from '@/components/ui/drawer';
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose, } from '@/components/ui/drawer';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, CheckCircle, XCircle } from 'lucide-react'
 
 export default function ReviewDrawer({ isOpen, onClose, documentData }) {
   const [comments, setComments] = useState('');

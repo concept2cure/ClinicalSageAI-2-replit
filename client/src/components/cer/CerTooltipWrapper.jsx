@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react'
 
 /**
  * CER Tooltip Wrapper Component

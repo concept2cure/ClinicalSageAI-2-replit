@@ -1,42 +1,15 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  Upload,
-  File,
-  ListChecks,
-  Info,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ArrowRight,
-  UploadCloud,
-  Trash2,
-  AlertTriangle,
-  Database,
-  FileText,
-  Layers,
-  Bookmark,
-} from 'lucide-react';
+  Upload, File, ListChecks, Info, CheckCircle2, XCircle, Clock, ArrowRight, UploadCloud, Trash2, AlertTriangle, Database, FileText, Layers, Bookmark } from 'lucide-react'
 
 // Sample recent uploads
 const recentUploads = [

@@ -1,6 +1,6 @@
 // client/src/components/search/SemanticSearchBar.jsx
 import React, { useState } from 'react';
-import { Search, Filter, Zap, FileText, Database, Sparkles } from 'lucide-react';
+import { Search, Filter, Zap, FileText, Database, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

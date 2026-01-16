@@ -10,32 +10,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  ChevronLeft,
-  Calendar,
-  Users,
-  Clock,
-  FileCheck,
-  FileText,
-  FileWarning,
-  CheckCircle2,
-  AlertCircle,
-  Lock,
-  Unlock,
-  FileStack,
-  ArrowRight,
-  BookOpen,
-  Clipboard,
-  Beaker,
-  Microscope,
-  Stethoscope,
-  Upload,
-  Download,
-  Edit3,
-  Layers,
-  ChevronRight,
-  ExternalLink,
-} from 'lucide-react';
+import { ChevronLeft, Calendar, Users, Clock, FileCheck, FileText, FileWarning, CheckCircle2, AlertCircle, Lock, Unlock, FileStack, ArrowRight, BookOpen, Clipboard, Beaker, Microscope, Stethoscope, Upload, Download, Edit3, Layers, ChevronRight, ExternalLink } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -55,442 +30,84 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { useNavigate, useParams } from 'wouter';
+import { useLocation, useNavigate, useParams } from 'wouter';
 
 // Import our stability monitoring hooks
 import { useNetworkResilience } from '@/hooks/useNetworkResilience';
 import { useHealthMonitor } from '@/hooks/useHealthMonitor';
 
-// Mock data - in a real application, this would come from an API
-const getProjectData = projectId => {
-  // IND projects
-  if (projectId === 'prj-001') {
-    return {
-      id: 'prj-001',
-      name: 'XYZ-123 Initial IND',
-      type: 'ind',
-      stage: 'preparation',
-      progress: 68,
-      createdAt: '2025-03-15T10:00:00Z',
-      updatedAt: '2025-04-28T14:30:00Z',
-      status: 'in-progress',
-      owner: 'John Smith',
-      dueDate: '2025-06-15',
-      description:
-        'Initial IND submission for XYZ-123, a novel treatment for rheumatoid arthritis.',
-      drugInfo: {
-        name: 'XYZ-123',
-        indication: 'Rheumatoid Arthritis',
-        mechanism: 'JAK1/JAK2 inhibitor',
-        formulation: 'Oral tablet, 10mg and 25mg',
-        sponsor: 'XYZ Pharmaceuticals, Inc.',
-      },
-      team: [
-        { name: 'John Smith', role: 'Project Manager', email: 'john.smith@example.com' },
-        { name: 'Sarah Williams', role: 'Regulatory Expert', email: 'sarah.williams@example.com' },
-        { name: 'Michael Johnson', role: 'CMC Lead', email: 'michael.johnson@example.com' },
-      ],
-      sections: [
-        {
-          id: 'forms',
-          name: 'FDA Forms',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'form-1571', name: 'Form FDA 1571', status: 'completed', progress: 100 },
-            { id: 'form-1572', name: 'Form FDA 1572', status: 'completed', progress: 100 },
-            { id: 'form-3674', name: 'Form FDA 3674', status: 'completed', progress: 100 },
-          ],
-        },
-        {
-          id: 'cover',
-          name: 'Cover Letter and TOC',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'cover-letter', name: 'Cover Letter', status: 'completed', progress: 100 },
-            { id: 'toc', name: 'Table of Contents', status: 'completed', progress: 100 },
-          ],
-        },
-        {
-          id: 'cmc',
-          name: 'Chemistry, Manufacturing, and Controls',
-          status: 'in-progress',
-          progress: 45,
-          subsections: [
-            { id: 'cmc-substance', name: 'Drug Substance', status: 'completed', progress: 100 },
-            { id: 'cmc-product', name: 'Drug Product', status: 'in-progress', progress: 75 },
-            {
-              id: 'cmc-manufacturing',
-              name: 'Manufacturing Process',
-              status: 'in-progress',
-              progress: 30,
-            },
-            {
-              id: 'cmc-controls',
-              name: 'Controls and Testing',
-              status: 'not-started',
-              progress: 0,
-            },
-            { id: 'cmc-stability', name: 'Stability Data', status: 'not-started', progress: 0 },
-          ],
-        },
-        {
-          id: 'nonclinical',
-          name: 'Nonclinical Pharmacology/Toxicology',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'nonc-pharmacology', name: 'Pharmacology', status: 'completed', progress: 100 },
-            { id: 'nonc-pk', name: 'Pharmacokinetics', status: 'completed', progress: 100 },
-            { id: 'nonc-toxicology', name: 'Toxicology', status: 'completed', progress: 100 },
-          ],
-        },
-        {
-          id: 'clinical',
-          name: 'Clinical Protocol',
-          status: 'in-progress',
-          progress: 75,
-          subsections: [
-            {
-              id: 'protocol-synopsis',
-              name: 'Protocol Synopsis',
-              status: 'completed',
-              progress: 100,
-            },
-            {
-              id: 'protocol-objectives',
-              name: 'Objectives and Endpoints',
-              status: 'completed',
-              progress: 100,
-            },
-            {
-              id: 'protocol-eligibility',
-              name: 'Eligibility Criteria',
-              status: 'completed',
-              progress: 100,
-            },
-            { id: 'protocol-design', name: 'Study Design', status: 'completed', progress: 100 },
-            {
-              id: 'protocol-procedures',
-              name: 'Study Procedures',
-              status: 'in-progress',
-              progress: 80,
-            },
-            {
-              id: 'protocol-safety',
-              name: 'Safety Assessments',
-              status: 'in-progress',
-              progress: 65,
-            },
-            {
-              id: 'protocol-stats',
-              name: 'Statistical Analysis',
-              status: 'not-started',
-              progress: 0,
-            },
-          ],
-        },
-        {
-          id: 'investigator',
-          name: 'Investigator Information',
-          status: 'in-progress',
-          progress: 50,
-          subsections: [
-            { id: 'inv-cv', name: 'Investigator CVs', status: 'in-progress', progress: 50 },
-            {
-              id: 'inv-facilities',
-              name: 'Facility Information',
-              status: 'in-progress',
-              progress: 50,
-            },
-          ],
-        },
-      ],
-      validationResults: [
-        {
-          level: 'error',
-          message: 'Missing stability data in CMC section',
-          section: 'cmc-stability',
-        },
-        {
-          level: 'warning',
-          message: 'Protocol statistical analysis needs completion',
-          section: 'protocol-stats',
-        },
-        {
-          level: 'info',
-          message: 'Investigator CVs need updating with recent publications',
-          section: 'inv-cv',
-        },
-      ],
-      documents: [
-        {
-          id: 'doc-001',
-          name: 'Form FDA 1571.pdf',
-          section: 'forms',
-          uploadedAt: '2025-03-20T09:15:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-002',
-          name: 'Cover Letter.pdf',
-          section: 'cover',
-          uploadedAt: '2025-03-21T10:30:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-003',
-          name: 'XYZ-123 Toxicology Report.pdf',
-          section: 'nonclinical',
-          uploadedAt: '2025-03-25T14:45:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-004',
-          name: 'Protocol v0.9.docx',
-          section: 'clinical',
-          uploadedAt: '2025-04-15T11:20:00Z',
-          status: 'draft',
-        },
-      ],
-      timeline: [
-        {
-          date: '2025-03-15',
-          title: 'Project Initiated',
-          description: 'IND project created in system',
-        },
-        {
-          date: '2025-04-01',
-          title: 'Forms Section Completed',
-          description: 'All required FDA forms completed and verified',
-        },
-        {
-          date: '2025-04-10',
-          title: 'Nonclinical Section Completed',
-          description: 'All nonclinical data compiled and reviewed',
-        },
-        {
-          date: '2025-06-15',
-          title: 'Submission Deadline',
-          description: 'Target date for IND submission to FDA',
-          status: 'upcoming',
-        },
-      ],
-    };
-  }
-  // eCTD projects
-  else if (projectId === 'prj-002') {
-    return {
-      id: 'prj-002',
-      name: 'ABC-456 eCTD Submission',
-      type: 'ectd',
-      stage: 'assembly',
-      progress: 82,
-      createdAt: '2025-02-10T09:15:00Z',
-      updatedAt: '2025-04-27T11:45:00Z',
-      status: 'in-progress',
-      owner: 'Jane Doe',
-      dueDate: '2025-05-30',
-      description:
-        'Phase 3 trial results and supporting documentation for ABC-456, a novel anti-inflammatory agent.',
-      drugInfo: {
-        name: 'ABC-456',
-        indication: "Crohn's Disease",
-        mechanism: 'IL-23 inhibitor',
-        formulation: 'Subcutaneous injection, 150mg/mL',
-        sponsor: 'ABC Biopharma, Inc.',
-      },
-      team: [
-        { name: 'Jane Doe', role: 'Project Manager', email: 'jane.doe@example.com' },
-        { name: 'Robert Chen', role: 'Clinical Lead', email: 'robert.chen@example.com' },
-        { name: 'Lisa Martinez', role: 'Regulatory Affairs', email: 'lisa.martinez@example.com' },
-      ],
-      sections: [
-        {
-          id: 'm1',
-          name: 'Module 1 - Administrative Information',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'm1-1', name: '1.1 Forms', status: 'completed', progress: 100 },
-            { id: 'm1-2', name: '1.2 Cover Letter', status: 'completed', progress: 100 },
-            {
-              id: 'm1-3',
-              name: '1.3 Administrative Information',
-              status: 'completed',
-              progress: 100,
-            },
-          ],
-        },
-        {
-          id: 'm2',
-          name: 'Module 2 - CTD Summaries',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'm2-2', name: '2.2 Introduction', status: 'completed', progress: 100 },
-            { id: 'm2-3', name: '2.3 Quality Overall Summary', status: 'completed', progress: 100 },
-            { id: 'm2-4', name: '2.4 Nonclinical Overview', status: 'completed', progress: 100 },
-            { id: 'm2-5', name: '2.5 Clinical Overview', status: 'completed', progress: 100 },
-            { id: 'm2-6', name: '2.6 Nonclinical Summary', status: 'completed', progress: 100 },
-            { id: 'm2-7', name: '2.7 Clinical Summary', status: 'completed', progress: 100 },
-          ],
-        },
-        {
-          id: 'm3',
-          name: 'Module 3 - Quality',
-          status: 'in-progress',
-          progress: 90,
-          subsections: [
-            { id: 'm3-2-s', name: '3.2.S Drug Substance', status: 'completed', progress: 100 },
-            { id: 'm3-2-p', name: '3.2.P Drug Product', status: 'completed', progress: 100 },
-            { id: 'm3-2-a', name: '3.2.A Appendices', status: 'in-progress', progress: 80 },
-            {
-              id: 'm3-2-r',
-              name: '3.2.R Regional Information',
-              status: 'in-progress',
-              progress: 50,
-            },
-          ],
-        },
-        {
-          id: 'm4',
-          name: 'Module 4 - Nonclinical Reports',
-          status: 'completed',
-          progress: 100,
-          subsections: [
-            { id: 'm4-2-1', name: '4.2.1 Pharmacology', status: 'completed', progress: 100 },
-            { id: 'm4-2-2', name: '4.2.2 Pharmacokinetics', status: 'completed', progress: 100 },
-            { id: 'm4-2-3', name: '4.2.3 Toxicology', status: 'completed', progress: 100 },
-          ],
-        },
-        {
-          id: 'm5',
-          name: 'Module 5 - Clinical Reports',
-          status: 'not-started',
-          progress: 0,
-          subsections: [
-            {
-              id: 'm5-3-1',
-              name: '5.3.1 Reports of Biopharmaceutic Studies',
-              status: 'not-started',
-              progress: 0,
-            },
-            {
-              id: 'm5-3-3',
-              name: '5.3.3 Reports of Human PK Studies',
-              status: 'not-started',
-              progress: 0,
-            },
-            {
-              id: 'm5-3-5',
-              name: '5.3.5 Reports of Efficacy and Safety Studies',
-              status: 'not-started',
-              progress: 0,
-            },
-          ],
-        },
-      ],
-      validationResults: [
-        { level: 'error', message: 'Module 5 content missing', section: 'm5' },
-        {
-          level: 'warning',
-          message: 'Regional information in Module 3 needs completion',
-          section: 'm3-2-r',
-        },
-        { level: 'info', message: 'Appendices need final review', section: 'm3-2-a' },
-      ],
-      documents: [
-        {
-          id: 'doc-101',
-          name: 'Module1/regional-info.pdf',
-          section: 'm1',
-          uploadedAt: '2025-03-05T09:15:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-102',
-          name: 'Module2/clinical-overview.pdf',
-          section: 'm2',
-          uploadedAt: '2025-03-10T10:30:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-103',
-          name: 'Module3/drug-substance.pdf',
-          section: 'm3',
-          uploadedAt: '2025-03-15T14:45:00Z',
-          status: 'final',
-        },
-        {
-          id: 'doc-104',
-          name: 'Module3/appendices.docx',
-          section: 'm3',
-          uploadedAt: '2025-04-05T11:20:00Z',
-          status: 'draft',
-        },
-      ],
-      timeline: [
-        {
-          date: '2025-02-10',
-          title: 'Project Initiated',
-          description: 'eCTD project created in system',
-        },
-        {
-          date: '2025-03-15',
-          title: 'Module 1 & 2 Completed',
-          description: 'Administrative information and summaries completed',
-        },
-        {
-          date: '2025-04-10',
-          title: 'Module 3 & 4 Reviewed',
-          description: 'Quality and nonclinical sections reviewed',
-        },
-        {
-          date: '2025-05-30',
-          title: 'Submission Deadline',
-          description: 'Target date for eCTD submission',
-          status: 'upcoming',
-        },
-      ],
-    };
-  }
-  return null;
-};
-
+const TacticalToast = ({ message, type, onClose }) => (
+  <div
+    className={`fixed top-6 right-6 z-[10000] px-6 py-4 rounded shadow-2xl flex items-center gap-4 animate-in slide-in-from-right duration-300 ${
+      type === 'SUCCESS'
+        ? 'bg-emerald-900 border border-emerald-500 text-white'
+        : 'bg-red-900 border border-red-500 text-white'
+    }`}
+  >
+    <div
+      className={`h-3 w-3 rounded-full ${
+        type === 'SUCCESS' ? 'bg-emerald-400' : 'bg-red-400'
+      }`}
+    ></div>
+    <div className="font-mono text-sm font-bold">{message}</div>
+    <button onClick={onClose} className="text-white/50 hover:text-white ml-4">
+      ✕
+    </button>
+  </div>
+);
 const RegulatoryProjectDetails = () => {
   const navigate = useNavigate();
-  const { projectId } = useParams();
+  const { id, projectId } = useParams();
+  const [location] = useLocation();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lumenAlert, setLumenAlert] = useState(null);
+  const [mitigationStatus, setMitigationStatus] = useState('idle');
+  const [toast, setToast] = useState(null);
+  const resolvedProjectId = projectId || id;
 
-  // Use network resilience and health monitor hooks
   const { isOnline, resilientFetch } = useNetworkResilience();
   const healthMonitor = useHealthMonitor();
 
   useEffect(() => {
-    // In a real application, this would be an API call
-    // using the resilientFetch from our hook
     const loadProject = async () => {
       try {
         setLoading(true);
+        const tenantId =
+          localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+        const response = await resilientFetch(`/api/projects/${resolvedProjectId}`, {
+          headers: {
+            ...(tenantId ? { 'x-organization-id': tenantId } : {}),
+          },
+        });
 
-        // Simulate API call
-        const data = getProjectData(projectId);
+        if (!response.ok) {
+          throw new Error(`Failed to load project ${resolvedProjectId}`);
+        }
 
-        if (data) {
-          setProject(data);
+        const payload = await response.json();
+        const projectData = payload?.project || payload;
+
+        if (projectData) {
+          setProject({
+            ...projectData,
+            sections: payload?.sections || [],
+            validationResults: payload?.validationResults || [],
+            documents: payload?.documents || [],
+            timeline: payload?.timeline || [],
+            team: payload?.team || [],
+            drugInfo: payload?.drugInfo || {},
+          });
         } else {
-          console.error('Project not found:', projectId);
+          setProject(null);
+          console.error('Project not found:', resolvedProjectId);
         }
       } catch (error) {
         console.error('Error loading project:', error);
 
-        // Report error to health monitor
         if (healthMonitor.isConnected) {
           healthMonitor.reportError({
-            message: `Failed to load project ${projectId}`,
+            message: `Failed to load project ${resolvedProjectId}`,
             stack: error.stack,
             severity: 'medium',
           });
@@ -501,18 +118,66 @@ const RegulatoryProjectDetails = () => {
     };
 
     loadProject();
-  }, [projectId, healthMonitor]);
+  }, [resolvedProjectId, healthMonitor, resilientFetch]);
 
-  // Report status to health monitor
   useEffect(() => {
     if (healthMonitor.isConnected) {
       healthMonitor.sendHeartbeat({
         page: 'regulatory-project-details',
-        projectId,
+        projectId: resolvedProjectId,
         status: 'active',
       });
     }
-  }, [healthMonitor, projectId]);
+  }, [healthMonitor, resolvedProjectId]);
+
+  useEffect(() => {
+    const alertContext = window.history.state?.lumenAlert;
+    if (alertContext) {
+      console.log('>>> 🛡️ LUMEN CORTEX INTERVENTION ACTIVE');
+      setLumenAlert(alertContext);
+      window.history.replaceState({}, document.title, location);
+    }
+  }, [location]);
+
+  const handleExecuteMitigation = async () => {
+    if (!lumenAlert) return;
+    try {
+      setMitigationStatus('saving');
+      const tenantId =
+        localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+      const token = localStorage.getItem('token');
+
+      const response = await fetch('/api/risks/create-from-lumen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tenantId ? { 'x-organization-id': tenantId } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          projectId: lumenAlert.projectId || resolvedProjectId,
+          source: 'LUMEN_CORTEX',
+          title: `Regulatory Intervention: ${lumenAlert.severity}`,
+          description: lumenAlert.rationale,
+          mitigation_plan: lumenAlert.actionItems || [],
+          severity: lumenAlert.severity,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Database Write Failed');
+      }
+
+      setToast({ msg: 'PROTOCOL EXECUTED. RISK LOGGED IN DHF.', type: 'SUCCESS' });
+      setLumenAlert(null);
+      setMitigationStatus('idle');
+    } catch (error) {
+      setToast({ msg: 'DB WRITE ERROR. CONTACT ADMIN.', type: 'ERROR' });
+      setMitigationStatus('error');
+    } finally {
+      setTimeout(() => setToast(null), 5000);
+    }
+  };
 
   if (loading) {
     return (
@@ -613,7 +278,11 @@ const RegulatoryProjectDetails = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="relative min-h-screen bg-slate-50">
+      {toast && (
+        <TacticalToast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />
+      )}
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
         <BreadcrumbItem>
@@ -634,8 +303,8 @@ const RegulatoryProjectDetails = () => {
             <h1 className="text-3xl font-bold">{project.name}</h1>
             <p className="text-gray-500">{project.description}</p>
           </div>
-          <Badge variant="outline" className={getStatusColor(project.status)}>
-            {project.status.replace('-', ' ')}
+          <Badge variant="outline" className={getStatusColor(project.status || 'unknown')}>
+            {(project.status || 'unknown').replace('-', ' ')}
           </Badge>
         </div>
 
@@ -647,7 +316,11 @@ const RegulatoryProjectDetails = () => {
                 <Calendar className="h-5 w-5 text-gray-500 mr-2" />
                 <div>
                   <p className="text-sm text-gray-500">Due Date</p>
-                  <p className="font-medium">{new Date(project.dueDate).toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {project.targetEndDate || project.dueDate
+                      ? new Date(project.targetEndDate || project.dueDate).toLocaleDateString()
+                      : '—'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -659,7 +332,9 @@ const RegulatoryProjectDetails = () => {
                 <Users className="h-5 w-5 text-gray-500 mr-2" />
                 <div>
                   <p className="text-sm text-gray-500">Owner</p>
-                  <p className="font-medium">{project.owner}</p>
+                  <p className="font-medium">
+                    {project.owner || (project.ownerId ? `User ${project.ownerId}` : 'Unassigned')}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -671,7 +346,9 @@ const RegulatoryProjectDetails = () => {
                 <Clock className="h-5 w-5 text-gray-500 mr-2" />
                 <div>
                   <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="font-medium">{new Date(project.updatedAt).toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : '—'}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -684,8 +361,8 @@ const RegulatoryProjectDetails = () => {
                 <div>
                   <p className="text-sm text-gray-500">Progress</p>
                   <div className="flex items-center">
-                    <span className="font-medium mr-2">{project.progress}%</span>
-                    <Progress value={project.progress} className="h-2 w-20" />
+                    <span className="font-medium mr-2">{project.progress ?? 0}%</span>
+                    <Progress value={project.progress ?? 0} className="h-2 w-20" />
                   </div>
                 </div>
               </div>
@@ -714,7 +391,7 @@ const RegulatoryProjectDetails = () => {
               {/* Show different actions based on project type */}
               {project.type === 'ind' ? (
                 <div className="flex space-x-2">
-                  <Button variant="outline" onClick={() => navigate(`/ind-wizard/${projectId}`)}>
+                  <Button variant="outline" onClick={() => navigate(`/ind-wizard/${resolvedProjectId}`)}>
                     Continue in IND Wizard
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -722,7 +399,7 @@ const RegulatoryProjectDetails = () => {
                   {project.progress >= 70 && (
                     <Button
                       variant="default"
-                      onClick={() => navigate(`/regulatory-submissions/ind-to-ectd/${projectId}`)}
+                      onClick={() => navigate(`/regulatory-submissions/ind-to-ectd/${resolvedProjectId}`)}
                     >
                       Generate eCTD Structure
                       <Layers className="ml-2 h-4 w-4" />
@@ -731,7 +408,7 @@ const RegulatoryProjectDetails = () => {
                 </div>
               ) : (
                 <div className="flex space-x-2">
-                  <Button variant="outline" onClick={() => navigate(`/ectd-editor/${projectId}`)}>
+                  <Button variant="outline" onClick={() => navigate(`/ectd-editor/${resolvedProjectId}`)}>
                     Continue in eCTD Editor
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -800,9 +477,9 @@ const RegulatoryProjectDetails = () => {
                       size="sm"
                       onClick={() => {
                         if (project.type === 'ind') {
-                          navigate(`/ind-wizard/${projectId}/section/${section.id}`);
+                          navigate(`/ind-wizard/${resolvedProjectId}/section/${section.id}`);
                         } else {
-                          navigate(`/ectd-editor/${projectId}/module/${section.id}`);
+                          navigate(`/ectd-editor/${resolvedProjectId}/module/${section.id}`);
                         }
                       }}
                       className="ml-auto"
@@ -963,9 +640,9 @@ const RegulatoryProjectDetails = () => {
                                 size="sm"
                                 onClick={() => {
                                   if (project.type === 'ind') {
-                                    navigate(`/ind-wizard/${projectId}/section/${issue.section}`);
+                                    navigate(`/ind-wizard/${resolvedProjectId}/section/${issue.section}`);
                                   } else {
-                                    navigate(`/ectd-editor/${projectId}/module/${issue.section}`);
+                                    navigate(`/ectd-editor/${resolvedProjectId}/module/${issue.section}`);
                                   }
                                 }}
                               >
@@ -1163,7 +840,7 @@ const RegulatoryProjectDetails = () => {
                       </p>
                       <Button
                         variant="outline"
-                        onClick={() => navigate(`/regulatory-submissions/ind-to-ectd/${projectId}`)}
+                        onClick={() => navigate(`/regulatory-submissions/ind-to-ectd/${resolvedProjectId}`)}
                       >
                         <Layers className="h-4 w-4 mr-2" />
                         Generate eCTD
@@ -1217,6 +894,133 @@ const RegulatoryProjectDetails = () => {
               <h3 className="font-medium">You're currently offline</h3>
               <p className="text-sm">Your changes will be synchronized when you reconnect</p>
             </div>
+          </div>
+        </div>
+      )}
+      </div>
+
+      {lumenAlert && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0f172a]/90 backdrop-blur-md animate-in fade-in duration-300">
+          <div
+            className={`w-full max-w-3xl bg-[#1e293b] border rounded-2xl shadow-2xl overflow-hidden relative ${
+              lumenAlert.severity === 'CRITICAL'
+                ? 'border-red-500/50 shadow-red-900/50'
+                : 'border-orange-500/50 shadow-orange-900/50'
+            }`}
+          >
+            <div
+              className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${
+                lumenAlert.severity === 'CRITICAL'
+                  ? 'from-red-500 via-red-400 to-red-500'
+                  : 'from-orange-500 via-amber-400 to-orange-500'
+              }`}
+            ></div>
+
+            <div className="p-8 pb-6 border-b border-slate-700/50 flex items-start justify-between bg-slate-900/50">
+              <div className="flex gap-5">
+                <div
+                  className={`p-4 rounded-xl flex items-center justify-center shadow-lg ${
+                    lumenAlert.severity === 'CRITICAL'
+                      ? 'bg-red-500/10 text-red-500 ring-1 ring-red-500/50'
+                      : 'bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/50'
+                  }`}
+                >
+                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                    LUMEN CORTEX INTERVENTION
+                    {lumenAlert.severity === 'CRITICAL' && (
+                      <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded tracking-widest animate-pulse">
+                        URGENT
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-slate-400 mt-1 font-medium">
+                    Intelligence Source:{' '}
+                    <span className="text-slate-200 font-mono">{lumenAlert.source}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="text-right hidden sm:block">
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">
+                  Alert Reference ID
+                </div>
+                <div className="text-sm text-slate-300 font-mono bg-slate-800 px-2 py-1 rounded">
+                  {lumenAlert.id?.substring(0, 8) || 'UNKNOWN'}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 space-y-8">
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                  Threat Rationale
+                </h3>
+                <div className="p-5 rounded-lg bg-black/20 border border-white/5 text-lg text-slate-200 leading-relaxed font-light">
+                  "{lumenAlert.rationale}"
+                </div>
+              </div>
+
+              {lumenAlert.actionItems && lumenAlert.actionItems.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Recommended Mitigation
+                  </h3>
+                  <div className="grid gap-3">
+                    {lumenAlert.actionItems.map((action, index) => (
+                      <div
+                        key={`${lumenAlert.id}-action-${index}`}
+                        className="flex items-center gap-4 bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 group hover:border-blue-500/30 transition-colors"
+                      >
+                        <div className="h-6 w-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold ring-1 ring-blue-500/50">
+                          {index + 1}
+                        </div>
+                        <span className="text-slate-300 font-medium">{action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between gap-4">
+              <button
+                onClick={() => setLumenAlert(null)}
+                className="px-6 py-3 rounded-lg font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-sm tracking-wide"
+              >
+                ACKNOWLEDGE & DISMISS
+              </button>
+
+              <button
+                onClick={handleExecuteMitigation}
+                className={`px-8 py-3 rounded-lg font-bold text-white shadow-xl transform transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 ${
+                  lumenAlert.severity === 'CRITICAL'
+                    ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-900/30'
+                    : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-orange-900/30'
+                }`}
+                disabled={mitigationStatus === 'saving'}
+              >
+                <span>⚡</span>
+                {mitigationStatus === 'saving'
+                  ? 'WRITING TO LEDGER...'
+                  : 'EXECUTE PROTOCOL'}
+              </button>
+            </div>
+            {mitigationStatus === 'error' && (
+              <div className="px-6 pb-6 text-xs text-red-400">
+                Failed to create risk record. Please retry.
+              </div>
+            )}
           </div>
         </div>
       )}

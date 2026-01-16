@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Info, XCircle, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, Info, XCircle, CheckCircle, X } from 'lucide-react'
 
 /**
  * GuidanceTooltip - Displays AI-powered guidance when documents are dropped into modules

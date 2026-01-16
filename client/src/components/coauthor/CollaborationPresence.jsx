@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Circle, Edit3, Clock, Wifi, WifiOff } from 'lucide-react';
+import { Circle, Edit3, Clock, Wifi, WifiOff } from 'lucide-react'
 
 const CollaborationPresence = ({ 
   collaborators = [], 

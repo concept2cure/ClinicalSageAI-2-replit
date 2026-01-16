@@ -9,26 +9,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  AlertCircle,
-  ArrowRight,
-  Calendar,
-  CheckCircle,
-  ClipboardList,
-  FileText,
-  LayoutList,
-} from 'lucide-react';
+  AlertCircle, ArrowRight, Calendar, CheckCircle, ClipboardList, FileText, LayoutList } from 'lucide-react'
 
 // Import project service
 import ProjectService from '../../services/ProjectService';

@@ -4,32 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { cerApiService } from '@/services/CerAPIService';
 import {
-  BookMarked,
-  RefreshCw,
-  Download,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  GitCompare,
-  Plus,
-  X,
-} from 'lucide-react';
+  BookMarked, RefreshCw, Download, FileText, AlertCircle, CheckCircle, GitCompare, Plus, X } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import {
   Accordion,

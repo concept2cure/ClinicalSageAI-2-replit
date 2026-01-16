@@ -20,9 +20,37 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  const isCodespaces = process.env.CODESPACES === 'true';
+  const codespaceName = process.env.CODESPACE_NAME;
+  const codespacesDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+
+  const codespacesForwardHost =
+    isCodespaces && codespaceName && codespacesDomain
+      ? `${codespaceName}-5000.${codespacesDomain}`
+      : undefined;
+
+  const hmrHost = process.env.VITE_HMR_HOST || codespacesForwardHost || undefined;
+  const hmrClientPortRaw = process.env.VITE_HMR_CLIENT_PORT;
+  const hmrClientPort = hmrClientPortRaw ? Number.parseInt(hmrClientPortRaw, 10) : undefined;
+  const hmrProtocol =
+    (process.env.VITE_HMR_PROTOCOL as 'ws' | 'wss' | undefined) ||
+    (isCodespaces ? 'wss' : undefined);
+
+  const resolvedHmrClientPort = Number.isFinite(hmrClientPort) ? hmrClientPort : isCodespaces ? 443 : undefined;
+
+  log(
+    `Vite HMR config: host=${hmrHost ?? '(default)'} protocol=${hmrProtocol ?? '(default)'} clientPort=${resolvedHmrClientPort ?? '(default)'}`,
+    'vite'
+  );
+
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: {
+      server,
+      host: hmrHost,
+      clientPort: resolvedHmrClientPort,
+      protocol: hmrProtocol,
+    },
     allowedHosts: true,
   };
 
@@ -43,6 +71,11 @@ export async function setupVite(app: Express, server: Server) {
   app.use(vite.middlewares);
   app.use('*', async (req, res, next) => {
     const url = req.originalUrl;
+
+    // Never serve the SPA index.html for API requests.
+    if (url.startsWith('/api/')) {
+      return next();
+    }
 
     try {
       const clientTemplate = path.resolve(import.meta.dirname, '..', 'client', 'index.html');

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import ModuleSettings from '../components/client-portal/ModuleSettings';
 

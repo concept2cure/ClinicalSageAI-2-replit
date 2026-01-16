@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Clock, AlertCircle, Check } from "lucide-react";
+import { Loader2, Mail, Clock, AlertCircle, Check } from 'lucide-react'
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import DigestPreferences from "./DigestPreferences";
@@ -42,17 +42,11 @@ export default function DigestDashboard() {
         setLastSent(todayMinus7);
       } catch (error) {
         console.error('Error fetching digest data:', error);
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Failed to load digest",
           description: "Your weekly digest could not be loaded. Please try again later.",
           variant: "destructive",
-        })
-  console.log('Toast would show:', {
-          title: "Failed to load digest",
-          description: "Your weekly digest could not be loaded. Please try again later.",
-          variant: "destructive",
-        });
+  });
       } finally {
         setLoading(false);
       }
@@ -73,15 +67,10 @@ export default function DigestDashboard() {
       });
       
       if (response.ok) {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Digest sent",
           description: "Your weekly digest has been generated and sent.",
-        })
-  console.log('Toast would show:', {
-          title: "Digest sent",
-          description: "Your weekly digest has been generated and sent.",
-        });
+  });
         
         // Update last sent date
         setLastSent(new Date());
@@ -90,17 +79,11 @@ export default function DigestDashboard() {
       }
     } catch (error) {
       console.error('Error sending digest:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Failed to send digest",
         description: "The digest could not be sent. Please try again later.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Failed to send digest",
-        description: "The digest could not be sent. Please try again later.",
-        variant: "destructive",
-      });
+  });
     } finally {
       setSending(false);
     }

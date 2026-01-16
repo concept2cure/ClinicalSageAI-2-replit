@@ -14,21 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Brain,
-  FileText,
-  TrendingUp,
-  Target,
-  Activity,
-  BarChart3,
-  Zap,
-  Shield,
-  Users,
-  Calendar,
-  Database,
-  Lightbulb,
-  Rocket,
-  Eye,
-} from 'lucide-react';
+  Brain, FileText, TrendingUp, Target, Activity, BarChart3, Zap, Shield, Users, Calendar, Database, Lightbulb, Rocket, Eye } from 'lucide-react'
 import PredictiveVaultBrowser from '@/pages/PredictiveVaultBrowser';
 import { useToast } from '@/hooks/use-toast';
 

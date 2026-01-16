@@ -2,23 +2,9 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell, } from '@/components/ui/table';
 import {
-  Brain,
-  ChevronRight,
-  FileCheck,
-  BarChart4,
-  Shield,
-  Database,
-  LineChart,
-  Laptop,
-} from 'lucide-react';
+  Brain, ChevronRight, FileCheck, BarChart4, Shield, Database, LineChart, Laptop } from 'lucide-react'
 
 const CerGeneratorLandingPage = () => {
   const [, setLocation] = useLocation();

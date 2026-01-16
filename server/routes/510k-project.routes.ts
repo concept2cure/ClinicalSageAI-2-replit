@@ -2,8 +2,12 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { fda510kProjects, fda510kStageProgress, projects } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = Router();
+
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use(requireTenant());
 
 // Get available project templates
 router.get('/templates', async (req: Request, res: Response) => {
@@ -23,7 +27,9 @@ router.get('/templates', async (req: Request, res: Response) => {
 
 // Create a new project with wizard data
 router.post('/create', async (req: Request, res: Response) => {
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = Number((req as any).organizationId);
+  const workspaceHeader = req.headers['x-client-workspace-id'] as string | undefined;
+  const clientWorkspaceId = workspaceHeader ? Number.parseInt(String(workspaceHeader), 10) : 1;
   const {
     projectName,
     deviceName,
@@ -67,7 +73,7 @@ router.post('/create', async (req: Request, res: Response) => {
       .insert(projects)
       .values({
         organizationId: organizationId,
-        clientWorkspaceId: 1, // Default to first workspace
+        clientWorkspaceId: Number.isFinite(clientWorkspaceId) ? clientWorkspaceId : 1,
         name: projectName,
         description: `FDA 510(k) submission project for ${deviceName}`,
         type: 'regulatory',
@@ -196,7 +202,6 @@ router.post('/create', async (req: Request, res: Response) => {
       .insert(fda510kStageProgress)
       .values({
         projectId: project.id,
-        organizationId: organizationId,
         stageName: 'setup',
         sectionName: 'project_initialization',
         collectedData: {
@@ -230,7 +235,6 @@ router.post('/create', async (req: Request, res: Response) => {
           .insert(fda510kStageProgress)
           .values({
             projectId: project.id,
-            organizationId: organizationId,
             stageName: 'setup',
             sectionName: 'template_application',
             collectedData: {
@@ -264,9 +268,23 @@ router.post('/create', async (req: Request, res: Response) => {
 // Get project stage data
 router.get('/:projectId/stage', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = Number((req as any).organizationId);
 
   try {
+    // If the FDA 510k project row doesn't exist yet (projects created via /api/projects),
+    // auto-create a minimal record so workflow state can be persisted.
+    const ensureBaseProject = await db.execute(sql`
+      SELECT id, name
+      FROM projects
+      WHERE id = ${parseInt(projectId)}
+      AND organization_id = ${organizationId}
+      LIMIT 1
+    `);
+
+    if (!ensureBaseProject.rows || ensureBaseProject.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
     // Get FDA 510k project stage information
     const projectResult = await db.execute(sql`
       SELECT 
@@ -288,7 +306,57 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
     `);
 
     if (!projectResult.rows || projectResult.rows.length === 0) {
-      return res.status(404).json({ error: 'FDA 510(k) project not found' });
+      const baseProject = ensureBaseProject.rows[0] as any;
+
+      await db.execute(sql`
+        INSERT INTO fda_510k_projects (
+          organization_id,
+          project_id,
+          device_name,
+          current_stage,
+          current_stage_progress,
+          overall_progress,
+          status,
+          has_software,
+          has_biocompatibility,
+          has_clinical_data,
+          metadata
+        ) VALUES (
+          ${organizationId},
+          ${parseInt(projectId)},
+          ${baseProject.name},
+          1,
+          0,
+          0,
+          'active',
+          false,
+          true,
+          false,
+          ${JSON.stringify({ autoCreated: true, source: '510k-project:stage' })}::jsonb
+        )
+      `);
+
+      // Re-run fetch after initialization
+      const reloaded = await db.execute(sql`
+        SELECT 
+          p.id,
+          p.project_id,
+          p.device_name,
+          p.current_stage,
+          p.current_stage_progress,
+          p.overall_progress,
+          p.status,
+          p.has_software,
+          p.has_biocompatibility,
+          p.has_clinical_data,
+          p.metadata
+        FROM fda_510k_projects p
+        WHERE p.project_id = ${parseInt(projectId)}
+        AND p.organization_id = ${organizationId}
+        LIMIT 1
+      `);
+
+      projectResult.rows = reloaded.rows;
     }
 
     const project = projectResult.rows[0] as any;
@@ -298,7 +366,8 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
     let rtaStatus = 'not_started';
     
     // Check if this is the AeroSpire project (Stage 5)
-    if (project.current_stage === 5) {
+    const stageNumber = Number.parseInt(String(project.current_stage), 10);
+    if (Number.isFinite(stageNumber) && stageNumber === 5) {
       estarStatus = 'in_progress';
       rtaStatus = 'ready';
     }
@@ -339,10 +408,142 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
   }
 });
 
+// PUT project stage data (persist workflow state)
+router.put('/:projectId/stage', async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const organizationId = Number((req as any).organizationId);
+
+  const rawStage = (req.body?.current_stage ?? req.body?.stage ?? req.body?.currentStage);
+  const current_stage = rawStage === undefined || rawStage === null ? '' : String(rawStage).trim();
+  const current_stage_progress = Number.parseInt(String(req.body?.current_stage_progress ?? 0), 10);
+  const overall_progress = Number.parseInt(String(req.body?.overall_progress ?? 0), 10);
+  const estar_status = req.body?.estar_status;
+  const rta_status = req.body?.rta_status;
+
+  if (!current_stage) {
+    return res.status(400).json({ error: 'current_stage is required' });
+  }
+
+  const clamp = (val: number) => Math.max(0, Math.min(100, Number.isFinite(val) ? val : 0));
+
+  try {
+    // Ensure base project exists and belongs to tenant
+    const baseProject = await db.execute(sql`
+      SELECT id
+      FROM projects
+      WHERE id = ${parseInt(projectId)}
+      AND organization_id = ${organizationId}
+      LIMIT 1
+    `);
+
+    if (!baseProject.rows || baseProject.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Ensure 510k project row exists
+    await db.execute(sql`
+      INSERT INTO fda_510k_projects (
+        organization_id,
+        project_id,
+        device_name,
+        current_stage,
+        current_stage_progress,
+        overall_progress,
+        status,
+        has_software,
+        has_biocompatibility,
+        has_clinical_data,
+        metadata
+      )
+      SELECT
+        ${organizationId},
+        ${parseInt(projectId)},
+        (SELECT name FROM projects WHERE id = ${parseInt(projectId)}),
+        1,
+        0,
+        0,
+        'active',
+        false,
+        true,
+        false,
+        ${JSON.stringify({ autoCreated: true, source: '510k-project:stage:put' })}::jsonb
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM fda_510k_projects p
+        WHERE p.project_id = ${parseInt(projectId)}
+        AND p.organization_id = ${organizationId}
+      )
+    `);
+
+    // Update stage fields
+    await db.execute(sql`
+      UPDATE fda_510k_projects
+      SET
+        current_stage = ${current_stage},
+        current_stage_progress = ${clamp(current_stage_progress)},
+        overall_progress = ${clamp(overall_progress)}
+      WHERE project_id = ${parseInt(projectId)}
+      AND organization_id = ${organizationId}
+    `);
+
+    // Store eSTAR/RTA status on the base project settings (if provided)
+    if (estar_status !== undefined || rta_status !== undefined) {
+      await db.execute(sql`
+        UPDATE projects
+        SET settings = COALESCE(settings, '{}'::jsonb)
+          || jsonb_build_object(
+            'eSTARStatus', CAST(${estar_status ?? null} AS TEXT),
+            'rtaStatus', CAST(${rta_status ?? null} AS TEXT)
+          )
+        WHERE id = ${parseInt(projectId)}
+        AND organization_id = ${organizationId}
+      `);
+    }
+
+    // Return the current stage snapshot
+    const response = await db.execute(sql`
+      SELECT 
+        p.id,
+        p.project_id,
+        p.device_name,
+        p.current_stage,
+        p.current_stage_progress,
+        p.overall_progress,
+        p.status,
+        p.has_software,
+        p.has_biocompatibility,
+        p.has_clinical_data
+      FROM fda_510k_projects p
+      WHERE p.project_id = ${parseInt(projectId)}
+      AND p.organization_id = ${organizationId}
+      LIMIT 1
+    `);
+
+    const row = response.rows?.[0] as any;
+    res.json({
+      id: row?.id,
+      project_id: row?.project_id,
+      device_name: row?.device_name,
+      current_stage: row?.current_stage,
+      current_stage_progress: row?.current_stage_progress,
+      overall_progress: row?.overall_progress,
+      status: row?.status,
+      estar_status: estar_status ?? null,
+      rta_status: rta_status ?? null,
+      has_software: row?.has_software,
+      has_biocompatibility: row?.has_biocompatibility,
+      has_clinical_data: row?.has_clinical_data,
+    });
+  } catch (error) {
+    console.error('Error updating project stage:', error);
+    res.status(500).json({ error: 'Failed to update project stage data' });
+  }
+});
+
 // Get project details
 router.get('/:projectId', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = Number((req as any).organizationId);
 
   try {
     const [project] = await db

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, FileText, Download, Lock } from 'lucide-react';
+import { Save, FileText, Download, Lock } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { getDocumentTypeConfig, getSectionScaffold } from '@/config/documentTypeConfig';
 

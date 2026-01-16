@@ -3,10 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  Loader2, Download, ChevronDown, FileText, 
-  BarChart, PieChart, LineChart, Users, Calendar, 
-  TrendingUp, AlertTriangle, Info, Search
-} from 'lucide-react';
+  Loader2, Download, ChevronDown, FileText, BarChart, PieChart, LineChart, Users, Calendar, TrendingUp, AlertTriangle, Info, Search } from 'lucide-react'
 import { 
   ResponsiveContainer, 
   BarChart as RechartsBarChart, 
@@ -193,17 +190,11 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Loading Error",
           description: "Failed to load dashboard data. Please try again.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Loading Error",
-          description: "Failed to load dashboard data. Please try again.",
-          variant: "destructive"
-        });
+  });
       } finally {
         setLoading(false);
       }
@@ -225,15 +216,10 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
   // Export PDF handler
   const handleExportPDF = useCallback(() => {
     // In a real implementation, this would trigger a PDF export
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "PDF Export",
       description: "This feature would export the current dashboard view as a PDF.",
-    })
-  console.log('Toast would show:', {
-      title: "PDF Export",
-      description: "This feature would export the current dashboard view as a PDF.",
-    });
+  });
   }, [toast]);
 
   // Loading state

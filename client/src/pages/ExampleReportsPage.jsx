@@ -1,25 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileBarChart2,
-  Download,
-  FileText,
-  Filter,
-  Search,
-  SlidersHorizontal,
-  AlertCircle,
-  Calendar,
-  Tag,
-  ChevronDown,
-  ArrowLeft,
-  ExternalLink,
-  Beaker,
-  LineChart,
-  PieChart,
-  ClipboardCheck,
-  Microscope,
-  Users,
-  Database,
-} from 'lucide-react';
+import { FileBarChart2, Download, FileText, Filter, Search, SlidersHorizontal, AlertCircle, Calendar, Tag, ChevronDown, ArrowLeft, ExternalLink, Beaker, LineChart, PieChart, ClipboardCheck, Microscope, Users, Database } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

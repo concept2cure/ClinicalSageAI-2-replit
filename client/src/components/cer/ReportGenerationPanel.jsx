@@ -2,17 +2,11 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Info, Download, CheckCircle, RefreshCw } from 'lucide-react';
+import { Info, Download, CheckCircle, RefreshCw } from 'lucide-react'
 
 /**
  * ReportGenerationPanel - A component to generate and download reports

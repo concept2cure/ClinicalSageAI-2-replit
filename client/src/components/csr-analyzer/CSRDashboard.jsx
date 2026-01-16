@@ -5,17 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
-  BarChart,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  CheckSquare,
-  AlertTriangle,
-  FileSearch,
-  Users,
-  ArrowUpRight,
-  Download,
-} from 'lucide-react';
+  BarChart, LineChart, PieChart, TrendingUp, CheckSquare, AlertTriangle, FileSearch, Users, ArrowUpRight, Download } from 'lucide-react'
 
 // Sample data for recent CSRs
 const recentReports = [

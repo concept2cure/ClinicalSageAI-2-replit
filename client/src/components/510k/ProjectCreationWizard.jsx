@@ -12,24 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { 
-  ChevronRight, 
-  ChevronLeft, 
-  CheckCircle, 
-  Building2, 
-  Package, 
-  Users, 
-  Calendar, 
-  Shield, 
-  Cpu, 
-  Heart, 
-  FlaskConical,
-  Zap,
-  FileText,
-  Save,
-  Rocket,
-  Layout,
-  Sparkles
-} from 'lucide-react';
+  ChevronRight, ChevronLeft, CheckCircle, Building2, Package, Users, Calendar, Shield, Cpu, Heart, FlaskConical, Zap, FileText, Save, Rocket, Layout, Sparkles } from 'lucide-react'
 import { DEVICE_TEMPLATES, applyTemplateToForm, getAllTemplates } from '../../services/ProjectTemplates';
 
 const WIZARD_STEPS = [

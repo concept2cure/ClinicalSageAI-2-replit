@@ -5,7 +5,7 @@
 
 import { google } from 'googleapis';
 import { db } from '../db/index.js';
-import { coauthorDocuments, integrationTokens } from '../../shared/schema.js';
+import { coauthorDocuments, integrationTokens } from '../../shared/schema.ts';
 import { eq, and } from 'drizzle-orm';
 
 // OAuth2 configuration

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import HeatMap from 'react-heatmap-grid';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react'
 
 // TypeScript type definitions - resolves type issues
 type HeatMapProps = {

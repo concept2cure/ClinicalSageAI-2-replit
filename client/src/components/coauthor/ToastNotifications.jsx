@@ -10,22 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Info,
-  X,
-  Eye,
-  ChevronRight,
-  Bell,
-  MessageSquare,
-  FileText,
-  Package,
-  Shield,
-  Share2,
-  UserPlus,
-  Clock,
-} from 'lucide-react';
+  CheckCircle, XCircle, AlertTriangle, Info, X, Eye, ChevronRight, Bell, MessageSquare, FileText, Package, Shield, Share2, UserPlus, Clock } from 'lucide-react'
 
 // Toast context for global usage
 const ToastContext = React.createContext();

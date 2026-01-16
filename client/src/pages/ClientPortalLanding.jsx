@@ -7,26 +7,14 @@ import { Button } from '@/components/ui/button';
 import { useTenant } from '../contexts/TenantContext';
 import { OrganizationSwitcher } from '../components/tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../components/tenant/ClientWorkspaceSwitcher';
-import { Building, Users, Settings, Info, MessageCircle, Bot, FileEdit, Database, FolderOpen, BarChart, Brain, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building, Users, Info, MessageCircle, Bot, FileEdit, Database, FolderOpen, BarChart, Brain, Lock, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertTriangle,
-  ArrowRight,
-  BarChart3,
-  BookOpen,
-  CheckCircle,
-  Clock,
-  FileText,
-  MessageSquare,
-  Shield,
-  TrendingUp,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, BookOpen, CheckCircle, Clock, FileText, MessageSquare, Shield, TrendingUp, Zap } from 'lucide-react';
 import { useLumenAiAssistant } from '../contexts/LumenAiAssistantContext';
 import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
 
@@ -36,7 +24,8 @@ import VaultQuickAccess from '../components/VaultQuickAccess';
 import AnalyticsQuickView from '../components/AnalyticsQuickView';
 import ReportsQuickWidget from '../components/ReportsQuickWidget';
 import EmbeddedCodingAgent from '../components/ai/EmbeddedCodingAgent';
-import { Settings as SettingsIcon } from 'lucide-react';
+import AboutConcept2CureAI from '../components/client-portal/AboutConcept2CureAI';
+ 
 
 const ClientPortalLanding = () => {
   const [projects, setProjects] = useState([]);
@@ -179,7 +168,7 @@ const ClientPortalLanding = () => {
           id: 'coauthor',
           title: 'eCTD Co-Author™',
           description: 'AI-assisted co-authoring of CTD submission sections',
-          path: '/working-coauthor',
+          path: '/ectd-co-author',
         },
         {
           id: 'cmc',
@@ -227,6 +216,13 @@ const ClientPortalLanding = () => {
           description: 'Unified platform for protocol design, study planning, CSR analytics, regulatory compliance, and predictive insights',
           path: '/unified-suite',
           isNew: true,
+          highlight: true,
+        },
+        {
+          id: 'lumen-cortex',
+          title: 'Lumen Cortex™',
+          description: 'Command Center for hunter status, audit stream, and live intelligence telemetry',
+          path: '/client-portal/lumen-cortex',
           highlight: true,
         },
         {
@@ -579,6 +575,14 @@ const ClientPortalLanding = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* About Concept2Cure's AI */}
+          <div className="mb-10">
+            <AboutConcept2CureAI
+              currentOrganization={currentOrganization}
+              currentClientWorkspace={currentClientWorkspace}
+            />
           </div>
 
           {/* Main Content - Modules Only */}

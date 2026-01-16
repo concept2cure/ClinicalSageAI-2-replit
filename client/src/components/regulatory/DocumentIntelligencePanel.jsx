@@ -8,22 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  Search,
-  Download,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  BookOpen,
-  Shield,
-  Target,
-  Zap,
-  BarChart3,
-  Calendar,
-  Users,
-  Globe,
-} from 'lucide-react';
+  FileText, Search, Download, AlertTriangle, CheckCircle, Clock, TrendingUp, BookOpen, Shield, Target, Zap, BarChart3, Calendar, Users, Globe } from 'lucide-react'
 
 export default function DocumentIntelligencePanel() {
   const { toast } = useToast();

@@ -6,14 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Loader2,
-  FileText,
-  CheckCircle,
-  AlertTriangle,
-  Download,
-  Upload,
-  FileCheck,
-} from 'lucide-react';
+  Loader2, FileText, CheckCircle, AlertTriangle, Download, Upload, FileCheck } from 'lucide-react'
 import { isFeatureEnabled } from '../../flags/featureFlags';
 import FDA510kService from '../../services/FDA510kService';
 

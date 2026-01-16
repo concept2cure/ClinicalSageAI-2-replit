@@ -1,36 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import {
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs,
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  CardDescription,
-  Button,
-  Input,
-  Select,
-} from '../components/ui';
+  Tab, TabList, TabPanel, Tabs, Card, CardHeader, CardContent, CardTitle, CardDescription, Button, Input, Select, } from '../components/ui';
 import {
-  FileText,
-  FlaskConical,
-  Factory,
-  Beaker,
-  Brain,
-  Settings,
-  BarChart,
-  Upload,
-  FileCheck,
-  Share2,
-  ListChecks,
-  Sparkles,
-  Folder,
-} from 'lucide-react';
-import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
-import { Separator } from '../components/ui/separator';
+  FileText, FlaskConical, Factory, Beaker, Brain, Settings, BarChart, Upload, FileCheck, Share2, ListChecks, Sparkles, Folder, Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
 import { useCERGenerator } from '../hooks/useCERGenerator';
 import { useTenantContext } from '../contexts/TenantContext';
@@ -41,7 +14,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Shield as ShieldAlert, Activity, Landmark, Eye, ClipboardCheck } from 'lucide-react';
+import { Shield as ShieldAlert, Activity, Landmark, Eye, ClipboardCheck } from 'lucide-react'
+
+import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import NavigationBanner from '../components/common/NavigationBanner';
 

@@ -8,46 +8,22 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Popover, PopoverContent, PopoverTrigger, } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  FlaskConical,
-  FileText,
-  Activity,
-  BookOpen,
-  Archive,
-  Clipboard,
-  CalendarIcon,
-  Loader2,
-  Plus,
-  AlertCircle,
-} from 'lucide-react';
+  FlaskConical, FileText, Activity, BookOpen, Archive, Clipboard, CalendarIcon, Loader2, Plus, AlertCircle } from 'lucide-react'
 
 // Module configuration
 const MODULES = [

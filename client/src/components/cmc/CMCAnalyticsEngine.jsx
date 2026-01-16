@@ -3,36 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  BarChart3,
-  TrendingUp,
-  Target,
-  Activity,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Users,
-  Award,
-  FileText,
-  Zap,
-  Eye,
-  Download,
-  Calendar,
-  ArrowUp,
-  ArrowDown,
-  Filter,
-  Settings,
-  RefreshCcw,
-  Gauge,
-} from 'lucide-react';
+  BarChart3, TrendingUp, Target, Activity, AlertCircle, CheckCircle2, Clock, Users, Award, FileText, Zap, Eye, Download, Calendar, ArrowUp, ArrowDown, Filter, Settings, RefreshCcw, Gauge } from 'lucide-react'
 
 const CMCAnalyticsEngine = () => {
   const [activeTab, setActiveTab] = useState('overview');

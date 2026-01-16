@@ -6,26 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Users,
-  FileText,
-  MessageSquare,
-  Clock,
-  Calendar,
-  BarChart2,
-  Database,
-  Brain,
-  Clipboard,
-  CheckSquare,
-  AlertTriangle,
-  Download,
-  Search,
-  Share2,
-  Edit,
-  Plus,
-  Save,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+  Users, FileText, MessageSquare, Clock, Calendar, BarChart2, Database, Brain, Clipboard, CheckSquare, AlertTriangle, Download, Search, Share2, Edit, Plus, Save, RefreshCw, X } from 'lucide-react'
 
 const StudyWorkspace = ({ session }) => {
   const [activeTab, setActiveTab] = useState('overview');

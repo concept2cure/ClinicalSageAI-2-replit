@@ -12,32 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import {
-  AlertTriangle,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Building,
-  Filter,
-  Plus,
-  Search,
-  Target,
-  TrendingUp,
-  User,
-  Shield,
-  BarChart3,
-  MessageSquare,
-  Flag,
-  Eye,
-  Edit,
-} from 'lucide-react';
+  AlertTriangle, Calendar, CheckCircle2, Clock, Building, Filter, Plus, Search, Target, TrendingUp, User, Shield, BarChart3, MessageSquare, Flag, Eye, Edit } from 'lucide-react'
 
 interface ObligationData {
   id: number;

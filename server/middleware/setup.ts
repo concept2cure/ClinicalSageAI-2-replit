@@ -47,12 +47,12 @@ export function setupMiddleware(app: Express): void {
 
   // Authentication and Tenant isolation (only for API routes)
   app.use('/api', (req, res, next) => {
-    // Skip middleware for public routes
+    // Skip middleware for public routes (use originalUrl to preserve the full path)
     if (
-      req.path === '/api/health' ||
-      req.path.startsWith('/api/auth/login') ||
-      req.path.startsWith('/api/auth/register') ||
-      req.path.startsWith('/api/public')
+      req.originalUrl === '/api/health' ||
+      req.originalUrl.startsWith('/api/auth/login') ||
+      req.originalUrl.startsWith('/api/auth/register') ||
+      req.originalUrl.startsWith('/api/public')
     ) {
       return next();
     }

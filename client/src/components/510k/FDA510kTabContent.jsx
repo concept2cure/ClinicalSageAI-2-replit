@@ -1,25 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Search,
-  FileText,
-  GitCompare,
-  CheckSquare,
-  Archive,
-  ArrowRight,
-  Database,
-  CheckCircle,
-  AlertTriangle,
-  Info,
-} from 'lucide-react';
+  Search, FileText, GitCompare, CheckSquare, Archive, ArrowRight, Database, CheckCircle, AlertTriangle, Info } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

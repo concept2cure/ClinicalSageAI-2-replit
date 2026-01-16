@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Download, FileText, AlertTriangle, Loader2, TrendingUp, BarChart } from 'lucide-react';
+import { Download, FileText, AlertTriangle, Loader2, TrendingUp, BarChart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 

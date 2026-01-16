@@ -4,15 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-  RefreshCw,
-  CheckCircle2,
-  Sparkles,
-  Bot,
-  AlertTriangle,
-  MessageSquare,
-  BookOpenCheck,
-  Lightbulb,
-} from 'lucide-react';
+  RefreshCw, CheckCircle2, Sparkles, Bot, AlertTriangle, MessageSquare, BookOpenCheck, Lightbulb } from 'lucide-react'
 
 export default function DraftEditor({ content = '', onChange }) {
   const [isGenerating, setIsGenerating] = useState(false);

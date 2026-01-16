@@ -14,9 +14,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const genAI = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 // Enhanced AI Development Assistant with full Replit Agent capabilities
 router.post('/code', async (req, res) => {
@@ -78,17 +77,27 @@ Analyze the request and take immediate action to fulfill it completely.`;
 
     // Choose AI model based on user preference
     if (model === 'gemini' && genAI) {
-      // Use Google Gemini Pro
-      const geminiModel = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp', // Latest Gemini model
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 4000,
-        },
-      });
+      // Use Gemini (platform default model can be overridden via GEMINI_MODEL)
+      const requestedModel = process.env.GEMINI_MODEL || process.env.GEMINI_DEFAULT_MODEL || 'gemini-3-flash-preview';
+      const fallbackModel = 'gemini-2.0-flash-exp';
 
-      const result = await geminiModel.generateContent([systemPrompt, `\nUser request: ${prompt}`]);
-      aiResponse = result.response.text();
+      const runGemini = async (modelName) => {
+        const geminiModel = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4000,
+          },
+        });
+        const result = await geminiModel.generateContent([systemPrompt, `\nUser request: ${prompt}`]);
+        return result.response.text();
+      };
+
+      try {
+        aiResponse = await runGemini(requestedModel);
+      } catch (e) {
+        aiResponse = await runGemini(fallbackModel);
+      }
     } else {
       // Use OpenAI GPT-4o (default)
       const response = await openai.chat.completions.create({
@@ -146,7 +155,7 @@ Analyze the request and take immediate action to fulfill it completely.`;
       parsedResponse,
       executionResults,
       suggestions: parsedResponse.suggestions || [],
-      modelUsed: model === 'gemini' && genAI ? 'gemini-2.0-flash-exp' : 'gpt-4o',
+      modelUsed: model === 'gemini' && genAI ? (process.env.GEMINI_MODEL || process.env.GEMINI_DEFAULT_MODEL || 'gemini-3-flash-preview') : 'gpt-4o',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

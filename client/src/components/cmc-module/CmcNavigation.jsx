@@ -1,17 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Beaker,
-  FlaskConical,
-  Factory,
-  FileCheck,
-  BarChart,
-  Lightbulb,
-  BookOpen,
-  FileText,
-  Database,
-  DownloadCloud,
-} from 'lucide-react';
+  Beaker, FlaskConical, Factory, FileCheck, BarChart, Lightbulb, BookOpen, FileText, Database, DownloadCloud } from 'lucide-react'
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Separator } from '../../components/ui/separator';

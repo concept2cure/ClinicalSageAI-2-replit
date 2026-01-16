@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CheckCircle, XCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react'
 
 // Define types for validation results
 export interface ValidationIssue {

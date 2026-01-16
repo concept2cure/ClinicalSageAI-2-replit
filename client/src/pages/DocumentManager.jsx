@@ -6,17 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Search,
-  Filter,
-  FolderOpen,
-  Edit3,
-  Eye,
-  Download,
-} from 'lucide-react';
+  FileText, Clock, CheckCircle, AlertCircle, Search, Filter, FolderOpen, Edit3, Eye, Download } from 'lucide-react'
 import NavigationBanner from '../components/common/NavigationBanner';
 
 function DocumentManager() {

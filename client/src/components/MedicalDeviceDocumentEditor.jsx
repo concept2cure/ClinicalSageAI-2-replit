@@ -14,75 +14,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { DOC_TYPES } from '@shared/docTypes';
 import { applyScaffold } from '@/lib/scaffold';
-import EnhancedDocumentEditor from './EnhancedDocumentEditor';
+import EnhancedDocumentEditor from './ectd/EnhancedDocumentEditor';
 import RegulatoryRichTextEditor from './RegulatoryRichTextEditor';
+import { evidenceFabric } from '@/api/evidenceFabric';
 import { useEvidenceGraph } from '@/contexts/EvidenceGraphContext';
 import { EvidenceType, ValidationStatus } from '@shared/evidenceSchema';
 import { 
-  generateCompleteDocument, 
-  getWorkflowSuggestions,
-  populatePredicateSection,
-  populateEquivalenceSection,
-  populateLiteratureSection
+  generateCompleteDocument, getWorkflowSuggestions, populatePredicateSection, populateEquivalenceSection, populateLiteratureSection
 } from '@/lib/documentDataFlow';
 import Fda510kExportService from '@/services/Fda510kExportService';
 import cerv2SectionService from '@/services/CERV2SectionService';
 import FDA510kTemplateService from '@/services/FDA510kTemplateService';
 import FDA510kAIService from '@/services/FDA510kAIService';
 import {
-  Save,
-  Download,
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  Info,
-  Sparkles,
-  FileCheck,
-  History,
-  Edit3,
-  Eye,
-  Lock,
-  Unlock,
-  RefreshCw,
-  Package,
-  ChevronRight,
-  ChevronDown,
-  Check,
-  X,
-  Clock,
-  Upload,
-  User,
-  Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Shield,
-  Activity,
-  ClipboardCheck,
-  Beaker,
-  FileSignature,
-  Circle,
-  CheckCircle2,
-  BookOpen,
-  ShieldCheck,
-  Link2,
-  DollarSign,
-  Code,
-  Network,
-  Users,
-  Settings,
-  Zap,
-  Tag,
-  GitCompare,
-  AlertTriangle,
-  Bot,
-  Send,
-  Brain,
-  Database
-} from 'lucide-react';
+  Save, Download, FileText, CheckCircle, AlertCircle, Info, Sparkles, FileCheck, History, Edit3, Eye, Lock, Unlock, RefreshCw, Package, ChevronRight, ChevronDown, Check, X, Clock, Upload, User, Building2, Phone, Mail, MapPin, Shield, Activity, ClipboardCheck, Beaker, FileSignature, Circle, CheckCircle2, BookOpen, ShieldCheck, Link2, DollarSign, Code, Network, Users, Settings, Zap, Tag, GitCompare, AlertTriangle, Bot, Send, Brain, Database } from 'lucide-react'
 
 // Import Data Room integration components
 import DocumentCitationHelper from './DocumentCitationHelper';
@@ -100,7 +49,13 @@ const MedicalDeviceDocumentEditor = ({
   readOnly = false,
   onWorkflowUpdate,
   selectedSection = null, // Section selected from Document Vault
-  onSectionSaved // Callback when section is saved to database
+  onSectionSaved, // Callback when section is saved to database
+
+  // Evidence Fabric (optional): manifest persists in parent doc metadata
+  evidenceFabricManifest = null,
+  evidenceFabricStatus = null,
+  onEvidenceFabricManifestChange,
+  onEvidenceFabricStatusChange
 }) => {
   const { toast } = useToast();
   const editorRef = useRef(null);
@@ -121,6 +76,188 @@ const MedicalDeviceDocumentEditor = ({
   const [isManualEdit, setIsManualEdit] = useState(false);
   const [citations, setCitations] = useState({});
   const [citationSources, setCitationSources] = useState([]);
+
+  // Evidence Fabric state (local fallback if parent doesn't manage it)
+  const [localEvidenceManifest, setLocalEvidenceManifest] = useState(null);
+  const [localEvidenceStatus, setLocalEvidenceStatus] = useState({
+    stale: false,
+    staleReason: null,
+    changedSources: [],
+    newBindings: [],
+    checkedAt: null,
+    refreshedAt: null,
+  });
+  const [evidenceRefreshing, setEvidenceRefreshing] = useState(false);
+  const [evidenceChecking, setEvidenceChecking] = useState(false);
+  const [renderedPreviewCache, setRenderedPreviewCache] = useState({}); // key: `${sectionId}:${fieldId}` -> rendered html/text
+
+  const effectiveEvidenceManifest = evidenceFabricManifest || localEvidenceManifest;
+  const effectiveEvidenceStatus = evidenceFabricStatus || localEvidenceStatus;
+
+  const updateEvidenceManifest = useCallback(
+    (nextManifest) => {
+      if (onEvidenceFabricManifestChange) onEvidenceFabricManifestChange(nextManifest);
+      setLocalEvidenceManifest(nextManifest);
+      try {
+        if (documentId) {
+          localStorage.setItem(`cerv2_evidence_manifest_v1:${String(documentId)}`, JSON.stringify(nextManifest));
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [documentId, onEvidenceFabricManifestChange]
+  );
+
+  const updateEvidenceStatus = useCallback(
+    (partial) => {
+      if (onEvidenceFabricStatusChange) onEvidenceFabricStatusChange(partial);
+      setLocalEvidenceStatus((prev) => ({ ...prev, ...(partial || {}) }));
+    },
+    [onEvidenceFabricStatusChange]
+  );
+
+  const buildEvidenceContent = useCallback(() => {
+    // Collect only string values (the ones that can hold Smart Tags) to keep payload small.
+    const strings = [];
+    const pushValue = (v) => {
+      if (typeof v === 'string' && v.includes('{{')) strings.push(v);
+    };
+
+    // Current selected section (preferred)
+    if (selectedSection) {
+      const sectionKey = selectedSection.section_key || `section-${selectedSection.id}`;
+      const currentSectionData = sectionData?.[sectionKey] || {};
+      Object.values(currentSectionData).forEach(pushValue);
+      if (typeof selectedSection?.content === 'string') pushValue(selectedSection.content);
+      return strings.join('\n\n---\n\n');
+    }
+
+    // Whole document fallback
+    Object.values(sectionData || {}).forEach((sectionObj) => {
+      if (sectionObj && typeof sectionObj === 'object') Object.values(sectionObj).forEach(pushValue);
+    });
+
+    return strings.join('\n\n---\n\n');
+  }, [sectionData, selectedSection]);
+
+  // Hydrate local manifest fallback from storage
+  useEffect(() => {
+    if (evidenceFabricManifest) return;
+    if (!documentId) return;
+    try {
+      const raw = localStorage.getItem(`cerv2_evidence_manifest_v1:${String(documentId)}`);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') setLocalEvidenceManifest(parsed);
+    } catch {
+      // ignore
+    }
+  }, [documentId, evidenceFabricManifest]);
+
+  // Periodic stale check (only when there are Smart Tags and a previous manifest)
+  useEffect(() => {
+    const content = buildEvidenceContent();
+    if (!content) return;
+    if (!effectiveEvidenceManifest) return;
+
+    let cancelled = false;
+    const checkOnce = async () => {
+      try {
+        setEvidenceChecking(true);
+        const tenantId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+        const resp = await evidenceFabric.status(String(tenantId), content, effectiveEvidenceManifest);
+        if (cancelled) return;
+        updateEvidenceStatus({
+          stale: Boolean(resp?.stale),
+          staleReason: resp?.staleReason || null,
+          changedSources: Array.isArray(resp?.changedSources) ? resp.changedSources : [],
+          newBindings: Array.isArray(resp?.newBindings) ? resp.newBindings : [],
+          checkedAt: new Date().toISOString(),
+        });
+      } catch {
+        // fail soft: don't block editing
+      } finally {
+        if (!cancelled) setEvidenceChecking(false);
+      }
+    };
+
+    checkOnce();
+    const id = window.setInterval(checkOnce, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [buildEvidenceContent, effectiveEvidenceManifest, updateEvidenceStatus]);
+
+  const refreshEvidenceFabric = useCallback(async () => {
+    const content = buildEvidenceContent();
+    if (!content) {
+      toast({
+        title: 'No Smart Tags found',
+        description: 'Insert Evidence Fabric tags like {{safety_analysis.primary_endpoint.p_value}} first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setEvidenceRefreshing(true);
+      const tenantId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+
+      // 1) Refresh manifest at the document level
+      const resp = await evidenceFabric.preview(String(tenantId), content, effectiveEvidenceManifest || undefined);
+      const nextManifest = resp?.manifest || null;
+      if (nextManifest) updateEvidenceManifest(nextManifest);
+      updateEvidenceStatus({
+        stale: Boolean(resp?.stale),
+        staleReason: resp?.staleReason || null,
+        changedSources: Array.isArray(resp?.changedSources) ? resp.changedSources : [],
+        newBindings: Array.isArray(resp?.newBindings) ? resp.newBindings : [],
+        refreshedAt: new Date().toISOString(),
+        checkedAt: new Date().toISOString(),
+      });
+
+      // 2) Re-render only in preview mode: cache rendered field values without overwriting stored tags
+      if (viewMode === 'preview') {
+        const nextCache = {};
+        const work = [];
+
+        sections.forEach((section) => {
+          const currentSectionData = sectionData?.[section.id] || {};
+          section.fields.forEach((field) => {
+            const raw = currentSectionData?.[field.id];
+            if (typeof raw !== 'string' || !raw.includes('{{')) return;
+            const key = `${section.id}:${field.id}`;
+            work.push(
+              evidenceFabric.preview(String(tenantId), raw, undefined).then((r) => {
+                nextCache[key] = r?.rendered ?? raw;
+              })
+            );
+          });
+        });
+
+        await Promise.allSettled(work);
+        setRenderedPreviewCache(nextCache);
+      }
+
+      toast({
+        title: resp?.stale ? 'Evidence refreshed (still stale)' : 'Evidence refreshed',
+        description: resp?.stale
+          ? 'Some tags are still missing sources/paths. Check the changedSources/newBindings details.'
+          : 'Document is now in sync with current evidence sources.',
+        variant: resp?.stale ? 'destructive' : 'default',
+      });
+    } catch (e) {
+      toast({
+        title: 'Evidence refresh failed',
+        description: e?.message || 'Unable to refresh evidence at this time.',
+        variant: 'destructive',
+      });
+    } finally {
+      setEvidenceRefreshing(false);
+    }
+  }, [buildEvidenceContent, effectiveEvidenceManifest, sections, sectionData, toast, updateEvidenceManifest, updateEvidenceStatus, viewMode]);
   
   // Multi-section tab editing state
   const [openSections, setOpenSections] = useState(['user-fee-cover']); // Array of section IDs open in tabs
@@ -251,7 +388,6 @@ const MedicalDeviceDocumentEditor = ({
       });
       
       return {
-        id: section.section_key,
         title: `${section.section_number} ${section.section_title}`,
         required: section.is_required || false,
         icon: iconMap[section.icon] || FileText,
@@ -622,6 +758,53 @@ const MedicalDeviceDocumentEditor = ({
     }
     return cerSections;
   }, [documentType, fda510kSections]);
+
+  // Confidence gating (Phase 3)
+  const DEFAULT_CONFIDENCE_GATE_THRESHOLD = 0.85; // AGENT:CONFIDENCE_GATE_DEFAULT
+  const isConfidenceGateEnabled = useCallback(() => {
+    try {
+      const v = window?.localStorage?.getItem('cerv2_confidence_gate_enabled');
+      // Default enabled unless explicitly set to 'false'
+      return v == null ? true : v !== 'false';
+    } catch {
+      return true;
+    }
+  }, []);
+
+  const getConfidenceGateThreshold = useCallback(() => {
+    try {
+      const raw = window?.localStorage?.getItem('cerv2_confidence_gate_threshold');
+      const parsed = raw == null ? NaN : Number(raw);
+      return Number.isFinite(parsed) ? parsed : DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+    } catch {
+      return DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+    }
+  }, []);
+
+  const confidenceGateEnabled = isConfidenceGateEnabled();
+  const confidenceGateThreshold = getConfidenceGateThreshold();
+
+  const exportConfidence = useMemo(() => {
+    try {
+      const validation = Fda510kExportService.validateForExport(sections, sectionData);
+      const completeness = typeof validation?.completeness === 'number' ? validation.completeness : 0;
+      const progress = typeof overallProgress === 'number' ? overallProgress : 0;
+
+      // Conservative blended confidence score: completeness is primary signal.
+      const confidence = Math.min(
+        0.99,
+        Math.max(0, (completeness / 100) * 0.75 + (progress / 100) * 0.25)
+      );
+
+      return {
+        confidence,
+        completeness,
+        issues: Array.isArray(validation?.issues) ? validation.issues.length : 0,
+      };
+    } catch {
+      return { confidence: 0, completeness: 0, issues: 0 };
+    }
+  }, [sections, sectionData, overallProgress]);
 
   // Initialize section data with auto-populated values on mount
   useEffect(() => {
@@ -1444,6 +1627,43 @@ const MedicalDeviceDocumentEditor = ({
     try {
       // Validate document before export
       const validation = Fda510kExportService.validateForExport(sections, sectionData);
+
+      // Confidence gate (blocks export when enabled and under threshold)
+      if (confidenceGateEnabled) {
+        const completeness = typeof validation?.completeness === 'number' ? validation.completeness : 0;
+        const progress = typeof overallProgress === 'number' ? overallProgress : 0;
+        const confidence = Math.min(
+          0.99,
+          Math.max(0, (completeness / 100) * 0.75 + (progress / 100) * 0.25)
+        );
+
+        if (confidence < confidenceGateThreshold) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('cerv2:confidence_gate', {
+                detail: {
+                  source: 'MedicalDeviceDocumentEditor',
+                  action: 'export',
+                  format,
+                  confidence,
+                  threshold: confidenceGateThreshold,
+                  completeness,
+                  issues: Array.isArray(validation?.issues) ? validation.issues.length : 0,
+                },
+              })
+            );
+          } catch {
+            // ignore
+          }
+
+          toast({
+            title: 'Export Blocked (Confidence Gate)',
+            description: `Confidence ${Math.round(confidence * 100)}% is below the required ${Math.round(confidenceGateThreshold * 100)}%. Address missing fields and validation issues, then retry.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
       
       if (!validation.isValid && validation.completeness < 50) {
         const confirmExport = window.confirm(
@@ -1983,7 +2203,48 @@ ${sections}
 
   // EMR-STYLE RENDERING
   return (
-    <div className="h-full w-full flex flex-col bg-gray-50" data-testid="document-editor">
+    <div
+      className={`h-full w-full flex flex-col ${effectiveEvidenceStatus?.stale ? 'bg-rose-50/30' : 'bg-gray-50'}`}
+      data-testid="document-editor"
+    >
+      {/* Evidence Fabric status (stale -> red, refresh -> new manifest) */}
+      {(effectiveEvidenceManifest || buildEvidenceContent()) && (
+        <div className={`mx-6 mt-4 shrink-0 border rounded-md px-3 py-2 ${effectiveEvidenceStatus?.stale ? 'border-rose-300 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className={effectiveEvidenceStatus?.stale ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}>
+                  {effectiveEvidenceStatus?.stale ? 'EVIDENCE: STALE' : 'EVIDENCE: FRESH'}
+                </Badge>
+                {effectiveEvidenceStatus?.staleReason ? (
+                  <span className="text-xs text-slate-600">{String(effectiveEvidenceStatus.staleReason)}</span>
+                ) : null}
+                {evidenceChecking ? <span className="text-xs text-slate-500">Checking…</span> : null}
+              </div>
+              {effectiveEvidenceStatus?.stale && (
+                <div className="text-xs text-rose-700 mt-1">
+                  {Array.isArray(effectiveEvidenceStatus?.changedSources) && effectiveEvidenceStatus.changedSources.length > 0
+                    ? `Changed sources: ${effectiveEvidenceStatus.changedSources.slice(0, 5).join(', ')}${effectiveEvidenceStatus.changedSources.length > 5 ? '…' : ''}`
+                    : 'This document references evidence that has changed since your last refresh.'}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={effectiveEvidenceStatus?.stale ? 'destructive' : 'outline'}
+                onClick={refreshEvidenceFabric}
+                disabled={evidenceRefreshing}
+                data-testid="button-evidence-refresh"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${evidenceRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* EMR Header */}
       <div className="bg-white border-b px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
@@ -2065,6 +2326,19 @@ ${sections}
                 Saved {new Date(lastSaved).toLocaleTimeString()}
               </Badge>
             )}
+
+            {/* Confidence Gate (Phase 3) */}
+            <div className="flex items-center gap-2" data-testid="confidence-gate-banner">
+              <Badge
+                variant={exportConfidence.confidence >= confidenceGateThreshold ? 'secondary' : 'outline'}
+                className="h-8"
+              >
+                Confidence {Math.round(exportConfidence.confidence * 100)}%
+              </Badge>
+              <Badge variant="outline" className="h-8">
+                Gate {confidenceGateEnabled ? 'On' : 'Off'} ≥ {Math.round(confidenceGateThreshold * 100)}%
+              </Badge>
+            </div>
             
             {/* Actions */}
             <Button
@@ -2951,7 +3225,7 @@ ${sections}
                                     className="text-gray-700 whitespace-pre-wrap leading-relaxed border border-transparent hover:border-blue-200 rounded p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all cursor-text"
                                     contentEditable={!readOnly}
                                     suppressContentEditableWarning
-                                    dangerouslySetInnerHTML={{ __html: value }}
+                                    dangerouslySetInnerHTML={{ __html: renderedPreviewCache?.[`${section.id}:${field.id}`] ?? value }}
                                     onBlur={(e) => {
                                       const newValue = e.currentTarget.textContent;
                                       if (newValue !== value) {

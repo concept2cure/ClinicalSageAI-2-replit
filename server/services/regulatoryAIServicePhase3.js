@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { db } from '../db/index.js';
 import crypto from 'crypto';
 import { eq, and, sql } from 'drizzle-orm';
-import { aiAuditLog } from '../../shared/schema.js';
+import { aiAuditLog } from '../../shared/schema.ts';
 
 /**
  * Phase 3 Regulatory Intelligence - OpenAI Proxy Service
@@ -12,16 +12,24 @@ import { aiAuditLog } from '../../shared/schema.js';
 
 class RegulatoryAIServicePhase3 {
   constructor() {
-    // Initialize OpenAI with Replit AI integrations
-    this.openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY
-    });
-    
+    // Initialize OpenAI clients only when keys are present.
+    // This keeps the server bootable in dev/demo environments without AI credentials.
+    const chatKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    const embedKey = process.env.OPENAI_API_KEY;
+
+    this.openai = chatKey
+      ? new OpenAI({
+          baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
+          apiKey: chatKey,
+        })
+      : null;
+
     // Direct OpenAI client for embeddings (not supported by Replit integration)
-    this.embeddingClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    this.embeddingClient = embedKey
+      ? new OpenAI({
+          apiKey: embedKey,
+        })
+      : null;
     
     // Token budget management - will be loaded from database
     this.tokenBudget = {
@@ -101,7 +109,46 @@ class RegulatoryAIServicePhase3 {
       }
       
     } catch (error) {
+      const errMsg = (error && error.message) || '';
+      if (error?.code === 'NO_DB' || errMsg.includes('DATABASE_URL environment variable not set')) {
+        // Demo/no-db mode: skip persistence without spamming logs.
+        return;
+      }
+
       console.error('Failed to load persistent data:', error);
+      // If tables are missing, attempt to create them automatically
+      try {
+        if (errMsg.includes('ai_dead_letter_queue') || (error && error.code === '42P01')) {
+          console.log('Attempting to create missing AI tables automatically...');
+          await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS ai_dead_letter_queue (
+              id SERIAL PRIMARY KEY,
+              operation TEXT,
+              request_data JSONB,
+              error_message TEXT,
+              retry_count INTEGER DEFAULT 0,
+              max_retries INTEGER DEFAULT 3,
+              created_at TIMESTAMP DEFAULT NOW(),
+              processed_at TIMESTAMP
+            );
+          `);
+          await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS ai_token_budget (
+              id INTEGER PRIMARY KEY,
+              daily_limit INTEGER DEFAULT 100000,
+              tokens_used INTEGER DEFAULT 0,
+              reset_at TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT NOW()
+            );
+          `);
+          console.log('AI tables created (or already existed). Retrying load...');
+          // Retry loading data
+          await this.initializePersistentData();
+          return;
+        }
+      } catch (creationError) {
+        console.error('Automatic creation of AI tables failed:', creationError);
+      }
       // Continue with in-memory defaults on error
     }
   }

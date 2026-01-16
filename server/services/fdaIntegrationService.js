@@ -14,7 +14,7 @@ import {
   deviceSubmissions,
   organizations,
   fdaCredentials 
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import auditService from './auditService.js';
 

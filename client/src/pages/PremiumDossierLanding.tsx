@@ -1,29 +1,13 @@
 import { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2,
-  CheckCircle,
-  FileCheck,
-  Clock,
-  Beaker,
-  FileText,
-  BarChart3,
-  ShieldCheck,
-  CreditCard,
-  BookOpen,
-} from 'lucide-react';
+  Loader2, CheckCircle, FileCheck, Clock, Beaker, FileText, BarChart3, ShieldCheck, CreditCard, BookOpen } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 

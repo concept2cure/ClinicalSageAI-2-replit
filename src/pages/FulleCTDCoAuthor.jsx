@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import CoAuthor_eCTD_Module_Review from '../../client/src/components/ectd/CoAuthor_eCTD_Module_Review';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import {
@@ -680,11 +681,12 @@ export default function FulleCTDCoAuthor() {
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="workspace">Workspace</TabsTrigger>
                     <TabsTrigger value="templates">Templates</TabsTrigger>
                     <TabsTrigger value="validation">Validation</TabsTrigger>
                     <TabsTrigger value="health">Document Health</TabsTrigger>
+                    <TabsTrigger value="review">Review</TabsTrigger>
                   </TabsList>
 
                   {/* Workspace Tab */}
@@ -971,6 +973,11 @@ export default function FulleCTDCoAuthor() {
                         </CardContent>
                       </Card>
                     </div>
+                  </TabsContent>
+
+                  {/* Review Tab */}
+                  <TabsContent value="review" className="h-[600px]">
+                    <CoAuthor_eCTD_Module_Review />
                   </TabsContent>
                 </Tabs>
               </CardContent>

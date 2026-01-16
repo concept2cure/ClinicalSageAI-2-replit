@@ -1,31 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Activity,
-  Cpu,
-  HardDrive,
-  Network,
-  AlertCircle,
-  Code,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  DownloadCloud,
-} from 'lucide-react';
+  Activity, Cpu, HardDrive, Network, AlertCircle, Code, CheckCircle, XCircle, RefreshCw, DownloadCloud } from 'lucide-react'
 
 /**
  * SystemHealthPanel - Client-friendly system diagnostics panel

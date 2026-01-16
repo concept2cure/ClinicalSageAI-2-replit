@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Save, Calendar, Users, Clock, Activity, Target } from 'lucide-react';
+import { Save, Calendar, Users, Clock, Activity, Target } from 'lucide-react'
 
 export default function StudyPlanner({ session }) {
   const [formData, setFormData] = useState({

@@ -1,28 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3,
-  FileText,
-  ChevronRight,
-  Filter,
-  Download,
-  ArrowUpDown,
-  Search,
-  AlertCircle,
-  Loader2,
-  FileBarChart2,
-  ClipboardList,
-  TrendingUp,
-  BarChart2,
-  PieChart,
-  LineChart,
-  FileDown,
-  FolderUp,
-  Microscope,
-  Lightbulb,
-  FileOutput,
-  FileDigit
-} from "lucide-react";
+  BarChart3, FileText, ChevronRight, Filter, Download, ArrowUpDown, Search, AlertCircle, Loader2, FileBarChart2, ClipboardList, TrendingUp, BarChart2, PieChart, LineChart, FileDown, FolderUp, Microscope, Lightbulb, FileOutput, FileDigit } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -114,17 +93,11 @@ export default function ReportsAnalytics() {
       setReports(data);
     } catch (err) {
       setError("Failed to load reports. Please try again.");
-      // toast call replaced
-  // Original: toast({
+  toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to load reports. Please try again.",
-      })
-  console.log('Toast would show:', {
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load reports. Please try again.",
-      });
+  });
     } finally {
       setIsLoading(false);
     }

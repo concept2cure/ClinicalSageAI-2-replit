@@ -1,7 +1,11 @@
 import express, { Request, Response } from 'express';
-import { db } from '../db.js';
+import { db } from '../db/index.js';
+import { and, eq, inArray } from 'drizzle-orm';
 import { 
   projects, 
+  organizations,
+  clientWorkspaces,
+  fda510kProjects,
   projectWorkflowStages, 
   projectTasks,
   medicalDevices,
@@ -37,6 +41,389 @@ function mapToFDARequirement(category: string): string {
   };
   return mapping[category] || 'device_desc';
 }
+
+type CERV2SeedSpec = {
+  code: string;
+  name: string;
+  description: string;
+  type: string;
+  status: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  riskLevel: 'low' | 'medium' | 'high';
+  stageNumber: number;
+  stageProgress: number;
+  overallProgress: number;
+  metadata: any;
+  settings?: any;
+};
+
+const buildCerv2SeedSpecsForWorkspace = (
+  orgId: number,
+  workspaceSlug: string,
+  workspaceName: string
+): CERV2SeedSpec[] => {
+  // Keep codes deterministic and stable for idempotent reseeding.
+  const base = `CERV2-DEMO-O${orgId}-${workspaceSlug}`;
+
+  // Per-org flavor
+  const orgLabel =
+    orgId === 1 ? 'Northstar' :
+    orgId === 2 ? 'Apex' :
+    orgId === 3 ? 'ClearWave' :
+    'Demo';
+
+  const commonDeviceProfile = {
+    manufacturer:
+      orgId === 1 ? 'Northstar Diagnostics, Inc.' :
+      orgId === 2 ? 'Apex Ortho, LLC' :
+      orgId === 3 ? 'ClearWave Cardio, Inc.' :
+      'Demo Manufacturer',
+  };
+
+  return [
+    // 510(k) in progress
+    {
+      code: `${base}-510K-INPROG`,
+      name: `${orgLabel} — 510(k) In Progress (${workspaceName})`,
+      description: 'Demo 510(k) project with partially completed device profile + predicate analysis + evidence.',
+      type: 'medical_device',
+      status: 'active',
+      priority: 'high',
+      riskLevel: 'medium',
+      stageNumber: 3,
+      stageProgress: 65,
+      overallProgress: 55,
+      settings: {
+        currentStage: 3,
+        eSTARStatus: 'not_started',
+        rtaStatus: 'not_started',
+      },
+      metadata: {
+        clientWorkspaceId: workspaceSlug,
+        manufacturer: commonDeviceProfile.manufacturer,
+        deviceClass: 'II',
+        intendedUse:
+          'Demonstration intended use statement for exploring CERV2 device intake, predicates, and evidence workflows.',
+        attachedDocuments: [
+          { name: 'Device Description v1.0', type: 'pdf' },
+          { name: 'Comparison Table Draft', type: 'xlsx' },
+        ],
+        state: {
+          documentType: '510k',
+          workflowStep: 3,
+          deviceProfile: {
+            deviceName: `${orgLabel} Device System`,
+            manufacturer: commonDeviceProfile.manufacturer,
+            deviceClass: 'II',
+            productCode: orgId === 2 ? 'JWH' : orgId === 3 ? 'QDD' : 'LLZ',
+            submissionType: 'Traditional 510(k)',
+            intendedUse:
+              'Demonstration intended use statement for exploring CERV2 device intake, predicates, and evidence workflows.',
+          },
+          predicateDevices: [
+            {
+              kNumber: orgId === 2 ? 'K210555' : orgId === 3 ? 'K223456' : 'K203412',
+              deviceName: 'Comparable Predicate Device',
+              manufacturer: 'Example Corp',
+              similarities: ['Same intended use', 'Comparable performance characteristics'],
+            },
+          ],
+          literatureResults: [],
+          complianceScore: { overall: 0.72, gaps: ['Labeling', 'Software documentation (if applicable)'] },
+        },
+      },
+    },
+
+    // 510(k) submitted
+    {
+      code: `${base}-510K-SUBMITTED`,
+      name: `${orgLabel} — 510(k) Submitted (eSTAR)`,
+      description: 'Demo 510(k) submission marked submitted with near-complete compliance score.',
+      type: 'medical_device',
+      status: 'submitted',
+      priority: 'critical',
+      riskLevel: 'low',
+      stageNumber: 7,
+      stageProgress: 100,
+      overallProgress: 98,
+      settings: {
+        currentStage: 7,
+        eSTARStatus: 'complete',
+        rtaStatus: 'complete',
+      },
+      metadata: {
+        clientWorkspaceId: workspaceSlug,
+        manufacturer: commonDeviceProfile.manufacturer,
+        deviceClass: 'II',
+        intendedUse: 'Demonstration submitted 510(k) project for workflow walkthroughs.',
+        attachedDocuments: [
+          { name: 'eSTAR Package.zip', type: 'zip' },
+          { name: 'RTA Checklist (Completed)', type: 'xlsx' },
+        ],
+        state: {
+          documentType: '510k',
+          workflowStep: 7,
+          deviceProfile: {
+            deviceName: `${orgLabel} Device System`,
+            manufacturer: commonDeviceProfile.manufacturer,
+            deviceClass: 'II',
+            productCode: orgId === 2 ? 'JWH' : orgId === 3 ? 'QDD' : 'LLZ',
+            submissionType: 'Traditional 510(k)',
+            submissionId: `${base}-K26-DEMO`,
+            intendedUse: 'Demonstration submitted 510(k) project for workflow walkthroughs.',
+          },
+          predicateDevices: [],
+          literatureResults: [],
+          complianceScore: { overall: 0.98, gaps: [] },
+        },
+      },
+    },
+
+    // PMA example (complete)
+    {
+      code: `${base}-PMA-COMPLETE`,
+      name: `${orgLabel} — PMA Complete (Demo)`,
+      description: 'Demo PMA-track project marked completed/submitted for exploring portfolio management.',
+      type: 'medical_device',
+      status: 'completed',
+      priority: 'medium',
+      riskLevel: 'high',
+      stageNumber: 5,
+      stageProgress: 90,
+      overallProgress: 90,
+      settings: {
+        currentStage: 5,
+        eSTARStatus: 'n/a',
+        rtaStatus: 'n/a',
+      },
+      metadata: {
+        clientWorkspaceId: workspaceSlug,
+        manufacturer: commonDeviceProfile.manufacturer,
+        deviceClass: 'III',
+        intendedUse: 'Demonstration PMA-track program (for UX exploration only).',
+        attachedDocuments: [
+          { name: 'PMA Module 1 (Admin) - Complete', type: 'pdf' },
+          { name: 'Clinical Summary - Complete', type: 'pdf' },
+        ],
+        state: {
+          documentType: 'pma',
+          workflowStep: 5,
+          deviceProfile: {
+            deviceName: `${orgLabel} High-Risk Device (PMA Example)`,
+            manufacturer: commonDeviceProfile.manufacturer,
+            deviceClass: 'III',
+            submissionType: 'PMA',
+            submissionId: `${base}-PMA-DEMO`,
+            intendedUse: 'Demonstration PMA-track program (for UX exploration only).',
+          },
+          predicateDevices: [],
+          literatureResults: [],
+          complianceScore: { overall: 0.95, gaps: [] },
+        },
+      },
+    },
+  ];
+};
+
+const upsertProjectWith510kStage = async (args: {
+  organizationId: number;
+  clientWorkspaceId: number;
+  createdById: number;
+  spec: CERV2SeedSpec;
+}) => {
+  const { organizationId, clientWorkspaceId, createdById, spec } = args;
+
+  const existing = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.organizationId, organizationId),
+        eq(projects.clientWorkspaceId, clientWorkspaceId),
+        eq(projects.code, spec.code)
+      )
+    )
+    .limit(1);
+
+  let projectId: number;
+
+  if (existing.length) {
+    projectId = existing[0].id;
+    await db
+      .update(projects)
+      .set({
+        name: spec.name,
+        description: spec.description,
+        type: spec.type,
+        status: spec.status,
+        priority: spec.priority,
+        progress: spec.overallProgress,
+        riskLevel: spec.riskLevel,
+        settings: spec.settings ?? null,
+        metadata: spec.metadata ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId));
+  } else {
+    const inserted = await db
+      .insert(projects)
+      .values({
+        organizationId,
+        clientWorkspaceId,
+        name: spec.name,
+        code: spec.code,
+        description: spec.description,
+        type: spec.type,
+        status: spec.status,
+        priority: spec.priority,
+        progress: spec.overallProgress,
+        riskLevel: spec.riskLevel,
+        startDate: new Date(),
+        targetEndDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60),
+        createdById,
+        ownerId: createdById,
+        tags: ['cerv2', 'demo', spec.metadata?.state?.documentType || '510k'],
+        settings: spec.settings ?? null,
+        metadata: spec.metadata ?? null,
+      })
+      .returning({ id: projects.id });
+
+    projectId = inserted[0].id;
+  }
+
+  // Ensure fda_510k_projects reflects the desired stage so CERV2 switches tabs correctly.
+  const existing510k = await db
+    .select({ id: fda510kProjects.id })
+    .from(fda510kProjects)
+    .where(and(eq(fda510kProjects.organizationId, organizationId), eq(fda510kProjects.projectId, projectId)))
+    .limit(1);
+
+  const deviceName =
+    spec?.metadata?.state?.deviceProfile?.deviceName ||
+    spec?.metadata?.state?.deviceProfile?.device_name ||
+    spec.name;
+
+  const deviceClass = spec?.metadata?.deviceClass || spec?.metadata?.state?.deviceProfile?.deviceClass || null;
+  const productCode = spec?.metadata?.state?.deviceProfile?.productCode || null;
+
+  const fdaValues = {
+    organizationId,
+    projectId,
+    deviceName,
+    deviceClassification: deviceClass,
+    productCode,
+    currentStage: String(spec.stageNumber),
+    currentStageProgress: spec.stageProgress,
+    overallProgress: spec.overallProgress,
+    status: spec.status === 'submitted' ? 'completed' : 'active',
+    metadata: {
+      seeded: true,
+      seedCode: spec.code,
+      documentType: spec?.metadata?.state?.documentType || '510k',
+    },
+    updatedAt: new Date(),
+  } as any;
+
+  if (existing510k.length) {
+    await db.update(fda510kProjects).set(fdaValues).where(eq(fda510kProjects.id, existing510k[0].id));
+  } else {
+    await db.insert(fda510kProjects).values({
+      ...fdaValues,
+      createdAt: new Date(),
+    } as any);
+  }
+
+  return { projectId };
+};
+
+/**
+ * POST /api/demo/seed-cerv2-portfolio
+ *
+ * Creates a multi-org, multi-client demo portfolio aligned to the built-in demo orgs/clients.
+ * Requires DATABASE_URL (DB-enabled mode). Idempotent (safe to re-run).
+ */
+router.post('/seed-cerv2-portfolio', async (req: Request, res: Response) => {
+  try {
+    const timestamp = new Date().toISOString();
+    const createdById = 1;
+
+    // Default to seeding the 3 built-in demo orgs.
+    const defaultOrgIds = [1, 2, 3];
+    const orgIdsParam = (req.query.organizationIds as string | undefined) || undefined;
+    const orgIds = orgIdsParam
+      ? orgIdsParam
+          .split(',')
+          .map(s => Number.parseInt(s.trim(), 10))
+          .filter(n => Number.isFinite(n))
+      : defaultOrgIds;
+
+    const orgRows = await db
+      .select({ id: organizations.id, name: organizations.name })
+      .from(organizations)
+      .where(inArray(organizations.id, orgIds));
+
+    if (!orgRows.length) {
+      return res.status(400).json({ success: false, message: 'No matching organizations found to seed.' });
+    }
+
+    const seeded: Array<{ organizationId: number; clientWorkspaceId: number; slug: string; projects: any[] }> = [];
+
+    for (const org of orgRows) {
+      const workspaces = await db
+        .select({ id: clientWorkspaces.id, slug: clientWorkspaces.slug, name: clientWorkspaces.name })
+        .from(clientWorkspaces)
+        .where(eq(clientWorkspaces.organizationId, org.id));
+
+      // Prefer demo workspaces if present, otherwise seed all workspaces for the org.
+      const demoWorkspaces = workspaces.filter(w => String(w.slug || '').startsWith('demo-'));
+      const targets = demoWorkspaces.length ? demoWorkspaces : workspaces;
+
+      for (const ws of targets) {
+        const specs = buildCerv2SeedSpecsForWorkspace(org.id, ws.slug, ws.name);
+        const createdForWorkspace: any[] = [];
+
+        for (const spec of specs) {
+          const { projectId } = await upsertProjectWith510kStage({
+            organizationId: org.id,
+            clientWorkspaceId: ws.id,
+            createdById,
+            spec,
+          });
+
+          createdForWorkspace.push({
+            id: projectId,
+            code: spec.code,
+            name: spec.name,
+            status: spec.status,
+            stage: spec.stageNumber,
+            overallProgress: spec.overallProgress,
+          });
+        }
+
+        seeded.push({
+          organizationId: org.id,
+          clientWorkspaceId: ws.id,
+          slug: ws.slug,
+          projects: createdForWorkspace,
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'CERV2 demo portfolio seeded successfully',
+      timestamp,
+      seeded,
+    });
+  } catch (error: any) {
+    console.error('Error seeding CERV2 demo portfolio:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to seed CERV2 demo portfolio (is DATABASE_URL configured and reachable?)',
+      error: error?.message || String(error),
+    });
+  }
+});
 
 // Seed demo projects endpoint
 router.post('/seed', async (req: Request, res: Response) => {

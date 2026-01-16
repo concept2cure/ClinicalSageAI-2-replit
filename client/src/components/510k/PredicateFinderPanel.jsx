@@ -1,45 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Search,
-  Check,
-  X,
-  AlertTriangle,
-  ThumbsUp,
-  Loader2,
-  FileText,
-  GitCompare,
-  BookOpen,
-  Filter,
-  ExternalLink,
-  Eye,
-  Calendar,
-  BarChart,
-  ArrowUpDown,
-  Info,
-  ShieldAlert,
-  RefreshCw,
-} from 'lucide-react';
+  Search, Check, X, AlertTriangle, ThumbsUp, Loader2, FileText, GitCompare, BookOpen, Filter, ExternalLink, Eye, Calendar, BarChart, ArrowUpDown, Info, ShieldAlert, RefreshCw } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area';
 import FDA510kService from '@/services/FDA510kService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -159,12 +129,16 @@ const PredicateFinderPanel = ({
     deviceName: deviceProfile?.deviceName || '',
     manufacturer: deviceProfile?.manufacturer || '',
     productCode: deviceProfile?.productCode || '',
+    regulationNumber: deviceProfile?.regulationNumber || '',
     deviceClass: deviceProfile?.deviceClass || 'II',
     intendedUse: deviceProfile?.intendedUse || '',
     description: deviceProfile?.description || '',
     technicalSpecifications: deviceProfile?.technicalSpecifications || '',
     regulatoryClass: deviceProfile?.regulatoryClass || 'Class II',
   });
+
+  const [isLookingUpRegulation, setIsLookingUpRegulation] = useState(false);
+  const [regulationLookup, setRegulationLookup] = useState(null);
 
   const { toast } = useToast();
 
@@ -181,6 +155,7 @@ const PredicateFinderPanel = ({
         deviceName: deviceProfile?.deviceName || '',
         manufacturer: deviceProfile?.manufacturer || '',
         productCode: deviceProfile?.productCode || '',
+        regulationNumber: deviceProfile?.regulationNumber || '',
         deviceClass: deviceProfile?.deviceClass || 'II',
         intendedUse: deviceProfile?.intendedUse || '',
         description: deviceProfile?.description || '',
@@ -259,6 +234,70 @@ const PredicateFinderPanel = ({
     });
   };
 
+  const lookupRegulationByProductCode = async () => {
+    const productCode = (formData.productCode || '').trim();
+    if (!productCode) {
+      toast({
+        title: 'Product Code Required',
+        description: 'Enter a product code to look up regulation and panel.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLookingUpRegulation(true);
+    try {
+      const lookup = await FDA510kService.lookupRegulationByProductCode(productCode);
+      setRegulationLookup(lookup);
+
+      if (!lookup?.found || !lookup?.result) {
+        toast({
+          title: 'No Classification Found',
+          description: `No openFDA classification match for product code ${productCode.toUpperCase()}.`,
+          variant: 'default',
+        });
+        return;
+      }
+
+      const r = lookup.result;
+      const deviceClassMap = {
+        '1': 'I',
+        '2': 'II',
+        '3': 'III',
+      };
+
+      const nextDeviceClass =
+        deviceClassMap[String(r.deviceClass)] || formData.deviceClass || 'II';
+      const nextReg = r.regulationNumber
+        ? String(r.regulationNumber).startsWith('21')
+          ? String(r.regulationNumber)
+          : `21 CFR ${r.regulationNumber}`
+        : formData.regulationNumber;
+
+      setFormData(prev => ({
+        ...prev,
+        deviceClass: nextDeviceClass,
+        regulationNumber: nextReg,
+      }));
+
+      toast({
+        title: 'Classification Loaded',
+        description:
+          `${nextReg || 'Regulation'}${r.reviewPanel ? ` • Panel ${r.reviewPanel}` : ''}`,
+        variant: 'default',
+      });
+    } catch (e) {
+      console.error('Regulation lookup failed:', e);
+      toast({
+        title: 'Lookup Failed',
+        description: 'Unable to look up regulation info. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLookingUpRegulation(false);
+    }
+  };
+
   // Save device profile with enhanced persistence and error handling
   const saveDeviceProfile = () => {
     // Validate required fields
@@ -278,6 +317,7 @@ const PredicateFinderPanel = ({
       deviceName: formData.deviceName,
       manufacturer: formData.manufacturer,
       productCode: formData.productCode || 'UNASSIGNED',
+      regulationNumber: formData.regulationNumber || '',
       deviceClass: formData.deviceClass || 'II',
       intendedUse: formData.intendedUse,
       description: formData.description || '',
@@ -854,6 +894,41 @@ const PredicateFinderPanel = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="regulationNumber">Regulation Number</Label>
+            <div className="flex gap-2">
+              <Input
+                id="regulationNumber"
+                placeholder="e.g., 21 CFR 870.2340"
+                value={formData.regulationNumber}
+                onChange={e => handleInputChange('regulationNumber', e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={lookupRegulationByProductCode}
+                disabled={isLookingUpRegulation || !(formData.productCode || '').trim()}
+              >
+                {isLookingUpRegulation ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Lookup
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Lookup
+                  </>
+                )}
+              </Button>
+            </div>
+            {regulationLookup?.result?.reviewPanelDescription && (
+              <p className="text-xs text-muted-foreground">
+                Panel: {regulationLookup.result.reviewPanelDescription}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -125,3 +125,71 @@ model CmcMethod {
   status    MethodStatus @default(DRAFT)
   createdAt DateTime     @default(now()) @db.Timestamptz
 }
+
+// --- Models added to preserve existing DB tables and avoid destructive sync ---
+model AiTokenBudget {
+  id         Int      @id
+  daily_limit BigInt? @db.BigInt
+  tokens_used BigInt? @db.BigInt
+  reset_at   DateTime? @db.Timestamptz
+  created_at DateTime? @default(now()) @db.Timestamptz
+  updated_at DateTime? @default(now()) @db.Timestamptz
+
+  @@map("ai_token_budget")
+}
+
+model CoauthorValidationRules {
+  id                 Int      @id @default(autoincrement())
+  rule_id            String   @unique
+  organization_id    Int?
+  module             String
+  section            String?
+  agency             String
+  category           String
+  rule_type          String
+  severity           String
+  rule_name          String
+  description        String
+  check_logic        Json
+  remediation_text   String
+  auto_fix_available Boolean? @default(false)
+  auto_fix_logic     Json?
+  is_active          Boolean? @default(true)
+  created_at         DateTime? @default(now()) @db.Timestamptz
+  updated_at         DateTime? @default(now()) @db.Timestamptz
+
+  @@map("coauthor_validation_rules")
+  @@index([module], map: "validation_rules_module_idx")
+  @@index([agency], map: "validation_rules_agency_idx")
+  @@index([severity], map: "validation_rules_severity_idx")
+  @@index([category], map: "validation_rules_category_idx")
+  @@index([rule_type], map: "validation_rules_type_idx")
+}
+
+model Permission {
+  id                  Int      @id @default(autoincrement())
+  is_system_permission Boolean? @default(false)
+  created_at          DateTime? @default(now()) @db.Timestamp
+  resource            String
+  action              String
+  description         String?
+
+  @@map("permissions")
+}
+
+model Role {
+  id            Int      @id @default(autoincrement())
+  updated_at    DateTime? @default(now()) @db.Timestamp
+  level         Int?     @default(10)
+  is_global     Boolean? @default(false)
+  is_external   Boolean? @default(false)
+  permissions   Json?    @default("{}")
+  is_system_role Boolean? @default(false)
+  created_at    DateTime? @default(now()) @db.Timestamp
+  name          String
+  description   String?
+  icon          String?
+  color_code    String?  @default("#6B7280")
+
+  @@map("roles")
+}

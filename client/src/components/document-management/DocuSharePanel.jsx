@@ -1,23 +1,7 @@
 import React from 'react';
 import { useDocuShare } from '../../contexts/DocuShareContext';
 import {
-  FolderOpen,
-  FileText,
-  Search,
-  Download,
-  Share2,
-  Edit,
-  Trash2,
-  Filter,
-  Clock,
-  Tag,
-  AlertCircle,
-  Check,
-  Lock,
-  Upload,
-  FileUp,
-  ChevronRight,
-} from 'lucide-react';
+  FolderOpen, FileText, Search, Download, Share2, Edit, Trash2, Filter, Clock, Tag, AlertCircle, Check, Lock, Upload, FileUp, ChevronRight } from 'lucide-react'
 
 // Common document type filters based on module type
 const MODULE_FILTERS = {

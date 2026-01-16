@@ -1,3 +1,4 @@
+import { TabsContent, Shield, FileCheck, ClipboardCheck, CheckSquare, Badge, AlertTriangle } from 'lucide-react'
 {
   /* FDA Compliance Tab */
 }

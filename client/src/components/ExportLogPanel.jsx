@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, FileText, Mail, RefreshCw, Download, Clock } from 'lucide-react';
+import { Calendar, FileText, Mail, RefreshCw, Download, Clock } from 'lucide-react'
 import { format, parseISO } from 'date-fns';
 
 /**

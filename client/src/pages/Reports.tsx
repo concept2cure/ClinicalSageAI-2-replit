@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ReportCard } from '@/components/reports/ReportCard';
 import { ReportDetailModal } from '@/components/reports/ReportDetailModal';
 import { type CsrReport } from '@/lib/types';
-import { Filter } from 'lucide-react';
+import { Filter, CsrReport } from 'lucide-react'
 
 export default function Reports() {
   const [selectedReport, setSelectedReport] = useState<CsrReport | null>(null);

@@ -12,22 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Package, 
-  Building2, 
-  Target,
-  Shield, 
-  FlaskConical,
-  Heart,
-  Cpu,
-  FileText,
-  Users,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  Save,
-  Send,
-  ChevronRight
-} from 'lucide-react';
+  Package, Building2, Target, Shield, FlaskConical, Heart, Cpu, FileText, Users, AlertTriangle, CheckCircle, Info, Save, Send, ChevronRight } from 'lucide-react'
 import { DEVICE_TEMPLATES } from '../../services/ProjectTemplates';
 
 const DATA_COLLECTION_SECTIONS = [

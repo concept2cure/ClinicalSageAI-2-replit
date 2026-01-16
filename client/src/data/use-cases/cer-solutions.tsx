@@ -2,16 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  CheckCircle2,
-  FileText,
-  AlertCircle,
-  FilePlus,
-  LineChart,
-  FileBarChart2,
-  BarChart4,
-  Laptop,
-  DownloadCloud,
-} from 'lucide-react';
+  CheckCircle2, FileText, AlertCircle, FilePlus, LineChart, FileBarChart2, BarChart4, Laptop, DownloadCloud } from 'lucide-react'
 import { Link } from 'wouter';
 
 export const cerSolutionsUseCase = {

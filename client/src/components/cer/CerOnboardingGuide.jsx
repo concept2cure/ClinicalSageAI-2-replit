@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, X, BookOpen, Database, FileText, Download } from 'lucide-react';
+import { ArrowRight, X, BookOpen, Database, FileText, Download } from 'lucide-react'
 
 /**
  * CER Onboarding Guide Component

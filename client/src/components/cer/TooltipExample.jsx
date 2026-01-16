@@ -4,14 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  FileText,
-  BookOpen,
-  CheckSquare,
-  GitCompare,
-  HelpCircle,
-  Info,
-  AlertCircle,
-} from 'lucide-react';
+  FileText, BookOpen, CheckSquare, GitCompare, HelpCircle, Info, AlertCircle } from 'lucide-react'
 
 /**
  * TooltipExample Component

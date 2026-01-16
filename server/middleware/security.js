@@ -8,7 +8,7 @@
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const config = require('../config/environment').config;
+const config = require('../config/environment.cjs').config;
 
 // Base CORS configuration
 const corsOptions = {

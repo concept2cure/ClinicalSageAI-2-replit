@@ -1,32 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
-  FileText,
-  FolderTree,
-  FileSearch,
-  Upload,
-  Clock,
-  FileCheck,
-  FileWarning,
-  Sparkles,
-  PlusCircle,
-  Library,
-  FileCog,
-  BookOpen,
-  Users,
-  CheckSquare,
-  Newspaper,
-} from 'lucide-react';
+  FileText, FolderTree, FileSearch, Upload, Clock, FileCheck, FileWarning, Sparkles, PlusCircle, Library, FileCog, BookOpen, Users, CheckSquare, Newspaper } from 'lucide-react'
 import CoauthorModule from './CoauthorModule';
 import LumenChatPane from './LumenChatPane';
 

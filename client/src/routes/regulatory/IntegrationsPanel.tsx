@@ -3,24 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Mail,
-  Calendar,
-  RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  Settings,
-  ExternalLink,
-  Info,
-  Clock,
-  Database,
-  Zap,
-  Download,
-  Upload,
-  Globe,
-  Shield,
-  Activity,
-  Users,
-} from 'lucide-react';
+  Mail, Calendar, RefreshCw, CheckCircle2, AlertTriangle, Settings, ExternalLink, Info, Clock, Database, Zap, Download, Upload, Globe, Shield, Activity, Users } from 'lucide-react'
 
 interface IntegrationsPanelProps {
   subId?: string;

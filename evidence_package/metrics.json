@@ -1,0 +1,19 @@
+{
+  "total": 425,
+  "positives": 125,
+  "negatives": 300,
+  "tp": 124,
+  "tn": 299,
+  "fp": 1,
+  "fn": 1,
+  "sensitivity": 0.992,
+  "sensitivity_ci": [
+    0.956074,
+    0.998586
+  ],
+  "specificity": 0.996667,
+  "specificity_ci": [
+    0.981363,
+    0.999411
+  ]
+}

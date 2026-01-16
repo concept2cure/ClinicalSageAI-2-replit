@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Folder, FileText, Search, Plus, Calendar, Clock } from 'lucide-react';
+import { Database, Folder, FileText, Search, Plus, Calendar, Clock } from 'lucide-react'
 import {
   Card,
   CardContent,

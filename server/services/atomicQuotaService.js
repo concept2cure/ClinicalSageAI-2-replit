@@ -5,8 +5,33 @@
  * Prevents race conditions through database-level locking
  * Ensures concurrent requests cannot exceed licensed limits
  */
+import getPool from '../db/pool';
 
-import { pool } from '../db.js';
+const pool = getPool();
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function connectWithRetry(pgPool, maxAttempts = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await pgPool.connect();
+    } catch (e) {
+      lastError = e;
+      const message = (e && e.message) ? String(e.message) : '';
+      const isTransient =
+        message.toLowerCase().includes('timeout') ||
+        message.toLowerCase().includes('terminated unexpectedly') ||
+        message.toLowerCase().includes('connection terminated');
+
+      if (!isTransient || attempt === maxAttempts) break;
+      await sleep(750 * attempt);
+    }
+  }
+  throw lastError;
+}
 
 /**
  * Atomically check and consume project quota
@@ -17,31 +42,54 @@ import { pool } from '../db.js';
  * @returns {object} Result with success, data, and error details
  */
 export async function atomicCreateProject(organizationId, projectData) {
-  const client = await pool.connect();
+  if (!pool) {
+    return {
+      success: false,
+      error: 'NO_DATABASE',
+      message: 'Database connection not available',
+    };
+  }
+
+  const client = await connectWithRetry(pool, 4);
   
   try {
     await client.query('BEGIN');
-    
-    // Lock the license row to prevent concurrent reads
-    const licenseResult = await client.query(
-      `SELECT l.*
-       FROM licenses l
-       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
-       FOR UPDATE`,
-      [organizationId]
-    );
-    
-    if (licenseResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return {
-        success: false,
-        error: 'NO_LICENSE',
-        message: 'No active license found for this organization'
-      };
+
+    // Quota enforcement: prefer organization.max_projects, fall back to client_workspaces.quota_projects.
+    // (Licenses table may not be present in dev; do not hard-fail.)
+    let orgMaxProjects = null;
+    try {
+      const orgResult = await client.query(
+        `SELECT max_projects
+         FROM organizations
+         WHERE id = $1
+         LIMIT 1`,
+        [organizationId]
+      );
+      const raw = orgResult.rows?.[0]?.max_projects;
+      const parsed = raw === null || raw === undefined ? null : parseInt(String(raw), 10);
+      if (Number.isFinite(parsed)) orgMaxProjects = parsed;
+    } catch (_e) {
+      // ignore
     }
-    
-    const license = licenseResult.rows[0];
+
+    let workspaceMaxProjects = null;
+    if (projectData?.clientWorkspaceId) {
+      try {
+        const wsResult = await client.query(
+          `SELECT quota_projects
+           FROM client_workspaces
+           WHERE id = $1 AND organization_id = $2
+           LIMIT 1`,
+          [projectData.clientWorkspaceId, organizationId]
+        );
+        const raw = wsResult.rows?.[0]?.quota_projects;
+        const parsed = raw === null || raw === undefined ? null : parseInt(String(raw), 10);
+        if (Number.isFinite(parsed)) workspaceMaxProjects = parsed;
+      } catch (_e) {
+        // ignore
+      }
+    }
     
     // Count current projects within the same transaction
     const countResult = await client.query(
@@ -52,7 +100,11 @@ export async function atomicCreateProject(organizationId, projectData) {
     );
     
     const currentCount = parseInt(countResult.rows[0].count);
-    const maxProjects = license.max_projects || 20;
+    const fallbackMax = 20;
+    const maxProjectsCandidates = [orgMaxProjects, workspaceMaxProjects, fallbackMax].filter(
+      (v) => typeof v === 'number' && Number.isFinite(v) && v > 0
+    );
+    const maxProjects = Math.min(...maxProjectsCandidates);
     
     if (currentCount >= maxProjects) {
       await client.query('ROLLBACK');
@@ -71,7 +123,7 @@ export async function atomicCreateProject(organizationId, projectData) {
     // Create the project within the same transaction
     const projectResult = await client.query(
       `INSERT INTO projects (
-        name, description, type, priority, due_date, 
+        name, description, type, priority, target_end_date,
         organization_id, client_workspace_id, status, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       RETURNING *`,

@@ -4,19 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { useToast } from '../App';
 import {
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
-  RefreshCw,
-  Loader2,
-  FileText,
-  Shield,
-  List,
-  BarChart,
-  ExternalLink,
-} from 'lucide-react';
+  AlertTriangle, AlertCircle, CheckCircle, ChevronDown, ChevronRight, RefreshCw, Loader2, FileText, Shield, List, BarChart, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import {
   Card,

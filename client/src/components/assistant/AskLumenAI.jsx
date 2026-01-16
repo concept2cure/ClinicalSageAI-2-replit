@@ -1,22 +1,7 @@
 // /client/src/components/assistant/AskLumenAI.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Send,
-  UserRound,
-  Bot,
-  Sparkles,
-  PieChart,
-  Clock,
-  Scale,
-  Briefcase,
-  XCircle,
-  Minimize2,
-  Maximize2,
-  Paperclip,
-  File,
-  X,
-} from 'lucide-react';
+import { Send, UserRound, Bot, Sparkles, PieChart, Clock, Scale, Briefcase, XCircle, Minimize2, Maximize2, Paperclip, File, X } from 'lucide-react'
 import { getAdvisorReadiness } from '../../lib/advisorService';
 
 export default function AskLumenAI() {

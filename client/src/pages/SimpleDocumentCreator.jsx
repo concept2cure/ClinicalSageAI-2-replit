@@ -3,14 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react'
 
 export default function SimpleDocumentCreator() {
   const [title, setTitle] = useState('');

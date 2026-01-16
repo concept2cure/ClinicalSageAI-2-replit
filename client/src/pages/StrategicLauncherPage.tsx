@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Briefcase, Clipboard, Brain, AlarmClock, FileText, BarChart, Book, DownloadCloud, 
-  CheckCircle, PlayCircle, ShieldCheck, TrendingUp, Award, Database
-} from 'lucide-react';
+  Briefcase, Clipboard, Brain, AlarmClock, FileText, BarChart, Book, DownloadCloud, CheckCircle, PlayCircle, ShieldCheck, TrendingUp, Award, Database } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -69,33 +67,21 @@ export default function StrategicLauncherPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Use case launched",
         description: "The strategic intelligence workflow has been started.",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Use case launched",
-        description: "The strategic intelligence workflow has been started.",
-        variant: "default",
-      });
+  });
       
       // Navigate to the protocol builder with pre-populated data
       navigate(`/protocol-builder?scenario=${data.useCase.id}`);
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Launch failed",
         description: error.message || "Failed to launch use case.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Launch failed",
-        description: error.message || "Failed to launch use case.",
-        variant: "destructive",
-      });
+  });
     }
   });
 
@@ -106,17 +92,11 @@ export default function StrategicLauncherPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Report prepared",
         description: "Your report is ready for download.",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Report prepared",
-        description: "Your report is ready for download.",
-        variant: "default",
-      });
+  });
       
       // Open the download link in a new tab
       if (data.downloadUrl) {
@@ -124,17 +104,11 @@ export default function StrategicLauncherPage() {
       }
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Download failed",
         description: error.message || "Failed to download report.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Download failed",
-        description: error.message || "Failed to download report.",
-        variant: "destructive",
-      });
+  });
     }
   });
 

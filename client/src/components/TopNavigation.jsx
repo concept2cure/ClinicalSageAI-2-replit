@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { FileText, MessageSquare } from 'lucide-react';
+import { FileText, MessageSquare } from 'lucide-react'
 
 export default function TopNavigation() {
   return (

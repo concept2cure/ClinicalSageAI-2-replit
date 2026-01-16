@@ -4,11 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import {
-  Scale as ScaleIcon,
-  AlertTriangle as AlertTriangleIcon,
-  CheckCircle as CheckCircleIcon,
-  XCircle as XCircleIcon,
-} from 'lucide-react';
+  Scale as ScaleIcon, AlertTriangle as AlertTriangleIcon, CheckCircle as CheckCircleIcon, XCircle as XCircleIcon } from 'lucide-react'
 
 // Define interfaces for the component props and state
 interface ProtocolData {

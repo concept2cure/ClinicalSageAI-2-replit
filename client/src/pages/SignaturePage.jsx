@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save, Trash, Check, Calendar } from 'lucide-react';
+import { Loader2, Save, Trash, Check, Calendar } from 'lucide-react'
 
 /**
  * Digital Signature Page - Capture and manage electronic signatures for documents

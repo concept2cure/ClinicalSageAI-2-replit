@@ -5,32 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Search,
-  Upload,
-  BarChart2,
-  FileText,
-  Layers,
-  Database,
-  Zap,
-  BookOpen,
-  ArrowUpRight,
-  Box,
-  Package2,
-  Brain,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  CheckSquare,
-  AlertTriangle,
-  Users,
-  Lightbulb,
-  Microscope,
-  Target,
-  HelpCircle,
-  Download,
-  Sparkles,
-  Beaker,
-} from 'lucide-react';
+  Search, Upload, BarChart2, FileText, Layers, Database, Zap, BookOpen, ArrowUpRight, Box, Package2, Brain, LineChart, PieChart, TrendingUp, CheckSquare, AlertTriangle, Users, Lightbulb, Microscope, Target, HelpCircle, Download, Sparkles, Beaker } from 'lucide-react'
 
 // Import Study Architect Components
 import StudyWorkspace from '@/components/studyArchitect/StudyWorkspace';

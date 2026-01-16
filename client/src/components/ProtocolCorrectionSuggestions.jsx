@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircleIcon, CheckCircleIcon, ClipboardCopyIcon, LightbulbIcon } from 'lucide-react';
+import { AlertCircleIcon, CheckCircleIcon, ClipboardCopyIcon, LightbulbIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 

@@ -6,19 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Shield,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  BarChart3,
-  Globe,
-  Target,
-  TrendingDown,
-  TrendingUp,
-  Calendar,
-  Users,
-  FileCheck,
-} from 'lucide-react';
+  Shield, AlertTriangle, CheckCircle, Clock, BarChart3, Globe, Target, TrendingDown, TrendingUp, Calendar, Users, FileCheck } from 'lucide-react'
 
 export default function ComplianceMonitoringDashboard() {
   const [timeRange, setTimeRange] = useState('30d');

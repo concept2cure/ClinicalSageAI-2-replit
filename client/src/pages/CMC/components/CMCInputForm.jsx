@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, FileText } from 'lucide-react';
+import { Loader2, FileText } from 'lucide-react'
 
 const CMCInputForm = ({ drugName, setDrugName, isGenerating, onGenerate }) => {
   return (

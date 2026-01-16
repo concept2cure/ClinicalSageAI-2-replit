@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ChevronRight, AlertCircle, Info } from 'lucide-react';
+import { CheckCircle, ChevronRight, AlertCircle, Info } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import CerTooltipWrapper from './CerTooltipWrapper';
 

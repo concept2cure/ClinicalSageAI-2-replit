@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Link } from 'wouter';
-import { Home, AlertCircle } from 'lucide-react';
+import { Home, AlertCircle } from 'lucide-react'
 
 const NotFoundPage = () => {
   return (

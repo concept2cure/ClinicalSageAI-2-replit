@@ -1,4 +1,4 @@
-import { FileText, Search, BarChart2, Upload, FilePlus } from 'lucide-react';
+import { FileText, Search, BarChart2, Upload, FilePlus } from 'lucide-react'
 import { Link } from 'react-router-dom';
 
 export default function TopNavigation() {

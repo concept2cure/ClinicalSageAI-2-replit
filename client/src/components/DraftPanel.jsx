@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, FileText, ClipboardCheck, Save, Download } from 'lucide-react';
+import { Loader2, FileText, ClipboardCheck, Save, Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

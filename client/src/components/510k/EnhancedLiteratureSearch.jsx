@@ -7,14 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,23 +19,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  Search,
-  Book,
-  FileText,
-  BookOpen,
-  ExternalLink,
-  Calendar,
-  Loader2,
-  X,
-  Check,
-  Info,
-} from 'lucide-react';
+  Search, Book, FileText, BookOpen, ExternalLink, Calendar, Loader2, X, Check, Info } from 'lucide-react'
 
 import { useContext } from 'react';
 import { useTenant } from '../../contexts/TenantContext.tsx';

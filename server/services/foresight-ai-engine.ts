@@ -91,128 +91,11 @@ export class ForesightAIEngine {
       ],
       temperature: 0.3,
       max_tokens: 2000,
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
-    const prediction = JSON.parse(predictionResponse.choices[0].message.content || '{}');
-
-    // Store prediction in database
-    const [savedPrediction] = await db!.insert(foresightPredictions).values({
-      organization_id: organizationId,
-      prediction_type: 'multi_modal_advanced',
-      phase: studyPhase,
-      prediction_data: prediction,
-      confidence_score: prediction.confidence || 0,
-      risk_factors: prediction.risks || [],
-      recommendations: prediction.recommendations || [],
-      metadata: {
-        model_used: AI_MODELS.PREDICTION,
-        data_sources: Object.keys(params).filter(k => (params as any)[k]?.length > 0),
-        timestamp: new Date().toISOString()
-      }
-    }).returning();
-
-    // Generate hypothesis based on prediction
-    const hypothesis = await this.generateClinicalHypothesis(prediction, context);
-    
-    return {
-      prediction: savedPrediction,
-      hypothesis,
-      actionableInsights: this.extractActionableInsights(prediction)
-    };
-  }
-
-  /**
-   * Intelligent Hypothesis Generator
-   * Creates testable hypotheses based on patterns and predictions
-   */
-  async generateClinicalHypothesis(prediction: any, context: any) {
-    const response = await openai.chat.completions.create({
-      model: AI_MODELS.REASONING,
-      messages: [
-        {
-          role: 'system',
-          content: `Generate testable clinical hypotheses based on the prediction and data patterns.
-                   Each hypothesis should include:
-                   1. Primary hypothesis statement
-                   2. Mechanistic rationale
-                   3. Required evidence to test
-                   4. Expected outcomes and biomarkers
-                   5. Statistical power calculations
-                   6. Risk-benefit assessment
-                   Follow ICH E9 statistical principles and FDA guidance on adaptive designs.`
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({ prediction, context })
-        }
-      ],
-      temperature: 0.4,
-      max_tokens: 1500
-    });
-
-    return JSON.parse(response.choices[0].message.content || '{}');
-  }
-
-  /**
-   * Real-Time Adaptive Learning System
-   * Continuously improves predictions based on clinical feedback
-   */
-  async adaptiveLearning(feedbackId: string) {
-    // Fetch feedback and related predictions
-    const [feedback] = await db!.select()
-      .from(clinicalFeedback)
-      .where(eq(clinicalFeedback.id, feedbackId));
-
-    if (!feedback) throw new Error('Feedback not found');
-
-    // Analyze outcome vs prediction
-    const learningResponse = await openai.chat.completions.create({
-      model: AI_MODELS.ANALYSIS,
-      messages: [
-        {
-          role: 'system',
-          content: `Analyze the difference between predicted and actual clinical outcomes.
-                   Identify:
-                   1. Key factors that influenced the outcome
-                   2. Model improvements needed
-                   3. New patterns discovered
-                   4. Updated risk weightings
-                   5. Refined success criteria
-                   Generate specific adjustments to improve future predictions.`
-        },
-        {
-          role: 'user',
-          content: JSON.stringify(feedback)
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 1000
-    });
-
-    const learnings = JSON.parse(learningResponse.choices[0].message.content || '{}');
-    
-    // Update translational patterns based on learnings
-    if (learnings.newPatterns) {
-      for (const pattern of learnings.newPatterns) {
-        await db!.insert(translationalPatterns).values({
-          organizationId: feedback.organizationId,
-          sourcePhase: feedback.phase || 'unknown',
-          targetPhase: pattern.targetPhase,
-          patternType: pattern.type,
-          patternData: pattern.data,
-          confidenceScore: pattern.confidence,
-          evidenceCount: 1,
-          metadata: {
-            source: 'adaptive_learning',
-            feedbackId: feedbackId,
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
-    }
-
-    return learnings;
+    const content = predictionResponse.choices?.[0]?.message?.content;
+    return content ? JSON.parse(content) : {};
   }
 
   /**
@@ -661,43 +544,7 @@ export class ForesightAIEngine {
    * Bayesian MTD Calculation
    * Advanced statistical calculation for Maximum Tolerated Dose
    */
-  private async calculateBayesianMTD(cohorts: any[], dlts: any[]) {
-    // Implement Bayesian logistic regression for MTD estimation
-    // This is a simplified version - production should use MCMC or similar
-    return {
-      mtd: null,
-      confidence: 0.95,
-      posteriorDistribution: []
-    };
-  }
-  
-  /**
-   * Safety Margin Calculation
-   * Calculate appropriate safety margins based on MTD
-   */
-  private calculateSafetyMargin(estimatedMTD: number) {
-    // FDA guidance suggests starting at 1/10th of NOAEL in most sensitive species
-    // or 1/6th of highest dose tested in non-rodent species
-    return {
-      conservativeFactor: 10,
-      safeDose: estimatedMTD / 10,
-      rationale: 'Standard 10-fold safety margin applied per FDA guidance'
-    };
-  }
-  
-  /**
-   * Regulatory Compliance Check
-   * Verify dose escalation meets regulatory requirements
-   */
-  private async checkDoseEscalationCompliance(study: any, recommendation: any) {
-    return {
-      fdaCompliant: true,
-      emaCompliant: true,
-      ichGuidelines: ['E4', 'E8', 'E9', 'M3(R2)'],
-      issues: [],
-      recommendations: []
-    };
-  }
+
 
   /**
    * Natural Language Protocol Generator

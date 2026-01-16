@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileBarChart, RefreshCw, ChartBar } from 'lucide-react';
+import { FileBarChart, RefreshCw, ChartBar } from 'lucide-react'
 
 export default function BatchAnalysisPanel() {
   return (

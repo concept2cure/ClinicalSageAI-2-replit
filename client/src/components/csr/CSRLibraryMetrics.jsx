@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, PieChart, Activity } from 'lucide-react';
+import { BarChart, PieChart, Activity } from 'lucide-react'
 
 export default function CSRLibraryMetrics() {
   // Sample metrics data - in a real implementation, this would come from an API

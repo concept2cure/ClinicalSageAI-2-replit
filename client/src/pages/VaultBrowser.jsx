@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, ArrowLeft } from 'lucide-react';
+import { Database, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import NavigationBanner from '../components/common/NavigationBanner';

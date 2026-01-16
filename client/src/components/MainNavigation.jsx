@@ -2,28 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import {
-  Home,
-  FileText,
-  Beaker,
-  BookOpen,
-  Users,
-  BookCheck,
-  MessageSquare,
-  PencilRuler,
-  Microscope,
-  Settings,
-  BarChart2,
-  Layers,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Search,
-  Menu,
-  Grid,
-  ExternalLink,
-  Lock,
-  HelpCircle,
-} from 'lucide-react';
+  Home, FileText, Beaker, BookOpen, Users, BookCheck, MessageSquare, PencilRuler, Microscope, Settings, BarChart2, Layers, ChevronLeft, ChevronRight, Bell, Search, Menu, Grid, ExternalLink, Lock, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';

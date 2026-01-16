@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -15,32 +8,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  GitCompare,
-  ArrowRight,
-  Check,
-  Loader2,
-  FileCheck,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Info,
-  Save,
-  FileText,
-  BookOpen,
-  Calendar,
-  BarChart2,
-  PlusCircle,
-  MinusCircle,
-  File,
-  Link,
-} from 'lucide-react';
+  GitCompare, ArrowRight, Check, Loader2, FileCheck, X, ChevronDown, ChevronUp, Info, Save, FileText, BookOpen, Calendar, BarChart2, PlusCircle, MinusCircle, File, Link } from 'lucide-react'
 import {
   Table,
   TableBody,

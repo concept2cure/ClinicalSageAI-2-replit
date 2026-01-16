@@ -1,43 +1,15 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  FileText,
-  PencilRuler,
-  Target,
-  Download,
-  RefreshCw,
-  Loader2,
-  ChevronRight,
-  Lightbulb,
-  Brain,
-  Scale,
-  Beaker,
-  Folder,
-  Sparkles,
-  Database,
-  Check,
-  Info,
-} from 'lucide-react';
+  FileText, PencilRuler, Target, Download, RefreshCw, Loader2, ChevronRight, Lightbulb, Brain, Scale, Beaker, Folder, Sparkles, Database, Check, Info } from 'lucide-react'
 
 const ProtocolBlueprintGenerator = () => {
   const [loading, setLoading] = useState(false);

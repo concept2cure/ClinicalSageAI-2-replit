@@ -4,15 +4,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Loader2, AlertCircle, CheckCircle, PlusCircle, Edit, Trash } from 'lucide-react';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Loader2, AlertCircle, CheckCircle, PlusCircle, Edit, Trash } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiRequest, queryClient as queryClientRef } from '@/lib/queryClient';
 import {

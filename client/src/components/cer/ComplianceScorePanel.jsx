@@ -3,61 +3,24 @@ import { cerApiService } from '@/services/CerAPIService';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Info,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  FileText,
-  Sparkles,
-  Zap,
-  XCircle,
-  Plus,
-  Shield,
-  BarChart4,
-  ArrowRight,
-  ExternalLink,
-  FileCheck,
-  BookOpen,
-} from 'lucide-react';
+  Info, CheckCircle, AlertCircle, RefreshCw, FileText, Sparkles, Zap, XCircle, Plus, Shield, BarChart4, ArrowRight, ExternalLink, FileCheck, BookOpen } from 'lucide-react'
 
 export default function ComplianceScorePanel({
   sections,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, Beaker, CheckCircle, ArrowRight, FileText, Plus, Atom } from 'lucide-react';
+import { ArrowLeft, Beaker, CheckCircle, ArrowRight, FileText, Plus, Atom } from 'lucide-react'
 import ComprehensiveCMCPlatform from '../components/cmc/ComprehensiveCMCPlatformClean';
 
 export default function CMCBlueprintGenerator() {

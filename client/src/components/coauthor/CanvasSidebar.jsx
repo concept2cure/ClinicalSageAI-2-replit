@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Layout, FileText, Settings, List, Users, Clock, Search } from 'lucide-react';
+import { Layout, FileText, Settings, List, Users, Clock, Search } from 'lucide-react'
 
 export default function CanvasSidebar({ submissionId }) {
   const [activeTab, setActiveTab] = useState('sections');

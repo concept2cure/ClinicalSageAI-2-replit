@@ -5,7 +5,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { X, RefreshCw, Lock, Unlock, Copy, Database, Calendar, TestTube, Building2, Package, Hash } from 'lucide-react';
+import { X, RefreshCw, Lock, Unlock, Copy, Database, Calendar, TestTube, Building2, Package, Hash } from 'lucide-react'
 
 import SpecsTable from '../tokens/SpecsTable.jsx';
 import BatchAnalysesTable from '../tokens/BatchAnalysesTable.jsx';

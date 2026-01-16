@@ -1,24 +1,11 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  FileText,
-  Upload,
-  CheckCircle,
-  AlertTriangle,
-  ClipboardCheck,
-  Search,
-  ArrowRight,
-} from 'lucide-react';
+  FileText, Upload, CheckCircle, AlertTriangle, ClipboardCheck, Search, ArrowRight } from 'lucide-react'
 
 export default function ProtocolOptimizerLanding() {
   const [, navigate] = useLocation();

@@ -1,25 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import {
-  Search,
-  FileText,
-  Brain,
-  Lock,
-  Microscope,
-  CheckCircle,
-  Database,
-  BarChart2,
-  PieChart,
-  LineChart,
-  BookOpen,
-  Rocket,
-  ChevronRight,
-  AreaChart,
-  Beaker,
-  Users,
-  Package,
-  FileCheck,
-} from 'lucide-react';
+  Search, FileText, Brain, Lock, Microscope, CheckCircle, Database, BarChart2, PieChart, LineChart, BookOpen, Rocket, ChevronRight, AreaChart, Beaker, Users, Package, FileCheck } from 'lucide-react'
 
 import {
   PageContainer,

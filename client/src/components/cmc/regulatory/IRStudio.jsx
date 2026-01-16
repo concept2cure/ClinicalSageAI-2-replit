@@ -5,31 +5,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
-  HelpCircle,
-  Download,
-  Send,
-  Edit3,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  FileText,
-  Plus,
-  Loader2,
-  MessageSquare,
-  Calendar,
-  Flag,
-  User,
-  History,
-  ArrowRight,
-} from 'lucide-react';
+  HelpCircle, Download, Send, Edit3, Clock, CheckCircle, AlertCircle, FileText, Plus, Loader2, MessageSquare, Calendar, Flag, User, History, ArrowRight } from 'lucide-react'
 
 export default function IRStudio({ submissionId }) {
   const [rows, setRows] = React.useState([]);

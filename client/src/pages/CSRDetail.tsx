@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'wouter';
 import {
-  Loader2,
-  ArrowLeft,
-  FileText,
-  Pill,
-  Users,
-  Calendar,
-  FlaskConical,
-  Award,
-} from 'lucide-react';
+  Loader2, ArrowLeft, FileText, Pill, Users, Calendar, FlaskConical, Award } from 'lucide-react'
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -31,13 +23,7 @@ export default function CSRDetail() {
         setCsr(response.data);
       } catch (error) {
         console.error('Error fetching CSR details:', error);
-        // toast call replaced
-        // Original: toast({
-        //   title: 'Failed to load CSR details',
-        //   description: 'Could not retrieve the requested clinical study report.',
-        //   variant: 'destructive'
-        // })
-        console.log('Toast would show:', {
+        toast({
           title: 'Failed to load CSR details',
           description: 'Could not retrieve the requested clinical study report.',
           variant: 'destructive',

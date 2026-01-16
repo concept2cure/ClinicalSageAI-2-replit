@@ -5,16 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
-  FileSpreadsheet, 
-  FileText, 
-  Package, 
-  BarChart4, 
-  Download, 
-  ExternalLink, 
-  Presentation, 
-  FileBarChart,
-  LayoutDashboard
-} from "lucide-react";
+  FileSpreadsheet, FileText, Package, BarChart4, Download, ExternalLink, Presentation, FileBarChart, LayoutDashboard } from 'lucide-react'
 import axios from "axios";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";

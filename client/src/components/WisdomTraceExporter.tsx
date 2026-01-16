@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileDown, Printer, Share2, Check, Loader2 } from 'lucide-react';
+import { FileDown, Printer, Share2, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -38,15 +38,11 @@ export default function WisdomTraceExporter({
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
       
       // Show success message
-      // toast call replaced
-  // Original: toast({
-        title: "Export Successful",
-        description: `Wisdom trace "${traceName}" has been exported as ${exportFormat.toUpperCase()
-  console.log('Toast would show:', {
+  toast({
         title: "Export Successful",
         description: `Wisdom trace "${traceName}" has been exported as ${exportFormat.toUpperCase()}.`,
         variant: "default",
-      });
+  });
       
       // For PDF/HTML, this would trigger a download in a real implementation
       if (exportFormat === 'pdf' || exportFormat === 'html') {
@@ -57,17 +53,11 @@ export default function WisdomTraceExporter({
       
       setIsDialogOpen(false);
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Export Failed",
         description: "There was an error exporting the wisdom trace. Please try again.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Export Failed",
-        description: "There was an error exporting the wisdom trace. Please try again.",
-        variant: "destructive",
-      });
+  });
       console.error("Export error:", error);
     } finally {
       setIsExporting(false);
@@ -75,29 +65,19 @@ export default function WisdomTraceExporter({
   };
 
   const handlePrint = () => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Print Initiated",
       description: "Preparing wisdom trace for printing...",
-    })
-  console.log('Toast would show:', {
-      title: "Print Initiated",
-      description: "Preparing wisdom trace for printing...",
-    });
+  });
     // In a real implementation, we would handle the print logic here
     // window.print();
   };
 
   const handleShare = () => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Sharing Options",
       description: "You can now share this trace with your team or stakeholders.",
-    })
-  console.log('Toast would show:', {
-      title: "Sharing Options",
-      description: "You can now share this trace with your team or stakeholders.",
-    });
+  });
     // In a real implementation, we would open a share dialog or copy a link to clipboard
   };
 

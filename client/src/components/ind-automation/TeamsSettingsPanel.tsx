@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  InfoIcon,
-  RefreshCw,
-  ArrowRightCircle,
-} from 'lucide-react';
+  CheckCircle, AlertCircle, Loader2, InfoIcon, RefreshCw, ArrowRightCircle } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import api from '../../services/api';
 

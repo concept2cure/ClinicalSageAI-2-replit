@@ -1,88 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import {
-  RefreshCw,
-  Upload,
-  FileText,
-  File,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  MoreHorizontal,
-  Download,
-  Trash2,
-  Share2,
-  PlusCircle,
-  FolderPlus,
-  Filter,
-  Tag,
-  Link,
-  Clock,
-  Calendar,
-  Users,
-  Shield,
-  Eye,
-  EyeOff,
-  Edit,
-  ArrowUpDown,
-  ExternalLink,
-  Copy,
-  ChevronRight,
-  ClipboardList,
-  Microscope,
-  FileCheck,
-  FileLock2,
-  FlaskConical,
-} from 'lucide-react';
+  RefreshCw, Upload, FileText, File, CheckCircle, AlertTriangle, Search, MoreHorizontal, Download, Trash2, Share2, PlusCircle, FolderPlus, Filter, Tag, Link, Clock, Calendar, Users, Shield, Eye, EyeOff, Edit, ArrowUpDown, ExternalLink, Copy, ChevronRight, ClipboardList, Microscope, FileCheck, FileLock2, FlaskConical } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 /**

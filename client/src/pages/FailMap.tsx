@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react'
 
 // Import visualization components
 import { EndpointHeatmap } from '@/components/fail-map/EndpointHeatmap';

@@ -184,9 +184,37 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000; // Changed to match port 5000 that's actually being used
-app.listen(PORT, () => {
+// Start Server with Socket.IO
+import http from 'http';
+import { Server as IOServer } from 'socket.io';
+
+const PORT = process.env.PORT || 5000;
+const httpServer = http.createServer(app);
+
+// Initialize Socket.IO and attach to the express app for route access
+const io = new IOServer(httpServer, {
+  cors: { origin: '*' },
+});
+app.set('io', io);
+
+io.on('connection', socket => {
+  console.log('⚡️ Socket.IO client connected:', socket.id);
+
+  socket.on('subscribeTo510k', data => {
+    try {
+      console.log('Client subscribed to 510k pipeline:', data);
+      if (data && data.pipelineId) socket.join(data.pipelineId);
+    } catch (err) {
+      console.error('subscribeTo510k handler error:', err);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
+
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log('🚀 CoAuthor API available at: /api/coauthor/generate');
   console.log('🧪 Test endpoint available at: /api/coauthor/generate/test');

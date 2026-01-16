@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, FolderIcon, FileIcon, ArrowRightIcon, FileDownIcon } from 'lucide-react';
+import { Loader2, FolderIcon, FileIcon, ArrowRightIcon, FileDownIcon } from 'lucide-react'
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import html2pdf from 'html2pdf.js';
@@ -35,17 +35,11 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
         setData(loaded);
       } catch (error) {
         console.error("Error fetching CSR data:", error);
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Error loading CSR data",
           description: "There was a problem retrieving the clinical study reports.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Error loading CSR data",
-          description: "There was a problem retrieving the clinical study reports.",
-          variant: "destructive"
-        });
+  });
       } finally {
         setLoading(false);
       }
@@ -99,17 +93,11 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
 
   const sendToDossier = async () => {
     if (selectedIds.length < 1) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No CSRs selected",
         description: "Please select at least one CSR to add to dossier.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No CSRs selected",
-        description: "Please select at least one CSR to add to dossier.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -120,15 +108,10 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
       });
       
       if (response.data?.dossier_id) {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Dossier created",
           description: `Successfully created dossier with ${selectedIds.length} CSRs.`,
-        })
-  console.log('Toast would show:', {
-          title: "Dossier created",
-          description: `Successfully created dossier with ${selectedIds.length} CSRs.`,
-        });
+  });
         // Navigate to the dossier page
         setLocation(`/dossier/${response.data.dossier_id}`);
       } else {
@@ -136,17 +119,11 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
       }
     } catch (error) {
       console.error("Error creating dossier:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error creating dossier",
         description: "There was a problem creating the dossier from selected CSRs.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error creating dossier",
-        description: "There was a problem creating the dossier from selected CSRs.",
-        variant: "destructive"
-      });
+  });
     } finally {
       setSendingToDossier(false);
     }

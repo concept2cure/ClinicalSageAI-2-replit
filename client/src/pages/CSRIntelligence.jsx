@@ -13,60 +13,19 @@ import CSRValuePropositionTab from '../components/CSRValuePropositionTab';
 import CSRBusinessValueDashboard from '../components/CSRBusinessValueDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  FileText,
-  BarChart,
-  PieChart,
-  UploadCloud,
-  Download,
-  Search,
-  FileSymlink,
-  TrendingUp,
-  Zap,
-  Plus,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  AlertCircle,
-  Activity,
-  LineChart,
-  BarChart2,
-  ExternalLink,
-  FileSearch,
-  Layers,
-  GitCompare,
-  Loader2,
-} from 'lucide-react';
+  FileText, BarChart, PieChart, UploadCloud, Download, Search, FileSymlink, TrendingUp, Zap, Plus, CheckCircle, Clock, DollarSign, AlertCircle, Activity, LineChart, BarChart2, ExternalLink, FileSearch, Layers, GitCompare, Loader2 } from 'lucide-react'
 
 // Data will be loaded from API
 

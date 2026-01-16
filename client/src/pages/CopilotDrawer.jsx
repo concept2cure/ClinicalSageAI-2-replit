@@ -3,7 +3,7 @@
 // CopilotDrawer.jsx - Slide-over chat UI with agent suggestions
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../App';
-import { X, Send, CheckCircle, XCircle, MessageSquare, Lightbulb } from 'lucide-react';
+import { X, Send, CheckCircle, XCircle, MessageSquare, Lightbulb } from 'lucide-react'
 
 export default function CopilotDrawer({ isOpen, onClose, projectId = 1 }) {
   const [messages, setMessages] = useState([]);

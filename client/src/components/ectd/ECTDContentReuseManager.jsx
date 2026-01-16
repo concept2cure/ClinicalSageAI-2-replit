@@ -15,54 +15,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import {
-  Copy,
-  FileText,
-  Search,
-  Filter,
-  Download,
-  Upload,
-  Eye,
-  Tags,
-  GitBranch,
-  History,
-  RefreshCw,
-  Database,
-  Package,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Link2,
-  BookOpen,
-  Archive,
-  Scissors,
-  FileCode,
-  FileOutput,
-  Sparkles,
-  Wand2,
-  PlusCircle,
-  Save,
-  X,
-} from 'lucide-react';
+  Copy, FileText, Search, Filter, Download, Upload, Eye, Tags, GitBranch, History, RefreshCw, Database, Package, CheckCircle, AlertCircle, Clock, Link2, BookOpen, Archive, Scissors, FileCode, FileOutput, Sparkles, Wand2, PlusCircle, Save, X } from 'lucide-react'
 
 // Reusable content types
 const CONTENT_TYPES = {

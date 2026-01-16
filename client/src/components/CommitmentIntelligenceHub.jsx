@@ -12,44 +12,7 @@ import { Textarea } from './ui/textarea';
 import { useToast } from '../hooks/use-toast';
 import RiskMitigationPlanDialog from './RiskMitigationPlanDialog';
 import {
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  Calendar,
-  FileText,
-  Search,
-  Filter,
-  Download,
-  Upload,
-  Eye,
-  Brain,
-  Shield,
-  Target,
-  Zap,
-  Settings,
-  ChevronRight,
-  RefreshCw,
-  AlertCircle,
-  TrendingUp,
-  TrendingDown,
-  Database,
-  Network,
-  X,
-  Lightbulb,
-  BarChart3,
-  Users,
-  MessageSquare,
-  ArrowRight,
-  Star,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  Save,
-  FileCheck,
-  Activity,
-  Minus,
-} from 'lucide-react';
+  Clock, AlertTriangle, CheckCircle, Calendar, FileText, Search, Filter, Download, Upload, Eye, Brain, Shield, Target, Zap, Settings, ChevronRight, RefreshCw, AlertCircle, TrendingUp, TrendingDown, Database, Network, X, Lightbulb, BarChart3, Users, MessageSquare, ArrowRight, Star, Plus, ChevronDown, ChevronUp, Edit, Save, FileCheck, Activity, Minus } from 'lucide-react'
 
 /**
  * COMMITMENT INTELLIGENCE HUB - PROFESSIONAL REGULATORY COMPLIANCE SYSTEM

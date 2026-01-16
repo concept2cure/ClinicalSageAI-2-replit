@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email' }),
@@ -36,28 +36,17 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(data.email, data.password);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Login successful',
         description: 'Welcome back to TrialSage!',
-      })
-  console.log('Toast would show:', {
-        title: 'Login successful',
-        description: 'Welcome back to TrialSage!',
-      });
+  });
       setLocation('/dashboard');
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: 'Login failed',
         description: error instanceof Error ? error.message : 'An error occurred during login',
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'An error occurred during login',
-        variant: 'destructive',
-      });
+  });
     } finally {
       setIsSubmitting(false);
     }

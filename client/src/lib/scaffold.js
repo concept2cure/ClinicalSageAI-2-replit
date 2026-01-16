@@ -1,3 +1,4 @@
+import { List, Map } from 'lucide-react'
 // Document Section Scaffolding for Medical Device Submissions
 
 import { DOC_TYPES } from '@shared/docTypes';

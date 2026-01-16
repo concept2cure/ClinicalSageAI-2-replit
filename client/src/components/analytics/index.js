@@ -9,47 +9,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Cell,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-} from 'recharts';
+  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, } from 'recharts';
 import {
-  Users,
-  Clock,
-  FileText,
-  CheckCircle,
-  BarChart2,
-  TrendingUp,
-  AlertCircle,
-  ChevronUp,
-  ChevronDown,
-  Zap,
-  Clipboard,
-  MessageSquare,
-  Code,
-  Download,
-  Check,
-  X,
-  AlertTriangle,
-  Info,
-} from 'lucide-react';
+  Users, Clock, FileText, CheckCircle, BarChart2, TrendingUp, AlertCircle, ChevronUp, ChevronDown, Zap, Clipboard, MessageSquare, Code, Download, Check, X, AlertTriangle, Info } from 'lucide-react'
 
 // Default color palette
 const COLORS = {

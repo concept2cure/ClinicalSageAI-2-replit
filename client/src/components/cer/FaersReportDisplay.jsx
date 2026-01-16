@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, AlertCircle, CheckCircle, Filter, Download } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Filter, Download } from 'lucide-react'
 import {
   Table,
   TableBody,

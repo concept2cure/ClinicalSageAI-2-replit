@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart, FileBarChart, PieChart, RefreshCw, Download } from 'lucide-react';
+import { BarChart, FileBarChart, PieChart, RefreshCw, Download } from 'lucide-react'
 import {
   Card,
   CardContent,

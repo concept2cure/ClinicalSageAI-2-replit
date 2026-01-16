@@ -2,14 +2,24 @@ import { Pool } from 'pg';
 
 class RoleBasedAccessService {
   constructor() {
-    this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    });
+    this.enabled = Boolean(process.env.DATABASE_URL);
+    this.pool = this.enabled
+      ? new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        })
+      : null;
+
+    if (!this.enabled) {
+      console.log('ℹ️ RBAC disabled (no DATABASE_URL)');
+      return;
+    }
+
     this.initializeTables();
   }
 
   async initializeTables() {
+    if (!this.pool) return;
     try {
       // Create roles table with enhanced structure
       await this.pool.query(`
@@ -94,6 +104,7 @@ class RoleBasedAccessService {
   }
 
   async seedDefaultRolesAndPermissions() {
+    if (!this.pool) return;
     try {
       // Insert default permissions
       const defaultPermissions = [

@@ -4,7 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain, Loader2, LineChart, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Brain, Loader2, LineChart, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,31 +35,19 @@ export function ProtocolSuccessPredictor({ protocolData, onPredictionComplete }:
         setPrediction(data.result);
         onPredictionComplete(data.result);
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Prediction Failed",
           description: data.message || "Failed to predict protocol success",
           variant: "destructive",
-        })
-  console.log('Toast would show:', {
-          title: "Prediction Failed",
-          description: data.message || "Failed to predict protocol success",
-          variant: "destructive",
-        });
+  });
       }
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Prediction Failed",
         description: error.message || "An error occurred during prediction",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Prediction Failed",
-        description: error.message || "An error occurred during prediction",
-        variant: "destructive",
-      });
+  });
     },
   });
   

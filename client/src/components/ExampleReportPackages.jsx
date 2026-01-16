@@ -1,22 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import {
-  FileText,
-  ChevronRight,
-  Download,
-  ExternalLink,
-  Clock,
-  CheckCircle,
-  Tag,
-  Shield,
-  Book,
-  Beaker,
-  FileArchive,
-  Calendar,
-  Users,
-  BarChart2,
-  Star,
-} from 'lucide-react';
+  FileText, ChevronRight, Download, ExternalLink, Clock, CheckCircle, Tag, Shield, Book, Beaker, FileArchive, Calendar, Users, BarChart2, Star } from 'lucide-react'
 
 const SAMPLE_REPORTS = [
   {

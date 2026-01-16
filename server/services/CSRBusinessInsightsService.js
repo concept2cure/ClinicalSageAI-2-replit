@@ -1,19 +1,11 @@
 /**
- * CSR Business Insights Service
- *
- * This service provides strategic business insights derived from CSR analysis,
- * focusing on high-value use cases that deliver immediate client value.
+ * DEPRECATED
+ * Mock CSR business insights have been removed in Lumen Cortex consolidation.
  */
 
 class CSRBusinessInsightsService {
   constructor() {
-    this.protocolOptimizationInsights = this.initializeProtocolOptimizationInsights();
-    this.riskMitigationInsights = this.initializeRiskMitigationInsights();
-    this.competitiveIntelligenceInsights = this.initializeCompetitiveIntelligenceInsights();
-    this.regulatoryStrategyInsights = this.initializeRegulatoryStrategyInsights();
-    this.clientSuccessMetrics = this.initializeClientSuccessMetrics();
-
-    console.log('✅ CSR Business Insights Service initialized');
+    throw new Error('[DEPRECATED] CSRBusinessInsightsService removed.');
   }
 
   initializeProtocolOptimizationInsights() {
@@ -372,6 +364,4 @@ class CSRBusinessInsightsService {
 }
 
 // Create singleton instance
-const csrBusinessInsights = new CSRBusinessInsightsService();
-
-export default csrBusinessInsights;
+export default {};

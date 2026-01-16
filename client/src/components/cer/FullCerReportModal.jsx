@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Textarea } from '../ui/textarea';
-import { FileText, ClipboardList, Book, FileCheck, Download, Loader2 } from 'lucide-react';
+import { FileText, ClipboardList, Book, FileCheck, Download, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 /**

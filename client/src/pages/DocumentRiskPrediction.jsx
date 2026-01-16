@@ -1,23 +1,5 @@
 import React, { useState } from 'react';
-import {
-  AlertTriangle,
-  FileText,
-  ChevronRight,
-  Search,
-  Settings,
-  Gauge,
-  RefreshCw,
-  Filter,
-  Clock,
-  CheckCircle2,
-  Upload,
-  FileUp,
-  Download,
-  Sparkles,
-  HelpCircle,
-  FilePlus,
-  Lightbulb,
-} from 'lucide-react';
+import { AlertTriangle, FileText, ChevronRight, Search, Settings, Gauge, RefreshCw, Filter, Clock, CheckCircle2, Upload, FileUp, Download, Sparkles, HelpCircle, FilePlus, Lightbulb } from 'lucide-react'
 import { useParams, useLocation } from 'wouter';
 import { useDocumentRiskAnalysis } from '@/hooks/useDocumentRiskAnalysis';
 

@@ -5,18 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  FileText, 
-  Download, 
-  Lock, 
-  Unlock, 
-  RefreshCw, 
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  FileCheck,
-  Send,
-  Copy
-} from 'lucide-react';
+  FileText, Download, Lock, Unlock, RefreshCw, CheckCircle, AlertCircle, Loader2, FileCheck, Send, Copy } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const DocumentGenerationPanel = ({ projectId, projectData }) => {

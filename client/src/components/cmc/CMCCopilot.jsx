@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Volume2, Mic, BrainCircuit, Send } from 'lucide-react';
+import { Sparkles, X, Volume2, Mic, BrainCircuit, Send } from 'lucide-react'
 import {
   Card,
   CardContent,

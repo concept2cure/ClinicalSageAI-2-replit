@@ -1130,6 +1130,71 @@ router.post('/predicate-search', async (req: Request, res: Response, next: NextF
 });
 
 /**
+ * GET /product-code/:productCode/regulation
+ * Lookup regulation number, device class, and review panel from openFDA device classification.
+ */
+router.get('/product-code/:productCode/regulation', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawCode = String(req.params.productCode || '').trim();
+    const productCode = rawCode.toUpperCase();
+
+    if (!productCode || productCode.length < 2 || productCode.length > 10) {
+      return res.status(400).json({
+        found: false,
+        error: 'Invalid productCode',
+        productCode: rawCode,
+      });
+    }
+
+    const tenantContext = (req as any).tenantContext;
+    const cacheKey = generateCacheKey('product-code-regulation', { productCode });
+    const cachedResult = cache.get(cacheKey);
+    if (cachedResult) {
+      res.setHeader('X-Cache-Hit', 'true');
+      res.setHeader('Cache-Control', 'private, max-age=86400');
+      return res.json(cachedResult);
+    }
+
+    res.setHeader('X-Cache-Hit', 'false');
+
+    const fdaUrl = `https://api.fda.gov/device/classification.json?search=product_code:%22${encodeURIComponent(productCode)}%22&limit=5`;
+    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+
+    const rawResults = Array.isArray(fdaData?.results) ? fdaData.results : [];
+    const mapped = rawResults.map((r: any) => ({
+      productCode: r.product_code || productCode,
+      deviceClass: r.device_class ? String(r.device_class) : undefined,
+      regulationNumber: r.regulation_number ? String(r.regulation_number) : undefined,
+      regulationName: r.regulation_name ? String(r.regulation_name) : undefined,
+      deviceName: r.device_name ? String(r.device_name) : undefined,
+      medicalSpecialty: r.medical_specialty ? String(r.medical_specialty) : undefined,
+      medicalSpecialtyDescription: r.medical_specialty_description ? String(r.medical_specialty_description) : undefined,
+      reviewPanel: r.review_panel ? String(r.review_panel) : undefined,
+      reviewPanelDescription: r.review_panel_description ? String(r.review_panel_description) : undefined,
+      submissionTypeId: r.submission_type_id ? String(r.submission_type_id) : undefined,
+    }));
+
+    const top = mapped[0];
+    const response = {
+      found: Boolean(top),
+      productCode,
+      result: top || null,
+      results: mapped,
+      metadata: {
+        source: 'openFDA:device/classification',
+        searchTimestamp: new Date().toISOString(),
+      },
+    };
+
+    cache.set(cacheKey, response, CACHE_TTL.LONG);
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    return res.json(response);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /pathway-analyzer
  * Production-ready regulatory pathway analysis with comprehensive validation
  */

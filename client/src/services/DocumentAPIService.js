@@ -9,6 +9,61 @@
 // Create a single export object for consistent API access
 const documentApiService = {};
 
+// Normalize various document payload shapes returned by different API implementations
+const normalizeDocumentEntity = payload => {
+  if (!payload) {
+    return payload;
+  }
+
+  // Some endpoints wrap the entity under a document field
+  if (payload.document) {
+    return normalizeDocumentEntity(payload.document);
+  }
+
+  // Some endpoints wrap the entity under a data field
+  if (payload.data && !Array.isArray(payload.data)) {
+    return normalizeDocumentEntity(payload.data);
+  }
+
+  if (payload.result && !Array.isArray(payload.result)) {
+    return normalizeDocumentEntity(payload.result);
+  }
+
+  if (payload.payload && !Array.isArray(payload.payload)) {
+    return normalizeDocumentEntity(payload.payload);
+  }
+
+  return payload;
+};
+
+const normalizeDocumentList = payload => {
+  if (!payload) {
+    return [];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map(normalizeDocumentEntity);
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data.map(normalizeDocumentEntity);
+  }
+
+  if (Array.isArray(payload.documents)) {
+    return payload.documents.map(normalizeDocumentEntity);
+  }
+
+  if (Array.isArray(payload.results)) {
+    return payload.results.map(normalizeDocumentEntity);
+  }
+
+  if (Array.isArray(payload.items)) {
+    return payload.items.map(normalizeDocumentEntity);
+  }
+
+  return [];
+};
+
 /**
  * Fetch all documents with optional filtering
  * @param {Object} options - Query parameters for filtering documents
@@ -40,7 +95,8 @@ documentApiService.getDocuments = async (options = {}) => {
     }
 
     const data = await response.json();
-    return data;
+    const normalized = normalizeDocumentList(data);
+    return normalized;
   } catch (error) {
     console.error('Error in getDocuments:', error);
     throw error;
@@ -61,7 +117,8 @@ documentApiService.getDocument = async id => {
     }
 
     const data = await response.json();
-    return data;
+    const normalized = normalizeDocumentEntity(data);
+    return normalized;
   } catch (error) {
     console.error('Error in getDocument:', error);
     throw error;

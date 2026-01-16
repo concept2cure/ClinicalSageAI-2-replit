@@ -11,21 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import {
-  Users,
-  UserPlus,
-  Shield,
-  FileText,
-  Heart,
-  Briefcase,
-  Mail,
-  Phone,
-  X,
-  Check,
-  AlertCircle,
-  Crown,
-  UserCheck,
-  Clock
-} from 'lucide-react';
+  Users, UserPlus, Shield, FileText, Heart, Briefcase, Mail, Phone, X, Check, AlertCircle, Crown, UserCheck, Clock } from 'lucide-react'
 
 // Predefined roles for 510(k) projects
 const PROJECT_ROLES = [

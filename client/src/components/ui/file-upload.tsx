@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from './button';
-import { Upload, X, FileIcon } from 'lucide-react';
+import { Upload, X, FileIcon, File } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 /**

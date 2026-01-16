@@ -1,22 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  AlertCircle,
-  CheckCircle,
-  Info,
-  X,
-  ChevronDown,
-  ChevronRight,
-  FileBadge,
-  FileCheck,
-  ShieldCheck,
-  Sparkles,
-  GitCommit,
-  Link,
-  PenLine,
-  ThumbsUp,
-  ThumbsDown,
-  Zap,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, X, ChevronDown, ChevronRight, FileBadge, FileCheck, ShieldCheck, Sparkles, GitCommit, Link, PenLine, ThumbsUp, ThumbsDown, Zap } from 'lucide-react'
 import { cerValidationService } from '../../services/CerValidationService';
 import { cerApiService } from '../../services/CerAPIService';
 import { useToast } from '@/components/ui/toaster';

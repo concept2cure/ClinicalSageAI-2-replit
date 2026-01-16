@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { History, Clock, User, RotateCcw, FileText, Eye } from 'lucide-react';
+import { History, Clock, User, RotateCcw, FileText, Eye } from 'lucide-react'
 import coauthorService from '@/services/coauthorService';
 
 export default function HistoryModal({ sectionId, onClose }) {

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from '../utils/i18n-stub.js';
-import { Globe } from 'lucide-react';
+import { Globe } from 'lucide-react'
 import clsx from 'clsx';
 
 export default function LanguageToggle({ onLanguageChange }) {

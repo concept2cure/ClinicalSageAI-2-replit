@@ -7,27 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -37,15 +21,7 @@ import AcademicInsightsPanel from '@/components/AcademicInsightsPanel';
 import FormattedProtocolRecommendations from '@/components/FormattedProtocolRecommendations';
 import ExportMenu from '@/components/ExportMenu';
 import {
-  ArrowRight,
-  FileDown,
-  FileText,
-  Save,
-  Loader2,
-  PlusCircle,
-  Upload,
-  BookCopy,
-} from 'lucide-react';
+  ArrowRight, FileDown, FileText, Save, Loader2, PlusCircle, Upload, BookCopy, File, ExportMenu } from 'lucide-react'
 
 export default function ProtocolOptimizer() {
   const [location] = useLocation();

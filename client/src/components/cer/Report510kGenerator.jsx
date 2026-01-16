@@ -2,16 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toaster';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { FileIcon, FileTextIcon, FileDownIcon } from 'lucide-react';
+import { FileIcon, FileTextIcon, FileDownIcon } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 
 /**

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Bot, MessageSquare, ChevronRight, ExternalLink } from 'lucide-react';
+import { Sparkles, X, Send, Bot, MessageSquare, ChevronRight, ExternalLink } from 'lucide-react'
 import {
   Card,
   CardContent,

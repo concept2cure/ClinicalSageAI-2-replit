@@ -5,14 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, CheckCircle, Copy, Save, Upload, Download } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Copy, Save, Upload, Download } from 'lucide-react'
 
 export const AgentController = () => {
   const [command, setCommand] = useState('');

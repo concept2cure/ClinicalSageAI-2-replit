@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Home, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Search } from 'lucide-react'
 
 export default function UnifiedTopNavV4({ tabs = [] }) {
   const goBack = () => window.history.back();

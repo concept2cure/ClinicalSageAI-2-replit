@@ -1,28 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2,
-  Send,
-  Lightbulb,
-  BookOpen,
-  CheckSquare,
-  FileText,
-  List,
-  Search,
-} from 'lucide-react';
+  Loader2, Send, Lightbulb, BookOpen, CheckSquare, FileText, List, Search } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import {

@@ -1,24 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  Users,
-  Shield,
-  FileText,
-  Settings,
-  User,
-  PlusCircle,
-  Edit,
-  Trash2,
-  Check,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Search,
-  BarChart2,
-  FileBarChart,
-  Calendar,
-  Download,
-} from 'lucide-react';
+  Users, Shield, FileText, Settings, User, PlusCircle, Edit, Trash2, Check, X, ChevronDown, ChevronUp, Search, BarChart2, FileBarChart, Calendar, Download, Eye } from 'lucide-react'
 import { queryClient, apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 

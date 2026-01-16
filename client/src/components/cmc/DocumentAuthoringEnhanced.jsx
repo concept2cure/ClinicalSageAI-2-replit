@@ -1,127 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, } from '@/components/ui/command';
 import {
-  ChevronDown,
-  FileText,
-  Search,
-  Plus,
-  Clock,
-  User,
-  Globe,
-  Sparkles,
-  Download,
-  Eye,
-  Edit3,
-  Save,
-  X,
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Zap,
-  BookOpen,
-  Filter,
-  Brain,
-  Target,
-  FileCheck,
-  Lightbulb,
-  TrendingUp,
-  Shield,
-  MessageSquare,
-  ChevronRight,
-  FolderOpen,
-  Database,
-  History,
-  Link,
-  GitBranch,
-  Lock,
-  Unlock,
-  FileType,
-  Table,
-  Award,
-  Calendar,
-  TestTube,
-  Upload,
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  List,
-  ListOrdered,
-  Quote,
-  Link2,
-  Image,
-  Type,
-  Maximize,
-  Minimize,
-  BarChart3,
-  Slash,
-  Hash,
-  AtSign,
-  Diff,
-  MessageCircle,
-  CheckSquare,
-  XSquare,
-  UserCheck,
-  FileSignature,
-  RefreshCw,
-  Copy,
-  Trash2,
-  PenTool,
-  FileDown,
-  Send,
-  AlertTriangle,
-  Info,
-  HelpCircle,
-  Package,
-  Tag,
-  Code,
-  FileCode,
-  GitCommit,
-  GitMerge,
-  Activity,
-  Folder,
-  FolderPlus,
-} from 'lucide-react';
+  ChevronDown, FileText, Search, Plus, Clock, User, Globe, Sparkles, Download, Eye, Edit3, Save, X, ArrowLeft, AlertCircle, CheckCircle, Settings, Zap, BookOpen, Filter, Brain, Target, FileCheck, Lightbulb, TrendingUp, Shield, MessageSquare, ChevronRight, FolderOpen, Database, History, Link, GitBranch, Lock, Unlock, FileType, Table, Award, Calendar, TestTube, Upload, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Link2, Image, Type, Maximize, Minimize, BarChart3, Slash, Hash, AtSign, Diff, MessageCircle, CheckSquare, XSquare, UserCheck, FileSignature, RefreshCw, Copy, Trash2, PenTool, FileDown, Send, AlertTriangle, Info, HelpCircle, Package, Tag, Code, FileCode, GitCommit, GitMerge, Activity, Folder, FolderPlus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 const DocumentAuthoringEnhanced = () => {

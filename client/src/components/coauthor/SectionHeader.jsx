@@ -2,17 +2,7 @@ import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
-  FileText,
-  Save,
-  FileSearch,
-  History,
-  Download,
-  Share,
-  ChevronLeft,
-  MoreHorizontal,
-  CheckSquare,
-  Eye,
-} from 'lucide-react';
+  FileText, Save, FileSearch, History, Download, Share, ChevronLeft, MoreHorizontal, CheckSquare, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,

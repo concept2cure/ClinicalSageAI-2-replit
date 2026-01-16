@@ -483,57 +483,8 @@ export const exportValidationCertificate = async (
   }
 };
 
-// Create mock API responses for better demonstration
-const createMockValidationStatus = documentId => {
-  // Return a validated status for demonstration purposes
-  return {
-    status: 'validated',
-    validationId: `VAL-${Math.floor(100000 + Math.random() * 900000)}`,
-    timestamp: new Date().toISOString(),
-    algorithmReferences: [
-      {
-        id: 'ALG-123456',
-        name: 'CER Risk Assessment Algorithm',
-        version: '2.1.0',
-      },
-      {
-        id: 'ALG-789012',
-        name: 'Clinical Evidence Evaluation Algorithm',
-        version: '1.5.2',
-      },
-    ],
-    validationDetails: {
-      validatorName: 'MAUD Enterprise Validator',
-      validatorVersion: '3.2.1',
-      regulatoryFrameworks: ['EU MDR', 'FDA 21 CFR Part 820', 'ISO 14971'],
-      validationScore: 92.5,
-      complianceLevel: 'High',
-      certificationDate: new Date().toISOString(),
-    },
-  };
-};
-
-// Override API functions with mock implementations for better demonstration
-const originalGetMAUDValidationStatus = getMAUDValidationStatus;
-export const getMockMAUDValidationStatus = async (documentId, organizationId = null) => {
-  try {
-    const mockStatus = createMockValidationStatus(documentId);
-    localStorage.setItem(`maud_status_${documentId}`, JSON.stringify(mockStatus));
-    return mockStatus;
-  } catch (error) {
-    console.error('Error in mock MAUD validation:', error);
-    return originalGetMAUDValidationStatus(documentId, organizationId);
-  }
-};
-
-// Use the mock implementation instead of the real one
-const validationStatusMethod =
-  import.meta.env.VITE_USE_MOCK_MAUD === 'false'
-    ? originalGetMAUDValidationStatus
-    : getMockMAUDValidationStatus;
-
 export default {
-  getMAUDValidationStatus: validationStatusMethod,
+  getMAUDValidationStatus,
   submitForMAUDValidation,
   getAvailableMAUDAlgorithms,
   getValidationHistory,

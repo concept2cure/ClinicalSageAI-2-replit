@@ -15,21 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDropzone } from 'react-dropzone';
 import mammoth from 'mammoth';
 import { 
-  ArrowLeft, Save, Download, Sparkles, Shield, 
-  FileText, Edit3, Bold, Italic, Underline, List, Table,
-  Loader2, Upload, File, X, CheckCircle, Brain, Wand2,
-  BookOpen, Users, Clock, Target, AlertTriangle, TrendingUp,
-  Search, RefreshCw, Copy, Scissors, PlusCircle, Minus,
-  Zap, Award, Globe, Database, Settings, Filter, SortAsc,
-  BarChart3, PieChart, LineChart, Calendar, MessageSquare,
-  Share2, Lock, Unlock, Eye, EyeOff, History, MoreVertical,
-  ChevronDown, ChevronRight, Maximize2, Minimize2, Type,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-  Subscript, Superscript, Quote, Code, Link, Image,
-  PlayCircle, PauseCircle, StopCircle, SkipForward,
-  Volume2, VolumeX, Mic, MicOff, Video, VideoOff,
-  FileCheck, Cpu, Network, Layers, GitBranch, Lightbulb, FolderTree
-} from 'lucide-react';
+  ArrowLeft, Save, Download, Sparkles, Shield, FileText, Edit3, Bold, Italic, Underline, List, Table, Loader2, Upload, File, X, CheckCircle, Brain, Wand2, BookOpen, Users, Clock, Target, AlertTriangle, TrendingUp, Search, RefreshCw, Copy, Scissors, PlusCircle, Minus, Zap, Award, Globe, Database, Settings, Filter, SortAsc, BarChart3, PieChart, LineChart, Calendar, MessageSquare, Share2, Lock, Unlock, Eye, EyeOff, History, MoreVertical, ChevronDown, ChevronRight, Maximize2, Minimize2, Type, AlignLeft, AlignCenter, AlignRight, AlignJustify, Subscript, Superscript, Quote, Code, Link, Image, PlayCircle, PauseCircle, StopCircle, SkipForward, Volume2, VolumeX, Mic, MicOff, Video, VideoOff, FileCheck, Cpu, Network, Layers, GitBranch, Lightbulb, FolderTree } from 'lucide-react'
 
 const WorkingDocumentEditor = () => {
   // Core document state

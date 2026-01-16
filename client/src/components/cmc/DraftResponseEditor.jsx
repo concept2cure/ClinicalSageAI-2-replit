@@ -6,17 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  FileText, 
-  Plus, 
-  Save, 
-  Send, 
-  Link2, 
-  CheckCircle, 
-  AlertCircle,
-  Loader2,
-  Edit3,
-  X
-} from 'lucide-react';
+  FileText, Plus, Save, Send, Link2, CheckCircle, AlertCircle, Loader2, Edit3, X } from 'lucide-react'
 
 export default function DraftResponseEditor({ finding, open, onClose }) {
   const [text, setText] = React.useState('');

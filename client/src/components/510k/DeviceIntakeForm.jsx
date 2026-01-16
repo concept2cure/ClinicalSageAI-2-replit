@@ -9,14 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 // Document Intelligence components and services moved to combined import below
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, } from '@/components/ui/form';
 
 // Custom Input component that prevents form submission on Enter key
 const Input = React.forwardRef((props, ref) => {
@@ -39,25 +32,11 @@ const Input = React.forwardRef((props, ref) => {
   );
 });
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Info,
-  AlertCircle,
-  CheckCircle,
-  HelpCircle,
-  FileText,
-  FileQuestion,
-  FilePlus,
-} from 'lucide-react';
+  Info, AlertCircle, CheckCircle, HelpCircle, FileText, FileQuestion, FilePlus } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext.tsx';
 import { useToast } from '@/components/ui/toaster';
 import DocumentUploader from '@/components/document-intelligence/DocumentUploader';

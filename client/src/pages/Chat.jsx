@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, Send, Sparkles, User, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Send, Sparkles, User, MessageSquare } from 'lucide-react'
 
 export default function Chat() {
   const [message, setMessage] = useState('');

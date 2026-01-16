@@ -2,27 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'wouter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -32,16 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 import {
-  Search,
-  FileText,
-  Folder,
-  ChevronRight,
-  Plus,
-  Download,
-  Calendar,
-  Users,
-  CheckCircle2,
-} from 'lucide-react';
+  Search, FileText, Folder, ChevronRight, Plus, Download, Calendar, Users, CheckCircle2 } from 'lucide-react'
 
 import { ctdTemplates } from '../../data/ctd-templates'; // We'll create this next
 import { getFullCTDStructure } from '../../utils/ctd-template-validator';

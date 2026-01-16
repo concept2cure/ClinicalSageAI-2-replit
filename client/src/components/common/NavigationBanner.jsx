@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, ArrowRight, Home, Database, Users, FileEdit } from 'lucide-react';
+import { FileText, ArrowRight, Home, Database, Users } from 'lucide-react'
 import { useLocation } from 'wouter';
 
 const NavigationBanner = ({ currentModule, currentSection }) => {
@@ -100,22 +100,6 @@ const NavigationBanner = ({ currentModule, currentSection }) => {
           >
             <FileText className="h-3 w-3 mr-1" />
             Co-Author
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              try {
-                setLocation('/editor');
-              } catch (error) {
-                console.error('Navigation error:', error);
-                window.location.href = '/editor';
-              }
-            }}
-            className="h-8 px-2"
-          >
-            <FileEdit className="h-3 w-3 mr-1" />
-            Editor
           </Button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Loader2, PlusCircle, MoreVertical, Download } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, PlusCircle, MoreVertical, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

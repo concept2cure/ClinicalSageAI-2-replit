@@ -1,18 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  AlertTriangle, 
-  CheckCircle, 
-  AlertCircle, 
-  Info, 
-  Shield,
-  Clock,
-  GitBranch,
-  FileText,
-  Search,
-  TrendingUp,
-  Activity
-} from 'lucide-react';
+  AlertTriangle, CheckCircle, AlertCircle, Info, Shield, Clock, GitBranch, FileText, Search, TrendingUp, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

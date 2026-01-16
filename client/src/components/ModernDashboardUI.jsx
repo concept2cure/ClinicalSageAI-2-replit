@@ -3,11 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  PlayCircle, Edit, CheckCircle, Package, Send,
-  FileText, FlaskConical, Activity, BookOpen,
-  TrendingUp, Users, Clock, AlertCircle, Shield,
-  BarChart3, Target, Award, Zap
-} from 'lucide-react';
+  PlayCircle, Edit, CheckCircle, Package, Send, FileText, FlaskConical, Activity, BookOpen, TrendingUp, Users, Clock, AlertCircle, Shield, BarChart3, Target, Award, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 // Animated counter hook for metrics

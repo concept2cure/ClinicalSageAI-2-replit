@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, CheckCircle } from 'lucide-react';
+import { Loader2, Save, CheckCircle } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import { documentApiService } from '@/services/DocumentAPIService';
 

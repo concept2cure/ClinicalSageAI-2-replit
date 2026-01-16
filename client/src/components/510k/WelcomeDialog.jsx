@@ -1,24 +1,9 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  CheckCircle,
-  FileText,
-  Search,
-  ClipboardCheck,
-  FileCheck,
-  Download,
-  ChevronRight,
-  BookOpen,
-} from 'lucide-react';
+  CheckCircle, FileText, Search, ClipboardCheck, FileCheck, Download, ChevronRight, BookOpen } from 'lucide-react'
 
 /**
  * Welcome dialog for new clients starting a 510(k) submission

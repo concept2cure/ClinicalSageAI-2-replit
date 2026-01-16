@@ -7,24 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  CheckCircle2,
-  Circle,
-  ArrowRight,
-  ArrowLeft,
-  Play,
-  Save,
-  FlaskConical,
-  FileText,
-  BarChart3,
-  Shield,
-  Clock,
-  Users,
-  Target,
-  AlertTriangle,
-  ChevronRight,
-  Lightbulb,
-  Microscope,
-} from 'lucide-react';
+  CheckCircle2, Circle, ArrowRight, ArrowLeft, Play, Save, FlaskConical, FileText, BarChart3, Shield, Clock, Users, Target, AlertTriangle, ChevronRight, Lightbulb, Microscope } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,

@@ -5,13 +5,7 @@ import { useToast } from '@/components/ui/toaster';
 
 // UI Components
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,28 +18,7 @@ import { Switch } from '@/components/ui/switch';
 
 // Icons
 import {
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  FileSearch,
-  ListFilter,
-  AlertTriangle,
-  Search,
-  Eye,
-  XCircle,
-  Info,
-  Lightbulb,
-  Edit,
-  RefreshCw,
-  Check,
-  Table,
-  UserCheck,
-  FlaskConical,
-  Pencil,
-  Zap,
-  HeartPulse,
-  SkipForward,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, Loader2, FileSearch, ListFilter, AlertTriangle, Search, Eye, XCircle, Info, Lightbulb, Edit, RefreshCw, Check, Table, UserCheck, FlaskConical, Pencil, Zap, HeartPulse, SkipForward } from 'lucide-react'
 
 /**
  * Regulatory QA Assistant Component

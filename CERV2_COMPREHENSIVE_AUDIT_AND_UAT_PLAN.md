@@ -8,6 +8,218 @@
 
 This comprehensive 360-degree audit evaluates the CERV2 Medical Device & Diagnostic Module across all dimensions: functionality, security, compliance, performance, and user experience. The module demonstrates extensive frontend capabilities with 134+ components but requires critical backend integration and security enhancements before production deployment.
 
+## 0. 2026 Commercial Readiness & AI Automation Plan (Sellable Scope)
+
+This section turns the audit into an execution plan: what must be true to sell the Medical Device & Diagnostics module to real clients, and how to maximize end-to-end automation without compromising traceability.
+
+### 0.1 Product Scope (What we are selling)
+
+- **Frontend entry points:** `/cerv2`, `/medical-device`, `/cerV2` all route to the same UI shell.
+- **Primary UI shell:** `CERV2Page` (monolithic but feature-rich).
+- **Core deliverables:** FDA 510(k) workflow + EU MDR/IVDR CER workflow + evidence ingestion + traceability + export packages.
+
+### 0.2 Current Backend Surface (What exists today)
+
+The module is backed by multiple API families that currently have different security models.
+
+- **510(k) workflow persistence + auto-population:** `/api/510k-workflow/*` (stores workflow + auto-maps to template metadata).
+- **CERV2 section tree & status:** `/api/cerv2-sections/*` (requires `x-organization-id`).
+- **CERV2 versioning & editing sessions:** `/api/cerv2-versions/*` (DB-backed version history + session state).
+- **Unified document save/load:** `/api/cerv2/documents/*` (uses `x-organization-id`).
+- **Medical device management:** `/api/medical-devices/*` (**JWT required**, plus `x-organization-id` / org extracted).
+- **CER report management:** `/api/cer/*` (**JWT required**, org derived from verified JWT).
+- **AI utility endpoints:** `/api/ai/*` (status, generate, tagging; uses OpenAI if configured else fallback).
+
+### 0.3 Client-Ready “Definition of Done” (Non-negotiables)
+
+To sell into regulated orgs, the feature surface must be consistent, secure, and auditable.
+
+**P0 — Security/tenant correctness**
+
+- **One auth model per module:** either (A) everything under `/api/*` uses JWT + org derived from JWT, or (B) everything uses signed session + server-side org resolution. Mixed header-only + JWT is a sales blocker.
+- **Tenant isolation:** every DB query must enforce organization scoping server-side (no trusting client localStorage).
+- **RBAC:** roles for Author / Reviewer / QA / Admin with permissions for editing, approving, exporting, and evidence access.
+
+**P0 — Auditability and traceability**
+
+- **Immutable audit log:** every section change, evidence attachment, approval, export action.
+- **Versioning UI integration:** CERV2 Versions API exists; it must be wired into the editor UX for “show history / compare / restore”.
+- **Trace links:** requirement → evidence → claim → section. If an AI draft cannot cite evidence, it must be labeled “uncited draft”.
+
+**P0 — Operational readiness**
+
+- **Background jobs:** long-running generation/export/literature pulls must run asynchronously with status pages and retries.
+- **Observability:** error reporting, structured logs, request IDs, and user-visible failure states.
+- **Deterministic workflow:** a state machine (project stage, gate checks, completion criteria) rather than ad-hoc tab completion.
+
+**P1 — Commercial UX expectations**
+
+- Onboarding wizard + sample project + “demo mode” that never breaks.
+- Export packages that match what RA teams actually deliver (510k eSTAR-aligned bundle; CER MDR/IVDR compliant report + annexes).
+- Team collaboration: assignments, review queues, comments, sign-off.
+
+### 0.4 Capability Checklist (Current vs Client-Ready)
+
+Legend: ✅ present • ⚠️ partial/exists-but-not-wired • ❌ missing
+
+| Capability Area | Capability | Current State | Client-Ready Requirement |
+|---|---|---:|---|
+| Access control | Single consistent auth model across module | ⚠️ | Consolidate on JWT/session; remove header-only trust; enforce org in DB |
+| Tenant isolation | Org scoping enforced server-side on all endpoints | ⚠️ | All queries scoped to org from auth context |
+| 510(k) workflow | Stage gating + intake workflow UI | ✅ | Gate rules must be deterministic + tested |
+| 510(k) drafting | Section editor + auto-population | ✅ | Must persist reliably + include citations/evidence links |
+| eSTAR readiness | Package assembly + RTA precheck | ⚠️ | Deterministic checklist + exportable package |
+| CER workflow | CER endpoints exist (reports, evidence, versioning) | ✅ | UI must fully expose and wire these endpoints |
+| Literature | Search + review workflow | ✅ | Async jobs + screening/appraisal traceability |
+| Evidence mgmt | Evidence endpoints mounted | ⚠️ | Evidence ingestion + tagging + linking integrated into authoring |
+| Version history | CERV2 Versions API exists | ✅ | UI must show history/compare/restore + audit trail |
+| Audit trail | Some audit infra exists | ⚠️ | Append-only audit with exports, approvals, evidence actions |
+| Diagnostics/IVD | IVDR performance evaluation workflow | ❌ | Add IVD-specific flows (analytical + clinical performance) |
+| Exports | PDF/Word/preview endpoints exist | ⚠️ | Real package exports + deterministic templates + validation evidence |
+| Reliability | Graceful errors + retry + status views | ⚠️ | Background jobs + monitoring + user-visible status |
+
+### 0.5 Prioritized Implementation Tracker (What to build next)
+
+This is the execution list for “ready to sell”.
+
+**P0 (sell-blockers)**
+
+| Priority | Work Item | Outcome |
+|---:|---|---|
+| P0 | Unify auth + tenant enforcement for all Medical Device module APIs | Eliminates cross-tenant risk and inconsistent behavior |
+| P0 | Wire CERV2 Versions into the editor UI (history/compare/restore) | Enables regulated editing and reviewer trust |
+| P0 | Evidence → Claim → Section trace links (minimum viable traceability) | Enables citation-backed AI and auditability |
+| P0 | Background job framework for generation/export/literature | Prevents timeouts and provides reliable status/retries |
+| P0 | “Demo-safe mode” dataset and a no-break onboarding path | Sales demos cannot fail due to missing auth/data |
+
+**P1 (commercial scale-up)**
+
+| Priority | Work Item | Outcome |
+|---:|---|---|
+| P1 | RBAC (Author/Reviewer/QA/Admin) with review queues + approvals | Enables team workflows and controlled releases |
+| P1 | Package exports: 510(k) eSTAR-aligned bundle + CER MDR/IVDR report | Tangible deliverables for customer success |
+| P1 | License/quota UX integrated (quota errors become actionable UI) | Prevents surprise failures and supports sales packaging |
+| P1 | Observability: request IDs, error reporting, and audit dashboards | Faster support + enterprise trust |
+
+**P2 (diagnostics expansion + advanced automation)**
+
+| Priority | Work Item | Outcome |
+|---:|---|---|
+| P2 | IVDR/Diagnostics workflows (performance evaluation paths) | Expands into diagnostics market credibly |
+| P2 | Automated standards mapping + test plan generation | Reduces RA time and increases differentiation |
+| P2 | Auto-redlining: AI proposes changes with citations + reviewer approval | Safe automation for regulated docs |
+
+### 0.6 AI Automation Backlog (Make it “fully automated” safely)
+
+Automation is “client-ready” only when it is **reviewable, cited, and auditable**.
+
+- **Evidence ingestion automation:** parse uploaded PDFs/Word; extract metadata; tag to standards/requirements; store normalized evidence records.
+- **Citation-backed drafting:** AI drafts sections only from linked evidence; every paragraph includes evidence pointers.
+- **Gap detection:** continuously compute “missing artifacts” per workflow gate (e.g., no IEC 62304 evidence but software toggle enabled).
+- **Regulatory traceability matrix automation:** auto-generate and keep updated as sections/evidence change.
+- **Reviewer assist:** AI summarizes changes, highlights risk, and suggests acceptance criteria; reviewer accepts/rejects with reason.
+
+### 0.7 Execution Board (Concrete engineering breakdown)
+
+This section translates the P0/P1/P2 tracker into “change these exact files/endpoints” work items.
+
+#### 0.7.1 Tenant/Auth unification (P0 sell-blocker)
+
+**Goal:** The module must not trust client-provided org IDs. The server must derive tenant context from authenticated identity and enforce it on every query.
+
+**Current reality (observed in code):**
+
+- Client sends organization context in multiple inconsistent ways:
+  - `x-organization-id` is automatically set by the React Query helper.
+  - Many components also hardcode fallback org IDs like `"1"` or `"7"`.
+  - Several places use `X-Organization-Id` casing (works in Node, but is inconsistent).
+- Server has mixed enforcement patterns:
+  - `/api/cer/*` and `/api/medical-devices/*` are JWT-protected and derive org from JWT.
+  - `/api/cerv2-sections/*` and `/api/cerv2/documents/*` require `x-organization-id` and treat it as tenant context.
+
+**Target model (client-ready):**
+
+- **One model for all Medical Device/CER/510(k) APIs:** JWT/session-based auth + server-side tenant resolution.
+- Optional: allow `x-organization-id` only for local demo/dev, and only if it matches the authenticated tenant.
+
+**Concrete work items:**
+
+1) **Normalize the client request layer (single source of truth)**
+   - Files to review/change:
+     - [client/src/lib/queryClient.ts](client/src/lib/queryClient.ts)
+     - [client/src/lib/queryClient.js](client/src/lib/queryClient.js) (duplicate implementation; decide to delete or merge)
+   - Acceptance criteria:
+     - All React Query + `apiRequest(...)` calls send a consistent auth mechanism.
+     - Organization context is not silently defaulted to `"1"` or `"7"` in production mode.
+     - A missing tenant context becomes a user-actionable UI error (e.g., “Select organization” / “Re-authenticate”).
+
+2) **Remove hardcoded org fallbacks in module-critical flows**
+   - Files to review/change:
+     - [client/src/components/MedicalDeviceDocumentEditor.jsx](client/src/components/MedicalDeviceDocumentEditor.jsx)
+     - [client/src/pages/CERV2Page.jsx](client/src/pages/CERV2Page.jsx)
+     - [client/src/components/510k/EnhancedDocumentVault.jsx](client/src/components/510k/EnhancedDocumentVault.jsx)
+     - [client/src/services/CERV2SectionService.js](client/src/services/CERV2SectionService.js)
+   - Acceptance criteria:
+     - No “magic org” (1/7/default) in save/load/versioning paths.
+     - Tenant context always comes from TenantContext/auth state.
+
+3) **Make CERV2 APIs enforce tenant from auth (and optionally validate headers)**
+   - Files to review/change:
+     - `server/routes/cerv2-sections.js`
+     - `server/routes/cerv2-document-routes.js`
+     - `server/index.ts` (mount order and shared middleware)
+   - Acceptance criteria:
+     - Requests without auth are rejected consistently.
+     - Tenant/org is enforced server-side for every query.
+     - Header-only org selection is either removed or restricted to demo/dev only.
+
+#### 0.7.2 Endpoint → UI touchpoint map (what calls what)
+
+Use this to ensure feature restoration is not blocked by missing wiring.
+
+| API family | Endpoint examples | Primary UI callsites (observed) | Notes |
+|---|---|---|---|
+| CERV2 sections | `/api/cerv2-sections` | [client/src/pages/CERV2Page.jsx](client/src/pages/CERV2Page.jsx), [client/src/components/MedicalDeviceDocumentEditor.jsx](client/src/components/MedicalDeviceDocumentEditor.jsx), [client/src/components/510k/EnhancedDocumentVault.jsx](client/src/components/510k/EnhancedDocumentVault.jsx) | Used for the document tree/status CRUD; currently depends on org header behavior |
+| CERV2 document save/load (legacy) | `/api/cerv2/documents/:id/save` | [client/src/components/MedicalDeviceDocumentEditor.jsx](client/src/components/MedicalDeviceDocumentEditor.jsx) | Still used as fallback path when no section is selected |
+| 510(k) workflow persistence | `/api/510k-workflow/:projectId` | [client/src/components/510k/Enhanced510kIntakeWorkflow.jsx](client/src/components/510k/Enhanced510kIntakeWorkflow.jsx) | Should be aligned with same auth/tenant model as sections |
+| CER report mgmt + generation | `/api/cer/reports/*`, `/api/cer/generate*` | [client/src/pages/EnterpriseGradeCERGenerator.jsx](client/src/pages/EnterpriseGradeCERGenerator.jsx), [client/src/pages/CERGeneration.jsx](client/src/pages/CERGeneration.jsx), [client/src/components/cer/*](client/src/components/cer) | JWT-protected server-side; needs consistent tenant handling with CERV2 |
+| AI assistance | `/api/ai/status`, `/api/ai/generate`, `/api/ai/tag-file` | Multiple pages/components; starts from shared request helper | Must be “auditable output”, not just generated text |
+
+#### 0.7.3 Version history + compare + restore (P0)
+
+**Goal:** expose regulated editing UX: view history, compare, restore; and bind it to the audit trail.
+
+- Backend exists: `/api/cerv2-versions/*` (version sessions/timeline/compare).
+- Frontend gap: no direct client usage of `/api/cerv2-versions` is wired today.
+
+**Concrete work items:**
+
+- Add a “History” drawer/tab in the authoring shell to:
+  - list versions for the current document/section
+  - open a diff/compare view
+  - restore a prior version (creates a new version event)
+- Primary UI shells to extend:
+  - [client/src/pages/CERV2Page.jsx](client/src/pages/CERV2Page.jsx)
+  - [client/src/components/MedicalDeviceDocumentEditor.jsx](client/src/components/MedicalDeviceDocumentEditor.jsx)
+
+#### 0.7.4 Minimum viable traceability (Evidence → Claim → Section) (P0)
+
+**Goal:** every claim in a “Final/Approved” state has linked evidence; AI drafts without evidence are explicitly labeled “uncited”.
+
+**Concrete work items:**
+
+- Introduce an “Evidence” panel per section (attach/upload/select evidence; show linked citations).
+- Add a traceability matrix view (section × claim × evidence) that is exportable.
+- Gate approvals/exports on traceability completeness.
+
+#### 0.7.5 Demo-safe mode (P0)
+
+**Goal:** sales demos never fail, but do not accidentally define production behavior.
+
+- Separate “demo tenant” behavior from production tenant behavior.
+- Ensure any default org IDs (if kept) are only used when demo mode is explicitly enabled (e.g., `VITE_DEMO_ORG_ID`).
+
+
 ## 1. FRONTEND ARCHITECTURE & USER INTERFACE
 
 ### 1.1 Component Inventory

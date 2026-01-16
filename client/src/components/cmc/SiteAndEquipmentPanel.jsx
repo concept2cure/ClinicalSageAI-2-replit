@@ -10,30 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Factory, 
-  MapPin, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock, 
-  Settings,
-  Users,
-  Calendar,
-  FileCheck,
-  Plus,
-  Eye,
-  Shield,
-  AlertCircle,
-  Timer,
-  Filter,
-  Search,
-  Download,
-  RefreshCw,
-  Bell,
-  Loader2,
-  TrendingUp,
-  Wrench,
-  Zap
-} from 'lucide-react';
+  Factory, MapPin, CheckCircle2, AlertTriangle, Clock, Settings, Users, Calendar, FileCheck, Plus, Eye, Shield, AlertCircle, Timer, Filter, Search, Download, RefreshCw, Bell, Loader2, TrendingUp, Wrench, Zap } from 'lucide-react'
 
 const MANUFACTURING_SITES = [
   {

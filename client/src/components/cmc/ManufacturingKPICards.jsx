@@ -4,19 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock,
-  Target,
-  BarChart3,
-  Zap,
-  Shield,
-  Factory,
-  Bot
-} from 'lucide-react';
+  TrendingUp, TrendingDown, Activity, AlertTriangle, CheckCircle2, Clock, Target, BarChart3, Zap, Shield, Factory, Bot } from 'lucide-react'
 
 function Card_({ label, value, sub }) {
   return (

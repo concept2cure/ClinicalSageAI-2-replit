@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, Bot } from 'lucide-react';
+import { ArrowLeft, Bot } from 'lucide-react'
 import SimpleCodingAgent from '../components/ai/SimpleCodingAgent';
 
 const CodingAgentPage = () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Calendar, FileText, BarChart } from 'lucide-react';
+import { Calendar, FileText, BarChart } from 'lucide-react'
 import CanvasWorkbenchV2 from '../components/canvas/CanvasWorkbenchV2';
 import './CanvasPage.css';
 

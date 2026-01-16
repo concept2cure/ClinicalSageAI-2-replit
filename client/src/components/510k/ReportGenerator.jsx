@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,25 +7,11 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { toast } from '@/hooks/use-toast';
 import FDA510kService from '@/services/FDA510kService';
 import {
-  FileText,
-  CheckCircle,
-  AlertTriangle,
-  FileDown,
-  Loader2,
-  ArrowRight,
-  FileCheck,
-  Download,
-  Calendar,
-  RefreshCw,
-} from 'lucide-react';
+  FileText, CheckCircle, AlertTriangle, FileDown, Loader2, ArrowRight, FileCheck, Download, Calendar, RefreshCw } from 'lucide-react'
 
 /**
  * Report Generator for 510(k) submissions

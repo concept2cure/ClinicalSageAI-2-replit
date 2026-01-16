@@ -6,55 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  FileText,
-  Edit3,
-  Globe,
-  GitBranch,
-  Link,
-  Zap,
-  Eye,
-  Download,
-  Upload,
-  Plus,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Users,
-  History,
-  Settings,
-  Search,
-  Filter,
-  RefreshCcw,
-  AlertCircle,
-  Award,
-  Target,
-  BarChart3,
-  Languages,
-  Flag,
-  Send,
-  FileCheck,
-  Lock,
-  Package,
-  MessageSquare,
-} from 'lucide-react';
+  FileText, Edit3, Globe, GitBranch, Link, Zap, Eye, Download, Upload, Plus, BookOpen, CheckCircle2, Clock, Users, History, Settings, Search, Filter, RefreshCcw, AlertCircle, Award, Target, BarChart3, Languages, Flag, Send, FileCheck, Lock, Package, MessageSquare, Save } from 'lucide-react'
 import { GuidanceDrawer, TemplatesDrawer } from './DocumentAuthoringFixed';
 import { useToast } from '@/hooks/use-toast';
 import { EditorContent, useEditor } from '@tiptap/react';

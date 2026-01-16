@@ -6,40 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
-  Copy, Repeat, Timer, Play, Pause, StopCircle, Clock,
-  Calendar, History, GitBranch, Shield, ShieldCheck, ShieldAlert,
-  BellRing, BellOff, CheckCircle, AlertTriangle, Info, Hash,
-  FileText, ArrowUpDown, Smartphone, Monitor, RotateCcw,
-  GitCommit, MessageSquare, User, FileCheck, Save, TrendingUp
-} from 'lucide-react';
+  Copy, Repeat, Timer, Play, Pause, StopCircle, Clock, Calendar, History, GitBranch, Shield, ShieldCheck, ShieldAlert, BellRing, BellOff, CheckCircle, AlertTriangle, Info, Hash, FileText, ArrowUpDown, Smartphone, Monitor, RotateCcw, GitCommit, MessageSquare, User, FileCheck, Save, TrendingUp, Archive } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, addWeeks, addMonths, differenceInMinutes, isWeekend } from 'date-fns';
 

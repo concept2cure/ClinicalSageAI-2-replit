@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  ChevronRight,
-  Clock,
-  BarChart2,
-  FileText,
-  Database,
-  Search,
-  Beaker,
-  ClipboardList,
-} from 'lucide-react';
+import { ChevronRight, Clock, BarChart2, FileText, Database, Search, Beaker, ClipboardList } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

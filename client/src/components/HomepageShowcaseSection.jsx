@@ -2,42 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import axios from 'axios';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  FileText,
-  PieChart,
-  LineChart,
-  BookOpen,
-  Award,
-  Calendar,
-  BarChart,
-  FileCheck,
-  Users,
-  Star,
-  FileDown,
-  ExternalLink,
-  Eye,
-  BrainCircuit,
-  Lightbulb,
-} from 'lucide-react';
+  FileText, PieChart, LineChart, BookOpen, Award, Calendar, BarChart, FileCheck, Users, Star, FileDown, ExternalLink, Eye, BrainCircuit, Lightbulb } from 'lucide-react'
 
 /**
  * Clinical Intelligence Showcase Section

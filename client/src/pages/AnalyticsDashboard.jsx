@@ -4,113 +4,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useToast } from '../hooks/useToast';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ScatterChart,
-  Scatter,
-  Cell,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Sankey,
-  Treemap,
-  RadialBarChart,
-  RadialBar,
-} from 'recharts';
+  BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ScatterChart, Scatter, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Sankey, Treemap, RadialBarChart, RadialBar, } from 'recharts';
 import {
-  Network,
-  HeatMapGrid,
-  Choropleth,
-  GeoFeature,
-  StreamGraph,
-  Sunburst,
-  ParallelCoordinates,
-  CirclePacking,
-  Marimekko,
-  Candlestick,
-  StackedAreaChart,
-  TreemapChart,
-} from '../components/visualization';
+  Network, HeatMapGrid, Choropleth, GeoFeature, StreamGraph, Sunburst, ParallelCoordinates, CirclePacking, Marimekko, Candlestick, StackedAreaChart, TreemapChart, } from '../components/visualization';
 import {
-  DashboardLayout,
-  WidgetContainer,
-  GridLayout,
-  KPITile,
-  SectionMatrix,
-  StatusRibbon,
-  SubmissionTimeline,
-  DataTable,
-  FilterBar,
-  ExportMenu,
-  UserActivityCard,
-  RegulatoryIntelligencePanel,
-  PredictionCard,
-  DocumentQualityMatrix,
-} from '../components/analytics';
+  DashboardLayout, WidgetContainer, GridLayout, KPITile, SectionMatrix, StatusRibbon, SubmissionTimeline, DataTable, FilterBar, ExportMenu, UserActivityCard, RegulatoryIntelligencePanel, PredictionCard, DocumentQualityMatrix, } from '../components/analytics';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '../components/ui/select';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
-  AlertCircle,
-  Bookmark,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Download,
-  FileText,
-  Filter,
-  BarChart2,
-  PieChart as PieChartIcon,
-  Plus,
-  Save,
-  Search,
-  Settings,
-  Share2,
-  TrendingUp,
-  User,
-  Zap,
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  Eye,
-  ExternalLink,
-  RefreshCcw,
-  Calendar,
-  Sliders,
-  BarChart4,
-  Map,
-  RadialBar as RadialBarIcon,
-} from 'lucide-react';
+  AlertCircle, Bookmark, ChevronDown, ChevronUp, Clock, Download, FileText, Filter, BarChart2, PieChart as PieChartIcon, Plus, Save, Search, Settings, Share2, TrendingUp, User, Zap, Activity, AlertTriangle, CheckCircle, Eye, ExternalLink, RefreshCcw, Calendar, Sliders, BarChart4, Map, RadialBar as RadialBarIcon } from 'lucide-react'
 import {
   Tooltip as ShadTooltip,
   TooltipContent,

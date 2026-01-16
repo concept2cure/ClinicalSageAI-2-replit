@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { Calendar, FileText, BarChart, Check, AlertCircle, Clock } from 'lucide-react';
+import { Calendar, FileText, BarChart, Check, AlertCircle, Clock } from 'lucide-react'
 import './TimelinePage.css';
 
 /**

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Shield, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export default function ComplianceTab({ regulatoryData }) {
   return (

@@ -17,45 +17,13 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenantContext } from '@/contexts/TenantContext';
 import {
-  Plus,
-  Filter,
-  Calendar,
-  User,
-  Clock,
-  Edit2,
-  Trash2,
-  MoreVertical,
-  ChevronRight,
-  CheckSquare,
-  Square,
-  Circle,
-  Users,
-  Flag,
-  Activity,
-  TrendingUp,
-  Zap,
-  Eye,
-  Play,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  CalendarDays,
-  GroupIcon,
-  LayoutGrid,
-  List,
-  ArrowUpDown
-} from 'lucide-react';
+  Plus, Filter, Calendar, User, Clock, Edit2, Trash2, MoreVertical, ChevronRight, CheckSquare, Square, Circle, Users, Flag, Activity, TrendingUp, Zap, Eye, Play, CheckCircle2, XCircle, AlertCircle, CalendarDays, GroupIcon, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
 
 // SharePoint colors and styles
 const sharePointColors = {

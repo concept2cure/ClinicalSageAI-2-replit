@@ -6,44 +6,16 @@ import { queryClient } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import {
-  CheckCircle,
-  Calendar,
-  Clock,
-  Download,
-  AlertTriangle,
-  FileText,
-  Send,
-  Check,
-  AlertCircle,
-  FileWarning,
-  ShieldCheck,
-  ShieldOff,
-  UploadCloud,
-  Globe,
-  Share2,
-} from 'lucide-react';
+  CheckCircle, Calendar, Clock, Download, AlertTriangle, FileText, Send, Check, AlertCircle, FileWarning, ShieldCheck, ShieldOff, UploadCloud, Globe, Share2 } from 'lucide-react'
 import RegionalExportModal from '@/components/RegionalExportModal';
 
 export default function IndSequenceDetail() {

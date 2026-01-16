@@ -1,25 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import {
-  FileText,
-  Download,
-  ChevronLeft,
-  PieChart,
-  Microscope,
-  Beaker,
-  Users,
-  ArrowRight,
-  Check,
-  X,
-} from 'lucide-react';
+  FileText, Download, ChevronLeft, PieChart, Microscope, Beaker, Users, ArrowRight, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';

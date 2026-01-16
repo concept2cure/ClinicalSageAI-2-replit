@@ -355,6 +355,171 @@ export type AuditTrailEntry = InferSelectModel<typeof auditTrail>;
 export type InsertAuditTrailEntry = z.infer<typeof insertAuditTrailSchema>;
 
 /**
+ * =====================================================================================
+ * LUMEN ENTERPRISE AI GOVERNANCE (CORE REVENUE ENGINE)
+ * =====================================================================================
+ *
+ * Production tables to support:
+ * - Semantic cache (pgvector)
+ * - Request/usage accounting (cost attribution)
+ * - Audit logging (21 CFR Part 11 aligned)
+ * - Active Learning v1 (tenant preferences KV)
+ */
+
+export const lumenCacheEntries = pgTable(
+  'lumen_cache_entries',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    module: text('module').notNull(),
+    normalizedQuery: text('normalized_query').notNull(),
+    queryHash: text('query_hash').notNull(),
+    embedding: vector('embedding', { dimensions: 1536 }),
+    similarityThreshold: real('similarity_threshold').default(0.92),
+    responseText: text('response_text'),
+    responseJson: json('response_json'),
+    sources: json('sources'),
+    cacheMetadata: json('cache_metadata'),
+    hitCount: integer('hit_count').default(0).notNull(),
+    lastAccessedAt: timestamp('last_accessed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    invalidatedAt: timestamp('invalidated_at'),
+    invalidationReason: text('invalidation_reason'),
+  },
+  (table) => ({
+    uniq: uniqueIndex('lumen_cache_entries_org_module_hash_uniq').on(
+      table.organizationId,
+      table.module,
+      table.queryHash
+    ),
+    orgModuleExpiresIdx: index('lumen_cache_entries_org_module_expires_idx').on(
+      table.organizationId,
+      table.module,
+      table.expiresAt
+    ),
+  })
+);
+
+export const lumenUsageEvents = pgTable(
+  'lumen_usage_events',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    module: text('module').notNull(),
+    queryHash: text('query_hash'),
+    provider: text('provider'),
+    model: text('model'),
+    cacheStatus: text('cache_status').notNull(), // hit | miss | stale | bypass
+    latencyMs: integer('latency_ms'),
+    costUsd: decimal('cost_usd', { precision: 12, scale: 6 }).default('0').notNull(),
+    creditsUsed: integer('credits_used').default(0).notNull(),
+    tokensInput: integer('tokens_input'),
+    tokensOutput: integer('tokens_output'),
+    requestMetadata: json('request_metadata'),
+    responseMetadata: json('response_metadata'),
+    status: text('status').default('ok').notNull(), // ok | error | blocked
+    errorCode: text('error_code'),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgCreatedIdx: index('lumen_usage_events_org_created_idx').on(table.organizationId, table.createdAt),
+    orgModuleCreatedIdx: index('lumen_usage_events_org_module_created_idx').on(
+      table.organizationId,
+      table.module,
+      table.createdAt
+    ),
+  })
+);
+
+export const lumenAuditEvents = pgTable(
+  'lumen_audit_events',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(), // query | response | cache-hit | agent-invoked | cost | error
+    module: text('module'),
+    queryHash: text('query_hash'),
+    actorUserId: text('actor_user_id'),
+    actorUserName: text('actor_user_name'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    request: json('request'),
+    response: json('response'),
+    metadata: json('metadata'),
+    signature: text('signature'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgCreatedIdx: index('lumen_audit_events_org_created_idx').on(table.organizationId, table.createdAt),
+    orgEventTypeCreatedIdx: index('lumen_audit_events_org_type_created_idx').on(
+      table.organizationId,
+      table.eventType,
+      table.createdAt
+    ),
+  })
+);
+
+export const tenantStylePreferences = pgTable(
+  'tenant_style_preferences',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    draftStyle: text('draft_style').default('formal').notNull(),
+    formalityLevel: text('formality_level').default('high').notNull(),
+    citationFormat: text('citation_format').default('vancouver').notNull(),
+    regulatoryRegion: text('regulatory_region').default('FDA').notNull(),
+    preferences: json('preferences'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniq: uniqueIndex('tenant_style_preferences_org_uniq').on(table.organizationId),
+  })
+);
+
+export const insertLumenCacheEntrySchema = createInsertSchema(lumenCacheEntries).omit({
+  id: true,
+  createdAt: true,
+  lastAccessedAt: true,
+  invalidatedAt: true,
+});
+
+export const insertLumenUsageEventSchema = createInsertSchema(lumenUsageEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLumenAuditEventSchema = createInsertSchema(lumenAuditEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTenantStylePreferencesSchema = createInsertSchema(tenantStylePreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type LumenCacheEntry = InferSelectModel<typeof lumenCacheEntries>;
+export type InsertLumenCacheEntry = z.infer<typeof insertLumenCacheEntrySchema>;
+export type LumenUsageEvent = InferSelectModel<typeof lumenUsageEvents>;
+export type InsertLumenUsageEvent = z.infer<typeof insertLumenUsageEventSchema>;
+export type LumenAuditEvent = InferSelectModel<typeof lumenAuditEvents>;
+export type InsertLumenAuditEvent = z.infer<typeof insertLumenAuditEventSchema>;
+export type TenantStylePreferences = InferSelectModel<typeof tenantStylePreferences>;
+export type InsertTenantStylePreferences = z.infer<typeof insertTenantStylePreferencesSchema>;
+
+/**
  * ======================================================================================
  * MODULE SUBSCRIPTION SYSTEM
  * ======================================================================================
@@ -1398,6 +1563,70 @@ export const notifications = pgTable('notifications', {
   notificationReadIdx: index('notification_read_idx').on(table.isRead),
   notificationCreatedIdx: index('notification_created_idx').on(table.createdAt),
 }));
+
+// Lumen Cortex Risk Records - persistent risk registry entries
+export const lumenRiskRecords = pgTable('lumen_risk_records', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  alertId: text('alert_id'),
+  source: text('source').notNull(),
+  severity: text('severity').notNull(),
+  rationale: text('rationale').notNull(),
+  actionItems: json('action_items'),
+  metadata: json('metadata'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  lumenRiskOrgIdx: index('lumen_risk_org_idx').on(table.organizationId),
+  lumenRiskProjectIdx: index('lumen_risk_project_idx').on(table.projectId),
+  lumenRiskSeverityIdx: index('lumen_risk_severity_idx').on(table.severity),
+}));
+
+export const insertLumenRiskRecordSchema = createInsertSchema(lumenRiskRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type LumenRiskRecord = InferSelectModel<typeof lumenRiskRecords>;
+export type InsertLumenRiskRecord = z.infer<typeof insertLumenRiskRecordSchema>;
+
+// Project Risk Register - enterprise risk ledger
+export const projectRisks = pgTable('project_risks', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  status: text('status').default('OPEN').notNull(),
+  priority: text('priority').default('MEDIUM').notNull(),
+  source: text('source').notNull(),
+  mitigationSteps: json('mitigation_steps'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  projectRisksOrgIdx: index('project_risks_org_idx').on(table.organizationId),
+  projectRisksProjectIdx: index('project_risks_project_idx').on(table.projectId),
+  projectRisksPriorityIdx: index('project_risks_priority_idx').on(table.priority),
+}));
+
+export const insertProjectRiskSchema = createInsertSchema(projectRisks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProjectRisk = InferSelectModel<typeof projectRisks>;
+export type InsertProjectRisk = z.infer<typeof insertProjectRiskSchema>;
 
 // User Following Table - tracks what users are following
 export const userFollowing = pgTable('user_following', {
@@ -2450,6 +2679,44 @@ export const analyticalMethods = pgTable('analytical_methods', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const insertAnalyticalMethodSchema = createInsertSchema(analyticalMethods).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
+export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
+
+// Comparability Studies Table - change control assessments
+export const comparabilityStudies = pgTable('comparability_studies', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  projectId: integer('project_id').references(() => projects.id),
+  title: text('title').notNull(),
+  product: text('product').notNull(),
+  changeType: text('change_type').notNull(),
+  status: text('status').default('planned').notNull(), // planned, in_progress, completed
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  methods: text('methods').array(),
+  outcome: text('outcome'), // comparable, not_comparable
+  ownerId: integer('owner_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertComparabilityStudySchema = createInsertSchema(comparabilityStudies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ComparabilityStudy = InferSelectModel<typeof comparabilityStudies>;
+export type InsertComparabilityStudy = z.infer<typeof insertComparabilityStudySchema>;
+
 // Process Validation Table - 3 Stage Lifecycle
 export const processValidation = pgTable('process_validation', {
   id: serial('id').primaryKey(),
@@ -2610,12 +2877,6 @@ export const regulatoryDocuments = pgTable('regulatory_documents', {
 });
 
 // CMC Schema Types and Insert Schemas
-export const insertAnalyticalMethodSchema = createInsertSchema(analyticalMethods).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertProcessValidationSchema = createInsertSchema(processValidation).omit({
   id: true,
   createdAt: true,
@@ -2653,8 +2914,6 @@ export const insertDrugProductSchema = createInsertSchema(drugProducts).omit({
 });
 
 // CMC Types
-export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
-export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
 export type ProcessValidation = InferSelectModel<typeof processValidation>;
 export type InsertProcessValidation = z.infer<typeof insertProcessValidationSchema>;
 export type StabilityStudy = InferSelectModel<typeof stabilityStudies>;
@@ -2784,6 +3043,72 @@ export type CerDocument = InferSelectModel<typeof cerDocuments>;
 export type InsertCerDocument = z.infer<typeof insertCerDocumentSchema>;
 
 /**
+ * Device Profiles Table
+ * 
+ * Medical device profile information for 510(k) and CER submissions
+ */
+export const deviceProfiles = pgTable('device_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceName: text('device_name').notNull(),
+  deviceType: text('device_type'),
+  manufacturer: text('manufacturer'),
+  intendedUse: text('intended_use'),
+  classification: text('classification'),
+  predicate: text('predicate'),
+  status: text('status').default('draft'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type DeviceProfile = InferSelectModel<typeof deviceProfiles>;
+
+/**
+ * Device Submissions Table
+ * 
+ * Tracks 510(k) and MDR submission progress for devices
+ */
+export const deviceSubmissions = pgTable('device_submissions', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceProfileId: integer('device_profile_id')
+    .notNull()
+    .references(() => deviceProfiles.id),
+  submissionType: text('submission_type').notNull(), // 510k, MDR, PMA
+  status: text('status').default('draft'),
+  submissionNumber: text('submission_number'),
+  submissionDate: timestamp('submission_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type DeviceSubmission = InferSelectModel<typeof deviceSubmissions>;
+
+/**
+ * CER Essential Requirements Table
+ * 
+ * Essential requirements mapping for MDR compliance
+ */
+export const cerEssentialRequirements = pgTable('cer_essential_requirements', {
+  id: serial('id').primaryKey(),
+  reportId: text('report_id')
+    .notNull()
+    .references(() => cerReports.reportId),
+  requirementNumber: text('requirement_number').notNull(),
+  requirementText: text('requirement_text'),
+  status: text('status').default('pending'),
+  evidence: text('evidence'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type CerEssentialRequirement = InferSelectModel<typeof cerEssentialRequirements>;
+
+/**
  * CER Reports Table
  * 
  * Main reports for Clinical Evaluation Reports (CER)
@@ -2815,6 +3140,63 @@ export const insertCerReportSchema = createInsertSchema(cerReports).omit({
 
 export type CerReport = InferSelectModel<typeof cerReports>;
 export type InsertCerReport = z.infer<typeof insertCerReportSchema>;
+
+/**
+ * CER Clinical Evidence Table
+ * 
+ * Clinical evidence data linked to CER reports
+ */
+export const cerClinicalEvidence = pgTable('cer_clinical_evidence', {
+  id: serial('id').primaryKey(),
+  reportId: text('report_id')
+    .notNull()
+    .references(() => cerReports.reportId),
+  evidenceType: text('evidence_type').notNull(),
+  source: text('source'),
+  description: text('description'),
+  relevance: text('relevance'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type CerClinicalEvidence = InferSelectModel<typeof cerClinicalEvidence>;
+
+/**
+ * CER Templates Table
+ * 
+ * Regulatory templates for CER generation
+ */
+export const cerTemplates = pgTable('cer_templates', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  name: text('name').notNull(),
+  templateType: text('template_type').notNull(),
+  content: json('content'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type CerTemplate = InferSelectModel<typeof cerTemplates>;
+
+/**
+ * CER Version History Table
+ * 
+ * Tracks version history and changes for CER reports
+ */
+export const cerVersionHistory = pgTable('cer_version_history', {
+  id: serial('id').primaryKey(),
+  reportId: text('report_id')
+    .notNull()
+    .references(() => cerReports.reportId),
+  versionNumber: integer('version_number').notNull(),
+  changes: json('changes'),
+  changedBy: integer('changed_by').references(() => users.id),
+  changeReason: text('change_reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type CerVersionHistoryEntry = InferSelectModel<typeof cerVersionHistory>;
 
 /**
  * CER Sections Table
@@ -10433,6 +10815,121 @@ export const insertPkpdCompartmentSchema = createInsertSchema(pkpdCompartments).
   id: true,
   createdAt: true,
 });
+
+/**
+ * ======================================================================================
+ * SOURCE DATA MAPPER
+ * ======================================================================================
+ *
+ * Normalizes raw evidence sources (PDFs, tables, datasets) into traceable data points.
+ * Each ingested fragment receives a stable UID for downstream binding to authored content.
+ */
+
+export const sourceDocuments = pgTable('source_documents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentUid: text('document_uid').notNull().unique(),
+  title: text('title'),
+  description: text('description'),
+  sourceType: text('source_type').notNull(), // pdf, csv, dataset, manual
+  origin: text('origin'), // upload, api, knowledge_base
+  ingestionStatus: text('ingestion_status').default('processed').notNull(),
+  checksum: text('checksum'),
+  fileName: text('file_name'),
+  fileSize: integer('file_size'),
+  mimeType: text('mime_type'),
+  pageCount: integer('page_count'),
+  metadata: json('metadata'),
+  createdBy: integer('created_by').references(() => users.id),
+  processedAt: timestamp('processed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sourceDocumentsOrgIdx: index('source_documents_org_idx').on(table.organizationId),
+  sourceDocumentsTypeIdx: index('source_documents_type_idx').on(table.sourceType),
+  sourceDocumentsStatusIdx: index('source_documents_status_idx').on(table.ingestionStatus),
+}));
+
+export const sourceDataPoints = pgTable('source_data_points', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: uuid('document_id')
+    .references(() => sourceDocuments.id, { onDelete: 'cascade' }),
+  dataPointUid: text('data_point_uid').notNull().unique(),
+  label: text('label'),
+  content: text('content').notNull(),
+  value: text('value'),
+  dataType: text('data_type'), // narrative, table_cell, metric, citation
+  unit: text('unit'),
+  pageNumber: integer('page_number'),
+  sectionHeading: text('section_heading'),
+  subsectionHeading: text('subsection_heading'),
+  tableName: text('table_name'),
+  rowIndex: integer('row_index'),
+  columnName: text('column_name'),
+  sourceLocation: json('source_location'), // coordinates, bounding boxes, etc.
+  confidence: real('confidence'),
+  hash: text('hash'),
+  metadata: json('metadata'),
+  lastSeenAt: timestamp('last_seen_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sourceDataPointsOrgIdx: index('source_data_points_org_idx').on(table.organizationId),
+  sourceDataPointsDocIdx: index('source_data_points_doc_idx').on(table.documentId),
+  sourceDataPointsTypeIdx: index('source_data_points_type_idx').on(table.dataType),
+}));
+
+export const sourceDataPointBindings = pgTable('source_data_point_bindings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  dataPointId: uuid('data_point_id')
+    .notNull()
+    .references(() => sourceDataPoints.id, { onDelete: 'cascade' }),
+  targetType: text('target_type').notNull(), // document_paragraph, table_cell, review_note, etc.
+  targetIdentifier: text('target_identifier').notNull(),
+  bindingStatus: text('binding_status').default('current').notNull(), // current, outdated, superseded
+  bindingMetadata: json('binding_metadata'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sourceDataPointBindingsOrgIdx: index('source_data_point_bindings_org_idx').on(table.organizationId),
+  sourceDataPointBindingsTargetIdx: index('source_data_point_bindings_target_idx').on(table.targetIdentifier),
+}));
+
+export const insertSourceDocumentSchema = createInsertSchema(sourceDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSourceDataPointSchema = createInsertSchema(sourceDataPoints).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSourceDataPointBindingSchema = createInsertSchema(sourceDataPointBindings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SourceDocument = InferSelectModel<typeof sourceDocuments>;
+export type InsertSourceDocument = z.infer<typeof insertSourceDocumentSchema>;
+
+export type SourceDataPoint = InferSelectModel<typeof sourceDataPoints>;
+export type InsertSourceDataPoint = z.infer<typeof insertSourceDataPointSchema>;
+
+export type SourceDataPointBinding = InferSelectModel<typeof sourceDataPointBindings>;
+export type InsertSourceDataPointBinding = z.infer<typeof insertSourceDataPointBindingSchema>;
 
 // Type definitions for new tables
 export type DoseEscalationStudy = InferSelectModel<typeof doseEscalationStudies>;

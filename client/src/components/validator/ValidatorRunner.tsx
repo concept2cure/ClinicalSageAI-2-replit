@@ -6,38 +6,12 @@ import clsx from 'clsx';
 import { useSortable } from '../lightweight-wrappers.js';
 import { CSS } from '../lightweight-wrappers.js';
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '../lightweight-wrappers.js';
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, } from '../lightweight-wrappers.js';
 import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '../lightweight-wrappers.jsx';
+  SortableContext, verticalListSortingStrategy, arrayMove, } from '../lightweight-wrappers.jsx';
 import axiosWithToken from '../../utils/axiosWithToken';
 import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Upload,
-  FileText,
-  ChevronRight,
-  Trash2,
-  Settings,
-  RefreshCw,
-  Search,
-  Eye,
-  Download,
-  Play,
-  Info,
-  Clipboard,
-  Shield,
-  FileCheck,
-  File,
-} from 'lucide-react';
+  CheckCircle, XCircle, AlertTriangle, Upload, FileText, ChevronRight, Trash2, Settings, RefreshCw, Search, Eye, Download, Play, Info, Clipboard, Shield, FileCheck, File, Select } from 'lucide-react'
 
 // Types
 interface FileWithMetadata {

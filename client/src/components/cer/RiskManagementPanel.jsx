@@ -2,36 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { cerApiService } from '@/services/CerAPIService';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Upload,
-  Database,
-  FileSpreadsheet,
-  UploadCloud,
-  RefreshCw,
-  ShieldAlert,
-  LinkIcon,
-  FilePlus2,
-  Table,
-  Layers,
-  CheckSquare,
-  Sparkles,
-  Brain,
-  BarChart,
-  Lightbulb,
-} from 'lucide-react';
+  AlertCircle, CheckCircle, FileText, Upload, Database, FileSpreadsheet, UploadCloud, RefreshCw, ShieldAlert, LinkIcon, FilePlus2, Table, Layers, CheckSquare, Sparkles, Brain, BarChart, Lightbulb } from 'lucide-react'
 import {
   Table as UITable,
   TableBody,

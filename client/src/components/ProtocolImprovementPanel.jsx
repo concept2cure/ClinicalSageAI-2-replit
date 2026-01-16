@@ -1,17 +1,10 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, CheckCircle, Download, FileText, PieChart } from 'lucide-react';
+import { AlertCircle, CheckCircle, Download, FileText, PieChart } from 'lucide-react'
 
 const ProtocolImprovementPanel = ({ analysisResults, open, onOpenChange, onImport }) => {
   return (

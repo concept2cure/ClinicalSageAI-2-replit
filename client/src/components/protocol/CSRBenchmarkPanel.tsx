@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Database, Loader2, BarChart, Info, Search } from 'lucide-react';
+import { Database, Loader2, BarChart, Info, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,31 +31,19 @@ export function CSRBenchmarkPanel({ protocolData, onBenchmarkComplete }: CSRBenc
         setBenchmarkData(data.result);
         onBenchmarkComplete(data.result);
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Benchmark Failed",
           description: data.message || "Failed to analyze protocol against CSR benchmarks",
           variant: "destructive",
-        })
-  console.log('Toast would show:', {
-          title: "Benchmark Failed",
-          description: data.message || "Failed to analyze protocol against CSR benchmarks",
-          variant: "destructive",
-        });
+  });
       }
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Benchmark Analysis Failed",
         description: error.message || "An error occurred during benchmark analysis",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Benchmark Analysis Failed",
-        description: error.message || "An error occurred during benchmark analysis",
-        variant: "destructive",
-      });
+  });
     },
   });
 

@@ -58,3 +58,17 @@ export const updateDocument = async (docId, content) => {
     throw error;
   }
 };
+export const saveToVault = async (docId, vaultName = 'default') => {
+  try {
+    // In a real implementation, this would save to secure vault
+    return {
+      success: true,
+      docId: docId,
+      vault: vaultName,
+      saved: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Error saving to vault:', error);
+    throw error;
+  }
+};

@@ -6,7 +6,7 @@
  */
 
 import { db } from '../db/index.js';
-import { components } from '../../shared/schema.js';
+import { components } from '../../shared/schema.ts';
 import { eq, and } from 'drizzle-orm';
 
 class ControlledVocabularyService {

@@ -1,24 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChevronRight, Filter, Check, Globe, Zap, ArrowRightLeft, MapPin } from 'lucide-react';
+import { ChevronRight, Filter, Check, Globe, Zap, ArrowRightLeft, MapPin } from 'lucide-react'
 import {
   getAllProfileTemplates,
   createProfileFromTemplate,

@@ -3,6 +3,67 @@ import express from 'express';
 const router = express.Router();
 
 /**
+ * GET /api/workflow/templates - Return available workflow templates
+ * Used by the CoAuthor UI.
+ */
+router.get('/templates', async (_req, res) => {
+  try {
+    res.json({
+      success: true,
+      templates: [
+        {
+          id: 'wf-ectd-default',
+          name: 'eCTD Default Workflow',
+          description: 'Draft → Review → Approval → Published',
+          type: 'ectd',
+          version: '1.0.0',
+          stages: ['draft', 'review', 'approval', 'published'],
+        },
+        {
+          id: 'wf-ind-to-nda',
+          name: 'IND → NDA Progression',
+          description: 'Workflow progression scaffold for IND-to-NDA planning',
+          type: 'progression',
+          version: '1.0.0',
+          stages: ['discovery', 'cmc', 'clinical', 'regulatory', 'readiness'],
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Error returning workflow templates:', error);
+    res.status(500).json({ error: 'Failed to fetch workflow templates' });
+  }
+});
+
+/**
+ * GET /api/workflow/progression/dashboard - Provide a lightweight dashboard summary
+ * Used by the CoAuthor UI.
+ */
+router.get('/progression/dashboard', async (_req, res) => {
+  try {
+    res.json({
+      success: true,
+      dashboard: {
+        activePrograms: 2,
+        inDiscovery: 1,
+        inCMC: 1,
+        inClinical: 0,
+        inRegulatory: 0,
+        inReadiness: 0,
+        lastUpdated: new Date().toISOString(),
+        highlights: [
+          'NO_DB mode: using mock progression data',
+          'Use /api/workflow/progression/create to create a new plan',
+        ],
+      },
+    });
+  } catch (error) {
+    console.error('Error building progression dashboard:', error);
+    res.status(500).json({ error: 'Failed to fetch progression dashboard' });
+  }
+});
+
+/**
  * POST /api/workflow/export - Export workflow configuration and data
  */
 router.post('/export', async (req, res) => {

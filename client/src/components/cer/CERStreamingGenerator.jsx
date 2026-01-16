@@ -1,25 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  FileText,
-  Download,
-  Check,
-  AlertCircle,
-  Loader2,
-  Copy,
-  RefreshCw,
-  BookOpen,
-  Dices,
-  FlaskConical,
-  PlusCircle,
-  CheckCircle2,
-  XCircle,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Search,
-  ChevronUp,
-  Settings,
-} from 'lucide-react';
+import { FileText, Download, Check, AlertCircle, Loader2, Copy, RefreshCw, BookOpen, Dices, FlaskConical, PlusCircle, CheckCircle2, XCircle, ChevronDown, ChevronRight, Info, Search, ChevronUp, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';

@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BarChart2,
-  PlayCircle,
-  ChevronRight,
-  Users,
-  ClipboardCheck,
-  FileText,
-  Building,
-  TrendingUp,
-} from 'lucide-react';
+import { BarChart2, PlayCircle, ChevronRight, Users, ClipboardCheck, FileText, Building, TrendingUp } from 'lucide-react'
 
 // Define button component for hero section
 const HeroButton = ({ children, variant = 'primary', to, onClick, className = '' }) => {

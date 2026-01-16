@@ -6,32 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  MessageSquare,
-  Users,
-  Bell,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Send,
-  AtSign,
-  Calendar,
-  FileText,
-  Eye,
-  Edit,
-  Share,
-  Download,
-  Settings,
-  Zap,
-  Activity,
-  TrendingUp,
-} from 'lucide-react';
+  MessageSquare, Users, Bell, Clock, CheckCircle2, AlertTriangle, Send, AtSign, Calendar, FileText, Eye, Edit, Share, Download, Settings, Zap, Activity, TrendingUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 
 export function WorkflowCollaboration({ workflowId, currentUser = 'Current User' }) {

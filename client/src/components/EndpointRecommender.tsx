@@ -10,28 +10,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  Download, 
-  Plus, 
-  FileText, 
-  Search, 
-  CheckCircle2, 
-  HelpCircle,
-  ArrowRight,
-  LineChart
-} from 'lucide-react';
+  Download, Plus, FileText, Search, CheckCircle2, HelpCircle, ArrowRight, LineChart } from 'lucide-react'
 
 // Types
 interface Endpoint {
@@ -113,17 +95,11 @@ export default function EndpointRecommender() {
   // Handler for search action
   const handleSearch = async () => {
     if (!indication || !phase) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing information",
         description: "Please select both indication and phase to search for endpoints.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing information",
-        description: "Please select both indication and phase to search for endpoints.",
-        variant: "destructive"
-      });
+  });
       return;
     }
     
@@ -234,17 +210,11 @@ export default function EndpointRecommender() {
       
     } catch (error) {
       console.error('Error generating endpoint recommendations:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Error",
         description: "Failed to generate endpoint recommendations. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to generate endpoint recommendations. Please try again.",
-        variant: "destructive"
-      });
+  });
       setIsSearching(false);
       setIsGenerating(false);
     }
@@ -252,15 +222,10 @@ export default function EndpointRecommender() {
   
   // Add an endpoint to a protocol (simulation)
   const handleAddToProtocol = (endpoint: Endpoint) => {
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Endpoint Added",
       description: `${endpoint.name} has been added to your draft protocol.`,
-    })
-  console.log('Toast would show:', {
-      title: "Endpoint Added",
-      description: `${endpoint.name} has been added to your draft protocol.`,
-    });
+  });
   };
   
   // Export recommendations
@@ -269,15 +234,10 @@ export default function EndpointRecommender() {
     
     // In a real implementation, this would generate and download a PDF
     // For now, we'll just show a toast
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Export Initiated",
       description: "Your endpoint recommendations are being exported as PDF.",
-    })
-  console.log('Toast would show:', {
-      title: "Export Initiated",
-      description: "Your endpoint recommendations are being exported as PDF.",
-    });
+  });
   };
 
   return (

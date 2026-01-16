@@ -7,15 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import {
-  Brain,
-  Send,
-  TestTube,
-  Zap,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
+  Brain, Send, TestTube, Zap, FileText, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 
 export default function RegulatoryAITesting() {
   const { toast } = useToast();

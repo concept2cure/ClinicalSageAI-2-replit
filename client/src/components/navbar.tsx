@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import {
-  FileSearch,
-  BarChart2,
-  FileText,
-  Menu,
-  X,
-  Layers,
-  DollarSign,
-  Lightbulb,
-  Code,
-  BookOpen,
-} from 'lucide-react';
+  FileSearch, BarChart2, FileText, Menu, X, Layers, DollarSign, Lightbulb, Code, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {

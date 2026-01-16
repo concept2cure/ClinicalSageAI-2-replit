@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen,
-  Brain,
-  MessageSquare,
-  Send,
-  Microscope,
-  ChevronRight,
-  Beaker,
-  FileText,
-  RefreshCw,
-} from 'lucide-react';
+  BookOpen, Brain, MessageSquare, Send, Microscope, ChevronRight, Beaker, FileText, RefreshCw } from 'lucide-react'
 import {
   Card,
   CardContent,

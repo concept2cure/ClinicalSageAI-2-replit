@@ -2,18 +2,12 @@
 import { Router } from 'express';
 import { sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
+import { requireTenant } from '../middleware/tenant.js';
 
 const router = Router();
 
-// Middleware to check for organization ID
-router.use((req, res, next) => {
-  const organizationId = req.headers['x-organization-id'] || req.headers['X-Organization-Id'];
-  if (!organizationId) {
-    return res.status(403).json({ error: 'Missing x-organization-id header' });
-  }
-  req.organizationId = parseInt(organizationId);
-  next();
-});
+// Tenant enforcement (JWT in production; header fallback only in dev/demo)
+router.use(requireTenant());
 
 // GET /api/collaboration/activities - Get recent activities
 router.get('/activities', async (req, res) => {

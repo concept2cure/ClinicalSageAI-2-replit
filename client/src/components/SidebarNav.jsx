@@ -1,15 +1,7 @@
 // /client/src/components/SidebarNav.jsx
 import { Link } from 'wouter';
 import {
-  BrainCircuit,
-  BarChart3,
-  FileText,
-  UploadCloud,
-  LineChart,
-  NotebookText,
-  FlaskConical,
-  ClipboardCheck,
-} from 'lucide-react';
+  BrainCircuit, BarChart3, FileText, UploadCloud, LineChart, NotebookText, FlaskConical, ClipboardCheck } from 'lucide-react'
 
 export default function SidebarNav() {
   return (

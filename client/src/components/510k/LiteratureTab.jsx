@@ -1,29 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Button,
-  Card,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Alert,
-  AlertTitle,
-  AlertDescription,
-  Checkbox,
-} from '@/components/ui';
-import { XCircle, BookOpen, FileCheck, Search, PlusCircle, Lightbulb } from 'lucide-react';
+import { Button, Card, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Tabs, TabsContent, TabsList, TabsTrigger, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Alert, AlertTitle, AlertDescription, Checkbox, } from '@/components/ui';
+import { XCircle, BookOpen, FileCheck, Search, PlusCircle, Lightbulb } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster';
 import LiteratureFeatureService from '@/services/LiteratureFeatureService';
 import { searchPubMed } from '@/services/LiteratureAPIService';

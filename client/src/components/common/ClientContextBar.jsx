@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, CheckCircle, Building, Shield, Info, ChevronUp } from 'lucide-react';
+import { ChevronDown, CheckCircle, Building, Shield, Info, ChevronUp } from 'lucide-react'
 import { useLocation } from 'wouter';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Clock, FileText, Activity, Shield, Brain, TrendingUp, Package, Users, LineChart, Zap, PieChart } from 'lucide-react';
+import { Clock, FileText, Activity, Shield, Brain, TrendingUp, Package, Users, LineChart, Zap, PieChart } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query';
 import * as csrAPI from '@/api/csr';
 

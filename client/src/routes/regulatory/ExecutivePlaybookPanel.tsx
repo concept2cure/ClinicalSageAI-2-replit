@@ -7,40 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '@/components/ui/dialog';
 import {
-  Target,
-  TrendingUp,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Pause,
-  Play,
-  Lightbulb,
-  Zap,
-  ArrowUp,
-  Users,
-  Calendar,
-  AlertTriangle,
-  Info,
-  RefreshCw,
-  Sparkles,
-  BarChart3,
-  Brain,
-  Wand2,
-  Pin,
-  PinOff,
-  ThumbsUp,
-  ThumbsDown,
-  ChevronRight,
-  Star,
-} from 'lucide-react';
+  Target, TrendingUp, Clock, CheckCircle2, XCircle, Pause, Play, Lightbulb, Zap, ArrowUp, Users, Calendar, AlertTriangle, Info, RefreshCw, Sparkles, BarChart3, Brain, Wand2, Pin, PinOff, ThumbsUp, ThumbsDown, ChevronRight, Star } from 'lucide-react'
 
 interface ExecutivePlaybookProps {
   subId?: string;

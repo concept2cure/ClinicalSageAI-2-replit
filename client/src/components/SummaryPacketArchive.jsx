@@ -9,9 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Archive, Clock, Download, Eye, FileText, Share2, 
-  FileSearch, RotateCcw, Calendar, Tag, ExternalLink, Filter 
-} from "lucide-react";
+  Archive, Clock, Download, Eye, FileText, Share2, FileSearch, RotateCcw, Calendar, Tag, ExternalLink, Filter } from 'lucide-react'
 
 export default function SummaryPacketArchive({ sessionId }) {
   const [archiveItems, setArchiveItems] = useState([]);

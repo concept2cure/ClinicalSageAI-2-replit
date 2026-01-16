@@ -2,14 +2,24 @@ import { Pool } from 'pg';
 
 class AuditService {
   constructor() {
-    this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    });
+    this.enabled = Boolean(process.env.DATABASE_URL);
+    this.pool = this.enabled
+      ? new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        })
+      : null;
+
+    if (!this.enabled) {
+      console.log('ℹ️ AuditService disabled (no DATABASE_URL)');
+      return;
+    }
+
     this.initializeTables();
   }
 
   async initializeTables() {
+    if (!this.pool) return;
     try {
       // Create audit_logs table if it doesn't exist
       await this.pool.query(`
@@ -20,6 +30,9 @@ class AuditService {
           action VARCHAR(255) NOT NULL,
           resource_type VARCHAR(100) NOT NULL,
           resource_id VARCHAR(255),
+          actor_id VARCHAR(255),
+          action_type VARCHAR(50),
+          target_resource VARCHAR(255),
           details JSONB,
           ip_address INET,
           user_agent TEXT,
@@ -29,12 +42,22 @@ class AuditService {
         );
       `);
 
+      // Add Phase 17 ledger columns if table already existed
+      await this.pool.query(`
+        ALTER TABLE audit_logs
+          ADD COLUMN IF NOT EXISTS actor_id VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS action_type VARCHAR(50),
+          ADD COLUMN IF NOT EXISTS target_resource VARCHAR(255);
+      `);
+
       // Create indexes for performance
       await this.pool.query(`
         CREATE INDEX IF NOT EXISTS idx_audit_tenant_timestamp ON audit_logs(tenant_id, timestamp DESC);
         CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs(user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
         CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_logs(resource_type, resource_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_logs(actor_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_action_type ON audit_logs(action_type);
       `);
 
       console.log('✅ Audit logging tables initialized');
@@ -55,6 +78,7 @@ class AuditService {
     sessionId = null,
     severity = 'info',
   }) {
+    if (!this.pool) return null;
     try {
       const result = await this.pool.query(
         `
@@ -87,6 +111,7 @@ class AuditService {
   }
 
   async getAuditTrail(tenantId, filters = {}) {
+    if (!this.pool) return [];
     try {
       let query = `
         SELECT id, user_id, action, resource_type, resource_id, details,
@@ -134,6 +159,7 @@ class AuditService {
   }
 
   async getAuditStats(tenantId, timeframe = '24 hours') {
+    if (!this.pool) return [];
     try {
       const result = await this.pool.query(
         `

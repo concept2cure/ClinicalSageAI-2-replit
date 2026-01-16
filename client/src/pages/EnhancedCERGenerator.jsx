@@ -1,29 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import {
-  Beaker,
-  FileText,
-  Search,
-  CheckCircle,
-  AlertCircle,
-  Package,
-  Globe,
-  ArrowRight,
-  FileDown,
-  Bot,
-  PlusCircle,
-  ChevronDown,
-  ChevronRight,
-  FilterX,
-  Filter,
-  Calendar,
-  BarChart,
-  Database,
-  RefreshCw,
-  Clock,
-  ArrowUpRight,
-  Zap,
-} from 'lucide-react';
+  Beaker, FileText, Search, CheckCircle, AlertCircle, Package, Globe, ArrowRight, FileDown, Bot, PlusCircle, ChevronDown, ChevronRight, FilterX, Filter, Calendar, BarChart, Database, RefreshCw, Clock, ArrowUpRight, Zap, InfoIcon } from 'lucide-react'
 
 // UI Components for our enhanced generator
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

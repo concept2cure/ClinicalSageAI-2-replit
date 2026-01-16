@@ -10,16 +10,9 @@ interface ClientWorkspace {
 }
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '../ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, } from '../ui/command';
 import { Button } from '../ui/button';
-import { Check, ChevronsUpDown, Users, Settings, Building2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Users, Settings, Building2 } from 'lucide-react'
 import { cn } from '../../lib/utils';
 import { useLocation } from 'wouter';
 import { Skeleton } from '../ui/skeleton';

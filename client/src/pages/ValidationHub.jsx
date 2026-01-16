@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AlertTriangle,
-  FileCheck,
-  Flag,
-  Settings,
-  Search,
-  Database,
-  BarChart2,
-  Download,
-  FileText,
-  Loader2,
-  Filter,
-  PlusCircle,
-} from 'lucide-react';
+  AlertTriangle, FileCheck, Flag, Settings, Search, Database, BarChart2, Download, FileText, Loader2, Filter, PlusCircle, FileX } from 'lucide-react'
 import JPValidationPanel from '@/components/validation/JPValidationPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

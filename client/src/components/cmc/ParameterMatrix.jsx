@@ -4,17 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Target, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Settings,
-  Plus,
-  Edit,
-  Eye,
-  ArrowRight,
-  Activity
-} from 'lucide-react';
+  Target, TrendingUp, AlertTriangle, CheckCircle2, Settings, Plus, Edit, Eye, ArrowRight, Activity } from 'lucide-react'
 
 const PROCESS_PARAMETERS = [
   {

@@ -2,19 +2,7 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  FileSearch,
-  Calendar,
-  Globe,
-  Tag,
-  Check,
-  Clock,
-  Download,
-  ExternalLink,
-  Eye,
-  Share2,
-  MessageSquare,
-} from 'lucide-react';
+  FileText, FileSearch, Calendar, Globe, Tag, Check, Clock, Download, ExternalLink, Eye, Share2, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';

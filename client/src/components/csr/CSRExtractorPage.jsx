@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.jsx';
 import { Button } from '@/components/ui/button';
-import { Upload, Search, Layers, FileText, ChevronRight, BarChart2 } from 'lucide-react';
+import { Upload, Search, Layers, FileText, ChevronRight, BarChart2 } from 'lucide-react'
 
 export default function CSRExtractorPage() {
   const [activeTab, setActiveTab] = useState('upload');

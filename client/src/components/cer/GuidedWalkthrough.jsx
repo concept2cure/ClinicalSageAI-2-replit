@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  PlayCircle,
-  PauseCircle,
-  CheckCircle,
-  XCircle,
-  ArrowRight,
-  RefreshCw,
-  HelpCircle,
-  Info,
-  BookOpen,
-} from 'lucide-react';
+import { PlayCircle, PauseCircle, CheckCircle, XCircle, ArrowRight, RefreshCw, HelpCircle, Info, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

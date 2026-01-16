@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useLocation } from 'wouter';
-import { HelpCircle, MessageSquare, ExternalLink } from 'lucide-react';
+import { HelpCircle, MessageSquare, ExternalLink } from 'lucide-react'
 
 const AppFooter = () => {
   const [, setLocation] = useLocation();

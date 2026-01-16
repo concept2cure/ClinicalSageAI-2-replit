@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RotateCw } from 'lucide-react';
+import { AlertTriangle, RotateCw } from 'lucide-react'
 import { Button } from './button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 import { Alert, AlertTitle, AlertDescription } from './alert';

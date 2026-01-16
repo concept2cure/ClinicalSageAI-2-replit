@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/toaster';
-import { MessageSquare, Send, X, RefreshCw, Sparkles, FileText, AlertCircle } from 'lucide-react';
+import { MessageSquare, Send, X, RefreshCw, Sparkles, FileText, AlertCircle } from 'lucide-react'
 
 /**
  * CER Assistant Panel

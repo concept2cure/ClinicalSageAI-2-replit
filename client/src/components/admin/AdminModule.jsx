@@ -7,22 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Users,
-  Building,
-  Settings,
-  Shield,
-  Activity,
-  Database,
-  UserPlus,
-  MoreHorizontal,
-  Search,
-  ChevronDown,
-  X,
-  CheckCircle,
-  AlertTriangle,
-  Filter,
-} from 'lucide-react';
+import { Users, Building, Settings, Shield, Activity, Database, UserPlus, MoreHorizontal, Search, ChevronDown, X, CheckCircle, AlertTriangle, Filter } from 'lucide-react'
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 import securityService from '../../services/SecurityService';
 import { OrganizationSwitcher } from '../client-portal/OrganizationSwitcher';

@@ -1,31 +1,5 @@
 import React, { useState } from 'react';
-import {
-  BarChart3,
-  BookOpen,
-  Calendar,
-  CheckCircle,
-  ClipboardList,
-  FileText,
-  FileWarning,
-  Layers,
-  SlidersHorizontal,
-  Users,
-  FileCheck,
-  ArrowRight,
-  Clock,
-  ListTodo,
-  BookText,
-  Database,
-  Shield,
-  PieChart,
-  ArrowUpRight,
-  FlaskConical,
-  BarChart,
-  Bell,
-  Plus,
-  Pen,
-  Brain,
-} from 'lucide-react';
+import { BarChart3, BookOpen, Calendar, CheckCircle, ClipboardList, FileText, FileWarning, Layers, SlidersHorizontal, Users, FileCheck, ArrowRight, Clock, ListTodo, BookText, Database, Shield, PieChart, ArrowUpRight, FlaskConical, BarChart, Bell, Plus, Pen, Brain, PlusCircle } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 import { Link } from 'wouter';
 

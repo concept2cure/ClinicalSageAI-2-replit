@@ -2,7 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from './db/index.js';
-import { users, organizations, organizationUsers } from '../shared/schema.js';
+import { users, organizations, organizationUsers } from '../shared/schema.ts';
 import { eq, and } from 'drizzle-orm';
 
 // Initialize auth router

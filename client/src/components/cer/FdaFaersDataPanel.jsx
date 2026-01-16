@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,39 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Loader2,
-  Search,
-  CheckCircle,
-  AlertCircle,
-  DatabaseIcon,
-  BarChart4,
-  BarChartHorizontal,
-  HelpCircle,
-  FileText,
-  FileCheck,
-  Filter,
-  Calendar,
-  Zap,
-  Download,
-  ChevronRight,
-  RefreshCw,
-  ExternalLink,
-} from 'lucide-react';
+  Loader2, Search, CheckCircle, AlertCircle, DatabaseIcon, BarChart4, BarChartHorizontal, HelpCircle, FileText, FileCheck, Filter, Calendar, Zap, Download, ChevronRight, RefreshCw, ExternalLink, Database, Shield } from 'lucide-react'
 import { FaersRiskBadge } from './FaersRiskBadge';
 import { FaersHowToModal } from './FaersHowToModal';
 import { useToast } from '@/components/ui/toaster';

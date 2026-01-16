@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Building, Upload, PenLine, Users, ArrowLeft, Brain } from 'lucide-react';
+import { FileText, Building, Upload, PenLine, Users, ArrowLeft, Brain } from 'lucide-react'
 
 import SponsorInfoForm from '../components/ind-wizard/SponsorInfoForm';
 import FDAFormsUploader from '../components/ind-wizard/FDAFormsUploader';

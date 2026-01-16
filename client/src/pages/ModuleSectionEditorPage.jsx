@@ -8,23 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  ArrowLeft, 
-  RefreshCw, 
-  FileText, 
-  Link, 
-  Unlink, 
-  Clock, 
-  Users, 
-  CheckCircle, 
-  AlertTriangle, 
-  Activity,
-  Wifi,
-  WifiOff,
-  Bell,
-  Shield,
-  GitBranch,
-  Eye
-} from 'lucide-react';
+  ArrowLeft, RefreshCw, FileText, Link, Unlink, Clock, Users, CheckCircle, AlertTriangle, Activity, Wifi, WifiOff, Bell, Shield, GitBranch, Eye } from 'lucide-react'
 
 /**
  * Module Section Editor Page - Enhanced with sync status and metadata

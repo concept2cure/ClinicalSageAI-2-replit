@@ -5,21 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  History,
-  Clock,
-  User,
-  Shield,
-  FileText,
-  GitBranch,
-  Download,
-  Eye,
-  RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  Calendar,
-  Tag,
-  Building,
-} from 'lucide-react';
+  History, Clock, User, Shield, FileText, GitBranch, Download, Eye, RefreshCw, CheckCircle2, AlertTriangle, Calendar, Tag, Building, Upload } from 'lucide-react'
 import { format } from 'date-fns';
 
 /**

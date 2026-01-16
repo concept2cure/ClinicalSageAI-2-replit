@@ -9,64 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import {
-  FileText,
-  Upload,
-  Search,
-  Filter,
-  Download,
-  Eye,
-  Tags,
-  FileCheck,
-  Heart,
-  Zap,
-  Shield,
-  Clock,
-  Package,
-  Users,
-  Activity,
-  Factory,
-  AlertTriangle,
-  ChevronRight,
-  Folder,
-  CheckCircle,
-  Sparkles,
-  UploadCloud,
-  X,
-  RefreshCw,
-  Database,
-  FileSearch,
-  Copy,
-  MoreVertical,
-  Calendar,
-  Code,
-  Trash2,
-} from 'lucide-react';
+  FileText, Upload, Search, Filter, Download, Eye, Tags, FileCheck, Heart, Zap, Shield, Clock, Package, Users, Activity, Factory, AlertTriangle, ChevronRight, Folder, CheckCircle, Sparkles, UploadCloud, X, RefreshCw, Database, FileSearch, Copy, MoreVertical, Calendar, Code, Trash2 } from 'lucide-react'
 
 // Category icons and metadata
 const CATEGORY_CONFIG = {

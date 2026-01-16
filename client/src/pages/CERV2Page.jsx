@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // Safely handle LumenAiAssistant context access with fallbacks
 import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { useToast } from '@/components/ui/toaster';
 import { queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
 import axios from 'axios';
-// CER imports disabled - focusing on 510(k) workflow only
-// import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
-// import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
-// import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
-// import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
+import { lumen } from '@/api/lumen';
+import mammoth from 'mammoth';
+import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
+import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
+import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
+import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
 import ComplianceScorePanel from '@/components/cer/ComplianceScorePanel';
-// import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
+import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
 import DocumentVaultPanel from '@/components/cer/DocumentVaultPanel';
 import CerDataRetrievalPanel from '@/components/cer/CerDataRetrievalPanel';
 // Using 510k specific components instead of CER ones
@@ -63,73 +66,7 @@ import { literatureAPIService } from '@/services/LiteratureAPIService';
 import LiteratureFeatureService from '@/services/LiteratureFeatureService';
 import { ensureProfileIntegrity, createNewDeviceProfile } from '@/utils/deviceProfileUtils';
 import {
-  FileText,
-  BookOpen,
-  CheckSquare,
-  Download,
-  MessageSquare,
-  Clock,
-  FileCheck,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  ZapIcon,
-  BarChart,
-  FolderOpen,
-  Database,
-  GitCompare,
-  BookMarked,
-  Lightbulb,
-  ClipboardList,
-  FileSpreadsheet,
-  Layers,
-  Trophy,
-  ShieldCheck,
-  Shield,
-  Play,
-  PlayCircle,
-  Archive,
-  Activity,
-  Cpu,
-  HardDrive,
-  Network,
-  Code,
-  XCircle,
-  DownloadCloud,
-  Search,
-  Calendar,
-  Info,
-  ArrowRight,
-  AlertTriangle,
-  Files,
-  FolderTree,
-  X,
-  FilePlus,
-  FolderPlus,
-  PlusCircle,
-  Loader2,
-  UploadCloud,
-  Upload,
-  Target,
-  Zap,
-  ClipboardCheck,
-  CalendarDays,
-  User,
-  ChevronRight,
-  ExternalLink,
-  Edit3,
-  Heart,
-  Lock,
-  Users,
-  Package,
-  Send,
-  Tag,
-  TestTube,
-  Beaker,
-  Award,
-  Droplet,
-  Workflow,
-} from 'lucide-react';
+  FileText, BookOpen, CheckSquare, Download, MessageSquare, Clock, FileCheck, CheckCircle, AlertCircle, RefreshCw, ZapIcon, BarChart, FolderOpen, Database, GitCompare, BookMarked, Lightbulb, ClipboardList, FileSpreadsheet, Layers, Trophy, ShieldCheck, Shield, Play, PlayCircle, Archive, Activity, Cpu, HardDrive, Network, Code, XCircle, DownloadCloud, Search, Calendar, Info, ArrowRight, AlertTriangle, Files, FolderTree, X, FilePlus, FolderPlus, PlusCircle, Loader2, UploadCloud, Upload, Target, Zap, ClipboardCheck, CalendarDays, User, ChevronRight, ExternalLink, Edit3, Heart, Lock, Users, Package, Send, Tag, TestTube, Beaker, Award, Droplet, Workflow } from 'lucide-react'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -150,6 +87,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Stable module surfaces (used by consolidated navigation)
+import UnifiedTaskDashboard from '@/components/UnifiedTaskDashboard';
+import TaskManagementHub from '@/components/TaskManagementHub';
 import {
   Card,
   CardContent,
@@ -176,23 +117,203 @@ const safeAssistantHook = () => {
   }
 };
 
+// Create a fallback if TenantContext is unavailable
+const useSafeTenant = () => {
+  try {
+    return useTenant();
+  } catch (e) {
+    console.warn('TenantContext not available, using fallback');
+    return {
+      organizations: [],
+      currentOrganization: null,
+      setCurrentOrganization: () => {},
+      clientWorkspaces: [],
+      currentClientWorkspace: null,
+      setCurrentClientWorkspace: () => {},
+      filteredClientWorkspaces: [],
+      modules: [],
+      currentModule: null,
+      setCurrentModule: () => {},
+      isLoading: false,
+      getTenantHeaders: () => ({}),
+      refreshClientWorkspaces: async () => [],
+    };
+  }
+};
+
 export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   // Use the safe assistant hook instead of direct context access
   const assistantContext = safeAssistantHook();
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
-  
-  // Organization and workspace IDs for project management
-  const organizationId = '6'; // Default organization ID
-  const clientWorkspaceId = '26'; // Default workspace ID
-  
-  // Set organization ID in localStorage for API interceptor
+
+  // AI contextual surfacing (Phase 3)
   useEffect(() => {
-    localStorage.setItem('currentOrganizationId', organizationId);
-  }, [organizationId]);
+    const handler = (evt) => {
+      try {
+        const detail = evt?.detail || {};
+        const module = detail?.module || (
+          evt?.type === 'cerv2:validation_failed'
+            ? 'validation'
+            : evt?.type === 'cerv2:predicted_questions'
+              ? 'predicted_questions'
+              : 'confidence_gate'
+        );
+        setModuleContext({ module: module, context: detail });
+      } catch {
+        // ignore
+      }
+    };
+    try {
+      window.addEventListener('cerv2:confidence_gate', handler);
+      window.addEventListener('cerv2:validation_failed', handler);
+      window.addEventListener('cerv2:predicted_questions', handler);
+      return () => {
+        window.removeEventListener('cerv2:confidence_gate', handler);
+        window.removeEventListener('cerv2:validation_failed', handler);
+        window.removeEventListener('cerv2:predicted_questions', handler);
+      };
+    } catch {
+      return undefined;
+    }
+  }, [setModuleContext]);
+
+  const tenantContext = useSafeTenant();
+  const { currentOrganization, currentClientWorkspace, isLoading: tenantLoading } = tenantContext;
+
+  // Organization and workspace IDs for project management (tenant-derived)
+  const organizationId = currentOrganization?.id ? String(currentOrganization.id) : null;
+  const clientWorkspaceId = currentClientWorkspace?.id ? String(currentClientWorkspace.id) : null;
+
+  // Subscription gate (server-enforced toggle; UI blocks access when disabled)
+  const [moduleAccess, setModuleAccess] = useState({
+    loading: true,
+    allowed: true,
+    reason: null,
+    module: null,
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    const checkAccess = async () => {
+      try {
+        const resp = await apiRequest('GET', '/api/modules/access/cerv2');
+        const data = await resp.json();
+        if (!mounted) return;
+
+        // If the endpoint is unavailable or returns unexpected data, fail open to avoid blocking users.
+        if (typeof data?.allowed !== 'boolean') {
+          setModuleAccess({ loading: false, allowed: true, reason: null, module: null });
+          return;
+        }
+
+        setModuleAccess({
+          loading: false,
+          allowed: data.allowed,
+          reason: data.reason || null,
+          module: data.module || null,
+        });
+      } catch (_e) {
+        if (!mounted) return;
+        setModuleAccess({ loading: false, allowed: true, reason: null, module: null });
+      }
+    };
+
+    checkAccess();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const enableModuleNow = async () => {
+    try {
+      await apiRequest('POST', '/api/modules/subscribe', {
+        moduleId: 'cerv2',
+        enabled: true,
+        actor: 'upgrade_cta',
+      });
+      const resp = await apiRequest('GET', '/api/modules/access/cerv2');
+      const data = await resp.json();
+      if (typeof data?.allowed === 'boolean') {
+        setModuleAccess({ loading: false, allowed: data.allowed, reason: data.reason || null, module: data.module || null });
+      }
+    } catch (e) {
+      toast({
+        title: 'Unable to enable module',
+        description: e?.message || 'Please try again or contact support.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (!moduleAccess.loading && moduleAccess.allowed === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-xl w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-1">
+              <Lock className="h-6 w-6 text-gray-500" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Subscription required
+              </h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-300">
+                {moduleAccess.module?.name || 'Medical Device & Diagnostics'} is not enabled for your organization.
+              </p>
+              <div className="mt-5 flex gap-3">
+                <Button onClick={() => (window.location.href = '/subscriptions')} variant="outline">
+                  View plans
+                </Button>
+                <Button onClick={enableModuleNow}>
+                  Enable now
+                </Button>
+              </div>
+              <p className="mt-3 text-xs text-gray-500">
+                {moduleAccess.reason === 'SUBSCRIPTION_REQUIRED'
+                  ? 'Enable access to unlock 510(k) + CER workflows.'
+                  : 'Access is currently restricted.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (tenantLoading && !organizationId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="text-gray-600 dark:text-gray-300">Loading organization context…</div>
+      </div>
+    );
+  }
+
+  // Tenant must be selected for enterprise-grade isolation.
+  // (In production this is typically JWT-derived; in dev/demo it may come from TenantContext/localStorage.)
+  if (!tenantLoading && !organizationId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-6">
+        <div className="max-w-xl w-full bg-white rounded-xl shadow-lg p-8">
+          <h1 className="text-2xl font-bold text-gray-900">Select an Organization</h1>
+          <p className="mt-2 text-gray-600">
+            This module requires an active tenant context to load projects and enforce access controls.
+          </p>
+          <p className="mt-4 text-sm text-gray-500">
+            Use the organization switcher in the main navigation, then return here.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Multi-Project Management State
   const [allProjects, setAllProjects] = useState([]);
+
+  const isServerProjectId = (projectId) => {
+    const numericId = Number.parseInt(String(projectId), 10);
+    return Number.isFinite(numericId) && String(numericId) === String(projectId);
+  };
   
   const [currentProjectId, setCurrentProjectId] = useState(() => {
     try {
@@ -210,46 +331,71 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        if (tenantLoading) return;
+
         console.log('Fetching projects from database...');
-        
-        // Using organizationId and clientWorkspaceId defined at component level
-        console.log('Using org ID:', organizationId, 'workspace ID:', clientWorkspaceId);
-        
-        // Build query params
+        console.log('Tenant org ID:', organizationId, 'workspace ID:', clientWorkspaceId);
+
         const params = new URLSearchParams();
-        params.append('organization_id', organizationId);
-        params.append('client_workspace_id', clientWorkspaceId);
-        
-        const url = `/api/projects?${params.toString()}`;
-        console.log('Fetching from:', url);
-        
-        const response = await fetch(url);
-        console.log('Response status:', response.status);
-        
+        if (clientWorkspaceId) params.append('client_workspace_id', clientWorkspaceId);
+
+        const url = params.toString() ? `/api/projects?${params.toString()}` : '/api/projects';
+        const extraHeaders = clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined;
+        const response = await apiRequest('GET', url, undefined, extraHeaders);
+
         if (response.ok) {
           const projects = await response.json();
-          console.log('Received projects from API:', projects);
-          
-          // Transform database projects to match frontend format
-          const transformedProjects = projects.map(p => ({
-            id: p.id?.toString() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            deviceName: p.name || 'Untitled Device',
-            deviceType: p.type || 'medical_device',
-            manufacturer: p.metadata?.manufacturer || '',
-            deviceClass: p.metadata?.deviceClass || 'II',
-            intendedUse: p.metadata?.intendedUse || '',
-            status: p.status || 'draft',
-            createdAt: p.created_at || new Date().toISOString(),
-            updatedAt: p.updated_at || new Date().toISOString(),
-            attachedDocuments: p.metadata?.attachedDocuments || [],
-            state: p.metadata?.state || {}
-          }));
-          
-          console.log('Transformed projects:', transformedProjects);
+
+          const transformedProjects = (Array.isArray(projects) ? projects : [])
+            .map(p => {
+              if (!p?.id) return null;
+              return {
+                id: String(p.id),
+                deviceName: p.name || 'Untitled Device',
+                deviceType: p.type || 'medical_device',
+                manufacturer: p.metadata?.manufacturer || '',
+                deviceClass: p.metadata?.deviceClass || 'II',
+                intendedUse: p.metadata?.intendedUse || '',
+                status: p.status || 'draft',
+                createdAt: p.createdAt || p.created_at || new Date().toISOString(),
+                updatedAt: p.updatedAt || p.updated_at || new Date().toISOString(),
+                attachedDocuments: p.metadata?.attachedDocuments || [],
+                state: p.metadata?.state || {},
+              };
+            })
+            .filter(Boolean);
+
           setAllProjects(transformedProjects);
-          
-          // Also cache in localStorage for offline access
-          localStorage.setItem('medicalDeviceProjects', JSON.stringify(transformedProjects));
+
+          // Cache for offline/read-only fallback only
+          try {
+            const sanitized = transformedProjects.map(p => {
+              if (!p?.id) return null;
+              if (isServerProjectId(p.id)) {
+                const { state, ...rest } = p;
+                return rest;
+              }
+              return p;
+            }).filter(Boolean);
+            localStorage.setItem('medicalDeviceProjects', JSON.stringify(sanitized));
+          } catch (_e) {
+            // ignore
+          }
+
+          // Ensure current project selection is valid for this tenant/workspace
+          try {
+            const savedId = localStorage.getItem('currentMedicalDeviceProjectId');
+            const nextId =
+              (savedId && transformedProjects.some(p => p.id === savedId) && savedId) ||
+              transformedProjects[0]?.id ||
+              null;
+
+            setCurrentProjectId(nextId);
+            if (nextId) localStorage.setItem('currentMedicalDeviceProjectId', nextId);
+            else localStorage.removeItem('currentMedicalDeviceProjectId');
+          } catch (_e) {
+            // ignore
+          }
         } else {
           console.error('Failed to fetch projects, status:', response.status);
           // If API fails, still try loading from localStorage
@@ -257,11 +403,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           if (saved) {
             try {
               const projects = JSON.parse(saved);
-              console.log('Loaded cached projects from localStorage:', projects);
-              setAllProjects(projects.map(p => ({
-                ...p,
-                attachedDocuments: p.attachedDocuments || []
-              })));
+              setAllProjects(
+                (Array.isArray(projects) ? projects : []).map(p => ({
+                  ...p,
+                  attachedDocuments: p.attachedDocuments || [],
+                }))
+              );
             } catch (parseError) {
               console.warn('Error parsing localStorage projects:', parseError);
             }
@@ -285,13 +432,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         }
       }
     };
-    
-    // Add a small delay to ensure the component is mounted
-    setTimeout(fetchProjects, 100);
-  }, []); // Run once on mount
+
+    fetchProjects();
+  }, [tenantLoading, organizationId, clientWorkspaceId]);
 
   // State variables
-  const [title, setTitle] = useState('FDA 510(k) Submission');
+  const [title, setTitle] = useState('FDA 510(k) Dossier');
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showDeviceIntakeForm, setShowDeviceIntakeForm] = useState(false);
   const [newClientMode, setNewClientMode] = useState(false);
@@ -303,9 +449,27 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     isOpen: false,
     url: '',
     documentName: '',
-    type: 'other'
+    type: 'other',
+    loading: false,
+    error: null,
+    html: ''
   });
-  const [documentType, setDocumentType] = useState('510k'); // Force 510k mode for now
+  const [documentViewerViewMode, setDocumentViewerViewMode] = useState('preview'); // 'preview' | 'raw'
+
+  useEffect(() => {
+    if (!documentViewerData.isOpen) return;
+    setDocumentViewerViewMode('preview');
+  }, [documentViewerData.isOpen, documentViewerData.url]);
+  const getInitialDocumentType = () => {
+    // Prefer explicit prop, then saved state, then default.
+    try {
+      return initialDocumentType || localStorage.getItem('cerv2_documentType') || '510k';
+    } catch (e) {
+      return initialDocumentType || '510k';
+    }
+  };
+  const initialType = getInitialDocumentType();
+  const [documentType, setDocumentType] = useState(initialType);
   const [deviceName, setDeviceName] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
@@ -325,8 +489,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingFaers, setIsFetchingFaers] = useState(false);
   const [isFetchingLiterature, setIsFetchingLiterature] = useState(false);
-  // Start users at Device Intake Form - the clear starting point for 510(k)
-  const [activeTab, setActiveTab] = useState(initialActiveTab || 'device-intake');
+  // Start users at the appropriate entry point per document type
+  const [activeTab, setActiveTab] = useState(
+    initialActiveTab || (initialType === 'cer' ? 'builder' : 'home')
+  );
 
   // Helper function to load saved state from localStorage
   const loadSavedState = (key, defaultValue) => {
@@ -348,19 +514,78 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     }
   };
 
+  // 510k workflow specific state with persistence (declared early to avoid temporal dead zone in useEffect dependencies)
+  const [workflowStep, setWorkflowStep] = useState(() => loadSavedState('workflowStep', 1));
+  const [workflowProgress, setWorkflowProgress] = useState(() =>
+    loadSavedState('workflowProgress', 25)
+  );
+  const [predicatesFound, setPredicatesFound] = useState(() =>
+    loadSavedState('predicatesFound', false)
+  );
+  // eSTAR and RTA status state for Stage 5
+  const [estarStatus, setEstarStatus] = useState('not_started');
+  const [rtaStatus, setRtaStatus] = useState('not_started');
+  const [predicateDevices, setPredicateDevices] = useState(() =>
+    loadSavedState('predicateDevices', [])
+  );
+  const [literatureResults, setLiteratureResults] = useState([]);
+
+  // eSTAR Builder state variables
+  const [isValidatingEstar, setIsValidatingEstar] = useState(false);
+  const [isGeneratingEstar, setIsGeneratingEstar] = useState(false);
+  const [estarValidationResults, setEstarValidationResults] = useState(null);
+  const [estarGeneratedUrl, setEstarGeneratedUrl] = useState('');
+  const [estarFormat, setEstarFormat] = useState('zip');
+
   // Multi-Project Management Functions
   const saveAllProjects = (projects) => {
     try {
-      localStorage.setItem('medicalDeviceProjects', JSON.stringify(projects));
+      const sanitized = (Array.isArray(projects) ? projects : [])
+        .map(p => {
+          if (!p?.id) return null;
+          if (isServerProjectId(p.id)) {
+            const { state, ...rest } = p;
+            return rest;
+          }
+          return p;
+        })
+        .filter(Boolean);
+      localStorage.setItem('medicalDeviceProjects', JSON.stringify(sanitized));
     } catch (error) {
       console.error('Error saving projects:', error);
     }
   };
 
-  const createNewProject = (projectData) => {
+  const createNewProject = async (projectData) => {
+    const deviceName = projectData.deviceName || 'Untitled Device';
+
+    let serverProjectId = null;
+    if (organizationId) {
+      try {
+        const response = await apiRequest(
+          'POST',
+          '/api/projects',
+          {
+            name: deviceName,
+            description: projectData.intendedUse || undefined,
+            type: 'medical_device',
+            priority: 'medium',
+          },
+          clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+        );
+
+        if (response.ok) {
+          const created = await response.json();
+          if (created?.id) serverProjectId = String(created.id);
+        }
+      } catch (e) {
+        console.warn('Project creation API failed; falling back to local-only draft:', e);
+      }
+    }
+
     const newProject = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      deviceName: projectData.deviceName || 'Untitled Device',
+      id: serverProjectId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      deviceName,
       deviceType: documentType,
       manufacturer: projectData.manufacturer || '',
       deviceClass: projectData.deviceClass || 'II',
@@ -368,16 +593,15 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      attachedDocuments: [], // Initialize empty attachedDocuments array
-      // Store complete project state
+      attachedDocuments: [],
       state: {
         deviceProfile,
         predicateDevices,
         literatureResults,
         complianceScore,
         workflowStep,
-        documentType
-      }
+        documentType,
+      },
     };
     
     const updated = [...allProjects, newProject];
@@ -388,7 +612,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     
     toast({
       title: 'New Project Created',
-      description: `Created project for ${newProject.deviceName}`,
+      description: serverProjectId
+        ? `Created project in workspace: ${deviceName}`
+        : `Created local draft project: ${deviceName}`,
     });
     
     return newProject;
@@ -399,17 +625,77 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     if (!project) return;
     
     // Save current project state before switching
-    if (currentProjectId) {
+    if (currentProjectId && !isServerProjectId(currentProjectId)) {
       saveCurrentProjectState();
     }
     
     // Load the selected project's state
     setCurrentProjectId(projectId);
     localStorage.setItem('currentMedicalDeviceProjectId', projectId);
+
+    const nextDocumentType = project.state?.documentType || project.deviceType || '510k';
+    setDocumentType(nextDocumentType);
+
+    // Restore project state (for both local and server-backed projects).
+    if (project.state) {
+      setDeviceProfile(project.state.deviceProfile || {});
+      setPredicateDevices(project.state.predicateDevices || []);
+      setLiteratureResults(project.state.literatureResults || []);
+      setComplianceScore(project.state.complianceScore || null);
+
+      // Only persist 510(k) keys to localStorage for 510(k) projects.
+      if (nextDocumentType === '510k') {
+        if (project.state.workflowStep) {
+          setWorkflowStep(project.state.workflowStep);
+          saveState('workflowStep', project.state.workflowStep);
+        }
+      } else {
+        setWorkflowStep(project.state.workflowStep || 1);
+      }
+    }
+
+    // For PMA projects, switch the UI into PMA mode and avoid 510(k) APIs.
+    if (nextDocumentType === 'pma') {
+      // Prefer the PMA submission builder as the default landing page for a PMA *project*.
+      setActiveTab('pma-builder');
+
+      // Prefill the PMA builder with best-available project info.
+      const profile = project.state?.deviceProfile || {};
+      const fallbackDeviceName = profile.deviceName || project.deviceName || '';
+      const fallbackManufacturer = profile.manufacturer || project.manufacturer || '';
+      setPmaSubmissionData(prev => ({
+        ...prev,
+        deviceName: prev?.deviceName || fallbackDeviceName,
+        manufacturer: prev?.manufacturer || fallbackManufacturer,
+      }));
+
+      setShowProjectSelector(false);
+
+      // Hydrate server-backed PMA state (if available) after switching.
+      if (isServerProjectId(projectId)) {
+        await loadCerv2PmaDocumentState(projectId);
+      }
+
+      toast({
+        title: 'Switched Project',
+        description: `Now working on ${project.deviceName} (PMA)`,
+      });
+      return;
+    }
     
-    // Fetch FDA 510(k) stage data from database
+    // Fetch FDA 510(k) stage data from database (510(k) only)
     try {
-      const response = await fetch(`/api/fda-510k/projects/${projectId}/stage`);
+      if (!isServerProjectId(projectId)) {
+        // Local-only project; rely on in-memory / local state.
+        return;
+      }
+
+      const response = await apiRequest(
+        'GET',
+        `/api/510k-project/${projectId}/stage`,
+        undefined,
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
       if (response.ok) {
         const stageData = await response.json();
         console.log('Loaded FDA 510(k) stage data:', stageData);
@@ -417,23 +703,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         // Set the workflow step based on the database stage
         if (stageData.current_stage) {
           setWorkflowStep(stageData.current_stage);
+          saveState('workflowStep', stageData.current_stage);
           
           // Also set the appropriate tab based on stage
           const stageTabMap = {
             1: 'device-intake',  // Stage 1: Initial Device Assessment
-            2: 'predicate',      // Stage 2: Predicate Analysis
+            2: 'predicates',     // Stage 2: Predicate Analysis
             3: 'equivalence',    // Stage 3: Performance Testing
             4: 'compliance',     // Stage 4: Clinical Validation
-            5: 'estar',          // Stage 5: eSTAR & RTA Prep
+            5: 'rta-check',      // Stage 5: eSTAR & RTA Prep
             6: 'submission',     // Stage 6: Final QC Review
             7: 'submission'      // Stage 7: FDA Submission
           };
           
           const targetTab = stageTabMap[stageData.current_stage] || 'device-intake';
           setActiveTab(targetTab);
+          saveState('activeTab', targetTab);
           
           // Update workflow progress
           setWorkflowProgress(stageData.overall_progress || 0);
+          saveState('workflowProgress', stageData.overall_progress || 0);
           
           // If we have eSTAR/RTA status, set those too
           if (stageData.estar_status) {
@@ -452,15 +741,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       }
     }
     
-    // Restore project state
-    if (project.state) {
-      setDeviceProfile(project.state.deviceProfile || {});
-      setPredicateDevices(project.state.predicateDevices || []);
-      setLiteratureResults(project.state.literatureResults || []);
-      setComplianceScore(project.state.complianceScore || null);
-      setDocumentType(project.state.documentType || '510k');
-    }
-    
     toast({
       title: 'Switched Project',
       description: `Now working on ${project.deviceName}`,
@@ -469,8 +749,275 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     setShowProjectSelector(false);
   };
 
+  // Persist workflow stage/progress to server (enterprise source of truth)
+  const persistWorkflowStage = async (nextStage, nextOverallProgress) => {
+    if (!currentProjectId) return;
+    if (documentType !== '510k') return;
+    const numericId = Number.parseInt(String(currentProjectId), 10);
+    const isServerProjectId = Number.isFinite(numericId) && String(numericId) === String(currentProjectId);
+    if (!isServerProjectId) return;
+
+    try {
+      await apiRequest(
+        'PUT',
+        `/api/510k-project/${numericId}/stage`,
+        {
+          current_stage: nextStage,
+          current_stage_progress: nextOverallProgress,
+          overall_progress: nextOverallProgress,
+          estar_status: estarStatus,
+          rta_status: rtaStatus,
+        },
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
+    } catch (e) {
+      // Fail soft: local cache remains as fallback.
+      console.warn('[CERV2] Failed to persist workflow stage:', e);
+    }
+  };
+
+  // Server-backed CERV2 document state sync (DB source of truth; localStorage remains fallback)
+  const lastServerHydrationAtRef = useRef(0);
+  const lastServerPersistAtRef = useRef(0);
+  const cerv2MetadataRef = useRef({});
+  const lastEvidenceFabricPersistAtRef = useRef(0);
+
+  // Evidence Fabric (Smart Tags -> stale/red + refresh -> new manifest)
+  const [evidenceFabricManifest, setEvidenceFabricManifest] = useState(null);
+  const [evidenceFabricStatus, setEvidenceFabricStatus] = useState({
+    stale: false,
+    staleReason: null,
+    changedSources: [],
+    newBindings: [],
+    checkedAt: null,
+    refreshedAt: null,
+  });
+
+  const loadCerv2DocumentState = async (projectId) => {
+    if (!projectId) return;
+    if (documentType !== '510k') return;
+    if (!isServerProjectId(projectId)) return;
+
+    const numericId = Number.parseInt(String(projectId), 10);
+    try {
+      const response = await apiRequest(
+        'GET',
+        `/api/cerv2/documents/${numericId}/cerv2_510k`,
+        undefined,
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
+
+      if (!response.ok) {
+        // If not found, the project just hasn't been saved server-side yet.
+        return;
+      }
+
+      const data = await response.json();
+      const sections = data?.sections || {};
+      const metadata = data?.metadata || {};
+
+      // Preserve any metadata fields we don't explicitly manage (e.g., Evidence Fabric)
+      cerv2MetadataRef.current = metadata || {};
+
+      // Hydrate Evidence Fabric state (if present)
+      const ef = metadata?.evidenceFabric;
+      if (ef?.manifest) setEvidenceFabricManifest(ef.manifest);
+      if (typeof ef?.stale === 'boolean') {
+        setEvidenceFabricStatus((prev) => ({
+          ...prev,
+          stale: Boolean(ef.stale),
+          staleReason: ef.staleReason ?? prev.staleReason,
+          changedSources: Array.isArray(ef.changedSources) ? ef.changedSources : prev.changedSources,
+          newBindings: Array.isArray(ef.newBindings) ? ef.newBindings : prev.newBindings,
+          checkedAt: ef.checkedAt ?? prev.checkedAt,
+          refreshedAt: ef.refreshedAt ?? prev.refreshedAt,
+        }));
+      }
+
+      // Mark hydration to avoid immediately re-saving the just-loaded state.
+      lastServerHydrationAtRef.current = Date.now();
+
+      if (sections.deviceProfile) setDeviceProfile(sections.deviceProfile);
+      if (Array.isArray(sections.predicateDevices)) setPredicateDevices(sections.predicateDevices);
+      if (typeof sections.predicatesFound === 'boolean') setPredicatesFound(sections.predicatesFound);
+      if (sections.riskAssessmentData) setRiskAssessmentData(sections.riskAssessmentData);
+      if (sections.equivalenceData) setEquivalenceData(sections.equivalenceData);
+      if (typeof sections.equivalenceCompleted === 'boolean') setEquivalenceCompleted(sections.equivalenceCompleted);
+      if (sections.complianceScore) setComplianceScore(sections.complianceScore);
+      if (sections.complianceFixes) setComplianceFixes(sections.complianceFixes);
+      if (sections.templateData) setTemplateData(sections.templateData);
+      if (Array.isArray(sections.selectedLiterature)) setSelectedLiterature(sections.selectedLiterature);
+
+      // Prefer stage endpoint for these, but allow doc-level restore as fallback.
+      if (typeof sections.estarStatus === 'string') setEstarStatus(sections.estarStatus);
+      if (typeof sections.rtaStatus === 'string') setRtaStatus(sections.rtaStatus);
+      if (typeof sections.estarGeneratedUrl === 'string') setEstarGeneratedUrl(sections.estarGeneratedUrl);
+      if (typeof sections.estarFormat === 'string') setEstarFormat(sections.estarFormat);
+      if (sections.estarValidationResults) setEstarValidationResults(sections.estarValidationResults);
+
+      // Optional restore (do not override current in-memory navigation unless missing)
+      if (metadata?.activeTab && !activeTab) setActiveTab(metadata.activeTab);
+    } catch (e) {
+      console.warn('[CERV2] Failed to load CERV2 document state:', e);
+    }
+  };
+
+  const loadCerv2PmaDocumentState = async (projectId) => {
+    if (!projectId) return;
+    if (!isServerProjectId(projectId)) return;
+
+    const numericId = Number.parseInt(String(projectId), 10);
+    try {
+      const response = await apiRequest(
+        'GET',
+        `/api/cerv2/documents/${numericId}/cerv2_pma`,
+        undefined,
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const sections = data?.sections || {};
+      const metadata = data?.metadata || {};
+
+      lastServerHydrationAtRef.current = Date.now();
+
+      if (typeof sections.pmaSearchQuery === 'string') setPmaSearchQuery(sections.pmaSearchQuery);
+      if (Array.isArray(sections.selectedPmaDevices)) setSelectedPmaDevices(sections.selectedPmaDevices);
+      if (sections.pmaComparisonResults) setPmaComparisonResults(sections.pmaComparisonResults);
+      if (sections.pmaSupplements) setPmaSupplements(sections.pmaSupplements);
+      if (sections.pmaSubmissionData) setPmaSubmissionData(sections.pmaSubmissionData);
+
+      // Only allow PMA tabs to be restored when in PMA mode.
+      if (typeof metadata?.activeTab === 'string' && metadata.activeTab.startsWith('pma-')) {
+        setActiveTab(metadata.activeTab);
+      }
+    } catch (e) {
+      console.warn('[CERV2] Failed to load PMA document state:', e);
+    }
+  };
+
+  const persistCerv2DocumentState = async () => {
+    if (!currentProjectId) return;
+    if (documentType !== '510k') return;
+    if (!isServerProjectId(currentProjectId)) return;
+
+    // Avoid thrashing: skip if we just hydrated from server.
+    if (Date.now() - lastServerHydrationAtRef.current < 1500) return;
+    // Avoid excessive writes.
+    if (Date.now() - lastServerPersistAtRef.current < 750) return;
+
+    const numericId = Number.parseInt(String(currentProjectId), 10);
+    try {
+      const nextMetadata = {
+        ...(cerv2MetadataRef.current || {}),
+        savedAt: new Date().toISOString(),
+        activeTab,
+        workflowStep,
+        workflowProgress,
+        evidenceFabric: {
+          ...(cerv2MetadataRef.current?.evidenceFabric || {}),
+          manifest: evidenceFabricManifest || cerv2MetadataRef.current?.evidenceFabric?.manifest || null,
+          stale: Boolean(evidenceFabricStatus?.stale),
+          staleReason: evidenceFabricStatus?.staleReason || null,
+          changedSources: Array.isArray(evidenceFabricStatus?.changedSources) ? evidenceFabricStatus.changedSources : [],
+          newBindings: Array.isArray(evidenceFabricStatus?.newBindings) ? evidenceFabricStatus.newBindings : [],
+          checkedAt: evidenceFabricStatus?.checkedAt || null,
+          refreshedAt: evidenceFabricStatus?.refreshedAt || null,
+        },
+      };
+
+      await apiRequest(
+        'POST',
+        `/api/cerv2/documents/${numericId}/save`,
+        {
+          documentType: 'cerv2_510k',
+          sections: {
+            deviceProfile,
+            predicateDevices,
+            predicatesFound,
+            riskAssessmentData,
+            equivalenceData,
+            equivalenceCompleted,
+            complianceScore,
+            complianceFixes,
+            templateData,
+            selectedLiterature,
+
+            // eSTAR/RTA artifacts
+            estarStatus,
+            rtaStatus,
+            estarValidationResults,
+            estarGeneratedUrl,
+            estarFormat,
+          },
+          metadata: nextMetadata,
+        },
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
+      cerv2MetadataRef.current = nextMetadata;
+      lastServerPersistAtRef.current = Date.now();
+    } catch (e) {
+      console.warn('[CERV2] Failed to persist CERV2 document state:', e);
+    }
+  };
+
+  // Persist Evidence Fabric manifest/status soon after refresh/check updates.
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (!evidenceFabricManifest) return;
+
+    const now = Date.now();
+    if (now - lastEvidenceFabricPersistAtRef.current < 1500) return;
+    lastEvidenceFabricPersistAtRef.current = now;
+
+    // Fire-and-forget (persistCerv2DocumentState is already fail-soft)
+    persistCerv2DocumentState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjectId, evidenceFabricManifest, evidenceFabricStatus?.stale]);
+
+  const persistCerv2PmaDocumentState = async () => {
+    if (!currentProjectId) return;
+    if (documentType !== 'pma') return;
+    if (!isServerProjectId(currentProjectId)) return;
+
+    if (Date.now() - lastServerHydrationAtRef.current < 1500) return;
+    if (Date.now() - lastServerPersistAtRef.current < 750) return;
+
+    const numericId = Number.parseInt(String(currentProjectId), 10);
+    try {
+      await apiRequest(
+        'POST',
+        `/api/cerv2/documents/${numericId}/save`,
+        {
+          documentType: 'cerv2_pma',
+          sections: {
+            pmaSearchQuery,
+            selectedPmaDevices,
+            pmaComparisonResults,
+            pmaSupplements,
+            pmaSubmissionData,
+          },
+          metadata: {
+            savedAt: new Date().toISOString(),
+            activeTab,
+            documentType,
+          },
+        },
+        clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+      );
+      lastServerPersistAtRef.current = Date.now();
+    } catch (e) {
+      console.warn('[CERV2] Failed to persist PMA document state:', e);
+    }
+  };
+
   const saveCurrentProjectState = () => {
     if (!currentProjectId) return;
+    if (isServerProjectId(currentProjectId)) return;
     
     const updatedProjects = allProjects.map(p => {
       if (p.id === currentProjectId) {
@@ -497,7 +1044,27 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     saveAllProjects(updatedProjects);
   };
 
-  const deleteProject = (projectId) => {
+  const deleteProject = async (projectId) => {
+    const numericId = Number.parseInt(String(projectId), 10);
+    const isServerId = Number.isFinite(numericId) && String(numericId) === String(projectId);
+    if (isServerId && organizationId) {
+      try {
+        await apiRequest(
+          'DELETE',
+          `/api/projects/${numericId}`,
+          undefined,
+          clientWorkspaceId ? { 'x-client-workspace-id': clientWorkspaceId } : undefined
+        );
+      } catch (e) {
+        toast({
+          title: 'Unable to delete project',
+          description: e?.message || 'Server rejected the delete request.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     // Use functional update to avoid stale state issues
     setAllProjects(prevProjects => {
       const project = prevProjects.find(p => p.id === projectId);
@@ -528,28 +1095,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     });
   };
 
-  // 510k workflow specific state with persistence
-  const [workflowStep, setWorkflowStep] = useState(() => loadSavedState('workflowStep', 1));
-  const [workflowProgress, setWorkflowProgress] = useState(() =>
-    loadSavedState('workflowProgress', 25)
-  );
-  const [predicatesFound, setPredicatesFound] = useState(() =>
-    loadSavedState('predicatesFound', false)
-  );
-  // eSTAR and RTA status state for Stage 5
-  const [estarStatus, setEstarStatus] = useState('not_started');
-  const [rtaStatus, setRtaStatus] = useState('not_started');
-  const [predicateDevices, setPredicateDevices] = useState(() =>
-    loadSavedState('predicateDevices', [])
-  );
-  const [literatureResults, setLiteratureResults] = useState([]);
-
-  // eSTAR Builder state variables
-  const [isValidatingEstar, setIsValidatingEstar] = useState(false);
-  const [isGeneratingEstar, setIsGeneratingEstar] = useState(false);
-  const [estarValidationResults, setEstarValidationResults] = useState(null);
-  const [estarGeneratedUrl, setEstarGeneratedUrl] = useState('');
-  const [estarFormat, setEstarFormat] = useState('zip');
+  // Additional state variables (workflow state already declared earlier to avoid temporal dead zone)
   const [selectedLiterature, setSelectedLiterature] = useState([]);
   const [equivalenceCompleted, setEquivalenceCompleted] = useState(false);
   const [complianceScore, setComplianceScore] = useState(null);
@@ -615,6 +1161,172 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // Ensure profile integrity before returning
     return ensureProfileIntegrity(baseProfile);
   });
+
+  // Shadow Review (public signals) state
+  const [shadowReviewProductCode, setShadowReviewProductCode] = useState('');
+  const [shadowReviewTopic, setShadowReviewTopic] = useState('cybersecurity');
+  const [shadowReviewLoading, setShadowReviewLoading] = useState(false);
+  const [shadowReviewError, setShadowReviewError] = useState(null);
+  const [shadowReviewResult, setShadowReviewResult] = useState(null);
+
+  useEffect(() => {
+    if (shadowReviewProductCode) return;
+    const pc = deviceProfile?.productCode;
+    if (pc && pc !== 'UNASSIGNED') setShadowReviewProductCode(String(pc));
+  }, [deviceProfile?.productCode, shadowReviewProductCode]);
+
+  const runShadowReview = async () => {
+    if (!organizationId) {
+      toast({
+        title: 'Missing tenant',
+        description: 'Select an organization/tenant before running Shadow Review.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const productCode = String(shadowReviewProductCode || '').trim();
+    if (!productCode) {
+      toast({
+        title: 'Missing product code',
+        description: 'Enter an FDA product code (e.g., KRA) to run Shadow Review.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setShadowReviewLoading(true);
+    setShadowReviewError(null);
+
+    try {
+      const dossierContext = {
+        isSoftware: !!(deviceProfile?.hasSoftware || deviceProfile?.isSoftware),
+        hasSBOM: !!(deviceProfile?.hasSBOM || deviceProfile?.sbomUploaded),
+        contactDuration:
+          deviceProfile?.contactDuration || deviceProfile?.workflowMetadata?.contactDuration || undefined,
+        iso10993Report: !!deviceProfile?.iso10993Report,
+        predicateClearanceDate:
+          deviceProfile?.predicateClearanceDate || deviceProfile?.workflowMetadata?.predicateClearanceDate || undefined,
+        hasAIML: !!(deviceProfile?.hasAIML || deviceProfile?.usesAIML),
+        hasPCCP: !!deviceProfile?.hasPCCP,
+        clinicalSampleSize: typeof deviceProfile?.clinicalSampleSize === 'number' ? deviceProfile.clinicalSampleSize : undefined,
+      };
+
+      const result = await lumen.runShadowReview(String(organizationId), productCode, dossierContext, {
+        topic: shadowReviewTopic,
+        useCache: true,
+      });
+
+      setShadowReviewResult(result);
+      toast({
+        title: 'Shadow Review complete',
+        description: `Status: ${result?.overall_status || 'OK'}`,
+      });
+    } catch (e) {
+      const msg = e?.message || 'Shadow Review failed';
+      setShadowReviewError(msg);
+      toast({
+        title: 'Shadow Review failed',
+        description: msg,
+        variant: 'destructive',
+      });
+    } finally {
+      setShadowReviewLoading(false);
+    }
+  };
+
+  // Debounced server sync whenever workflow state changes
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (documentType !== '510k') return;
+    const t = setTimeout(() => {
+      persistWorkflowStage(workflowStep, workflowProgress);
+    }, 750);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjectId, workflowStep, workflowProgress, estarStatus, rtaStatus, clientWorkspaceId]);
+
+  // Load server-backed document state when switching projects (if this is a server project)
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (documentType !== '510k') return;
+    loadCerv2DocumentState(currentProjectId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjectId, clientWorkspaceId, documentType]);
+
+  // Load server-backed PMA document state when switching PMA projects
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (documentType !== 'pma') return;
+    loadCerv2PmaDocumentState(currentProjectId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjectId, clientWorkspaceId, documentType]);
+
+  // Debounced server sync for core 510(k) working state (device profile, predicates, etc.)
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (documentType !== '510k') return;
+    const t = setTimeout(() => {
+      persistCerv2DocumentState();
+    }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentProjectId,
+    deviceProfile,
+    predicateDevices,
+    predicatesFound,
+    riskAssessmentData,
+    equivalenceData,
+    equivalenceCompleted,
+    complianceScore,
+    complianceFixes,
+    templateData,
+    selectedLiterature,
+    estarStatus,
+    rtaStatus,
+    estarValidationResults,
+    estarGeneratedUrl,
+    estarFormat,
+    activeTab,
+    workflowStep,
+    workflowProgress,
+    clientWorkspaceId,
+  ]);
+
+  // PMA-related state variables
+  const [pmaSearchQuery, setPmaSearchQuery] = useState('');
+  const [pmaDevices, setPmaDevices] = useState([]);
+  const [selectedPmaDevices, setSelectedPmaDevices] = useState([]);
+  const [pmaComparisonResults, setPmaComparisonResults] = useState(null);
+  const [pmaSubmissionData, setPmaSubmissionData] = useState({});
+  const [isLoadingPma, setIsLoadingPma] = useState(false);
+  const [pmaError, setPmaError] = useState(null);
+  const [pathwayAnalysis, setPathwayAnalysis] = useState({});
+  const [recommendedPathway, setRecommendedPathway] = useState(null);
+  const [isAnalyzingPathway, setIsAnalyzingPathway] = useState(false);
+  const [pmaSupplements, setPmaSupplements] = useState({});
+
+  // Debounced server sync for PMA working state
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (documentType !== 'pma') return;
+    const t = setTimeout(() => {
+      persistCerv2PmaDocumentState();
+    }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentProjectId,
+    documentType,
+    clientWorkspaceId,
+    activeTab,
+    pmaSearchQuery,
+    selectedPmaDevices,
+    pmaComparisonResults,
+    pmaSupplements,
+    pmaSubmissionData,
+  ]);
   const [compliance, setCompliance] = useState(null);
   const [draftStatus, setDraftStatus] = useState('in-progress');
   const [exportTimestamp, setExportTimestamp] = useState(null);
@@ -628,18 +1340,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [showDocumentTree, setShowDocumentTree] = useState(false);
   const [documentPreview, setDocumentPreview] = useState({ show: false, path: '', title: '' });
 
-  // PMA-related state variables
-  const [pmaSearchQuery, setPmaSearchQuery] = useState('');
-  const [pmaDevices, setPmaDevices] = useState([]);
-  const [selectedPmaDevices, setSelectedPmaDevices] = useState([]);
-  const [pmaComparisonResults, setPmaComparisonResults] = useState(null);
-  const [pmaSubmissionData, setPmaSubmissionData] = useState({});
-  const [isLoadingPma, setIsLoadingPma] = useState(false);
-  const [pmaError, setPmaError] = useState(null);
-  const [pathwayAnalysis, setPathwayAnalysis] = useState(null);
-  const [recommendedPathway, setRecommendedPathway] = useState(null);
-  const [isAnalyzingPathway, setIsAnalyzingPathway] = useState(false);
-  const [pmaSupplements, setPmaSupplements] = useState({});
+  // Journey review simulation (Stage 4) + export gating (Stage 5)
+  const [journeyReview, setJourneyReview] = useState(null);
+  const [isJourneyReviewLoading, setIsJourneyReviewLoading] = useState(false);
+  const [journeyReviewError, setJourneyReviewError] = useState(null);
 
   // Document Vault - folder expansion state
   const [expandedFolders, setExpandedFolders] = useState({
@@ -676,6 +1380,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   // Load project state when currentProjectId changes
   useEffect(() => {
     if (!currentProjectId) return;
+    if (isServerProjectId(currentProjectId)) return;
     
     const project = allProjects.find(p => p.id === currentProjectId);
     if (project && project.state) {
@@ -692,6 +1397,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   // Auto-save current project state periodically
   useEffect(() => {
     if (!currentProjectId) return;
+    if (isServerProjectId(currentProjectId)) return;
     
     const saveInterval = setInterval(() => {
       saveCurrentProjectState();
@@ -768,12 +1474,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       event.stopPropagation();
     }
     
+    const isPdf = /\.pdf(\?|#|$)/i.test(url);
+    const isDocx = /\.(docx|doc)(\?|#|$)/i.test(url);
     // Always open in the inline document viewer for consistent experience
     setDocumentViewerData({
       isOpen: true,
       url: url,
       documentName: documentName,
-      type: url.endsWith('.pdf') ? 'pdf' : 'other'
+      type: isPdf ? 'pdf' : isDocx ? 'docx' : 'other',
+      loading: isDocx,
+      error: null,
+      html: ''
     });
     
     if (showToast) {
@@ -784,6 +1495,47 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       });
     }
   };
+
+  // DOCX inline preview (enterprise-friendly: no new routes/pages; uses existing viewer modal)
+  useEffect(() => {
+    let cancelled = false;
+
+    const convertDocxToHtml = async () => {
+      if (!documentViewerData.isOpen) return;
+      if (documentViewerData.type !== 'docx') return;
+      if (!documentViewerData.url) return;
+      if (documentViewerData.html) return;
+
+      try {
+        setDocumentViewerData(prev => ({ ...prev, loading: true, error: null }));
+
+        const resp = await fetch(documentViewerData.url);
+        if (!resp.ok) {
+          throw new Error(`Unable to load document (HTTP ${resp.status})`);
+        }
+
+        const blob = await resp.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        const html = result?.value || '<p>(No preview content)</p>';
+
+        if (cancelled) return;
+        setDocumentViewerData(prev => ({ ...prev, html, loading: false, error: null }));
+      } catch (e) {
+        if (cancelled) return;
+        setDocumentViewerData(prev => ({
+          ...prev,
+          loading: false,
+          error: e?.message || 'Unable to preview this document.'
+        }));
+      }
+    };
+
+    convertDocxToHtml();
+    return () => {
+      cancelled = true;
+    };
+  }, [documentViewerData.isOpen, documentViewerData.type, documentViewerData.url, documentViewerData.html]);
 
   // Set up the 510K workflow if initialized with that document type
   // and handle state persistence on page load
@@ -1030,11 +1782,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   };
 
   const handleSubmissionReady = () => {
-    setSubmissionReady(true);
-    toast({
-      title: 'Submission Package Ready',
-      description: 'Your 510(k) submission package is now ready for final review.',
-    });
+    exportJourneyPdf();
   };
 
   /**
@@ -1068,6 +1816,23 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           variant: 'default',
         });
       } else {
+        try {
+          window.dispatchEvent(
+            new CustomEvent('cerv2:validation_failed', {
+              detail: {
+                module: 'validation',
+                source: 'CERV2Page',
+                action: 'validate_estar',
+                strictMode,
+                results,
+                deviceName: deviceProfile?.deviceName,
+                productCode: deviceProfile?.productCode,
+              },
+            })
+          );
+        } catch {
+          // ignore
+        }
         toast({
           title: 'Validation Issues Found',
           description: `${results.issues?.length || 0} issues need to be resolved before submission.`,
@@ -1332,6 +2097,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           // Update tab with proper persistence
           setActiveTab(targetTab);
           saveState('activeTab', targetTab);
+
+          // Enterprise persistence (server-backed)
+          persistWorkflowStage(step, progressMap[step]);
 
           console.log(
             `[CERV2 Navigation] Successfully transitioned to step ${step} and tab "${targetTab}"`
@@ -1603,6 +2371,375 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   };
 
   const renderContent = () => {
+    // CER workflow content (re-enabled)
+    if (documentType === 'cer') {
+      switch (activeTab) {
+        case 'builder':
+          return (
+            <div className="p-6">
+              <CerBuilderPanel
+                documentId={cerDocumentId}
+                deviceProfile={deviceProfile}
+                onUpdateDeviceProfile={setDeviceProfile}
+              />
+            </div>
+          );
+        case 'document-editor':
+          return (
+            <div className="p-6 space-y-6">
+              <MedicalDeviceDocumentEditor
+                documentType="cer"
+                selectedSection={selectedSection}
+                deviceProfile={deviceProfile}
+                predicateDevices={predicateDevices}
+                literatureResults={literatureResults}
+                documentId={cerDocumentId}
+                existingContent={loadSavedState(`document_content_cer`, '')}
+                onSectionSaved={async (section) => {
+                  await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
+                  toast({
+                    title: 'Section Saved',
+                    description: `${section.section_number} ${section.section_title} saved`,
+                  });
+                }}
+                onSave={() => {
+                  toast({
+                    title: 'CER Content Saved',
+                    description: 'Your CER content has been saved successfully',
+                  });
+                }}
+                onExport={(format) => {
+                  toast({
+                    title: `Export ${format.toUpperCase()} Successful`,
+                    description: 'Your CER content has been exported',
+                  });
+                }}
+                readOnly={false}
+              />
+            </div>
+          );
+        case 'cep':
+          return (
+            <div className="p-6">
+              <ClinicalEvaluationPlanPanel
+                documentId={cerDocumentId}
+                deviceProfile={deviceProfile}
+                onUpdateDeviceProfile={setDeviceProfile}
+              />
+            </div>
+          );
+        case 'qmp':
+          return (
+            <div className="p-6">
+              <QualityManagementPlanPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'documents':
+          // Reuse existing document vault handler below (keeps project attach logic)
+          break;
+        case 'data-retrieval':
+          return (
+            <div className="p-6">
+              <CerDataRetrievalPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'literature':
+          return (
+            <div className="p-6 space-y-4">
+              <LiteratureMethodologyPanel documentId={cerDocumentId} />
+              <LiteratureSearchPanel
+                documentId={cerDocumentId}
+                onSearchComplete={(results) => {
+                  setLiteratureResults(results || []);
+                  toast({
+                    title: 'Literature Retrieved',
+                    description: `Found ${(results || []).length} results`,
+                  });
+                }}
+              />
+            </div>
+          );
+        case 'literature-review':
+          return (
+            <div className="p-6">
+              <LiteratureReviewWorkflow documentId={cerDocumentId} />
+            </div>
+          );
+        case 'internal-clinical-data':
+          return (
+            <div className="p-6">
+              <InternalClinicalDataPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'sota':
+          return (
+            <div className="p-6">
+              <StateOfArtPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'equivalence':
+          return (
+            <div className="p-6">
+              <EquivalenceBuilderPanel
+                deviceProfile={deviceProfile}
+                documentId={cerDocumentId}
+                predicateDevices={predicateDevices}
+                selectedLiterature={selectedLiterature}
+                onComplete={handleEquivalenceComplete}
+              />
+            </div>
+          );
+        case 'gspr-mapping':
+          return (
+            <div className="p-6">
+              <GSPRMappingPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'traceability':
+          return (
+            <div className="p-6">
+              <RegulatoryTraceabilityMatrix documentId={cerDocumentId} />
+            </div>
+          );
+        case 'compliance':
+          // Uses existing compliance handler below
+          break;
+        case 'preview':
+          return (
+            <div className="p-6">
+              <CerPreviewPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
+            </div>
+          );
+        case 'export':
+          return (
+            <div className="p-6">
+              <ExportModule documentId={cerDocumentId} />
+            </div>
+          );
+        case 'reports':
+          return (
+            <div className="p-6">
+              <CerComprehensiveReportsPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'assistant':
+          return (
+            <div className="p-6">
+              <CerAssistantPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
+            </div>
+          );
+        case 'maud':
+          return (
+            <div className="p-6">
+              <MAUDIntegrationPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case 'k-automation':
+          return (
+            <div className="p-6">
+              <KAutomationPanel documentId={cerDocumentId} />
+            </div>
+          );
+        case '510k':
+          // Quick jump to 510(k) mode
+          handleSetDocumentType('510k');
+          return null;
+        default:
+          // Fall through to shared handlers (documents/compliance) or 510k content
+          break;
+      }
+    }
+
+    // Consolidated module tabs (510(k) mode)
+    if (activeTab === 'task-center') {
+      return (
+        <div className="p-6">
+          <UnifiedTaskDashboard organizationId={organizationId} projectId={currentProjectId} />
+        </div>
+      );
+    }
+
+    if (activeTab === 'team') {
+      return (
+        <div className="p-6">
+          <TaskManagementHub organizationId={organizationId} projectId={currentProjectId} />
+        </div>
+      );
+    }
+
+    // Home base for the 510(k) workflow (stable entry point; reduces navigation confusion)
+    if (activeTab === 'home') {
+      const projectName = currentProjectId
+        ? allProjects.find(p => p.id === currentProjectId)?.deviceName
+        : null;
+
+      return (
+        <div className="p-6 space-y-6" data-testid="cerv2-home">
+          <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-700" />
+                {documentType === 'cer' ? 'CER Workspace' : 'FDA 510(k) Workspace'}
+              </CardTitle>
+              <CardDescription>
+                {projectName
+                  ? `Project: ${projectName}`
+                  : 'Select a project to start working.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <Button
+                  size="sm"
+                  className="justify-start bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setActiveTab('device-intake')}
+                  data-testid="home-go-intake"
+                >
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Intake
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="justify-start bg-white"
+                  onClick={() => setActiveTab('pathway-analyzer')}
+                  data-testid="home-go-pathway"
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  Pathway
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="justify-start bg-white"
+                  onClick={() => setActiveTab('device-data-center')}
+                  data-testid="home-go-datacenter"
+                >
+                  <HardDrive className="h-4 w-4 mr-2" />
+                  Data Center
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="justify-start bg-white"
+                  onClick={() => setActiveTab('document-editor')}
+                  data-testid="home-go-editor"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Editor
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white"
+                  onClick={() => setIsDocumentVaultOpen(true)}
+                  data-testid="home-open-vault"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Open Vault
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white"
+                  onClick={() => setShowNewProjectDialog(true)}
+                  data-testid="home-new-project"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white"
+                  onClick={() => openAssistant()}
+                  data-testid="home-open-assistant"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  AI Assistant
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-gray-900">Workflow Status</CardTitle>
+                <CardDescription className="text-xs">Progress across core steps</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Current stage</span>
+                  <span className="font-medium text-gray-900">{workflowStep || 1}</span>
+                </div>
+                <Progress value={workflowProgress || 0} />
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Overall</span>
+                  <span className="font-medium text-gray-900">{Math.round(workflowProgress || 0)}%</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-gray-900">Compliance</CardTitle>
+                <CardDescription className="text-xs">Checks and readiness</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Score</span>
+                  <span className="font-medium text-gray-900">{complianceScore || 0}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full bg-white"
+                  onClick={() => setActiveTab('compliance')}
+                  data-testid="home-go-compliance"
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Run Compliance
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-gray-900">Documents</CardTitle>
+                <CardDescription className="text-xs">Vault + imports</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full bg-white"
+                  onClick={() => setActiveTab('document-vault')}
+                  data-testid="home-go-document-vault"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Vault Browser
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full bg-white"
+                  onClick={() => setActiveTab('import')}
+                  data-testid="home-go-import"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Files
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
     // Enhanced 510(k) Intake Workflow - comprehensive 7-stage gated process
     if (activeTab === 'device-intake') {
       return (
@@ -1658,8 +2795,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           }}
           onComplete={(completedData) => {
             toast({
-              title: '510(k) Workflow Complete',
-              description: 'All stages completed. Ready for FDA submission.',
+              title: '510(k) Dossier Complete',
+              description: 'All stages completed. Ready for FDA package.',
               duration: 5000,
             });
             
@@ -1699,280 +2836,111 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           {deviceProfile && Object.keys(deviceProfile).length > 0 && (
             <Card className="bg-white border-gray-200 shadow-sm context-banner-enter">
               <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <Target className="h-4 w-4 text-blue-600" />
-                    Overall Progress
-                  </h3>
-                  <span className="text-xs text-gray-500">
-                    {[
-                      isTabCompleted('device-intake'),
-                      isTabCompleted('pathway-analyzer'),
-                      isTabCompleted('predicates'),
-                      isTabCompleted('equivalence'),
-                      isTabCompleted('compliance')
-                    ].filter(Boolean).length} / 5 Core Steps Complete
-                  </span>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                  <div 
-                    className="bg-gradient-to-r from-blue-600 to-green-600 h-2 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${([
-                        isTabCompleted('device-intake'),
-                        isTabCompleted('pathway-analyzer'),
-                        isTabCompleted('predicates'),
-                        isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length / 5) * 100}%` 
-                    }}
-                  />
-                </div>
+                {(() => {
+                  const stableTabs = [
+                    { id: 'dashboard', label: 'Dashboard', icon: <Target className="h-4 w-4" />, targetTab: 'home' },
+                    { id: 'documents', label: 'Documents', icon: <FolderOpen className="h-4 w-4" />, targetTab: 'document-vault' },
+                    { id: 'dossier', label: 'Dossier', icon: <FileText className="h-4 w-4" />, targetTab: 'document-editor' },
+                    { id: 'tasks', label: 'Tasks', icon: <ListChecks className="h-4 w-4" />, targetTab: 'task-center' },
+                    { id: 'validate', label: 'Validate', icon: <Gauge className="h-4 w-4" />, targetTab: 'compliance' },
+                    { id: 'team', label: 'Team', icon: <Users className="h-4 w-4" />, targetTab: 'team' },
+                  ];
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="bg-green-50 rounded p-2 text-center">
-                    <div className="font-bold text-green-700">
-                      {[
-                        isTabCompleted('device-intake'),
-                        isTabCompleted('pathway-analyzer'),
-                        isTabCompleted('predicates'),
-                        isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length}
+                  const isActiveStable = (stableId) => {
+                    const tab = stableTabs.find(t => t.id === stableId);
+                    if (!tab) return false;
+
+                    if (activeTab === tab.targetTab) return true;
+
+                    if (stableId === 'documents' && ['import', 'device-data-center'].includes(activeTab)) return true;
+                    if (stableId === 'dossier' && ['traceability'].includes(activeTab)) return true;
+                    if (stableId === 'validate' && ['compliance'].includes(activeTab)) return true;
+
+                    return false;
+                  };
+
+                  const journeyStage = (() => {
+                    if (['device-data-center', 'document-vault', 'import', 'home', 'device-intake'].includes(activeTab)) return 1; // COLLECT
+                    if (['document-editor', 'traceability'].includes(activeTab)) return 2; // STRUCTURE
+                    if (['predicates', 'se-strategy', 'standards-matrix', 'test-plan', 'task-center'].includes(activeTab)) return 3; // ENRICH
+                    if (['compliance'].includes(activeTab)) return 4; // VALIDATE
+                    if (['submission', 'export'].includes(activeTab)) return 5; // PACKAGE
+                    return 1;
+                  })();
+
+                  const stagePercent = Math.round((journeyStage / 5) * 100);
+
+                  return (
+                    <div className="mb-4" data-testid="cerv2-stable-tabs">
+                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <div className="px-3 pt-3" data-testid="cerv2-stage-progress">
+                          <div className="flex items-center justify-between text-xs text-gray-600">
+                            <span>Stage {journeyStage} of 5</span>
+                            <span>{stagePercent}%</span>
+                          </div>
+                          <div className="mt-2">
+                            <Progress value={stagePercent} />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 p-3">
+                          {stableTabs.map((t) => (
+                            <Button
+                              key={t.id}
+                              size="sm"
+                              variant={isActiveStable(t.id) ? 'default' : 'outline'}
+                              className={isActiveStable(t.id) ? '' : 'bg-white'}
+                              onClick={() => setActiveTab(t.targetTab)}
+                              data-testid={`stable-tab-${t.id}`}
+                            >
+                              <span className="mr-2">{t.icon}</span>
+                              {t.label}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="px-3 pb-3">
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-600"
+                              onClick={() => setActiveTab('device-intake')}
+                            >
+                              <ClipboardCheck className="h-4 w-4 mr-2" />
+                              Intake
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-600"
+                              onClick={() => setActiveTab('predicates')}
+                            >
+                              <Search className="h-4 w-4 mr-2" />
+                              Predicates
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-600"
+                              onClick={() => setActiveTab('device-data-center')}
+                              data-testid="quick-jump-evidence-vault"
+                            >
+                              <HardDrive className="h-4 w-4 mr-2" />
+                              Evidence Vault
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-green-600">Completed</div>
-                  </div>
-                  <div className="bg-blue-50 rounded p-2 text-center">
-                    <div className="font-bold text-blue-700">
-                      {5 - [
-                        isTabCompleted('device-intake'),
-                        isTabCompleted('pathway-analyzer'),
-                        isTabCompleted('predicates'),
-                        isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length}
-                    </div>
-                    <div className="text-blue-600">Remaining</div>
-                  </div>
-                  <div className="bg-purple-50 rounded p-2 text-center">
-                    <div className="font-bold text-purple-700">{deviceProfile.deviceName ? '1' : '0'}</div>
-                    <div className="text-purple-600">Device(s)</div>
-                  </div>
-                </div>
+                  );
+                })()}
+
+                <p className="text-sm text-gray-600">
+                  Continue in the Home tab for the step-by-step 510(k) workflow.
+                </p>
               </CardContent>
             </Card>
           )}
-
-          {/* Getting Started Banner */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-600 p-3 rounded-lg">
-                  <Lightbulb className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Welcome to CERV2 - Your 510(k) Submission Builder
-                    </h3>
-                    {/* Resume Button for returning users */}
-                    {deviceProfile && Object.keys(deviceProfile).length > 0 && (
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => {
-                          // Intelligently determine next incomplete step using validation
-                          const isDeviceIntakeComplete = deviceProfile.deviceName && 
-                                                         deviceProfile.manufacturer && 
-                                                         deviceProfile.intendedUse && 
-                                                         deviceProfile.productCode && 
-                                                         deviceProfile.regulationNumber &&
-                                                         deviceProfile.deviceClass;
-                          
-                          const isPathwayComplete = recommendedPathway && recommendedPathway.pathway;
-                          const isPredicatesComplete = (predicatesFound || (predicateDevices && predicateDevices.length > 0)) && selectedPredicate;
-                          
-                          let nextStep = 'device-intake';
-                          let nextStepName = 'Device Intake Form';
-                          
-                          if (!isDeviceIntakeComplete) {
-                            nextStep = 'device-intake';
-                            nextStepName = 'Device Intake Form';
-                          } else if (!isPathwayComplete) {
-                            nextStep = 'pathway-analyzer';
-                            nextStepName = 'Pathway Analyzer';
-                          } else if (!isPredicatesComplete) {
-                            nextStep = 'predicates';
-                            nextStepName = 'Predicate Finder';
-                          } else if (!equivalenceCompleted) {
-                            nextStep = 'equivalence';
-                            nextStepName = 'Equivalence Analysis';
-                          } else if (!complianceScore || complianceScore === 0) {
-                            nextStep = 'compliance';
-                            nextStepName = 'Compliance Check';
-                          } else {
-                            nextStep = 'document-editor';
-                            nextStepName = 'Document Editor';
-                          }
-                          
-                          setActiveTab(nextStep);
-                          toast({
-                            title: 'Resuming Your Work',
-                            description: `Taking you to: ${nextStepName}`,
-                          });
-                        }}
-                        data-testid="button-resume-work"
-                      >
-                        <PlayCircle className="h-4 w-4 mr-1" />
-                        Continue Where You Left Off
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-700 mb-4">
-                    Follow this step-by-step workflow to build your complete FDA 510(k) submission package:
-                  </p>
-                  
-                  {/* Step Progress Indicator */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-sm text-gray-900">Your 510(k) Submission Workflow</h4>
-                      <span className="text-xs text-gray-500">Follow steps 1-12 in order</span>
-                    </div>
-                    
-                    {/* Visual Progress Flow */}
-                    <div className="flex items-center justify-between space-x-2 mb-4 overflow-x-auto">
-                      <div className="flex items-center space-x-1">
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">1</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">2</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">3</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-cyan-100 text-cyan-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">4</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">5</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-yellow-100 text-yellow-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">6</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">7</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-orange-100 text-orange-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">8</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-red-100 text-red-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">9</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">10</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">11</div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">12</div>
-                      </div>
-                    </div>
-                    
-                    {/* Quick Start Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</div>
-                          <h5 className="font-semibold text-xs text-blue-900">Step 1: Device Intake</h5>
-                        </div>
-                        <p className="text-xs text-blue-700 mb-2">Complete comprehensive intake form</p>
-                        <Button 
-                          size="sm" 
-                          variant="default"
-                          className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => setActiveTab('device-intake')}
-                          data-testid="banner-step1-start"
-                        >
-                          <PlayCircle className="h-3 w-3 mr-1" />
-                          Start Here
-                        </Button>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-3 rounded-lg border border-cyan-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-cyan-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</div>
-                          <h5 className="font-semibold text-xs text-cyan-900">Step 2: Data Collection</h5>
-                        </div>
-                        <p className="text-xs text-cyan-700 mb-2">Upload test reports & documents</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="w-full text-xs bg-white hover:bg-cyan-50"
-                          onClick={() => setActiveTab('device-data-center')}
-                          data-testid="banner-step2-datacenter"
-                        >
-                          <HardDrive className="h-3 w-3 mr-1" />
-                          Data Center
-                        </Button>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">3</div>
-                          <h5 className="font-semibold text-xs text-green-900">Step 3: Document Creation</h5>
-                        </div>
-                        <p className="text-xs text-green-700 mb-2">Write 510(k) with AI assistance</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="w-full text-xs bg-white hover:bg-green-50"
-                          onClick={() => setActiveTab('document-editor')}
-                          data-testid="banner-step3-editor"
-                        >
-                          <Edit3 className="h-3 w-3 mr-1" />
-                          Document Editor
-                        </Button>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 rounded-lg border border-teal-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">4</div>
-                          <h5 className="font-semibold text-xs text-teal-900">Step 4: Submission</h5>
-                        </div>
-                        <p className="text-xs text-teal-700 mb-2">Compliance check & finalize</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="w-full text-xs bg-white hover:bg-teal-50"
-                          onClick={() => setActiveTab('compliance')}
-                          data-testid="banner-step4-compliance"
-                        >
-                          <CheckSquare className="h-3 w-3 mr-1" />
-                          FDA Compliance
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3" />
-                      New to 510(k)?
-                    </span>
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 text-xs text-blue-600"
-                      onClick={() => setActiveTab('fda-guidance')}
-                      data-testid="banner-goto-guidance"
-                    >
-                      Read FDA Guidance
-                    </Button>
-                    <span className="text-gray-400">•</span>
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 text-xs text-blue-600"
-                      onClick={() => setActiveTab('assistant')}
-                      data-testid="banner-goto-assistant"
-                    >
-                      Ask AI Assistant
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
@@ -1992,7 +2960,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </Label>
                   <Select 
                     onValueChange={(value) => {
-                      setPathwayAnalysis(prev => ({ ...prev, riskLevel: value }));
+                      setPathwayAnalysis(prev => ({ ...(prev || {}), riskLevel: value }));
                     }}
                     data-testid="select-risk-level"
                   >
@@ -2012,7 +2980,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </Label>
                   <Select 
                     onValueChange={(value) => {
-                      setPathwayAnalysis(prev => ({ ...prev, predicateExists: value }));
+                      setPathwayAnalysis(prev => ({ ...(prev || {}), predicateExists: value }));
                     }}
                     data-testid="select-predicate-exists"
                   >
@@ -2032,7 +3000,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </Label>
                   <Select 
                     onValueChange={(value) => {
-                      setPathwayAnalysis(prev => ({ ...prev, deviceType: value }));
+                      setPathwayAnalysis(prev => ({ ...(prev || {}), deviceType: value }));
                     }}
                     data-testid="select-device-type"
                   >
@@ -2055,7 +3023,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </Label>
                   <Select 
                     onValueChange={(value) => {
-                      setPathwayAnalysis(prev => ({ ...prev, intendedUseRisk: value }));
+                      setPathwayAnalysis(prev => ({ ...(prev || {}), intendedUseRisk: value }));
                     }}
                     data-testid="select-intended-use-risk"
                   >
@@ -2111,6 +3079,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       reasons: reasons,
                       analysisDate: new Date().toISOString()
                     });
+
+                    // Persist the recommendation onto the device profile so:
+                    // - the Pathway step can show as "completed"
+                    // - later workflow steps can reference it
+                    setDeviceProfile(prev => ({
+                      ...(prev || {}),
+                      recommendedPathway: recommended,
+                      recommendedPathwayConfidence: confidence,
+                      recommendedPathwayUpdatedAt: new Date().toISOString(),
+                    }));
                     
                     toast({
                       title: "Analysis Complete",
@@ -2174,7 +3152,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           if (recommendedPathway.pathway === 'PMA') {
                             setActiveTab('pma-search');
                           } else if (recommendedPathway.pathway === '510(k)') {
-                            setActiveTab('device-profile');
+                            // 510(k) workflow uses the intake tab as the starting point.
+                            setActiveTab('device-intake');
                           }
                           toast({
                             title: "Starting Submission Process",
@@ -2902,9 +3881,82 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
 
+          {/* RegulAI Editor Toolbar (Phase 3) */}
+          <Card className="bg-white border-slate-200" data-testid="regulai-toolbar">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-slate-700" />
+                RegulAI Editor
+              </CardTitle>
+              <CardDescription>
+                Context-aware writing, compliance checks, and confidence-driven export gating.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="default"
+                onClick={() =>
+                  openAssistant('regulai_editor', {
+                    trigger: 'toolbar',
+                    documentType: '510k',
+                    activeTab,
+                    selectedSection: selectedSection
+                      ? {
+                          section_number: selectedSection.section_number,
+                          section_title: selectedSection.section_title,
+                          section_key: selectedSection.section_key,
+                        }
+                      : null,
+                    deviceName: deviceProfile?.deviceName,
+                    manufacturer: deviceProfile?.manufacturer,
+                    productCode: deviceProfile?.productCode,
+                  })
+                }
+                data-testid="button-open-regulai-assistant"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ask Lumen
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  openAssistant('fda_guidance', {
+                    trigger: 'guidance',
+                    documentType: '510k',
+                    selectedSection: selectedSection?.section_number || null,
+                    productCode: deviceProfile?.productCode,
+                    regulationNumber: deviceProfile?.regulationNumber,
+                  })
+                }
+                data-testid="button-open-guidance"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Guidance
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  openAssistant('confidence_gate', {
+                    trigger: 'explain_confidence',
+                    documentType: '510k',
+                    hint: 'Explain why export/packaging is blocked and what to fix next.',
+                  })
+                }
+                data-testid="button-explain-confidence"
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                Explain Confidence
+              </Button>
+            </CardContent>
+          </Card>
+
           <MedicalDeviceDocumentEditor
             documentType="cerv2_510k"
             selectedSection={selectedSection} // Pass section selected from vault
+            evidenceFabricManifest={evidenceFabricManifest}
+            evidenceFabricStatus={evidenceFabricStatus}
+            onEvidenceFabricManifestChange={(m) => setEvidenceFabricManifest(m || null)}
+            onEvidenceFabricStatusChange={(s) => setEvidenceFabricStatus((prev) => ({ ...prev, ...(s || {}) }))}
           deviceProfile={deviceProfile || {
             deviceName: deviceName,
             manufacturer: manufacturer,
@@ -2974,9 +4026,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             });
           }}
           onUpload={() => {
+            setActiveTab('import');
             toast({
-              title: 'Upload Document',
-              description: 'Use the Import tab to upload Word or PDF documents',
+              title: 'Upload Orchestrator',
+              description: 'Drop files in Import to auto-categorize and extract metadata',
             });
           }}
         />
@@ -3278,6 +4331,46 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
           
+          {/* Document Health Dashboard */}
+          <Card className="bg-white border-gray-200" data-testid="document-health-dashboard">
+            <CardHeader>
+              <CardTitle>Document Health</CardTitle>
+              <CardDescription>Completeness, confidence, review status, and traceability coverage</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const completeCount = evidenceCategories.filter(cat => calculateCoverage(cat.id) === 100).length;
+                const reviewStatus = evidenceCategories.length ? Math.round((completeCount / evidenceCategories.length) * 100) : 0;
+                const completeness = overallCoverage;
+                const confidence = Math.min(95, Math.max(50, Math.round(completeness * 0.8 + reviewStatus * 0.2)));
+                const traceabilityCoverage = Math.round(((deviceProfile?.evidenceCoverage ?? (overallCoverage / 100)) * 100));
+
+                const Ring = ({ testId, label, value, color }) => (
+                  <div className="flex flex-col items-center" data-testid={testId}>
+                    <div
+                      className="relative w-20 h-20 rounded-full"
+                      style={{
+                        background: `conic-gradient(${color} ${value * 3.6}deg, #e5e7eb 0deg)`,
+                      }}
+                    >
+                      <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center text-sm font-semibold">{value}%</div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-600">{label}</div>
+                  </div>
+                );
+
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Ring testId="health-completeness" label="Completeness" value={completeness} color="#16a34a" />
+                    <Ring testId="health-confidence" label="Confidence" value={confidence} color="#2563eb" />
+                    <Ring testId="health-review-status" label="Review Status" value={reviewStatus} color="#f59e0b" />
+                    <Ring testId="health-traceability" label="Traceability" value={traceabilityCoverage} color="#7c3aed" />
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
           {/* Individual Category Coverage */}
           <Card>
             <CardHeader>
@@ -3930,6 +5023,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         <MedicalDeviceDocumentEditor
           documentType="cerv2_510k"
           selectedSection={selectedSection}
+            evidenceFabricManifest={evidenceFabricManifest}
+            evidenceFabricStatus={evidenceFabricStatus}
+            onEvidenceFabricManifestChange={(m) => setEvidenceFabricManifest(m || null)}
+            onEvidenceFabricStatusChange={(s) => setEvidenceFabricStatus((prev) => ({ ...prev, ...(s || {}) }))}
           deviceProfile={deviceProfile || {
             deviceName: deviceName,
             manufacturer: manufacturer,
@@ -4191,16 +5288,82 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-slate-200 bg-white" data-testid="validation-command-center">
             <CardHeader>
-              <CardTitle>eSTAR Package Compiler</CardTitle>
-              <CardDescription>Assemble submission into FDA eSTAR format</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-slate-700" />
+                Validation Command Center
+              </CardTitle>
+              <CardDescription>Validate, package, and resolve issues before submission.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-3 text-blue-300" />
-                <p className="mb-2">eSTAR Assembly Engine</p>
-                <p className="text-sm">Coming soon - Automated eSTAR package generation</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="default"
+                  onClick={() => validateESTARPackage(false)}
+                  disabled={isValidatingEstar}
+                  data-testid="button-validate-estar"
+                >
+                  {isValidatingEstar ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Validate eSTAR
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => validateESTARPackage(true)}
+                  disabled={isValidatingEstar}
+                  data-testid="button-validate-estar-strict"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Strict Validate
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => generateESTARPackage('zip')}
+                  disabled={!deviceProfile?.id}
+                  data-testid="button-generate-estar-zip"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Generate ZIP
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    openAssistant('validation', {
+                      trigger: 'estar_command_center',
+                      deviceName: deviceProfile?.deviceName,
+                      productCode: deviceProfile?.productCode,
+                      strictModeHint: 'Use Strict Validate before packaging.',
+                      estarValidationResults,
+                    })
+                  }
+                  data-testid="button-ask-lumen-validation"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Ask Lumen
+                </Button>
+              </div>
+
+              <div className="mt-4" data-testid="estar-validation-summary">
+                {estarValidationResults ? (
+                  <Alert variant={estarValidationResults.valid ? 'default' : 'destructive'}>
+                    <AlertTitle>
+                      {estarValidationResults.valid ? 'Ready for Packaging' : 'Issues Detected'}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {estarValidationResults.valid
+                        ? 'No blocking issues detected for eSTAR submission.'
+                        : `${estarValidationResults.issues?.length || 0} issue(s) need attention before submission.`}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    Run validation to see submission readiness and actionable issues.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -4222,6 +5385,40 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-gray-200" data-testid="rta-preflight-summary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-green-700" />
+                RTA Preflight Summary
+              </CardTitle>
+              <CardDescription>Fast readiness snapshot before formal RTA check.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-3">
+              <Badge variant="secondary">
+                Current RTA Score: {typeof deviceProfile?.rtaScore === 'number' ? `${Math.round(deviceProfile.rtaScore * 100)}%` : 'Not run'}
+              </Badge>
+              <Badge variant="outline">
+                Compliance: {typeof complianceScore === 'number' ? `${complianceScore}%` : '—'}
+              </Badge>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  openAssistant('rta_precheck', {
+                    trigger: 'rta_summary',
+                    deviceName: deviceProfile?.deviceName,
+                    productCode: deviceProfile?.productCode,
+                    rtaScore: deviceProfile?.rtaScore,
+                    complianceScore,
+                  })
+                }
+                data-testid="button-ask-lumen-rta"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ask Lumen
+              </Button>
             </CardContent>
           </Card>
 
@@ -4302,17 +5499,137 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Submission Workbench (Phase 6) */}
+          <Card className="border-slate-200 bg-white" data-testid="submission-workbench">
             <CardHeader>
-              <CardTitle>Submission Portal</CardTitle>
-              <CardDescription>Upload and submit to FDA eSTAR</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5 text-teal-700" />
+                Submission Workbench
+              </CardTitle>
+              <CardDescription>Run gates in order and submit with confidence.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Send className="h-12 w-12 mx-auto mb-3 text-teal-300" />
-                <p className="mb-2">eSTAR Submission Interface</p>
-                <p className="text-sm">Coming soon - Direct FDA portal integration</p>
-              </div>
+              {(() => {
+                const DEFAULT_CONFIDENCE_GATE_THRESHOLD = 0.85;
+                const gateEnabled = (() => {
+                  try {
+                    const v = window?.localStorage?.getItem('cerv2_confidence_gate_enabled');
+                    return v == null ? true : v !== 'false';
+                  } catch {
+                    return true;
+                  }
+                })();
+                const threshold = (() => {
+                  try {
+                    const raw = window?.localStorage?.getItem('cerv2_confidence_gate_threshold');
+                    const parsed = raw == null ? NaN : Number(raw);
+                    return Number.isFinite(parsed) ? parsed : DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+                  } catch {
+                    return DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+                  }
+                })();
+
+                const reviewerConf = typeof journeyReview?.clearance_probability === 'number' ? journeyReview.clearance_probability : null;
+                const reviewerReady = gateEnabled ? (reviewerConf != null && reviewerConf >= threshold) : true;
+                const rtaScore = typeof deviceProfile?.rtaScore === 'number' ? deviceProfile.rtaScore : null;
+                const rtaReady = rtaScore != null && rtaScore >= 0.9;
+                const estarReady = Boolean(estarValidationResults?.valid);
+
+                return (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2" data-testid="submission-gate-badges">
+                      <Badge variant={reviewerReady ? 'secondary' : 'outline'}>
+                        Reviewer Confidence: {reviewerConf == null ? 'Not run' : `${Math.round(reviewerConf * 100)}%`}
+                      </Badge>
+                      <Badge variant={estarReady ? 'secondary' : 'outline'}>
+                        eSTAR Validation: {estarValidationResults ? (estarReady ? 'Pass' : 'Issues') : 'Not run'}
+                      </Badge>
+                      <Badge variant={rtaReady ? 'secondary' : 'outline'}>
+                        RTA: {rtaScore == null ? 'Not run' : `${Math.round(rtaScore * 100)}%`}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={refreshJourneyReview}
+                        disabled={isJourneyReviewLoading}
+                        data-testid="button-submission-simulate-review"
+                      >
+                        {isJourneyReviewLoading ? 'Simulating…' : 'Simulate Review'}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => validateESTARPackage(false)}
+                        disabled={isValidatingEstar}
+                        data-testid="button-submission-validate-estar"
+                      >
+                        {isValidatingEstar ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Validate eSTAR
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActiveTab('rta-check')}
+                        data-testid="button-submission-run-rta"
+                      >
+                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        Run RTA
+                      </Button>
+
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleSubmissionReady}
+                        disabled={!reviewerReady || !rtaReady}
+                        data-testid="button-submission-export"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Package
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          openAssistant('submission_portal', {
+                            trigger: 'submission_workbench',
+                            reviewerConf,
+                            threshold,
+                            rtaScore,
+                            estarValidationResults,
+                            deviceName: deviceProfile?.deviceName,
+                            productCode: deviceProfile?.productCode,
+                          })
+                        }
+                        data-testid="button-submission-ask-lumen"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Ask Lumen
+                      </Button>
+                    </div>
+
+                    {!rtaReady && (
+                      <div className="mt-4" data-testid="submission-gate-warning">
+                        <Alert>
+                          <AlertTitle>Submission Gate</AlertTitle>
+                          <AlertDescription>
+                            Export is enabled once Reviewer Confidence meets threshold and RTA score is ≥ 90%.
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
@@ -4340,6 +5657,317 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             deviceProfile={deviceProfile}
             submissionId={deviceProfile?.submissionId}
           />
+
+          {/* Interactive Review Inbox (Phase 7) */}
+          <Card className="border-slate-200 bg-white" data-testid="interactive-review-inbox">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-amber-700" />
+                Interactive Review Inbox
+              </CardTitle>
+              <CardDescription>Track questions and draft responses with Lumen.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const questions = Array.isArray(journeyReview?.top_questions) ? journeyReview.top_questions : [];
+                if (!questions.length) {
+                  return (
+                    <p className="text-sm text-gray-600">
+                      No predicted questions yet. Run “Simulate Review” in Validate to populate.
+                    </p>
+                  );
+                }
+
+                return (
+                  <>
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-gray-800" data-testid="interactive-review-question-list">
+                      {questions.slice(0, 5).map((q, idx) => (
+                        <li key={`${idx}-${String(q).slice(0, 24)}`}>{q}</li>
+                      ))}
+                    </ul>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="default"
+                        onClick={() =>
+                          openAssistant('interactive_review', {
+                            trigger: 'ai_tracking_inbox',
+                            questions,
+                            deviceName: deviceProfile?.deviceName,
+                            productCode: deviceProfile?.productCode,
+                            submissionId: deviceProfile?.submissionId,
+                          })
+                        }
+                        data-testid="button-draft-interactive-review-response"
+                      >
+                        <Edit3 className="h-4 w-4 mr-2" />
+                        Draft Responses
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setActiveTab('task-center')}
+                        data-testid="button-open-task-center"
+                      >
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Open Task Center
+                      </Button>
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Shadow Review (Public Signals) */}
+          <Card className="border-slate-200 bg-white" data-testid="shadow-review-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-600" />
+                FDA Shadow Review™
+                <Badge variant="secondary" className="ml-2">v1</Badge>
+              </CardTitle>
+              <CardDescription>
+                Digital twin simulation using public signals (MAUDE/openFDA) + hard checklist gates. No confidential letters.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Product Code</Label>
+                  <Input
+                    value={shadowReviewProductCode}
+                    onChange={(e) => setShadowReviewProductCode(e.target.value)}
+                    placeholder="e.g., KRA"
+                    data-testid="shadow-review-product-code"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Topic (optional)</Label>
+                  <Input
+                    value={shadowReviewTopic}
+                    onChange={(e) => setShadowReviewTopic(e.target.value)}
+                    placeholder="e.g., cybersecurity"
+                    data-testid="shadow-review-topic"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    className="w-full"
+                    onClick={runShadowReview}
+                    disabled={shadowReviewLoading}
+                    data-testid="button-run-shadow-review"
+                  >
+                    {shadowReviewLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle className="h-4 w-4 mr-2" />
+                        Run Shadow Review
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {shadowReviewError && (
+                <Alert variant="destructive">
+                  <AlertTitle>Shadow Review Error</AlertTitle>
+                  <AlertDescription>{shadowReviewError}</AlertDescription>
+                </Alert>
+              )}
+
+              {shadowReviewResult && (() => {
+                const compliance = shadowReviewResult?.layers?.compliance;
+                const riskRadar = shadowReviewResult?.layers?.risk_prediction;
+                const peer = shadowReviewResult?.layers?.peer_intelligence;
+
+                const score = compliance?.score ?? shadowReviewResult?.score;
+                const overall = shadowReviewResult?.overall_status || 'UNKNOWN';
+                const statusBg =
+                  overall === 'READY'
+                    ? 'bg-emerald-50 border-emerald-500'
+                    : overall === 'AT_RISK'
+                      ? 'bg-amber-50 border-amber-500'
+                      : 'bg-rose-50 border-rose-500';
+                const statusText =
+                  overall === 'READY'
+                    ? 'text-emerald-700'
+                    : overall === 'AT_RISK'
+                      ? 'text-amber-700'
+                      : 'text-rose-700';
+
+                const risks = Array.isArray(riskRadar?.risks) ? riskRadar.risks : [];
+                const recommendations = Array.isArray(shadowReviewResult?.recommendations)
+                  ? shadowReviewResult.recommendations
+                  : [];
+                const insights = Array.isArray(peer?.insights) ? peer.insights : [];
+                const examples = Array.isArray(peer?.examples) ? peer.examples : [];
+
+                return (
+                  <div className="space-y-5" data-testid="shadow-review-result">
+                    {/* Status Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className={`p-4 rounded-lg border-l-4 ${statusBg}`}>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Submission Status</div>
+                        <div className={`text-2xl font-black mt-1 ${statusText}`}>{String(overall).replace(/_/g, ' ')}</div>
+                        <div className="text-xs text-slate-500 mt-1">Score: {score ?? '—'}/100</div>
+                      </div>
+
+                      <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                        <div className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                          <Shield className="h-4 w-4" /> Compliance Score
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 mt-1">
+                          {score ?? '—'}
+                          <span className="text-base text-slate-400 font-normal">/100</span>
+                        </div>
+                        {compliance?.status && (
+                          <div className="text-xs text-slate-500 mt-1">Checklist: {compliance.status}</div>
+                        )}
+                      </div>
+
+                      <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                        <div className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" /> Risk Signals
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 mt-1">{risks.length}</div>
+                        {riskRadar?.warning && (
+                          <div className="text-xs text-slate-500 mt-1">{String(riskRadar.warning)}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Top Recommendations */}
+                    {recommendations.length > 0 && (
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900 mb-1">Top Recommendations</div>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
+                          {recommendations.slice(0, 6).map((rec, idx) => (
+                            <li key={`shadow-rec-${idx}`}>{String(rec)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* MAUDE Risk Radar */}
+                    {risks.length > 0 && (
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 text-xs font-bold text-slate-700 uppercase">
+                          Real-World Failure Modes (MAUDE/openFDA)
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                          {risks.map((risk, idx) => (
+                            <div key={`risk-${idx}`} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-bold text-slate-800">{risk.issue}</span>
+                                {risk.signal === 'high' && (
+                                  <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    HIGH PROBABILITY
+                                  </span>
+                                )}
+                                {risk.signal === 'medium' && (
+                                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    MODERATE
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-slate-600 mb-2">
+                                Found in <span className="font-semibold text-slate-900">{risk.reports_last_year}</span> events (last 12 months).
+                              </div>
+                              <div className="bg-blue-50 text-blue-800 text-xs p-2 rounded border border-blue-100 font-medium">
+                                Prediction: {risk.prediction}
+                              </div>
+                              {risk.action && (
+                                <div className="mt-2 text-xs text-slate-700">
+                                  <span className="font-semibold">Action:</span> {risk.action}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Deficiency Bank Insights */}
+                    {(insights.length > 0 || examples.length > 0) && (
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                        <div className="flex gap-3">
+                          <div className="mt-1"><FileText className="h-5 w-5 text-indigo-600" /></div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-indigo-900 text-sm">Deficiency Bank™ Insights</h3>
+                            {insights.length > 0 && (
+                              <ul className="mt-2 list-disc pl-5 text-sm text-indigo-900 space-y-1">
+                                {insights.slice(0, 3).map((it, idx) => (
+                                  <li key={`peer-insight-${idx}`}>{String(it)}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {examples.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {examples.slice(0, 3).map((ex, i) => (
+                                  <span
+                                    key={`peer-ex-${i}`}
+                                    className="text-xs bg-white text-indigo-700 px-2 py-1 rounded border border-indigo-100 shadow-sm max-w-xs truncate"
+                                    title={String(ex)}
+                                  >
+                                    “{String(ex)}”
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          openAssistant('shadow_review', {
+                            trigger: 'cerv2_shadow_review',
+                            productCode: shadowReviewProductCode,
+                            deviceName: deviceProfile?.deviceName,
+                            result: shadowReviewResult,
+                          })
+                        }
+                        data-testid="button-open-shadow-review-in-assistant"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Send to CoAuthor
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={() =>
+                          openAssistant('risk_mitigation', {
+                            trigger: 'cerv2_shadow_review_generate_plan',
+                            productCode: shadowReviewProductCode,
+                            deviceName: deviceProfile?.deviceName,
+                            shadowReview: shadowReviewResult,
+                          })
+                        }
+                        data-testid="button-generate-risk-mitigation-plan"
+                      >
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        Generate Risk Mitigation Plan
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setShadowReviewResult(null)}
+                        data-testid="button-clear-shadow-review"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
         </div>
       );
     }
@@ -4556,6 +6184,79 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           </Card>
           
           {deviceProfile && deviceProfile.id ? (
+            <>
+              <Card className="border-slate-200 bg-white" data-testid="submission-workbench">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="h-5 w-5 text-teal-700" />
+                    Submission Workbench
+                  </CardTitle>
+                  <CardDescription>Run gates in order and submit with confidence.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={refreshJourneyReview}
+                      disabled={isJourneyReviewLoading}
+                      data-testid="button-submission-simulate-review"
+                    >
+                      {isJourneyReviewLoading ? 'Simulating…' : 'Simulate Review'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => validateESTARPackage(false)}
+                      disabled={isValidatingEstar}
+                      data-testid="button-submission-validate-estar"
+                    >
+                      {isValidatingEstar ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      )}
+                      Validate eSTAR
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('rta-check')}
+                      data-testid="button-submission-run-rta"
+                    >
+                      <ClipboardCheck className="h-4 w-4 mr-2" />
+                      Run RTA
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSubmissionReady}
+                      data-testid="button-submission-export"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Package
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        openAssistant('submission_portal', {
+                          trigger: 'submission_panel',
+                          deviceName: deviceProfile?.deviceName,
+                          productCode: deviceProfile?.productCode,
+                          rtaScore: deviceProfile?.rtaScore,
+                          estarValidationResults,
+                        })
+                      }
+                      data-testid="button-submission-ask-lumen"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Ask Lumen
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
             <ReportGenerator
               deviceProfile={deviceProfile}
               documentId={deviceProfile.id}
@@ -4565,6 +6266,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               sections={Array.isArray(sections) ? sections : []}
               onSubmissionReady={handleSubmissionReady}
             />
+            </>
           ) : (
             <div className="text-center p-8">
               <p className="text-gray-600">Please complete device profile before generating submission package.</p>
@@ -4620,7 +6322,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileCheck className="h-6 w-6 text-blue-600" />
-                FDA 510(k) Submission Workflow
+                FDA 510(k) Dossier Workflow
               </CardTitle>
               <CardDescription className="text-blue-700">
                 Complete 7-stage gated process for FDA 510(k) submission
@@ -4700,6 +6402,28 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       // Note: isTabCompleted is now defined at component level for reusability
       // FDA eSTAR-compliant 7-Stage Workflow Structure
       const k510TabGroups = [
+        // Workspace: stable home base (always accessible)
+        {
+          label: 'Workspace',
+          stage: 'workspace',
+          gateStatus: { passed: true },
+          tabs: [
+            {
+              id: 'home',
+              label: (
+                <div className="flex items-center">
+                  <Target className="h-4 w-4 mr-1.5 text-slate-700" />
+                  <span>Home</span>
+                  <span className="ml-1.5 bg-slate-100 text-slate-700 text-xs px-1.5 py-0.5 rounded-full">
+                    Overview
+                  </span>
+                </div>
+              ),
+              required: false,
+              status: 'ready',
+            },
+          ],
+        },
         // Stage 0: Setup - Project intake and predicate search
         {
           label: 'Stage 0: Setup',
@@ -5334,10 +7058,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       },
     ];
 
-    // Return CER tabs only when not in 510(k) mode (should never happen now)
-    // This is commented out since we're focusing on 510(k) workflow only
-    return null; // Remove CER tabs completely
-    /*
+    // Render CER tabs when in CER mode
+    if (documentType !== 'cer') {
+      return null;
+    }
+
     return (
       <div className="mt-2 mb-4 border-b border-neutral-100">
         <div className="flex overflow-x-auto pb-2 px-6 space-x-6">
@@ -5361,11 +7086,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     }`}
                     onClick={() => {
                       setActiveTab(tab.id);
-                      // Special case for 510k tab
-                      if (tab.id === '510k') {
-                        setDocumentType('510k');
-                        setActiveTab('predicates');
-                      }
+                      // Special case for switching to 510(k)
+                      if (tab.id === '510k') handleSetDocumentType('510k');
                     }}
                     onKeyDown={(e) => {
                       // Keyboard navigation for accessibility - WAI-ARIA tab pattern
@@ -5386,10 +7108,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                         e.preventDefault();
                         // Enter/Space activate the focused tab
                         setActiveTab(tab.id);
-                        if (tab.id === '510k') {
-                          setDocumentType('510k');
-                          setActiveTab('predicates');
-                        }
+                        if (tab.id === '510k') handleSetDocumentType('510k');
                       }
                     }}
                   >
@@ -5405,7 +7124,314 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         </div>
       </div>
     );
-    */
+  };
+
+  // 5-stage journey progress (Collect → Structure → Enrich → Validate → Package)
+  const getJourneyStage = () => {
+    // Only used for 510(k) consolidated experience.
+    if (documentType !== '510k') return { index: 0, label: null };
+
+    // Map active tab to the journey stage.
+    const stageByTab = {
+      home: 1,
+      'device-data-center': 1,
+      'document-vault': 1,
+      import: 1,
+
+      'document-editor': 2,
+      'cerv2-sections': 2,
+
+      predicates: 3,
+      'se-strategy': 3,
+      'task-center': 3,
+
+      compliance: 4,
+      'rta-checklist': 4,
+
+      submission: 5,
+    };
+
+    const idx = stageByTab[activeTab] || 1;
+    const labels = ['Collect', 'Structure', 'Enrich', 'Validate', 'Package'];
+    return { index: idx, label: labels[idx - 1] };
+  };
+
+  const getJourneyProjectId = () => {
+    if (!currentProjectId) return 'demo';
+    return String(currentProjectId);
+  };
+
+  const refreshJourneyReview = async () => {
+    setIsJourneyReviewLoading(true);
+    setJourneyReviewError(null);
+    try {
+      const projectId = encodeURIComponent(getJourneyProjectId());
+      const resp = await fetch(`/api/simulate-review?projectId=${projectId}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+      if (!resp.ok) {
+        const body = await resp.text();
+        throw new Error(body || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      setJourneyReview(data);
+      return data;
+    } catch (e) {
+      const msg = e?.message || 'Unknown error';
+      setJourneyReviewError(msg);
+      return null;
+    } finally {
+      setIsJourneyReviewLoading(false);
+    }
+  };
+
+  const exportJourneyPdf = async () => {
+    let review = journeyReview;
+    if (!review || typeof review.clearance_probability !== 'number') {
+      review = await refreshJourneyReview();
+    }
+
+    const DEFAULT_CONFIDENCE_GATE_THRESHOLD = 0.85; // AGENT:CONFIDENCE_GATE_DEFAULT
+    const isConfidenceGateEnabled = () => {
+      try {
+        const v = window?.localStorage?.getItem('cerv2_confidence_gate_enabled');
+        return v == null ? true : v !== 'false';
+      } catch {
+        return true;
+      }
+    };
+    const getConfidenceGateThreshold = () => {
+      try {
+        const raw = window?.localStorage?.getItem('cerv2_confidence_gate_threshold');
+        const parsed = raw == null ? NaN : Number(raw);
+        return Number.isFinite(parsed) ? parsed : DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+      } catch {
+        return DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+      }
+    };
+
+    const clearanceProb = typeof review?.clearance_probability === 'number' ? review.clearance_probability : null;
+    const gateEnabled = isConfidenceGateEnabled();
+    const threshold = getConfidenceGateThreshold();
+    if (gateEnabled && (clearanceProb == null || clearanceProb < threshold)) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('cerv2:confidence_gate', {
+            detail: {
+              source: 'CERV2Page',
+              action: 'package',
+              confidence: clearanceProb,
+              threshold,
+              note: 'Reviewer simulation confidence must meet threshold before packaging.',
+            },
+          })
+        );
+      } catch {
+        // ignore
+      }
+      toast({
+        title: 'Export Locked',
+        description: `Run simulation and reach ≥ ${Math.round(threshold * 100)}% reviewer confidence before packaging the dossier.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const projectId = encodeURIComponent(getJourneyProjectId());
+      const resp = await fetch(`/api/export-pdf?projectId=${projectId}`, {
+        method: 'POST',
+        headers: { Accept: 'application/pdf' },
+      });
+      if (!resp.ok) {
+        const body = await resp.text();
+        throw new Error(body || `HTTP ${resp.status}`);
+      }
+
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dossier.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setExportTimestamp(new Date());
+      toast({
+        title: 'Export Started',
+        description: 'Downloading dossier.pdf',
+      });
+    } catch (e) {
+      toast({
+        title: 'Export Failed',
+        description: e?.message || 'There was an error exporting the dossier.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const renderJourneyProgressBar = () => {
+    const stage = getJourneyStage();
+    if (!stage.label) return null;
+
+    const percent = Math.round((stage.index / 5) * 100);
+    const clearanceProb = typeof journeyReview?.clearance_probability === 'number' ? journeyReview.clearance_probability : null;
+    const clearancePercent = clearanceProb != null ? Math.round(clearanceProb * 100) : null;
+    const DEFAULT_CONFIDENCE_GATE_THRESHOLD = 0.85; // AGENT:CONFIDENCE_GATE_DEFAULT
+    const gateEnabled = (() => {
+      try {
+        const v = window?.localStorage?.getItem('cerv2_confidence_gate_enabled');
+        return v == null ? true : v !== 'false';
+      } catch {
+        return true;
+      }
+    })();
+    const threshold = (() => {
+      try {
+        const raw = window?.localStorage?.getItem('cerv2_confidence_gate_threshold');
+        const parsed = raw == null ? NaN : Number(raw);
+        return Number.isFinite(parsed) ? parsed : DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+      } catch {
+        return DEFAULT_CONFIDENCE_GATE_THRESHOLD;
+      }
+    })();
+    const exportBlocked = gateEnabled ? (clearanceProb != null ? clearanceProb < threshold : true) : false;
+
+    const topQuestions = Array.isArray(journeyReview?.top_questions) ? journeyReview.top_questions : [];
+    return (
+      <div className="mb-4" data-testid="stage-progress-bar">
+        <Card className="border-slate-200 bg-white">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-slate-100 text-slate-800">Stage {stage.index} of 5</Badge>
+                <span className="text-sm text-slate-700 font-medium">{stage.label}</span>
+              </div>
+              <div className="text-xs text-slate-500">Collect → Structure → Enrich → Validate → Package</div>
+            </div>
+            <div className="mt-3">
+              <Progress value={percent} />
+            </div>
+
+            {documentType === '510k' && stage.index >= 4 && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-slate-600">
+                  {isJourneyReviewLoading ? (
+                    'Refreshing reviewer simulation…'
+                  ) : journeyReviewError ? (
+                    <span className="text-red-600">Simulation unavailable: {journeyReviewError}</span>
+                  ) : clearancePercent != null ? (
+                    <>
+                      Reviewer confidence: <span className="font-semibold">{clearancePercent}%</span>
+                      {exportBlocked ? (
+                        <span className="text-amber-700"> • Export locked until ≥ 85%</span>
+                      ) : (
+                        <span className="text-green-700"> • Export unlocked</span>
+                      )}
+                    </>
+                  ) : (
+                    'Run reviewer simulation to unlock export (≥ 85%).'
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshJourneyReview}
+                    disabled={isJourneyReviewLoading}
+                    data-testid="button-refresh-review-simulation"
+                  >
+                    {isJourneyReviewLoading ? 'Simulating…' : 'Simulate Review'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {documentType === '510k' && stage.index >= 4 && topQuestions.length > 0 && (
+              <div className="mt-4" data-testid="predicted-reviewer-questions">
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-amber-900">
+                      <AlertTriangle className="h-5 w-5" />
+                      Predicted Reviewer Questions
+                    </CardTitle>
+                    <CardDescription className="text-amber-800">
+                      Top questions likely to appear in interactive review based on current evidence and completeness.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-amber-900">
+                      {topQuestions.slice(0, 5).map((q, idx) => (
+                        <li key={`${idx}-${String(q).slice(0, 24)}`}>{q}</li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          try {
+                            window.dispatchEvent(
+                              new CustomEvent('cerv2:predicted_questions', {
+                                detail: {
+                                  module: 'predicted_questions',
+                                  source: 'CERV2Page',
+                                  action: 'create_remediation_tasks',
+                                  questions: topQuestions,
+                                  clearance_probability: clearanceProb,
+                                  threshold,
+                                  projectId: currentProjectId,
+                                  deviceName: deviceProfile?.deviceName,
+                                  productCode: deviceProfile?.productCode,
+                                },
+                              })
+                            );
+                          } catch {
+                            // ignore
+                          }
+
+                          setActiveTab('task-center');
+                          toast({
+                            title: 'Remediation Tasks',
+                            description: 'Opened Task Center with predicted questions context.',
+                          });
+                        }}
+                        data-testid="button-create-remediation-tasks"
+                      >
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Create Remediation Tasks
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          openAssistant('predicted_questions', {
+                            trigger: 'journey_progress',
+                            questions: topQuestions,
+                            clearance_probability: clearanceProb,
+                            threshold,
+                            deviceName: deviceProfile?.deviceName,
+                            productCode: deviceProfile?.productCode,
+                          })
+                        }
+                        data-testid="button-ask-lumen-predicted-questions"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Ask Lumen
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   // Helper functions
@@ -5501,15 +7527,54 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   // Handle the change of document type
   const handleSetDocumentType = type => {
     setDocumentType(type);
+    try {
+      localStorage.setItem('cerv2_documentType', type);
+    } catch (e) {
+      // ignore
+    }
     if (type === 'cer') {
       setActiveTab('builder');
     } else if (type === '510k') {
-      setActiveTab('predicates');
+      setActiveTab('home');
     }
   };
 
-  // Document type banner disabled - focusing on 510(k) workflow only
-  const renderDocumentTypeBanner = () => null;
+  const renderDocumentTypeBanner = () => {
+    return (
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-6 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Workflow Mode</div>
+              <div className="text-xs text-gray-600">
+                Switch between FDA 510(k) pipeline and EU MDR CER automation.
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={documentType === '510k' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleSetDocumentType('510k')}
+                data-testid="toggle-doc-type-510k"
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                510(k)
+              </Button>
+              <Button
+                variant={documentType === 'cer' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleSetDocumentType('cer')}
+                data-testid="toggle-doc-type-cer"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                CER
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render page
   return (
@@ -5519,7 +7584,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold text-gray-900">
-                FDA 510(k) Submission Pipeline
+                {documentType === 'cer' ? 'CER Workflow & Automations' : 'FDA 510(k) Dossier Pipeline'}
               </h1>
               
               {/* Multi-Project Selector */}
@@ -5647,6 +7712,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
             {/* PROMINENT CORE FEATURES - Primary Work Areas */}
             <div className="flex items-center space-x-2">
+              {/* Home - PRIMARY ENTRY POINT */}
+              <Button
+                variant="default"
+                size="lg"
+                onClick={() => setActiveTab('home')}
+                className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                  activeTab === 'home'
+                    ? 'bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white ring-2 ring-slate-400 ring-offset-2'
+                    : 'bg-gradient-to-r from-slate-50 to-slate-100 text-slate-800 border-2 border-slate-300 hover:from-slate-100 hover:to-slate-200'
+                }`}
+                data-testid="quick-access-home"
+              >
+                <Target className="h-5 w-5" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm leading-tight">Home</span>
+                  <span className="text-xs opacity-90 leading-tight">Overview</span>
+                </div>
+              </Button>
+
               {/* Device Data Center - PRIMARY DATA ROOM */}
               <Button
                 variant="default"
@@ -5733,7 +7817,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={documentType === 'cer' ? generateFullCER : handleSubmissionReady}
-                  disabled={documentType === 'cer' ? isGeneratingFullCER : !equivalenceCompleted}
+                  disabled={
+                    documentType === 'cer'
+                      ? isGeneratingFullCER
+                      : !(typeof journeyReview?.clearance_probability === 'number' && journeyReview.clearance_probability >= 0.85)
+                  }
                 >
                   {documentType === 'cer' ? (
                     <>
@@ -5756,6 +7844,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       {renderDocumentTypeBanner()}
 
       <div className="container mx-auto px-6 mt-4">
+        {renderJourneyProgressBar()}
         {renderNavigation()}
 
         <div className="flex">
@@ -6629,7 +8718,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.target);
               const projectData = {
@@ -6638,15 +8727,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 deviceClass: formData.get('deviceClass'),
                 intendedUse: formData.get('intendedUse'),
               };
-              
-              const newProject = createNewProject(projectData);
+
+              await createNewProject(projectData);
               setShowNewProjectDialog(false);
               setActiveTab('device-profile');
-              
-              toast({
-                title: 'Project Created',
-                description: `Created new project: ${projectData.deviceName}`,
-              });
             }}
           >
             <div className="space-y-4 py-4">
@@ -6723,7 +8807,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 isOpen: false,
                 url: '',
                 documentName: '',
-                type: 'other'
+                type: 'other',
+                loading: false,
+                error: null,
+                html: ''
               });
             }
           }}
@@ -6734,7 +8821,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 isOpen: false,
                 url: '',
                 documentName: '',
-                type: 'other'
+                type: 'other',
+                loading: false,
+                error: null,
+                html: ''
               });
             }
           }}
@@ -6750,7 +8840,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <FileText className="h-5 w-5 text-blue-600" />
                 {documentViewerData.documentName || 'Document Viewer'}
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="document-viewer-toolbar">
+                {documentViewerData.type === 'docx' && documentViewerData.html && (
+                  <div className="flex items-center gap-1 mr-2">
+                    <Button
+                      variant={documentViewerViewMode === 'preview' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDocumentViewerViewMode('preview')}
+                    >
+                      Preview
+                    </Button>
+                    <Button
+                      variant={documentViewerViewMode === 'raw' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDocumentViewerViewMode('raw')}
+                    >
+                      Raw
+                    </Button>
+                  </div>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -6771,7 +8879,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       isOpen: false,
                       url: '',
                       documentName: '',
-                      type: 'other'
+                      type: 'other',
+                      loading: false,
+                      error: null,
+                      html: ''
                     });
                   }}
                   className="h-8 w-8 p-0"
@@ -6785,12 +8896,47 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
             {/* Document Display Area */}
             <div className="flex-1 overflow-hidden p-4 bg-gray-50">
-              {documentViewerData.type === 'pdf' ? (
+              {documentViewerData.loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-3" />
+                    <p className="text-sm text-gray-700">Preparing preview…</p>
+                    {documentViewerData.error && (
+                      <p className="text-xs text-red-600 mt-2">{documentViewerData.error}</p>
+                    )}
+                  </div>
+                </div>
+              ) : documentViewerData.type === 'pdf' ? (
                 <iframe
                   src={documentViewerData.url}
                   className="w-full h-full border rounded-lg bg-white"
                   title={documentViewerData.documentName}
                 />
+              ) : documentViewerData.type === 'docx' && documentViewerData.html ? (
+                documentViewerViewMode === 'raw' ? (
+                  <pre className="w-full h-full border rounded-lg bg-white p-4 overflow-auto text-xs text-gray-800">
+                    {documentViewerData.html}
+                  </pre>
+                ) : (
+                  <iframe
+                    className="w-full h-full border rounded-lg bg-white"
+                    title={documentViewerData.documentName}
+                    sandbox="allow-same-origin"
+                    srcDoc={`<!doctype html><html><head><meta charset="utf-8" />
+                      <meta name="viewport" content="width=device-width, initial-scale=1" />
+                      <style>
+                        body{font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding:24px; color:#111827;}
+                        img{max-width:100%; height:auto;}
+                        table{border-collapse:collapse; max-width:100%;}
+                        table, th, td{border:1px solid #e5e7eb;}
+                        th, td{padding:6px 8px; vertical-align:top;}
+                        a{color:#2563eb;}
+                        h1,h2,h3{margin-top:1.25em;}
+                        pre{white-space:pre-wrap;}
+                      </style>
+                    </head><body>${documentViewerData.html}</body></html>`}
+                  />
+                )
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -6799,7 +8945,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       Document Preview Not Available
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
-                      This document type cannot be displayed inline
+                      {documentViewerData.error ? documentViewerData.error : 'This document type cannot be displayed inline'}
                     </p>
                     <Button
                       variant="default"
@@ -6810,7 +8956,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           isOpen: false,
                           url: '',
                           documentName: '',
-                          type: 'other'
+                          type: 'other',
+                          loading: false,
+                          error: null,
+                          html: ''
                         });
                       }}
                     >

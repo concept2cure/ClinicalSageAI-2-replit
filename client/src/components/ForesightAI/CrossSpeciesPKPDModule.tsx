@@ -13,18 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Activity,
-  TrendingUp,
-  Calculator,
-  Brain,
-  ChartBar,
-  Info,
-  Plus,
-  Trash2,
-  Download,
-  FileText,
-  AlertTriangle
-} from 'lucide-react';
+  Activity, TrendingUp, Calculator, Brain, ChartBar, Info, Plus, Trash2, Download, FileText, AlertTriangle } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { ScatterChart, Scatter, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';

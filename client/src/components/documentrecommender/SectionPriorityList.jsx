@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, CheckCircle2, Clock, AlertTriangle, Info } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock, AlertTriangle, Info } from 'lucide-react'
 
 /**
  * SectionPriorityList Component

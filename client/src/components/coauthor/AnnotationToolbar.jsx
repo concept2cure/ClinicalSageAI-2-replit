@@ -2,18 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  MessageSquare,
-  Edit,
-  Type,
-  Highlighter,
-  AlignLeft,
-  Check,
-  X,
-  Plus,
-  Move,
-  Undo,
-  Redo,
-} from 'lucide-react';
+  MessageSquare, Edit, Type, Highlighter, AlignLeft, Check, X, Plus, Move, Undo, Redo } from 'lucide-react'
 
 export default function AnnotationToolbar({ submissionId }) {
   const [activeMode, setActiveMode] = useState('view');

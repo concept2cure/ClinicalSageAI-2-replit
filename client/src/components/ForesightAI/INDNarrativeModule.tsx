@@ -14,18 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  FileText,
-  Brain,
-  CheckCircle,
-  AlertTriangle,
-  Download,
-  Edit,
-  Eye,
-  Upload,
-  Zap,
-  Clock,
-  Shield
-} from 'lucide-react';
+  FileText, Brain, CheckCircle, AlertTriangle, Download, Edit, Eye, Upload, Zap, Clock, Shield } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 

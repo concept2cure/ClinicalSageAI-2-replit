@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  BookOpen,
-  MapPin,
-  CheckCircle,
-  ArrowRight,
-  Lightbulb,
-  FileText,
-  HelpCircle,
-} from 'lucide-react';
+import { BookOpen, MapPin, CheckCircle, ArrowRight, Lightbulb, FileText, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';

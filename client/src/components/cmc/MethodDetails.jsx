@@ -6,19 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Upload,
-  FileText,
-  Wrench,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  ArrowLeft,
-  Plus,
-  Download,
-  BarChart3,
-  BadgeCheck,
-  TriangleAlert,
-} from 'lucide-react';
+  Upload, FileText, Wrench, TrendingUp, AlertTriangle, CheckCircle2, ArrowLeft, Plus, Download, BarChart3, BadgeCheck, TriangleAlert } from 'lucide-react'
 import {
   Dialog,
   DialogContent,

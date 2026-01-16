@@ -1,59 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -61,82 +28,7 @@ import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import {
-  RefreshCw,
-  FileText,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  Download,
-  Clock,
-  Calendar,
-  User,
-  Users,
-  Activity,
-  BellRing,
-  PlusCircle,
-  XCircle,
-  CheckSquare,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  MessageSquare,
-  Link,
-  FileCheck,
-  FileCog,
-  ArrowRight,
-  ArrowLeft,
-  ArrowUpDown,
-  CalendarClock,
-  ClipboardCheck,
-  Paperclip,
-  ListChecks,
-  Kanban,
-  ListTodo,
-  Timer,
-  BarChart,
-  PieChart,
-  Lightbulb,
-  Brain,
-  Bot,
-  Tag,
-  Tags,
-  Filter,
-  Sparkles,
-  Zap,
-  Play,
-  Copy,
-  ChevronRight,
-  ChevronDown,
-  GanttChart,
-  Wifi,
-  WifiOff,
-  Bell,
-  Archive,
-  Upload,
-  Send,
-  Package,
-  Layers,
-  Scale,
-  TrendingUp,
-  AlertCircle,
-  Shield,
-  UserPlus,
-  Settings,
-  History,
-  Target,
-  Award,
-  Gauge,
-  FileBarChart,
-  Save,
-  Template,
-  FolderOpen,
-  ChevronLeft,
-  Database,
-  Loader2,
-  CheckCircle2,
-  XOctagon,
-} from 'lucide-react';
+  RefreshCw, FileText, CheckCircle, AlertTriangle, Search, Download, Clock, Calendar, User, Users, Activity, BellRing, PlusCircle, XCircle, CheckSquare, MoreHorizontal, Eye, Pencil, Trash2, MessageSquare, Link, FileCheck, FileCog, ArrowRight, ArrowLeft, ArrowUpDown, CalendarClock, ClipboardCheck, Paperclip, ListChecks, Kanban, ListTodo, Timer, BarChart, PieChart, Lightbulb, Brain, Bot, Tag, Tags, Filter, Sparkles, Zap, Play, Copy, ChevronRight, ChevronDown, GanttChart, Wifi, WifiOff, Bell, Archive, Upload, Send, Package, Layers, Scale, TrendingUp, AlertCircle, Shield, UserPlus, Settings, History, Target, Award, Gauge, FileBarChart, Save, Template, FolderOpen, ChevronLeft, Database, Loader2, CheckCircle2, XOctagon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import io from 'socket.io-client';

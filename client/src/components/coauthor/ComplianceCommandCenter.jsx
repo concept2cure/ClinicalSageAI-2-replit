@@ -23,42 +23,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTenantContext } from '@/contexts/TenantContext';
 import {
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldX,
-  AlertCircle,
-  AlertTriangle,
-  XCircle,
-  CheckCircle,
-  CheckCircle2,
-  Info,
-  Clock,
-  User,
-  Users,
-  Zap,
-  FileText,
-  ChevronRight,
-  Filter,
-  Search,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  BarChart2,
-  RefreshCw,
-  HelpCircle,
-  MessageSquare,
-  Wrench,
-  Calendar,
-  Tag,
-  Hash,
-  Flag,
-  Target,
-  Gauge,
-  ArrowUp,
-  ArrowDown,
-  ArrowRight
-} from 'lucide-react';
+  Shield, ShieldAlert, ShieldCheck, ShieldX, AlertCircle, AlertTriangle, XCircle, CheckCircle, CheckCircle2, Info, Clock, User, Users, Zap, FileText, ChevronRight, Filter, Search, TrendingUp, TrendingDown, Activity, BarChart2, RefreshCw, HelpCircle, MessageSquare, Wrench, Calendar, Tag, Hash, Flag, Target, Gauge, ArrowUp, ArrowDown, ArrowRight, DialogTrigger } from 'lucide-react'
 
 /**
  * Mock FDA compliance data generator

@@ -1,0 +1,3 @@
+risk_id,description,severity,mitigation,verification,traceability
+RISK-001,False negative leads to missed diagnosis,High,Model thresholding + clinician triage,Analysis test (sensitivity >= 0.99),data/sample_study/sample.csv;analysis/analysis.py
+RISK-002,False positive leads to unnecessary follow-up,Medium,Specificity threshold + confirmatory workflow,Analysis test (specificity >= 0.985),data/sample_study/sample.csv;analysis/analysis.py

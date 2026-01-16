@@ -1,71 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Radio, RadioGroup } from '@/components/ui/radio-group';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogFooter, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import {
-  Calculator,
-  ActivitySquare,
-  LineChart,
-  Brain,
-  Users,
-  AlertTriangle,
-  FileText,
-  Clipboard,
-  Database,
-  BrainCircuit,
-  BarChart3,
-  CheckCircle2,
-  Server,
-  Clock,
-  FileCheck,
-  Settings2,
-  X,
-  Download,
-  Share2,
-  PenTool,
-  Zap,
-  Layers,
-  Lock,
-  ArrowRight,
-  ArrowUpRight,
-  Microscope,
-  Scroll,
-  FileSpreadsheet,
-  Table,
-  ChevronDown,
-  Star,
-  Filter,
-  Info,
-} from 'lucide-react';
+  Calculator, ActivitySquare, LineChart, Brain, Users, AlertTriangle, FileText, Clipboard, Database, BrainCircuit, BarChart3, CheckCircle2, Server, Clock, FileCheck, Settings2, X, Download, Share2, PenTool, Zap, Layers, Lock, ArrowRight, ArrowUpRight, Microscope, Scroll, FileSpreadsheet, Table, ChevronDown, Star, Filter, Info, Check, Separator, Progress, Link, Textarea, Loader2, Search } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,

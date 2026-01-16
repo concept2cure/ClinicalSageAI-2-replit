@@ -1,51 +1,18 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  AlertTriangle,
-  FileText,
-  CheckCircle2,
-  RotateCw,
-  Microscope,
-  Layers,
-  Shield,
-  Info,
-  Sliders,
-  Compare,
-  Target,
-  Beaker,
-  Code,
-  Dices,
-  Zap,
-  Gauge,
-  ListFilter,
-} from 'lucide-react';
+  AlertTriangle, FileText, CheckCircle2, RotateCw, Microscope, Layers, Shield, Info, Sliders, Compare, Target, Beaker, Code, Dices, Zap, Gauge, ListFilter } from 'lucide-react'
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';

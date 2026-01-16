@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Download, Shield, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { FileText, Download, Shield, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react'
 
 /**
  * ValidationDocuments - Page for accessing IQ/OQ/PQ validation documentation

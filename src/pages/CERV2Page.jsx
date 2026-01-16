@@ -39,6 +39,7 @@ import SimpleDocumentTreePanel from '@/components/510k/SimpleDocumentTreePanel';
 import WelcomeDialog from '@/components/510k/WelcomeDialog';
 import DeviceIntakeForm from '@/components/510k/DeviceIntakeForm';
 import DeviceProfileForm from '@/components/cer/DeviceProfileForm';
+import IntegratedDemoTab from '@/components/IntegratedDemoTab';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1339,7 +1340,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 }
               }}
               onGenerationComplete={result => {
-                setGeneratedEstarUrl(result.downloadUrl);
+                setEstarGeneratedUrl(result.downloadUrl);
                 setSubmissionReady(true);
                 toast({
                   title: 'eSTAR Package Generated',
@@ -1368,6 +1369,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const renderContent = () => {
     // If 510k document type is selected, show integrated 510k content
     if (documentType === '510k') {
+      // Show demo tab if active
+      if (activeTab === 'demo') {
+        return (
+          <div className="p-4">
+            <IntegratedDemoTab />
+          </div>
+        );
+      }
       // Show device profile tab if active
       if (activeTab === 'device-profile') {
         return (
@@ -1619,6 +1628,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // Define 510k specific tab groups if the document type is 510k
     if (documentType === '510k') {
       const k510TabGroups = [
+        {
+          label: 'Demo:',
+          tabs: [
+            {
+              id: 'demo',
+              label: 'Interactive Demo',
+              icon: <Lightbulb className="h-3.5 w-3.5 mr-1.5 text-purple-600" />,
+            },
+          ],
+        },
         {
           label: '510(k) Submission:',
           tabs: [

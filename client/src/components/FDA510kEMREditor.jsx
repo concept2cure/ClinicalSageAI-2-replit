@@ -9,23 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Save,
-  Download,
-  FileText,
-  CheckCircle2,
-  Circle,
-  Edit3,
-  ChevronRight,
-  Clock,
-  AlertCircle,
-  Sparkles,
-  Copy,
-  FileCheck,
-  Wand2,
-  ArrowRight,
-  ArrowLeft,
-  BarChart3
-} from 'lucide-react';
+  Save, Download, FileText, CheckCircle2, Circle, Edit3, ChevronRight, Clock, AlertCircle, Sparkles, Copy, FileCheck, Wand2, ArrowRight, ArrowLeft, BarChart3 } from 'lucide-react'
 
 // FDA 510(k) EMR-style template sections
 const FDA_510K_SECTIONS = [

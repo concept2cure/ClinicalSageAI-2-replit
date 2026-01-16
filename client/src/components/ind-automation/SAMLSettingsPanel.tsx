@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SAMLSettingsPanel: React.FC = () => {
@@ -96,28 +96,17 @@ const SAMLSettingsPanel: React.FC = () => {
       }
       
       setSaveSuccess(true);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "SAML Settings Saved",
         description: "Your SAML configuration has been saved successfully.",
-      })
-  console.log('Toast would show:', {
-        title: "SAML Settings Saved",
-        description: "Your SAML configuration has been saved successfully.",
-      });
+  });
     } catch (error: any) {
       setSaveError(error.message || 'Failed to save SAML settings');
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Failed to Save Settings",
         description: error.message || 'An error occurred while saving SAML settings',
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Failed to Save Settings",
-        description: error.message || 'An error occurred while saving SAML settings',
-        variant: "destructive",
-      });
+  });
     } finally {
       setLoading(false);
     }

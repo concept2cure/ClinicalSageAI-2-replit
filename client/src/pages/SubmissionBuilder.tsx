@@ -7,16 +7,7 @@ import { DndProvider } from 'react-dnd';
 import { Tree, NodeModel } from '@minoru/react-dnd-treeview';
 import update from 'immutability-helper';
 import {
-  CheckCircle,
-  XCircle,
-  Info,
-  AlertTriangle,
-  FileCheck,
-  Loader2,
-  FileWarning,
-  Clock,
-  ShieldCheck,
-} from 'lucide-react';
+  CheckCircle, XCircle, Info, AlertTriangle, FileCheck, Loader2, FileWarning, Clock, ShieldCheck, Node } from 'lucide-react'
 import { useToast } from '../App';
 import { useLocation } from 'wouter';
 import AppPackagesBanner from '../components/AppPackagesBanner';

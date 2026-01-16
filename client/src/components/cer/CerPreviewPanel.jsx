@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle, Info, Download, FileText, Eye } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Download, FileText, Eye } from 'lucide-react'
 import { cerApiService } from '@/services/CerAPIService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

@@ -2,26 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'wouter';
 import {
-  Bot,
-  User,
-  Send,
-  MoreHorizontal,
-  RefreshCw,
-  FileText,
-  Clipboard,
-  ChevronRight,
-  XCircle,
-  PlusCircle,
-  Settings,
-  Save,
-  ArrowLeft,
-  Sparkles,
-  FileSymlink,
-  HelpCircle,
-  Download,
-  Shield,
-  Archive as FileArchive,
-} from 'lucide-react';
+  Bot, User, Send, MoreHorizontal, RefreshCw, FileText, Clipboard, ChevronRight, XCircle, PlusCircle, Settings, Save, ArrowLeft, Sparkles, FileSymlink, HelpCircle, Download, Shield, Archive as FileArchive } from 'lucide-react'
 import { apiRequest } from '../lib/queryClient';
 import { useToast } from '../hooks/use-toast';
 

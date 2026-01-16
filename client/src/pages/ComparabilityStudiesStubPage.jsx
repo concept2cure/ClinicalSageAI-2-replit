@@ -1,119 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
-  BarChart,
-  Calendar,
-  ArrowRight,
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  FileBarChart,
-  ClipboardList,
-  Beaker,
-} from 'lucide-react';
+  BarChart, Calendar, ArrowRight, FileText, CheckCircle2, AlertTriangle, FileBarChart, ClipboardList, Beaker } from 'lucide-react'
 
-/**
- * Comparability Studies Stub Page
- *
- * This page displays a list of comparability studies without requiring API connection.
- * It includes:
- * - Study listing with key properties
- * - Status tracking
- * - Result summary visualization
- */
 const ComparabilityStudiesStubPage = () => {
   const [activeTab, setActiveTab] = useState('active');
+  const [studies, setStudies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data for comparability studies
-  const mockStudies = [
-    {
-      id: 'CS-001',
-      title: 'API Manufacturing Process Change Assessment',
-      product: 'Neuromax',
-      type: 'Process Change',
-      status: 'completed',
-      startDate: '2024-11-15',
-      endDate: '2025-02-10',
-      methods: ['HPLC', 'DSC', 'FTIR', 'Particle Size'],
-      outcome: 'comparable',
-      owner: 'Sarah Johnson',
-    },
-    {
-      id: 'CS-002',
-      title: 'DP Manufacturing Site Transfer Comparability',
-      product: 'Cardiostat',
-      type: 'Site Transfer',
-      status: 'in_progress',
-      startDate: '2025-01-25',
-      endDate: null,
-      methods: ['Dissolution', 'Content Uniformity', 'Hardness', 'Disintegration'],
-      outcome: null,
-      owner: 'Michael Chen',
-    },
-    {
-      id: 'CS-003',
-      title: 'Raw Material Supplier Change Assessment',
-      product: 'Neuromax',
-      type: 'Supplier Change',
-      status: 'completed',
-      startDate: '2024-09-05',
-      endDate: '2024-12-15',
-      methods: ['HPLC', 'Karl Fischer', 'Elemental Impurities'],
-      outcome: 'not_comparable',
-      owner: 'Robert Smith',
-    },
-    {
-      id: 'CS-004',
-      title: 'Scale-Up Comparability for Commercial Production',
-      product: 'Immunoboost',
-      type: 'Scale-Up',
-      status: 'in_progress',
-      startDate: '2025-03-01',
-      endDate: null,
-      methods: ['Bioassay', 'SEC-HPLC', 'CEX-HPLC', 'Glycan Analysis'],
-      outcome: null,
-      owner: 'Amanda Wong',
-    },
-    {
-      id: 'CS-005',
-      title: 'Formulation Excipient Change Evaluation',
-      product: 'Cardiostat',
-      type: 'Formulation Change',
-      status: 'planned',
-      startDate: '2025-05-15',
-      endDate: null,
-      methods: ['Dissolution', 'Stability', 'Content Uniformity'],
-      outcome: null,
-      owner: 'James Wilson',
-    },
-    {
-      id: 'CS-006',
-      title: 'Container Closure System Change Assessment',
-      product: 'Immunoboost',
-      type: 'Packaging Change',
-      status: 'completed',
-      startDate: '2024-10-10',
-      endDate: '2025-01-20',
-      methods: ['Extractables/Leachables', 'Container Integrity', 'Stability'],
-      outcome: 'comparable',
-      owner: 'Emily Rodriguez',
-    },
-  ];
+  useEffect(() => {
+    const loadStudies = async () => {
+      try {
+        setLoading(true);
+        const tenantId =
+          localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/comparability-studies', {
+          headers: {
+            ...(tenantId ? { 'x-organization-id': tenantId } : {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Comparability studies service not configured');
+        }
+
+        const payload = await response.json();
+        setStudies(payload?.data || payload || []);
+      } catch (err) {
+        setError(err?.message || 'Failed to load comparability studies');
+        setStudies([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStudies();
+  }, []);
 
   // Filter studies based on active tab
-  const filteredStudies = mockStudies.filter(study => {
+  const filteredStudies = studies.filter(study => {
     if (activeTab === 'active') {
       return study.status === 'in_progress' || study.status === 'planned';
     } else if (activeTab === 'completed') {
@@ -123,11 +56,11 @@ const ComparabilityStudiesStubPage = () => {
   });
 
   // Get counts for dashboard
-  const plannedCount = mockStudies.filter(s => s.status === 'planned').length;
-  const inProgressCount = mockStudies.filter(s => s.status === 'in_progress').length;
-  const completedCount = mockStudies.filter(s => s.status === 'completed').length;
-  const comparableCount = mockStudies.filter(s => s.outcome === 'comparable').length;
-  const notComparableCount = mockStudies.filter(s => s.outcome === 'not_comparable').length;
+  const plannedCount = studies.filter(s => s.status === 'planned').length;
+  const inProgressCount = studies.filter(s => s.status === 'in_progress').length;
+  const completedCount = studies.filter(s => s.status === 'completed').length;
+  const comparableCount = studies.filter(s => s.outcome === 'comparable').length;
+  const notComparableCount = studies.filter(s => s.outcome === 'not_comparable').length;
 
   // Get status badge with appropriate styling
   const getStatusBadge = status => {
@@ -200,7 +133,7 @@ const ComparabilityStudiesStubPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockStudies.length}</div>
+            <div className="text-2xl font-bold">{studies.length}</div>
           </CardContent>
         </Card>
 
@@ -242,6 +175,13 @@ const ComparabilityStudiesStubPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {loading && (
+        <div className="mb-4 text-sm text-muted-foreground">Loading comparability studies...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-sm text-red-600">{error}</div>
+      )}
 
       <Card className="mb-6">
         <CardHeader>

@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { BarChart4, FileText, SearchIcon, ArrowUpDown, Activity, Beaker } from 'lucide-react';
+import { BarChart4, FileText, SearchIcon, ArrowUpDown, Activity, Beaker } from 'lucide-react'
 
 /**
  * FAERS How-To Modal Component

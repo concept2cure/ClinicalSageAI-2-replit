@@ -1,7 +1,7 @@
 // InsightsModal.jsx – detailed cards with filter, tabs & docs links
 import React, { useEffect, useState } from 'react';
 import ModalPortal from './ModalPortal';
-import { X } from 'lucide-react';
+import { X } from 'lucide-react'
 
 export default function InsightsModal({ onClose }) {
   const [models, setModels] = useState([]);

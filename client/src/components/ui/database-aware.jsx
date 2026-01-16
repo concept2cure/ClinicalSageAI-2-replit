@@ -3,7 +3,7 @@ import { useDatabaseStatus } from '@/components/providers/database-status-provid
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react'
 
 /**
  * Database Aware Component

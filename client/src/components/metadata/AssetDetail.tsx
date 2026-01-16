@@ -1,33 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Timeline, TimelineItem } from '../lightweight-wrappers.js';
 import {
-  FileText,
-  Calendar,
-  Download,
-  Edit,
-  History,
-  Info,
-  Code,
-  ArrowLeft,
-  Tags,
-  Lock,
-  CheckCircle,
-  Users,
-  BookOpen,
-  Database,
-  BellRing,
-} from 'lucide-react';
+  FileText, Calendar, Download, Edit, History, Info, Code, ArrowLeft, Tags, Lock, CheckCircle, Users, BookOpen, Database, BellRing } from 'lucide-react'
 import { useToast } from '../../hooks/use-toast';
 
 // Mock metadata detail

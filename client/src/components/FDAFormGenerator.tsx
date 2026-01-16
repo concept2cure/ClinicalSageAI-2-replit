@@ -8,15 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import {
-  FileText,
-  Download,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  RefreshCw,
-  FileDown,
-  Loader2
-} from 'lucide-react';
+  FileText, Download, CheckCircle, AlertCircle, Clock, RefreshCw, FileDown, Loader2 } from 'lucide-react'
 
 interface FDAForm {
   id: string;

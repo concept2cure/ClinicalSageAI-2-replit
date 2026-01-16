@@ -223,6 +223,8 @@ const ClientPortalDashboard = () => {
     } else if (module === 'timeline') {
       // Fallback to client portal for now
       window.location.href = '/client-portal.html';
+    } else if (module === 'lumen') {
+      window.location.href = '/client-portal/lumen-cortex';
     } else {
       // Default to client portal
       window.location.href = '/client-portal.html';
@@ -319,6 +321,13 @@ const ClientPortalDashboard = () => {
                 onClick={() => navigateToModule('csr')}
               >
                 CSR Intelligence™
+              </Button>
+              <Button
+                variant={activeModule === 'lumen' ? 'default' : 'ghost'}
+                className={activeModule === 'lumen' ? 'bg-pink-600 hover:bg-pink-700' : ''}
+                onClick={() => navigateToModule('lumen')}
+              >
+                Lumen Cortex™
               </Button>
             </div>
 
@@ -959,6 +968,53 @@ const ClientPortalDashboard = () => {
                 </p>
                 <div className="text-sm text-indigo-600 font-medium flex items-center">
                   View Timeline
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 ml-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-0">
+              <div className="p-6 cursor-pointer" onClick={() => navigateToModule('lumen')}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-slate-100 p-2 rounded-full">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-slate-700"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold">Lumen Cortex™</h3>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Monitor hunter status, trigger force hunts, and track intelligence volume in
+                  real time.
+                </p>
+                <div className="text-sm text-slate-700 font-medium flex items-center">
+                  Open Command Center
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-4 w-4 ml-1"

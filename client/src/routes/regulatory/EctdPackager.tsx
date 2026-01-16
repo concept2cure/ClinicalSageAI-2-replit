@@ -5,25 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
-  Package,
-  Play,
-  Download,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  FileText,
-  Archive,
-  Shield,
-} from 'lucide-react';
+  Package, Play, Download, AlertTriangle, CheckCircle, Clock, FileText, Archive, Shield } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 

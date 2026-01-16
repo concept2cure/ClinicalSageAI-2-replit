@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Folder, File, FileText, FileSpreadsheet, FileImage, FileVideo, FileAudio,
-  ChevronRight, ChevronDown, MoreVertical, Upload, Download, Share2, 
-  Copy, Move, Trash2, Edit3, Info, Clock, Users, Lock, Search, 
-  Grid, List, LayoutGrid, Home, Star, Plus, FolderPlus,
-  Check, X, Eye, History, Link2, Settings, Filter, SortAsc
-} from 'lucide-react';
+import { Folder, File, FileText, FileSpreadsheet, FileImage, FileVideo, FileAudio, ChevronRight, ChevronDown, MoreVertical, Upload, Download, Share2, Copy, Move, Trash2, Edit3, Info, Clock, Users, Lock, Search, Grid, List, LayoutGrid, Home, Star, Plus, FolderPlus, Check, X, Eye, History, Link2, Settings, Filter, SortAsc } from 'lucide-react'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -5,44 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import queryClient, { apiRequest } from '@/lib/queryClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar,
-  Clock,
-  Users,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  PlayCircle,
-  PauseCircle,
-  GitBranch,
-  GitMerge,
-  BarChart3,
-  Target,
-  Zap,
-  Filter,
-  Plus,
-  Edit3,
-  Trash2,
-  Download,
-  Upload,
-  RefreshCw,
-  ChevronRight,
-  ChevronLeft,
-  Maximize2,
-  Grid3X3,
-  List,
-  Activity,
-  TrendingUp,
-  Bell,
-  Settings,
-  User,
-  UserPlus,
-  Package,
-  FileText,
-  Shield,
-  Archive,
-  Brain,
-  Sparkles,
-} from 'lucide-react';
+  Calendar, Clock, Users, AlertCircle, CheckCircle, XCircle, PlayCircle, PauseCircle, GitBranch, GitMerge, BarChart3, Target, Zap, Filter, Plus, Edit3, Trash2, Download, Upload, RefreshCw, ChevronRight, ChevronLeft, Maximize2, Grid3X3, List, Activity, TrendingUp, Bell, Settings, User, UserPlus, Package, FileText, Shield, Archive, Brain, Sparkles } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

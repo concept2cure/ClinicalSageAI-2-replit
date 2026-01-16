@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,77 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import {
-  CalendarIcon,
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  ClipboardList,
-  Download,
-  FileText,
-  Filter,
-  Folder,
-  FolderPlus,
-  HelpCircle,
-  Link2,
-  ListChecks,
-  Plus,
-  Search,
-  Settings,
-  Share2,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-  Upload,
-  Users,
-  X,
-  XCircle,
-  AlertCircle,
-  BarChart4,
-  LineChart,
-  PieChart,
-  Cable,
-  FileUp,
-  Eye,
-  Copy,
-  Archive,
-  Clock,
-  Info,
-  MoreHorizontal,
-  Calendar,
-  Star,
-  StarHalf,
-} from 'lucide-react';
+  CalendarIcon, Check, CheckCircle2, ChevronRight, ClipboardList, Download, FileText, Filter, Folder, FolderPlus, HelpCircle, Link2, ListChecks, Plus, Search, Settings, Share2, ShieldAlert, ShieldCheck, Sparkles, Upload, Users, X, XCircle, AlertCircle, BarChart4, LineChart, PieChart, Cable, FileUp, Eye, Copy, Archive, Clock, Info, MoreHorizontal, Calendar, Star, StarHalf } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,

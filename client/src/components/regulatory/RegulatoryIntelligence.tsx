@@ -5,17 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  TrendingUp, 
-  Brain, 
-  AlertTriangle, 
-  Target,
-  BarChart3,
-  Calendar,
-  CheckCircle,
-  Clock,
-  FileText,
-  Lightbulb
-} from 'lucide-react';
+  TrendingUp, Brain, AlertTriangle, Target, BarChart3, Calendar, CheckCircle, Clock, FileText, Lightbulb } from 'lucide-react'
 
 // Type Definitions
 interface RegSubmission {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, CheckCircle, AlertCircle, CalendarClock } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, CalendarClock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

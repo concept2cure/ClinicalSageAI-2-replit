@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import {
-  BarChart2,
-  FileText,
-  Database,
-  Book,
-  ClipboardCheck,
-  FileSearch,
-  Server,
-  Activity,
-  Settings,
-  Grid3X3,
-  ArrowRight,
-} from 'lucide-react';
+  BarChart2, FileText, Database, Book, ClipboardCheck, FileSearch, Server, Activity, Settings, Grid3X3, ArrowRight } from 'lucide-react'
 
 export default function TrialSageDashboard() {
   const [activeModule, setActiveModule] = useState(null);

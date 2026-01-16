@@ -7,7 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { FileSymlink, ArrowRight, Download, CheckCircle2, AlertCircle, FilePenLine, Brain } from "lucide-react";
+import { FileSymlink, ArrowRight, Download, CheckCircle2, AlertCircle, FilePenLine, Brain } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function FixedProtocolViewer({ originalText = "", sessionId = null, onProtocolRepaired = () => {} }) {

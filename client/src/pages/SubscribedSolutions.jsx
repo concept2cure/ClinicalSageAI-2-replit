@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { CheckCircle, ChevronRight } from 'lucide-react';
+import { CheckCircle, ChevronRight, Layout } from 'lucide-react'
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/use-auth';
 

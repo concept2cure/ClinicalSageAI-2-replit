@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { FileText, History, User, AlertTriangle, Check, Clock, CalendarClock } from 'lucide-react';
+import { FileText, History, User, AlertTriangle, Check, Clock, CalendarClock } from 'lucide-react'
 import { useToast } from '../../hooks/use-toast';
 import { useTenant } from '../../contexts/TenantContext';
 import { format } from 'date-fns';

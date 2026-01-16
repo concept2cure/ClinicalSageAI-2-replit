@@ -2,7 +2,7 @@ import { db } from '../db/index.js';
 import { 
   documentComponents,
   coauthorDocuments
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, sql, isNull, or } from 'drizzle-orm';
 
 /**

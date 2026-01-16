@@ -3,7 +3,7 @@ import {
   coauthorValidationRules,
   coauthorValidationHistory,
   coauthorDocuments 
-} from '../../shared/schema.js';
+} from '../../shared/schema.ts';
 import { eq, and, or, inArray } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 
@@ -294,6 +294,10 @@ export async function initializeValidationRules(organizationId = null) {
       console.log('✅ Default validation rules initialized');
     }
   } catch (error) {
+    const errMsg = (error && error.message) || '';
+    if (error?.code === 'NO_DB' || errMsg.includes('DATABASE_URL environment variable not set')) {
+      return;
+    }
     console.error('Error initializing validation rules:', error);
   }
 }

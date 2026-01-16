@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query';
+  useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider, } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,61 +16,22 @@ import ExportModule from '@/components/cer/ExportModule';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue, } from '@/components/ui/select';
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from '@/components/ui/dialog';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, } from '@/components/ui/alert-dialog';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -87,62 +43,13 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 
 // Icons
 import {
-  Beaker,
-  FileText,
-  Search,
-  CheckCircle,
-  AlertCircle,
-  Package,
-  Globe,
-  ArrowRight,
-  FileDown,
-  Bot,
-  PlusCircle,
-  ChevronDown,
-  ChevronRight,
-  FilterX,
-  Filter,
-  Calendar,
-  BarChart,
-  Database,
-  RefreshCw,
-  Clock,
-  ArrowUpRight,
-  Zap,
-  Brain,
-  FileSearch,
-  Settings,
-  Trash2,
-  Download,
-  Upload,
-  ClipboardCheck,
-  Edit,
-  Eye,
-  FileUp,
-  Loader2,
-  Share2,
-  Users,
-  Lightbulb,
-  RotateCw,
-  Info,
-  XCircle,
-  Sparkles,
-  Hourglass,
-  Check,
-  AlertTriangle,
-} from 'lucide-react';
+  Beaker, FileText, Search, CheckCircle, AlertCircle, Package, Globe, ArrowRight, FileDown, Bot, PlusCircle, ChevronDown, ChevronRight, FilterX, Filter, Calendar, BarChart, Database, RefreshCw, Clock, ArrowUpRight, Zap, Brain, FileSearch, Settings, Trash2, Download, Upload, ClipboardCheck, Edit, Eye, FileUp, Loader2, Share2, Users, Lightbulb, RotateCw, Info, XCircle, Sparkles, Hourglass, Check, AlertTriangle, ChevronLeft, Archive, Plus } from 'lucide-react'
 
 /**
  * Status Badge Component

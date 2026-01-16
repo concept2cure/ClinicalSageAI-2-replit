@@ -1,31 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Folder,
-  FolderOpen,
-  FileText,
-  ChevronRight,
-  ChevronDown,
-  ListFilter,
-  Search,
-  X,
-  EyeOff,
-  Eye,
-  Clock,
-  User,
-  Tag,
-  Star,
-  StarOff,
-  FileText as FileWordIcon,
-  FilePdf,
-  FileSpreadsheet,
-  FilePresentation,
-  FileJson,
-  FileCode,
-  Image,
-  FileArchive,
-  Zap,
-  Plus,
-} from 'lucide-react';
+import { Folder, FolderOpen, FileText, ChevronRight, ChevronDown, ListFilter, Search, X, EyeOff, Eye, Clock, User, Tag, Star, StarOff, FileText as FileWordIcon, FilePdf, FileSpreadsheet, FilePresentation, FileJson, FileCode, Image, FileArchive, Zap, Plus } from 'lucide-react'
 import { useDocuShare } from '../../contexts/DocuShareContext';
 
 // Icon mapping for different file types

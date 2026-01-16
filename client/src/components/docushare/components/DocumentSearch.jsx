@@ -4,13 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Search, Filter, Calendar, FileText, User, Tag, X } from 'lucide-react';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
+import { Search, Filter, Calendar, FileText, User, Tag, X } from 'lucide-react'
 
 const DocumentSearch = ({
   onSearch,

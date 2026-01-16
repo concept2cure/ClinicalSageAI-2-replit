@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, X, Send, Loader2 } from 'lucide-react';
+import { Bot, X, Send, Loader2 } from 'lucide-react'
 import { useModuleIntegration } from './integration/ModuleIntegrationLayer';
 
 const AIAssistantButton = () => {

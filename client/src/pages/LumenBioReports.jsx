@@ -2,19 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'wouter';
 import AppPackagesBanner from '../components/AppPackagesBanner';
 import {
-  FileText,
-  Search,
-  Download,
-  Filter,
-  ChevronDown,
-  Calendar,
-  ChevronRight,
-  BarChart2,
-  PieChart,
-  FileBarChart,
-  FileSpreadsheet,
-  BookOpen,
-} from 'lucide-react';
+  FileText, Search, Download, Filter, ChevronDown, Calendar, ChevronRight, BarChart2, PieChart, FileBarChart, FileSpreadsheet, BookOpen } from 'lucide-react'
 
 // Mock data for reports - would come from API in production
 const REPORTS = [

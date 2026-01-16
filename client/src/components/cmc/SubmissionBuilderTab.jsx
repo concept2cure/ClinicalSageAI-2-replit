@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Book } from 'lucide-react';
+import { FileText, Download, Book } from 'lucide-react'
 
 export default function SubmissionBuilderTab({ processId }) {
   const [building, setBuilding] = useState(false);

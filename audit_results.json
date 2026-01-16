@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-01-14T21:02:16.627Z",
+  "repoRoot": "/workspaces/ClinicalSageAI-2-replit",
+  "tenant": {
+    "middleware": true,
+    "vaultHardcodedTenantRemoved": true,
+    "projectsManagementTenantEnforced": true
+  },
+  "cerv2": {
+    "clientRoute": true,
+    "apiSections": true,
+    "apiDocuments": false
+  },
+  "ingestion": {
+    "legacy": true,
+    "versionedV1": true
+  },
+  "workflow510k": {
+    "mounted": true
+  },
+  "agent": {
+    "cliPresent": true
+  },
+  "env": {
+    "missingRequired": [],
+    "missingOptional": [
+      "GEMINI_API_KEY",
+      "PERPLEXITY_API_KEY",
+      "SENDGRID_API_KEY",
+      "REPLIT_DOMAINS"
+    ],
+    "invalidRequired": []
+  },
+  "blockers": [
+    {
+      "id": "db.migrations",
+      "severity": "P1",
+      "message": "DB schema may not be applied (missing-table errors observed previously).",
+      "fix": "Run `npm run db:push` against the target DATABASE_URL."
+    }
+  ],
+  "next": {
+    "id": "db.migrations",
+    "severity": "P1",
+    "message": "DB schema may not be applied (missing-table errors observed previously).",
+    "fix": "Run `npm run db:push` against the target DATABASE_URL."
+  }
+}

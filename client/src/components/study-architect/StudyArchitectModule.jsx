@@ -1,24 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Book,
-  FileCheck,
-  FileText,
-  FlaskConical,
-  Users,
-  BriefcaseMedical,
-  Brain,
-  Microscope,
-  Clipboard,
-  CopyCheck,
-  UploadCloud,
-  Pin,
-  Filter,
-  Plus,
-  Folder,
-  Layers,
-  PlusCircle,
-  Search,
-} from 'lucide-react';
+import { Book, FileCheck, FileText, FlaskConical, Users, BriefcaseMedical, Brain, Microscope, Clipboard, CopyCheck, UploadCloud, Pin, Filter, Plus, Folder, Layers, PlusCircle, Search, Pen, CheckCircle } from 'lucide-react'
 import { useIntegration } from '../integration/ModuleIntegrationLayer';
 
 const StudyArchitectModule = () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 export default function GenerationProgressPanel({ jobId, onComplete }) {

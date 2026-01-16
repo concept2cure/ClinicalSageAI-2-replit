@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X } from 'lucide-react'
 
 export default function VersionsTour() {
   const [showTour, setShowTour] = useState(true);

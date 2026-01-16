@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Upload, FileText, Check, AlertCircle } from "lucide-react";
+import { Loader2, Upload, FileText, Check, AlertCircle, File } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProcessedDocument {
@@ -33,17 +33,11 @@ export function AcademicUploader() {
       
       // Validate file type
       if (selectedFile.type !== 'application/pdf') {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Invalid file type",
           description: "Please upload a PDF file.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Invalid file type",
-          description: "Please upload a PDF file.",
-          variant: "destructive"
-        });
+  });
         return;
       }
       
@@ -54,17 +48,11 @@ export function AcademicUploader() {
   // Handle file upload
   const handleUpload = async () => {
     if (!file) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No file selected",
         description: "Please select a PDF file to upload.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No file selected",
-        description: "Please select a PDF file to upload.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -87,46 +75,28 @@ export function AcademicUploader() {
       
       if (result.success) {
         setProcessedDocument(result);
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Document processed successfully",
           description: `Processed ${result.fileName}`,
           variant: "default"
-        })
-  console.log('Toast would show:', {
-          title: "Document processed successfully",
-          description: `Processed ${result.fileName}`,
-          variant: "default"
-        });
+  });
         
         // Add to recent documents
         setRecentDocuments(prev => [result, ...prev]);
       } else {
-        // toast call replaced
-  // Original: toast({
+  toast({
           title: "Processing error",
           description: result.error || "Failed to process document",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Processing error",
-          description: result.error || "Failed to process document",
-          variant: "destructive"
-        });
+  });
       }
     } catch (error) {
       console.error('Upload error:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Upload failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
+  });
     } finally {
       setUploading(false);
     }

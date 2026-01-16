@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import {
-  Library,
-  Search,
-  Filter,
-  Tag,
-  FileText,
-  Download,
-  ArrowRight,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
+  Library, Search, Filter, Tag, FileText, Download, ArrowRight, CheckCircle, Clock } from 'lucide-react'
 
 // Case Study Card Component
 const CaseStudyCard = ({ title, category, agency, date, status, description, link }) => {

@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,20 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import AutoCheckerPanel from './regulatory/AutoCheckerPanel';
 import {
-  AlertTriangle,
-  BookOpen,
-  Calendar,
-  CheckCircle,
-  Clock,
-  FileText,
-  Flag,
-  Globe,
-  Info,
-  Search,
-  Shield,
-  Tag,
-  Zap,
-} from 'lucide-react';
+  AlertTriangle, BookOpen, Calendar, CheckCircle, Clock, FileText, Flag, Globe, Info, Search, Shield, Tag, Zap } from 'lucide-react'
 
 /**
  * RegulatoryIntelligence Component

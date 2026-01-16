@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../db.js';
-import { csrReports, csrDetails } from 'shared/schema.js';
+import { csrReports, csrDetails } from 'shared/schema.ts';
 import { importTrialsFromApiV2 } from '../data-importer.js';
 import { processApiV2Data } from '../data-importer-v2.js';
 import { sql } from 'drizzle-orm';

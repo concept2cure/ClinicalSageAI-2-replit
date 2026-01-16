@@ -1,21 +1,5 @@
 import React from 'react';
-import {
-  AlertTriangle,
-  AlertCircle,
-  Check,
-  FileText,
-  Calendar,
-  User,
-  RefreshCw,
-  ArrowUpRight,
-  ArrowDownRight,
-  Lightbulb,
-  FileCode,
-  X,
-  CheckCircle,
-  Clock,
-  Diff,
-} from 'lucide-react';
+import { AlertTriangle, AlertCircle, Check, FileText, Calendar, User, RefreshCw, ArrowUpRight, ArrowDownRight, Lightbulb, FileCode, X, CheckCircle, Clock, Diff } from 'lucide-react'
 import {
   Card,
   CardContent,

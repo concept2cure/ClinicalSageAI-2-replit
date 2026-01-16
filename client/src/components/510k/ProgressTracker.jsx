@@ -4,23 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  ChevronDown,
-  ChevronUp,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  FileSearch,
-  Search,
-  Database,
-  BarChart,
-  FileText,
-  PenTool,
-  BookOpen,
-  Loader2,
-  Cpu,
-  LucideFeather,
-} from 'lucide-react';
+  ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, AlertTriangle, FileSearch, Search, Database, BarChart, FileText, PenTool, BookOpen, Loader2, Cpu, LucideFeather } from 'lucide-react'
 
 /**
  * Enhanced progress tracker for 510(k) submission steps

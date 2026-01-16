@@ -8,17 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  CheckCircle, 
-  FileText, 
-  Brain, 
-  PieChart, 
-  FlaskConical, 
-  Lightbulb, 
-  Upload, 
-  AlertCircle, 
-  X,
-  Download
-} from "lucide-react";
+  CheckCircle, FileText, Brain, PieChart, FlaskConical, Lightbulb, Upload, AlertCircle, X, Download, File } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -59,17 +49,11 @@ const ProtocolDesigner = () => {
   // Handler for analyzing uploaded protocol
   const handleAnalyzeProtocol = async () => {
     if (!uploadedFile) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "No file uploaded",
         description: "Please select a protocol file first.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "No file uploaded",
-        description: "Please select a protocol file first.",
-        variant: "destructive",
-      });
+  });
       return;
     }
 
@@ -92,28 +76,17 @@ const ProtocolDesigner = () => {
       setAnalysisResults(data.protocol);
       setShowUploadDialog(false);
 
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Protocol Analyzed",
         description: "Successfully analyzed your protocol.",
-      })
-  console.log('Toast would show:', {
-        title: "Protocol Analyzed",
-        description: "Successfully analyzed your protocol.",
-      });
+  });
     } catch (error) {
       console.error("Error analyzing protocol:", error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Analysis Failed",
         description: error instanceof Error ? error.message : "Failed to analyze protocol",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze protocol",
-        variant: "destructive",
-      });
+  });
     } finally {
       setIsAnalyzing(false);
     }
@@ -142,46 +115,29 @@ const ProtocolDesigner = () => {
       setEndpoint(analysisResults.primaryEndpoint);
     }
 
-    // toast call replaced
-  // Original: toast({
+  toast({
       title: "Protocol Imported",
       description: "The protocol information has been successfully imported for enhancement.",
-    })
-  console.log('Toast would show:', {
-      title: "Protocol Imported",
-      description: "The protocol information has been successfully imported for enhancement.",
-    });
+  });
   };
 
   const handleGenerate = async () => {
     // Validate required fields
     if (!indication.trim()) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please enter an indication for the protocol.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please enter an indication for the protocol.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
     if (!phase.trim()) {
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Missing Information",
         description: "Please select a phase for the protocol.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please select a phase for the protocol.",
-        variant: "destructive"
-      });
+  });
       return;
     }
 
@@ -220,17 +176,11 @@ const ProtocolDesigner = () => {
       setActiveTab("preview");
     } catch (error) {
       console.error('Error generating protocol:', error);
-      // toast call replaced
-  // Original: toast({
+  toast({
         title: "Generation Failed",
         description: error instanceof Error ? error.message : "Failed to generate protocol. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate protocol. Please try again.",
-        variant: "destructive"
-      });
+  });
       setIsGenerating(false);
     }
   };

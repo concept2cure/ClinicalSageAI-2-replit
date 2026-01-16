@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, FileText, Download } from 'lucide-react';
+import { X, FileText, Download } from 'lucide-react'
 
 const SelectedDocumentsPanel = ({ selectedFiles = [], onRemoveFile, onCompile }) => {
   const getFileDisplayName = fileId => {

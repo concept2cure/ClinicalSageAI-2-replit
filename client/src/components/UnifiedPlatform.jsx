@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
-  Database,
-  FileText,
-  FlaskConical,
-  BarChartBig,
-  ShieldCheck,
-  BookText,
-  Building,
-} from 'lucide-react';
+  Database, FileText, FlaskConical, BarChartBig, ShieldCheck, BookText, Building } from 'lucide-react'
 import { useModuleIntegration } from './integration/ModuleIntegrationLayer';
 import TrialVaultModule from './trial-vault/TrialVaultModule';
 import ClientPortal from './client-portal/ClientPortal';

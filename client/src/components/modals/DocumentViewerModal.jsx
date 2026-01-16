@@ -1,6 +1,6 @@
 // DocumentViewerModal.jsx – shows full doc with highlighted snippet and PDF page
 import React, { useEffect, useState, useRef } from 'react';
-import { X, FileText, Download } from 'lucide-react';
+import { X, FileText, Download } from 'lucide-react'
 
 export default function DocumentViewerModal({ docId, snippet, page, onClose }) {
   const [doc, setDoc] = useState(null);

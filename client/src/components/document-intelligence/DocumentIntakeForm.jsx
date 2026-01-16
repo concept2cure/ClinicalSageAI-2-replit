@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Sparkles, Shield, RotateCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Sparkles, Shield, RotateCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
 

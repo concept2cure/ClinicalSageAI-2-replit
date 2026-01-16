@@ -7,9 +7,9 @@
 import express from 'express';
 import cerGenerationService from '../services/cerGenerationService';
 import { db } from '../db/index.js';
-import { cerReports, cerClinicalEvidence, cerTemplates, cerVersionHistory, cerEssentialRequirements } from '../../shared/schema.js';
+import { cerReports, cerClinicalEvidence, cerTemplates, cerVersionHistory, cerEssentialRequirements } from '../../shared/schema.ts';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
-const { authenticateJWT } = require('../middleware/auth');
+import { authenticateJWT } from '../middleware/auth.js';
 
 const router = express.Router();
 

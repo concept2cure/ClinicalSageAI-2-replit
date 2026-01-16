@@ -1,0 +1,110 @@
+/**
+ * SmartTag Styling - Regulatory Compliance Visual Indicators
+ * 
+ * Color scheme based on validation status:
+ * - Green: Verified data (passed QC)
+ * - Amber: Draft (not yet validated)
+ * - Red: Stale (source data changed)
+ * - Blue: Frozen (locked for submission)
+ */
+
+.smart-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  margin: 0 0.125rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  user-select: none;
+}
+
+/* Status: Draft (Amber) - Not yet validated */
+.smart-tag-chip.status-draft {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #fbbf24;
+}
+
+.smart-tag-chip.status-draft:hover {
+  background-color: #fde68a;
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Status: Verified (Green) - Passed QC */
+.smart-tag-chip.status-verified {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.smart-tag-chip.status-verified:hover {
+  background-color: #a7f3d0;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Status: Stale (Red) - Source data changed */
+.smart-tag-chip.status-stale {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #ef4444;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.smart-tag-chip.status-stale:hover {
+  background-color: #fecaca;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+}
+
+/* Status: Frozen (Blue) - Locked for submission */
+.smart-tag-chip.status-frozen {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #3b82f6;
+  cursor: not-allowed;
+}
+
+.smart-tag-chip.status-frozen::after {
+  content: '🔒';
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* Pulse animation for stale tags */
+@keyframes pulse-warning {
+  0%, 100% {
+    border-color: #ef4444;
+  }
+  50% {
+    border-color: #dc2626;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* Hover tooltip preparation */
+.smart-tag-chip[data-label]:hover::before {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.5rem;
+  background-color: #1f2937;
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 0.25rem;
+  pointer-events: none;
+}
+
+/* Selection indicator */
+.smart-tag-chip.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

@@ -1,13 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+  Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,23 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toast } from '@/hooks/use-toast';
 
 import {
-  Bot,
-  Send,
-  Clipboard,
-  BookOpen,
-  FileText,
-  Lightbulb,
-  Sparkles,
-  CheckSquare,
-  AlertCircle,
-  Upload,
-  Copy,
-  X,
-  Loader2,
-  Brain,
-  Settings,
-  RotateCw,
-} from 'lucide-react';
+  Bot, Send, Clipboard, BookOpen, FileText, Lightbulb, Sparkles, CheckSquare, AlertCircle, Upload, Copy, X, Loader2, Brain, Settings, RotateCw } from 'lucide-react'
 
 /**
  * Chat Message Component

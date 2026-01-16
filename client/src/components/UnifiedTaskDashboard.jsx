@@ -19,34 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import UnifiedTaskCreationModal from './UnifiedTaskCreationModal';
 import {
-  FlaskConical,
-  FileText,
-  Activity,
-  BookOpen,
-  Archive,
-  Clipboard,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Users,
-  Link2,
-  Filter,
-  ArrowUpDown,
-  Target,
-  TrendingUp,
-  AlertTriangle,
-  Loader2,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Circle,
-  CheckCircle2,
-  XCircle,
-  Timer,
-  PauseCircle,
-  Plus,
-} from 'lucide-react';
+  FlaskConical, FileText, Activity, BookOpen, Archive, Clipboard, ChevronRight, AlertCircle, CheckCircle, Clock, Users, Link2, Filter, ArrowUpDown, Target, TrendingUp, AlertTriangle, Loader2, RefreshCw, ChevronDown, ChevronUp, Circle, CheckCircle2, XCircle, Timer, PauseCircle, Plus } from 'lucide-react'
 
 // Module configuration with colors and icons
 const MODULE_CONFIG = {

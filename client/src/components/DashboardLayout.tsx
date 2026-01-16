@@ -1,24 +1,8 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  BarChart2,
-  PieChart,
-  Layout,
-  Beaker, // Using Beaker instead of Flask since Flask is not available
-  FileCheck,
-  Layers,
-  Search,
-  User,
-  Settings,
-  LogOut,
-  Menu,
-  Bell,
-  Sun,
-  Moon
-} from "lucide-react";
+  ChevronLeft, ChevronRight, FileText, BarChart2, PieChart, Layout, Beaker, // Using Beaker instead of Flask since Flask is not available
+  FileCheck, Layers, Search, User, Settings, LogOut, Menu, Bell, Sun, Moon, FileCheck } from 'lucide-react'
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -196,15 +180,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               variant="ghost"
               size="icon"
               onClick={() => {
-                // toast call replaced
-  // Original: toast({
+  toast({
                   title: "Notifications",
                   description: "No new notifications at this time."
-                })
-  console.log('Toast would show:', {
-                  title: "Notifications",
-                  description: "No new notifications at this time."
-                });
+  });
               }}
               aria-label="Notifications"
             >
