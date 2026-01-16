@@ -2754,6 +2754,16 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
   }
 });
 
+// Mount CSR Harvest routes (Phase 22)
+try {
+  const { default: harvestRoutes } = await import('./api/vault/harvest.js');
+  const { authenticateJWT } = await import('./middleware/auth.js');
+  app.use('/api/vault/harvest', authenticateJWT, harvestRoutes);
+  console.log('✅ CSR Harvest API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount CSR Harvest routes:', error);
+}
+
 // Lumen AI Regulatory Intelligence endpoint
 app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
