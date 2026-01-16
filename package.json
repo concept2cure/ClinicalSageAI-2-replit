@@ -16,7 +16,8 @@
     "check": "tsc -p tsconfig.check.json",
     "db:push": "drizzle-kit push",
     "agent": "node scripts/agent-cli.mjs",
-    "gemini:check": "node scripts/gemini-sanity-check.mjs"
+    "gemini:check": "node scripts/gemini-sanity-check.mjs",
+    "worker:csr-harvest": "tsx server/queue/worker.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -75,6 +76,7 @@
     "axios": "1.13.2",
     "bcrypt": "6.0.0",
     "bcryptjs": "3.0.3",
+    "bullmq": "^5.35.3",
     "cheerio": "1.1.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -100,6 +102,7 @@
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.10.3",
     "input-otp": "^1.2.4",
+    "ioredis": "^5.4.2",
     "jsonwebtoken": "9.0.2",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "5.0.2",

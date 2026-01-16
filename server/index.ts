@@ -1397,7 +1397,9 @@ app.use('/api/lumen/genome', lumenGenomeRouter);
 
 // Lumen Deep Intelligence API
 import lumenIntelligenceRouter from './api/lumen/intelligence.js';
+import harvestRouter from './api/vault/harvest.js';
 app.use('/api/vault', lumenIntelligenceRouter);
+app.use('/api/vault/harvest', harvestRouter);
 
 // Lumen Synapse comparator API
 import lumenSynapseRouter from './api/lumen/synapse.js';
