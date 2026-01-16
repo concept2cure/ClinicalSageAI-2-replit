@@ -64,9 +64,16 @@ def extract_pdf(pdf_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "No PDF path provided"}))
+        print(json.dumps({"error": "No PDF path provided"}), file=sys.stderr)
         sys.exit(1)
     
     pdf_path = sys.argv[1]
     result = extract_pdf(pdf_path)
+    
+    # If there was an error, exit with error code
+    if "error" in result:
+        print(json.dumps(result), file=sys.stderr)
+        sys.exit(1)
+    
     print(json.dumps(result))
+    sys.exit(0)

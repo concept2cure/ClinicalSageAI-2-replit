@@ -41,10 +41,11 @@ const harvesterService = new CSRHarvesterService();
 
 // Worker processor function
 const processJob = async (job: Job<CSRHarvestJobData>) => {
-  logger.info('Processing job', { jobId: job.id, data: job.data });
+  const jobId = job.id || `unknown-${Date.now()}`;
+  logger.info('Processing job', { jobId, data: job.data });
 
   const result = await harvesterService.processJob({
-    jobId: job.id!,
+    jobId,
     submissionId: job.data.submissionId,
     sourceUrl: job.data.sourceUrl,
     priority: job.data.priority,
@@ -54,7 +55,7 @@ const processJob = async (job: Job<CSRHarvestJobData>) => {
     throw new Error(result.error || 'Job processing failed');
   }
 
-  logger.info('Job completed', { jobId: job.id, submissionId: result.submissionId });
+  logger.info('Job completed', { jobId, submissionId: result.submissionId });
   return result;
 };
 

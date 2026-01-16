@@ -28,8 +28,24 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_log_created_at ON csr_ingestion_log(cre
 -- Composite index for common queries
 CREATE INDEX IF NOT EXISTS idx_ingestion_log_status_started ON csr_ingestion_log(status, started_at);
 
+-- Ensure update_updated_at_column() function exists (from migration 001)
+-- If it doesn't exist, create it now
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc WHERE proname = 'update_updated_at_column'
+  ) THEN
+    CREATE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $func$
+    BEGIN
+      NEW.updated_at = CURRENT_TIMESTAMP;
+      RETURN NEW;
+    END;
+    $func$ LANGUAGE 'plpgsql';
+  END IF;
+END $$;
+
 -- Trigger to automatically update updated_at timestamp
--- Note: Requires update_updated_at_column() function from migration 001_templates_table.sql
 CREATE OR REPLACE TRIGGER update_csr_ingestion_log_updated_at 
 BEFORE UPDATE ON csr_ingestion_log 
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

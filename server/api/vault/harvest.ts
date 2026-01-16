@@ -4,6 +4,9 @@
  * Endpoints:
  * - POST /api/vault/harvest/enqueue - Enqueue harvest jobs (up to 100)
  * - GET /api/vault/harvest/status - Get job status by submission_id
+ * 
+ * Note: Authentication is handled by the authenticateJWT middleware
+ * mounted in server/index.ts when these routes are registered.
  */
 
 import { Router, Request, Response } from 'express';

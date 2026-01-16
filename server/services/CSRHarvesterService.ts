@@ -39,6 +39,8 @@ export interface HarvestResult {
   submissionId: string;
   error?: string;
   extractedData?: any;
+  vaultInserted?: boolean; // Indicates if data was inserted into csr_deep_vault
+  warnings?: string[]; // Non-fatal warnings during processing
 }
 
 export class CSRHarvesterService {
@@ -64,6 +66,8 @@ export class CSRHarvesterService {
     const { jobId, submissionId, sourceUrl } = job;
     
     logger.info('Processing harvest job', { jobId, submissionId, sourceUrl });
+
+    const warnings: string[] = [];
 
     try {
       // 1. Validate job parameters
@@ -95,13 +99,14 @@ export class CSRHarvesterService {
       this.validatePayload(structuredData);
 
       // 9. Insert into csr_deep_vault
-      await this.insertIntoVault(submissionId, structuredData, checksum);
+      const vaultInserted = await this.insertIntoVault(submissionId, structuredData, checksum, warnings);
 
       // 10. Log job completion
       await this.logJobComplete(jobId, checksum, fileSize, {
         pageCount: extractedContent.metadata.pageCount,
         tableCount: extractedContent.tables.length,
-        processingTimeMs: extractedContent.metadata.processingTimeMs
+        processingTimeMs: extractedContent.metadata.processingTimeMs,
+        vaultInserted
       });
 
       // Cleanup
@@ -113,7 +118,9 @@ export class CSRHarvesterService {
         success: true,
         jobId,
         submissionId,
-        extractedData: structuredData
+        extractedData: structuredData,
+        vaultInserted,
+        warnings: warnings.length > 0 ? warnings : undefined
       };
 
     } catch (error) {
@@ -187,8 +194,8 @@ export class CSRHarvesterService {
 
         // Verify MIME type
         const contentType = response.headers['content-type'];
-        if (!contentType || !contentType.includes('application/pdf')) {
-          throw new Error(`Invalid content type: ${contentType}. Expected application/pdf`);
+        if (!contentType || contentType.toLowerCase() !== 'application/pdf') {
+          throw new Error(`Invalid content type: ${contentType}. Expected exactly 'application/pdf'`);
         }
 
         // Stream to disk
@@ -293,8 +300,15 @@ export class CSRHarvesterService {
    * 
    * If the table doesn't exist, this will fail. A separate migration should create
    * the csr_deep_vault table before using this ingestion pipeline.
+   * 
+   * @returns true if inserted, false if skipped
    */
-  private async insertIntoVault(submissionId: string, data: any, checksum: string): Promise<void> {
+  private async insertIntoVault(
+    submissionId: string, 
+    data: any, 
+    checksum: string,
+    warnings: string[]
+  ): Promise<boolean> {
     try {
       // Check if table exists first
       const tableCheck = await db.execute(sql`
@@ -308,9 +322,10 @@ export class CSRHarvesterService {
       const tableExists = (tableCheck.rows[0] as any)?.exists;
       
       if (!tableExists) {
-        logger.warn('csr_deep_vault table does not exist - skipping vault insertion', { submissionId });
-        // Don't fail the job, just log the issue
-        return;
+        const warningMsg = 'csr_deep_vault table does not exist - skipping vault insertion';
+        logger.warn(warningMsg, { submissionId });
+        warnings.push(warningMsg);
+        return false;
       }
 
       await db.execute(sql`
@@ -333,6 +348,7 @@ export class CSRHarvesterService {
       `);
       
       logger.info('Data inserted into csr_deep_vault', { submissionId, checksum });
+      return true;
     } catch (error) {
       logger.error('Failed to insert into vault', { submissionId, error });
       throw error;
