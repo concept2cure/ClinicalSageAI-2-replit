@@ -236,17 +236,25 @@ export class CSRHarvesterService {
 
   /**
    * Extract structured data using LLM
+   * 
+   * IMPORTANT: This is a PLACEHOLDER implementation.
+   * In production, this should integrate with an actual LLM service (e.g., OpenAI, Anthropic)
+   * to extract structured fields from the CSR text and tables.
+   * 
+   * The structured_fields below are hardcoded as null - they should be populated
+   * by the LLM based on the extracted content.
+   * 
+   * TODO: Replace with actual LLMStructuredExtractor integration
    */
   private async extractStructuredData(extractedContent: any): Promise<any> {
-    // TODO: Integrate with actual LLMStructuredExtractor
-    // For now, return a structured format
-    logger.info('Extracting structured data with LLM');
+    logger.info('Extracting structured data with LLM (PLACEHOLDER - not implemented)');
 
     return {
       raw_text: extractedContent.text,
       tables: extractedContent.tables,
       metadata: extractedContent.metadata,
       // Placeholder for LLM-extracted fields
+      // TODO: Implement actual LLM extraction for these fields
       structured_fields: {
         study_title: null,
         sponsor: null,
@@ -254,7 +262,8 @@ export class CSRHarvesterService {
         phase: null,
         endpoints: [],
         patient_population: null
-      }
+      },
+      _extraction_note: 'LLM structured extraction is not yet implemented - placeholder data only'
     };
   }
 
@@ -274,10 +283,36 @@ export class CSRHarvesterService {
 
   /**
    * Insert into csr_deep_vault
+   * 
+   * Note: This method assumes csr_deep_vault table exists with the following schema:
+   * - submission_id (VARCHAR, UNIQUE)
+   * - extracted_data (JSONB)
+   * - pdf_checksum (VARCHAR)
+   * - created_at (TIMESTAMP)
+   * - updated_at (TIMESTAMP)
+   * 
+   * If the table doesn't exist, this will fail. A separate migration should create
+   * the csr_deep_vault table before using this ingestion pipeline.
    */
   private async insertIntoVault(submissionId: string, data: any, checksum: string): Promise<void> {
     try {
-      // TODO: Update this query to match actual csr_deep_vault schema
+      // Check if table exists first
+      const tableCheck = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'csr_deep_vault'
+        )
+      `);
+      
+      const tableExists = (tableCheck.rows[0] as any)?.exists;
+      
+      if (!tableExists) {
+        logger.warn('csr_deep_vault table does not exist - skipping vault insertion', { submissionId });
+        // Don't fail the job, just log the issue
+        return;
+      }
+
       await db.execute(sql`
         INSERT INTO csr_deep_vault (
           submission_id,

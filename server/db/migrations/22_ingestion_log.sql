@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_log_created_at ON csr_ingestion_log(cre
 CREATE INDEX IF NOT EXISTS idx_ingestion_log_status_started ON csr_ingestion_log(status, started_at);
 
 -- Trigger to automatically update updated_at timestamp
+-- Note: Requires update_updated_at_column() function from migration 001_templates_table.sql
 CREATE OR REPLACE TRIGGER update_csr_ingestion_log_updated_at 
 BEFORE UPDATE ON csr_ingestion_log 
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

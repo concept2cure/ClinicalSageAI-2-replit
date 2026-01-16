@@ -30,6 +30,13 @@ export interface ExtractedContent {
 }
 
 export class PDFProcessor {
+  private pythonExecutable: string;
+
+  constructor() {
+    // Allow configuring Python executable via environment variable
+    this.pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python3';
+  }
+
   /**
    * Extract text and tables from a PDF file
    * @param pdfPath Absolute path to the PDF file
@@ -84,7 +91,7 @@ export class PDFProcessor {
         return this.fallbackExtraction(pdfPath).then(resolve).catch(reject);
       }
 
-      const pythonProcess = spawn('python3', [scriptPath, pdfPath]);
+      const pythonProcess = spawn(this.pythonExecutable, [scriptPath, pdfPath]);
       let stdout = '';
       let stderr = '';
 
