@@ -162,6 +162,17 @@
   --color-gray-900: #0f172a;
   --color-bg: #ffffff;
   --color-surface: #ffffff;
+  /* Typography tokens (conflict-resolved: keep full token set) */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-text-code: #0b1220;
+  --color-link: #0b4aa8;
+  --color-link-hover: #0f172a;
+  --color-link-visited: #233876;
+
+  /* Semantic background tokens */
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
 
@@ -185,6 +196,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv02', 'cv03', 'liga', 'kern';
+  font-variant-ligatures: common-ligatures;
 
   /* Typography Scale */
   --font-size-xs: 0.75rem; /* 12px */
@@ -255,12 +268,19 @@ textarea {
   color: var(--color-text-primary);
 }
 
+/* Global typography color hierarchy */
 p,
 li,
 label,
 span,
 small {
   color: var(--color-text-secondary);
+}
+
+small,
+.text-muted,
+.text-tertiary {
+  color: var(--color-text-tertiary);
 }
 
 h1,
@@ -274,6 +294,28 @@ strong {
 }
 
 a {
+  color: var(--color-link);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+a:visited {
+  color: var(--color-link-visited);
+}
+
+::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+code,
+pre,
+kbd {
+  color: var(--color-text-code);
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-variant-ligatures: none;
   color: #0b4aa8;
 }
 
