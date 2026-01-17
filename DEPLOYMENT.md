@@ -17,6 +17,10 @@ Make sure to set up the following environment variables in your Vercel project:
 ```
 NEON_CONNECTION_STRING=postgresql://user:password@host:port/dbname?sslmode=require
 DATABASE_URL=${NEON_CONNECTION_STRING}
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
 ```
