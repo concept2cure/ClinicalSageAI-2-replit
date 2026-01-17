@@ -160,6 +160,22 @@
   --color-gray-700: #334155;
   --color-gray-800: #1e293b;
   --color-gray-900: #0f172a;
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --muted: 0 0% 100%;
+  --muted-foreground: 215 20% 35%;
+  --secondary: 0 0% 100%;
+  --accent: 0 0% 100%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-accent: 0 0% 100%;
+  --sidebar-border: 210 20% 94%;
 
   /* Typography */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -197,13 +213,72 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  color: var(--color-gray-800);
-  background-color: var(--color-gray-50);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+html,
+body,
+#root,
+main,
+section,
+header,
+footer,
+nav,
+aside {
+  background-color: var(--color-bg);
+  background: var(--color-bg);
+}
+
+.bg-background,
+.bg-card,
+.bg-popover,
+.bg-muted,
+.bg-secondary,
+.bg-accent,
+.bg-input,
+.bg-sidebar {
+  background-color: var(--color-bg) !important;
+  background: var(--color-bg) !important;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  color: var(--color-text-primary);
+}
+
+p,
+li,
+label,
+span,
+small {
+  color: var(--color-text-secondary);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong {
+  color: var(--color-text-primary);
+}
+
+a {
+  color: #0b4aa8;
+}
+
+a:hover {
+  color: #0f172a;
 }
 
 /* Font Sizing System - Based on Professional Design System */
