@@ -7,6 +7,7 @@
 
 import { Pool } from 'pg';
 import setupLiterature from './setupLiterature';
+import setupLumenCortex from './setupLumenCortex';
 import { getSslConfig } from './ssl';
 
 // Initialize database connection pool
@@ -50,6 +51,20 @@ export async function initializeDatabase() {
       }
     } else {
       console.log('Literature discovery features are disabled');
+    }
+
+    // Initialize Lumen Cortex intelligence core tables
+    console.log('Initializing Lumen Cortex intelligence core...');
+    try {
+      const lumenCortexSetup = await setupLumenCortex.initializeLumenCortexDatabase();
+      if (lumenCortexSetup) {
+        console.log('Lumen Cortex initialized successfully');
+      } else {
+        console.warn('Lumen Cortex tables could not be set up. Cortex features may be limited.');
+      }
+    } catch (error) {
+      console.error('Error initializing Lumen Cortex:', error);
+      console.warn('Lumen Cortex features may be limited or unavailable');
     }
 
     console.log('Database initialization complete');

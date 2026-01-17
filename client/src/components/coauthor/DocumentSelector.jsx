@@ -130,6 +130,15 @@ const PROGRAM_PORTFOLIO = [
   },
 ];
 
+
+const PYRAMID_MODULES = [
+  { id: 'm1', label: 'Module 1', status: 'approved', description: 'Administrative' },
+  { id: 'm2', label: 'Module 2', status: 'in-progress', description: 'Summaries' },
+  { id: 'm3', label: 'Module 3', status: 'draft', description: 'Quality' },
+  { id: 'm4', label: 'Module 4', status: 'draft', description: 'Nonclinical' },
+  { id: 'm5', label: 'Module 5', status: 'draft', description: 'Clinical' },
+];
+
 const STATUS_STYLES = {
   approved: { label: 'Approved', variant: 'success' },
   'in-progress': { label: 'In Progress', variant: 'secondary' },
@@ -162,6 +171,8 @@ export default function DocumentSelector({ onSelectDocument }) {
             <Badge variant="outline">Sequence 0007</Badge>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">Regulatory Submission Workspace</p>
+        <h1 className="text-3xl font-semibold">eCTD Co-Author™</h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
           Orchestrate IND → eCTD workflows with compliance guidance, structured authoring, and
           readiness analytics tailored to biotech, CRO, and pharma teams.
@@ -461,6 +472,8 @@ export default function DocumentSelector({ onSelectDocument }) {
             ))}
           </CardContent>
         </Card>
+      </div>
+
       </div>
 
       <Card>

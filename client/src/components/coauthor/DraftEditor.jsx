@@ -376,65 +376,6 @@ export default function DraftEditor({ content = '', onChange }) {
                 ))}
               </div>
             </div>
-
-            <div className="rounded-xl border bg-white p-4">
-              <h3 className="text-sm font-semibold">Scientific Defensibility</h3>
-              <p className="text-xs text-muted-foreground">
-                Lumen Cortex checks for reviewer-ready evidence.
-              </p>
-              <div className="mt-3 space-y-2 text-sm">
-                {SCIENTIFIC_CHECKS.map(check => (
-                  <label key={check.id} className="flex items-start gap-2">
-                    <input type="checkbox" className="mt-1" />
-                    <span>{check.label}</span>
-                  </label>
-                ))}
-              </div>
-              <Button size="sm" variant="outline" className="mt-3 w-full">
-                Run Scientific Validation
-              </Button>
-            </div>
-
-            <div className="rounded-xl border bg-white p-4">
-              <h3 className="text-sm font-semibold">SOP Alignment Gates</h3>
-              <p className="text-xs text-muted-foreground">
-                Required internal routing aligned to your SOPs.
-              </p>
-              <div className="mt-3 space-y-2 text-sm">
-                {SOP_GATES.map(gate => (
-                  <div key={gate.id} className="flex items-start gap-2">
-                    <Badge variant="outline" className="mt-0.5">
-                      {gate.label}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{gate.detail}</span>
-                  </div>
-                ))}
-              </div>
-              <Button size="sm" variant="outline" className="mt-3 w-full">
-                Launch Governance Review
-              </Button>
-            </div>
-
-            <div className="rounded-xl border bg-white p-4">
-              <h3 className="text-sm font-semibold">Evidence Traceability Map</h3>
-              <p className="text-xs text-muted-foreground">
-                Link claims to protocols, SAPs, and CSR evidence.
-              </p>
-              <div className="mt-3 space-y-2 text-sm">
-                {EVIDENCE_MAP.map(item => (
-                  <div key={item.id} className="rounded-md border border-muted/60 p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{item.title}</p>
-                      <Badge variant="outline">{item.status}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{item.detail}</p>
-                  </div>
-                ))}
-              </div>
-              <Button size="sm" variant="outline" className="mt-3 w-full">
-                Sync Evidence Links
-              </Button>
-            </div>
           </div>
         )}
 
