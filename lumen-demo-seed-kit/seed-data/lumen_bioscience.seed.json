@@ -1,0 +1,454 @@
+{
+  "seed_version": "2026-01-17",
+  "purpose": "Demo tenant seed for Lumen Bioscience, Inc. (public data)",
+  "metadata": {
+    "record_tags": [
+      "demo",
+      "public-data",
+      "seed-kit"
+    ],
+    "data_quality": {
+      "notes": [
+        "All non-public PII (e.g., Brian Finrow email) is intentionally left as an environment-substituted placeholder.",
+        "Trial records are based on public trial listings and publicly posted protocol PDFs."
+      ]
+    },
+    "sources": [
+      {
+        "label": "Company website (home/pipeline)",
+        "url": "https://www.lumen.bio/"
+      },
+      {
+        "label": "Company pipeline page",
+        "url": "https://www.lumen.bio/pipeline"
+      },
+      {
+        "label": "CenterWatch listing (NCT05330182)",
+        "url": "https://www.centerwatch.com/clinical-trials/listings/NCT05330182/lmn-201-for-prevention-of-c-difficile-infection-recurrence"
+      },
+      {
+        "label": "CenterWatch listing (NCT06556940)",
+        "url": "https://www.centerwatch.com/clinical-trials/listings/NCT06556940/gi-pharmacokinetics-of-lmn-401-in-individuals-with-ileostomies"
+      },
+      {
+        "label": "CenterWatch listing (NCT06363890)",
+        "url": "https://www.centerwatch.com/clinical-trials/listings/NCT06363890/etiology-of-travelers-diarrhea-in-australian-tourists-traveling-to-southeast-asia"
+      },
+      {
+        "label": "CenterWatch listing (NCT06030414)",
+        "url": "https://www.centerwatch.com/clinical-trials/listings/NCT06030414/a-study-to-determine-the-tolerability-of-intranasal-lmn-301"
+      },
+      {
+        "label": "ClinicalTrials.gov protocol PDF (NCT04893239)",
+        "url": "https://cdn.clinicaltrials.gov/large-docs/39/NCT04893239/Prot_000.pdf"
+      },
+      {
+        "label": "ClinicalTrials.gov protocol PDF (NCT06030414)",
+        "url": "https://cdn.clinicaltrials.gov/large-docs/14/NCT06030414/Prot_000.pdf"
+      },
+      {
+        "label": "Press release (LMN-201 Phase 1 capsule delivery)",
+        "url": "https://www.prnewswire.com/news-releases/lumen-bioscience-announces-clinical-advancement-of-lmn-201-for-c-difficile-infection-301526716.html"
+      },
+      {
+        "label": "Company news (LMN-201 RePreve sentinel cohort results)",
+        "url": "https://lumen.bio/news/2025/04/02/lmn-201-achieves-100-initial-c-difficile-clinical-cure-in-preliminary-cohort-of-re-preve-trial"
+      }
+    ]
+  },
+  "client": {
+    "slug": "lumen-bioscience",
+    "display_name": "Lumen Bioscience",
+    "legal_name": "Lumen Bioscience, Inc.",
+    "website": "https://www.lumen.bio",
+    "primary_domain": "lumen.bio",
+    "industry": "Biotechnology / Life Sciences",
+    "description": "Lumen develops biologic drugs using a spirulina-based expression and delivery platform, enabling oral and intranasal delivery of therapeutic proteins.",
+    "headquarters": {
+      "address_line1": "1441 North 34th Street",
+      "address_line2": "Suite 300",
+      "city": "Seattle",
+      "state": "WA",
+      "postal_code": "98103",
+      "country": "US",
+      "phone": "+1-206-899-1904"
+    },
+    "public_metrics": {
+      "invested_to_date_usd": 185000000,
+      "issued_patents": 34,
+      "pending_patents": 24
+    },
+    "preferred_time_zone": "America/Los_Angeles",
+    "account": {
+      "environment": "demo",
+      "status": "active",
+      "plan": "demo-enterprise",
+      "seats_purchased": 5,
+      "seats_assigned": 1,
+      "billing": {
+        "billing_status": "not_applicable_demo",
+        "currency": "USD"
+      }
+    },
+    "public_contacts": {
+      "clinical_trials_inquiries": "trials@lumen.bio"
+    }
+  },
+  "users": [
+    {
+      "external_key": "lumen-brian-finrow",
+      "first_name": "Brian",
+      "last_name": "Finrow",
+      "title": "CEO & Co-founder",
+      "email": "${PRIMARY_USER_EMAIL}",
+      "role": "client_admin",
+      "license": {
+        "type": "full",
+        "status": "active"
+      },
+      "preferences": {
+        "timezone": "America/Los_Angeles",
+        "send_invite_email": false
+      },
+      "notes": [
+        "Email is injected from PRIMARY_USER_EMAIL. Use a demo alias unless you have explicit permission."
+      ]
+    }
+  ],
+  "onboarding": {
+    "stage": "completed",
+    "completed_at": "2026-01-17",
+    "checklist": [
+      {
+        "key": "company_profile",
+        "label": "Company profile completed",
+        "status": "done"
+      },
+      {
+        "key": "primary_user_added",
+        "label": "Primary user (CEO) added and licensed",
+        "status": "done"
+      },
+      {
+        "key": "pipeline_seeded",
+        "label": "Pipeline seeded (programs, studies, documents)",
+        "status": "done"
+      },
+      {
+        "key": "integrations",
+        "label": "Integrations",
+        "status": "skipped",
+        "notes": "Demo tenant: no production integrations."
+      },
+      {
+        "key": "security_review",
+        "label": "Security review",
+        "status": "skipped",
+        "notes": "Demo tenant: contains only public data."
+      }
+    ]
+  },
+  "indications": [
+    {
+      "code": "OBESITY_OVERWEIGHT",
+      "name": "Weight loss / Overweight"
+    },
+    {
+      "code": "CDIFF",
+      "name": "Clostridioides difficile infection (C. difficile colitis)"
+    },
+    {
+      "code": "IBD",
+      "name": "Inflammatory Bowel Disease (Crohn's disease, Ulcerative colitis)"
+    },
+    {
+      "code": "OXALATE",
+      "name": "Oxalate malabsorption / Kidney stone risk"
+    },
+    {
+      "code": "TRAVELERS_DIARRHEA",
+      "name": "Traveler's diarrhea / Gastroenteritis"
+    },
+    {
+      "code": "VIRAL_RESP",
+      "name": "Viral respiratory infections (e.g., SARS-CoV-2, influenza)"
+    },
+    {
+      "code": "MALARIA",
+      "name": "Malaria (Plasmodium infection)"
+    }
+  ],
+  "programs": [
+    {
+      "code": "LMN-801",
+      "name": "Weight Loss",
+      "indication_code": "OBESITY_OVERWEIGHT",
+      "modality": "Oral hormone protein",
+      "stage": "Phase 2",
+      "summary": "LMN-801 is designed as a potential first-in-class orally delivered biologic (hormone protein) for weight loss, intended to promote fat loss while preserving lean muscle mass.",
+      "studies": []
+    },
+    {
+      "code": "LMN-201",
+      "name": "C. difficile Colitis",
+      "indication_code": "CDIFF",
+      "modality": "Oral biologic cocktail",
+      "stage": "Phase 2/3",
+      "summary": "LMN-201 is an oral biologic cocktail intended for use with and following antibiotics to improve outcomes for C. difficile infection.",
+      "mechanism_of_action": {
+        "description": "Cocktail consisting of a bacteriophage lysin specific for C. difficile and three VHH-derived proteins that bind and inhibit C. difficile toxin B, delivered in whole, spray-dried spirulina biomass and formulated in enteric capsules.",
+        "targets": [
+          "C. difficile organism",
+          "C. difficile toxin B"
+        ],
+        "components": [
+          "bacteriophage lysin",
+          "VHH anti-toxin B proteins (3)"
+        ]
+      },
+      "studies": [
+        {
+          "registry": "clinicaltrials.gov",
+          "registry_id": "NCT04893239",
+          "internal_code": "CDI01",
+          "title": "Exploratory study to assess delivery of LMN-201 components via enteric capsules in the gut of individuals with ileostomies",
+          "phase": "Phase 1",
+          "design": {
+            "type": "Interventional",
+            "allocation": "N/A",
+            "masking": "Open-label",
+            "primary_purpose": "Device feasibility / drug delivery",
+            "population": "Adults aged 19+ with mature ileostomy"
+          },
+          "status": "completed",
+          "objectives": {
+            "primary": "Determine if enteric capsules are sufficient to deliver LMN-201 therapeutic proteins to the terminal ileum.",
+            "exploratory": [
+              "Document presence of LMN-201 therapeutic proteins at the terminal ileum",
+              "Assess variability between individuals in quantity of LMN-201 proteins at terminal ileum"
+            ]
+          },
+          "key_procedures": [
+            "Subjects swallow 4 enteric capsules of LMN-201 components plus transit marker capsules",
+            "Hourly ileostomy fluid collection and analysis"
+          ],
+          "documents": [
+            {
+              "type": "protocol_pdf",
+              "title": "Protocol CDI01 (Version 1.2, 18 Nov 2021)",
+              "source_url": "https://cdn.clinicaltrials.gov/large-docs/39/NCT04893239/Prot_000.pdf"
+            },
+            {
+              "type": "press_release",
+              "title": "Clinical advancement of LMN-201 (capsule delivery study met primary endpoint)",
+              "source_url": "https://www.prnewswire.com/news-releases/lumen-bioscience-announces-clinical-advancement-of-lmn-201-for-c-difficile-infection-301526716.html"
+            }
+          ]
+        },
+        {
+          "registry": "clinicaltrials.gov",
+          "registry_id": "NCT05330182",
+          "internal_code": "CDI02",
+          "acronym": "RePreve",
+          "title": "LMN-201 for Prevention of C. difficile Infection Recurrence",
+          "phase": "Phase 2/3",
+          "design": {
+            "type": "Interventional",
+            "allocation": "Randomized",
+            "masking": "Double-blind",
+            "control": "Placebo",
+            "primary_purpose": "Treatment / recurrence prevention",
+            "population": "Adults recently diagnosed with CDI receiving standard-of-care antibiotics"
+          },
+          "status": "active_recruiting",
+          "enrollment": {
+            "target": 375,
+            "unit": "participants"
+          },
+          "key_dates": {
+            "study_start": "2024-08-29",
+            "estimated_primary_completion": null,
+            "estimated_completion": "2026-04-01"
+          },
+          "endpoints": {
+            "primary": "Sustained clinical cure (initial clinical cure + no recurrence) at 12 weeks vs placebo",
+            "secondary": [
+              "Initial clinical cure",
+              "Recurrence rate",
+              "Safety and tolerability"
+            ]
+          },
+          "documents": [
+            {
+              "type": "trial_listing",
+              "title": "CenterWatch listing for NCT05330182",
+              "source_url": "https://www.centerwatch.com/clinical-trials/listings/NCT05330182/lmn-201-for-prevention-of-c-difficile-infection-recurrence"
+            },
+            {
+              "type": "company_news",
+              "title": "Sentinel cohort topline results (April 2025)",
+              "source_url": "https://lumen.bio/news/2025/04/02/lmn-201-achieves-100-initial-c-difficile-clinical-cure-in-preliminary-cohort-of-re-preve-trial"
+            }
+          ],
+          "milestones": [
+            {
+              "name": "Sentinel cohort complete",
+              "date": "2025-04-03",
+              "notes": "21 patients completed 7 days of LMN-201 plus standard-of-care antibiotics; 100% initial clinical cure reported."
+            },
+            {
+              "name": "Main cohort recruiting",
+              "date": "2025-04-03",
+              "notes": "Randomized placebo-controlled portion recruiting."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "IBD-PROGRAM",
+      "name": "IBD (Crohn's / UC)",
+      "indication_code": "IBD",
+      "modality": "Oral biologic cocktail",
+      "stage": "Preclinical",
+      "summary": "Preclinical program targeting inflammatory bowel disease with an orally delivered biologic cocktail.",
+      "studies": []
+    },
+    {
+      "code": "OXALATE-DEGRADATION",
+      "name": "Oxalate degradation",
+      "indication_code": "OXALATE",
+      "modality": "Enzyme dietary supplement",
+      "stage": "Phase 2/3 ready",
+      "summary": "Oral enzyme supplement designed to support oxalate degradation and reduce recurrence of kidney stone formation.",
+      "studies": []
+    },
+    {
+      "code": "LMN-401",
+      "name": "Traveler's diarrhea / Gastroenteritis",
+      "indication_code": "TRAVELERS_DIARRHEA",
+      "modality": "Antibody cocktail",
+      "stage": "Preclinical",
+      "summary": "Innovation pipeline program for acute gastroenteritis / traveler's diarrhea including field etiology and ileostomy pharmacokinetic studies; field POC planned 2026.",
+      "studies": [
+        {
+          "registry": "clinicaltrials.gov",
+          "registry_id": "NCT06363890",
+          "internal_code": "TD02",
+          "title": "Etiology of Travelers' Diarrhea in Australian Tourists Traveling to Southeast Asia",
+          "phase": "N/A",
+          "design": {
+            "type": "Observational",
+            "primary_purpose": "Epidemiology / feasibility",
+            "population": "Australian adult tourists traveling 14-28 days"
+          },
+          "status": "active_recruiting",
+          "enrollment": {
+            "target": 1200,
+            "unit": "participants"
+          },
+          "key_dates": {
+            "study_start": "2024-06-20",
+            "estimated_completion": "2026-07-01"
+          },
+          "documents": [
+            {
+              "type": "trial_listing",
+              "title": "CenterWatch listing for NCT06363890",
+              "source_url": "https://www.centerwatch.com/clinical-trials/listings/NCT06363890/etiology-of-travelers-diarrhea-in-australian-tourists-traveling-to-southeast-asia"
+            }
+          ]
+        },
+        {
+          "registry": "clinicaltrials.gov",
+          "registry_id": "NCT06556940",
+          "internal_code": "TD01",
+          "title": "G.I. Pharmacokinetics of LMN-401 in Individuals With Ileostomies",
+          "phase": "Phase 1",
+          "design": {
+            "type": "Interventional",
+            "masking": "Open-label",
+            "primary_purpose": "Pharmacokinetics",
+            "population": "Adults with mature ileostomy"
+          },
+          "status": "active_recruiting",
+          "documents": [
+            {
+              "type": "trial_listing",
+              "title": "CenterWatch listing for NCT06556940",
+              "source_url": "https://www.centerwatch.com/clinical-trials/listings/NCT06556940/gi-pharmacokinetics-of-lmn-401-in-individuals-with-ileostomies"
+            }
+          ]
+        },
+        {
+          "registry": "internal",
+          "registry_id": "FIELD-POC-2026",
+          "internal_code": "TD-POC",
+          "title": "Field proof-of-concept study (planned)",
+          "phase": "N/A",
+          "status": "planned",
+          "key_dates": {
+            "planned_start_year": 2026
+          },
+          "notes": "Placeholder based on public pipeline statement 'Field POC study planned 2026'."
+        }
+      ]
+    },
+    {
+      "code": "LMN-301",
+      "name": "Viral Respiratory Infections",
+      "indication_code": "VIRAL_RESP",
+      "modality": "Intranasal biologic",
+      "stage": "Phase 1",
+      "summary": "Intranasal biologic program with Phase 1 safety/tolerability study in healthy volunteers.",
+      "studies": [
+        {
+          "registry": "clinicaltrials.gov",
+          "registry_id": "NCT06030414",
+          "internal_code": "COV01",
+          "title": "A Phase 1 study to determine the safety and tolerability of single and multiple doses of intranasally administered LMN-301 in healthy volunteers",
+          "phase": "Phase 1",
+          "design": {
+            "type": "Interventional",
+            "masking": "Open-label",
+            "site_count": 1,
+            "population": "Healthy volunteers 18-65"
+          },
+          "status": "active_or_recent",
+          "enrollment": {
+            "target": 35,
+            "unit": "participants"
+          },
+          "key_elements": {
+            "dose": "50 mg intranasal (25 mg per nostril)",
+            "parts": [
+              "Part A: single dose sentinel cohort",
+              "Part B: multiple doses (q3d, qod, or qd for 12 days)"
+            ]
+          },
+          "documents": [
+            {
+              "type": "protocol_pdf",
+              "title": "Protocol COV01 (Version 1.0, 25 May 2023)",
+              "source_url": "https://cdn.clinicaltrials.gov/large-docs/14/NCT06030414/Prot_000.pdf"
+            },
+            {
+              "type": "trial_listing",
+              "title": "CenterWatch listing for NCT06030414",
+              "source_url": "https://www.centerwatch.com/clinical-trials/listings/NCT06030414/a-study-to-determine-the-tolerability-of-intranasal-lmn-301"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MALARIA-PROGRAM",
+      "name": "Malaria",
+      "indication_code": "MALARIA",
+      "modality": "Intranasal vaccine",
+      "stage": "Exploratory / Preclinical",
+      "summary": "Exploratory/preclinical intranasal vaccine concept.",
+      "studies": []
+    }
+  ]
+}
