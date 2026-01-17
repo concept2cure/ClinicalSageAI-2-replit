@@ -162,7 +162,7 @@
   --color-gray-900: #0f172a;
   --color-bg: #ffffff;
   --color-surface: #ffffff;
-  /* Typography tokens */
+  /* Typography tokens (conflict-resolved: keep full token set) */
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-tertiary: #64748b;
