@@ -25,7 +25,13 @@ const client = postgres(dbUrl, {
   max: 10, // Maximum number of connections
   idle_timeout: 30, // Connection timeout in seconds
   max_lifetime: 60 * 30, // Maximum connection lifetime in seconds
-  ssl: dbUrl.includes('postgres://') ? { rejectUnauthorized: false } : false,
+  ssl:
+    dbUrl.includes('postgres://') ||
+    dbUrl.includes('postgresql://') ||
+    dbUrl.includes('neon.tech') ||
+    dbUrl.includes('neondb')
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
 // Create a Drizzle ORM instance
