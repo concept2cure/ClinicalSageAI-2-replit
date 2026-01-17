@@ -43,6 +43,10 @@ async function getLicenseForOrganization(organizationId) {
   }
 }
 
+export async function getActiveLicenseForOrganization(organizationId) {
+  return getLicenseForOrganization(organizationId);
+}
+
 /**
  * Get current month's submission count for a license
  */

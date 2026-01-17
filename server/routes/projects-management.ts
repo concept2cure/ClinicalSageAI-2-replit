@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { projects, insertProjectSchema, clientWorkspaces, organizations } from '@shared/schema';
+import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { eq } from 'drizzle-orm';
-import { enforceProjectQuota } from '../services/quotaEnforcementService.js';
+import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 
 const router = Router();
 
@@ -28,14 +28,29 @@ const createProjectSchema = z.object({
  */
 router.get('/', async (req, res) => {
   try {
-    // Support both header and query parameter for organizationId
-    const organizationIdParam = req.headers['x-organization-id'] || req.query.organizationId;
-    const organizationId = parseInt(organizationIdParam as string);
+    // Support header/query params for organization/workspace context
+    const organizationIdParam =
+      req.headers['x-organization-id'] ||
+      req.query.organizationId ||
+      req.query.organization_id;
+    const clientWorkspaceIdParam =
+      req.headers['x-client-workspace-id'] ||
+      req.query.clientWorkspaceId ||
+      req.query.client_workspace_id;
+    const organizationId = parseInt(organizationIdParam as string, 10);
+    const clientWorkspaceId = clientWorkspaceIdParam
+      ? parseInt(clientWorkspaceIdParam as string, 10)
+      : null;
 
     console.log('🔍 GET projects request - organizationId:', organizationId, 'from:', req.headers['x-organization-id'] ? 'header' : 'query');
 
-    if (!organizationId) {
+    if (!organizationId || Number.isNaN(organizationId)) {
       return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
+    const license = await getActiveLicenseForOrganization(organizationId);
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
     }
 
     // Get projects from database
@@ -44,9 +59,13 @@ router.get('/', async (req, res) => {
       .from(projects)
       .where(eq(projects.organizationId, organizationId));
 
+    const filteredProjects = clientWorkspaceId
+      ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
+      : orgProjects;
+
     console.log('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
     console.log('🔍 Projects data:', orgProjects);
-    res.json(orgProjects);
+    res.json(filteredProjects);
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
@@ -62,6 +81,11 @@ router.post('/', async (req, res) => {
     console.log('Create project request received:', req.body);
 
     const validatedData = createProjectSchema.parse(req.body);
+
+    const license = await getActiveLicenseForOrganization(validatedData.organizationId);
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
+    }
     
     // Find an available client workspace for the organization first
     let availableClients = await db
@@ -149,6 +173,43 @@ router.post('/', async (req, res) => {
 
     console.log('Created project atomically:', result.data);
     console.log('Quota info:', result.quotaInfo);
+
+    try {
+      const now = new Date();
+      const userName =
+        (req.headers['x-user-name'] as string) ||
+        (req.headers['x-user-email'] as string) ||
+        'system';
+      const userRole = (req.headers['x-user-role'] as string) || null;
+
+      await db.insert(auditEvents).values({
+        organizationId: validatedData.organizationId,
+        eventType: 'project_create',
+        entityType: 'project',
+        entityId: result.data.id,
+        userId: null,
+        userName,
+        userRole,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null,
+        timestamp: now,
+        timestampUtc: now,
+        oldValues: null,
+        newValues: result.data,
+        changedFields: Object.keys(result.data || {}),
+        reason: 'Project created',
+        comments: null,
+        requiresSignature: false,
+        regulatorySignificant: true,
+        gxpRelevant: true,
+        metadata: {
+          source: 'projects-management',
+          clientWorkspaceId: result.data.client_workspace_id ?? result.data.clientWorkspaceId,
+        },
+      });
+    } catch (auditError) {
+      console.error('Audit trail creation failed (non-blocking):', auditError);
+    }
     
     res.status(201).json(result.data);
   } catch (error) {
@@ -167,9 +228,20 @@ router.post('/', async (req, res) => {
 router.delete('/:projectId', async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
+    const organizationIdParam = req.headers['x-organization-id'] || req.query.organizationId;
+    const organizationId = parseInt(organizationIdParam as string, 10);
 
-    if (isNaN(projectId)) {
+    if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!organizationId || Number.isNaN(organizationId)) {
+      return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
+    const license = await getActiveLicenseForOrganization(organizationId);
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
     }
 
     // Check if project exists
@@ -179,8 +251,49 @@ router.delete('/:projectId', async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
+    if (existingProject.organizationId !== organizationId) {
+      return res.status(403).json({ error: 'Access denied to this project' });
+    }
+
     // Delete the project
     await db.delete(projects).where(eq(projects.id, projectId));
+
+    try {
+      const now = new Date();
+      const userName =
+        (req.headers['x-user-name'] as string) ||
+        (req.headers['x-user-email'] as string) ||
+        'system';
+      const userRole = (req.headers['x-user-role'] as string) || null;
+
+      await db.insert(auditEvents).values({
+        organizationId,
+        eventType: 'project_delete',
+        entityType: 'project',
+        entityId: existingProject.id,
+        userId: null,
+        userName,
+        userRole,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null,
+        timestamp: now,
+        timestampUtc: now,
+        oldValues: existingProject,
+        newValues: null,
+        changedFields: Object.keys(existingProject || {}),
+        reason: 'Project deleted',
+        comments: null,
+        requiresSignature: false,
+        regulatorySignificant: true,
+        gxpRelevant: true,
+        metadata: {
+          source: 'projects-management',
+          clientWorkspaceId: existingProject.clientWorkspaceId,
+        },
+      });
+    } catch (auditError) {
+      console.error('Audit trail creation failed (non-blocking):', auditError);
+    }
 
     console.log(`Deleted project ${projectId} (${existingProject.name})`);
     res.json({ message: 'Project deleted successfully', projectId });
