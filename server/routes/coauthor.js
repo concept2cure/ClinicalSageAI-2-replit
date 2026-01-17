@@ -51,6 +51,7 @@ import {
   getDocumentLocks,
   autoSaveManager
 } from '../services/documentLocking.js';
+import openaiService from '../services/openaiService.js';
 import ectdAuditService from '../services/ectdAuditService.js';
 import controlledVocabularyService from '../services/controlledVocabularyService.js';
 import globalChangeManagementService from '../services/globalChangeManagementService.js';
@@ -3751,68 +3752,49 @@ router.post('/search/export', async (req, res) => {
 router.post('/ai/generate', async (req, res) => {
   try {
     const { section, module, requirements = {}, currentContent = '' } = req.body;
+    const documentType = module ? `eCTD Module ${module}` : 'eCTD';
+    const prompt = `Generate comprehensive regulatory content for eCTD ${module} Section ${section}.
     
-    let OpenAI;
+    Current content (if any): ${currentContent}
+    
+    Requirements: ${JSON.stringify(requirements)}
+    
+    Please provide detailed, FDA/ICH-compliant content that includes:
+    1. All required subsections
+    2. Regulatory language and formatting
+    3. Placeholders for specific data where needed
+    4. Compliance considerations`;
+
     try {
-      OpenAI = (await import('openai')).default;
-    } catch (e) {
-      console.log('OpenAI not available for content generation');
-    }
+      const content = await openaiService.generateRegulatoryContent(
+        prompt,
+        documentType,
+        requirements
+      );
 
-    if (OpenAI && process.env.OPENAI_API_KEY) {
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-
-      const prompt = `Generate comprehensive regulatory content for eCTD ${module} Section ${section}.
-      
-      Current content (if any): ${currentContent}
-      
-      Requirements: ${JSON.stringify(requirements)}
-      
-      Please provide detailed, FDA/ICH-compliant content that includes:
-      1. All required subsections
-      2. Regulatory language and formatting
-      3. Placeholders for specific data where needed
-      4. Compliance considerations`;
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert regulatory writer specializing in eCTD documentation for pharmaceutical submissions.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000
-      });
-
-      res.json({
+      return res.json({
         success: true,
-        content: response.choices[0].message.content,
+        content,
         section,
         module,
-        model: 'gpt-4o',
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         isRealAI: true
       });
-    } else {
-      // Fallback template content
-      res.json({
-        success: true,
-        content: `[Template for ${module} Section ${section}]
+    } catch (aiError) {
+      if (aiError.message?.includes('Kimi AI API key not available')) {
+        return res.json({
+          success: true,
+          content: `[Template for ${module} Section ${section}]
         
 This section requires comprehensive documentation following ICH guidelines.
 Please add specific content based on your product requirements.`,
-        section,
-        module,
-        model: 'template',
-        isRealAI: false
-      });
+          section,
+          module,
+          model: 'template',
+          isRealAI: false
+        });
+      }
+      throw aiError;
     }
 
   } catch (error) {
