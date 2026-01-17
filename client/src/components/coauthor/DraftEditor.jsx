@@ -23,6 +23,8 @@ import {
   FileDown,
   ClipboardList,
   PanelRightOpen,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
 
 const TOOLBAR_ACTIONS = [
@@ -49,11 +51,29 @@ const COMPLIANCE_CHECKLIST = [
   'Mentions safety signals and mitigation plans',
 ];
 
+const COMMENT_THREADS = [
+  {
+    id: 'comment-1',
+    author: 'Reg Affairs Lead',
+    time: '2h ago',
+    text: 'Please confirm the risk mitigation language aligns with Module 5.3.5.',
+  },
+  {
+    id: 'comment-2',
+    author: 'Medical Writer',
+    time: 'Yesterday',
+    text: 'Consider adding a short summary of regional subgroup analysis.',
+  },
+];
+
 export default function DraftEditor({ content = '', onChange }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
   const [showInsights, setShowInsights] = useState(true);
+  const [activeRibbon, setActiveRibbon] = useState('home');
+  const [trackChanges, setTrackChanges] = useState(true);
+  const [showComments, setShowComments] = useState(true);
   const textareaRef = useRef(null);
 
   const metrics = useMemo(() => {
@@ -155,6 +175,30 @@ export default function DraftEditor({ content = '', onChange }) {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white px-4 py-2 shadow-sm">
+        <div className="flex items-center gap-2">
+          {['home', 'insert', 'review', 'export'].map(tab => (
+            <Button
+              key={tab}
+              size="sm"
+              variant={activeRibbon === tab ? 'default' : 'ghost'}
+              className="capitalize"
+              onClick={() => setActiveRibbon(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Badge variant="outline">IND → eCTD</Badge>
+          <Badge variant="secondary">Module 2.7</Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            Draft in Review
+          </Badge>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="ghost" disabled={isGenerating} onClick={handleGenerateContent}>
@@ -170,6 +214,14 @@ export default function DraftEditor({ content = '', onChange }) {
           <Button size="sm" variant="ghost" onClick={() => setShowInsights(prev => !prev)}>
             <PanelRightOpen className="h-4 w-4 mr-2" />
             {showInsights ? 'Hide Insights' : 'Show Insights'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setTrackChanges(prev => !prev)}>
+            <ShieldCheck className="h-4 w-4 mr-2" />
+            {trackChanges ? 'Track Changes On' : 'Track Changes Off'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowComments(prev => !prev)}>
+            <MessageSquare className="h-4 w-4 mr-2" />
+            {showComments ? 'Hide Comments' : 'Show Comments'}
           </Button>
         </div>
 
@@ -216,7 +268,11 @@ export default function DraftEditor({ content = '', onChange }) {
 
       {isGenerating && <Progress value={progress} className="h-1" />}
 
-      <div className={`grid gap-6 ${showInsights ? 'lg:grid-cols-[2fr_1fr]' : 'grid-cols-1'}`}>
+      <div
+        className={`grid gap-6 ${
+          showInsights && showComments ? 'lg:grid-cols-[2fr_1fr_0.8fr]' : showInsights ? 'lg:grid-cols-[2fr_1fr]' : 'grid-cols-1'
+        }`}
+      >
         <div className="rounded-xl border bg-slate-50/60 p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-2">
@@ -292,6 +348,29 @@ export default function DraftEditor({ content = '', onChange }) {
             </div>
           </div>
         )}
+
+        {showComments && (
+          <div className="space-y-4">
+            <div className="rounded-xl border bg-white p-4">
+              <h3 className="text-sm font-semibold">Comments & Review</h3>
+              <p className="text-xs text-muted-foreground">Track reviewer feedback by section</p>
+              <div className="mt-3 space-y-3 text-sm">
+                {COMMENT_THREADS.map(thread => (
+                  <div key={thread.id} className="rounded-lg border border-muted/60 p-3">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{thread.author}</span>
+                      <span>{thread.time}</span>
+                    </div>
+                    <p className="mt-2">{thread.text}</p>
+                  </div>
+                ))}
+              </div>
+              <Button size="sm" variant="outline" className="mt-3 w-full">
+                Add Comment
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {suggestions.length > 0 && (
@@ -329,7 +408,7 @@ export default function DraftEditor({ content = '', onChange }) {
       <div className="flex justify-end">
         <Button size="sm" variant="outline" className="flex items-center">
           <Bot className="h-4 w-4 mr-2" />
-          Ask AI for help
+          Ask Kimi AI
         </Button>
       </div>
     </div>
