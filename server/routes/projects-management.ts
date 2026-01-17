@@ -4,6 +4,7 @@ import { db } from '../db';
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
 import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
+import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 
 const router = Router();
 
@@ -27,35 +28,6 @@ const updateProjectSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['planning', 'active', 'on-hold', 'completed', 'archived']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-});
-
-const getTenantContext = (req: any) => {
-  const organizationIdParam =
-    req.headers['x-organization-id'] || req.query.organizationId || req.query.organization_id;
-  const clientWorkspaceIdParam =
-    req.headers['x-client-workspace-id'] ||
-    req.query.clientWorkspaceId ||
-    req.query.client_workspace_id;
-  const organizationId = parseInt(organizationIdParam as string, 10);
-  const clientWorkspaceId = clientWorkspaceIdParam
-    ? parseInt(clientWorkspaceIdParam as string, 10)
-    : null;
-
-  if (!organizationIdParam || Number.isNaN(organizationId)) {
-    return { error: 'Organization ID is required' };
-  }
-
-  if (clientWorkspaceIdParam && Number.isNaN(clientWorkspaceId)) {
-    return { error: 'Client workspace ID must be numeric' };
-  }
-
-  return { organizationId, clientWorkspaceId };
-};
-
-const getRequestActor = (req: any) => ({
-  userName:
-    (req.headers['x-user-name'] as string) || (req.headers['x-user-email'] as string) || 'system',
-  userRole: (req.headers['x-user-role'] as string) || null,
 });
 
 /**
