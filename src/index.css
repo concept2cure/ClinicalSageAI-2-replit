@@ -167,6 +167,7 @@
   --color-text-tertiary: #64748b;
   --color-text-inverse: #ffffff;
   --color-text-code: #0b1220;
+  /* Resolved: consolidated typography tokens for merge alignment */
   --color-link: #0b4aa8;
   --color-link-hover: #0f172a;
   --color-link-visited: #233876;
