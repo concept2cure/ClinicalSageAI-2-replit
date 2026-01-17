@@ -18,6 +18,8 @@
 // Import audit service for 21 CFR Part 11 compliance
 import auditService from './auditService.js';
 import componentExtraction from './componentExtraction.js';
+import fs from 'fs';
+import path from 'path';
 const { generateUDI, extractComponents } = componentExtraction;
 
 class VaultDMSService {
@@ -120,16 +122,26 @@ class VaultDMSService {
       throw new Error('documentData with title, type, and status are required.');
     }
 
-    // Simulate file storage (in production, this would upload to actual storage)
+    // Persist file content when provided (local storage fallback)
     let filePath = null;
     if (file && file.originalname) {
-      filePath = `/uploads/${tenantId}/${Date.now()}-${file.originalname}`;
-      console.log(`[VaultDMSService] Simulated file upload: ${filePath}`);
+      const uploadsDir = path.join(process.cwd(), 'uploads', String(tenantId));
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      filePath = path.join(uploadsDir, `${Date.now()}-${file.originalname}`);
+
+      if (file.buffer) {
+        fs.writeFileSync(filePath, file.buffer);
+      }
+
+      console.log(`[VaultDMSService] Stored file upload: ${filePath}`);
     }
 
     const sql = `
             INSERT INTO documents (organization_id, name, type, status, file_path, folder_id)
-            VALUES ($1, $2, $3, $4, $5, NULL)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id, organization_id, name as title, type, created_at as date, status, file_path, created_at, updated_at;
         `;
 
@@ -137,9 +149,9 @@ class VaultDMSService {
       tenantId,
       documentData.title,
       documentData.type,
-      documentData.date || new Date().toISOString().split('T')[0],
       documentData.status,
       filePath,
+      documentData.folderId || null,
     ];
 
     try {
@@ -184,6 +196,124 @@ class VaultDMSService {
     } catch (error) {
       console.error(`[VaultDMSService] Error creating document for tenant ${tenantId}:`, error);
       throw new Error('Failed to create document in the database.');
+    }
+  }
+
+  /**
+   * Retrieves a specific document by ID with tenant scoping (alias for getDocumentById).
+   */
+  async getDocument(tenantId, documentId) {
+    return this.getDocumentById(tenantId, documentId);
+  }
+
+  /**
+   * Ensure a folder exists for a given path. Returns the leaf folder ID.
+   */
+  async ensureFolder(tenantId, folderPath, createdById = null) {
+    if (!tenantId) {
+      throw new Error('tenantId is required to ensure a folder.');
+    }
+    if (!folderPath) {
+      throw new Error('folderPath is required to ensure a folder.');
+    }
+
+    const normalizedPath = `/${String(folderPath).trim().replace(/^\/+|\/+$/g, '')}`;
+    const segments = normalizedPath.split('/').filter(Boolean);
+
+    let parentId = null;
+    let currentPath = '';
+
+    for (const segment of segments) {
+      currentPath = `${currentPath}/${segment}`;
+      const existing = await this.db.query(
+        `
+          SELECT id
+          FROM document_folders
+          WHERE organization_id = $1
+            AND name = $2
+            AND parent_id ${parentId ? '= $3' : 'IS NULL'}
+          LIMIT 1
+        `,
+        parentId ? [tenantId, segment, parentId] : [tenantId, segment]
+      );
+
+      if (existing.rows.length > 0) {
+        parentId = existing.rows[0].id;
+        continue;
+      }
+
+      const created = await this.db.query(
+        `
+          INSERT INTO document_folders (organization_id, name, parent_id, path, created_by_id)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id
+        `,
+        [tenantId, segment, parentId, currentPath, createdById]
+      );
+
+      parentId = created.rows[0].id;
+    }
+
+    return parentId;
+  }
+
+  /**
+   * Return version history for a document scoped by tenant.
+   */
+  async getVersions(tenantId, documentId) {
+    if (!tenantId) {
+      throw new Error('tenantId is required to retrieve versions.');
+    }
+    if (!documentId) {
+      throw new Error('documentId is required to retrieve versions.');
+    }
+
+    const sql = `
+      SELECT dv.*
+      FROM document_versions dv
+      INNER JOIN documents d ON d.id = dv.document_id
+      WHERE dv.document_id = $1
+        AND d.organization_id = $2
+      ORDER BY dv.created_at DESC
+    `;
+
+    try {
+      const { rows } = await this.db.query(sql, [documentId, tenantId]);
+      return rows;
+    } catch (error) {
+      console.error(`[VaultDMSService] Error fetching versions for document ${documentId}:`, error);
+      throw new Error('Failed to retrieve document versions from the database.');
+    }
+  }
+
+  /**
+   * Return audit trail entries for a document scoped by tenant.
+   */
+  async getAuditTrail(tenantId, documentId) {
+    if (!tenantId) {
+      throw new Error('tenantId is required to retrieve audit trail.');
+    }
+    if (!documentId) {
+      throw new Error('documentId is required to retrieve audit trail.');
+    }
+
+    const sql = `
+      SELECT *
+      FROM document_audit_trail
+      WHERE document_id = $1
+        AND organization_id = $2
+      ORDER BY timestamp DESC
+    `;
+
+    try {
+      const { rows } = await this.db.query(sql, [documentId, tenantId]);
+      return rows;
+    } catch (error) {
+      console.error(
+        `[VaultDMSService] Error fetching audit trail for document ${documentId}:`,
+        error
+      );
+      throw new Error('Failed to retrieve document audit trail from the database.');
     }
   }
 
