@@ -810,8 +810,11 @@ input[type="checkbox"].sp-checkbox:checked {
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-tertiary: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-text-code: #0b1220;
   --color-link: #0b4aa8;
   --color-link-hover: #0f172a;
+  --color-link-visited: #233876;
 
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
@@ -990,9 +993,21 @@ a:hover {
   color: var(--color-link-hover);
 }
 
+a:visited {
+  color: var(--color-link-visited);
+}
+
 ::placeholder {
   color: var(--color-text-tertiary);
   opacity: 1;
+}
+
+code,
+pre,
+kbd {
+  color: var(--color-text-code);
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-variant-ligatures: none;
 }
 
 /* Font Sizing System - Based on Professional Design System */
