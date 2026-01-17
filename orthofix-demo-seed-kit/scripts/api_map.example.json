@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "header": "Authorization",
+    "scheme": "Bearer"
+  },
+  "endpoints": {
+    "clients": {
+      "list": { "method": "GET", "path": "/admin/clients", "query_param": "slug" },
+      "create": { "method": "POST", "path": "/admin/clients" },
+      "update": { "method": "PATCH", "path": "/admin/clients/{id}" }
+    },
+    "users": {
+      "list": { "method": "GET", "path": "/admin/users", "query_param": "email" },
+      "create": { "method": "POST", "path": "/admin/users" },
+      "update": { "method": "PATCH", "path": "/admin/users/{id}" }
+    },
+    "licenses": {
+      "assign": { "method": "POST", "path": "/admin/licenses/assign" }
+    },
+    "onboarding": {
+      "upsert": { "method": "PUT", "path": "/admin/clients/{client_id}/onboarding" }
+    },
+    "programs": {
+      "list": { "method": "GET", "path": "/admin/programs", "query_param": "code" },
+      "create": { "method": "POST", "path": "/admin/programs" },
+      "update": { "method": "PATCH", "path": "/admin/programs/{id}" }
+    },
+    "studies": {
+      "list": { "method": "GET", "path": "/admin/studies", "query_param": "registry_id" },
+      "create": { "method": "POST", "path": "/admin/studies" },
+      "update": { "method": "PATCH", "path": "/admin/studies/{id}" }
+    },
+    "documents": {
+      "list": { "method": "GET", "path": "/admin/documents", "query_param": "source_url" },
+      "create": { "method": "POST", "path": "/admin/documents" },
+      "update": { "method": "PATCH", "path": "/admin/documents/{id}" }
+    }
+  },
+  "response": {
+    "id_field": "id",
+    "list_items_field": "items"
+  }
+}
