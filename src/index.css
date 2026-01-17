@@ -162,16 +162,17 @@
   --color-gray-900: #0f172a;
   --color-bg: #ffffff;
   --color-surface: #ffffff;
+  /* Typography tokens */
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-tertiary: #64748b;
   --color-text-inverse: #ffffff;
   --color-text-code: #0b1220;
-  /* Resolved: consolidated typography tokens for merge alignment */
   --color-link: #0b4aa8;
   --color-link-hover: #0f172a;
   --color-link-visited: #233876;
 
+  /* Semantic background tokens */
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
