@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,6 +26,8 @@ import {
   PanelRightOpen,
   MessageSquare,
   ShieldCheck,
+  Wand2,
+  Activity,
 } from 'lucide-react';
 
 const TOOLBAR_ACTIONS = [
@@ -51,6 +54,13 @@ const COMPLIANCE_CHECKLIST = [
   'Mentions safety signals and mitigation plans',
 ];
 
+const SCIENTIFIC_CHECKS = [
+  { id: 'evidence', label: 'Evidence-linked claims with source anchors' },
+  { id: 'stat', label: 'Statistical rationale documented (p-values, CI)' },
+  { id: 'consistency', label: 'Consistency across protocol, CSR, and summary' },
+  { id: 'mlr', label: 'MLR risk flags cleared (promotional language)' },
+];
+
 const COMMENT_THREADS = [
   {
     id: 'comment-1',
@@ -66,6 +76,25 @@ const COMMENT_THREADS = [
   },
 ];
 
+const VERSION_TIMELINE = [
+  { id: 'v4', label: 'Draft v4 saved', time: '10 min ago', status: 'auto-save' },
+  { id: 'v3', label: 'Reviewer notes applied', time: '2h ago', status: 'review' },
+  { id: 'v2', label: 'Clinical summary expanded', time: 'Yesterday', status: 'edit' },
+];
+
+const SOP_GATES = [
+  { id: 'qc', label: 'QC Checklist', detail: 'Formatting, metadata, traceability' },
+  { id: 'stat', label: 'Stats Validation', detail: 'Endpoints, tables, p-value confirmation' },
+  { id: 'med', label: 'Medical Review', detail: 'SME review and clinical alignment' },
+  { id: 'reg', label: 'Regulatory Signoff', detail: 'Submission ready for agency' },
+];
+
+const EVIDENCE_MAP = [
+  { id: 'csr-12', title: 'CSR 12-201', status: 'Linked', detail: 'Primary efficacy endpoint' },
+  { id: 'sap-08', title: 'SAP 08-045', status: 'Linked', detail: 'Statistical analysis plan' },
+  { id: 'proto-03', title: 'Protocol 03-112', status: 'Pending', detail: 'Eligibility criteria' },
+];
+
 export default function DraftEditor({ content = '', onChange }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -74,6 +103,7 @@ export default function DraftEditor({ content = '', onChange }) {
   const [activeRibbon, setActiveRibbon] = useState('home');
   const [trackChanges, setTrackChanges] = useState(true);
   const [showComments, setShowComments] = useState(true);
+  const [kimiPrompt, setKimiPrompt] = useState('');
   const textareaRef = useRef(null);
 
   const metrics = useMemo(() => {
@@ -369,6 +399,24 @@ export default function DraftEditor({ content = '', onChange }) {
                 Add Comment
               </Button>
             </div>
+            <div className="rounded-xl border bg-white p-4">
+              <h3 className="text-sm font-semibold">Version Timeline</h3>
+              <p className="text-xs text-muted-foreground">Trace edits and approvals</p>
+              <div className="mt-3 space-y-3 text-sm">
+                {VERSION_TIMELINE.map(item => (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <Activity className="h-4 w-4 text-blue-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.time}</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto">
+                      {item.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -404,6 +452,39 @@ export default function DraftEditor({ content = '', onChange }) {
           </div>
         </div>
       )}
+
+      <div className="rounded-xl border bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Kimi AI Guidance</h3>
+            <p className="text-xs text-muted-foreground">
+              Ask for rephrasing, compliance checks, or summary tables.
+            </p>
+          </div>
+          <Badge variant="secondary">Kimi Ready</Badge>
+        </div>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={kimiPrompt}
+            onChange={event => setKimiPrompt(event.target.value)}
+            placeholder="e.g., Summarize safety findings with citations"
+            className="flex-1"
+          />
+          <Button className="gap-2">
+            <Wand2 className="h-4 w-4" />
+            Run Prompt
+          </Button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          {['Generate executive summary', 'Check missing citations', 'Rewrite for EMA tone'].map(
+            action => (
+              <Button key={action} size="sm" variant="ghost">
+                {action}
+              </Button>
+            )
+          )}
+        </div>
+      </div>
 
       <div className="flex justify-end">
         <Button size="sm" variant="outline" className="flex items-center">
