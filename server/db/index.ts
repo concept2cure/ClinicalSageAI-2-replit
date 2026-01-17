@@ -6,6 +6,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { createScopedLogger } from '../utils/logger';
+import { getSslConfig } from './ssl';
 
 const logger = createScopedLogger('database');
 
@@ -19,10 +20,7 @@ if (!connectionString) {
 
 // Create the postgres client
 const client = postgres(connectionString, {
-  ssl:
-    connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: getSslConfig(connectionString),
 });
 
 // Create the drizzle database instance
