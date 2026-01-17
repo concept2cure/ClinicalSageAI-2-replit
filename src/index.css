@@ -173,6 +173,9 @@
   --color-link-visited: #233876;
 
   /* Semantic background tokens */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
@@ -313,6 +316,11 @@ kbd {
   color: var(--color-text-code);
   font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-variant-ligatures: none;
+  color: #0b4aa8;
+}
+
+a:hover {
+  color: #0f172a;
 }
 
 /* Font Sizing System - Based on Professional Design System */

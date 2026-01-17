@@ -7,15 +7,12 @@
 
 import { Pool } from 'pg';
 import setupLiterature from './setupLiterature';
+import { getSslConfig } from './ssl';
 
 // Initialize database connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_URL?.includes('neondb') ||
-    process.env.DATABASE_URL?.includes('postgresql://')
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: getSslConfig(process.env.DATABASE_URL),
 });
 
 /**

@@ -1010,6 +1010,11 @@ kbd {
   color: var(--color-text-code);
   font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-variant-ligatures: none;
+  color: #0b4aa8;
+}
+
+a:hover {
+  color: #0f172a;
 }
 
 /* Font Sizing System - Based on Professional Design System */
