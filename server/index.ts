@@ -256,9 +256,13 @@ app.get('/api/projects', async (req, res) => {
     const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
     const organization_id = req.query.organization_id || req.headers['x-organization-id'];
     const organizationId = Number(organization_id);
+    const clientWorkspaceId = client_workspace_id ? Number(client_workspace_id) : null;
 
     if (!organization_id || Number.isNaN(organizationId)) {
       return res.status(400).json({ error: 'Organization ID is required' });
+    }
+    if (client_workspace_id && Number.isNaN(clientWorkspaceId)) {
+      return res.status(400).json({ error: 'Client workspace ID must be numeric' });
     }
 
     // Import database connection dynamically
@@ -282,8 +286,8 @@ app.get('/api/projects', async (req, res) => {
     const params: any[] = [organizationId];
     
     // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
+    if (clientWorkspaceId) {
+      params.push(clientWorkspaceId);
       query += ` AND client_workspace_id = $${params.length}`;
     }
     
