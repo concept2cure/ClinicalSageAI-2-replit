@@ -171,6 +171,68 @@ export const getSequences = async () => {
   }
 };
 
+const buildAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+/**
+ * Get full document metadata including linked objects
+ * @param {string|number} documentId - The document ID
+ * @returns {Promise<Object>} Document metadata
+ */
+export const getDocumentMetadata = async documentId => {
+  const response = await fetch(`${BASE_URL}/documents/${documentId}`, {
+    headers: {
+      ...buildAuthHeader(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch document metadata');
+  }
+
+  return response.json();
+};
+
+/**
+ * Get version history for a document
+ * @param {string|number} documentId - The document ID
+ * @returns {Promise<Array>} Version history
+ */
+export const getDocumentVersions = async documentId => {
+  const response = await fetch(`${BASE_URL}/documents/${documentId}/versions`, {
+    headers: {
+      ...buildAuthHeader(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch versions');
+  }
+
+  return response.json();
+};
+
+/**
+ * Get audit trail for a document
+ * @param {string|number} documentId - The document ID
+ * @returns {Promise<Array>} Audit trail entries
+ */
+export const getDocumentAuditTrail = async documentId => {
+  const response = await fetch(`${BASE_URL}/documents/${documentId}/audit`, {
+    headers: {
+      ...buildAuthHeader(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch audit trail');
+  }
+
+  return response.json();
+};
+
 export default {
   getFolderStructure,
   getFilesInFolder,
@@ -181,4 +243,7 @@ export default {
   deleteFile,
   searchFiles,
   getSequences,
+  getDocumentMetadata,
+  getDocumentVersions,
+  getDocumentAuditTrail,
 };

@@ -200,6 +200,7 @@ pool
 
 // Initialize VaultDMSService
 import VaultDMSService from './services/VaultDMSService.js';
+import vaultAutoRoutes from './routes/vault-auto';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
@@ -637,6 +638,9 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Document Management routes:', error);
 }
+
+// Mount auto-vault integration routes
+app.use('/api/vault-auto', vaultAutoRoutes);
 
 // Serve uploaded SOPs
 const UPDIR = '/tmp/uploads';
