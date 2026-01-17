@@ -22,6 +22,12 @@ pg_dump --schema-only --no-owner --no-acl \
   > /tmp/supabase-schema.sql
 ```
 
+You can also run the helper script:
+
+```bash
+./scripts/neon-migrate-schema.sh
+```
+
 ## 3. Remove Supabase-specific artifacts
 
 ```bash
@@ -43,6 +49,12 @@ psql "$NEON_CONNECTION_STRING" -f /tmp/supabase-schema.sql
 
 ```bash
 psql "$NEON_CONNECTION_STRING" -c "SELECT 1"
+```
+
+Or use the helper script:
+
+```bash
+./scripts/neon-verify-connection.sh
 ```
 
 ## 6. Optional data migration
