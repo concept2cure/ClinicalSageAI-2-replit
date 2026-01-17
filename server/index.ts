@@ -253,13 +253,25 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context  
+    // Check multiple sources for organization/workspace context
     const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
-    
+    const organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organizationId = Number(organization_id);
+
+    if (!organization_id || Number.isNaN(organizationId)) {
+      return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
     // Import database connection dynamically
     const dbModule = await import('./db.js');
     const { pool } = dbModule;
+
+    const { getActiveLicenseForOrganization } = await import('./services/quotaEnforcementService.js');
+    const license = await getActiveLicenseForOrganization(organizationId);
+
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
+    }
     
     if (!pool) {
       // Return empty array if database not available
@@ -268,7 +280,7 @@ app.get('/api/projects', async (req, res) => {
     
     // Query projects from database - fetch all for the organization
     let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
+    const params: any[] = [organizationId];
     
     // Optionally filter by workspace if provided
     if (client_workspace_id) {
