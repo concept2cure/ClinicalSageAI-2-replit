@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { getSslConfig } from './ssl';
 
 // Centralized database pool - single source of truth
 let pool: Pool | null = null;
@@ -6,16 +7,10 @@ let pool: Pool | null = null;
 export function getPool(): Pool {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL;
-    const useSsl =
-      process.env.NODE_ENV === 'production' ||
-      (connectionString?.includes('postgres://') ||
-        connectionString?.includes('postgresql://') ||
-        connectionString?.includes('neon.tech') ||
-        connectionString?.includes('neondb'));
 
     pool = new Pool({
       connectionString,
-      ssl: useSsl ? { rejectUnauthorized: false } : false,
+      ssl: getSslConfig(connectionString),
       // Connection pool settings for stability
       max: 20,
       idleTimeoutMillis: 30000,
