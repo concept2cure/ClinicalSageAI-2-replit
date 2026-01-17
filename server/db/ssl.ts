@@ -1,16 +1,33 @@
-type SslConfig = { rejectUnauthorized: false } | false;
-
-export const getSslConfig = (connectionString?: string): SslConfig => {
+export const requiresSsl = (connectionString?: string): boolean => {
   if (!connectionString) {
     return false;
   }
 
-  const shouldUseSsl =
-    process.env.NODE_ENV === 'production' ||
-    connectionString.includes('postgres://') ||
-    connectionString.includes('postgresql://') ||
-    connectionString.includes('neon.tech') ||
-    connectionString.includes('neondb');
+  const normalized = connectionString.toLowerCase();
 
-  return shouldUseSsl ? { rejectUnauthorized: false } : false;
+  return (
+    normalized.startsWith('postgres://') ||
+    normalized.startsWith('postgresql://') ||
+    normalized.includes('neon.tech') ||
+    normalized.includes('neondb') ||
+    normalized.includes('sslmode=require')
+  );
+};
+
+export const shouldUseSsl = (
+  connectionString?: string,
+  nodeEnv: string | undefined = process.env.NODE_ENV
+): boolean => {
+  if (nodeEnv === 'production') {
+    return true;
+  }
+
+  return requiresSsl(connectionString);
+};
+
+export const getSslConfig = (
+  connectionString?: string,
+  nodeEnv?: string
+): { rejectUnauthorized: false } | false => {
+  return shouldUseSsl(connectionString, nodeEnv) ? { rejectUnauthorized: false } : false;
 };

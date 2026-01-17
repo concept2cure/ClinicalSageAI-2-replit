@@ -10,6 +10,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createScopedLogger } from './utils/logger';
 import * as schema from '../shared/schema';
 import path from 'path';
+import { getSslConfig } from './db/ssl';
 
 const logger = createScopedLogger('database');
 
@@ -23,11 +24,7 @@ try {
     logger.info('Initializing PostgreSQL connection pool');
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl:
-        process.env.DATABASE_URL?.includes('postgresql://') ||
-        process.env.DATABASE_URL?.includes('neondb')
-          ? { rejectUnauthorized: false }
-          : false,
+      ssl: getSslConfig(process.env.DATABASE_URL),
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
       connectionTimeoutMillis: 5000, // How long to wait for a connection to become available
