@@ -124,6 +124,126 @@ const DEFAULT_PROGRAM_PORTFOLIO = [
   },
 ];
 
+const RECENT_DOCUMENTS = [
+  { id: 'doc1', title: 'Enzymase 10mg Clinical Overview', module: '2.5', lastEdited: '2 hours ago' },
+  { id: 'doc2', title: 'NAD-102 Stability Analysis', module: '2.3', lastEdited: '1 day ago' },
+  { id: 'doc3', title: 'Cellbloc Safety Summary', module: '2.7', lastEdited: '3 days ago' },
+];
+
+const TEMPLATES = [
+  {
+    id: 'tpl1',
+    title: 'Clinical Study Report Template',
+    module: 'M5',
+    description: 'ICH E3 compliant CSR template with guidance',
+  },
+  {
+    id: 'tpl2',
+    title: 'Quality Overall Summary Template',
+    module: 'M2',
+    description: 'Complete QOS template with examples',
+  },
+  {
+    id: 'tpl3',
+    title: 'FDA CTD Module 2 Template',
+    module: 'M2',
+    description: 'FDA-specific template for Module 2 summaries',
+  },
+];
+
+const PYRAMID_MODULES = [
+  { id: 'm1', label: 'Module 1', status: 'approved', description: 'Administrative' },
+  { id: 'm2', label: 'Module 2', status: 'in-progress', description: 'Summaries' },
+  { id: 'm3', label: 'Module 3', status: 'draft', description: 'Quality' },
+  { id: 'm4', label: 'Module 4', status: 'draft', description: 'Nonclinical' },
+  { id: 'm5', label: 'Module 5', status: 'draft', description: 'Clinical' },
+];
+
+const LIFECYCLE_DOCS = [
+  { id: 'protocols', label: 'Protocols & Synopses', status: 'In Progress' },
+  { id: 'csrs', label: 'Clinical Study Reports', status: 'Draft' },
+  { id: 'manuscripts', label: 'Manuscripts & Abstracts', status: 'Planned' },
+  { id: 'value', label: 'Value Dossiers', status: 'Planned' },
+  { id: 'mlr', label: 'MLR-Ready Materials', status: 'In Review' },
+];
+
+const INTEGRATIONS = [
+  'Vault RIM / eTMF',
+  'SharePoint Embedded',
+  'Datavision & iEnvision',
+  'Internal SOP routing & naming',
+];
+
+const GOVERNANCE_TRACKS = [
+  {
+    id: 'regulatory',
+    title: 'Regulatory Submissions',
+    description: 'IND, NDA, BLA readiness with eCTD technical compliance gates.',
+  },
+  {
+    id: 'medaffairs',
+    title: 'Medical Affairs & Publications',
+    description: 'Manuscripts, abstracts, slide decks, and MLR-ready materials.',
+  },
+  {
+    id: 'safety',
+    title: 'Safety & Risk Management',
+    description: 'Signal narratives, REMS support, and safety summaries.',
+  },
+];
+
+const WORKFLOW_STAGES = [
+  { id: 'ingest', label: 'Data Ingestion', detail: 'Protocol, SAP, CSR, and source data' },
+  { id: 'draft', label: 'AI Drafting', detail: 'Lumen Cortex + Kimi AI generation' },
+  { id: 'review', label: 'Medical Review', detail: 'SME + statistics validation' },
+  { id: 'mlr', label: 'MLR Approval', detail: 'Compliance, legal, regulatory signoff' },
+  { id: 'publish', label: 'Submission Ready', detail: 'eCTD package + publishing' },
+];
+
+const PLATFORM_CAPABILITIES = [
+  'End-to-end CTD pyramid coverage (Modules 1-5)',
+  'Scientific defensibility checks with evidence mapping',
+  'Built-in SOP routing & audit trails',
+  'Unified IND/NDA/BLA authoring workspace',
+];
+
+const REVIEWER_EXPECTATIONS = [
+  'Traceable claims linked to source data and CSR evidence',
+  'Clear benefit-risk narrative with consistent endpoints',
+  'Region-specific conformance (FDA, EMA, PMDA)',
+  'MLR-compliant language with governance signoff',
+];
+
+const PROGRAM_PORTFOLIO = [
+  {
+    id: 'ind-042',
+    name: 'IND-042 Oncology',
+    status: 'Drafting',
+    nextMilestone: 'Module 2 draft due in 12 days',
+  },
+  {
+    id: 'nda-018',
+    name: 'NDA-018 CV',
+    status: 'Review',
+    nextMilestone: 'QC & stats validation in progress',
+  },
+  {
+    id: 'bla-007',
+    name: 'BLA-007 Rare Disease',
+    status: 'Planning',
+    nextMilestone: 'Protocol authoring kickoff',
+  },
+];
+
+
+const PYRAMID_MODULES = [
+  { id: 'm1', label: 'Module 1', status: 'approved', description: 'Administrative' },
+  { id: 'm2', label: 'Module 2', status: 'in-progress', description: 'Summaries' },
+  { id: 'm3', label: 'Module 3', status: 'draft', description: 'Quality' },
+  { id: 'm4', label: 'Module 4', status: 'draft', description: 'Nonclinical' },
+  { id: 'm5', label: 'Module 5', status: 'draft', description: 'Clinical' },
+];
+
 const STATUS_STYLES = {
   approved: { label: 'Approved', variant: 'success' },
   'in-progress': { label: 'In Progress', variant: 'secondary' },
@@ -251,6 +371,8 @@ export default function DocumentSelector({ onSelectDocument }) {
             <Badge variant="outline">Sequence 0007</Badge>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">Regulatory Submission Workspace</p>
+        <h1 className="text-3xl font-semibold">eCTD Co-Author™</h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
           Orchestrate IND → eCTD workflows with compliance guidance, structured authoring, and
           readiness analytics tailored to biotech, CRO, and pharma teams.
@@ -307,6 +429,20 @@ export default function DocumentSelector({ onSelectDocument }) {
                 </div>
               </div>
             ))}
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Missing citations in 2.5.4</p>
+                <p className="text-muted-foreground">Add source references for efficacy data.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Module 1 ready for submission</p>
+                <p className="text-muted-foreground">All forms approved and validated.</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -410,6 +546,7 @@ export default function DocumentSelector({ onSelectDocument }) {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {pyramidModules.map(module => {
+              {PYRAMID_MODULES.map(module => {
                 const status = STATUS_STYLES[module.status];
                 return (
                   <div
@@ -492,6 +629,7 @@ export default function DocumentSelector({ onSelectDocument }) {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {DEFAULT_WORKFLOW_STAGES.map(stage => (
+            {WORKFLOW_STAGES.map(stage => (
               <div key={stage.id} className="flex items-start gap-3 rounded-md border border-muted/60 p-3">
                 <span className="text-xs font-semibold uppercase text-blue-600">{stage.label}</span>
                 <span className="text-xs text-muted-foreground">{stage.detail}</span>
@@ -508,6 +646,7 @@ export default function DocumentSelector({ onSelectDocument }) {
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 text-sm">
           {DEFAULT_PLATFORM_CAPABILITIES.map(capability => (
+          {PLATFORM_CAPABILITIES.map(capability => (
             <div key={capability} className="flex items-start gap-2 rounded-md border border-muted/60 p-3">
               <ShieldCheck className="h-4 w-4 text-emerald-500 mt-0.5" />
               <span>{capability}</span>
@@ -524,6 +663,7 @@ export default function DocumentSelector({ onSelectDocument }) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {DEFAULT_REVIEWER_EXPECTATIONS.map(item => (
+            {REVIEWER_EXPECTATIONS.map(item => (
               <div key={item} className="flex items-start gap-2 rounded-md border border-muted/60 p-3">
                 <ShieldCheck className="h-4 w-4 text-emerald-500 mt-0.5" />
                 <span>{item}</span>
@@ -539,6 +679,7 @@ export default function DocumentSelector({ onSelectDocument }) {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {DEFAULT_PROGRAM_PORTFOLIO.map(program => (
+            {PROGRAM_PORTFOLIO.map(program => (
               <div key={program.id} className="rounded-md border border-muted/60 p-3">
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{program.name}</p>
@@ -549,6 +690,8 @@ export default function DocumentSelector({ onSelectDocument }) {
             ))}
           </CardContent>
         </Card>
+      </div>
+
       </div>
 
       <Card>
@@ -581,6 +724,21 @@ export default function DocumentSelector({ onSelectDocument }) {
                           Open
                         </Button>
                       </div>
+                {RECENT_DOCUMENTS.map(doc => (
+                  <div key={doc.id} className="border rounded p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          {doc.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Module {doc.module} • Last edited {doc.lastEdited}
+                        </p>
+                      </div>
+                      <Button size="sm" onClick={() => onSelectDocument('module2')}>
+                        Open
+                      </Button>
                     </div>
                   ))
                 ) : (
