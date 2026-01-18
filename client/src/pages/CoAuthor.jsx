@@ -46,6 +46,7 @@ import NavigationBanner from '../components/common/NavigationBanner';
 import CommitmentIntelligenceHub from '../components/CommitmentIntelligenceHub';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTenantContext } from '@/contexts/TenantContext';
 
 // TipTap editor imports 
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -717,10 +718,13 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   const [selectedContentAtom, setSelectedContentAtom] = useState(null);
   const [atomRegionFilter, setAtomRegionFilter] = useState('US');
   
-  // Get current organization ID from localStorage with fallback to default test org
-  const currentOrganization = useMemo(() => {
-    return localStorage.getItem('selectedOrganizationId') || '7';
-  }, []);
+  const { currentOrganization } = useTenantContext();
+  const currentOrganizationId = useMemo(() => {
+    if (!currentOrganization?.id) {
+      return null;
+    }
+    return String(currentOrganization.id);
+  }, [currentOrganization]);
   
   // Enhanced UI state for workflow panels
   const [expandedWorkflowPhases, setExpandedWorkflowPhases] = useState({
@@ -744,14 +748,17 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   });
   
   // Fetch eCTD module tree from database with document counts
-  const { data: ectdModulesData, isLoading: isLoadingModules } = useQuery({
-    queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganization }],
-    enabled: !!currentOrganization,
+  const { data: ectdModulesData, isLoading: isLoadingModules, error: modulesError, refetch: refetchModules } = useQuery({
+    queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganizationId }],
+    enabled: !!currentOrganizationId,
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
     queryFn: async () => {
-      const response = await fetch(`/api/coauthor/ectd-modules/tree-with-counts?organizationId=${currentOrganization}`, {
+      if (!currentOrganizationId) {
+        throw new Error('Organization context is required to load modules.');
+      }
+      const response = await fetch(`/api/coauthor/ectd-modules/tree-with-counts?organizationId=${currentOrganizationId}`, {
         headers: {
-          'X-Organization-Id': String(currentOrganization)
+          'X-Organization-Id': currentOrganizationId
         }
       });
       if (!response.ok) throw new Error('Failed to fetch eCTD modules');
@@ -843,7 +850,15 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       }
 
       // Check if document exists or create from template
-      const organizationId = localStorage.getItem('selectedOrganizationId') || currentOrganization;
+      const organizationId = currentOrganizationId;
+      if (!organizationId) {
+        toast({
+          title: "Organization required",
+          description: "Select an organization to load documents.",
+          variant: "destructive"
+        });
+        return;
+      }
       const response = await fetch(`/api/coauthor/documents/section/${sectionId}`, {
         method: 'GET',
         headers: {
@@ -908,7 +923,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-organization-id': localStorage.getItem('selectedOrganizationId') || ''
+              ...(organizationId ? { 'x-organization-id': organizationId } : {})
             },
             body: JSON.stringify(componentData)
           });
@@ -1598,7 +1613,10 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   const createDocumentFromTemplate = async (sectionId, sectionTitle) => {
     try {
       const templateContent = getTemplateForSection(sectionId, sectionTitle);
-      const organizationId = localStorage.getItem('selectedOrganizationId') || currentOrganization;
+      const organizationId = currentOrganizationId;
+      if (!organizationId) {
+        throw new Error('Organization context is required to create documents.');
+      }
       
       const moduleResponse = await fetch(`/api/coauthor/ectd-modules/${sectionId}`, {
         headers: {
@@ -1647,7 +1665,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       
       // Invalidate tree cache to refresh document counts (matches query key structure)
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganization }] 
+        queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganizationId }] 
       });
       
       toast({
@@ -2681,6 +2699,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState(null);
+  const [validationLoadError, setValidationLoadError] = useState(null);
+  const [validationStatusMessage, setValidationStatusMessage] = useState(null);
   const [selectedAgency, setSelectedAgency] = useState('FDA');
   const [validationHistory, setValidationHistory] = useState([]);
   
@@ -2773,9 +2793,10 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       const response = await apiRequest(`/api/coauthor/validate/history/${documentId}?limit=5`);
       if (response.success) {
         setValidationHistory(response.history);
+        setValidationLoadError(null);
       }
     } catch (error) {
-      console.error('Error fetching validation history:', error);
+      setValidationLoadError('Unable to load validation history.');
     }
   };
   
@@ -2814,8 +2835,10 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       // Fetch latest validation results for the document
       const fetchLatestValidation = async () => {
         try {
+          setValidationLoadError(null);
           const response = await apiRequest(`/api/coauthor/validate/latest/${selectedDocument.id}`);
           if (response.success && response.hasValidation) {
+            setValidationStatusMessage(null);
             const validation = response.validation;
             setValidationResults({
               completeness: Math.round((validation.passedRules / (validation.passedRules + validation.failedRules)) * 100),
@@ -2840,9 +2863,20 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 category: issue.category
               })) || []
             });
+          } else if (response.success && !response.hasValidation) {
+            setValidationStatusMessage(response.message || 'No validation data available yet.');
+            setValidationResults(prev => ({
+              ...prev,
+              issues: [],
+              totalIssues: 0,
+              criticalIssues: 0,
+              majorIssues: 0,
+              minorIssues: 0,
+              informationalIssues: 0
+            }));
           }
         } catch (error) {
-          console.error('Error fetching latest validation:', error);
+          setValidationLoadError('Unable to load validation results.');
         }
       };
       
@@ -6798,6 +6832,27 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       </div>
                     ))}
                   </div>
+                ) : modulesError ? (
+                  <div className="p-4 rounded-lg border border-red-200 bg-red-50">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-red-700 font-medium">Failed to load eCTD modules</p>
+                        <p className="text-xs text-red-600 mt-1">
+                          {modulesError?.message || 'Please try again later.'}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 h-7 text-xs"
+                          onClick={() => refetchModules()}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {ectdNavigationTree && ectdNavigationTree.length > 0 ? (
@@ -9623,6 +9678,17 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 'Select a document to validate'
               )}
             </DialogDescription>
+            {(validationError || validationLoadError || validationStatusMessage) && (
+              <div
+                className={`mt-3 rounded-md border px-3 py-2 text-xs ${
+                  validationError || validationLoadError
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-600'
+                }`}
+              >
+                {validationError || validationLoadError || validationStatusMessage}
+              </div>
+            )}
           </DialogHeader>
           
           <div className="flex-grow overflow-auto">
@@ -9677,50 +9743,58 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                   </div>
                 </div>
                 
-                <div className="border rounded-md">
-                  <div className="grid grid-cols-5 gap-4 p-3 border-b bg-slate-50 font-medium text-sm">
-                    <div>Severity</div>
-                    <div>Location</div>
-                    <div className="col-span-2">Issue</div>
-                    <div>Action</div>
+                {validationResults.issues.length === 0 && !validationError && !validationLoadError && (
+                  <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
+                    No validation issues to show yet. Run validation to generate a report.
                   </div>
-                  
-                  <div className="divide-y max-h-[300px] overflow-y-auto">
-                    {validationResults.issues.map((issue) => (
-                      <div key={issue.id} className="grid grid-cols-5 gap-4 p-3 text-sm hover:bg-slate-50">
-                        <div>
-                          {issue.severity === 'critical' && (
-                            <Badge className="bg-red-100 text-red-800 border-red-200">Critical</Badge>
-                          )}
-                          {issue.severity === 'major' && (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-200">Major</Badge>
-                          )}
-                          {issue.severity === 'minor' && (
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">Minor</Badge>
-                          )}
-                          {issue.severity === 'info' && (
-                            <Badge className="bg-slate-100 text-slate-800 border-slate-200">Info</Badge>
-                          )}
+                )}
+
+                {validationResults.issues.length > 0 && (
+                  <div className="border rounded-md">
+                    <div className="grid grid-cols-5 gap-4 p-3 border-b bg-slate-50 font-medium text-sm">
+                      <div>Severity</div>
+                      <div>Location</div>
+                      <div className="col-span-2">Issue</div>
+                      <div>Action</div>
+                    </div>
+
+                    <div className="divide-y max-h-[300px] overflow-y-auto">
+                      {validationResults.issues.map((issue) => (
+                        <div key={issue.id} className="grid grid-cols-5 gap-4 p-3 text-sm hover:bg-slate-50">
+                          <div>
+                            {issue.severity === 'critical' && (
+                              <Badge className="bg-red-100 text-red-800 border-red-200">Critical</Badge>
+                            )}
+                            {issue.severity === 'major' && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">Major</Badge>
+                            )}
+                            {issue.severity === 'minor' && (
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200">Minor</Badge>
+                            )}
+                            {issue.severity === 'info' && (
+                              <Badge className="bg-slate-100 text-slate-800 border-slate-200">Info</Badge>
+                            )}
+                          </div>
+                          <div className="font-medium">Section {issue.section}</div>
+                          <div className="col-span-2">
+                            <div>{issue.description}</div>
+                            <div className="text-xs text-slate-500 mt-1">Suggestion: {issue.suggestion}</div>
+                          </div>
+                          <div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 border-blue-200 text-blue-700"
+                            >
+                              <ArrowUpRight className="h-3 w-3 mr-1" />
+                              Fix Issue
+                            </Button>
+                          </div>
                         </div>
-                        <div className="font-medium">Section {issue.section}</div>
-                        <div className="col-span-2">
-                          <div>{issue.description}</div>
-                          <div className="text-xs text-slate-500 mt-1">Suggestion: {issue.suggestion}</div>
-                        </div>
-                        <div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-7 border-blue-200 text-blue-700"
-                          >
-                            <ArrowUpRight className="h-3 w-3 mr-1" />
-                            Fix Issue
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="bg-slate-50 border rounded-md p-3">
                   <h4 className="font-medium text-sm mb-2 flex items-center">

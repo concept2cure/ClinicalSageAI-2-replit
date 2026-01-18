@@ -12,13 +12,13 @@ export const apiRequest = async (
   body?: any,
   customHeaders?: Record<string, string>
 ): Promise<Response> => {
-  // Get organization ID from localStorage
-  const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-  
+  // Get organization ID from localStorage when available
+  const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'x-organization-id': organizationId,
     ...customHeaders,
+    ...(organizationId ? { 'x-organization-id': organizationId } : {}),
   };
 
   const options: RequestInit = {
@@ -44,11 +44,14 @@ export const apiRequest = async (
 export const getQueryFn = (options: GetQueryFnOptions = {}) => {
   return async ({ queryKey }: { queryKey: string[] }) => {
     const [url] = queryKey;
-    // Get organization ID from localStorage
-    const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-    const response = await apiRequest('GET', url, undefined, {
-      'x-organization-id': organizationId
-    });
+    // Get organization ID from localStorage when available
+    const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId');
+    const response = await apiRequest(
+      'GET',
+      url,
+      undefined,
+      organizationId ? { 'x-organization-id': organizationId } : undefined
+    );
 
     if (response.status === 401) {
       if (options.on401 === 'returnNull') {

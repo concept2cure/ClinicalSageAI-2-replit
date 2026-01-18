@@ -20,9 +20,11 @@ import { authMiddleware, requireAdminRole, requireSuperAdminRole } from '../auth
 import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
+import { demoTenants } from '../data/demoTenantData.js';
 
 const logger = createScopedLogger('tenant-api');
 const router = Router();
+const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
 
 // Schema for tenant creation
 const createTenantSchema = z.object({
@@ -54,6 +56,10 @@ router.use(authMiddleware);
  */
 router.get('/', async (req, res) => {
   try {
+    if (isDemoMode) {
+      return res.json(demoTenants);
+    }
+
     // For development, return mock data
     if (process.env.NODE_ENV === 'development') {
       return res.json([

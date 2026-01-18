@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
+    "smoke:coauthor": "node scripts/smoke/coauthor-smoke.mjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

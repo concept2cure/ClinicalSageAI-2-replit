@@ -46,8 +46,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       ? req.headers.authorization.substring(7)
       : null);
 
-  // For development, allow requests without authentication in development environment
-  if (process.env.NODE_ENV === 'development' && !apiKey) {
+  const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
+
+  // For development/demo, allow requests without authentication
+  if ((process.env.NODE_ENV === 'development' || isDemoMode) && !apiKey) {
     // Set default values for development
     req.userId = 1;
     req.userRole = 'admin';

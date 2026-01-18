@@ -9,9 +9,11 @@ import {
   projectModules,
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { demoClientsByOrg } from '../data/demoTenantData.js';
 
 // Create a new router for client endpoints
 const router = Router();
+const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
 
 // Note: We now save clients directly to the database
 
@@ -90,6 +92,14 @@ router.get('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Organization ID is required',
+      });
+    }
+
+    if (isDemoMode) {
+      const demoClients = demoClientsByOrg[String(organizationId)] || [];
+      return res.json({
+        success: true,
+        clients: demoClients,
       });
     }
 

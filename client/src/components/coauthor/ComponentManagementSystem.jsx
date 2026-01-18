@@ -1549,7 +1549,7 @@ function SharePointPropertiesPanel({ selectedComponent, isOpen, onClose, onPrope
  * All CCMS API endpoints require x-organization-id for multi-tenant isolation
  */
 function getOrgHeader() {
-  const orgId = localStorage.getItem('currentOrganizationId') || '7';
+  const orgId = localStorage.getItem('currentOrganizationId');
   return { 'x-organization-id': orgId };
 }
 
@@ -1613,7 +1613,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
       // Component Vault shows ALL organization components, not filtered by document
       const url = '/api/coauthor/components';
       console.log('[CCMS] Fetching ALL organization components from:', url);
-      console.log('[CCMS] Organization ID:', localStorage.getItem('currentOrganizationId') || '7');
+      console.log('[CCMS] Organization ID:', localStorage.getItem('currentOrganizationId'));
       const response = await apiRequest('GET', url, undefined, getOrgHeader());
       const result = await response.json();
       console.log('[CCMS] Components API response:', result);

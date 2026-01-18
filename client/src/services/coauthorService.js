@@ -4,8 +4,8 @@
  */
 
 const getOrgHeader = () => {
-  const orgId = localStorage.getItem('currentOrganizationId') || '7';
-  return { 'x-organization-id': orgId };
+  const orgId = localStorage.getItem('currentOrganizationId');
+  return orgId ? { 'x-organization-id': orgId } : {};
 };
 
 const coauthorService = {
@@ -76,7 +76,10 @@ const coauthorService = {
   // Export document to Word format
   exportToWord: async (documentId, templateNumber, includeMetadata = true) => {
     try {
-      const orgId = localStorage.getItem('currentOrganizationId') || '7';
+      const orgId = localStorage.getItem('currentOrganizationId');
+      if (!orgId) {
+        throw new Error('Organization context is required to export documents');
+      }
       
       // Fetch the Word document as a blob
       const response = await fetch(`/api/coauthor/export-word/${documentId}?templateNumber=${templateNumber}&includeMetadata=${includeMetadata}`, {
