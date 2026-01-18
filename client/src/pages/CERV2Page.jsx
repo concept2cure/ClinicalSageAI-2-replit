@@ -5586,6 +5586,21 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       </Button>
 
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (deviceProfile?.id) {
+                            window.location.href = `/cerv2/workbench/${deviceProfile.id}/evidence`;
+                          }
+                        }}
+                        disabled={!deviceProfile?.id}
+                        data-testid="button-submission-open-workbench"
+                      >
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        Open Workbench
+                      </Button>
+
+                      <Button
                         variant="default"
                         size="sm"
                         onClick={handleSubmissionReady}
@@ -6226,6 +6241,20 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     >
                       <ClipboardCheck className="h-4 w-4 mr-2" />
                       Run RTA
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (deviceProfile?.id) {
+                          window.location.href = `/cerv2/workbench/${deviceProfile.id}/evidence`;
+                        }
+                      }}
+                      disabled={!deviceProfile?.id}
+                      data-testid="button-submission-open-workbench"
+                    >
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Open Workbench
                     </Button>
                     <Button
                       variant="default"

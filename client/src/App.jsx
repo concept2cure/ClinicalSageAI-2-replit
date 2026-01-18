@@ -94,6 +94,7 @@ import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 const CERPage = lazy(() => import('./pages/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
 const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+const Cerv2WorkbenchPage = lazy(() => import('./pages/cerv2/Cerv2WorkbenchPage'));
 
 // Subscriptions / billing entry point
 const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
@@ -1785,6 +1786,20 @@ function App() {
                       {/* CER Generator catch-all routes */}
                       <Route path="/cer-generator/*">{() => <CERV2Page />}</Route>
                       <Route path="/client-portal/cer-generator/*">{() => <CERV2Page />}</Route>
+                      <Route path="/cerv2/workbench/:programId/:view">
+                        {params => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <Cerv2WorkbenchPage params={params} />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/cerv2/workbench/:programId">
+                        {params => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <Cerv2WorkbenchPage params={params} />
+                          </Suspense>
+                        )}
+                      </Route>
                       <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
                       <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
                       {/* Enhanced Document Editor Route for IND Wizard Integration */}
