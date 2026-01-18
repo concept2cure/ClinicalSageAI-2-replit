@@ -48,6 +48,21 @@ If subagents are unavailable, open parallel agent sessions and isolate work by b
 - [ ] UI states: loading/error/empty done
 - [ ] deep links work
 - [ ] no secrets committed
+- [ ] no `.history/**` content committed
+- [ ] scope limited to the iteration deliverables (no unrelated workflows/pages/services)
+
+## Runtime verification (required before review)
+Provide proof that the feature runs locally or in codespace:
+- [ ] `npm run db:check` succeeds
+- [ ] migrations applied cleanly
+- [ ] smoke test passes with a real `programId`
+- [ ] curl proofs for primary endpoints (CRUD + audit where applicable)
+- [ ] 10–30s UI clip(s) demonstrating the critical flows
+
+If the hosted DB is unreachable, add a local Docker Postgres option and document the exact steps.
+
+## Mergeability gate
+Do not request review if GitHub shows `mergeable: false`. Resolve conflicts first so the PR is cleanly mergeable.
 
 ## Default acceptance criteria
 Every feature must ship with:
