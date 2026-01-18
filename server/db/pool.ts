@@ -1,13 +1,16 @@
 import { Pool } from 'pg';
+import { getSslConfig } from './ssl';
 
 // Centralized database pool - single source of truth
 let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
+    const connectionString = process.env.DATABASE_URL;
+
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      connectionString,
+      ssl: getSslConfig(connectionString),
       // Connection pool settings for stability
       max: 20,
       idleTimeoutMillis: 30000,

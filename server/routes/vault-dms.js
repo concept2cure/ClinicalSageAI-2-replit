@@ -8,6 +8,8 @@
  */
 import express from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import fs from 'fs/promises';
 
 const router = express.Router();
 
@@ -16,7 +18,7 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Middleware to log access and prepare tenantId
+// Middleware to log access and ensure Vault service is available
 router.use((req, res, next) => {
   console.log(`[Vault API] Request received for: ${req.method} ${req.originalUrl}`);
   if (!req.app.locals.vaultDmsService) {
@@ -24,10 +26,60 @@ router.use((req, res, next) => {
       error: 'VaultDMSService is not available. Check server initialization.',
     });
   }
-  // Hardcoding tenantId for now. Will be replaced by auth middleware.
-  req.organizationId = 'default-tenant';
   next();
 });
+
+// AUTHENTICATION MIDDLEWARE
+const authenticate = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'AUTH_REQUIRED',
+  
+        message: 'Authorization header with Bearer token required',
+      });
+    }
+
+  
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded?.organizationId) {
+      return res.status(403).json({
+        error: 'ORG_REQUIRED',
+        message: 'Token must include organizationId',
+      });
+    }
+
+    req.organizationId = decoded.organizationId;
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
+
+    next();
+  } catch (error) {
+    console.error('Auth error:', error.message);
+    return res.status(401).json({
+      error: 'INVALID_TOKEN',
+      message: 'Invalid or expired token',
+    });
+  }
+};
+
+// Apply auth to all routes
+router.use(authenticate);
+
+const normalizeDocumentInput = (payload = {}) => {
+  co
+    nst title = payload.title || payload.name;
+  return {
+    ...payload,
+    title,
+    type: payload.type || 'vault',
+    status: payload.status || 'draft',
+  };
+};
 
 // GET /api/vault - List all documents
 router.get('/', async (req, res) => {
@@ -38,6 +90,18 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('[Vault API] Error in GET / route:', error);
     res.status(500).json({ error: 'An internal server error occurred.' });
+  }
+});
+
+// LIST DOCUMENTS (alias)
+router.get('/documents', async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const documents = await vaultService.listDocuments(req.organizationId);
+    res.json(documents);
+  } catch (error) {
+    console.error('List documents error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -85,16 +149,34 @@ router.get('/document/:id', async (req, res) => {
   }
 });
 
+// GET DOCUMENT (alias)
+router.get('/documents/:id', async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const document = await vaultService.getDocumentById(req.organizationId, Number(req.params.id));
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    res.json(document);
+  } catch (error) {
+    console.error('Get document error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/vault - Create a new document with a file upload
 // The `upload.single('document')` middleware processes the uploaded file.
 router.post('/', upload.single('document'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'A document file is required.' });
-    }
     const vaultService = req.app.locals.vaultDmsService;
     // Document metadata comes from the form body
-    const documentData = req.body;
+    const documentData = normalizeDocumentInput({
+      ...req.body,
+      userId: req.userId,
+      userEmail: req.userEmail,
+    });
     // The actual file comes from req.file
     const newDocument = await vaultService.createDocument(
       req.organizationId,
@@ -105,6 +187,71 @@ router.post('/', upload.single('document'), async (req, res) => {
   } catch (error) {
     console.error('[Vault API] Error in POST / route:', error);
     res.status(500).json({ error: 'An internal server error occurred.' });
+  }
+});
+
+// CREATE DOCUMENT (alias)
+router.post('/documents', upload.single('document'), async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const documentData = normalizeDocumentInput({
+      ...req.body,
+      userId: req.userId,
+      userEmail: req.userEmail,
+    });
+    const result = await vaultService.createDocument(req.organizationId, documentData, req.file);
+
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Create document error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DOWNLOAD (alias)
+router.get('/documents/:id/download', async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const document = await vaultService.getDocumentById(req.organizationId, Number(req.params.id));
+
+    if (!document || !document.file_path) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    try {
+      await fs.access(document.file_path);
+    } catch {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+
+    res.download(document.file_path, document.title || document.name);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// VERSION HISTORY (alias)
+router.get('/documents/:id/versions', async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const versions = await vaultService.getVersions(req.organizationId, Number(req.params.id));
+    res.json(versions);
+  } catch (error) {
+    console.error('Get versions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AUDIT TRAIL (alias)
+router.get('/documents/:id/audit', async (req, res) => {
+  try {
+    const vaultService = req.app.locals.vaultDmsService;
+    const audit = await vaultService.getAuditTrail(req.organizationId, Number(req.params.id));
+    res.json(audit);
+  } catch (error) {
+    console.error('Get audit error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

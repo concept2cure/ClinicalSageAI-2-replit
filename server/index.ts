@@ -200,6 +200,7 @@ pool
 
 // Initialize VaultDMSService
 import VaultDMSService from './services/VaultDMSService.js';
+import vaultAutoRoutes from './routes/vault-auto';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
@@ -252,13 +253,29 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context  
+    // Check multiple sources for organization/workspace context
     const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
-    
+    const organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organizationId = Number(organization_id);
+    const clientWorkspaceId = client_workspace_id ? Number(client_workspace_id) : null;
+
+    if (!organization_id || Number.isNaN(organizationId)) {
+      return res.status(400).json({ error: 'Organization ID is required' });
+    }
+    if (client_workspace_id && Number.isNaN(clientWorkspaceId)) {
+      return res.status(400).json({ error: 'Client workspace ID must be numeric' });
+    }
+
     // Import database connection dynamically
     const dbModule = await import('./db.js');
     const { pool } = dbModule;
+
+    const { getActiveLicenseForOrganization } = await import('./services/quotaEnforcementService.js');
+    const license = await getActiveLicenseForOrganization(organizationId);
+
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
+    }
     
     if (!pool) {
       // Return empty array if database not available
@@ -267,11 +284,11 @@ app.get('/api/projects', async (req, res) => {
     
     // Query projects from database - fetch all for the organization
     let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
+    const params: any[] = [organizationId];
     
     // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
+    if (clientWorkspaceId) {
+      params.push(clientWorkspaceId);
       query += ` AND client_workspace_id = $${params.length}`;
     }
     
@@ -592,6 +609,16 @@ try {
   console.error('❌ Failed to mount Atoms routes:', error);
 }
 
+// Mount Lumen Cortex Intelligence routes
+try {
+  const lumenCortexModule = await import('./routes/lumen-cortex');
+  const lumenCortexRoutes = lumenCortexModule.default;
+  app.use('/api/lumen-cortex', lumenCortexRoutes);
+  console.log('✅ Lumen Cortex routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+}
+
 // Mount Workflow API routes
 try {
   const workflowModule = await import('./routes/workflow.js');
@@ -625,6 +652,9 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Document Management routes:', error);
 }
+
+// Mount auto-vault integration routes
+app.use('/api/vault-auto', vaultAutoRoutes);
 
 // Serve uploaded SOPs
 const UPDIR = '/tmp/uploads';
@@ -2704,18 +2734,6 @@ app.get('/api/templates', async (req: Request, res: Response) => {
   }
 });
 
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
-  }
-});
-
 // Vault statistics endpoint
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
   try {
@@ -3884,3 +3902,8 @@ async function startServer() {
   });
 
 }
+
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});

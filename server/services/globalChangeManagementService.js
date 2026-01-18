@@ -12,9 +12,14 @@ import ectdAuditService from './ectdAuditService.js';
 
 class GlobalChangeManagementService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    const apiKey = process.env.KIMI_API_KEY;
+    this.isAvailable = !!apiKey;
+    this.openai = apiKey
+      ? new OpenAI({
+          apiKey,
+          baseURL: process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1'
+        })
+      : null;
   }
 
   /**
@@ -22,6 +27,16 @@ class GlobalChangeManagementService {
    */
   async analyzeChangeImpact(originalText, newText, componentContext) {
     try {
+      if (!this.openai) {
+        return {
+          impact: 'unknown',
+          implications: 'Kimi AI not configured',
+          risks: [],
+          reviewLevel: 'high',
+          relatedSections: []
+        };
+      }
+
       const prompt = `
         You are a regulatory affairs expert analyzing a proposed text change in a pharmaceutical dossier.
         
@@ -40,7 +55,7 @@ class GlobalChangeManagementService {
       `;
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         response_format: { type: 'json_object' }
@@ -64,9 +79,13 @@ class GlobalChangeManagementService {
    */
   async findSimilarText(searchText, organizationId, threshold = 0.7) {
     try {
+      if (!this.openai || !db) {
+        return this.findExactMatches(searchText, organizationId);
+      }
+
       // Generate embedding for search text
       const embeddingResponse = await this.openai.embeddings.create({
-        model: 'text-embedding-3-small',
+        model: process.env.KIMI_EMBED_MODEL || 'text-embedding-3-small',
         input: searchText
       });
       
@@ -118,6 +137,9 @@ class GlobalChangeManagementService {
    */
   async findExactMatches(searchText, organizationId) {
     try {
+      if (!db) {
+        return [];
+      }
       console.log('🔍 Finding exact matches for:', { searchText, organizationId });
       
       const result = await db.execute(sql`

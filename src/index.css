@@ -160,6 +160,33 @@
   --color-gray-700: #334155;
   --color-gray-800: #1e293b;
   --color-gray-900: #0f172a;
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  /* Typography tokens (conflict-resolved: keep full token set) */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-text-code: #0b1220;
+  --color-link: #0b4aa8;
+  --color-link-hover: #0f172a;
+  --color-link-visited: #233876;
+
+  /* Semantic background tokens */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --muted: 0 0% 100%;
+  --muted-foreground: 215 20% 35%;
+  --secondary: 0 0% 100%;
+  --accent: 0 0% 100%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-accent: 0 0% 100%;
+  --sidebar-border: 210 20% 94%;
 
   /* Typography */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -169,6 +196,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv02', 'cv03', 'liga', 'kern';
+  font-variant-ligatures: common-ligatures;
 
   /* Typography Scale */
   --font-size-xs: 0.75rem; /* 12px */
@@ -197,13 +226,101 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  color: var(--color-gray-800);
-  background-color: var(--color-gray-50);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+html,
+body,
+#root,
+main,
+section,
+header,
+footer,
+nav,
+aside {
+  background-color: var(--color-bg);
+  background: var(--color-bg);
+}
+
+.bg-background,
+.bg-card,
+.bg-popover,
+.bg-muted,
+.bg-secondary,
+.bg-accent,
+.bg-input,
+.bg-sidebar {
+  background-color: var(--color-bg) !important;
+  background: var(--color-bg) !important;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  color: var(--color-text-primary);
+}
+
+/* Global typography color hierarchy */
+p,
+li,
+label,
+span,
+small {
+  color: var(--color-text-secondary);
+}
+
+small,
+.text-muted,
+.text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong {
+  color: var(--color-text-primary);
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+a:visited {
+  color: var(--color-link-visited);
+}
+
+::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+code,
+pre,
+kbd {
+  color: var(--color-text-code);
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-variant-ligatures: none;
+  color: #0b4aa8;
+}
+
+a:hover {
+  color: #0f172a;
 }
 
 /* Font Sizing System - Based on Professional Design System */
