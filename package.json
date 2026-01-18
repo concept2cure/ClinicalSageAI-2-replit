@@ -15,6 +15,8 @@
     "validate:ci": "bash -lc 'pip install -r analysis/requirements.txt && python3 analysis/analysis.py data/sample_study/sample.csv && python3 analysis/check_metrics.py analysis/results/metrics.json 0.99 0.985 && python3 analysis/plot_metrics.py data/sample_study/sample.csv analysis/results/plot.png'",
     "check": "tsc -p tsconfig.check.json",
     "db:push": "drizzle-kit push",
+    "db:validate-neon": "node scripts/validate-neon.mjs",
+    "cerv2:seed-demo": "node scripts/cerv2-seed-demo.mjs",
     "agent": "node scripts/agent-cli.mjs",
     "gemini:check": "node scripts/gemini-sanity-check.mjs"
   },
