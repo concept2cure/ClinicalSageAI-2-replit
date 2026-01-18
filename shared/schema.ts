@@ -1954,6 +1954,135 @@ export const medicalDevices = pgTable('medical_devices', {
   statusIdx: index('medical_devices_status_idx').on(table.regulatoryStatus),
 }));
 
+// Diagnostic Profiles (IVD/LDT) - Device-specific diagnostic configuration
+export const diagnosticProfiles = pgTable('diagnostic_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceId: integer('device_id')
+    .notNull()
+    .references(() => medicalDevices.id),
+
+  // Diagnostic Identity
+  profileName: text('profile_name').notNull(),
+  testName: text('test_name'),
+  testType: text('test_type'), // IVD, LDT, companion
+  testPrinciple: text('test_principle'), // PCR, immunoassay, imaging, etc.
+  resultType: text('result_type'), // qualitative, quantitative, semi-quantitative
+
+  // Clinical Context
+  intendedUse: text('intended_use'),
+  indicationsForUse: text('indications_for_use'),
+  targetCondition: text('target_condition'),
+  specimenTypes: text('specimen_types').array(),
+  analyteSummary: text('analyte_summary'),
+  isCompanionDiagnostic: boolean('is_companion_diagnostic').default(false),
+
+  // Regulatory Context
+  regulatoryFramework: text('regulatory_framework'), // FDA, IVDR, MDR
+  ivdrClass: text('ivdr_class'), // A, B, C, D
+  fdaClass: text('fda_class'), // I, II, III
+  softwareAsDevice: boolean('software_as_device').default(false),
+
+  // Performance Summary
+  performanceSummary: text('performance_summary'),
+  status: text('status').default('draft'),
+  metadata: json('metadata'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgProfileIdx: index('diagnostic_profiles_org_idx').on(table.organizationId),
+  deviceProfileIdx: index('diagnostic_profiles_device_idx').on(table.deviceId),
+  typeProfileIdx: index('diagnostic_profiles_type_idx').on(table.testType),
+  frameworkProfileIdx: index('diagnostic_profiles_framework_idx').on(table.regulatoryFramework),
+  ivdrProfileIdx: index('diagnostic_profiles_ivdr_idx').on(table.ivdrClass),
+  fdaProfileIdx: index('diagnostic_profiles_fda_idx').on(table.fdaClass),
+}));
+
+// Diagnostic Analytes - Target analytes tracked per diagnostic profile
+export const diagnosticAnalytes = pgTable('diagnostic_analytes', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  profileId: integer('profile_id')
+    .notNull()
+    .references(() => diagnosticProfiles.id),
+
+  analyteName: text('analyte_name').notNull(),
+  analyteType: text('analyte_type'), // protein, DNA, RNA, metabolite
+  units: text('units'),
+  referenceRange: json('reference_range'),
+  limitOfDetection: text('limit_of_detection'),
+  limitOfQuantitation: text('limit_of_quantitation'),
+  clinicalSignificance: text('clinical_significance'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgAnalyteIdx: index('diagnostic_analytes_org_idx').on(table.organizationId),
+  profileAnalyteIdx: index('diagnostic_analytes_profile_idx').on(table.profileId),
+  analyteNameIdx: index('diagnostic_analytes_name_idx').on(table.analyteName),
+}));
+
+// Diagnostic Specimens - Specimen requirements per diagnostic profile
+export const diagnosticSpecimens = pgTable('diagnostic_specimens', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  profileId: integer('profile_id')
+    .notNull()
+    .references(() => diagnosticProfiles.id),
+
+  specimenType: text('specimen_type').notNull(),
+  collectionMethod: text('collection_method'),
+  collectionContainer: text('collection_container'),
+  minimumVolume: text('minimum_volume'),
+  storageConditions: text('storage_conditions'),
+  stability: text('stability'),
+  transportRequirements: text('transport_requirements'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgSpecimenIdx: index('diagnostic_specimens_org_idx').on(table.organizationId),
+  profileSpecimenIdx: index('diagnostic_specimens_profile_idx').on(table.profileId),
+  specimenTypeIdx: index('diagnostic_specimens_type_idx').on(table.specimenType),
+}));
+
+// Diagnostic Performance Metrics - Analytical and clinical performance data
+export const diagnosticPerformanceMetrics = pgTable('diagnostic_performance_metrics', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  profileId: integer('profile_id')
+    .notNull()
+    .references(() => diagnosticProfiles.id),
+
+  metricCategory: text('metric_category').notNull(), // analytical, clinical
+  metricName: text('metric_name').notNull(), // sensitivity, specificity, LOD, etc.
+  metricValue: text('metric_value'),
+  metricUnit: text('metric_unit'),
+  studyDesign: text('study_design'),
+  comparator: text('comparator'),
+  population: text('population'),
+  specimenType: text('specimen_type'),
+  evidence: json('evidence'),
+  notes: text('notes'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgMetricIdx: index('diagnostic_metrics_org_idx').on(table.organizationId),
+  profileMetricIdx: index('diagnostic_metrics_profile_idx').on(table.profileId),
+  categoryMetricIdx: index('diagnostic_metrics_category_idx').on(table.metricCategory),
+  nameMetricIdx: index('diagnostic_metrics_name_idx').on(table.metricName),
+}));
+
 // 510(k) Submissions Table
 export const fda510kSubmissions = pgTable('fda_510k_submissions', {
   id: serial('id').primaryKey(),
@@ -9392,7 +9521,7 @@ export const cdiscCdashForms = pgTable('cdisc_cdash_forms', {
   tenantId: integer('tenant_id')
     .notNull()
     .references(() => organizations.id),
-  formId: varchar('form_id', { length: 100 }).notNull(),
+  formId: varchar('form_id', { length: 100 }).notNull().unique(),
   formName: text('form_name').notNull(),
   formLabel: text('form_label'),
   domain: varchar('domain', { length: 20 }).notNull(), // DM, AE, CM, LB, VS, etc.
@@ -9417,9 +9546,7 @@ export const cdiscCdashFields = pgTable('cdisc_cdash_fields', {
   tenantId: integer('tenant_id')
     .notNull()
     .references(() => organizations.id),
-  formId: varchar('form_id', { length: 100 })
-    .notNull()
-    .references(() => cdiscCdashForms.formId),
+  formId: varchar('form_id', { length: 100 }).notNull(),
   fieldName: varchar('field_name', { length: 50 }).notNull(),
   cdashVariable: varchar('cdash_variable', { length: 40 }).notNull(),
   fieldLabel: text('field_label'),
@@ -9607,7 +9734,7 @@ export const cdiscEctdDefineXml = pgTable('cdisc_ectd_define_xml', {
     .notNull()
     .references(() => cdiscPrmStudies.studyId),
   defineVersion: varchar('define_version', { length: 20 }).default('2.1'),
-  defineId: varchar('define_id', { length: 100 }).notNull(),
+  defineId: varchar('define_id', { length: 100 }).notNull().unique(),
   creationDateTime: timestamp('creation_date_time').defaultNow().notNull(),
   studyName: text('study_name'),
   studyDescription: text('study_description'),
@@ -9980,9 +10107,7 @@ export const cdiscDocsDefineArtifacts = pgTable('cdisc_docs_define_artifacts', {
   tenantId: integer('tenant_id')
     .notNull()
     .references(() => organizations.id),
-  defineId: varchar('define_id', { length: 100 })
-    .notNull()
-    .references(() => cdiscEctdDefineXml.defineId),
+  defineId: varchar('define_id', { length: 100 }).notNull(),
   artifactType: varchar('artifact_type', { length: 50 }), // Stylesheet, PDF, Schema
   artifactName: text('artifact_name'),
   artifactPath: text('artifact_path'),
@@ -10883,7 +11008,7 @@ export const speciesComparisons = pgTable('species_comparisons', {
   doseAdministered: decimal('dose_administered', { precision: 10, scale: 4 }).notNull(),
   doseUnit: text('dose_unit').notNull(),
   route: text('route').notNull(), // iv, po, sc, im
-  cmax: decimal('cmax', { precision: 12, scale: 4 }),
+  cmax: decimal('cmax_value', { precision: 12, scale: 4 }),
   tmax: real('tmax'),
   auc0inf: decimal('auc0_inf', { precision: 12, scale: 4 }),
   auc0last: decimal('auc0_last', { precision: 12, scale: 4 }),

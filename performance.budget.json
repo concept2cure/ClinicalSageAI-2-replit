@@ -1,0 +1,15 @@
+{
+  "api": {
+    "atoms_list": { "p50": 50, "p95": 150, "max": 500 },
+    "liquid_cer_convert": { "p50": 2000, "p95": 5000, "max": 10000 }
+  },
+  "database": {
+    "max_query_ms": 100,
+    "max_n_plus_one": 0,
+    "required_index_coverage": 95
+  },
+  "bundle_size": {
+    "max_kb": 500,
+    "max_async_chunks": 5
+  }
+}

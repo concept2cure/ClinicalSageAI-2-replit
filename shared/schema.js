@@ -1469,6 +1469,120 @@ exports.medicalDevices = (0, pg_core_1.pgTable)('medical_devices', {
     udiIdx: (0, pg_core_1.index)('medical_devices_udi_idx').on(table.udiDeviceIdentifier),
     statusIdx: (0, pg_core_1.index)('medical_devices_status_idx').on(table.regulatoryStatus),
 }); });
+// Diagnostic Profiles (IVD/LDT) - Device-specific diagnostic configuration
+exports.diagnosticProfiles = (0, pg_core_1.pgTable)('diagnostic_profiles', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    deviceId: (0, pg_core_1.integer)('device_id')
+        .notNull()
+        .references(function () { return exports.medicalDevices.id; }),
+    // Diagnostic Identity
+    profileName: (0, pg_core_1.text)('profile_name').notNull(),
+    testName: (0, pg_core_1.text)('test_name'),
+    testType: (0, pg_core_1.text)('test_type'), // IVD, LDT, companion
+    testPrinciple: (0, pg_core_1.text)('test_principle'), // PCR, immunoassay, imaging, etc.
+    resultType: (0, pg_core_1.text)('result_type'), // qualitative, quantitative, semi-quantitative
+    // Clinical Context
+    intendedUse: (0, pg_core_1.text)('intended_use'),
+    indicationsForUse: (0, pg_core_1.text)('indications_for_use'),
+    targetCondition: (0, pg_core_1.text)('target_condition'),
+    specimenTypes: (0, pg_core_1.text)('specimen_types').array(),
+    analyteSummary: (0, pg_core_1.text)('analyte_summary'),
+    isCompanionDiagnostic: (0, pg_core_1.boolean)('is_companion_diagnostic').default(false),
+    // Regulatory Context
+    regulatoryFramework: (0, pg_core_1.text)('regulatory_framework'), // FDA, IVDR, MDR
+    ivdrClass: (0, pg_core_1.text)('ivdr_class'), // A, B, C, D
+    fdaClass: (0, pg_core_1.text)('fda_class'), // I, II, III
+    softwareAsDevice: (0, pg_core_1.boolean)('software_as_device').default(false),
+    // Performance Summary
+    performanceSummary: (0, pg_core_1.text)('performance_summary'),
+    status: (0, pg_core_1.text)('status').default('draft'),
+    metadata: (0, pg_core_1.json)('metadata'),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow().notNull(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at').defaultNow().notNull(),
+}, function (table) { return ({
+    orgProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_org_idx').on(table.organizationId),
+    deviceProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_device_idx').on(table.deviceId),
+    typeProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_type_idx').on(table.testType),
+    frameworkProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_framework_idx').on(table.regulatoryFramework),
+    ivdrProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_ivdr_idx').on(table.ivdrClass),
+    fdaProfileIdx: (0, pg_core_1.index)('diagnostic_profiles_fda_idx').on(table.fdaClass),
+}); });
+// Diagnostic Analytes - Target analytes tracked per diagnostic profile
+exports.diagnosticAnalytes = (0, pg_core_1.pgTable)('diagnostic_analytes', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    profileId: (0, pg_core_1.integer)('profile_id')
+        .notNull()
+        .references(function () { return exports.diagnosticProfiles.id; }),
+    analyteName: (0, pg_core_1.text)('analyte_name').notNull(),
+    analyteType: (0, pg_core_1.text)('analyte_type'), // protein, DNA, RNA, metabolite
+    units: (0, pg_core_1.text)('units'),
+    referenceRange: (0, pg_core_1.json)('reference_range'),
+    limitOfDetection: (0, pg_core_1.text)('limit_of_detection'),
+    limitOfQuantitation: (0, pg_core_1.text)('limit_of_quantitation'),
+    clinicalSignificance: (0, pg_core_1.text)('clinical_significance'),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow().notNull(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at').defaultNow().notNull(),
+}, function (table) { return ({
+    orgAnalyteIdx: (0, pg_core_1.index)('diagnostic_analytes_org_idx').on(table.organizationId),
+    profileAnalyteIdx: (0, pg_core_1.index)('diagnostic_analytes_profile_idx').on(table.profileId),
+    analyteNameIdx: (0, pg_core_1.index)('diagnostic_analytes_name_idx').on(table.analyteName),
+}); });
+// Diagnostic Specimens - Specimen requirements per diagnostic profile
+exports.diagnosticSpecimens = (0, pg_core_1.pgTable)('diagnostic_specimens', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    profileId: (0, pg_core_1.integer)('profile_id')
+        .notNull()
+        .references(function () { return exports.diagnosticProfiles.id; }),
+    specimenType: (0, pg_core_1.text)('specimen_type').notNull(),
+    collectionMethod: (0, pg_core_1.text)('collection_method'),
+    collectionContainer: (0, pg_core_1.text)('collection_container'),
+    minimumVolume: (0, pg_core_1.text)('minimum_volume'),
+    storageConditions: (0, pg_core_1.text)('storage_conditions'),
+    stability: (0, pg_core_1.text)('stability'),
+    transportRequirements: (0, pg_core_1.text)('transport_requirements'),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow().notNull(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at').defaultNow().notNull(),
+}, function (table) { return ({
+    orgSpecimenIdx: (0, pg_core_1.index)('diagnostic_specimens_org_idx').on(table.organizationId),
+    profileSpecimenIdx: (0, pg_core_1.index)('diagnostic_specimens_profile_idx').on(table.profileId),
+    specimenTypeIdx: (0, pg_core_1.index)('diagnostic_specimens_type_idx').on(table.specimenType),
+}); });
+// Diagnostic Performance Metrics - Analytical and clinical performance data
+exports.diagnosticPerformanceMetrics = (0, pg_core_1.pgTable)('diagnostic_performance_metrics', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    profileId: (0, pg_core_1.integer)('profile_id')
+        .notNull()
+        .references(function () { return exports.diagnosticProfiles.id; }),
+    metricCategory: (0, pg_core_1.text)('metric_category').notNull(), // analytical, clinical
+    metricName: (0, pg_core_1.text)('metric_name').notNull(), // sensitivity, specificity, LOD, etc.
+    metricValue: (0, pg_core_1.text)('metric_value'),
+    metricUnit: (0, pg_core_1.text)('metric_unit'),
+    studyDesign: (0, pg_core_1.text)('study_design'),
+    comparator: (0, pg_core_1.text)('comparator'),
+    population: (0, pg_core_1.text)('population'),
+    specimenType: (0, pg_core_1.text)('specimen_type'),
+    evidence: (0, pg_core_1.json)('evidence'),
+    notes: (0, pg_core_1.text)('notes'),
+    createdAt: (0, pg_core_1.timestamp)('created_at').defaultNow().notNull(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at').defaultNow().notNull(),
+}, function (table) { return ({
+    orgMetricIdx: (0, pg_core_1.index)('diagnostic_metrics_org_idx').on(table.organizationId),
+    profileMetricIdx: (0, pg_core_1.index)('diagnostic_metrics_profile_idx').on(table.profileId),
+    categoryMetricIdx: (0, pg_core_1.index)('diagnostic_metrics_category_idx').on(table.metricCategory),
+    nameMetricIdx: (0, pg_core_1.index)('diagnostic_metrics_name_idx').on(table.metricName),
+}); });
 // 510(k) Submissions Table
 exports.fda510kSubmissions = (0, pg_core_1.pgTable)('fda_510k_submissions', {
     id: (0, pg_core_1.serial)('id').primaryKey(),
@@ -7715,7 +7829,7 @@ exports.cdiscCdashForms = (0, pg_core_1.pgTable)('cdisc_cdash_forms', {
     tenantId: (0, pg_core_1.integer)('tenant_id')
         .notNull()
         .references(function () { return exports.organizations.id; }),
-    formId: (0, pg_core_1.varchar)('form_id', { length: 100 }).notNull(),
+    formId: (0, pg_core_1.varchar)('form_id', { length: 100 }).notNull().unique(),
     formName: (0, pg_core_1.text)('form_name').notNull(),
     formLabel: (0, pg_core_1.text)('form_label'),
     domain: (0, pg_core_1.varchar)('domain', { length: 20 }).notNull(), // DM, AE, CM, LB, VS, etc.
@@ -7739,9 +7853,7 @@ exports.cdiscCdashFields = (0, pg_core_1.pgTable)('cdisc_cdash_fields', {
     tenantId: (0, pg_core_1.integer)('tenant_id')
         .notNull()
         .references(function () { return exports.organizations.id; }),
-    formId: (0, pg_core_1.varchar)('form_id', { length: 100 })
-        .notNull()
-        .references(function () { return exports.cdiscCdashForms.formId; }),
+    formId: (0, pg_core_1.varchar)('form_id', { length: 100 }).notNull(),
     fieldName: (0, pg_core_1.varchar)('field_name', { length: 50 }).notNull(),
     cdashVariable: (0, pg_core_1.varchar)('cdash_variable', { length: 40 }).notNull(),
     fieldLabel: (0, pg_core_1.text)('field_label'),
@@ -7920,7 +8032,7 @@ exports.cdiscEctdDefineXml = (0, pg_core_1.pgTable)('cdisc_ectd_define_xml', {
         .notNull()
         .references(function () { return exports.cdiscPrmStudies.studyId; }),
     defineVersion: (0, pg_core_1.varchar)('define_version', { length: 20 }).default('2.1'),
-    defineId: (0, pg_core_1.varchar)('define_id', { length: 100 }).notNull(),
+    defineId: (0, pg_core_1.varchar)('define_id', { length: 100 }).notNull().unique(),
     creationDateTime: (0, pg_core_1.timestamp)('creation_date_time').defaultNow().notNull(),
     studyName: (0, pg_core_1.text)('study_name'),
     studyDescription: (0, pg_core_1.text)('study_description'),
@@ -8276,9 +8388,7 @@ exports.cdiscDocsDefineArtifacts = (0, pg_core_1.pgTable)('cdisc_docs_define_art
     tenantId: (0, pg_core_1.integer)('tenant_id')
         .notNull()
         .references(function () { return exports.organizations.id; }),
-    defineId: (0, pg_core_1.varchar)('define_id', { length: 100 })
-        .notNull()
-        .references(function () { return exports.cdiscEctdDefineXml.defineId; }),
+    defineId: (0, pg_core_1.varchar)('define_id', { length: 100 }).notNull(),
     artifactType: (0, pg_core_1.varchar)('artifact_type', { length: 50 }), // Stylesheet, PDF, Schema
     artifactName: (0, pg_core_1.text)('artifact_name'),
     artifactPath: (0, pg_core_1.text)('artifact_path'),

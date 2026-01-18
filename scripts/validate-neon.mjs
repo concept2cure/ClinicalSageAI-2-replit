@@ -13,9 +13,9 @@ import path from "path";
 
 const envLocalPath = path.resolve(process.cwd(), ".env.local");
 if (fs.existsSync(envLocalPath)) {
-  dotenv.config({ path: envLocalPath });
+  dotenv.config({ path: envLocalPath, override: true });
 } else {
-  dotenv.config();
+  dotenv.config({ override: true });
 }
 
 const { Client } = pg;

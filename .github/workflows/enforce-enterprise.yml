@@ -1,0 +1,34 @@
+name: Enterprise Quality Gate
+
+on:
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rule: No TODO comments in production code
+      - name: Block TODOs
+        run: |
+          if grep -r "TODO|FIXME|HACK" --include="*.ts" --include="*.tsx" src/; then
+            echo "❌ Remove TODOs before merge"
+            exit 1
+          fi
+
+      # Rule: All API endpoints must have tests
+      - name: Require API Tests
+        run: |
+          ENDPOINTS=$(grep -r "app\.(get|post|put|delete)" --include="*.ts" src/ | wc -l)
+          TESTS=$(find src -name "*.test.ts" -o -name "*.spec.ts" | wc -l)
+          if [ "$TESTS" -lt "$ENDPOINTS" ]; then
+            echo "❌ Missing tests for $((ENDPOINTS - TESTS)) endpoints"
+            exit 1
+          fi
+
+      # Rule: SQL migrations must be in version order
+      - name: Verify Migration Sequence
+        run: |
+          ls -1 shared/migrations/*.sql | sort -c || (echo "❌ Migration order broken" && exit 1)
