@@ -11,7 +11,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:check": "node scripts/db_check.js",
+    "db:status": "node scripts/db_status.js",
+    "smoke:cerv2-workbench": "node scripts/smoke_cerv2_workbench.js",
+    "cerv2:seed-demo": "node scripts/cerv2_seed_demo.js",
+    "cerv2:verify": "node scripts/verify_cerv2_workbench.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
