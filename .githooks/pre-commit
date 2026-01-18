@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+# Block committing environment secrets
+if git diff --cached --name-only | grep -E '(^|/).env(\.|$)' >/dev/null 2>&1; then
+  echo "❌ Refusing to commit .env files. Remove them from the index before committing." >&2
+  exit 1
+fi
+
+# Warn on large untracked files to avoid accidental loss
+UNTRACKED_COUNT=$(git ls-files --others --exclude-standard | wc -l | tr -d ' ')
+if [ "$UNTRACKED_COUNT" -gt 0 ]; then
+  echo "⚠️  $UNTRACKED_COUNT untracked file(s). Consider staging or stashing to avoid loss." >&2
+fi

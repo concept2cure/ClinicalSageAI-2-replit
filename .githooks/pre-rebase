@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+if [ -z "$BRANCH" ]; then
+  exit 0
+fi
+
+# Block rebasing branches that are already on the remote.
+if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+  echo "❌ Refusing to rebase $BRANCH because it has been pushed to origin." >&2
+  echo "   Create a new branch or use merge instead." >&2
+  exit 1
+fi

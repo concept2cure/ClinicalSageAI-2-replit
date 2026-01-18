@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+
+COMMIT_MSG=$(git log -1 --pretty=%B)
+if echo "$COMMIT_MSG" | grep -qiE "login|auth"; then
+  echo "✅ Login/auth changes committed. Consider backing up this commit to your backup system." >&2
+fi
