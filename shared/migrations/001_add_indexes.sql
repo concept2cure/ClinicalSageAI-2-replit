@@ -9,5 +9,7 @@ WHERE compliance_score < 0.8;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_timestamp
 ON audit_logs (timestamp DESC);
 
--- Enable PgAudit
-CREATE EXTENSION IF NOT EXISTS pgaudit;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email
+ON users (email);
+
+-- PgAudit extension must be created by a superuser in Neon.
