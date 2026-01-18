@@ -1346,6 +1346,10 @@ app.use('/api/templates', templateRoutes);
 import templatesUsageRoutes from './routes/templates-usage.js';
 app.use('/api', templatesUsageRoutes);
 
+// CERV2 workbench routes
+import cerv2WorkbenchRoutes from './routes/cerv2-workbench.js';
+app.use('/api/cerv2-workbench', cerv2WorkbenchRoutes);
+
 // Projects API (enterprise, no mock data)
 import projectsRoutes from './routes/projects.js';
 app.use('/api', projectsRoutes);

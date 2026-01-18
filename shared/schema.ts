@@ -2141,6 +2141,175 @@ export const cerv2DocumentSessions = pgTable('cerv2_document_sessions', {
   activityIdx: index('cerv2_session_activity_idx').on(table.lastActivity),
 }));
 
+// ============================================================================
+// CERV2 Workbench Tables (Evidence, Claims, Standards, Outcomes, Audit)
+// ============================================================================
+
+export const cerv2Evidence = pgTable('cerv2_evidence', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  evidenceId: text('evidence_id').notNull(),
+  name: text('name').notNull(),
+  evidenceType: text('evidence_type').notNull().default('EVIDENCE'),
+  status: text('status').notNull().default('inbox'),
+  hash: text('hash'),
+  owner: text('owner'),
+  tags: text('tags').array(),
+  filePath: text('file_path'),
+  mimeType: text('mime_type'),
+  sizeBytes: bigint('size_bytes', { mode: 'number' }),
+  metadata: jsonb('metadata').default({}),
+  uploadedAt: timestamp('uploaded_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+}, (table) => ({
+  orgProgramIdx: index('cerv2_evidence_org_program_idx').on(table.organizationId, table.programId),
+  evidenceIdIdx: uniqueIndex('cerv2_evidence_unique').on(
+    table.organizationId,
+    table.programId,
+    table.evidenceId
+  ),
+  statusIdx: index('cerv2_evidence_status_idx').on(table.status),
+  hashIdx: index('cerv2_evidence_hash_idx').on(table.hash),
+}));
+
+export const cerv2EvidenceLinks = pgTable('cerv2_evidence_links', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  evidenceId: text('evidence_id').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  linkUniqueIdx: uniqueIndex('cerv2_evidence_links_unique').on(
+    table.organizationId,
+    table.programId,
+    table.evidenceId,
+    table.entityType,
+    table.entityId
+  ),
+  orgProgramIdx: index('cerv2_evidence_links_org_program_idx').on(table.organizationId, table.programId),
+}));
+
+export const cerv2Claims = pgTable('cerv2_claims', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  claimId: text('claim_id').notNull(),
+  claimType: text('claim_type').notNull().default('other'),
+  claimText: text('claim_text').notNull(),
+  rationale: text('rationale'),
+  status: text('status').notNull().default('draft'),
+  needsReview: boolean('needs_review').notNull().default(false),
+  lastImpactedAt: timestamp('last_impacted_at', { withTimezone: true }),
+  owner: text('owner'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  claimsUniqueIdx: uniqueIndex('cerv2_claims_unique').on(
+    table.organizationId,
+    table.programId,
+    table.claimId
+  ),
+  claimsOrgProgramIdx: index('cerv2_claims_org_program_idx').on(
+    table.organizationId,
+    table.programId
+  ),
+}));
+
+export const cerv2Standards = pgTable('cerv2_standards', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  standardId: text('standard_id').notNull(),
+  name: text('name').notNull(),
+  requirement: text('requirement').notNull(),
+  status: text('status').notNull().default('missing'),
+  needsReview: boolean('needs_review').notNull().default(false),
+  lastImpactedAt: timestamp('last_impacted_at', { withTimezone: true }),
+  owner: text('owner'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  standardsUniqueIdx: uniqueIndex('cerv2_standards_unique').on(
+    table.organizationId,
+    table.programId,
+    table.standardId
+  ),
+  standardsOrgProgramIdx: index('cerv2_standards_org_program_idx').on(
+    table.organizationId,
+    table.programId
+  ),
+}));
+
+export const cerv2Outcomes = pgTable('cerv2_outcomes', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  outcomeId: text('outcome_id').notNull(),
+  name: text('name').notNull(),
+  timepoint: text('timepoint'),
+  comparator: text('comparator'),
+  confidence: text('confidence').notNull().default('low'),
+  status: text('status').notNull().default('missing'),
+  needsReview: boolean('needs_review').notNull().default(false),
+  lastImpactedAt: timestamp('last_impacted_at', { withTimezone: true }),
+  owner: text('owner'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  outcomesUniqueIdx: uniqueIndex('cerv2_outcomes_unique').on(
+    table.organizationId,
+    table.programId,
+    table.outcomeId
+  ),
+  outcomesOrgProgramIdx: index('cerv2_outcomes_org_program_idx').on(
+    table.organizationId,
+    table.programId
+  ),
+}));
+
+export const cerv2AuditEvents = pgTable('cerv2_audit_events', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  programId: text('program_id').notNull(),
+  action: text('action').notNull(),
+  actorId: integer('actor_id'),
+  entityType: text('entity_type'),
+  entityId: text('entity_id'),
+  diffSummary: text('diff_summary'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  auditOrgProgramIdx: index('cerv2_audit_org_program_idx').on(
+    table.organizationId,
+    table.programId,
+    table.createdAt
+  ),
+  auditTypeIdx: index('cerv2_audit_type_idx').on(
+    table.organizationId,
+    table.action,
+    table.createdAt
+  ),
+}));
+
 // PMA Submissions Table
 export const pmaSubmissions = pgTable('pma_submissions', {
   id: serial('id').primaryKey(),

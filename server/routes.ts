@@ -23,6 +23,7 @@ import sharePointFilesRoutes from './routes/sharepoint-files.js';
 import vaultDmsRoutes from './routes/vault-dms.js';
 // @ts-ignore - JavaScript route file
 import cerv2SectionsRoutes from './routes/cerv2-sections.js';
+import cerv2WorkbenchRoutes from './routes/cerv2-workbench.js';
 import cerv2JourneyRoutes from './routes/cerv2-journey.js';
 // @ts-ignore - JavaScript route file
 import aiAssistanceRoutes from './routes/ai-assistance.js';
@@ -472,6 +473,9 @@ export default function registerRoutes(app: Express): void {
   
   // Mount CERV2 510(k) Section routes
   app.use('/api/cerv2-sections', cerv2SectionsRoutes);
+
+  // Mount CERV2 workbench routes
+  app.use('/api/cerv2-workbench', cerv2WorkbenchRoutes);
 
   // Mount CERV2 workflow journey compatibility endpoints
   // Provides: /api/upload, /api/ai-generate-section, /api/simulate-review, /api/export-pdf
