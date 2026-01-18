@@ -1,18 +1,19 @@
+---
 autoResolve:
   enabled: true
   minConfidence: 85
-  autoMerge: false # Set to true to enable auto-merge after resolution
-  
+  autoMerge: false  # Set to true to enable auto-merge after resolution
+
   strategies:
     whitespace: true
     imports: true
     dependencies: true
     aiAssisted: true
-    
+
   notifications:
-    slack: false # Optional: Slack webhook
+    slack: false  # Optional: Slack webhook
     email: false
-    
+
   protectedFiles:
     - "*.sql"
     - "db/migrations/*"
