@@ -1,0 +1,67 @@
+name: Auto-Resolve Merge Conflicts
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to resolve conflicts for (leave empty for all open PRs)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run mode (show what would be done without making changes)'
+        required: false
+        type: boolean
+        default: false
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    # Run daily at 2 AM UTC to check all open PRs
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect-and-resolve-conflicts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Detect and resolve conflicts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number || '' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          TRIGGER_EVENT: ${{ github.event_name }}
+          CURRENT_PR: ${{ github.event.pull_request.number || '' }}
+        run: node scripts/auto-resolve-conflicts.mjs
+      
+      - name: Upload resolution logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conflict-resolution-logs
+          path: logs/conflict-resolutions.json
+          retention-days: 30
