@@ -98,6 +98,7 @@ const Cerv2WorkbenchPage = lazy(() => import('./pages/cerv2/Cerv2WorkbenchPage')
 
 // Subscriptions / billing entry point
 const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
+const LoginScreen = lazy(() => import('./pages/Login'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
@@ -326,6 +327,13 @@ function App() {
                       {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
                       <Route path="/">
                         {() => <Redirect to="/client-portal" />}
+                      </Route>
+                      <Route path="/login">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LoginScreen />
+                          </Suspense>
+                        )}
                       </Route>
                       <Route path="/submission-center" component={UnifiedSubmissionCenter} />
                       <Route path="/subscriptions">

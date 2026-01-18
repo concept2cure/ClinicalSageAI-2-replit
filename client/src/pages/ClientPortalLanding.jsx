@@ -41,6 +41,7 @@ const ClientPortalLanding = () => {
     },
   ]);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [hasAuthToken, setHasAuthToken] = useState(false);
   
   // Safe tenant context access with fallback
   let tenantContext;
@@ -148,6 +149,18 @@ const ClientPortalLanding = () => {
 
     // Update console log for tracking
     console.log('All module access links updated to point to /client-portal');
+  }, []);
+
+  useEffect(() => {
+    try {
+      const token =
+        localStorage.getItem('token') ||
+        localStorage.getItem('authToken') ||
+        localStorage.getItem('auth_token');
+      setHasAuthToken(!!token);
+    } catch (err) {
+      console.warn('Unable to read auth token from localStorage.', err);
+    }
   }, []);
 
   // Filter workflow sections based on enabled modules
@@ -509,6 +522,28 @@ const ClientPortalLanding = () => {
                     {currentClientWorkspace?.quotaProjects || '10'}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8 rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                  <Lock className="h-5 w-5" />
+                  Security login
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Sign in to enable secure actions, audit trails, and regulated workflows.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge variant={hasAuthToken ? 'default' : 'secondary'}>
+                  {hasAuthToken ? 'Security session active' : 'Not signed in'}
+                </Badge>
+                <Button onClick={() => setLocation('/login')}>
+                  Security login
+                </Button>
               </div>
             </div>
           </div>

@@ -179,11 +179,42 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   }, [setModuleContext]);
 
   const tenantContext = useSafeTenant();
-  const { currentOrganization, currentClientWorkspace, isLoading: tenantLoading } = tenantContext;
+  const {
+    organizations,
+    currentOrganization,
+    setCurrentOrganization,
+    currentClientWorkspace,
+    isLoading: tenantLoading,
+  } = tenantContext;
+
+  const storedOrganizationId = (() => {
+    try {
+      return (
+        localStorage.getItem('currentOrganizationId') ||
+        localStorage.getItem('organizationId')
+      );
+    } catch (_e) {
+      return null;
+    }
+  })();
 
   // Organization and workspace IDs for project management (tenant-derived)
-  const organizationId = currentOrganization?.id ? String(currentOrganization.id) : null;
+  const organizationId = currentOrganization?.id
+    ? String(currentOrganization.id)
+    : storedOrganizationId;
   const clientWorkspaceId = currentClientWorkspace?.id ? String(currentClientWorkspace.id) : null;
+
+  useEffect(() => {
+    if (currentOrganization || !organizations?.length) return;
+    if (!storedOrganizationId) return;
+
+    const matchingOrg = organizations.find(
+      org => String(org.id) === String(storedOrganizationId)
+    );
+    if (matchingOrg) {
+      setCurrentOrganization(matchingOrg);
+    }
+  }, [currentOrganization, organizations, setCurrentOrganization, storedOrganizationId]);
 
   // Subscription gate (server-enforced toggle; UI blocks access when disabled)
   const [moduleAccess, setModuleAccess] = useState({
@@ -291,7 +322,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
   // Tenant must be selected for enterprise-grade isolation.
   // (In production this is typically JWT-derived; in dev/demo it may come from TenantContext/localStorage.)
-  if (!tenantLoading && !organizationId) {
+  if (!tenantLoading && !organizationId && organizations?.length) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-6">
         <div className="max-w-xl w-full bg-white rounded-xl shadow-lg p-8">
