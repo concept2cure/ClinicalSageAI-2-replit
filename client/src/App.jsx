@@ -326,7 +326,19 @@ function App() {
                     <Switch>
                       {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
                       <Route path="/">
-                        {() => <Redirect to="/client-portal" />}
+                        {() => {
+                          let hasToken = false;
+                          try {
+                            hasToken = !!(
+                              localStorage.getItem('token') ||
+                              localStorage.getItem('authToken') ||
+                              localStorage.getItem('auth_token')
+                            );
+                          } catch (_e) {
+                            hasToken = false;
+                          }
+                          return <Redirect to={hasToken ? '/client-portal' : '/login'} />;
+                        }}
                       </Route>
                       <Route path="/login">
                         {() => (
