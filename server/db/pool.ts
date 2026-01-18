@@ -5,9 +5,12 @@ let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
+    const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      connectionString,
+      ssl: connectionString?.includes('neondb') || process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
       // Connection pool settings for stability
       max: 20,
       idleTimeoutMillis: 30000,

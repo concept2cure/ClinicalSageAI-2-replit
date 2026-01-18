@@ -19,13 +19,15 @@ let pool: Pool | null = null;
 // Initialize database connection
 try {
   // Check if DATABASE_URL is available
-  if (process.env.DATABASE_URL) {
+  const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+
+  if (connectionString) {
     logger.info('Initializing PostgreSQL connection pool');
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       ssl:
-        process.env.DATABASE_URL?.includes('postgresql://') ||
-        process.env.DATABASE_URL?.includes('neondb')
+        connectionString.includes('postgresql://') ||
+        connectionString.includes('neondb')
           ? { rejectUnauthorized: false }
           : false,
       max: 20, // Maximum number of clients in the pool
@@ -65,7 +67,7 @@ try {
       logger.error('Unexpected database error', { error: err.message });
     });
   } else {
-    logger.warn('DATABASE_URL not found, database features will be unavailable');
+    logger.warn('NEON_DATABASE_URL or DATABASE_URL not found, database features will be unavailable');
   }
 } catch (error: any) {
   logger.error('Failed to initialize database', { error: error.message });

@@ -19,7 +19,7 @@ The TrialSage Vault™ module provides enterprise-grade document management for 
 The Vault system is built with a modern, scalable architecture:
 
 - **Backend**: Node.js with Express.js for the API server
-- **Database**: Supabase (PostgreSQL) for document metadata and audit logs
+- **Database**: Neon (PostgreSQL) for document metadata and audit logs
 - **Storage**: Local file system for document storage (can be configured for S3 or other storage)
 - **Authentication**: JWT-based authentication and authorization
 - **AI Services**: OpenAI GPT-4o for document analysis and insights
@@ -48,18 +48,18 @@ The Vault system is built with a modern, scalable architecture:
 ### Prerequisites
 
 - Node.js 16+
-- PostgreSQL database (provided by Supabase)
+- PostgreSQL database (Neon recommended)
 - Environment variables:
   - `JWT_SECRET`: Secret for JWT token generation and validation
-  - `SUPABASE_URL`: URL of the Supabase project
-  - `SUPABASE_SERVICE_ROLE_KEY`: Service role key for Supabase
+   - `NEON_DATABASE_URL`: Neon Postgres connection string
+   - `DATABASE_URL`: Fallback Postgres connection string
   - `OPENAI_API_KEY`: OpenAI API key for document analysis (optional)
 
 ### Database Setup
 
-1. Run the setup script to create the required tables in Supabase:
+1. Run the setup script to create the required tables in Postgres:
    ```
-   node scripts/setup_supabase.js
+   npm run db:push
    ```
 
 ### Starting the Vault Server

@@ -12,7 +12,7 @@ npm run build
 
 ## 2. Going Live (Replacing the Mock DB)
 
-To move to production, you must replace the Mock DB with a real PostgreSQL connection (e.g., Supabase).
+To move to production, you must replace the Mock DB with a real PostgreSQL connection (Neon recommended).
 
 ### Step A: Database Schema
 
@@ -28,19 +28,13 @@ Create the following tables in your Postgres DB:
 
 Replace the `SaaSDatabase` class with actual API calls.
 
-**Example (Supabase):**
+**Example (Postgres/Neon-backed API):**
 
 ```javascript
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(URL, KEY);
-
 class RealDatabase {
   async getProjects(tenantId) {
-    const { data } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('tenant_id', tenantId); // RLS Enforcement
-    return data;
+    const res = await fetch(`/api/projects?tenantId=${tenantId}`);
+    return res.json();
   }
 }
 export const db = new RealDatabase();
@@ -51,8 +45,8 @@ export const db = new RealDatabase();
 
 Configure your CI/CD (Vercel/Netlify) with:
 
-* `VITE_SUPABASE_URL`
-* `VITE_SUPABASE_ANON_KEY`
+* `NEON_DATABASE_URL`
+* `DATABASE_URL` (fallback for local/dev)
 * `VITE_ENABLE_TIPTAP_EDITOR=true`
 
 ## 4. Security Note
