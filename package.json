@@ -24,7 +24,8 @@
     "db:validate-neon": "node scripts/validate-neon.mjs",
     "cerv2:seed-demo": "node scripts/cerv2-seed-demo.mjs",
     "agent": "node scripts/agent-cli.mjs",
-    "gemini:check": "node scripts/gemini-sanity-check.mjs"
+    "gemini:check": "node scripts/gemini-sanity-check.mjs",
+    "harvest-worker": "tsx server/workers/harvest-worker.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
