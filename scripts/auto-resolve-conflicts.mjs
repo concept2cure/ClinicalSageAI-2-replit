@@ -28,18 +28,28 @@ function getRepoInfo() {
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
     return { owner, repo };
   }
-  
+
   // Fallback: parse from git remote
   try {
     const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
-    const match = remoteUrl.match(/github\.com[:/](.+?)\/(.+?)(\.git)?$/);
+
+    // Try HTTPS URL: https://github.com/owner/repo or https://github.com/owner/repo.git
+    let match = remoteUrl.match(/https?:\/\/github\.com\/([^/]+)\/([^/]+?)(\.git)?$/);
     if (match) {
       return { owner: match[1], repo: match[2] };
     }
+
+    // Try SSH URL: git@github.com:owner/repo or git@github.com:owner/repo.git
+    match = remoteUrl.match(/git@github\.com:([^/]+)\/([^/]+?)(\.git)?$/);
+    if (match) {
+      return { owner: match[1], repo: match[2] };
+    }
+
+    console.error('Failed to parse GitHub repository URL:', remoteUrl);
   } catch (error) {
-    console.error('Failed to determine repository info');
+    console.error('Failed to determine repository info:', error.message);
   }
-  
+
   return null;
 }
 

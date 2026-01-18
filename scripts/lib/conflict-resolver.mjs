@@ -266,7 +266,13 @@ export function getConflictedFiles() {
  */
 export function saveResolutionLog(logEntry) {
   const logPath = path.join(process.cwd(), 'logs', 'conflict-resolutions.json');
-  
+
+  // Ensure logs directory exists
+  const logDir = path.dirname(logPath);
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
   let logs = [];
   if (fs.existsSync(logPath)) {
     try {
@@ -275,17 +281,17 @@ export function saveResolutionLog(logEntry) {
       console.warn('Failed to read existing logs:', error.message);
     }
   }
-  
+
   logs.push({
     ...logEntry,
     timestamp: new Date().toISOString()
   });
-  
+
   // Keep only last 1000 entries
   if (logs.length > 1000) {
     logs = logs.slice(-1000);
   }
-  
+
   fs.writeFileSync(logPath, JSON.stringify(logs, null, 2));
 }
 

@@ -36,9 +36,9 @@ export function mergeImports(baseContent, headContent, conflictMarkers) {
     const lines = content.trim().split('\n');
     return lines.every(line => {
       const trimmed = line.trim();
-      return trimmed === '' || 
-             trimmed.startsWith('import ') || 
-             trimmed.startsWith('from ') ||
+      return trimmed === '' ||
+             trimmed.startsWith('import ') ||
+             trimmed.startsWith('export ') ||
              trimmed.startsWith('const ') ||
              trimmed.startsWith('let ') ||
              trimmed.startsWith('var ') ||
@@ -105,13 +105,11 @@ export function mergeDependencies(baseContent, headContent, filePath) {
           ...(baseJson[section] || {}),
           ...(headJson[section] || {})
         };
-        
-        // Sort dependencies alphabetically
-        const sorted = {};
-        Object.keys(mergedJson[section]).sort().forEach(key => {
-          sorted[key] = mergedJson[section][key];
-        });
-        mergedJson[section] = sorted;
+
+        // Sort dependencies alphabetically using more efficient approach
+        mergedJson[section] = Object.fromEntries(
+          Object.entries(mergedJson[section]).sort(([a], [b]) => a.localeCompare(b))
+        );
       }
     }
     
