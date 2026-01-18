@@ -51,11 +51,56 @@ import {
   getDocumentLocks,
   autoSaveManager
 } from '../services/documentLocking.js';
+import openaiService from '../services/openaiService.js';
 import ectdAuditService from '../services/ectdAuditService.js';
 import controlledVocabularyService from '../services/controlledVocabularyService.js';
 import globalChangeManagementService from '../services/globalChangeManagementService.js';
 
 const router = express.Router();
+const demoMode = process.env.DEMO_MODE === 'true';
+
+const demoDocuments = [
+  {
+    id: 101,
+    title: 'Module 2.7 Clinical Summary',
+    moduleNumber: '2',
+    sectionNumber: '2.7',
+    status: 'draft',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 102,
+    title: 'Module 3.2 Quality Overall Summary',
+    moduleNumber: '3',
+    sectionNumber: '3.2',
+    status: 'review',
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
+
+const demoModuleTree = [
+  {
+    id: 1,
+    moduleNumber: '1',
+    moduleName: 'Administrative Information',
+    status: 'approved',
+    documentCount: 4,
+  },
+  {
+    id: 2,
+    moduleNumber: '2',
+    moduleName: 'Summaries',
+    status: 'in-progress',
+    documentCount: 3,
+  },
+  {
+    id: 3,
+    moduleNumber: '3',
+    moduleName: 'Quality',
+    status: 'draft',
+    documentCount: 2,
+  },
+];
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -83,7 +128,9 @@ const upload = multer({
 });
 
 // Initialize validation rules on server startup
-initializeValidationRules();
+if (!demoMode && db) {
+  initializeValidationRules();
+}
 
 /* ================================================================================
  * COMPONENT MANAGEMENT FUNCTIONS - CORE CCMS ARCHITECTURE
@@ -1608,6 +1655,19 @@ router.post('/documents/:id/route', async (req, res) => {
  */
 router.get('/documents', async (req, res) => {
   try {
+    if (demoMode) {
+      return res.json({
+        success: true,
+        documents: demoDocuments,
+        pagination: {
+          total: demoDocuments.length,
+          limit: demoDocuments.length,
+          offset: 0,
+          hasMore: false,
+        },
+      });
+    }
+
     const organizationId = parseInt(req.headers['x-organization-id']) || 1;
     const { module, status, limit = 50, offset = 0 } = req.query;
 
@@ -2863,6 +2923,24 @@ router.get('/validate/latest/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
 
+    if (demoMode) {
+      return res.json({
+        success: true,
+        hasValidation: true,
+        validation: {
+          documentId: parseInt(documentId),
+          module: '2',
+          agency: 'FDA',
+          complianceScore: 92,
+          totalIssues: 4,
+          criticalIssues: 1,
+          majorIssues: 2,
+          minorIssues: 1,
+          performedAt: new Date().toISOString(),
+        },
+      });
+    }
+
     const [latest] = await db
       .select()
       .from(coauthorValidationHistory)
@@ -3751,68 +3829,49 @@ router.post('/search/export', async (req, res) => {
 router.post('/ai/generate', async (req, res) => {
   try {
     const { section, module, requirements = {}, currentContent = '' } = req.body;
+    const documentType = module ? `eCTD Module ${module}` : 'eCTD';
+    const prompt = `Generate comprehensive regulatory content for eCTD ${module} Section ${section}.
     
-    let OpenAI;
+    Current content (if any): ${currentContent}
+    
+    Requirements: ${JSON.stringify(requirements)}
+    
+    Please provide detailed, FDA/ICH-compliant content that includes:
+    1. All required subsections
+    2. Regulatory language and formatting
+    3. Placeholders for specific data where needed
+    4. Compliance considerations`;
+
     try {
-      OpenAI = (await import('openai')).default;
-    } catch (e) {
-      console.log('OpenAI not available for content generation');
-    }
+      const content = await openaiService.generateRegulatoryContent(
+        prompt,
+        documentType,
+        requirements
+      );
 
-    if (OpenAI && process.env.OPENAI_API_KEY) {
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-
-      const prompt = `Generate comprehensive regulatory content for eCTD ${module} Section ${section}.
-      
-      Current content (if any): ${currentContent}
-      
-      Requirements: ${JSON.stringify(requirements)}
-      
-      Please provide detailed, FDA/ICH-compliant content that includes:
-      1. All required subsections
-      2. Regulatory language and formatting
-      3. Placeholders for specific data where needed
-      4. Compliance considerations`;
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert regulatory writer specializing in eCTD documentation for pharmaceutical submissions.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000
-      });
-
-      res.json({
+      return res.json({
         success: true,
-        content: response.choices[0].message.content,
+        content,
         section,
         module,
-        model: 'gpt-4o',
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         isRealAI: true
       });
-    } else {
-      // Fallback template content
-      res.json({
-        success: true,
-        content: `[Template for ${module} Section ${section}]
+    } catch (aiError) {
+      if (aiError.message?.includes('Kimi AI API key not available')) {
+        return res.json({
+          success: true,
+          content: `[Template for ${module} Section ${section}]
         
 This section requires comprehensive documentation following ICH guidelines.
 Please add specific content based on your product requirements.`,
-        section,
-        module,
-        model: 'template',
-        isRealAI: false
-      });
+          section,
+          module,
+          model: 'template',
+          isRealAI: false
+        });
+      }
+      throw aiError;
     }
 
   } catch (error) {
@@ -6464,6 +6523,20 @@ router.get('/ectd-modules/:moduleNumber', async (req, res) => {
   try {
     const organizationId = parseInt(req.headers['x-organization-id']) || req.query.organizationId || 6;
     const { moduleNumber } = req.params;
+
+    if (moduleNumber === 'tree-with-counts') {
+      if (demoMode) {
+        return res.json({
+          success: true,
+          totalModules: demoModuleTree.length,
+          rootModules: demoModuleTree.length,
+          leafModules: demoModuleTree.length,
+          totalDocuments: demoModuleTree.reduce((sum, module) => sum + module.documentCount, 0),
+          tree: demoModuleTree,
+        });
+      }
+      return res.redirect('/api/coauthor/ectd-modules/tree-with-counts');
+    }
     
     const [module] = await db
       .select()
@@ -6964,6 +7037,17 @@ router.post('/modules/:moduleId/documents', async (req, res) => {
  */
 router.get('/ectd-modules/tree-with-counts', async (req, res) => {
   try {
+    if (demoMode) {
+      return res.json({
+        success: true,
+        totalModules: demoModuleTree.length,
+        rootModules: demoModuleTree.length,
+        leafModules: demoModuleTree.length,
+        totalDocuments: demoModuleTree.reduce((sum, module) => sum + module.documentCount, 0),
+        tree: demoModuleTree,
+      });
+    }
+
     const organizationId = parseInt(req.headers['x-organization-id']) || req.query.organizationId || 6;
     
     // Get all modules
