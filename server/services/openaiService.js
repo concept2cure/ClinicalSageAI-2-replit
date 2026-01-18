@@ -12,6 +12,11 @@ class OpenAIService {
           baseURL: KIMI_BASE_URL,
         })
       : null;
+    this.client = new OpenAI({
+      apiKey: process.env.KIMI_API_KEY,
+      baseURL: KIMI_BASE_URL,
+    });
+    this.isAvailable = !!process.env.KIMI_API_KEY;
   }
 
   async analyzeRegulatoryDocument(text, documentType = 'CMC') {

@@ -609,6 +609,16 @@ try {
   console.error('❌ Failed to mount Atoms routes:', error);
 }
 
+// Mount Lumen Cortex Intelligence routes
+try {
+  const lumenCortexModule = await import('./routes/lumen-cortex');
+  const lumenCortexRoutes = lumenCortexModule.default;
+  app.use('/api/lumen-cortex', lumenCortexRoutes);
+  console.log('✅ Lumen Cortex routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+}
+
 // Mount Workflow API routes
 try {
   const workflowModule = await import('./routes/workflow.js');
@@ -2721,18 +2731,6 @@ app.get('/api/templates', async (req: Request, res: Response) => {
       success: false,
       error: 'Failed to fetch templates',
     });
-  }
-});
-
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
   }
 });
 
