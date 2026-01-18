@@ -15,7 +15,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Parser } from 'expr-eval';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.ts';
 // import { dataHarvester } from './dataHarvester.js';
 
 // Initialize Supabase client

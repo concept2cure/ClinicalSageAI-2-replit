@@ -2783,6 +2783,80 @@ export const insertProjectDocumentSchema = createInsertSchema(projectDocuments).
   updatedAt: true,
 });
 
+/**
+ * Regulatory Atoms Table
+ *
+ * Atomic regulatory facts extracted from source documents and mapped to submissions.
+ */
+export const regulatoryAtoms = pgTable('regulatory_atoms', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  submissionId: text('submission_id').notNull(),
+  sourceDocument: text('source_document'),
+  sourceDocumentId: text('source_document_id'),
+  atomType: text('atom_type').notNull(),
+  atomKey: text('atom_key'),
+  content: text('content'),
+  applicableJurisdictions: text('applicable_jurisdictions').array(),
+  complianceScore: real('compliance_score'),
+  status: text('status').default('active'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  orgSubmissionIdx: index('reg_atoms_org_submission_idx').on(table.organizationId, table.submissionId),
+  atomTypeIdx: index('reg_atoms_type_idx').on(table.atomType),
+  complianceIdx: index('reg_atoms_compliance_idx').on(table.complianceScore),
+}));
+
+/**
+ * Audit Logs Table
+ *
+ * Unified audit trail for enterprise governance checks and RLS validation.
+ */
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  userId: integer('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  entityType: text('entity_type'),
+  entityId: text('entity_id'),
+  details: jsonb('details').default({}),
+  timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  auditOrgIdx: index('audit_logs_org_idx').on(table.organizationId),
+  auditUserIdx: index('audit_logs_user_idx').on(table.userId),
+}));
+
+/**
+ * Workbench Sessions Table
+ *
+ * Tracks active workbench sessions for vault and regulatory workflows.
+ */
+export const workbenchSessions = pgTable('workbench_sessions', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  sessionId: text('session_id').notNull().unique(),
+  submissionId: text('submission_id'),
+  context: jsonb('context').default({}),
+  status: text('status').default('active'),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+  lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  sessionOrgIdx: index('workbench_sessions_org_idx').on(table.organizationId),
+  sessionUserIdx: index('workbench_sessions_user_idx').on(table.userId),
+  sessionStatusIdx: index('workbench_sessions_status_idx').on(table.status),
+}));
+
 // Project Document Types
 export type ProjectDocument = InferSelectModel<typeof projectDocuments>;
 export type InsertProjectDocument = z.infer<typeof insertProjectDocumentSchema>;

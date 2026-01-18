@@ -25,11 +25,11 @@ class AuditService {
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS audit_logs (
           id SERIAL PRIMARY KEY,
-          tenant_id INTEGER NOT NULL,
+          organization_id INTEGER NOT NULL,
           user_id INTEGER,
           action VARCHAR(255) NOT NULL,
-          resource_type VARCHAR(100) NOT NULL,
-          resource_id VARCHAR(255),
+          entity_type VARCHAR(100),
+          entity_id VARCHAR(255),
           actor_id VARCHAR(255),
           action_type VARCHAR(50),
           target_resource VARCHAR(255),
@@ -45,6 +45,8 @@ class AuditService {
       // Add Phase 17 ledger columns if table already existed
       await this.pool.query(`
         ALTER TABLE audit_logs
+          ADD COLUMN IF NOT EXISTS entity_type VARCHAR(100),
+          ADD COLUMN IF NOT EXISTS entity_id VARCHAR(255),
           ADD COLUMN IF NOT EXISTS actor_id VARCHAR(255),
           ADD COLUMN IF NOT EXISTS action_type VARCHAR(50),
           ADD COLUMN IF NOT EXISTS target_resource VARCHAR(255);
@@ -52,10 +54,10 @@ class AuditService {
 
       // Create indexes for performance
       await this.pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_audit_tenant_timestamp ON audit_logs(tenant_id, timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_audit_org_timestamp ON audit_logs(organization_id, timestamp DESC);
         CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs(user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
-        CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_logs(resource_type, resource_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
         CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_logs(actor_id);
         CREATE INDEX IF NOT EXISTS idx_audit_action_type ON audit_logs(action_type);
       `);
@@ -83,7 +85,7 @@ class AuditService {
       const result = await this.pool.query(
         `
         INSERT INTO audit_logs (
-          tenant_id, user_id, action, resource_type, resource_id, 
+          organization_id, user_id, action, entity_type, entity_id, 
           details, ip_address, user_agent, session_id, severity
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, timestamp
@@ -114,10 +116,10 @@ class AuditService {
     if (!this.pool) return [];
     try {
       let query = `
-        SELECT id, user_id, action, resource_type, resource_id, details,
+        SELECT id, user_id, action, entity_type, entity_id, details,
                ip_address, timestamp, severity
         FROM audit_logs 
-        WHERE tenant_id = $1
+        WHERE organization_id = $1
       `;
       const params = [tenantId];
       let paramCount = 1;

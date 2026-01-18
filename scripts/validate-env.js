@@ -9,7 +9,7 @@ const envPaths = ['.env', '.env.codespace', '.env.local']
   .filter(p => fs.existsSync(p));
 
 for (const envPath of envPaths) {
-  dotenv.config({ path: envPath, override: true });
+  dotenv.config({ path: envPath, override: false });
 }
 
 const REQUIRED_SECRETS = [

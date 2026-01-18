@@ -7607,6 +7607,77 @@ exports.regulatoryAuditLogs = (0, pg_core_1.pgTable)('regulatory_audit_logs', {
     timestampIdx: (0, pg_core_1.index)('reg_audit_timestamp_idx').on(table.timestamp),
     submissionIdx: (0, pg_core_1.index)('reg_audit_submission_idx').on(table.submissionId),
 }); });
+/**
+ * Regulatory Atoms Table
+ *
+ * Atomic regulatory facts extracted from source documents and mapped to submissions.
+ */
+exports.regulatoryAtoms = (0, pg_core_1.pgTable)('regulatory_atoms', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    submissionId: (0, pg_core_1.text)('submission_id').notNull(),
+    sourceDocument: (0, pg_core_1.text)('source_document'),
+    sourceDocumentId: (0, pg_core_1.text)('source_document_id'),
+    atomType: (0, pg_core_1.text)('atom_type').notNull(),
+    atomKey: (0, pg_core_1.text)('atom_key'),
+    content: (0, pg_core_1.text)('content'),
+    applicableJurisdictions: (0, pg_core_1.text)('applicable_jurisdictions').array(),
+    complianceScore: (0, pg_core_1.real)('compliance_score'),
+    status: (0, pg_core_1.text)('status').default('active'),
+    metadata: (0, pg_core_1.jsonb)('metadata').default({}),
+    createdAt: (0, pg_core_1.timestamp)('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: (0, pg_core_1.timestamp)('updated_at', { withTimezone: true }).defaultNow(),
+}, function (table) { return ({
+    orgSubmissionIdx: (0, pg_core_1.index)('reg_atoms_org_submission_idx').on(table.organizationId, table.submissionId),
+    atomTypeIdx: (0, pg_core_1.index)('reg_atoms_type_idx').on(table.atomType),
+    complianceIdx: (0, pg_core_1.index)('reg_atoms_compliance_idx').on(table.complianceScore),
+}); });
+/**
+ * Audit Logs Table
+ *
+ * Unified audit trail for enterprise governance checks and RLS validation.
+ */
+exports.auditLogs = (0, pg_core_1.pgTable)('audit_logs', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    userId: (0, pg_core_1.integer)('user_id').references(function () { return exports.users.id; }),
+    action: (0, pg_core_1.text)('action').notNull(),
+    entityType: (0, pg_core_1.text)('entity_type'),
+    entityId: (0, pg_core_1.text)('entity_id'),
+    details: (0, pg_core_1.jsonb)('details').default({}),
+    timestamp: (0, pg_core_1.timestamp)('timestamp', { withTimezone: true }).defaultNow(),
+}, function (table) { return ({
+    auditOrgIdx: (0, pg_core_1.index)('audit_logs_org_idx').on(table.organizationId),
+    auditUserIdx: (0, pg_core_1.index)('audit_logs_user_idx').on(table.userId),
+}); });
+/**
+ * Workbench Sessions Table
+ *
+ * Tracks active workbench sessions for vault and regulatory workflows.
+ */
+exports.workbenchSessions = (0, pg_core_1.pgTable)('workbench_sessions', {
+    id: (0, pg_core_1.serial)('id').primaryKey(),
+    organizationId: (0, pg_core_1.integer)('organization_id')
+        .notNull()
+        .references(function () { return exports.organizations.id; }),
+    userId: (0, pg_core_1.integer)('user_id')
+        .notNull()
+        .references(function () { return exports.users.id; }),
+    sessionId: (0, pg_core_1.text)('session_id').notNull().unique(),
+    submissionId: (0, pg_core_1.text)('submission_id'),
+    context: (0, pg_core_1.jsonb)('context').default({}),
+    status: (0, pg_core_1.text)('status').default('active'),
+    startedAt: (0, pg_core_1.timestamp)('started_at', { withTimezone: true }).defaultNow(),
+    lastActivityAt: (0, pg_core_1.timestamp)('last_activity_at', { withTimezone: true }).defaultNow(),
+}, function (table) { return ({
+    sessionOrgIdx: (0, pg_core_1.index)('workbench_sessions_org_idx').on(table.organizationId),
+    sessionUserIdx: (0, pg_core_1.index)('workbench_sessions_user_idx').on(table.userId),
+    sessionStatusIdx: (0, pg_core_1.index)('workbench_sessions_status_idx').on(table.status),
+}); });
 // ============================================================================
 // INSERT SCHEMAS
 // ============================================================================
