@@ -12,16 +12,24 @@ import { aiAuditLog } from '../../shared/schema.js';
 
 class RegulatoryAIServicePhase3 {
   constructor() {
-    // Initialize OpenAI with Replit AI integrations
-    this.openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY
-    });
+    const apiKey = process.env.KIMI_API_KEY;
+    this.isAvailable = !!apiKey;
+    const baseURL = process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1';
+
+    this.openai = apiKey
+      ? new OpenAI({
+          baseURL,
+          apiKey
+        })
+      : null;
     
-    // Direct OpenAI client for embeddings (not supported by Replit integration)
-    this.embeddingClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    // Embedding client (optional, depends on provider support)
+    this.embeddingClient = apiKey
+      ? new OpenAI({
+          baseURL,
+          apiKey
+        })
+      : null;
     
     // Token budget management - will be loaded from database
     this.tokenBudget = {
@@ -32,9 +40,7 @@ class RegulatoryAIServicePhase3 {
     
     // Model fallback chain for resilience
     this.modelChain = [
-      'gpt-4o',
-      'gpt-4-turbo', 
-      'gpt-3.5-turbo'
+      process.env.KIMI_MODEL || 'moonshot-v1-32k'
     ];
     
     // Cache for NER results (24-hour TTL)
@@ -50,7 +56,9 @@ class RegulatoryAIServicePhase3 {
     };
     
     // Load persistent data from database
-    this.initializePersistentData();
+    if (db) {
+      this.initializePersistentData();
+    }
   }
   
   /**
@@ -58,6 +66,9 @@ class RegulatoryAIServicePhase3 {
    */
   async initializePersistentData() {
     try {
+      if (!db) {
+        return;
+      }
       // Load token budget from database (using id=1 for global budget)
       const [budgetResult] = await db.execute(sql`
         SELECT * FROM ai_token_budget 

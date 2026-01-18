@@ -4,6 +4,14 @@ const KIMI_BASE_URL = process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1';
 
 class OpenAIService {
   constructor() {
+    const apiKey = process.env.KIMI_API_KEY;
+    this.isAvailable = !!apiKey;
+    this.client = apiKey
+      ? new OpenAI({
+          apiKey,
+          baseURL: KIMI_BASE_URL,
+        })
+      : null;
     this.client = new OpenAI({
       apiKey: process.env.KIMI_API_KEY,
       baseURL: KIMI_BASE_URL,

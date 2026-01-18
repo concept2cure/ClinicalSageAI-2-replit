@@ -12,18 +12,26 @@ const logger = createScopedLogger('database');
 
 // Initialize the database connection
 const connectionString = process.env.DATABASE_URL || '';
+const demoMode = process.env.DEMO_MODE === 'true';
 
 if (!connectionString) {
-  logger.error('DATABASE_URL environment variable not set');
-  process.exit(1);
+  if (demoMode) {
+    logger.warn('DATABASE_URL not set; running in DEMO_MODE with mocked data');
+  } else {
+    logger.error('DATABASE_URL environment variable not set');
+    process.exit(1);
+  }
 }
 
-// Create the postgres client
-const client = postgres(connectionString, {
-  ssl: getSslConfig(connectionString),
-});
+let client = null;
+let db = null;
 
-// Create the drizzle database instance
-export const db = drizzle(client);
+if (connectionString) {
+  client = postgres(connectionString, {
+    ssl: getSslConfig(connectionString),
+  });
+  db = drizzle(client);
+}
 
+export { db };
 export default db;
