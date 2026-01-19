@@ -1,6 +1,7 @@
 // VectorSearch.jsx - Vector search component with citations
 import React, { useState } from 'react';
-import { Search, FileText, FilePlus, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Search, FileText, FilePlus, AlertTriangle } from 'lucide-react'
+import { authService } from '@/services/authService';
 
 export default function VectorSearch() {
   const [query, setQuery] = useState('');
@@ -17,10 +18,16 @@ export default function VectorSearch() {
     setError(null);
 
     try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('Authentication required.');
+      }
+
       const response = await fetch('/api/search/vector', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           query: query,
@@ -42,36 +49,6 @@ export default function VectorSearch() {
     }
   };
 
-  // Mock results for development and testing
-  const mockResults = [
-    {
-      content:
-        'The study demonstrated a statistically significant improvement in overall survival (HR 0.72, 95% CI 0.58-0.88, p=0.001) for patients treated with the combination therapy versus standard of care. The median overall survival was 18.2 months in the experimental arm compared to 12.6 months in the control arm.',
-      relevance: 0.95,
-      document_id: 1,
-      document_title: 'Clinical Study Report XYZ-123',
-      source_page: 42,
-      source_section: 'Efficacy Results',
-    },
-    {
-      content:
-        'Adverse events of Grade 3 or higher were observed in 32.5% of patients in the experimental arm versus 28.3% in the control arm. The most common treatment-related adverse events in the experimental arm were neutropenia (18.2%), fatigue (12.7%), and nausea (10.3%).',
-      relevance: 0.87,
-      document_id: 1,
-      document_title: 'Clinical Study Report XYZ-123',
-      source_page: 67,
-      source_section: 'Safety Results',
-    },
-    {
-      content:
-        'Similar phase II trials of combination regimens have reported median overall survival ranging from 12.3 to 16.8 months, placing our observed result of 18.2 months at the higher end of the efficacy spectrum for this patient population.',
-      relevance: 0.82,
-      document_id: 2,
-      document_title: 'Comparative Efficacy Analysis',
-      source_page: 15,
-      source_section: 'Discussion',
-    },
-  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -106,18 +83,10 @@ export default function VectorSearch() {
         )}
       </form>
 
-      {/* Development note: Replace with actual results when API is ready */}
       {!isSearching && results.length === 0 && query && (
         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-          {/* This section would be replaced by real results when the API is working */}
           <FileText size={48} className="mb-4 opacity-50" />
-          <p className="text-center mb-2">Development placeholder: Using mock results.</p>
-          <button
-            onClick={() => setResults(mockResults)}
-            className="flex items-center text-emerald-600 hover:text-emerald-700 gap-1"
-          >
-            Show mock results <ArrowRight size={16} />
-          </button>
+          <p className="text-center mb-2">No results found for your query.</p>
         </div>
       )}
 

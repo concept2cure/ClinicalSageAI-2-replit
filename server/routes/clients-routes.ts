@@ -8,12 +8,8 @@ import {
   projects,
   projectModules,
 } from '@shared/schema';
-<<<<<<< HEAD
 import { eq, and, sql } from 'drizzle-orm';
-=======
-import { eq, and } from 'drizzle-orm';
 import { demoClientsByOrg } from '../data/demoTenantData.js';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 // Create a new router for client endpoints
 const router = Router();

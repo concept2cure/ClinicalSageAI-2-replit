@@ -5,13 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import {
-<<<<<<< HEAD
-  RefreshCw, CheckCircle2, Sparkles, Bot, AlertTriangle, MessageSquare, BookOpenCheck, Lightbulb } from 'lucide-react'
-=======
   RefreshCw,
   CheckCircle2,
   Sparkles,
   Bot,
+  AlertTriangle,
   BookOpenCheck,
   Lightbulb,
   Bold,
@@ -32,7 +30,6 @@ import {
   Wand2,
   Activity,
 } from 'lucide-react';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 const TOOLBAR_ACTIONS = [
   { id: 'bold', label: 'Bold', icon: Bold, token: '**bold**' },

@@ -1,102 +1,51 @@
 import express from 'express';
-const router = express.Router();
+import { and, eq, isNull, or } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { getPool } from '../db/pool.js';
+import {
+  coauthorSections,
+  coauthorValidationRules,
+} from '../../shared/schema.ts';
+import { authenticateJWT } from '../middleware/auth.js';
 
-// Mock CTD sections database
-let ctdSections = [
-  {
-    id: '1.1',
-    title: 'Forms & Cover Letters',
-    status: 'complete',
-    x: 100,
-    y: 100,
-    connections: ['1.2'],
-  },
-  {
-    id: '1.2',
-    title: 'TOC & Indices',
-    status: 'complete',
-    x: 300,
-    y: 100,
-    connections: ['1.3', '2.1', '3.1'],
-  },
-  {
-    id: '1.3',
-    title: 'Administrative Info',
-    status: 'pending',
-    x: 500,
-    y: 100,
-    connections: ['2.1'],
-  },
-  {
-    id: '2.1',
-    title: 'CTD Overview',
-    status: 'pending',
-    x: 300,
-    y: 200,
-    connections: ['2.2', '2.3'],
-  },
-  {
-    id: '2.2',
-    title: 'Clinical Overview',
-    status: 'critical',
-    x: 500,
-    y: 200,
-    connections: ['2.3', '2.4', '2.5'],
-  },
-  {
-    id: '2.3',
-    title: 'Nonclinical Overview',
-    status: 'pending',
-    x: 700,
-    y: 200,
-    connections: ['2.4'],
-  },
-  {
-    id: '2.4',
-    title: 'Clinical Summaries',
-    status: 'pending',
-    x: 500,
-    y: 300,
-    connections: ['2.5'],
-  },
-  {
-    id: '2.5',
-    title: 'Nonclinical Summaries',
-    status: 'pending',
-    x: 700,
-    y: 300,
-  },
-  {
-    id: '3.1',
-    title: 'Quality Reports',
-    status: 'pending',
-    x: 200,
-    y: 400,
-    connections: ['3.2', '3.3'],
-  },
-  {
-    id: '3.2',
-    title: 'Nonclinical Reports',
-    status: 'pending',
-    x: 400,
-    y: 400,
-    connections: ['3.3'],
-  },
-  {
-    id: '3.3',
-    title: 'Clinical Reports',
-    status: 'critical',
-    x: 600,
-    y: 400,
-  },
-];
+const router = express.Router();
+const pool = getPool();
+const db = drizzle(pool);
+
+router.use(authenticateJWT);
+
+const resolveRiskLevel = (sourceStatus, targetStatus) => {
+  const criticalStates = new Set(['critical', 'blocked']);
+  const mediumStates = new Set(['pending', 'review', 'in-progress']);
+  if (criticalStates.has(sourceStatus) || criticalStates.has(targetStatus)) return 'high';
+  if (mediumStates.has(sourceStatus) || mediumStates.has(targetStatus)) return 'medium';
+  return 'low';
+};
 
 /**
  * GET /api/coauthor/sections
  * Returns all CTD sections with position and connection data
  */
 router.get('/sections', (req, res) => {
-  res.json(ctdSections);
+  const organizationId = req.user?.organizationId;
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const { sessionId, submissionId, moduleNumber } = req.query;
+  const conditions = [eq(coauthorSections.organizationId, organizationId)];
+  if (sessionId) conditions.push(eq(coauthorSections.sessionId, String(sessionId)));
+  if (submissionId) conditions.push(eq(coauthorSections.submissionId, String(submissionId)));
+  if (moduleNumber) conditions.push(eq(coauthorSections.moduleNumber, String(moduleNumber)));
+
+  db.select()
+    .from(coauthorSections)
+    .where(and(...conditions))
+    .then(rows => res.json(rows))
+    .catch(error => {
+      console.error('Error fetching sections:', error);
+      res.status(500).json({ error: 'Failed to fetch sections' });
+    });
 });
 
 /**
@@ -104,13 +53,25 @@ router.get('/sections', (req, res) => {
  * Returns a specific CTD section by ID
  */
 router.get('/sections/:id', (req, res) => {
-  const section = ctdSections.find(s => s.id === req.params.id);
-
-  if (!section) {
-    return res.status(404).json({ error: 'Section not found' });
+  const organizationId = req.user?.organizationId;
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
-  res.json(section);
+  db.select()
+    .from(coauthorSections)
+    .where(and(eq(coauthorSections.organizationId, organizationId), eq(coauthorSections.sectionId, req.params.id)))
+    .limit(1)
+    .then(rows => {
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Section not found' });
+      }
+      res.json(rows[0]);
+    })
+    .catch(error => {
+      console.error('Error fetching section:', error);
+      res.status(500).json({ error: 'Failed to fetch section' });
+    });
 });
 
 /**
@@ -118,23 +79,33 @@ router.get('/sections/:id', (req, res) => {
  * Updates the position of a CTD section
  */
 router.post('/layout/:id', (req, res) => {
-  const { id } = req.params;
-  const { x, y } = req.body;
-
-  const sectionIndex = ctdSections.findIndex(s => s.id === id);
-
-  if (sectionIndex === -1) {
-    return res.status(404).json({ error: 'Section not found' });
+  const organizationId = req.user?.organizationId;
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
-  // Update the section's position
-  ctdSections[sectionIndex] = {
-    ...ctdSections[sectionIndex],
-    x,
-    y,
-  };
+  const { id } = req.params;
+  const { x, y, connections } = req.body;
 
-  res.json(ctdSections[sectionIndex]);
+  db.update(coauthorSections)
+    .set({
+      x: typeof x === 'number' ? x : undefined,
+      y: typeof y === 'number' ? y : undefined,
+      connections: Array.isArray(connections) ? connections : undefined,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(coauthorSections.organizationId, organizationId), eq(coauthorSections.sectionId, id)))
+    .returning()
+    .then(rows => {
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Section not found' });
+      }
+      res.json(rows[0]);
+    })
+    .catch(error => {
+      console.error('Error updating layout:', error);
+      res.status(500).json({ error: 'Failed to update layout' });
+    });
 });
 
 /**
@@ -142,14 +113,37 @@ router.post('/layout/:id', (req, res) => {
  * Returns risk connection data for the Canvas
  */
 router.get('/risks', (req, res) => {
-  // Mock risk connections
-  const riskConnections = [
-    { source: '2.2', target: '3.3', riskLevel: 'high' },
-    { source: '1.3', target: '2.1', riskLevel: 'medium' },
-    { source: '3.1', target: '3.2', riskLevel: 'low' },
-  ];
+  const organizationId = req.user?.organizationId;
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
 
-  res.json(riskConnections);
+  db.select()
+    .from(coauthorSections)
+    .where(eq(coauthorSections.organizationId, organizationId))
+    .then(rows => {
+      const sectionById = new Map(rows.map(section => [section.sectionId, section]));
+      const riskConnections = [];
+
+      rows.forEach(section => {
+        const connections = Array.isArray(section.connections) ? section.connections : [];
+        connections.forEach(targetId => {
+          const target = sectionById.get(targetId);
+          if (!target) return;
+          riskConnections.push({
+            source: section.sectionId,
+            target: target.sectionId,
+            riskLevel: resolveRiskLevel(section.status, target.status),
+          });
+        });
+      });
+
+      res.json(riskConnections);
+    })
+    .catch(error => {
+      console.error('Error fetching risks:', error);
+      res.status(500).json({ error: 'Failed to fetch risks' });
+    });
 });
 
 /**
@@ -158,20 +152,64 @@ router.get('/risks', (req, res) => {
  */
 router.get('/guidance/:id', (req, res) => {
   const { id } = req.params;
+  const organizationId = req.user?.organizationId;
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
 
-  // In a real implementation, this would query a database of regulatory guidance
-  const guidance = {
-    text: `Regulatory guidance for section ${id} would be retrieved from the database.
-This section requires comprehensive documentation according to ICH guidelines.
-Include all relevant supporting information and cross-reference to other modules as needed.`,
-    examples: [
-      'Example 1 from FDA guidelines',
-      'Example 2 from ICH guidelines',
-      'Example 3 from EMA guidelines',
-    ],
-  };
+  db.select()
+    .from(coauthorSections)
+    .where(and(eq(coauthorSections.organizationId, organizationId), eq(coauthorSections.sectionId, id)))
+    .limit(1)
+    .then(async rows => {
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Section not found' });
+      }
 
-  res.json(guidance);
+      const section = rows[0];
+      const moduleLabel = section.moduleNumber ? `Module ${section.moduleNumber}` : undefined;
+
+      const ruleConditions = [eq(coauthorValidationRules.isActive, true)];
+      if (moduleLabel) {
+        ruleConditions.push(eq(coauthorValidationRules.module, moduleLabel));
+      }
+
+      const rules = await db
+        .select()
+        .from(coauthorValidationRules)
+        .where(
+          and(
+            ...ruleConditions,
+            or(
+              eq(coauthorValidationRules.organizationId, organizationId),
+              isNull(coauthorValidationRules.organizationId)
+            )
+          )
+        );
+
+      const sectionRules = rules.filter(rule => !rule.section || rule.section === id);
+
+      const guidance = {
+        sectionId: id,
+        title: section.title,
+        status: section.status,
+        rules: sectionRules.map(rule => ({
+          ruleId: rule.ruleId,
+          agency: rule.agency,
+          category: rule.category,
+          severity: rule.severity,
+          name: rule.ruleName,
+          description: rule.description,
+          remediation: rule.remediationText,
+        })),
+      };
+
+      res.json(guidance);
+    })
+    .catch(error => {
+      console.error('Error fetching guidance:', error);
+      res.status(500).json({ error: 'Failed to fetch guidance' });
+    });
 });
 
 export default router;

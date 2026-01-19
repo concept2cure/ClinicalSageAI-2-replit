@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import useWindowSize from '../../hooks/useWindowSize';
 import AnnotationPanel from './AnnotationPanel';
+import { fetchCTDSections, updateSectionPosition as saveSectionPosition } from '../../api/coauthor';
 
 /**
  * Non-Konva version: Interactive canvas for visualizing document sections
@@ -16,8 +17,7 @@ export default function CanvasWorkbench() {
 
   // Load sections on mount
   useEffect(() => {
-    fetch('/api/coauthor/sections')
-      .then(res => res.json())
+    fetchCTDSections()
       .then(data => setSections(data))
       .catch(console.error);
   }, []);
@@ -33,14 +33,11 @@ export default function CanvasWorkbench() {
 
   // Update section position
   const updateSectionPosition = (id, newX, newY) => {
-    setSections(secs => secs.map(sec => (sec.id === id ? { ...sec, x: newX, y: newY } : sec)));
+    setSections(secs =>
+      secs.map(sec => (sec.sectionId === id || sec.id === id ? { ...sec, x: newX, y: newY } : sec))
+    );
 
-    // Save to server
-    fetch(`/api/coauthor/layout/${id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ x: newX, y: newY }),
-    }).catch(console.error);
+    saveSectionPosition(id, newX, newY).catch(console.error);
   };
 
   // Handle drag start
@@ -49,7 +46,7 @@ export default function CanvasWorkbench() {
       id,
       startX: e.clientX,
       startY: e.clientY,
-      section: sections.find(s => s.id === id),
+      section: sections.find(s => s.sectionId === id || s.id === id),
     };
   };
 
@@ -104,9 +101,9 @@ export default function CanvasWorkbench() {
       >
         {/* Connections (simple div-based arrows) */}
         {sections.flatMap(sec =>
-          sec.connections.map(toId => {
-            const from = sections.find(s => s.id === sec.id);
-            const to = sections.find(s => s.id === toId);
+          (Array.isArray(sec.connections) ? sec.connections : []).map(toId => {
+            const from = sections.find(s => s.sectionId === sec.sectionId || s.id === sec.id);
+            const to = sections.find(s => s.sectionId === toId || s.id === toId);
 
             if (!from || !to) return null;
 
@@ -118,7 +115,7 @@ export default function CanvasWorkbench() {
 
             return (
               <div
-                key={`${sec.id}-${toId}`}
+                key={`${sec.sectionId || sec.id}-${toId}`}
                 style={{
                   position: 'absolute',
                   top: from.y + 25,
@@ -138,7 +135,7 @@ export default function CanvasWorkbench() {
         {/* Nodes */}
         {sections.map(sec => (
           <div
-            key={sec.id}
+            key={sec.sectionId || sec.id}
             style={{
               position: 'absolute',
               top: sec.y,
@@ -152,7 +149,7 @@ export default function CanvasWorkbench() {
               userSelect: 'none',
               zIndex: 2,
             }}
-            onMouseDown={e => handleDragStart(e, sec.id)}
+            onMouseDown={e => handleDragStart(e, sec.sectionId || sec.id)}
             onClick={() => setSelected(sec)}
           >
             <div style={{ padding: 10, fontSize: 12 }}>{sec.title}</div>

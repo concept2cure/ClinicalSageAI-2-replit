@@ -74,6 +74,9 @@ import enterpriseRoutes from './api/enterprise/routes.js';
 // Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api.js';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.js';
+import portalRoutes from './routes/portal.js';
+import { authenticateJWT } from './middleware/auth.js';
+import { requireModuleEntitlement } from './middleware/license.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -691,6 +694,24 @@ try {
   console.error('❌ Failed to mount auth routes:', error);
 }
 
+// Portal routes (bootstrap, entitlements, org switching)
+app.use('/api/portal', portalRoutes);
+
+// Module entitlement enforcement (JWT + license check)
+const moduleRouteGuards = [
+  { prefix: '/api/coauthor', moduleId: 'coauthor' },
+  { prefix: '/api/document-authoring', moduleId: 'document-authoring' },
+  { prefix: '/api/cmc', moduleId: 'cmc' },
+  { prefix: '/api/medical-device', moduleId: 'medical-device' },
+  { prefix: '/api/analytics', moduleId: 'analytics' },
+  { prefix: '/api/vault', moduleId: 'vault' },
+  { prefix: '/api/submission-center', moduleId: 'submission-center' },
+];
+
+moduleRouteGuards.forEach(({ prefix, moduleId }) => {
+  app.use(prefix, authenticateJWT, requireModuleEntitlement(moduleId));
+});
+
 // ---------------------------------------------------------------------------
 // Legacy auth/user endpoints used by the SPA (must return JSON, never HTML).
 // ---------------------------------------------------------------------------
@@ -761,7 +782,6 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Dev-only seed endpoint: Insert demo organization and projects for local development/testing
 app.post('/api/dev/seed-demo', async (_req, res) => {
   try {
-<<<<<<< HEAD
     if (process.env.NODE_ENV === 'production') {
       return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
     }
@@ -807,45 +827,6 @@ app.post('/api/dev/seed-demo', async (_req, res) => {
       return res.status(500).json({ error: 'Failed to seed demo data' });
     } finally {
       client.release();
-=======
-    // Check multiple sources for organization/workspace context
-    const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'];
-    const organizationId = Number(organization_id);
-    const clientWorkspaceId = client_workspace_id ? Number(client_workspace_id) : null;
-
-    if (!organization_id || Number.isNaN(organizationId)) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-    if (client_workspace_id && Number.isNaN(clientWorkspaceId)) {
-      return res.status(400).json({ error: 'Client workspace ID must be numeric' });
-    }
-
-    // Import database connection dynamically
-    const dbModule = await import('./db.js');
-    const { pool } = dbModule;
-
-    const { getActiveLicenseForOrganization } = await import('./services/quotaEnforcementService.js');
-    const license = await getActiveLicenseForOrganization(organizationId);
-
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-    
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
-    }
-    
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organizationId];
-    
-    // Optionally filter by workspace if provided
-    if (clientWorkspaceId) {
-      params.push(clientWorkspaceId);
-      query += ` AND client_workspace_id = $${params.length}`;
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
   } catch (err) {
     console.error('❌ Unexpected error in seed endpoint:', err);
@@ -1465,10 +1446,7 @@ try {
   app.use('/api/export', exportRoutes);
   console.log('✅ Export API routes mounted successfully');
 } catch (error) {
-<<<<<<< HEAD
   console.error('❌ Failed to mount Export routes:', error);
-=======
-  console.error('Failed to mount ForesightAI routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -1762,7 +1740,6 @@ try {
   console.log('✅ AI Drafting API routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount AI Drafting routes:', error);
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 }
 
 // Mount Unified Document Management System routes

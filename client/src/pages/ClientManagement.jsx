@@ -1,5 +1,6 @@
 // client/src/pages/ClientManagement.jsx
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 import { useTenant } from '../contexts/TenantContext';
@@ -43,6 +44,7 @@ const ClientManagement = () => {
   const { currentOrganization, currentClientWorkspace, refreshClientWorkspaces } = useTenant();
   const [selectedClient, setSelectedClient] = useState(currentClientWorkspace?.id || null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [location] = useLocation();
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
   const [isEditClientDialogOpen, setIsEditClientDialogOpen] = useState(false);
   const [isEditQuotasDialogOpen, setIsEditQuotasDialogOpen] = useState(false);
@@ -65,6 +67,23 @@ const ClientManagement = () => {
     quotaProjects: 10,
     quotaStorageGB: 5,
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const allowedTabs = new Set([
+      'overview',
+      'workspace-settings',
+      'security-settings',
+      'quotas',
+      'users',
+      'projects',
+      'licenses',
+    ]);
+    if (tab && allowedTabs.has(tab) && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location, activeTab]);
 
   // Get organization ID from context
   const organizationId = currentOrganization?.id || '1';

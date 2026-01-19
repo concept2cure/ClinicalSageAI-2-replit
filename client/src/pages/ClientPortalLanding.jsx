@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, Link } from 'wouter';
-import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -8,13 +7,21 @@ import { useTenant } from '../contexts/TenantContext';
 import { OrganizationSwitcher } from '../components/tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../components/tenant/ClientWorkspaceSwitcher';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Users, Info, MessageCircle, Bot, FileEdit, Database, FolderOpen, BarChart, Brain, Lock, Settings } from 'lucide-react';
+import { Building, Users, Info, MessageCircle, FileEdit, Database, FolderOpen, BarChart, Brain, Lock, Settings, Shield, Package, Network, UserPlus, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, ArrowRight, BarChart3, BookOpen, CheckCircle, Clock, FileText, MessageSquare, Shield, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, BookOpen, CheckCircle, Clock, FileText, MessageSquare, TrendingUp, Zap } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useLumenAiAssistant } from '../contexts/LumenAiAssistantContext';
 import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
 import { authService } from '../services/authService';
@@ -24,25 +31,20 @@ import NextActionsSidebar from '../components/NextActionsSidebar';
 import VaultQuickAccess from '../components/VaultQuickAccess';
 import AnalyticsQuickView from '../components/AnalyticsQuickView';
 import ReportsQuickWidget from '../components/ReportsQuickWidget';
-import EmbeddedCodingAgent from '../components/ai/EmbeddedCodingAgent';
 import AboutConcept2CureAI from '../components/client-portal/AboutConcept2CureAI';
  
 
 const ClientPortalLanding = () => {
   const [projects, setProjects] = useState([]);
+  const [portalUser, setPortalUser] = useState(null);
+  const [portalOrganization, setPortalOrganization] = useState(null);
+  const [portalWorkspaces, setPortalWorkspaces] = useState([]);
+  const [portalWorkspaceAccess, setPortalWorkspaceAccess] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [, setLocation] = useLocation();
-  const [showChatGPT, setShowChatGPT] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    {
-      role: 'assistant',
-      content:
-        "Hello! I'm your internal OpenAI ChatGPT coding and client support agent. How can I help you today?",
-    },
-  ]);
-  const [currentMessage, setCurrentMessage] = useState('');
   const [hasAuthToken, setHasAuthToken] = useState(false);
+  const [entitledModules, setEntitledModules] = useState([]);
   
   // Safe tenant context access with fallback
   let tenantContext;
@@ -92,7 +94,7 @@ const ClientPortalLanding = () => {
     'cmc': 'cmcEnabled',
     'medical-device': 'medicalDeviceEnabled',
     'module-editor': 'moduleSectionEditorEnabled',
-    'enhanced-editor': 'enhancedDocumentEditorEnabled',
+    'document-authoring': 'enhancedDocumentEditorEnabled',
     'study-regulatory-suite': 'studyRegulatoryEnabled', // Unified module toggle
     'risk': 'riskHeatmapEnabled',
     'vault': 'vaultEnabled',
@@ -100,62 +102,47 @@ const ClientPortalLanding = () => {
     'submission-center': 'submissionCenterEnabled',
     // 'ind': 'indEnabled', // DELETED per user request
     // 'ectd-unified': 'ectdUnifiedEnabled', // DELETED per user request
-  };
-  
+        {
+          id: 'document-authoring',
+          title: 'Enhanced Document Editor™',
+          description: 'Collaborative authoring with compliance validation',
+          path: '/enhanced-editor',
+          isNew: true,
+        },
+        return;
+      }
 
-  useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      setLocation('/login');
-      return;
-    }
+      try {
+        setLoading(true);
+        setError(null);
+        const token = authService.getToken();
+        const response = await fetch('/api/portal/bootstrap', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-    // Log that the ClientPortalLanding component has mounted
-    console.log('ClientPortalLanding component mounted');
-    console.log('Current workspace settings:', workspaceSettings?.modules);
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.message || 'Unable to load portal data');
+        }
 
-    // Use mock data instead of fetching from API
-    const mockProjects = [
-      {
-        id: 'proj-001',
-        name: 'Enzymax Forte IND',
-        status: 'active',
-        progress: 65,
-        lastUpdated: '2025-04-20',
-        modules: ['IND Wizard', 'CMC Wizard', 'Vault'],
-      },
-      {
-        id: 'proj-002',
-        name: 'Cardiozen Phase 2 Study',
-        status: 'active',
-        progress: 42,
-        lastUpdated: '2025-04-22',
-        modules: ['Study Architect', 'Protocol Designer'],
-      },
-      {
-        id: 'proj-003',
-        name: 'Neuroclear Medical Device',
-        status: 'pending',
-        progress: 28,
-        lastUpdated: '2025-04-18',
-        modules: ['CER Generator'],
-      },
-      {
-        id: 'proj-004',
-        name: 'Respironix eCTD Submission',
-        status: 'active',
-        progress: 75,
-        lastUpdated: '2025-05-05',
-        modules: ['eCTD Co-Author', 'Vault'],
-      },
-    ];
+        setProjects(payload.projects || []);
+        setPortalUser(payload.user || null);
+        setPortalOrganization(payload.currentOrganization || null);
+        setPortalWorkspaces(payload.clientWorkspaces || []);
+        setPortalWorkspaceAccess(payload.workspaceAccess || []);
+        setEntitledModules(payload.modules || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Portal load error:', err);
+        setError(err.message || 'Unable to load portal data');
+        setLoading(false);
+      }
+    };
 
-    // Set mock projects data
-    setProjects(mockProjects);
-    setLoading(false);
-
-    // Update console log for tracking
-    console.log('All module access links updated to point to /client-portal');
-  }, []);
+    loadPortal();
+  }, [setLocation]);
 
   useEffect(() => {
     try {
@@ -216,7 +203,7 @@ const ClientPortalLanding = () => {
           isNew: true,
         },
         {
-          id: 'enhanced-editor',
+          id: 'document-authoring',
           title: 'Enhanced Document Editor™',
           description: 'Professional document editor with advanced features for regulatory documentation',
           path: '/enhanced-editor',
@@ -275,13 +262,16 @@ const ClientPortalLanding = () => {
 
   // Filter modules based on workspace settings
   const filterEnabledModules = (sections) => {
-    if (!workspaceSettings?.modules) {
-      // If no settings loaded yet, show all modules
-      return sections;
-    }
+    const entitledIds = new Set((entitledModules || []).map(module => module.moduleId || module.id));
 
     return sections.map(section => {
       const filteredModules = section.modules.filter(module => {
+        if (entitledIds.size > 0 && !entitledIds.has(module.id)) {
+          return false;
+        }
+        if (!workspaceSettings?.modules) {
+          return true;
+        }
         // Check if this module has a settings key
         const settingsKey = moduleIdToSettingsKey[module.id];
         
@@ -309,12 +299,112 @@ const ClientPortalLanding = () => {
     }).filter(section => section.modules.length > 0); // Remove empty sections
   };
 
+  const normalize = value => String(value || '').toLowerCase();
+
+  const accessIntelligence = useMemo(() => {
+    const role = portalOrganization?.role || 'member';
+    const title = portalUser?.title || '';
+    const department = portalUser?.department || '';
+    const jobSignal = `${title} ${department}`.trim();
+
+    const focusMatrix = [
+      {
+        key: 'regulatory',
+        match: ['regulatory', 'quality', 'qa', 'compliance', 'ra'],
+        priority: ['submission-center', 'coauthor', 'module-editor', 'document-authoring', 'risk', 'analytics'],
+        label: 'Regulatory strategy & submission readiness',
+      },
+      {
+        key: 'clinical',
+        match: ['clinical', 'study', 'trial', 'medical'],
+        priority: ['study-regulatory-suite', 'analytics', 'vault', 'risk'],
+        label: 'Clinical execution & study oversight',
+      },
+      {
+        key: 'operations',
+        match: ['operations', 'ops', 'program', 'project', 'pm'],
+        priority: ['submission-center', 'vault', 'analytics', 'coauthor'],
+        label: 'Program operations & delivery',
+      },
+      {
+        key: 'executive',
+        match: ['chief', 'vp', 'director', 'executive', 'c-level'],
+        priority: ['analytics', 'risk', 'submission-center', 'study-regulatory-suite'],
+        label: 'Executive visibility & risk posture',
+      },
+      {
+        key: 'data',
+        match: ['data', 'biostats', 'biostat', 'analytics', 'informatics'],
+        priority: ['analytics', 'study-regulatory-suite', 'vault', 'risk'],
+        label: 'Data intelligence & insights',
+      },
+    ];
+
+    const matchedFocus = focusMatrix.find(entry =>
+      entry.match.some(term => normalize(jobSignal).includes(term))
+    );
+
+    const rolePriority = role === 'admin'
+      ? ['submission-center', 'analytics', 'risk']
+      : role === 'manager'
+        ? ['submission-center', 'coauthor', 'analytics']
+        : role === 'viewer'
+          ? ['analytics', 'vault']
+          : [];
+
+    const prioritySet = new Set([...(matchedFocus?.priority || []), ...rolePriority]);
+
+    const activeProjects = projects || [];
+    const workspaceRole = portalWorkspaceAccess.find(access =>
+      String(access.clientWorkspaceId) === String(currentClientWorkspace?.id)
+    )?.role;
+    const projectTypes = Array.from(new Set(activeProjects.map(project => project.type).filter(Boolean)));
+    const projectTags = Array.from(
+      new Set(activeProjects.flatMap(project => project.tags || []).filter(Boolean))
+    );
+    const studyGroups = projectTags.length ? projectTags : projectTypes;
+
+    return {
+      role,
+      title,
+      department,
+      focusLabel: matchedFocus?.label || 'Balanced enterprise workflow',
+      priorityModules: Array.from(prioritySet),
+      activeProjects,
+      studyGroups,
+      workspaceCount: portalWorkspaces.length,
+      workspaceRole,
+    };
+  }, [portalOrganization, portalUser, projects, portalWorkspaces, portalWorkspaceAccess, currentClientWorkspace]);
+
+  const personalizeSections = sections => {
+    if (!accessIntelligence?.priorityModules?.length) return sections;
+    return sections.map(section => {
+      const scored = section.modules
+        .map(module => ({
+          ...module,
+          isRecommended: accessIntelligence.priorityModules.includes(module.id),
+          _priorityRank: accessIntelligence.priorityModules.indexOf(module.id),
+        }))
+        .sort((a, b) => {
+          const aScore = a._priorityRank === -1 ? 999 : a._priorityRank;
+          const bScore = b._priorityRank === -1 ? 999 : b._priorityRank;
+          return aScore - bScore;
+        })
+        .map(({ _priorityRank, ...module }) => module);
+      return { ...section, modules: scored };
+    });
+  };
+
+  const isAdminUser = accessIntelligence?.role === 'admin' || accessIntelligence?.role === 'manager';
+
   // Apply module filtering based on workspace settings
   const workflowSections = useMemo(() => {
     const filtered = filterEnabledModules(allWorkflowSections);
-    console.log('Filtered workflow sections:', filtered);
-    return filtered;
-  }, [workspaceSettings, allWorkflowSections]);
+    const personalized = personalizeSections(filtered);
+    console.log('Filtered workflow sections:', personalized);
+    return personalized;
+  }, [workspaceSettings, allWorkflowSections, entitledModules, accessIntelligence]);
 
   const handleModuleSelect = moduleId => {
     console.log('Module clicked:', moduleId);
@@ -353,40 +443,6 @@ const ClientPortalLanding = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!currentMessage.trim()) return;
-
-    const userMessage = { role: 'user', content: currentMessage };
-    const updatedMessages = [...chatMessages, userMessage];
-    setChatMessages(updatedMessages);
-    setCurrentMessage('');
-
-    try {
-      const response = await axios.post('/api/assistant/message', {
-        message: currentMessage,
-        mode: 'developer',
-        context: 'Concept2Cure Technical Support',
-        documentSection: 'Client Portal Interface',
-      });
-
-      setChatMessages([
-        ...updatedMessages,
-        {
-          role: 'assistant',
-          content: response.data.reply,
-        },
-      ]);
-    } catch (error) {
-      setChatMessages([
-        ...updatedMessages,
-        {
-          role: 'assistant',
-          content:
-            "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
-        },
-      ]);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50" style={{ position: 'relative' }}>
@@ -449,26 +505,53 @@ const ClientPortalLanding = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setLocation('/settings?tab=module-management')}
-                    className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-white hover:bg-blue-50 transition-all duration-150"
-                  >
-                    <Settings className="h-5 w-5 text-blue-600" />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-500">Admin</div>
-                      <div className="text-sm font-medium">Settings</div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setLocation('/ai')}
-                    className="flex items-center gap-2 border border-blue-200 rounded-lg p-2 bg-blue-50 hover:bg-blue-100 transition-all duration-150"
-                  >
-                    <Bot className="h-5 w-5 text-blue-600" />
-                    <div className="text-left">
-                      <div className="text-xs text-blue-500">Get Help</div>
-                      <div className="text-sm font-medium">💬 Coding Agent</div>
-                    </div>
-                  </button>
+                  {isAdminUser && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-white hover:bg-blue-50 transition-all duration-150">
+                          <Settings className="h-5 w-5 text-blue-600" />
+                          <div className="text-left">
+                            <div className="text-xs text-gray-500">Admin</div>
+                            <div className="text-sm font-medium">Console & Settings</div>
+                          </div>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-72">
+                        <DropdownMenuLabel>Enterprise Admin Console</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setLocation('/admin-console')}>
+                          <Settings className="h-4 w-4 text-blue-600" />
+                          Open admin console
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setLocation('/settings?tab=general')}>
+                          <Building className="h-4 w-4 text-blue-600" />
+                          Organization settings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocation('/settings?tab=security')}>
+                          <Shield className="h-4 w-4 text-indigo-600" />
+                          Enterprise security
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocation('/client-management?tab=users')}>
+                          <UserPlus className="h-4 w-4 text-emerald-600" />
+                          New users & access
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocation('/client-licenses')}>
+                          <Package className="h-4 w-4 text-amber-600" />
+                          Licensing & entitlements
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocation('/tenant-management')}>
+                          <Network className="h-4 w-4 text-slate-600" />
+                          CRO parent / child hierarchy
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setLocation('/client-management?tab=workspace-settings')}>
+                          <Layers className="h-4 w-4 text-purple-600" />
+                          Workspace & project dependencies
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -490,6 +573,52 @@ const ClientPortalLanding = () => {
                     Lumen Insights
                   </Button>
                 </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                      <Shield className="h-5 w-5 text-indigo-600" />
+                      Access intelligence
+                    </div>
+                    <p className="text-sm text-slate-600 mt-1">
+                      {accessIntelligence?.focusLabel}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge variant="outline">
+                      Role: {accessIntelligence?.role || 'member'}
+                    </Badge>
+                    {accessIntelligence?.department && (
+                      <Badge variant="outline">Dept: {accessIntelligence.department}</Badge>
+                    )}
+                    {accessIntelligence?.title && (
+                      <Badge variant="outline">Title: {accessIntelligence.title}</Badge>
+                    )}
+                    <Badge variant="outline">
+                      Projects: {accessIntelligence?.activeProjects?.length || 0}
+                    </Badge>
+                    <Badge variant="outline">
+                      Workspaces: {accessIntelligence?.workspaceCount || 0}
+                    </Badge>
+                    {accessIntelligence?.workspaceRole && (
+                      <Badge variant="outline">
+                        Workspace role: {accessIntelligence.workspaceRole}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {accessIntelligence?.studyGroups?.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="text-xs text-slate-500 uppercase tracking-wide mr-2">Study groups</div>
+                    {accessIntelligence.studyGroups.slice(0, 8).map(group => (
+                      <Badge key={group} variant="secondary">
+                        {group}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -684,6 +813,11 @@ const ClientPortalLanding = () => {
                               ENHANCED
                             </span>
                           )}
+                          {module.isRecommended && !module.isNew && !module.highlight && (
+                            <span className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-sky-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+                              RECOMMENDED
+                            </span>
+                          )}
                           <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
                               <ArrowRight className="h-5 w-5 text-white" />
@@ -705,10 +839,6 @@ const ClientPortalLanding = () => {
         </div>
       )}
 
-      {/* Floating AI Agent Panel */}
-      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}>
-        <EmbeddedCodingAgent />
-      </div>
     </div>
   );
 };

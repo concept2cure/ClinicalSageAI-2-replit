@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Settings, Globe, CheckCircle2, AlertTriangle, FileText, TrendingUp, Upload, Download, Eye, Edit, Trash2, History, BarChart3, Activity, Shield, Zap, GitBranch, Target, Users, Clock, Layers, Database, RefreshCw, Play, Pause, Info, AlertCircle, CheckCircle, XCircle, Cpu, Monitor, Network, Server, Code2, FileCode, Wrench, Gauge, Bot, Brain, Lightbulb, MessageSquare, Search, Filter, Star, Sparkles, Wand2, ChevronRight, PieChart, LineChart, BarChart2, ArrowRight, ArrowLeft } from 'lucide-react'
+import { authService } from '@/services/authService';
 
 interface PolicyEngineProps {
   subId?: string;
@@ -125,107 +126,17 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
   const regions = ['FDA', 'EMA', 'PMDA'];
 
-  // Enhanced mock data with AI features
-  const mockSystemHealth: SystemHealth[] = [
-    {
-      system: 'Gatekeeper v2',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '2 mins ago',
-      issues: 0,
-      ai_health_score: 98.5,
-    },
-    {
-      system: 'M3 Builder',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '5 mins ago',
-      issues: 0,
-      ai_health_score: 96.2,
-    },
-    {
-      system: 'Q12 Changes',
-      status: 'warning',
-      policy_version: '2025.08.15',
-      last_sync: '1 hour ago',
-      issues: 2,
-      ai_health_score: 78.1,
-    },
-    {
-      system: 'Questions Hub',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '3 mins ago',
-      issues: 0,
-      ai_health_score: 94.7,
-    },
-    {
-      system: 'eCTD Packager',
-      status: 'error',
-      policy_version: '2025.07.20',
-      last_sync: '6 hours ago',
-      issues: 5,
-      ai_health_score: 52.3,
-    },
-    {
-      system: 'RPI Dashboard',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '1 min ago',
-      issues: 0,
-      ai_health_score: 97.8,
-    },
-  ];
-
-  const mockPolicyMetrics: PolicyMetrics = {
-    compliance_score: 94.7,
-    coverage_percentage: 87.3,
-    last_updated: '2025-09-01T10:30:00Z',
-    active_submissions: 23,
-    pending_reviews: 7,
-    ai_optimization_score: 92.1,
-    predictive_accuracy: 89.4,
+  const buildAuthHeaders = () => {
+    const token = authService.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   };
-
-  const mockAiRecommendations: AIRecommendation[] = [
-    {
-      id: '1',
-      type: 'optimization',
-      title: 'Optimize Stability Coverage Threshold',
-      description:
-        'AI analysis suggests reducing FDA stability requirement from 12 to 10 months based on recent approvals',
-      impact: 'high',
-      confidence: 94.2,
-      action: 'Update FDA policy stability.minCoverageMonths to 10',
-      estimated_savings: '3.2 weeks per submission',
-    },
-    {
-      id: '2',
-      type: 'compliance',
-      title: 'Harmonize EMA Response Days',
-      description:
-        'Detected inconsistency between EMA policy (28 days) and recent guidance (25 days)',
-      impact: 'medium',
-      confidence: 87.6,
-      action: 'Update EMA defaultResponseDays to 25',
-      estimated_savings: '3 days faster responses',
-    },
-    {
-      id: '3',
-      type: 'risk',
-      title: 'PMDA Classification Gap Detected',
-      description: 'Missing Q12 classification for ProcessChange_Equipment in PMDA policy',
-      impact: 'high',
-      confidence: 96.1,
-      action: 'Add ProcessChange_Equipment mapping',
-      estimated_savings: 'Prevent submission delays',
-    },
-  ];
 
   const loadPolicy = async (region: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/reg/policy/${region}`);
+      const response = await fetch(`/api/reg/policy/${region}`, {
+        headers: buildAuthHeaders(),
+      });
       const policyData = await response.json();
       setPolicy(policyData);
     } catch (error) {
@@ -237,7 +148,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
   const loadVersions = async (region: string) => {
     try {
-      const response = await fetch(`/api/reg/policy/${region}/versions`);
+      const response = await fetch(`/api/reg/policy/${region}/versions`, {
+        headers: buildAuthHeaders(),
+      });
       const versionsData = await response.json();
       setVersions(versionsData);
     } catch (error) {
@@ -312,68 +225,48 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
   React.useEffect(() => {
     loadPolicy(activeRegion);
     loadVersions(activeRegion);
-    setSystemHealth(mockSystemHealth);
-    setPolicyMetrics(mockPolicyMetrics);
-    setAiRecommendations(mockAiRecommendations);
+    setSystemHealth([]);
+    setPolicyMetrics(null);
+    setAiRecommendations([]);
   }, [activeRegion]);
 
   const runPolicySimulation = async () => {
-    if (!policy) return;
+    if (!subId) return;
     setLoading(true);
 
-    setTimeout(() => {
-      setSimulationResults({
-        affected_submissions: 15,
-        compliance_improvement: 12.3,
-        estimated_time_savings: '4.2 hours/week',
-        risk_reduction: 'Medium',
-        systems_impacted: ['Gatekeeper v2', 'M3 Builder', 'Q12 Changes'],
-        recommendations: [
-          'Update stability coverage threshold will improve compliance by 8.5%',
-          'New IR response timeframe aligns with industry best practices',
-          'Q12 classification changes may require team training',
-        ],
+    try {
+      const response = await fetch('/api/reg/policy/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
+        body: JSON.stringify({ subId }),
       });
+
+      if (!response.ok) {
+        throw new Error('Policy simulation failed');
+      }
+
+      const evalData = await response.json();
+      setSimulationResults(evalData);
+    } catch (error) {
+      console.error('Policy simulation failed:', error);
+      setSimulationResults(null);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const validatePolicyIntegrity = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const updatedHealth = mockSystemHealth.map(system => ({
-        ...system,
-        last_sync: 'Just now',
-        status: Math.random() > 0.8 ? 'warning' : ('healthy' as any),
-        ai_health_score: Math.random() * 20 + 80,
-      }));
-      setSystemHealth(updatedHealth);
-      setLoading(false);
-    }, 2000);
+    setSystemHealth([]);
+    setLoading(false);
   };
 
   const handleAiQuery = async () => {
     if (!aiQuery.trim()) return;
 
     setAiLoading(true);
-    setTimeout(() => {
-      // Simulate AI responses based on query
-      let response = '';
-      const query = aiQuery.toLowerCase();
-
-      if (query.includes('stability') || query.includes('coverage')) {
-        response = `Based on current FDA guidance and industry benchmarks, the optimal stability coverage for ${activeRegion} submissions is 10-12 months. Your current policy (12 months) aligns with regulatory expectations but may be conservative. Consider: (1) Recent FDA approvals show 90% acceptance with 10-month data, (2) EMA typically requires 12 months but accepts 9 months with justification, (3) PMDA follows ICH Q1A guidelines (12 months). AI Recommendation: Maintain current requirements but allow case-by-case flexibility.`;
-      } else if (query.includes('response') || query.includes('days')) {
-        response = `${activeRegion} response timelines analysis: Current policy sets ${activeRegion === 'FDA' ? '30' : activeRegion === 'EMA' ? '28' : '30'} days. AI analysis of 500+ recent submissions shows: (1) Average agency response: FDA 24 days, EMA 21 days, PMDA 28 days, (2) Industry best practice: 20-25 days, (3) Your current timeframe is appropriate but could be optimized to 25 days for competitive advantage while maintaining quality.`;
-      } else if (query.includes('optimize') || query.includes('improve')) {
-        response = `AI Policy Optimization Report for ${activeRegion}: (1) **Compliance Score**: Current 94.7% can reach 97%+ with targeted improvements, (2) **Key Opportunities**: Stability thresholds (-2 months), Response times (-3 days), Q12 classifications (+15% coverage), (3) **ROI**: Estimated 15-20% time savings per submission, (4) **Risk**: Low - changes align with recent regulatory trends. Implement gradually with A/B testing.`;
-      } else {
-        response = `AI Policy Assistant: I can help with policy optimization, regulatory compliance, impact analysis, and system integration. Try asking about: "How can I optimize stability requirements?", "What are the latest response time benchmarks?", "Analyze policy compliance gaps", or "Compare regional policy differences". I have access to regulatory databases, industry benchmarks, and predictive models.`;
-      }
-
-      setAiResponse(response);
-      setAiLoading(false);
-    }, 1200);
+    setAiResponse('AI policy assistant is not yet available.');
+    setAiLoading(false);
   };
 
   const applyAiRecommendation = async (recommendation: AIRecommendation) => {

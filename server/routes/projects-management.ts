@@ -1,16 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-<<<<<<< HEAD
-import { projects, clientWorkspaces, organizations } from '@shared/schema';
-import { and, eq } from 'drizzle-orm';
-import { requireTenant } from '../middleware/tenant.js';
-=======
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
+import { requireTenant } from '../middleware/tenant.js';
 import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 const router = Router();
 
@@ -435,23 +430,19 @@ const updateProjectSchema = z.object({
  */
 router.get('/', async (req, res) => {
   try {
-<<<<<<< HEAD
-    const organizationId = Number((req as any).organizationId);
-=======
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) {
       return res.status(400).json({ error: tenantContext.error });
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
     if (!db) {
       const workspaceParam =
+        (clientWorkspaceId ? String(clientWorkspaceId) : undefined) ||
         (req.query.client_workspace_id as string | undefined) ||
         (req.query.clientWorkspaceId as string | undefined) ||
         (req.headers['x-client-workspace-id'] as string | undefined);
 
-<<<<<<< HEAD
       const all = demoProjectsByOrg[organizationId] || [];
       if (!workspaceParam) return res.json(all);
 
@@ -463,6 +454,7 @@ router.get('/', async (req, res) => {
     }
 
     const workspaceParam =
+      (clientWorkspaceId ? String(clientWorkspaceId) : undefined) ||
       (req.query.client_workspace_id as string | undefined) ||
       (req.query.clientWorkspaceId as string | undefined) ||
       (req.headers['x-client-workspace-id'] as string | undefined);
@@ -489,37 +481,18 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Get projects from database
-    const whereClause = workspaceId
-      ? and(eq(projects.organizationId, organizationId), eq(projects.clientWorkspaceId, workspaceId))
+    const license = await getActiveLicenseForOrganization(organizationId);
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
+    }
+
+    const effectiveWorkspaceId = workspaceId ?? clientWorkspaceId;
+    const whereClause = effectiveWorkspaceId
+      ? and(eq(projects.organizationId, organizationId), eq(projects.clientWorkspaceId, effectiveWorkspaceId))
       : eq(projects.organizationId, organizationId);
 
     const orgProjects = await db.select().from(projects).where(whereClause);
-=======
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-
-    // Get projects from database
-    const orgProjects = await db
-      .select()
-      .from(projects)
-      .where(
-        clientWorkspaceId
-          ? and(eq(projects.organizationId, organizationId), eq(projects.clientWorkspaceId, clientWorkspaceId))
-          : eq(projects.organizationId, organizationId)
-      );
-
-    const filteredProjects = clientWorkspaceId
-      ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
-      : orgProjects;
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+    const filteredProjects = orgProjects;
 
     console.log('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
     console.log('🔍 Projects data:', orgProjects);
@@ -638,8 +611,11 @@ router.post('/', async (req, res) => {
 
     const validatedData = createProjectSchema.parse(req.body);
 
-<<<<<<< HEAD
-    const organizationId = Number((req as any).organizationId);
+    const tenantContext = getTenantContext(req);
+    if ('error' in tenantContext) {
+      return res.status(400).json({ error: tenantContext.error });
+    }
+    const { organizationId } = tenantContext;
 
     if (
       validatedData.organizationId !== undefined &&
@@ -650,11 +626,11 @@ router.post('/', async (req, res) => {
         error: 'Organization mismatch',
         message: 'organizationId must match authenticated tenant context',
       });
-=======
-    const license = await getActiveLicenseForOrganization(validatedData.organizationId);
+    }
+
+    const license = await getActiveLicenseForOrganization(organizationId);
     if (!license) {
       return res.status(403).json({ error: 'No active license for this organization' });
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
     
     // Find an available client workspace for the organization first
@@ -747,11 +723,6 @@ router.post('/', async (req, res) => {
     try {
       const now = new Date();
       const { userName, userRole } = getRequestActor(req);
-      const userName =
-        (req.headers['x-user-name'] as string) ||
-        (req.headers['x-user-email'] as string) ||
-        'system';
-      const userRole = (req.headers['x-user-role'] as string) || null;
 
       await db.insert(auditEvents).values({
         organizationId: validatedData.organizationId,
@@ -844,12 +815,16 @@ router.post('/', async (req, res) => {
  */
 router.delete('/:projectId', async (req, res) => {
   try {
-<<<<<<< HEAD
     const projectIdParam = String(req.params.projectId);
     const projectIdNumber = Number.parseInt(projectIdParam, 10);
 
+    const tenantContext = getTenantContext(req);
+    if ('error' in tenantContext) {
+      return res.status(400).json({ error: tenantContext.error });
+    }
+    const { organizationId } = tenantContext;
+
     if (!db) {
-      const organizationId = Number((req as any).organizationId);
       const list = demoProjectsByOrg[organizationId] || [];
       const idx = list.findIndex(p => String(p.id) === projectIdParam);
       if (idx === -1) return res.status(404).json({ error: 'Project not found' });
@@ -859,16 +834,6 @@ router.delete('/:projectId', async (req, res) => {
     }
 
     if (Number.isNaN(projectIdNumber)) {
-=======
-    const projectId = parseInt(req.params.projectId);
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) {
-      return res.status(400).json({ error: tenantContext.error });
-    }
-    const { organizationId } = tenantContext;
-
-    if (Number.isNaN(projectId)) {
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
@@ -892,7 +857,7 @@ router.delete('/:projectId', async (req, res) => {
     }
 
     // Delete the project
-    await db.delete(projects).where(eq(projects.id, projectId));
+    await db.delete(projects).where(eq(projects.id, projectIdNumber));
 
     try {
       const now = new Date();
@@ -927,7 +892,7 @@ router.delete('/:projectId', async (req, res) => {
       console.error('Audit trail creation failed (non-blocking):', auditError);
     }
 
-    console.log(`Deleted project ${projectId} (${existingProject.name})`);
+    console.log(`Deleted project ${projectIdNumber} (${existingProject.name})`);
     res.json({ message: 'Project deleted successfully', projectId });
   } catch (error) {
     console.error('Error deleting project:', error);

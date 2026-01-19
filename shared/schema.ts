@@ -985,6 +985,78 @@ export type ClientAccess = InferSelectModel<typeof clientAccess>;
 export type InsertClientAccess = z.infer<typeof insertClientAccessSchema>;
 
 /**
+ * ======================================================================================
+ * ORGANIZATION LICENSES & ENTITLEMENTS
+ * ======================================================================================
+ * Defines time-bound and project-scoped access to modules for each organization.
+ */
+
+export const organizationLicenses = pgTable('organization_licenses', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  status: text('status').default('active').notNull(), // active, suspended, expired
+  plan: text('plan').default('standard').notNull(), // standard, professional, enterprise
+  startsAt: timestamp('starts_at'),
+  endsAt: timestamp('ends_at'),
+  billingCycle: text('billing_cycle').default('monthly').notNull(), // monthly, annual, custom
+  maxUsers: integer('max_users'),
+  maxProjects: integer('max_projects'),
+  maxStorage: integer('max_storage'), // GB
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const licenseEntitlements = pgTable(
+  'license_entitlements',
+  {
+    id: serial('id').primaryKey(),
+    licenseId: integer('license_id')
+      .notNull()
+      .references(() => organizationLicenses.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    moduleId: text('module_id').notNull(),
+    scope: text('scope').default('organization').notNull(), // organization, project, workspace
+    projectId: integer('project_id').references(() => projects.id),
+    clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
+    status: text('status').default('active').notNull(), // active, suspended, expired
+    startsAt: timestamp('starts_at'),
+    endsAt: timestamp('ends_at'),
+    maxUsers: integer('max_users'),
+    maxProjects: integer('max_projects'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    entOrgIdx: index('license_entitlements_org_idx').on(table.organizationId),
+    entLicenseIdx: index('license_entitlements_license_idx').on(table.licenseId),
+    entModuleIdx: index('license_entitlements_module_idx').on(table.moduleId),
+  })
+);
+
+export const insertOrganizationLicenseSchema = createInsertSchema(organizationLicenses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLicenseEntitlementSchema = createInsertSchema(licenseEntitlements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type OrganizationLicense = InferSelectModel<typeof organizationLicenses>;
+export type InsertOrganizationLicense = z.infer<typeof insertOrganizationLicenseSchema>;
+export type LicenseEntitlement = InferSelectModel<typeof licenseEntitlements>;
+export type InsertLicenseEntitlement = z.infer<typeof insertLicenseEntitlementSchema>;
+
+/**
  * Client Workspace Settings Table
  *
  * Stores comprehensive settings for each client workspace including
@@ -1843,6 +1915,41 @@ export const insertUserSchema = createInsertSchema(users).omit({
 // User Types
 export type User = InferSelectModel<typeof users>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+/**
+ * User Identities Table
+ *
+ * Maps external identity providers (Google/Microsoft) to internal users.
+ */
+export const userIdentities = pgTable(
+  'user_identities',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(), // google, microsoft
+    providerUserId: text('provider_user_id').notNull(),
+    email: text('email'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProviderUser: unique('unique_provider_user').on(table.provider, table.providerUserId),
+    userIdx: index('user_identities_user_idx').on(table.userId),
+    providerIdx: index('user_identities_provider_idx').on(table.provider),
+  })
+);
+
+export const insertUserIdentitySchema = createInsertSchema(userIdentities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserIdentity = InferSelectModel<typeof userIdentities>;
+export type InsertUserIdentity = z.infer<typeof insertUserIdentitySchema>;
 
 /**
  * Organization Users (Junction Table)

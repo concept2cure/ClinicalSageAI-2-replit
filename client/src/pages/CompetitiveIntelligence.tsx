@@ -44,192 +44,18 @@ import {
 } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { authService } from '@/services/authService';
 
-// Mock competitive intelligence data
-const competitors = [
-  {
-    id: 'comp_001',
-    name: 'BioPharma X',
-    marketCap: '$12.5B',
-    pipelineOverlap: 'High',
-    focusAreas: ['Oncology', 'Neurology', 'Rare Disease'],
-    keyProducts: ['XBio-1', 'XBio-2', 'XBio-3'],
-    recentTrials: 8,
-    pipelineStrength: 82
-  },
-  {
-    id: 'comp_002',
-    name: 'NovaCure Therapeutics',
-    marketCap: '$8.2B',
-    pipelineOverlap: 'Medium',
-    focusAreas: ['Oncology', 'Immunology'],
-    keyProducts: ['ImmunoStat', 'OncoCure'],
-    recentTrials: 5,
-    pipelineStrength: 73
-  },
-  {
-    id: 'comp_003',
-    name: 'GeneticaHealth',
-    marketCap: '$5.7B',
-    pipelineOverlap: 'High',
-    focusAreas: ['Oncology', 'Genetic Disorders'],
-    keyProducts: ['GeneTher', 'OncoDNA'],
-    recentTrials: 6,
-    pipelineStrength: 68
-  },
-  {
-    id: 'comp_004',
-    name: 'MedImmuneX',
-    marketCap: '$9.3B',
-    pipelineOverlap: 'Low',
-    focusAreas: ['Immunology', 'Inflammatory Disease'],
-    keyProducts: ['ImmuX', 'AntiFlam'],
-    recentTrials: 4,
-    pipelineStrength: 62
-  },
-  {
-    id: 'comp_005',
-    name: 'NeuroBioTech',
-    marketCap: '$3.8B',
-    pipelineOverlap: 'Medium',
-    focusAreas: ['Neurology', 'Psychiatry'],
-    keyProducts: ['NeuraStat', 'SynaTech'],
-    recentTrials: 3,
-    pipelineStrength: 58
+const fetchCompetitiveData = async () => {
+  const token = authService.getToken();
+  if (!token) {
+    throw new Error('Authentication required.');
   }
-];
 
-// Market landscape data
-const marketTrends = [
-  {
-    id: 'trend_1',
-    trend: 'Checkpoint Inhibitor Combinations',
-    growthRate: '+28%',
-    timeframe: '2023-2025',
-    impact: 'High',
-    competitors: ['BioPharma X', 'GeneticaHealth', 'Lumen Bio']
-  },
-  {
-    id: 'trend_2',
-    trend: 'RNA-based Therapeutics',
-    growthRate: '+35%',
-    timeframe: '2023-2025',
-    impact: 'Medium',
-    competitors: ['NovaCure Therapeutics', 'BioPharma X']
-  },
-  {
-    id: 'trend_3',
-    trend: 'Microbiome Modulators',
-    growthRate: '+41%',
-    timeframe: '2023-2025',
-    impact: 'Medium',
-    competitors: ['Lumen Bio', 'MedImmuneX']
-  },
-  {
-    id: 'trend_4',
-    trend: 'Gene Editing Therapies',
-    growthRate: '+62%',
-    timeframe: '2023-2025',
-    impact: 'High',
-    competitors: ['GeneticaHealth', 'NovaCure Therapeutics']
-  },
-  {
-    id: 'trend_5',
-    trend: 'AI-driven Drug Discovery',
-    growthRate: '+45%',
-    timeframe: '2023-2025',
-    impact: 'High',
-    competitors: ['Lumen Bio', 'BioPharma X', 'NeuroBioTech']
-  }
-];
-
-// Trial performance metrics
-const trialMetrics = [
-  {
-    id: 'metric_1',
-    metric: 'Patient Enrollment Rate',
-    lumenBio: '92%',
-    industryAvg: '78%',
-    difference: '+14%',
-    trend: 'up'
-  },
-  {
-    id: 'metric_2',
-    metric: 'Trial Completion Rate',
-    lumenBio: '88%',
-    industryAvg: '82%',
-    difference: '+6%',
-    trend: 'up'
-  },
-  {
-    id: 'metric_3',
-    metric: 'Protocol Amendments',
-    lumenBio: '1.2',
-    industryAvg: '2.4',
-    difference: '-50%',
-    trend: 'up'
-  },
-  {
-    id: 'metric_4',
-    metric: 'Time to Full Enrollment',
-    lumenBio: '8.2 months',
-    industryAvg: '11.5 months',
-    difference: '-29%',
-    trend: 'up'
-  },
-  {
-    id: 'metric_5',
-    metric: 'Data Query Resolution Time',
-    lumenBio: '3.5 days',
-    industryAvg: '6.8 days',
-    difference: '-48%',
-    trend: 'up'
-  }
-];
-
-// Competitive landscape reports
-const competitiveReports = [
-  {
-    id: 'report_1',
-    title: 'Checkpoint Inhibitor Landscape Analysis',
-    date: '2025-03-15',
-    type: 'Market',
-    category: 'Oncology',
-    summary: 'Comprehensive analysis of checkpoint inhibitor competitive landscape with focus on NSCLC indications and combination approaches'
-  },
-  {
-    id: 'report_2',
-    title: 'Immunotherapy Trials Benchmark',
-    date: '2025-02-10',
-    type: 'Benchmark',
-    category: 'Oncology',
-    summary: 'Performance benchmark of immunotherapy clinical trials comparing Lumen Bio studies against top 5 competitors'
-  },
-  {
-    id: 'report_3',
-    title: 'BioPharma X Pipeline Analysis',
-    date: '2025-01-22',
-    type: 'Competitor',
-    category: 'Multiple',
-    summary: 'Detailed analysis of BioPharma X pipeline with focus on therapeutic areas overlapping with Lumen Bio'
-  },
-  {
-    id: 'report_4',
-    title: 'IBD Market Opportunity Assessment',
-    date: '2024-12-05',
-    type: 'Market',
-    category: 'Immunology',
-    summary: 'Assessment of market opportunity in inflammatory bowel disease with competitive positioning analysis'
-  },
-  {
-    id: 'report_5',
-    title: 'Clinical Trial Design Strategies',
-    date: '2024-11-18',
-    type: 'Strategy',
-    category: 'Multiple',
-    summary: 'Analysis of successful clinical trial design strategies across Lumen Bio therapeutic areas'
-  }
-];
+  return apiRequest('GET', '/api/competitive/intelligence', undefined, {
+    Authorization: `Bearer ${token}`,
+  });
+};
 
 export default function CompetitiveIntelligence() {
   const { toast } = useToast();
@@ -242,25 +68,26 @@ export default function CompetitiveIntelligence() {
   const [phase, setPhase] = useState<string>('Phase 2');
   const [sampleSize, setSampleSize] = useState<string>('100');
 
-  // This would use a real API endpoint in production
   const { data: marketData, isLoading: isLoadingMarket } = useQuery({
     queryKey: ['/api/competitive-intelligence/market'],
+    queryFn: fetchCompetitiveData,
     initialData: {
-      trends: marketTrends,
-      competitors: competitors
-    }
+      trends: [],
+      competitors: [],
+      trialMetrics: [],
+      reports: [],
+    },
   });
 
-  // Get filtered reports based on search and category
-  const filteredReports = competitiveReports.filter(report => {
-    const matchesSearch = searchQuery === '' || 
+  const filteredReports = (marketData?.reports || []).filter(report => {
+    const matchesSearch = searchQuery === '' ||
       report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.summary.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = filterCategory === 'all' || 
+
+    const matchesCategory = filterCategory === 'all' ||
       report.category === filterCategory ||
       report.type === filterCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -461,7 +288,7 @@ export default function CompetitiveIntelligence() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {marketTrends.map(trend => (
+                        {marketData?.trends?.map(trend => (
                           <TableRow key={trend.id}>
                             <TableCell className="font-medium">{trend.trend}</TableCell>
                             <TableCell className="text-green-600 font-medium">{trend.growthRate}</TableCell>
@@ -472,7 +299,7 @@ export default function CompetitiveIntelligence() {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
-                                {trend.competitors.map(comp => (
+                                {(trend.competitors || []).map(comp => (
                                   <Badge key={comp} variant="outline" className="text-xs">
                                     {comp}
                                   </Badge>
@@ -657,7 +484,7 @@ export default function CompetitiveIntelligence() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {competitors.map(comp => (
+                        {marketData?.competitors?.map(comp => (
                           <TableRow key={comp.id} className={activeCompetitor === comp.id ? "bg-slate-50" : ""}>
                             <TableCell className="font-medium">{comp.name}</TableCell>
                             <TableCell>{comp.marketCap}</TableCell>
@@ -704,7 +531,7 @@ export default function CompetitiveIntelligence() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle>
-                      {competitors.find(c => c.id === activeCompetitor)?.name} - Detailed Analysis
+                      {marketData?.competitors?.find(c => c.id === activeCompetitor)?.name} - Detailed Analysis
                     </CardTitle>
                     <CardDescription>
                       Comprehensive analysis and strategic comparison
@@ -716,7 +543,7 @@ export default function CompetitiveIntelligence() {
                         <div className="space-y-2">
                           <h3 className="text-sm font-medium text-slate-500">Focus Areas</h3>
                           <div className="flex flex-wrap gap-2">
-                            {competitors.find(c => c.id === activeCompetitor)?.focusAreas.map(area => (
+                            {marketData?.competitors?.find(c => c.id === activeCompetitor)?.focusAreas.map(area => (
                               <Badge key={area} variant="outline">
                                 {area}
                               </Badge>
@@ -727,7 +554,7 @@ export default function CompetitiveIntelligence() {
                         <div className="space-y-2">
                           <h3 className="text-sm font-medium text-slate-500">Key Products</h3>
                           <div className="flex flex-wrap gap-2">
-                            {competitors.find(c => c.id === activeCompetitor)?.keyProducts.map(product => (
+                            {marketData?.competitors?.find(c => c.id === activeCompetitor)?.keyProducts.map(product => (
                               <Badge key={product} variant="secondary">
                                 {product}
                               </Badge>
@@ -942,7 +769,7 @@ export default function CompetitiveIntelligence() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {trialMetrics.map(metric => (
+                      {marketData?.trialMetrics?.map(metric => (
                         <TableRow key={metric.id}>
                           <TableCell className="font-medium">{metric.metric}</TableCell>
                           <TableCell>{metric.lumenBio}</TableCell>

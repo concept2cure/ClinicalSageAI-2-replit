@@ -4,67 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, BookOpen, FileText, Bookmark, ExternalLink } from 'lucide-react'
-
-// Mock regulatory search results
-const mockResults = {
-  2.7: [
-    {
-      title:
-        'ICH M4E(R2) - Common Technical Document for the Registration of Pharmaceuticals for Human Use - Efficacy',
-      snippet: 'Section 2.7 should provide a detailed summary of all clinical studies conducted...',
-      source: 'ICH Guidelines',
-      relevance: 'high',
-      url: '#',
-    },
-    {
-      title: 'FDA Guidance: Clinical Study Reports',
-      snippet:
-        'When preparing Section 2.7, sponsors should ensure that all clinical efficacy and safety data are presented in a balanced manner...',
-      source: 'FDA Guidance Documents',
-      relevance: 'medium',
-      url: '#',
-    },
-  ],
-  3.2: [
-    {
-      title: 'ICH M4Q(R1) - CTD Quality Guidelines',
-      snippet:
-        'Section 3.2 should contain detailed information on the product manufacturing process...',
-      source: 'ICH Guidelines',
-      relevance: 'high',
-      url: '#',
-    },
-    {
-      title: 'FDA Guidance: Quality Considerations in Demonstrating Bioequivalence',
-      snippet:
-        'The Quality section should include comprehensive information on analytical procedures used...',
-      source: 'FDA Guidance Documents',
-      relevance: 'medium',
-      url: '#',
-    },
-  ],
-};
-
-// Default results for sections without specific mock data
-const defaultResults = [
-  {
-    title:
-      'ICH M4 - Organization of the Common Technical Document for the Registration of Pharmaceuticals for Human Use',
-    snippet:
-      'This guideline describes the recommended format and organization for the Common Technical Document (CTD)...',
-    source: 'ICH Guidelines',
-    relevance: 'medium',
-    url: '#',
-  },
-  {
-    title: 'FDA Guidance: Submitting Marketing Applications According to the ICH-CTD Format',
-    snippet:
-      'This guidance document provides recommendations for preparing and submitting applications in the CTD format...',
-    source: 'FDA Guidance Documents',
-    relevance: 'medium',
-    url: '#',
-  },
-];
+import { searchCoauthorComponents } from '@/api/coauthor';
 
 export default function RegulatorySearch({ sectionId }) {
   const [query, setQuery] = useState('');
@@ -72,27 +12,40 @@ export default function RegulatorySearch({ sectionId }) {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setIsSearching(true);
+    const searchQuery = query.trim() || `Section ${sectionId}`;
 
-    // Simulate API delay
-    setTimeout(() => {
-      // Get section-specific results or default results
-      const sectionResults = mockResults[sectionId] || defaultResults;
+    try {
+      const payload = await searchCoauthorComponents(searchQuery, { limit: 8, searchIn: 'all' });
+      const items = Array.isArray(payload?.results) ? payload.results : [];
+      const normalized = items.map(item => {
+        const title = item.title || item.fileName || 'Untitled Component';
+        const snippet = item.snippet || 'No preview available.';
+        const source = item.module || item.fileName || item.type || 'CoAuthor Components';
+        const queryLower = searchQuery.toLowerCase();
+        const relevance =
+          title.toLowerCase().includes(queryLower) || snippet.toLowerCase().includes(queryLower)
+            ? 'high'
+            : 'medium';
 
-      // Filter results based on query if provided
-      const filteredResults = query.trim()
-        ? sectionResults.filter(
-            r =>
-              r.title.toLowerCase().includes(query.toLowerCase()) ||
-              r.snippet.toLowerCase().includes(query.toLowerCase())
-          )
-        : sectionResults;
+        return {
+          title,
+          snippet,
+          source,
+          relevance,
+          url: item.path || '#',
+        };
+      });
 
-      setResults(filteredResults);
+      setResults(normalized);
+    } catch (error) {
+      console.error('Regulatory search failed:', error);
+      setResults([]);
+    } finally {
       setIsSearching(false);
       setHasSearched(true);
-    }, 800);
+    }
   };
 
   const handleKeyDown = e => {

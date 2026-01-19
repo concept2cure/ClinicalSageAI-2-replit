@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Search, Upload, FileText, BarChart2, Filter, SlidersHorizontal, Loader2 } from 'lucide-react'
-import { trialsageApi } from '@/lib/api-connector';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { authService } from '@/services/authService';
 
 interface CsrItem {
   id: string;
@@ -32,24 +33,27 @@ export default function CsrIntelligence() {
     queryKey: ['/api/csr/list', searchTerm, selectedIndication, selectedPhase],
     queryFn: async () => {
       try {
-        // This is just for demonstration - normally we'd call the actual API
-        // In a real implementation, we'd use:
-        // const result = await trialsageApi.getCsrList({ 
-        //   search: searchTerm,
-        //   page: 1,
-        //   limit: 10
-        // });
-        
-        // For demo, return mock data
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-        return {
-          data: {
-            items: mockCsrData,
-            total: mockCsrData.length,
-            indications: ["Oncology", "Cardiology", "Neurology", "Immunology", "Dermatology"],
-            phases: ["Phase 1", "Phase 2", "Phase 3", "Phase 4"]
-          }
-        };
+        const token = authService.getToken();
+        if (!token) {
+          throw new Error('Authentication required.');
+        }
+
+        const queryParams = new URLSearchParams({
+          ...(searchTerm ? { search: searchTerm } : {}),
+          ...(selectedIndication ? { indication: selectedIndication } : {}),
+          ...(selectedPhase ? { phase: selectedPhase } : {}),
+          page: '1',
+          limit: '10',
+        });
+
+        const response = await apiRequest(
+          'GET',
+          `/api/csr/list?${queryParams.toString()}`,
+          undefined,
+          { Authorization: `Bearer ${token}` }
+        );
+
+        return response.json();
       } catch (err) {
         console.error('Error fetching CSR data:', err);
         throw err;
@@ -312,61 +316,3 @@ export default function CsrIntelligence() {
     </div>
   );
 }
-
-// Mock data for demonstration
-const mockCsrData: CsrItem[] = [
-  {
-    id: "1",
-    title: "A Phase III Study of Drug X for Advanced Metastatic Breast Cancer",
-    sponsor: "Pfizer",
-    phase: "Phase 3",
-    date: "Jan 15, 2023",
-    indication: "Oncology",
-    status: "Completed"
-  },
-  {
-    id: "2",
-    title: "Safety and Efficacy of Drug Y in Patients with Rheumatoid Arthritis",
-    sponsor: "Novartis",
-    phase: "Phase 2",
-    date: "Mar 22, 2023",
-    indication: "Immunology",
-    status: "Completed"
-  },
-  {
-    id: "3",
-    title: "Long-term Follow-up Study of Drug Z for Multiple Sclerosis",
-    sponsor: "Biogen",
-    phase: "Phase 4",
-    date: "Feb 8, 2023",
-    indication: "Neurology",
-    status: "In Progress"
-  },
-  {
-    id: "4",
-    title: "First-in-Human Study of Novel Antibody Treatment for Psoriasis",
-    sponsor: "AbbVie",
-    phase: "Phase 1",
-    date: "Apr 11, 2023",
-    indication: "Dermatology",
-    status: "In Progress"
-  },
-  {
-    id: "5",
-    title: "A Randomized Trial of Drug A for Hypertension",
-    sponsor: "Merck",
-    phase: "Phase 3",
-    date: "May 5, 2023",
-    indication: "Cardiology",
-    status: "Completed"
-  },
-  {
-    id: "6",
-    title: "Efficacy of Drug B in HER2-Positive Breast Cancer",
-    sponsor: "Genentech",
-    phase: "Phase 2",
-    date: "Jun 17, 2023",
-    indication: "Oncology",
-    status: "Completed"
-  }
-];

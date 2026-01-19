@@ -12,42 +12,8 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card';
+import { chatWithCoauthor } from '@/api/coauthor';
 
-// Mock chat history
-const initialMessages = {
-  2.7: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'What should I include in section 2.7?',
-      timestamp: new Date(Date.now() - 60000 * 60),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'Section 2.7 (Clinical Summary) should include a detailed yet concise analysis of all clinical data. Make sure to cover:\n\n1. Biopharmaceutic studies\n2. Clinical pharmacology studies\n3. Clinical efficacy studies\n4. Clinical safety findings\n5. Benefit-risk conclusions\n\nI recommend organizing this section with clear tables and graphs for the key efficacy and safety endpoints. Would you like me to help with a specific subsection?',
-      timestamp: new Date(Date.now() - 60000 * 59),
-    },
-  ],
-  3.2: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'How should I structure the manufacturing information?',
-      timestamp: new Date(Date.now() - 60000 * 180),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'For Section 3.2, structure your manufacturing information as follows:\n\n1. Description of the manufacturing process and process controls\n2. Control of materials\n3. Control of critical steps and intermediates\n4. Process validation and/or evaluation\n5. Manufacturing process development\n\nEnsure you include flow diagrams of the manufacturing process and clearly identify critical process parameters (CPPs) and critical quality attributes (CQAs).',
-      timestamp: new Date(Date.now() - 60000 * 179),
-    },
-  ],
-};
-
-// Default messages for sections without specific history
 const defaultMessages = [
   {
     id: 1,
@@ -66,7 +32,7 @@ export default function LumenChatPane({ contextId }) {
 
   // Load section-specific chat history
   useEffect(() => {
-    setMessages(initialMessages[contextId] || defaultMessages);
+    setMessages(defaultMessages);
   }, [contextId]);
 
   // Auto-scroll to bottom of messages
@@ -74,7 +40,7 @@ export default function LumenChatPane({ contextId }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
 
     // Add user message
@@ -89,32 +55,28 @@ export default function LumenChatPane({ contextId }) {
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      const aiResponses = {
-        1.1: 'For this administrative section, make sure to include all required contact information for the sponsor and investigators. Also, ensure Form FDA 356h is properly completed and signed. Would you like me to help with anything specific about this form?',
-        1.2: "In the cover letter, you should clearly state the purpose of the submission, reference any prior communications with the FDA, and provide a high-level overview of what's included. Consider adding a table of contents for the submission package.",
-        2.1: 'The ToC should follow the exact structure defined in ICH M4. Make sure all section numbering is correct and hyperlinks are working properly if submitting electronically.',
-        2.5: 'Your Clinical Overview should focus on the benefit-risk assessment, integrating all relevant data from Module 5. Make sure to address any safety concerns identified in nonclinical studies and how the clinical program addressed them.',
-        2.7: "Based on your current content, I'd recommend strengthening the efficacy summary with more quantitative data. The primary endpoint results should be presented with confidence intervals and p-values. Would you like me to suggest a table format for this data?",
-        3.2: 'Your quality information appears comprehensive, but you might need to add more details on batch analysis. Regulatory authorities typically expect at least 3 batches of data. Also, consider adding a risk assessment for critical process parameters.',
-        4.2: 'For the pharmacology section, make sure to clearly link the mechanism of action to the proposed indication. Include a summary table of all major nonclinical findings and their clinical relevance.',
-        5.3: 'Clinical study reports should follow ICH E3 guidelines. Each CSR should include a protocol and statistical analysis plan as appendices. For pivotal studies, include patient narratives for serious adverse events and discontinuations due to adverse events.',
-      };
-
-      const defaultResponse =
-        "I've analyzed this section and it appears to follow regulatory guidelines. To enhance it further, consider adding more cross-references to supporting data in other modules. Is there any specific regulatory requirement you're concerned about?";
-
+    try {
+      const payload = await chatWithCoauthor(userMessage.content, [{ sectionId: contextId }]);
       const aiMessage = {
         id: messages.length + 2,
         role: 'assistant',
-        content: aiResponses[contextId] || defaultResponse,
+        content: payload?.answer || 'I could not generate a response at this time.',
         timestamp: new Date(),
       };
-
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: messages.length + 2,
+          role: 'assistant',
+          content: 'The assistant is temporarily unavailable. Please try again.',
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = e => {

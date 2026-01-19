@@ -6,20 +6,12 @@ let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
-<<<<<<< HEAD
     const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
-    pool = new Pool({
-      connectionString,
-      ssl: connectionString?.includes('neondb') || process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
-=======
-    const connectionString = process.env.DATABASE_URL;
-
+    const hostaddr = process.env.NEON_DB_HOSTADDR || process.env.PGHOSTADDR;
     pool = new Pool({
       connectionString,
       ssl: getSslConfig(connectionString),
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+      ...(hostaddr ? { hostaddr } : {}),
       // Connection pool settings for stability
       max: 20,
       idleTimeoutMillis: 30000,

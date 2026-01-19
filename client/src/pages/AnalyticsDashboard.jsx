@@ -856,8 +856,7 @@ export default function AnalyticsDashboard() {
 
   // Helper function to render widget based on type
   function renderWidget(widget, index) {
-    // Mock data for different widget types
-    const data = getWidgetData(widget.type);
+    const data = getWidgetData(widget.type, analyticsData);
 
     switch (widget.type) {
       // KPI widgets
@@ -1726,225 +1725,52 @@ function getAvailableWidgets() {
   };
 }
 
-// Mock data for widgets
-function getWidgetData(widgetType) {
+// Data resolver for widgets
+function getWidgetData(widgetType, analyticsPayload) {
+  const resolved = analyticsPayload?.widgets?.[widgetType] ?? analyticsPayload?.[widgetType];
+  if (resolved !== undefined) return resolved;
+
   switch (widgetType) {
     case 'submission_status':
-      return [
-        { status: 'Drafts', count: 14, percentage: 70 },
-        { status: 'In Review', count: 7, percentage: 35 },
-        { status: 'Completed', count: 23, percentage: 85 },
-        { status: 'Submitted', count: 18, percentage: 60 },
-      ];
-
+      return [];
     case 'completion_rate':
       return {
-        completionPercentage: 68,
-        sectionsComplete: 17,
-        sectionsInProgress: 5,
-        sectionsNotStarted: 3,
+        completionPercentage: 0,
+        sectionsComplete: 0,
+        sectionsInProgress: 0,
+        sectionsNotStarted: 0,
       };
-
     case 'time_saved':
       return {
-        timeSavedPercentage: 75,
-        traditionalDays: 120,
-        newDays: 30,
-        daysSaved: 90,
-        costSavings: 450,
+        timeSavedPercentage: 0,
+        traditionalDays: 0,
+        newDays: 0,
+        daysSaved: 0,
+        costSavings: 0,
       };
-
     case 'quality_score':
       return {
-        overallScore: 87,
-        components: [
-          { name: 'Content Accuracy', score: 92 },
-          { name: 'Regulatory Compliance', score: 88 },
-          { name: 'Clarity & Structure', score: 85 },
-          { name: 'Cross-References', score: 80 },
-        ],
+        overallScore: 0,
+        components: [],
       };
-
     case 'submission_timeline':
-      return [
-        { month: 'Jan', submissions: 4 },
-        { month: 'Feb', submissions: 3 },
-        { month: 'Mar', submissions: 5 },
-        { month: 'Apr', submissions: 7 },
-        { month: 'May', submissions: 5 },
-        { month: 'Jun', submissions: 9 },
-        { month: 'Jul', submissions: 8 },
-        { month: 'Aug', submissions: 11 },
-        { month: 'Sep', submissions: 13 },
-        { month: 'Oct', submissions: 15 },
-        { month: 'Nov', submissions: 12 },
-        { month: 'Dec', submissions: 14 },
-      ];
-
+      return [];
     case 'completion_by_module':
-      return [
-        { name: 'Module 1', complete: 8, inProgress: 2, notStarted: 0 },
-        { name: 'Module 2', complete: 6, inProgress: 3, notStarted: 1 },
-        { name: 'Module 3', complete: 5, inProgress: 4, notStarted: 3 },
-        { name: 'Module 4', complete: 4, inProgress: 2, notStarted: 4 },
-        { name: 'Module 5', complete: 3, inProgress: 5, notStarted: 5 },
-      ];
-
+      return [];
     case 'authority_performance':
-      return [
-        { name: 'FDA', firstCycleApproval: 78, reviewTime: 90 },
-        { name: 'EMA', firstCycleApproval: 82, reviewTime: 85 },
-        { name: 'PMDA', firstCycleApproval: 75, reviewTime: 68 },
-        { name: 'NMPA', firstCycleApproval: 65, reviewTime: 95 },
-      ];
-
+      return [];
     case 'user_activity':
-      return [
-        { date: '10/1', activeUsers: 12, editsPerUser: 45 },
-        { date: '10/2', activeUsers: 15, editsPerUser: 38 },
-        { date: '10/3', activeUsers: 14, editsPerUser: 42 },
-        { date: '10/4', activeUsers: 18, editsPerUser: 36 },
-        { date: '10/5', activeUsers: 20, editsPerUser: 40 },
-        { date: '10/6', activeUsers: 22, editsPerUser: 35 },
-        { date: '10/7', activeUsers: 25, editsPerUser: 32 },
-        { date: '10/8', activeUsers: 28, editsPerUser: 30 },
-        { date: '10/9', activeUsers: 30, editsPerUser: 28 },
-        { date: '10/10', activeUsers: 32, editsPerUser: 34 },
-        { date: '10/11', activeUsers: 28, editsPerUser: 38 },
-        { date: '10/12', activeUsers: 26, editsPerUser: 42 },
-        { date: '10/13', activeUsers: 28, editsPerUser: 45 },
-        { date: '10/14', activeUsers: 30, editsPerUser: 48 },
-      ];
-
+      return [];
     case 'section_matrix':
-      return [
-        {
-          code: '1.1',
-          title: 'Administrative Information',
-          status: 'Complete',
-          author: 'J. Smith',
-          reviewer: 'M. Johnson',
-          completion: 100,
-          quality: 95,
-        },
-        {
-          code: '2.1',
-          title: 'Introduction',
-          status: 'Complete',
-          author: 'J. Smith',
-          reviewer: 'M. Johnson',
-          completion: 100,
-          quality: 90,
-        },
-        {
-          code: '2.2',
-          title: 'Overall Summary',
-          status: 'In Review',
-          author: 'A. Rodriguez',
-          reviewer: 'M. Johnson',
-          completion: 85,
-          quality: 82,
-        },
-        {
-          code: '2.3',
-          title: 'Background',
-          status: 'In Progress',
-          author: 'S. Lee',
-          reviewer: '',
-          completion: 65,
-          quality: 70,
-        },
-        {
-          code: '2.4',
-          title: 'Risk Analysis',
-          status: 'In Progress',
-          author: 'S. Lee',
-          reviewer: '',
-          completion: 40,
-          quality: 65,
-        },
-        {
-          code: '3.1',
-          title: 'Chemistry Data',
-          status: 'Not Started',
-          author: '',
-          reviewer: '',
-          completion: 0,
-          quality: 0,
-        },
-        {
-          code: '3.2',
-          title: 'Manufacturing',
-          status: 'Needs Revision',
-          author: 'P. Williams',
-          reviewer: 'T. Garcia',
-          completion: 75,
-          quality: 55,
-        },
-        {
-          code: '4.1',
-          title: 'Pharmacology',
-          status: 'Approved',
-          author: 'J. Smith',
-          reviewer: 'Dr. Martinez',
-          completion: 100,
-          quality: 98,
-        },
-      ];
-
+      return [];
     case 'prediction_success':
       return {
-        probability: 0.87,
-        prediction: 'High likelihood of first-cycle approval',
-        factors: [
-          { name: 'Content Quality', impact: 0.35 },
-          { name: 'Regulatory Compliance', impact: 0.25 },
-          { name: 'Submission Completeness', impact: 0.22 },
-          { name: 'Missing Safety Data', impact: -0.18 },
-          { name: 'Protocol Deviations', impact: -0.12 },
-        ],
+        probability: 0,
+        prediction: 'No data available',
+        factors: [],
       };
-
     case 'regulatory_intelligence':
-      return [
-        {
-          title: 'FDA Updates Guidance on Clinical Trial Design',
-          summary: 'New recommendations for adaptive trial designs and patient enrollment criteria',
-          date: '10/12/2025',
-          authority: 'FDA',
-          impact: 'High',
-        },
-        {
-          title: 'EMA Revises Requirements for Module 3',
-          summary: 'Updated expectations for chemistry, manufacturing, and controls documentation',
-          date: '10/05/2025',
-          authority: 'EMA',
-          impact: 'Medium',
-        },
-        {
-          title: 'PMDA Announces New Review Timeline',
-          summary:
-            'Shortened review periods for priority submissions in oncology and rare diseases',
-          date: '09/28/2025',
-          authority: 'PMDA',
-          impact: 'Medium',
-        },
-        {
-          title: 'FDA Enforcement Action on Data Integrity',
-          summary: 'Warning letter issued regarding electronic records compliance and audit trails',
-          date: '09/15/2025',
-          authority: 'FDA',
-          impact: 'High',
-        },
-        {
-          title: 'ICH E6(R3) Implementation Timeline',
-          summary: 'Global implementation schedule for updated Good Clinical Practice guidelines',
-          date: '09/10/2025',
-          authority: 'ICH',
-          impact: 'High',
-        },
-      ];
-
+      return [];
     default:
       return [];
   }

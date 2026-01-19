@@ -8,12 +8,9 @@
  */
 import express from 'express';
 import multer from 'multer';
-<<<<<<< HEAD
 import { requireTenant } from '../middleware/tenant.js';
-=======
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 const router = express.Router();
 
@@ -22,14 +19,10 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-<<<<<<< HEAD
 // Tenant enforcement (JWT in production; header fallback only in dev/demo)
 router.use(requireTenant());
 
 // Middleware to log access and validate service availability
-=======
-// Middleware to log access and ensure Vault service is available
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 router.use((req, res, next) => {
   console.log(`[Vault API] Request received for: ${req.method} ${req.originalUrl}`);
   if (!req.app.locals.vaultDmsService) {

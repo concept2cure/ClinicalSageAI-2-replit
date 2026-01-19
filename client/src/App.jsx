@@ -21,6 +21,8 @@ import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantConta
 import { memoryOptimizer } from './utils/memoryOptimizer';
 import { AnimatedPipeline } from './components/ModernDashboardUI';
 import ClientPortalLanding from './pages/ClientPortalLanding';
+import EntitlementRoute from './components/security/EntitlementRoute';
+import AuthRoute from './components/security/AuthRoute';
 
 // Initialize memory optimization
 memoryOptimizer.startPeriodicCleanup();
@@ -134,7 +136,7 @@ const DataRoomPage = lazy(() => import('./pages/DataRoomPage'));
 const PredictiveVaultPage = lazy(() => import('./pages/PredictiveVaultPage'));
 
 // CoAuthor and Canvas-related pages
-const CoAuthor = lazy(() => import('./pages/CoAuthor'));
+const CoAuthor = lazy(() => import('./pages/CoAuthorSafe'));
 const RealCoAuthor = lazy(() => import('./pages/RealCoAuthor'));
 const ComponentManagementSystem = lazy(() => import('./components/coauthor/ComponentManagementSystem'));
 // DocumentEditor removed - using enhanced CMC document authoring module instead
@@ -198,6 +200,7 @@ const ComparabilityStudiesStubPage = lazy(() => import('./pages/ComparabilityStu
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ReportsDashboard = lazy(() => import('./pages/ReportsDashboard'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AdminConsole = lazy(() => import('./pages/AdminConsole'));
 const LumenCortexPage = lazy(() => import('./pages/LumenCortexPage'));
 
 // Tenant Management, Client Management and Settings Pages
@@ -327,19 +330,7 @@ function App() {
                     <Switch>
                       {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
                       <Route path="/">
-                        {() => {
-                          let hasToken = false;
-                          try {
-                            hasToken = !!(
-                              localStorage.getItem('token') ||
-                              localStorage.getItem('authToken') ||
-                              localStorage.getItem('auth_token')
-                            );
-                          } catch (_e) {
-                            hasToken = false;
-                          }
-                          return <Redirect to={hasToken ? '/client-portal' : '/login'} />;
-                        }}
+                        {() => <Redirect to="/login" />}
                       </Route>
                       <Route path="/login">
                         {() => (
@@ -355,7 +346,13 @@ function App() {
                           </Suspense>
                         )}
                       </Route>
-                      <Route path="/submission-center" component={UnifiedSubmissionCenter} />
+                      <Route path="/submission-center">
+                        {() => (
+                          <EntitlementRoute moduleId="submission-center">
+                            <UnifiedSubmissionCenter />
+                          </EntitlementRoute>
+                        )}
+                      </Route>
                       <Route path="/subscriptions">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
@@ -365,20 +362,30 @@ function App() {
                       </Route>
         <Route path="/module-settings" component={() => import('./pages/ModuleSettingsPage')} />
         <Route path="/pre-submission-validation" component={() => import('./pages/PreSubmissionValidation')} />
-                      <Route path="/dashboard" component={ProjectDashboardPage} />
+                      <Route path="/dashboard">
+                        {() => (
+                          <AuthRoute>
+                            <ProjectDashboardPage />
+                          </AuthRoute>
+                        )}
+                      </Route>
                       {/* Client Portal Sub-Pages */}
                       <Route path="/client-portal/vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <VaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <VaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/predictive-vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <PredictiveVaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <PredictiveVaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/regulatory-intel">
@@ -389,23 +396,29 @@ function App() {
                       </Route>
                       <Route path="/client-portal/cer-generator">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/cmc-wizard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CmcWizard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CmcWizard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/cmc-blueprint">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CMCBlueprintGenerator />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CMCBlueprintGenerator />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/analytical-monitoring">
@@ -429,31 +442,39 @@ function App() {
                       </Route>
                       <Route path="/client-portal/analytics">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <AnalyticsDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="analytics">
+                            <Suspense fallback={<LoadingPage />}>
+                              <AnalyticsDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* 510k functionality is now integrated in CERV2Page */}
                       <Route path="/client-portal/510k">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/510k-dashboard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/client-management">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ClientManagement />
-                          </Suspense>
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <ClientManagement />
+                            </Suspense>
+                          </AuthRoute>
                         )}
                       </Route>
                       <Route path="/projects/:id">
@@ -520,23 +541,29 @@ function App() {
                       {/* Other Module Pages */}
                       <Route path="/cer-generator">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/cmc-wizard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CmcWizard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CmcWizard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/csr-analyzer">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CSRIntelligence />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CSRIntelligence />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/csr-intelligence">
@@ -544,25 +571,31 @@ function App() {
                       </Route>
                       <Route path="/vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <VaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <VaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Use VaultPage which includes VaultDocumentViewer */}
                       <Route path="/vault-page">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <VaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <VaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* vault-test route removed - was demo content */}
                       <Route path="/vault-browser">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <VaultBrowserPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <VaultBrowserPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Windows-style VAULT Document Browser */}
@@ -578,42 +611,52 @@ function App() {
                       </Route>
                       <Route path="/embedded-vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <EmbeddedVaultBrowser />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <EmbeddedVaultBrowser />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Integrated VAULT Browser with Document Viewer */}
                       <Route path="/predictive-vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <PredictiveVaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <PredictiveVaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Predictive Analytics Vault Demo */}
                       {/* context-demo route removed - was demo content */}
                       <Route path="/enhanced-editor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <EnhancedDocumentEditor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <EnhancedDocumentEditor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/module-editor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ModuleSectionEditorPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="module-editor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ModuleSectionEditorPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/coauthor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <FileProvider>
-                              <CoAuthor />
-                            </FileProvider>
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <FileProvider>
+                                <CoAuthor />
+                              </FileProvider>
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* Component Management System (CCMS) - Component-Centric Management with UDI tracking */}
@@ -1282,31 +1325,39 @@ function App() {
                           };
 
                           return (
-                            <Suspense fallback={<LoadingPage />}>
-                              <UnifiedSubmissionWorkflow />
-                            </Suspense>
+                            <EntitlementRoute moduleId="submission-center">
+                              <Suspense fallback={<LoadingPage />}>
+                                <UnifiedSubmissionWorkflow />
+                              </Suspense>
+                            </EntitlementRoute>
                           );
                         }}
                       </Route>
                       <Route path="/working-coauthor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/coauthor-clean">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/coauthor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/create-document">
@@ -1320,66 +1371,82 @@ function App() {
                       {/* DocumentEditor route removed - using enhanced CMC document authoring instead */}
                       <Route path="/coauthor/timeline">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CoAuthor timeline tab */}
                       <Route path="/coauthor/ask-lumen">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CoAuthor Ask Lumen tab */}
                       <Route path="/coauthor/canvas">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CoAuthor Canvas Workbench tab */}
                       {/* eCTD Co-Author Module Subpages */}
                       <Route path="/ectd-co-author">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <FulleCTDCoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <FulleCTDCoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Full eCTD Co-Author Module */}
                       <Route path="/coauthor/validation">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ValidationDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ValidationDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* eCTD Validation Dashboard */}
                       <Route path="/coauthor/templates">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <DocumentTemplates />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <DocumentTemplates />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Document Templates Library */}
                       <Route path="/canvas">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CanvasPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CanvasPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Canvas page route */}
                       <Route path="/timeline">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <TimelinePage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <TimelinePage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Timeline page route */}
@@ -1390,23 +1457,29 @@ function App() {
                       {/* All 510k functionality is integrated in CERV2Page */}
                       <Route path="/510k">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/510k-dashboard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/csr">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CSRPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CSRPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CSR Deep Intelligence page route - keeping this as it's different from CSRIntelligence */}
@@ -1420,17 +1493,21 @@ function App() {
                       {/* CSR Search page route */}
                       <Route path="/csr/:id">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CSRDetail />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CSRDetail />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CSR Detail page route */}
                       <Route path="/cmc">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CMCPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CMCPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CMC Module page route */}
@@ -1438,66 +1515,82 @@ function App() {
                       {/* IND Wizard page route */}
                       <Route path="/cer">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CER Generator page route */}
                       <Route path="/cerV2">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Advanced CER Generator page route */}
                       <Route path="/cerv2">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Additional lowercase route for Advanced CER Generator */}
                       <Route path="/cerv2/info">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* CER Generator Landing page with detailed info */}
                       {/* role-test route removed - was test content */}
                       <Route path="/blueprint">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <BlueprintPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <BlueprintPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Blueprint Generator page route */}
                       <Route path="/citations">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CitationManagerPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CitationManagerPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Citation Manager page route */}
                       <Route path="/audit">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <AuditPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <AuditPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Audit Trail page route */}
                       <Route path="/signature">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <SignaturePage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <SignaturePage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>{' '}
                       {/* Digital Signature page route */}
@@ -1506,16 +1599,20 @@ function App() {
                       </Route>
                       <Route path="/unified-suite">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <StudyRegulatoryIntelligenceSuite />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <StudyRegulatoryIntelligenceSuite />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/analytics">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <AnalyticsDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="analytics">
+                            <Suspense fallback={<LoadingPage />}>
+                              <AnalyticsDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       
@@ -1523,30 +1620,38 @@ function App() {
                       {/* eCTD Unified Editor route DELETED per user request */}
                       <Route path="/medical-device">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <CERV2Page />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <CERV2Page />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/new-project-wizard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <NewProjectWizard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <NewProjectWizard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/module-editor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ModuleSectionEditorPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="module-editor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ModuleSectionEditorPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/enhanced-editor">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <EnhancedDocumentEditor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <EnhancedDocumentEditor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/foresight">
@@ -1554,23 +1659,29 @@ function App() {
                       </Route>
                       <Route path="/vault">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <VaultPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <VaultPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/data-room">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <DataRoomPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="vault">
+                            <Suspense fallback={<LoadingPage />}>
+                              <DataRoomPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/coauthor-clean">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RealCoAuthor />
-                          </Suspense>
+                          <EntitlementRoute moduleId="coauthor">
+                            <Suspense fallback={<LoadingPage />}>
+                              <RealCoAuthor />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/working-coauthor">
@@ -1582,17 +1693,21 @@ function App() {
                       </Route>
                       <Route path="/risk-heatmap">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RegulatoryRiskDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId={['study-regulatory-suite', 'risk']}>
+                            <Suspense fallback={<LoadingPage />}>
+                              <RegulatoryRiskDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       
                       <Route path="/regulatory-risk-dashboard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RegulatoryRiskDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId={['study-regulatory-suite', 'risk']}>
+                            <Suspense fallback={<LoadingPage />}>
+                              <RegulatoryRiskDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/regulatory-intelligence-hub">
@@ -1600,16 +1715,20 @@ function App() {
                       </Route>
                       <Route path="/regulatory-dashboard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RegulatoryDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <RegulatoryDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/regulatory-ai-test">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <RegulatoryAITesting />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <RegulatoryAITesting />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* IND Wizard Module Routes - Using IndWizardLayout for all 7 steps */}
@@ -1665,139 +1784,186 @@ function App() {
                       {/* Analytical Control & Method Management Routes */}
                       <Route path="/analytical">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <AnalyticalMethodsStubPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <AnalyticalMethodsStubPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/comparability">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ComparabilityStudiesStubPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="cmc">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ComparabilityStudiesStubPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* Reports Module Routes */}
                       <Route path="/reports">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ReportsPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ReportsPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/cer-reports">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ReportsPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ReportsPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/cerv2/reports">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ReportsPage />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ReportsPage />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/reports-dashboard">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ReportsDashboard />
-                          </Suspense>
+                          <EntitlementRoute moduleId="study-regulatory-suite">
+                            <Suspense fallback={<LoadingPage />}>
+                              <ReportsDashboard />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* Tenant Management Route */}
                       <Route path="/tenant-management">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <TenantManagement />
-                          </Suspense>
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <TenantManagement />
+                            </Suspense>
+                          </AuthRoute>
                         )}
                       </Route>
                       {/* Client Management & Settings Routes */}
                       <Route path="/client-management">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ClientManagement />
-                          </Suspense>
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <ClientManagement />
+                            </Suspense>
+                          </AuthRoute>
                         )}
                       </Route>
                       <Route path="/client-licenses">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <ClientLicenseManagement />
-                          </Suspense>
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <ClientLicenseManagement />
+                            </Suspense>
+                          </AuthRoute>
+                        )}
+                      </Route>
+                      <Route path="/admin-console">
+                        {() => (
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <AdminConsole />
+                            </Suspense>
+                          </AuthRoute>
                         )}
                       </Route>
                       <Route path="/settings">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <Settings />
-                          </Suspense>
+                          <AuthRoute>
+                            <Suspense fallback={<LoadingPage />}>
+                              <Settings />
+                            </Suspense>
+                          </AuthRoute>
                         )}
                       </Route>
                       {/* Unified Submission Builder routes (combines eCTD and IND Wizard) */}
                       <Route path="/ectd-planner">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <SubmissionBuilder initialModule="ectd" />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <SubmissionBuilder initialModule="ectd" />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-1">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-2">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-3">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-4">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-5">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-6">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/client-portal/module-7">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <IndWizardLayout />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <IndWizardLayout />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/ectd-module">
                         {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <SubmissionBuilder />
-                          </Suspense>
+                          <EntitlementRoute moduleId="submission-center">
+                            <Suspense fallback={<LoadingPage />}>
+                              <SubmissionBuilder />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       {/* Help Routes */}
@@ -1829,36 +1995,66 @@ function App() {
                         )}
                       </Route>
                       {/* CER Generator catch-all routes */}
-                      <Route path="/cer-generator/*">{() => <CERV2Page />}</Route>
-                      <Route path="/client-portal/cer-generator/*">{() => <CERV2Page />}</Route>
+                      <Route path="/cer-generator/*">
+                        {() => (
+                          <EntitlementRoute moduleId="medical-device">
+                            <CERV2Page />
+                          </EntitlementRoute>
+                        )}
+                      </Route>
+                      <Route path="/client-portal/cer-generator/*">
+                        {() => (
+                          <EntitlementRoute moduleId="medical-device">
+                            <CERV2Page />
+                          </EntitlementRoute>
+                        )}
+                      </Route>
                       <Route path="/cerv2/workbench/:programId/:view">
                         {params => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <Cerv2WorkbenchPage params={params} />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <Cerv2WorkbenchPage params={params} />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/cerv2/workbench/:programId">
                         {params => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <Cerv2WorkbenchPage params={params} />
-                          </Suspense>
+                          <EntitlementRoute moduleId="medical-device">
+                            <Suspense fallback={<LoadingPage />}>
+                              <Cerv2WorkbenchPage params={params} />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
-                      <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
-                      <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
+                      <Route path="/cerv2/*">
+                        {() => (
+                          <EntitlementRoute moduleId="medical-device">
+                            <CERV2Page />
+                          </EntitlementRoute>
+                        )}
+                      </Route>
+                      <Route path="/cerV2/*">
+                        {() => (
+                          <EntitlementRoute moduleId="medical-device">
+                            <CERV2Page />
+                          </EntitlementRoute>
+                        )}
+                      </Route>
                       {/* Enhanced Document Editor Route for IND Wizard Integration */}
                       <Route path="/editor/:id">
                         {params => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <EnhancedDocumentEditor
-                              document={{
-                                id: params.id,
-                                title: `Document ${params.id}`,
-                              }}
-                              onBack={() => window.history.back()}
-                            />
-                          </Suspense>
+                          <EntitlementRoute moduleId="document-authoring">
+                            <Suspense fallback={<LoadingPage />}>
+                              <EnhancedDocumentEditor
+                                document={{
+                                  id: params.id,
+                                  title: `Document ${params.id}`,
+                                }}
+                                onBack={() => window.history.back()}
+                              />
+                            </Suspense>
+                          </EntitlementRoute>
                         )}
                       </Route>
                       <Route path="/editor">
@@ -1872,12 +2068,14 @@ function App() {
                             title: `Document ${params.get('documentId')}`
                           };
                           return (
-                            <Suspense fallback={<LoadingPage />}>
-                              <EnhancedDocumentEditor 
-                                document={document}
-                                onBack={() => window.history.back()}
-                              />
-                            </Suspense>
+                            <EntitlementRoute moduleId="document-authoring">
+                              <Suspense fallback={<LoadingPage />}>
+                                <EnhancedDocumentEditor 
+                                  document={document}
+                                  onBack={() => window.history.back()}
+                                />
+                              </Suspense>
+                            </EntitlementRoute>
                           );
                         }}
                       </Route>

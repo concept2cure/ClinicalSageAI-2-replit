@@ -25,17 +25,8 @@ try {
   if (connectionString) {
     logger.info('Initializing PostgreSQL connection pool');
     pool = new Pool({
-<<<<<<< HEAD
       connectionString,
-      ssl:
-        connectionString.includes('postgresql://') ||
-        connectionString.includes('neondb')
-          ? { rejectUnauthorized: false }
-          : false,
-=======
-      connectionString: process.env.DATABASE_URL,
-      ssl: getSslConfig(process.env.DATABASE_URL),
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+      ssl: getSslConfig(connectionString),
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
       connectionTimeoutMillis: 5000, // How long to wait for a connection to become available

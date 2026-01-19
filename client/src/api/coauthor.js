@@ -3,106 +3,47 @@
  * Provides functions to interact with the CoAuthor API endpoints
  */
 
+import { authService } from '../services/authService';
+
+const getOrganizationId = () =>
+  localStorage.getItem('currentOrganizationId') || localStorage.getItem('organizationId');
+
+const buildHeaders = (extraHeaders = {}) => {
+  const token = authService.getToken();
+  const organizationId = getOrganizationId();
+  const headers = { ...extraHeaders };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (organizationId) {
+    headers['X-Organization-Id'] = organizationId;
+  }
+
+  return headers;
+};
+
+const parseError = async response => {
+  const payload = await response.json().catch(() => ({}));
+  return payload?.error || payload?.message || 'Request failed';
+};
+
 /**
  * Fetch CTD sections for display in the Canvas
  * @returns {Promise<Array>} Array of section objects with position and connection data
  */
 export async function fetchCTDSections() {
   try {
-    // We'll use mock data for now
-    // In a real implementation, this would be `const response = await fetch('/api/coauthor/sections');`
+    const response = await fetch('/api/coauthor/sections', {
+      headers: buildHeaders(),
+    });
 
-    // Mock CTD sections with positioning and connections
-    const mockSections = [
-      {
-        id: '1.1',
-        title: 'Forms & Cover Letters',
-        status: 'complete',
-        x: 100,
-        y: 100,
-        connections: ['1.2'],
-      },
-      {
-        id: '1.2',
-        title: 'TOC & Indices',
-        status: 'complete',
-        x: 300,
-        y: 100,
-        connections: ['1.3', '2.1', '3.1'],
-      },
-      {
-        id: '1.3',
-        title: 'Administrative Info',
-        status: 'pending',
-        x: 500,
-        y: 100,
-        connections: ['2.1'],
-      },
-      {
-        id: '2.1',
-        title: 'CTD Overview',
-        status: 'pending',
-        x: 300,
-        y: 200,
-        connections: ['2.2', '2.3'],
-      },
-      {
-        id: '2.2',
-        title: 'Clinical Overview',
-        status: 'critical',
-        x: 500,
-        y: 200,
-        connections: ['2.3', '2.4', '2.5'],
-      },
-      {
-        id: '2.3',
-        title: 'Nonclinical Overview',
-        status: 'pending',
-        x: 700,
-        y: 200,
-        connections: ['2.4'],
-      },
-      {
-        id: '2.4',
-        title: 'Clinical Summaries',
-        status: 'pending',
-        x: 500,
-        y: 300,
-        connections: ['2.5'],
-      },
-      {
-        id: '2.5',
-        title: 'Nonclinical Summaries',
-        status: 'pending',
-        x: 700,
-        y: 300,
-      },
-      {
-        id: '3.1',
-        title: 'Quality Reports',
-        status: 'pending',
-        x: 200,
-        y: 400,
-        connections: ['3.2', '3.3'],
-      },
-      {
-        id: '3.2',
-        title: 'Nonclinical Reports',
-        status: 'pending',
-        x: 400,
-        y: 400,
-        connections: ['3.3'],
-      },
-      {
-        id: '3.3',
-        title: 'Clinical Reports',
-        status: 'critical',
-        x: 600,
-        y: 400,
-      },
-    ];
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
 
-    return mockSections;
+    return response.json();
   } catch (error) {
     console.error('Error fetching CTD sections:', error);
     throw error;
@@ -115,17 +56,15 @@ export async function fetchCTDSections() {
  */
 export async function fetchRiskConnections() {
   try {
-    // We'll use mock data for now
-    // In a real implementation, this would be `const response = await fetch('/api/coauthor/risks');`
+    const response = await fetch('/api/coauthor/risks', {
+      headers: buildHeaders(),
+    });
 
-    // Mock risk connections
-    const mockConnections = [
-      { source: '2.2', target: '3.3', riskLevel: 'high' },
-      { source: '1.3', target: '2.1', riskLevel: 'medium' },
-      { source: '3.1', target: '3.2', riskLevel: 'low' },
-    ];
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
 
-    return mockConnections;
+    return response.json();
   } catch (error) {
     console.error('Error fetching risk connections:', error);
     throw error;
@@ -139,18 +78,15 @@ export async function fetchRiskConnections() {
  */
 export async function fetchSectionGuidance(sectionId) {
   try {
-    // In a real implementation, this would call the backend
-    // const response = await fetch(`/api/coauthor/guidance/${sectionId}`);
+    const response = await fetch(`/api/coauthor/guidance/${sectionId}`, {
+      headers: buildHeaders(),
+    });
 
-    // For now, return mock guidance
-    return {
-      text: `Guidance for section ${sectionId} would be retrieved from the regulatory database.`,
-      examples: [
-        'Example 1 from FDA guidelines',
-        'Example 2 from ICH guidelines',
-        'Example 3 from EMA guidelines',
-      ],
-    };
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
   } catch (error) {
     console.error(`Error fetching guidance for section ${sectionId}:`, error);
     throw error;
@@ -166,19 +102,133 @@ export async function fetchSectionGuidance(sectionId) {
  */
 export async function updateSectionPosition(sectionId, x, y) {
   try {
-    // In a real implementation, this would be:
-    // const response = await fetch(`/api/coauthor/layout/${sectionId}`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ x, y })
-    // });
-    // return await response.json();
+    const response = await fetch(`/api/coauthor/layout/${sectionId}`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ x, y }),
+    });
 
-    // For now, just log the update and return a simulated response
-    console.log(`Updated position for section ${sectionId} to x=${x}, y=${y}`);
-    return { id: sectionId, x, y, updated: true };
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
   } catch (error) {
     console.error(`Error updating position for section ${sectionId}:`, error);
+    throw error;
+  }
+}
+
+export async function fetchSectionAnnotation(sectionId) {
+  try {
+    const response = await fetch(`/api/coauthor/annotation/${sectionId}`, {
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`Error fetching annotation for section ${sectionId}:`, error);
+    throw error;
+  }
+}
+
+export async function saveSectionAnnotation(sectionId, notes) {
+  try {
+    const response = await fetch(`/api/coauthor/annotation/${sectionId}`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ notes }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`Error saving annotation for section ${sectionId}:`, error);
+    throw error;
+  }
+}
+
+export async function fetchSectionAdvice(sectionId, text) {
+  try {
+    const response = await fetch('/api/coauthor/advice', {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ sectionId, text }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`Error fetching AI advice for section ${sectionId}:`, error);
+    throw error;
+  }
+}
+
+export async function searchCoauthorComponents(query, options = {}) {
+  try {
+    const response = await fetch('/api/coauthor/search', {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ query, ...options }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error searching coauthor components:', error);
+    throw error;
+  }
+}
+
+export async function chatWithCoauthor(query, documentContext = []) {
+  try {
+    const response = await fetch('/api/coauthor/chat', {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ query, documentContext }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error chatting with coauthor assistant:', error);
+    throw error;
+  }
+}
+
+export async function fetchValidationRules({ agency = 'ALL', module = 'ALL' } = {}) {
+  try {
+    const params = new URLSearchParams();
+    if (agency) params.set('agency', agency);
+    if (module) params.set('module', module);
+
+    const response = await fetch(`/api/coauthor/validate/rules?${params.toString()}`, {
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching validation rules:', error);
     throw error;
   }
 }

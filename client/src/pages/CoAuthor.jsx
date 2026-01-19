@@ -40,14 +40,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import NavigationBanner from '../components/common/NavigationBanner';
-<<<<<<< HEAD
 import EnhancedDocumentEditor from '../components/ectd/EnhancedDocumentEditor';
-=======
 import CommitmentIntelligenceHub from '../components/CommitmentIntelligenceHub';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenantContext } from '@/contexts/TenantContext';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+import { authService } from '@/services/authService';
 
 // TipTap editor imports 
 // (These will be used once packages are installed, include them now for preparation)
@@ -234,9 +232,7 @@ export default function CoAuthor() {
   const [isLoadingAtoms, setIsLoadingAtoms] = useState(false);
   const [selectedContentAtom, setSelectedContentAtom] = useState(null);
   const [atomRegionFilter, setAtomRegionFilter] = useState('US');
-  
-<<<<<<< HEAD
-=======
+
   const { currentOrganization } = useTenantContext();
   const currentOrganizationId = useMemo(() => {
     if (!currentOrganization?.id) {
@@ -620,8 +616,7 @@ export default function CoAuthor() {
       </div>
     );
   }, [bulkOperationMode, moduleExpanded, priorityFlags, documentAssignees, lastModifiedTimes, moduleStatuses, selectedDocument]);
-  
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+
   // Template Library state
   const [templateLibraryView, setTemplateLibraryView] = useState('atoms'); // 'atoms' or 'templates'
   const [templateRegionFilter, setTemplateRegionFilter] = useState('US');
@@ -765,9 +760,6 @@ export default function CoAuthor() {
   
   const { toast } = useToast();
   
-<<<<<<< HEAD
-  // Commitment extraction state
-=======
   // Collaboration state
   const [isCollaborationConnected, setIsCollaborationConnected] = useState(false);
   const [collaborators, setCollaborators] = useState([]);
@@ -1461,7 +1453,6 @@ export default function CoAuthor() {
   const [commitmentIntelligenceHubOpen, setCommitmentIntelligenceHubOpen] = useState(false);
   
   // Legacy simple dialog state (keeping for backward compatibility)
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
   const [commitmentExtractionDialogOpen, setCommitmentExtractionDialogOpen] = useState(false);
   const [isExtractingCommitments, setIsExtractingCommitments] = useState(false);
   const [extractedCommitments, setExtractedCommitments] = useState(null);
@@ -1774,8 +1765,7 @@ export default function CoAuthor() {
       }
     ]
   });
-<<<<<<< HEAD
-=======
+
   
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState(null);
@@ -1994,7 +1984,6 @@ export default function CoAuthor() {
       }
     };
   }, [validationTimer]);
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
   // Phase 5 export options defined at the top of the component
   
   // AI query submission handler
@@ -2061,79 +2050,8 @@ export default function CoAuthor() {
     }
   };
   
-  // Mock AI suggestions (will be replaced by actual AI responses)
-  const [aiSuggestions, setAiSuggestions] = useState([
-    {
-      id: 1,
-      type: 'completion',
-      text: 'The safety profile is consistent with other drugs in this class...',
-      section: '2.5.5',
-      accepted: false
-    },
-    {
-      id: 2,
-      type: 'formatting',
-      text: 'Table formatting for efficacy data does not meet ICH guidelines. Suggested template available.',
-      section: '2.5.4.2',
-      accepted: false
-    },
-    {
-      id: 3,
-      type: 'compliance',
-      text: 'Missing Integrated Summary of Benefits and Risks required by FDA guidance.',
-      section: '2.5.6',
-      accepted: false
-    }
-  ]);
-  
-  // Version history mock data - in real implementation this would come from the Vault API
-  const [versionHistory] = useState([
-    { 
-      id: 'v4.0', 
-      name: 'Version 4.0', 
-      date: 'May 11, 2025', 
-      author: 'John Doe', 
-      changes: 'Updated clinical endpoints in Module 2.5',
-      commitHash: '8f7e6d5c4b3a2',
-      status: 'Current'
-    },
-    { 
-      id: 'v3.2', 
-      name: 'Version 3.2', 
-      date: 'April 28, 2025', 
-      author: 'Jane Smith', 
-      changes: 'Fixed formatting issues in Module 3',
-      commitHash: '7a6b5c4d3e2f1',
-      status: 'Previous'
-    },
-    { 
-      id: 'v3.1', 
-      name: 'Version 3.1', 
-      date: 'April 25, 2025', 
-      author: 'Sarah Williams', 
-      changes: 'Updated regulatory citations in Module 1.3',
-      commitHash: '6f5e4d3c2b1a9',
-      status: 'Previous'
-    },
-    { 
-      id: 'v3.0', 
-      name: 'Version 3.0', 
-      date: 'April 22, 2025', 
-      author: 'John Doe', 
-      changes: 'Major revision with updated clinical data',
-      commitHash: '5e4d3c2b1a987',
-      status: 'Previous'
-    },
-    { 
-      id: 'v2.5', 
-      name: 'Version 2.5', 
-      date: 'April 15, 2025', 
-      author: 'Emily Chen', 
-      changes: 'Addressed regulatory feedback on Module 5',
-      commitHash: '4d3c2b1a9876',
-      status: 'Previous'
-    }
-  ]);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [versionHistory] = useState([]);
 
   // ========== REAL DATA LOADING (Database-Driven) ==========
   const [realDocuments, setRealDocuments] = useState([]);
@@ -2147,7 +2065,17 @@ export default function CoAuthor() {
     const fetchDocuments = async () => {
       try {
         setIsLoadingDocuments(true);
-        const response = await fetch('/api/documents?limit=20');
+        const token = authService.getToken();
+        if (!token) {
+          throw new Error('Authentication required to load documents.');
+        }
+
+        const response = await fetch('/api/documents?limit=20', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...(currentOrganization?.id ? { 'X-Organization-Id': String(currentOrganization.id) } : {}),
+          },
+        });
         const data = await response.json();
         
         if (data.success && data.data && data.data.length > 0) {
@@ -2166,23 +2094,33 @@ export default function CoAuthor() {
           setRealDocuments(mappedDocs);
           setActiveDocId(mappedDocs[0].id);
           console.log('✅ Loaded real documents from database:', mappedDocs.length);
-        } else {
-          // Use fallback if database is empty
-          console.warn('⚠️ Database returned no documents, using fallback');
-          setRealDocuments(FALLBACK_DOCUMENTS);
-          setActiveDocId(FALLBACK_DOCUMENTS[0].id);
+        }
+
+        if (!data?.success || !data?.data?.length) {
+          setRealDocuments([]);
+          setActiveDocId(null);
+          toast({
+            title: 'No documents found',
+            description: 'Create or import a document to get started.',
+            variant: 'default',
+          });
         }
       } catch (error) {
         console.error('❌ Error fetching documents:', error);
-        setRealDocuments(FALLBACK_DOCUMENTS);
-        setActiveDocId(FALLBACK_DOCUMENTS[0].id);
+        setRealDocuments([]);
+        setActiveDocId(null);
+        toast({
+          title: 'Unable to load documents',
+          description: error.message || 'Please try again.',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoadingDocuments(false);
       }
     };
 
     fetchDocuments();
-  }, []);
+  }, [currentOrganization?.id]);
   
   // Fallback Mock Data (Enterprise-Grade) - EXPANDED FOR PRESSURE TESTING
   const FALLBACK_DOCUMENTS = [
@@ -2464,7 +2402,7 @@ export default function CoAuthor() {
   ];
 
   // Use real documents if available, fallback otherwise
-  const DOCUMENTS = realDocuments.length > 0 ? realDocuments : FALLBACK_DOCUMENTS;
+  const DOCUMENTS = realDocuments;
 
   // Computed active document (Safety Check - prevents undefined errors)
   const activeDoc = useMemo(() => {
@@ -2539,49 +2477,22 @@ export default function CoAuthor() {
           return;
         }
       } catch (error) {
-        console.log("Backend API not available, using mock data:", error);
+        console.error('Backend API not available for content atoms:', error);
       }
-      
-      // For development, we'll use the registry in the component
-      let atomsFromRegistry = [
-        ...contentBlockRegistry.tables.map(table => ({
-          atom_id: parseInt(table.id.split('-')[1]),
-          region: table.regions[0] || 'GLOBAL',
-          module: parseInt(table.moduleId.replace('module', '')),
-          section_code: table.section,
-          type: 'table',
-          schema_json: table.schema,
-          ui_config: { template: table.template },
-          created_by: 1,
-          created_at: new Date()
-        })),
-        ...contentBlockRegistry.narratives.map(narrative => ({
-          atom_id: parseInt(narrative.id.split('-')[1]),
-          region: narrative.regions[0] || 'GLOBAL',
-          module: parseInt(narrative.moduleId.replace('module', '')),
-          section_code: narrative.section,
-          type: 'narrative',
-          schema_json: narrative.schema,
-          ui_config: { template: narrative.template },
-          created_by: 1,
-          created_at: new Date()
-        })),
-        ...contentBlockRegistry.figures.map(figure => ({
-          atom_id: parseInt(figure.id.split('-')[1]),
-          region: figure.regions[0] || 'GLOBAL',
-          module: parseInt(figure.moduleId.replace('module', '')),
-          section_code: figure.section,
-          type: 'figure',
-          schema_json: figure.schema,
-          ui_config: { template: figure.template },
-          created_by: 1,
-          created_at: new Date()
-        }))
-      ];
-      
-      setContentAtoms(atomsFromRegistry);
+
+      setContentAtoms([]);
+      toast({
+        title: 'Content atoms unavailable',
+        description: 'The content atom registry could not be loaded.',
+        variant: 'destructive',
+      });
     } catch (error) {
       console.error("Error fetching content atoms:", error);
+      toast({
+        title: 'Content atoms unavailable',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoadingAtoms(false);
     }
@@ -2620,12 +2531,21 @@ export default function CoAuthor() {
         
         setTemplates(processedTemplates);
       } else {
-        // If API fails, we'll keep using the mock data
-        console.log("Using default template data - API returned:", response.status);
+        setTemplates([]);
+        toast({
+          title: 'Templates unavailable',
+          description: `Template service returned ${response.status}.`,
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error("Error fetching templates:", error);
-      // Continue with mock data if API fails
+      setTemplates([]);
+      toast({
+        title: 'Templates unavailable',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -4096,77 +4016,7 @@ export default function CoAuthor() {
   };
 
   // Template Library & Atom Composition - Templates become pre-configured atom sets
-  const [templates, setTemplates] = useState([
-    {
-      id: 101,
-      name: 'Clinical Overview Template',
-      description: 'Standard template for Module 2.5 Clinical Overview with structured content blocks',
-      category: 'Module 2',
-      lastUpdated: '2 months ago',
-      regions: [
-        { id: 201, name: 'FDA Module 2 Regional', region: 'US FDA', lastUpdated: '2 months ago' },
-        { id: 202, name: 'EMA Module 2 Regional', region: 'EU EMA', lastUpdated: '2 months ago' }
-      ],
-      contentBlocks: [
-        'table-2-5-1',
-        'narrative-2-5-benefit-risk',
-        'figure-2-7-3-forest-plot'
-      ],
-      atomsComposition: true // Flag indicating this is a pre-configured atom set
-    },
-    {
-      id: 102,
-      name: 'CTD Module 3 Quality Template',
-      description: 'Comprehensive template for all Module 3 Quality sections with structured content blocks',
-      category: 'Module 3',
-      lastUpdated: '1 month ago',
-      regions: [
-        { id: 201, name: 'FDA Module 3 Regional', region: 'US FDA', lastUpdated: '1 month ago' },
-        { id: 202, name: 'EMA Module 3 Regional', region: 'EU EMA', lastUpdated: '1 month ago' }
-      ],
-      contentBlocks: [
-        'table-3-2-1'
-      ]
-    },
-    {
-      id: 103,
-      name: 'NDA Cover Letter Template',
-      description: 'Official cover letter format for NDA submissions',
-      category: 'Module 1',
-      lastUpdated: '3 weeks ago',
-      regions: [
-        { id: 201, name: 'FDA Module 1 Regional', region: 'US FDA', lastUpdated: '3 weeks ago' },
-        { id: 202, name: 'EMA Module 1 Regional', region: 'EU EMA', lastUpdated: '1 month ago' }
-      ],
-      contentBlocks: [
-        'narrative-1-2-cover'
-      ]
-    },
-    {
-      id: 104,
-      name: 'Investigator\'s Brochure',
-      description: 'Comprehensive IB template with safety updates',
-      category: 'Clinical',
-      lastUpdated: '1 week ago',
-      regions: [
-        { id: 203, name: 'Global IB Template', region: 'Global', lastUpdated: '1 week ago' }
-      ],
-      contentBlocks: ['narrative-ib-safety'],
-      atomsComposition: true
-    },
-    {
-      id: 105,
-      name: 'Clinical Study Report',
-      description: 'ICH E3 compliant CSR template',
-      category: 'Module 5',
-      lastUpdated: '3 days ago',
-      regions: [
-        { id: 204, name: 'ICH E3 CSR', region: 'Global', lastUpdated: '3 days ago' }
-      ],
-      contentBlocks: ['table-csr-efficacy', 'figure-csr-flow'],
-      atomsComposition: true
-    }
-  ]);
+  const [templates, setTemplates] = useState([]);
 
   // Create Document Handler Function
   const handleCreateDocument = async () => {
@@ -4229,8 +4079,7 @@ export default function CoAuthor() {
                 {activeDoc.title}
                 {isLoading && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
               </Badge>
-<<<<<<< HEAD
-=======
+            )}
             </div>
             
             {/* Collaboration Presence */}
@@ -4249,8 +4098,7 @@ export default function CoAuthor() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+      </header>
 
       {/* Main Content Area - Master-Detail Layout with Collaboration */}
       <div className="flex h-[calc(100vh-200px)] relative" ref={editorContainerRef}>
@@ -4962,8 +4810,7 @@ export default function CoAuthor() {
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </div>
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+                </div>
             )}
           </div>
           
@@ -5020,7 +4867,6 @@ export default function CoAuthor() {
             </Button>
           </div>
         </div>
-      </header>
       
       {/* Cinematic Flexbox Layout - Studio Mode */}
       <div className="flex items-start flex-1 overflow-hidden">
@@ -5545,14 +5391,21 @@ export default function CoAuthor() {
               />
             </div>
             
-<<<<<<< HEAD
             <div>
               <label className="text-sm font-medium mb-2 block">eCTD Module</label>
               <select
                 value={documentModule}
                 onChange={(e) => setDocumentModule(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-=======
+              >
+                <option value="">Select Module</option>
+                <option value="2.5">Module 2.5 - Clinical Overview</option>
+                <option value="2.7">Module 2.7 - Clinical Summary</option>
+                <option value="3.2.P">Module 3.2.P - Drug Product</option>
+                <option value="5.3.5">Module 5.3.5 - Clinical Study Reports</option>
+              </select>
+            </div>
+
             <div className="border rounded-md">
               <div className="bg-slate-50 p-2 font-medium border-b text-sm">Document Access Controls</div>
               <div className="p-3">
@@ -6246,14 +6099,9 @@ export default function CoAuthor() {
                 variant="outline" 
                 size="sm" 
                 className="border-blue-200 text-blue-700"
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
               >
-                <option value="">Select Module</option>
-                <option value="2.5">Module 2.5 - Clinical Overview</option>
-                <option value="2.7">Module 2.7 - Clinical Summary</option>
-                <option value="3.2.P">Module 3.2.P - Drug Product</option>
-                <option value="5.3.5">Module 5.3.5 - Clinical Study Reports</option>
-              </select>
+                Select Module
+              </Button>
             </div>
             
             <div>

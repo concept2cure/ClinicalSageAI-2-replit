@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchSectionAdvice, fetchSectionAnnotation, saveSectionAnnotation } from '../../api/coauthor';
 
 /**
  * Annotation Panel Component
@@ -12,8 +13,9 @@ export default function AnnotationPanel({ section, onClose }) {
   // Load existing notes if stored
   useEffect(() => {
     if (!section) return;
-    fetch(`/api/coauthor/annotation/${section.id}`)
-      .then(r => r.json())
+    const sectionKey = section.sectionId || section.id;
+    if (!sectionKey) return;
+    fetchSectionAnnotation(sectionKey)
       .then(data => setNotes(data.notes || ''))
       .catch(() => {});
   }, [section]);
@@ -22,12 +24,8 @@ export default function AnnotationPanel({ section, onClose }) {
   const fetchAdvice = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/coauthor/advice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionId: section.id, text: section.title }),
-      });
-      const { advice } = await res.json();
+      const sectionKey = section.sectionId || section.id;
+      const { advice } = await fetchSectionAdvice(sectionKey, section.title);
       setAiAdvice(advice);
     } catch (e) {
       setAiAdvice('Failed to load AI advice.');
@@ -38,11 +36,9 @@ export default function AnnotationPanel({ section, onClose }) {
 
   // Save manual notes
   const saveNotes = () => {
-    fetch(`/api/coauthor/annotation/${section.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes }),
-    });
+    const sectionKey = section.sectionId || section.id;
+    if (!sectionKey) return;
+    saveSectionAnnotation(sectionKey, notes).catch(() => {});
   };
 
   if (!section) return null;

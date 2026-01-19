@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   AlertTriangle, Calendar, CheckCircle2, Clock, Building, Filter, Plus, Search, Target, TrendingUp, User, Shield, BarChart3, MessageSquare, Flag, Eye, Edit } from 'lucide-react'
+import { authService } from '@/services/authService';
 
 interface ObligationData {
   id: number;
@@ -55,14 +56,28 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
   const fetchObligations = async () => {
     try {
       setLoading(true);
-      const subId = subId || 'default-sub-id'; // Use provided subId or fallback
+      if (!subId) {
+        setObligations([]);
+        return;
+      }
+
+      const token = authService.getToken();
+      if (!token) {
+        setObligations([]);
+        return;
+      }
+
       const params = new URLSearchParams({
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(priorityFilter !== 'all' && { priority: priorityFilter }),
         ...(agencyFilter !== 'all' && { region: agencyFilter }),
       });
 
-      const response = await fetch(`/api/regulatory/obligations/${subId}/obligations?${params}`);
+      const response = await fetch(`/api/regulatory/obligations/${subId}/obligations?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -79,9 +94,9 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
           dueDate: item.due_date,
           assignedTo: item.owner_user_id,
           businessImpact: item.severity?.toLowerCase() === 'critical' ? 'high' : 'medium',
-          estimatedCost: Math.floor(Math.random() * 100000) + 20000, // Placeholder
-          progressPercentage:
-            item.status === 'COMPLETED' ? 100 : Math.floor(Math.random() * 80) + 10,
+          estimatedCost: item.estimated_cost || undefined,
+          actualCost: item.actual_cost || undefined,
+          progressPercentage: item.status === 'COMPLETED' ? 100 : 0,
           tags: [item.source?.toLowerCase(), item.severity?.toLowerCase()].filter(Boolean),
           createdAt: item.created_at,
           updatedAt: item.updated_at,
@@ -104,145 +119,6 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
   useEffect(() => {
     fetchObligations();
   }, [statusFilter, priorityFilter, agencyFilter, subId]);
-
-  // Mock data for comprehensive demonstration (fallback)
-  const mockObligations: ObligationData[] = [
-    {
-      id: 1,
-      title: 'Complete Safety Data Analysis (PSUR)',
-      description:
-        'Quarterly Periodic Safety Update Report required by FDA for ongoing safety surveillance of Compound XYZ-001',
-      agency: 'FDA',
-      obligationType: 'post_market',
-      category: 'safety',
-      priority: 'critical',
-      status: 'overdue',
-      dueDate: '2025-08-15',
-      assignedTo: 1,
-      businessImpact: 'high',
-      estimatedCost: 45000,
-      actualCost: 52000,
-      progressPercentage: 75,
-      milestones: [
-        { name: 'Data Collection Complete', status: 'completed', date: '2025-07-01' },
-        { name: 'Statistical Analysis', status: 'completed', date: '2025-07-15' },
-        { name: 'Medical Review', status: 'in_progress', date: '2025-08-10' },
-        { name: 'Final Report Preparation', status: 'pending', date: '2025-08-20' },
-      ],
-      tags: ['safety', 'quarterly', 'psur', 'critical'],
-      createdAt: '2025-05-01T00:00:00Z',
-      updatedAt: '2025-08-10T15:30:00Z',
-    },
-    {
-      id: 2,
-      title: 'Annual Manufacturing Quality Review',
-      description:
-        'Comprehensive annual review of manufacturing processes, quality systems, and compliance with cGMP requirements',
-      agency: 'FDA',
-      obligationType: 'requirement',
-      category: 'quality',
-      priority: 'high',
-      status: 'in_progress',
-      dueDate: '2025-12-31',
-      assignedTo: 2,
-      businessImpact: 'medium',
-      estimatedCost: 75000,
-      progressPercentage: 45,
-      milestones: [
-        { name: 'Process Validation Review', status: 'completed', date: '2025-06-15' },
-        { name: 'Quality Metrics Analysis', status: 'in_progress', date: '2025-09-01' },
-        { name: 'Deviation Investigation Review', status: 'pending', date: '2025-10-15' },
-        { name: 'Final Report Compilation', status: 'pending', date: '2025-11-30' },
-      ],
-      tags: ['quality', 'annual', 'manufacturing', 'cgmp'],
-      createdAt: '2025-01-15T00:00:00Z',
-      updatedAt: '2025-08-12T10:00:00Z',
-    },
-    {
-      id: 3,
-      title: 'EMA PRAC Response - Signal Assessment',
-      description:
-        'Response to EMA Pharmacovigilance Risk Assessment Committee signal assessment for liver enzyme elevations',
-      agency: 'EMA',
-      obligationType: 'commitment',
-      category: 'safety',
-      priority: 'critical',
-      status: 'open',
-      dueDate: '2025-09-30',
-      assignedTo: 3,
-      businessImpact: 'high',
-      estimatedCost: 125000,
-      progressPercentage: 20,
-      milestones: [
-        { name: 'Literature Review', status: 'in_progress', date: '2025-08-30' },
-        { name: 'Clinical Data Analysis', status: 'pending', date: '2025-09-15' },
-        { name: 'Risk Assessment Update', status: 'pending', date: '2025-09-25' },
-        { name: 'Final Response Submission', status: 'pending', date: '2025-09-30' },
-      ],
-      tags: ['ema', 'prac', 'signal', 'liver', 'safety'],
-      createdAt: '2025-07-15T00:00:00Z',
-      updatedAt: '2025-08-14T14:20:00Z',
-    },
-    {
-      id: 4,
-      title: 'Health Canada Labeling Update',
-      description:
-        'Update product monograph and consumer information based on Health Canada post-market review requirements',
-      agency: 'Health Canada',
-      obligationType: 'condition',
-      category: 'labeling',
-      priority: 'medium',
-      status: 'completed',
-      dueDate: '2025-07-15',
-      assignedTo: 4,
-      businessImpact: 'medium',
-      estimatedCost: 25000,
-      actualCost: 23500,
-      progressPercentage: 100,
-      milestones: [
-        { name: 'Draft Label Review', status: 'completed', date: '2025-06-15' },
-        { name: 'Medical Writing', status: 'completed', date: '2025-06-25' },
-        { name: 'Regulatory Review', status: 'completed', date: '2025-07-05' },
-        { name: 'HC Submission', status: 'completed', date: '2025-07-10' },
-      ],
-      tags: ['health-canada', 'labeling', 'monograph', 'completed'],
-      createdAt: '2025-05-01T00:00:00Z',
-      updatedAt: '2025-07-10T16:45:00Z',
-    },
-    {
-      id: 5,
-      title: 'PMDA Consultation Meeting Follow-up',
-      description:
-        'Address PMDA questions from Type II consultation meeting regarding clinical trial design for Japanese market entry',
-      agency: 'PMDA',
-      obligationType: 'commitment',
-      category: 'clinical',
-      priority: 'high',
-      status: 'in_progress',
-      dueDate: '2025-10-15',
-      assignedTo: 5,
-      businessImpact: 'high',
-      estimatedCost: 95000,
-      progressPercentage: 60,
-      milestones: [
-        { name: 'Protocol Amendment Draft', status: 'completed', date: '2025-07-30' },
-        { name: 'Biostatistics Review', status: 'completed', date: '2025-08-15' },
-        { name: 'Clinical Team Review', status: 'in_progress', date: '2025-09-01' },
-        { name: 'Final Response Package', status: 'pending', date: '2025-10-10' },
-      ],
-      tags: ['pmda', 'consultation', 'clinical', 'japan'],
-      createdAt: '2025-06-15T00:00:00Z',
-      updatedAt: '2025-08-13T11:30:00Z',
-    },
-  ];
-
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setObligations(mockObligations);
-      setLoading(false);
-    }, 1000);
-  }, []);
 
   // Filter obligations based on current filters
   const filteredObligations = obligations.filter(obligation => {

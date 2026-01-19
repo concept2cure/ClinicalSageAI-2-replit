@@ -21,6 +21,7 @@ import { useLocation, Link } from 'wouter';
 import {
   Users, Building, ArrowLeft, FileText, BookOpen, BarChart2, CheckCircle, AlertCircle, Clock, Calendar, Search, Plus, RefreshCw, Shield, Zap, Layout, Layers, Activity, Folder, Database, BarChartHorizontal, BookMarked, ClipboardList, Lightbulb, Beaker, Network, Share2, ListChecks, Settings, Briefcase, ArrowUpRight, ChevronRight, Globe, LineChart, PieChart, UserCog, Lock, Bell, HelpCircle, LogOut, Menu, MessageSquare, Github, BarChart, Award, Edit3, Sliders, ChevronDown, User, Download, Server, Grid, Sparkles, Info, FileCheck, UserPlus, AlertTriangle } from 'lucide-react'
 import securityService from '../../services/SecurityService';
+import { authService } from '../../services/authService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 import { useToast } from '@/hooks/use-toast';
 import ProjectManagerGrid from '../project-manager/ProjectManagerGrid';
@@ -74,41 +75,28 @@ const AIProjectAssistant = ({ project, active = false }) => {
   useEffect(() => {
     if (isOpen && project && aiSuggestions.length === 0) {
       setIsLoading(true);
+      const loadSuggestions = async () => {
+        try {
+          const token = authService.getToken();
+          const response = await fetch(`/api/portal/assistant/${project.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload?.success) {
+            throw new Error(payload?.message || 'Unable to load suggestions');
+          }
+          setAiSuggestions(payload.suggestions || []);
+        } catch (error) {
+          console.error('AI suggestions error:', error);
+          setAiSuggestions([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-      // Simulate AI suggestions loading
-      setTimeout(() => {
-        setAiSuggestions([
-          {
-            id: 1,
-            title: 'Review Critical Path Tasks',
-            description:
-              'Your project timeline shows 3 critical path tasks that require attention to maintain timeline.',
-            priority: 'high',
-          },
-          {
-            id: 2,
-            title: 'Schedule FDA Meeting Preparation',
-            description:
-              "Based on current progress, it's recommended to schedule an FDA meeting preparation session within 2 weeks.",
-            priority: 'medium',
-          },
-          {
-            id: 3,
-            title: 'Update Data Management Plan',
-            description:
-              'Your data management plan should be updated to reflect recent protocol changes.',
-            priority: 'medium',
-          },
-          {
-            id: 4,
-            title: 'Complete Risk Assessment',
-            description:
-              'The risk assessment for this study is incomplete. Consider reviewing and finalizing.',
-            priority: 'low',
-          },
-        ]);
-        setIsLoading(false);
-      }, 1500);
+      loadSuggestions();
     }
   }, [isOpen, project]);
 
@@ -297,6 +285,8 @@ const EnterpriseClientPortal = () => {
   useEffect(() => {
     const initClientPortal = async () => {
       try {
+        await securityService.initialize();
+
         // Get organization list
         const orgList = securityService.getAccessibleOrganizations() || [];
         setOrganizations(orgList);
@@ -323,7 +313,7 @@ const EnterpriseClientPortal = () => {
             setUserProfile({
               ...userProfile,
               id: securityService.currentUser.id,
-              name: `${securityService.currentUser.firstName} ${securityService.currentUser.lastName}`,
+              name: securityService.currentUser.name,
               email: securityService.currentUser.email,
             });
 
@@ -334,44 +324,8 @@ const EnterpriseClientPortal = () => {
             }
           }
 
-          // Load user teams (simulated)
-          setUserTeams([
-            { id: 'team-1', name: 'Clinical Operations', role: 'Member' },
-            { id: 'team-2', name: 'Regulatory Affairs', role: 'Lead' },
-            { id: 'team-3', name: 'Data Management', role: 'Member' },
-          ]);
-
-          // Simulate notifications
-          setNotifications([
-            {
-              id: 'notif-1',
-              title: 'Document requires approval',
-              type: 'action',
-              unread: true,
-              time: '1h ago',
-            },
-            {
-              id: 'notif-2',
-              title: 'New comment on IND submission',
-              type: 'comment',
-              unread: true,
-              time: '3h ago',
-            },
-            {
-              id: 'notif-3',
-              title: 'Meeting scheduled for tomorrow',
-              type: 'meeting',
-              unread: false,
-              time: '1d ago',
-            },
-            {
-              id: 'notif-4',
-              title: 'Task deadline approaching',
-              type: 'reminder',
-              unread: false,
-              time: '2d ago',
-            },
-          ]);
+          setUserTeams([]);
+          setNotifications([]);
 
           // Load initial data for the selected organization
           await loadOrganizationData();
@@ -427,9 +381,8 @@ const EnterpriseClientPortal = () => {
     try {
       setLoading(true);
 
-      // In a real app, these would be API calls
       // Fetch projects
-      const projectList = await fetchProjects(currentOrganization.id);
+      const projectList = await fetchProjects();
       setProjects(projectList);
 
       // Set a selected project if none is selected yet
@@ -438,12 +391,15 @@ const EnterpriseClientPortal = () => {
       }
 
       // Fetch recent documents
-      const docList = await fetchDocuments(currentOrganization.id);
+      const docList = await fetchDocuments();
       setDocuments(docList);
 
       // Fetch recent activities
-      const activityList = await fetchActivities(currentOrganization.id);
+      const activityList = await fetchActivities();
       setActivities(activityList);
+
+      const notificationList = await fetchNotifications();
+      setNotifications(notificationList);
 
       // Update security service
       if (securityService.currentOrganization?.id !== currentOrganization.id) {
@@ -557,259 +513,80 @@ const EnterpriseClientPortal = () => {
     setLocation(`/${module}`);
   };
 
-  // Fetch projects (simulated for demo)
-  const fetchProjects = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        name: 'Phase II Clinical Trial - BX-107',
-        status: 'in_progress',
-        module: 'trial-vault',
-        progress: 65,
-        dueDate: '2025-06-15',
-        team: 'Clinical Operations',
-        priority: 'high',
-        kpis: [
-          {
-            id: 'kpi-1',
-            name: 'Patient Enrollment',
-            value: 42,
-            target: 65,
-            change: '+8%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-2',
-            name: 'Protocol Deviations',
-            value: 3,
-            target: 10,
-            change: '-2%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-3',
-            name: 'Data Completion',
-            value: 65,
-            target: 100,
-            change: '+5%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-4',
-            name: 'Site Activation',
-            value: 8,
-            target: 10,
-            change: '0%',
-            trend: 'neutral',
-          },
-        ],
+  const fetchProjects = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/projects', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        name: 'IND Application for BTX-331',
-        status: 'in_progress',
-        module: 'ind-wizard',
-        progress: 42,
-        dueDate: '2025-05-30',
-        team: 'Regulatory Affairs',
-        priority: 'high',
-        kpis: [
-          {
-            id: 'kpi-1',
-            name: 'Module Completion',
-            value: 12,
-            target: 28,
-            change: '+15%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-2',
-            name: 'Review Cycles',
-            value: 2,
-            target: 3,
-            change: '0%',
-            trend: 'neutral',
-          },
-          {
-            id: 'kpi-3',
-            name: 'Document Approvals',
-            value: 18,
-            target: 42,
-            change: '+12%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-4',
-            name: 'Quality Metrics',
-            value: 85,
-            target: 100,
-            change: '+3%',
-            trend: 'up',
-          },
-        ],
-      },
-      {
-        id: 3,
-        name: 'Clinical Study Report - Phase I',
-        status: 'pending_review',
-        module: 'csr-intelligence',
-        progress: 95,
-        dueDate: '2025-05-10',
-        team: 'Clinical Operations',
-        priority: 'medium',
-        kpis: [
-          {
-            id: 'kpi-1',
-            name: 'Section Completion',
-            value: 19,
-            target: 20,
-            change: '+5%',
-            trend: 'up',
-          },
-          { id: 'kpi-2', name: 'Data Tables', value: 45, target: 45, change: '+15%', trend: 'up' },
-          { id: 'kpi-3', name: 'QC Findings', value: 5, target: 20, change: '-30%', trend: 'up' },
-          {
-            id: 'kpi-4',
-            name: 'Reviewer Approvals',
-            value: 3,
-            target: 4,
-            change: '+50%',
-            trend: 'up',
-          },
-        ],
-      },
-      {
-        id: 4,
-        name: 'Study Protocol Development',
-        status: 'not_started',
-        module: 'study-architect',
-        progress: 0,
-        dueDate: '2025-07-21',
-        team: 'Clinical Operations',
-        priority: 'low',
-        kpis: [
-          {
-            id: 'kpi-1',
-            name: 'Section Drafts',
-            value: 0,
-            target: 12,
-            change: '0%',
-            trend: 'neutral',
-          },
-          {
-            id: 'kpi-2',
-            name: 'Review Cycles',
-            value: 0,
-            target: 3,
-            change: '0%',
-            trend: 'neutral',
-          },
-          {
-            id: 'kpi-3',
-            name: 'Stakeholder Input',
-            value: 2,
-            target: 8,
-            change: '+100%',
-            trend: 'up',
-          },
-          {
-            id: 'kpi-4',
-            name: 'SAP Progress',
-            value: 10,
-            target: 100,
-            change: '+10%',
-            trend: 'up',
-          },
-        ],
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load projects');
+    }
+    return payload.projects || [];
   };
 
-  // Fetch documents (simulated for demo)
-  const fetchDocuments = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        name: 'BX-107 Protocol.docx',
-        type: 'protocol',
-        module: 'study-architect',
-        updatedAt: '2025-04-25T15:30:00Z',
-        updatedBy: 'John Davis',
+  const fetchDocuments = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/documents', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        name: 'BTX-331 Investigator Brochure.pdf',
-        type: 'brochure',
-        module: 'ind-wizard',
-        updatedAt: '2025-04-24T09:15:00Z',
-        updatedBy: 'Sarah Johnson',
-      },
-      {
-        id: 3,
-        name: 'Phase I CSR Draft.docx',
-        type: 'report',
-        module: 'csr-intelligence',
-        updatedAt: '2025-04-23T11:45:00Z',
-        updatedBy: 'Mark Wilson',
-      },
-      {
-        id: 4,
-        name: 'BTX-331 Chemistry Data.xlsx',
-        type: 'data',
-        module: 'ind-wizard',
-        updatedAt: '2025-04-22T14:20:00Z',
-        updatedBy: 'Emily Chen',
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load documents');
+    }
+    return (payload.documents || []).map(doc => ({
+      id: doc.id,
+      name: doc.title,
+      type: doc.documentType,
+      module: doc.module,
+      updatedAt: doc.updatedAt,
+    }));
   };
 
-  // Fetch activities (simulated for demo)
-  const fetchActivities = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        type: 'document_updated',
-        description: 'BX-107 Protocol updated',
-        timestamp: '2025-04-25T15:30:00Z',
-        user: 'John Davis',
-        module: 'study-architect',
+  const fetchActivities = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/activities', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        type: 'task_completed',
-        description: 'Phase I CSR Quality Check completed',
-        timestamp: '2025-04-24T16:45:00Z',
-        user: 'Sarah Johnson',
-        module: 'csr-intelligence',
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load activities');
+    }
+    return (payload.activities || []).map(activity => ({
+      id: activity.id,
+      type: activity.activityType,
+      description: activity.description,
+      timestamp: activity.createdAt,
+      user: activity.userName,
+      module: activity.module,
+    }));
+  };
+
+  const fetchNotifications = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/notifications', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 3,
-        type: 'comment_added',
-        description: 'Comment added to BTX-331 IND application',
-        timestamp: '2025-04-24T10:15:00Z',
-        user: 'Mark Wilson',
-        module: 'ind-wizard',
-      },
-      {
-        id: 4,
-        type: 'meeting_scheduled',
-        description: 'FDA Meeting scheduled for May 10',
-        timestamp: '2025-04-23T09:30:00Z',
-        user: 'Emily Chen',
-        module: 'ind-wizard',
-      },
-      {
-        id: 5,
-        type: 'document_shared',
-        description: 'Phase I CSR shared with regulatory team',
-        timestamp: '2025-04-22T14:20:00Z',
-        user: 'Emily Chen',
-        module: 'csr-intelligence',
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load notifications');
+    }
+
+    return (payload.notifications || []).map(notification => ({
+      id: notification.id,
+      title: notification.title,
+      type: notification.type,
+      unread: !notification.isRead,
+      time: notification.createdAt,
+    }));
   };
 
   // Format date for display

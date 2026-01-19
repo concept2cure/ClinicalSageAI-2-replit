@@ -4,7 +4,6 @@ const KIMI_BASE_URL = process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1';
 
 class OpenAIService {
   constructor() {
-<<<<<<< HEAD
     // NOTE: env vars may be loaded after imports in server/index.ts.
     // Keep initialization lazy so availability reflects runtime env.
     this.isAvailable = false;
@@ -12,29 +11,20 @@ class OpenAIService {
   }
 
   ensureClient() {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.KIMI_API_KEY;
     this.isAvailable = !!apiKey;
     if (this.isAvailable && !this.client) {
-      this.client = new OpenAI({ apiKey });
+      this.client = new OpenAI({
+        apiKey,
+        baseURL: KIMI_BASE_URL,
+      });
     }
     return this.isAvailable;
   }
 
   async analyzeRegulatoryDocument(text, documentType = 'CMC') {
     if (!this.ensureClient()) {
-      throw new Error('OpenAI API key not available');
-=======
-    this.client = new OpenAI({
-      apiKey: process.env.KIMI_API_KEY,
-      baseURL: KIMI_BASE_URL,
-    });
-    this.isAvailable = !!process.env.KIMI_API_KEY;
-  }
-
-  async analyzeRegulatoryDocument(text, documentType = 'CMC') {
-    if (!this.isAvailable) {
       throw new Error('Kimi AI API key not available');
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
 
     try {
@@ -74,13 +64,9 @@ class OpenAIService {
   }
 
   async generateRegulatoryContent(prompt, documentType = 'CMC', requirements = {}) {
-<<<<<<< HEAD
     if (!this.ensureClient()) {
-      throw new Error('OpenAI API key not available');
-=======
-    if (!this.isAvailable) {
       throw new Error('Kimi AI API key not available');
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+    }
     }
 
     try {
@@ -110,13 +96,9 @@ class OpenAIService {
   }
 
   async enhanceRegulatoryText(text, improvements = []) {
-<<<<<<< HEAD
     if (!this.ensureClient()) {
-      throw new Error('OpenAI API key not available');
-=======
-    if (!this.isAvailable) {
       throw new Error('Kimi AI API key not available');
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
+    }
     }
 
     try {

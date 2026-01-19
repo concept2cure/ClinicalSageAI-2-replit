@@ -10,6 +10,7 @@ import { useLocation, Link } from 'wouter';
 import {
   Users, Building, ArrowLeft, FileText, BookOpen, BarChart2, CheckCircle, AlertCircle, Clock, Calendar, Search } from 'lucide-react'
 import securityService from '../../services/SecurityService';
+import { authService } from '../../services/authService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 
 // Client Portal dashboard component
@@ -29,6 +30,8 @@ const ClientPortal = () => {
   useEffect(() => {
     const initClientPortal = async () => {
       try {
+        await securityService.initialize();
+
         // Get organization data
         const org = securityService.currentOrganization;
         const parentOrg = securityService.parentOrganization;
@@ -45,15 +48,15 @@ const ClientPortal = () => {
 
         // In a real app, these would be API calls
         // Fetch projects
-        const projectList = await fetchProjects(org.id);
+        const projectList = await fetchProjects();
         setProjects(projectList);
 
         // Fetch recent documents
-        const docList = await fetchDocuments(org.id);
+        const docList = await fetchDocuments();
         setDocuments(docList);
 
         // Fetch recent activities
-        const activityList = await fetchActivities(org.id);
+        const activityList = await fetchActivities();
         setActivities(activityList);
 
         // Share client context with other modules
@@ -103,128 +106,63 @@ const ClientPortal = () => {
   };
 
   // Fetch projects (simulated for demo)
-  const fetchProjects = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        name: 'Phase II Clinical Trial - BX-107',
-        status: 'in_progress',
-        module: 'trial-vault',
-        progress: 65,
-        dueDate: '2025-06-15',
+  const fetchProjects = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/projects', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        name: 'IND Application for BTX-331',
-        status: 'in_progress',
-        module: 'ind-wizard',
-        progress: 42,
-        dueDate: '2025-05-30',
-      },
-      {
-        id: 3,
-        name: 'Clinical Study Report - Phase I',
-        status: 'pending_review',
-        module: 'csr-intelligence',
-        progress: 95,
-        dueDate: '2025-05-10',
-      },
-      {
-        id: 4,
-        name: 'Study Protocol Development',
-        status: 'not_started',
-        module: 'study-architect',
-        progress: 0,
-        dueDate: '2025-07-21',
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load projects');
+    }
+    return payload.projects || [];
   };
 
   // Fetch documents (simulated for demo)
-  const fetchDocuments = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        name: 'BX-107 Protocol.docx',
-        type: 'protocol',
-        module: 'study-architect',
-        updatedAt: '2025-04-25T15:30:00Z',
-        updatedBy: 'John Davis',
+  const fetchDocuments = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/documents', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        name: 'BTX-331 Investigator Brochure.pdf',
-        type: 'brochure',
-        module: 'ind-wizard',
-        updatedAt: '2025-04-24T09:15:00Z',
-        updatedBy: 'Sarah Johnson',
-      },
-      {
-        id: 3,
-        name: 'Phase I CSR Draft.docx',
-        type: 'report',
-        module: 'csr-intelligence',
-        updatedAt: '2025-04-23T11:45:00Z',
-        updatedBy: 'Mark Wilson',
-      },
-      {
-        id: 4,
-        name: 'BTX-331 Chemistry Data.xlsx',
-        type: 'data',
-        module: 'ind-wizard',
-        updatedAt: '2025-04-22T14:20:00Z',
-        updatedBy: 'Emily Chen',
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load documents');
+    }
+
+    return (payload.documents || []).map(doc => ({
+      id: doc.id,
+      name: doc.title,
+      type: doc.documentType,
+      module: doc.module,
+      updatedAt: doc.updatedAt,
+    }));
   };
 
   // Fetch activities (simulated for demo)
-  const fetchActivities = async orgId => {
-    // In a real app, would be an API call
-    return [
-      {
-        id: 1,
-        type: 'document_updated',
-        description: 'BX-107 Protocol updated',
-        timestamp: '2025-04-25T15:30:00Z',
-        user: 'John Davis',
-        module: 'study-architect',
+  const fetchActivities = async () => {
+    const token = authService.getToken();
+    const response = await fetch('/api/portal/activities', {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        type: 'task_completed',
-        description: 'Phase I CSR Quality Check completed',
-        timestamp: '2025-04-24T16:45:00Z',
-        user: 'Sarah Johnson',
-        module: 'csr-intelligence',
-      },
-      {
-        id: 3,
-        type: 'comment_added',
-        description: 'Comment added to BTX-331 IND application',
-        timestamp: '2025-04-24T10:15:00Z',
-        user: 'Mark Wilson',
-        module: 'ind-wizard',
-      },
-      {
-        id: 4,
-        type: 'meeting_scheduled',
-        description: 'FDA Meeting scheduled for May 10',
-        timestamp: '2025-04-23T09:30:00Z',
-        user: 'Emily Chen',
-        module: 'ind-wizard',
-      },
-      {
-        id: 5,
-        type: 'document_shared',
-        description: 'Phase I CSR shared with regulatory team',
-        timestamp: '2025-04-22T14:20:00Z',
-        user: 'Emily Chen',
-        module: 'csr-intelligence',
-      },
-    ];
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || 'Unable to load activities');
+    }
+
+    return (payload.activities || []).map(activity => ({
+      id: activity.id,
+      type: activity.activityType,
+      description: activity.description,
+      timestamp: activity.createdAt,
+      user: activity.userName,
+      module: activity.module,
+    }));
   };
 
   // Format date for display

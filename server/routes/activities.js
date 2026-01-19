@@ -20,8 +20,16 @@ import {
   insertNotificationPreferencesSchema,
   insertUserPresenceSchema,
   insertActivityReactionSchema,
-} from '@shared/schema.ts';
-import { eq, and, or, desc, asc, gte, lte, like, inArray, sql } from 'drizzle-orm';
+  auditEvents,
+  users,
+  organizations,
+  projects,
+  clientWorkspaces,
+  cerv2Sections,
+  cerv2Evidence,
+  regulatoryClaims,
+  organizationUsers,
+} from '../../shared/schema.ts';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -720,8 +728,5 @@ async function createNotificationsForActivity(activity) {
     console.error('Error creating notifications for activity:', error);
   }
 }
-
-// Import required for organizationUsers
-import { organizationUsers } from '@shared/schema.ts';
 
 export default router;

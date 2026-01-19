@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../db/index.js';
 import { and, eq, ilike, sql, desc } from 'drizzle-orm';
-import { lumenDataAtoms } from '@shared/schema';
+import { lumenDataAtoms } from '../../shared/schema.ts';
 
 const router = express.Router();
 

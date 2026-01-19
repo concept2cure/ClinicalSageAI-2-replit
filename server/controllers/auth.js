@@ -30,10 +30,14 @@ export function checkAuth(req, res, next) {
  * Process login requests and set authentication tokens
  */
 export function handleLogin(req, res) {
-  const { username, password } = req.body;
+  const { username, email, password } = req.body || {};
+  const loginId = username || (email ? email.split('@')[0] : undefined);
+
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const isAdminLogin = loginId === 'admin' && password === adminPassword;
 
   // Simple authentication logic - would use database in production
-  if (username === 'admin' && password === 'admin') {
+  if (isAdminLogin) {
     // Create a user object
     const user = {
       id: 1,
@@ -44,18 +48,37 @@ export function handleLogin(req, res) {
       subscribed: true,
     };
 
-    // Set user cookie
+    const token = process.env.ADMIN_TOKEN || `dev-${Date.now()}`;
+
+    // Set user + token cookies
     res.cookie('user', JSON.stringify(user), {
-      httpOnly: false, // Allow JavaScript access for client-side auth checks
-      secure: process.env.NODE_ENV === 'production', // Use secure in production
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
-    return res.json({ success: true, user });
+    res.cookie('token', token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({ success: true, user, token });
   }
 
   // Authentication failed
   res.status(401).json({ success: false, message: 'Invalid credentials' });
+}
+
+/**
+ * Verify token presence (dev-friendly)
+ */
+export function verifyAuth(req, res) {
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Missing token' });
+  }
+  return res.json({ success: true });
 }
 
 /**

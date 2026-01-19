@@ -22,63 +22,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTenantContext } from '@/contexts/TenantContext';
+import { fetchValidationRules } from '@/api/coauthor';
 import {
   Shield, ShieldAlert, ShieldCheck, ShieldX, AlertCircle, AlertTriangle, XCircle, CheckCircle, CheckCircle2, Info, Clock, User, Users, Zap, FileText, ChevronRight, Filter, Search, TrendingUp, TrendingDown, Activity, BarChart2, RefreshCw, HelpCircle, MessageSquare, Wrench, Calendar, Tag, Hash, Flag, Target, Gauge, ArrowUp, ArrowDown, ArrowRight, DialogTrigger } from 'lucide-react'
 
-/**
- * Mock FDA compliance data generator
- */
-const generateMockComplianceData = () => {
-  const regulations = [
-    { ref: '21 CFR Part 11', description: 'Electronic Records and Signatures' },
-    { ref: '21 CFR 314.50', description: 'Content and format of an NDA' },
-    { ref: '21 CFR 314.70', description: 'Supplements and other changes to an approved NDA' },
-    { ref: '21 CFR 312.23', description: 'IND content and format' },
-    { ref: '21 CFR 820.30', description: 'Design Controls' },
-    { ref: '21 CFR 58', description: 'Good Laboratory Practice' },
-    { ref: '21 CFR 211', description: 'Current Good Manufacturing Practice' },
-    { ref: '21 CFR 201.56', description: 'Labeling requirements' },
-    { ref: '21 CFR 312.32', description: 'IND safety reporting' },
-    { ref: '21 CFR 814.20', description: 'PMA application' }
-  ];
-
-  const severities = ['critical', 'major', 'minor', 'info'];
-  const statuses = ['open', 'in_progress', 'resolved', 'pending_review'];
-
-  const issues = [];
-  for (let i = 0; i < 15; i++) {
-    const regulation = regulations[Math.floor(Math.random() * regulations.length)];
-    const severity = severities[Math.floor(Math.random() * severities.length)];
-    
-    issues.push({
-      id: `COMP-${1000 + i}`,
-      severity,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      cfr: regulation.ref,
-      title: regulation.description,
-      description: `Non-compliance detected in ${regulation.description} requirements`,
-      impact: severity === 'critical' 
-        ? 'High - May delay regulatory approval'
-        : severity === 'major'
-        ? 'Medium - Requires immediate attention'
-        : severity === 'minor'
-        ? 'Low - Should be addressed before submission'
-        : 'Informational - Best practice recommendation',
-      remediation: [
-        'Review and update documentation',
-        'Implement required controls',
-        'Validate changes per SOP',
-        'Document rationale for approach'
-      ],
-      detectedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      assignedTo: Math.random() > 0.5 ? 'John Doe' : null,
-      moduleContext: ['Module 3', 'Module 2', 'Module 5'][Math.floor(Math.random() * 3)],
-      documentCount: Math.floor(Math.random() * 10) + 1,
-      estimatedEffort: `${Math.floor(Math.random() * 8) + 1} hours`
-    });
-  }
-  
-  return issues;
+const severityImpact = {
+  critical: 'High - May delay regulatory approval',
+  major: 'Medium - Requires immediate attention',
+  minor: 'Low - Should be addressed before submission',
+  informational: 'Informational - Best practice recommendation',
 };
 
 /**
@@ -481,18 +433,59 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
   const [cfrFilter, setCfrFilter] = useState('all');
   const [sortBy, setSortBy] = useState('severity');
   const [complianceScore, setComplianceScore] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize with mock data
+  const normalizeRuleSeverity = severity => {
+    const normalized = String(severity || '').toLowerCase();
+    if (normalized === 'informational') return 'info';
+    if (['critical', 'major', 'minor', 'info'].includes(normalized)) return normalized;
+    return 'info';
+  };
+
+  const buildIssueFromRule = (rule, index) => {
+    const severity = normalizeRuleSeverity(rule.severity);
+    return {
+      id: rule.ruleId || `COMP-${index + 1}`,
+      severity,
+      status: 'open',
+      cfr: rule.agency || 'ALL',
+      title: rule.ruleName || rule.category || 'Compliance rule',
+      description: rule.description || 'Compliance issue detected',
+      impact: severityImpact[rule.severity] || severityImpact.informational,
+      remediation: rule.remediationText ? [rule.remediationText] : [],
+      detectedAt: new Date().toISOString(),
+      assignedTo: null,
+      moduleContext: rule.module || 'ALL',
+      documentCount: 0,
+      estimatedEffort: 'TBD',
+    };
+  };
+
+  const loadComplianceRules = async () => {
+    setIsLoading(true);
+    try {
+      const payload = await fetchValidationRules();
+      const rules = Array.isArray(payload?.rules) ? payload.rules : [];
+      const issues = rules.map(buildIssueFromRule);
+      setComplianceIssues(issues);
+      setFilteredIssues(issues);
+
+      const resolved = issues.filter(i => i.status === 'resolved').length;
+      const total = issues.length;
+      const score = total > 0 ? Math.round((resolved / total) * 100) : 100;
+      setComplianceScore(100 - Math.round((total - resolved) * 2.5));
+    } catch (error) {
+      console.error('Failed to load compliance rules:', error);
+      setComplianceIssues([]);
+      setFilteredIssues([]);
+      setComplianceScore(100);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const mockData = generateMockComplianceData();
-    setComplianceIssues(mockData);
-    setFilteredIssues(mockData);
-    
-    // Calculate compliance score
-    const resolved = mockData.filter(i => i.status === 'resolved').length;
-    const total = mockData.length;
-    const score = total > 0 ? Math.round((resolved / total) * 100) : 100;
-    setComplianceScore(100 - Math.round((total - resolved) * 2.5)); // Penalty for open issues
+    loadComplianceRules();
   }, []);
 
   // Apply filters and sorting
@@ -634,8 +627,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
             variant="outline"
             size="sm"
             onClick={() => {
-              const newData = generateMockComplianceData();
-              setComplianceIssues(newData);
+              loadComplianceRules();
             }}
             data-testid="button-refresh-compliance"
           >

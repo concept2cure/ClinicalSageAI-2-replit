@@ -1,5 +1,6 @@
 // client/src/pages/Settings.jsx
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 import {
@@ -36,6 +37,7 @@ const Settings = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
+  const [location] = useLocation();
   const [formData, setFormData] = useState({
     organizationName: '',
     timezone: 'UTC',
@@ -79,6 +81,24 @@ const Settings = () => {
     logoUrl: '',
     customCss: '',
   });
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const allowedTabs = new Set([
+      'general',
+      'modules',
+      'security',
+      'notifications',
+      'integrations',
+      'appearance',
+      'advanced',
+      'clients',
+    ]);
+    if (tab && allowedTabs.has(tab) && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location, activeTab]);
 
   const { currentOrganization } = useTenant();
 

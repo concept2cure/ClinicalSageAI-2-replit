@@ -3,9 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-<<<<<<< HEAD
-import { FileText, BookOpen, ChevronRight, LayoutDashboard, FileCheck } from 'lucide-react'
-=======
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -20,7 +17,6 @@ import {
   FolderTree,
   Sparkles,
 } from 'lucide-react';
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 import ModuleDashboard from './ModuleDashboard';
 
 const RECENT_DOCUMENTS = [

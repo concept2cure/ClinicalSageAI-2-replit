@@ -3,10 +3,19 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { db } from '../db/index.js';
-import { availableModules, moduleSubscriptions } from '../../shared/schema.ts';
+import {
+  availableModules,
+  licenseEntitlements,
+  moduleSubscriptions,
+  organizationLicenses,
+} from '../../shared/schema.ts';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { authenticateJWT } from '../middleware/auth.js';
 
 const router = Router();
+
+router.use('/api/modules', authenticateJWT);
+router.use('/api/licenses', authenticateJWT);
 
 // -----------------------------------------------------------------------------
 // Module Subscription System (SaaS licensing)
@@ -14,7 +23,19 @@ const router = Router();
 
 const DEFAULT_MODULES = [
   {
-    moduleId: 'cerv2',
+    moduleId: 'submission-center',
+    name: 'Submission Center™',
+    description: 'Unified submission command center for IND, eCTD, CMC, and QA workflows.',
+    category: 'submissions',
+    path: '/submission-center',
+    icon: 'send',
+    isNew: false,
+    isHighlight: true,
+    sortOrder: 10,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'medical-device',
     name: 'Medical Device & Diagnostics RA™',
     description: 'End-to-end regulatory automation for 510(k), CER, MDR/IVDR evidence, and diagnostics workflows.',
     category: 'submissions',
@@ -22,7 +43,7 @@ const DEFAULT_MODULES = [
     icon: 'shield-check',
     isNew: false,
     isHighlight: true,
-    sortOrder: 10,
+    sortOrder: 20,
     metadata: {
       defaultEnabled: false,
       pricing: {
@@ -42,19 +63,19 @@ const DEFAULT_MODULES = [
     icon: 'file-text',
     isNew: false,
     isHighlight: false,
-    sortOrder: 20,
+    sortOrder: 30,
     metadata: { defaultEnabled: true },
   },
   {
-    moduleId: 'ind_wizard',
-    name: 'IND Wizard',
-    description: 'Guided IND application creation and planning.',
+    moduleId: 'cmc',
+    name: 'CMC Wizard™',
+    description: 'Chemistry, Manufacturing, and Controls documentation workflows.',
     category: 'submissions',
-    path: '/ind-wizard',
-    icon: 'beaker',
+    path: '/cmc-blueprint',
+    icon: 'flask-conical',
     isNew: false,
     isHighlight: false,
-    sortOrder: 30,
+    sortOrder: 40,
     metadata: { defaultEnabled: true },
   },
   {
@@ -66,19 +87,55 @@ const DEFAULT_MODULES = [
     icon: 'folder',
     isNew: false,
     isHighlight: false,
-    sortOrder: 40,
+    sortOrder: 50,
     metadata: { defaultEnabled: true },
   },
   {
-    moduleId: 'editor',
-    name: 'Document Editor',
+    moduleId: 'document-authoring',
+    name: 'Enhanced Document Editor',
     description: 'Structured authoring with validation-aware editing.',
     category: 'authoring',
-    path: '/editor',
+    path: '/enhanced-editor',
     icon: 'edit',
     isNew: false,
     isHighlight: false,
-    sortOrder: 50,
+    sortOrder: 60,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'module-editor',
+    name: 'Module Section Editor',
+    description: 'CTD module section editor with collaboration features.',
+    category: 'authoring',
+    path: '/module-editor',
+    icon: 'layout-grid',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 70,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'study-regulatory-suite',
+    name: 'Study & Regulatory Intelligence Suite',
+    description: 'Unified clinical study, risk, and regulatory intelligence suite.',
+    category: 'analytics',
+    path: '/unified-suite',
+    icon: 'bar-chart-3',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 80,
+    metadata: { defaultEnabled: true },
+  },
+  {
+    moduleId: 'risk',
+    name: 'Risk Heatmap',
+    description: 'Risk intelligence dashboards and heatmaps.',
+    category: 'analytics',
+    path: '/risk-heatmap',
+    icon: 'activity',
+    isNew: false,
+    isHighlight: false,
+    sortOrder: 85,
     metadata: { defaultEnabled: true },
   },
   {
@@ -90,18 +147,13 @@ const DEFAULT_MODULES = [
     icon: 'bar-chart',
     isNew: false,
     isHighlight: false,
-    sortOrder: 60,
+    sortOrder: 90,
     metadata: { defaultEnabled: true },
   },
 ];
 
 async function ensureDefaultModulesSeeded() {
   // If DB isn't available, let the caller handle the resulting exception.
-  const countRows = await db.select({ count: sql`count(*)` }).from(availableModules);
-  const rawCount = countRows?.[0]?.count;
-  const count = typeof rawCount === 'string' ? parseInt(rawCount, 10) : Number(rawCount ?? 0);
-  if (Number.isFinite(count) && count > 0) return;
-
   const values = DEFAULT_MODULES.map((mod) => ({
     moduleId: mod.moduleId,
     name: mod.name,
@@ -146,6 +198,95 @@ function generatePrivateUrl(clientId, baseUrl) {
 // -----------------------------------------------------------------------------
 // Module Subscription APIs
 // -----------------------------------------------------------------------------
+
+// Bootstrap licenses + entitlements for an organization
+router.post('/api/licenses/bootstrap', async (req, res) => {
+  try {
+    const organizationId = getOrgIdFromRequest(req);
+    await ensureDefaultModulesSeeded();
+
+    const activeLicenseRows = await db
+      .select()
+      .from(organizationLicenses)
+      .where(and(eq(organizationLicenses.organizationId, organizationId), eq(organizationLicenses.status, 'active')))
+      .limit(1);
+
+    let license = activeLicenseRows[0];
+    if (!license) {
+      const [created] = await db
+        .insert(organizationLicenses)
+        .values({
+          organizationId,
+          status: 'active',
+          plan: 'standard',
+          startsAt: new Date(),
+          billingCycle: 'monthly',
+        })
+        .returning();
+      license = created;
+    }
+
+    const modulesRows = await db
+      .select()
+      .from(availableModules)
+      .orderBy(asc(availableModules.sortOrder), asc(availableModules.name));
+
+    const subsRows = await db
+      .select()
+      .from(moduleSubscriptions)
+      .where(eq(moduleSubscriptions.organizationId, organizationId));
+
+    const subsByModuleId = new Map();
+    for (const sub of subsRows || []) {
+      subsByModuleId.set(sub.moduleId, sub);
+    }
+
+    const existingEntitlements = await db
+      .select()
+      .from(licenseEntitlements)
+      .where(eq(licenseEntitlements.organizationId, organizationId));
+
+    const existingByModule = new Map();
+    for (const ent of existingEntitlements || []) {
+      if (!existingByModule.has(ent.moduleId)) {
+        existingByModule.set(ent.moduleId, []);
+      }
+      existingByModule.get(ent.moduleId).push(ent);
+    }
+
+    const toInsert = [];
+    for (const mod of modulesRows || []) {
+      const subscription = subsByModuleId.get(mod.moduleId) || null;
+      const defaultEnabled = getDefaultEnabledFromMetadata(mod.metadata);
+      const enabled = subscription ? Boolean(subscription.enabled) : Boolean(defaultEnabled);
+      if (!enabled) continue;
+      if (existingByModule.has(mod.moduleId)) continue;
+
+      toInsert.push({
+        licenseId: license.id,
+        organizationId,
+        moduleId: mod.moduleId,
+        scope: 'organization',
+        status: 'active',
+        startsAt: license.startsAt || new Date(),
+      });
+    }
+
+    if (toInsert.length > 0) {
+      await db.insert(licenseEntitlements).values(toInsert);
+    }
+
+    return res.json({
+      success: true,
+      organizationId,
+      licenseId: license.id,
+      entitlementsCreated: toInsert.length,
+    });
+  } catch (error) {
+    console.error('License bootstrap error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to bootstrap license entitlements' });
+  }
+});
 
 // Returns the module catalog + effective enabled status for the org.
 router.get('/api/modules/catalog', async (req, res) => {

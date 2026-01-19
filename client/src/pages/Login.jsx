@@ -14,6 +14,8 @@ import {
   Chrome,
   Building2,
   UserPlus,
+  Network,
+  Users,
 } from 'lucide-react';
 import { authService } from '@/services/authService';
 
@@ -125,8 +127,9 @@ export default function Login({ onLoginSuccess }) {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-10">
-      <Card className="w-full max-w-lg border-0 shadow-[0_12px_30px_rgba(15,23,42,0.1)] rounded-2xl">
-        <CardContent className="p-10">
+      <div className="w-full max-w-6xl grid gap-8 lg:grid-cols-[1.05fr_0.95fr] items-start">
+        <Card className="w-full border-0 shadow-[0_12px_30px_rgba(15,23,42,0.1)] rounded-2xl">
+          <CardContent className="p-10">
           <div className="text-center mb-10">
             <div
               className="mx-auto mb-4 h-14 w-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold"
@@ -290,8 +293,53 @@ export default function Login({ onLoginSuccess }) {
             <ShieldCheck className="h-4 w-4" />
             Enterprise-grade security for regulated programs
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
+              <ShieldCheck className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Enterprise access control</h2>
+              <p className="text-sm text-slate-600">
+                Secure multi-tenant login for CROs, biotech sponsors, and consultants.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <Network className="mt-0.5 h-5 w-5 text-slate-700" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">CRO parent → child hierarchy</p>
+                <p className="text-xs text-slate-600">
+                  Govern multiple biotech clients with inherited policies and project-level security.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <Users className="mt-0.5 h-5 w-5 text-slate-700" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">User onboarding & entitlements</p>
+                <p className="text-xs text-slate-600">
+                  Provision teams, contractors, and consultants with scoped permissions.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-slate-700" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Enterprise security controls</p>
+                <p className="text-xs text-slate-600">
+                  SSO, MFA, audit logs, and policy enforcement aligned to regulated programs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

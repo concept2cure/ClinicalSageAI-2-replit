@@ -5,7 +5,7 @@
  */
 
 import express from 'express';
-import { handleLogin, handleLogout, checkAuth } from '../controllers/auth.js';
+import { handleLogin, handleLogout, checkAuth, verifyAuth } from '../controllers/auth.js';
 
 const router = express.Router();
 
@@ -14,6 +14,9 @@ router.post('/login', handleLogin);
 
 // Logout route
 router.get('/logout', handleLogout);
+
+// Verify token route
+router.get('/verify', verifyAuth);
 
 // Authenticated routes example
 router.get('/profile', checkAuth, (req, res) => {

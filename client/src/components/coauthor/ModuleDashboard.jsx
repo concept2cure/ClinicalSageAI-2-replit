@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from '@/components/ui/card';
@@ -8,85 +8,44 @@ import {
   FileText, FolderTree, FileSearch, Upload, Clock, FileCheck, FileWarning, Sparkles, PlusCircle, Library, FileCog, BookOpen, Users, CheckSquare, Newspaper } from 'lucide-react'
 import CoauthorModule from './CoauthorModule';
 import LumenChatPane from './LumenChatPane';
-
-// Mock CTD sections
-const CTD_SECTIONS = [
-  { id: '1.1', title: 'FDA Forms', status: 'approved', lastEdited: '2025-04-27T12:00:00Z' },
-  { id: '1.2', title: 'Cover Letter', status: 'approved', lastEdited: '2025-04-28T09:30:00Z' },
-  {
-    id: '1.3',
-    title: 'Administrative Information',
-    status: 'review',
-    lastEdited: '2025-04-29T14:15:00Z',
-  },
-  { id: '2.1', title: 'Table of Contents', status: 'draft', lastEdited: '2025-04-29T10:20:00Z' },
-  { id: '2.5', title: 'Clinical Overview', status: 'draft', lastEdited: '2025-04-29T08:45:00Z' },
-  { id: '2.7', title: 'Clinical Summary', status: 'draft', lastEdited: '2025-04-29T15:30:00Z' },
-  { id: '3.2', title: 'Quality Information', status: 'draft', lastEdited: '2025-04-28T16:10:00Z' },
-  { id: '4.2', title: 'Pharmacology Studies', status: 'draft', lastEdited: '2025-04-28T11:25:00Z' },
-];
-
-// Mock templates
-const TEMPLATES = [
-  { id: 'fda-nda', title: 'FDA New Drug Application', sections: 32, category: 'NDA' },
-  { id: 'fda-bla', title: 'FDA Biologics License Application', sections: 28, category: 'BLA' },
-  { id: 'fda-ind', title: 'FDA Investigational New Drug', sections: 24, category: 'IND' },
-  {
-    id: 'ema-maa',
-    title: 'EMA Marketing Authorization Application',
-    sections: 30,
-    category: 'MAA',
-  },
-  { id: 'pmda-nda', title: 'PMDA New Drug Application', sections: 26, category: 'JNDA' },
-];
-
-// Mock recent activity
-const RECENT_ACTIVITY = [
-  {
-    id: 1,
-    section: '2.7',
-    title: 'Clinical Summary',
-    action: 'edited',
-    user: 'Alex Smith',
-    time: '2025-04-29T15:30:00Z',
-  },
-  {
-    id: 2,
-    section: '3.2',
-    title: 'Quality Information',
-    action: 'reviewed',
-    user: 'Jamie Chen',
-    time: '2025-04-29T14:45:00Z',
-  },
-  {
-    id: 3,
-    section: '2.5',
-    title: 'Clinical Overview',
-    action: 'commented',
-    user: 'Taylor Wong',
-    time: '2025-04-29T13:20:00Z',
-  },
-  {
-    id: 4,
-    section: '1.3',
-    title: 'Administrative Information',
-    action: 'approved',
-    user: 'Jordan Lee',
-    time: '2025-04-29T11:15:00Z',
-  },
-  {
-    id: 5,
-    section: '1.2',
-    title: 'Cover Letter',
-    action: 'edited',
-    user: 'Alex Smith',
-    time: '2025-04-29T10:05:00Z',
-  },
-];
+import { fetchCTDSections } from '@/api/coauthor';
 
 export default function ModuleDashboard() {
   const [selectedTab, setSelectedTab] = useState('sections');
   const [editingSection, setEditingSection] = useState(null);
+  const [sections, setSections] = useState([]);
+  const [isLoadingSections, setIsLoadingSections] = useState(true);
+  const [templates] = useState([]);
+  const [recentActivity] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingSections(true);
+
+    fetchCTDSections()
+      .then(data => {
+        if (!isMounted) return;
+        const normalized = Array.isArray(data)
+          ? data.map(section => ({
+              ...section,
+              id: section.sectionId || section.id,
+              lastEdited: section.updatedAt || section.createdAt || null,
+            }))
+          : [];
+        setSections(normalized);
+      })
+      .catch(error => {
+        console.error('Failed to load CTD sections:', error);
+        if (isMounted) setSections([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingSections(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleOpenSection = (sectionId, sectionTitle) => {
     setEditingSection({ id: sectionId, title: sectionTitle });
@@ -98,7 +57,9 @@ export default function ModuleDashboard() {
 
   // Format date for display
   const formatDate = dateString => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'N/A';
     return date.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -177,7 +138,22 @@ export default function ModuleDashboard() {
 
             <TabsContent value="sections" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {CTD_SECTIONS.map(section => (
+                {isLoadingSections && (
+                  <Card className="border">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Loading sections…</CardTitle>
+                    </CardHeader>
+                  </Card>
+                )}
+                {!isLoadingSections && sections.length === 0 && (
+                  <Card className="border">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">No sections available</CardTitle>
+                      <CardDescription>Sections will appear once imported or created.</CardDescription>
+                    </CardHeader>
+                  </Card>
+                )}
+                {sections.map(section => (
                   <Card key={section.id} className="border">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base flex items-center">
@@ -294,7 +270,12 @@ export default function ModuleDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {TEMPLATES.map(template => (
+                    {templates.length === 0 && (
+                      <div className="text-sm text-muted-foreground">
+                        No templates available. Configure templates to get started.
+                      </div>
+                    )}
+                    {templates.map(template => (
                       <div
                         key={template.id}
                         className="border rounded-md p-4 flex justify-between items-center hover:bg-accent/50 cursor-pointer transition-colors"
@@ -331,7 +312,10 @@ export default function ModuleDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {RECENT_ACTIVITY.map(activity => (
+              {recentActivity.length === 0 && (
+                <div className="text-sm text-muted-foreground">No recent activity.</div>
+              )}
+              {recentActivity.map(activity => (
                 <div key={activity.id} className="flex items-start space-x-3">
                   <div className="mt-0.5">
                     {activity.action === 'edited' ? (

@@ -2,34 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Lightbulb, ChevronsRight, RefreshCw, ThumbsUp, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button';
-
-// Mock guidance data by section
-const mockGuidance = {
-  1.1: {
-    note: 'Administrative information should include all relevant contact details for the sponsor and investigators. Reference 21 CFR 312.23(a)(1) for complete requirements.',
-    tips: [
-      'Ensure all contact information is current and accurate',
-      'Include 24-hour emergency contact information',
-      'Provide FDA correspondence reference numbers if applicable',
-    ],
-  },
-  2.7: {
-    note: 'The Clinical Summary section 2.7 should provide a detailed but concise summary of all clinical data. This is one of the most scrutinized sections by regulatory reviewers.',
-    tips: [
-      'Present efficacy and safety data separately for clarity',
-      'Include clear tables summarizing key study outcomes',
-      'Address any inconclusive or contradictory results directly',
-    ],
-  },
-  3.2: {
-    note: 'Quality section 3.2 must detail all aspects of drug substance and drug product quality. This is critical for manufacturing approval.',
-    tips: [
-      'Include comprehensive batch analysis data',
-      'Detail all analytical procedures with validation data',
-      'Provide complete stability data supporting shelf-life claims',
-    ],
-  },
-};
+import { fetchSectionGuidance } from '@/api/coauthor';
 
 // Default guidance for sections without specific data
 const defaultGuidance = {
@@ -46,14 +19,53 @@ export default function GuidancePanel({ sectionId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call delay
+    let isMounted = true;
     setLoading(true);
-    setTimeout(() => {
-      // Get section-specific guidance or default guidance
-      const data = mockGuidance[sectionId] || defaultGuidance;
-      setGuidance(data);
-      setLoading(false);
-    }, 500);
+
+    fetchSectionGuidance(sectionId)
+      .then(data => {
+        if (!isMounted) return;
+        const rules = Array.isArray(data?.rules) ? data.rules : [];
+
+        if (!rules.length) {
+          setGuidance(defaultGuidance);
+          return;
+        }
+
+        const severityRank = {
+          critical: 0,
+          major: 1,
+          minor: 2,
+          informational: 3,
+        };
+
+        const sortedRules = [...rules].sort(
+          (a, b) => (severityRank[a.severity] ?? 99) - (severityRank[b.severity] ?? 99)
+        );
+
+        const topRule = sortedRules[0];
+        const tips = sortedRules
+          .map(rule => rule.remediation || rule.description)
+          .filter(Boolean)
+          .slice(0, 3);
+
+        setGuidance({
+          note: topRule?.description || defaultGuidance.note,
+          tips: tips.length ? tips : defaultGuidance.tips,
+        });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setGuidance(defaultGuidance);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [sectionId]);
 
   const handleCopyTip = tip => {

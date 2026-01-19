@@ -11,7 +11,7 @@ import { getSslConfig } from './ssl';
 const logger = createScopedLogger('database');
 
 // Initialize the database connection
-const connectionString = process.env.DATABASE_URL || '';
+const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || '';
 
 let db: any;
 
@@ -45,26 +45,12 @@ if (!connectionString) {
 } else {
   // Create the postgres client
   const client = postgres(connectionString, {
-    ssl:
-      connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    ssl: getSslConfig(connectionString),
   });
 
   // Create the drizzle database instance
   db = drizzle(client);
 }
 
-<<<<<<< HEAD
 export { db };
-=======
-// Create the postgres client
-const client = postgres(connectionString, {
-  ssl: getSslConfig(connectionString),
-});
-
-// Create the drizzle database instance
-export const db = drizzle(client);
-
->>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 export default db;

@@ -1,19 +1,19 @@
 import express from 'express';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { getPool } from '../db/pool.js';
-
-const db = drizzle(getPool());
-import { 
-  sections, 
-  sectionLinks, 
-  sectionPatches, 
-  sectionPropagations, 
-  leaves, 
+import {
+  sections,
+  sectionLinks,
+  sectionPatches,
+  sectionPropagations,
+  leaves,
   leafPatches,
-  auditTrail 
-} from '@shared/schema.ts';
+  auditTrail,
+} from '../../shared/schema.ts';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
+
+const db = drizzle(getPool());
 
 const router = express.Router();
 

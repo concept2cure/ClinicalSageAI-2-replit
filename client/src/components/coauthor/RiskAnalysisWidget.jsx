@@ -6,49 +6,7 @@ import {
   AlertTriangle, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Shield, PieChart } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
-// Mock risk analysis data by section
-const mockRiskData = {
-  2.7: {
-    overallRisk: 'medium',
-    score: 65,
-    findings: [
-      {
-        level: 'medium',
-        text: 'Efficacy data may not meet statistical significance requirements for secondary endpoints.',
-        impact: 'Potential for regulatory questions during review.',
-        recommendation:
-          'Include additional statistical analyses and justification for observed trends.',
-      },
-      {
-        level: 'low',
-        text: 'Safety summary lacks comprehensive adverse event categories.',
-        impact: 'Minor delay in review process.',
-        recommendation: 'Expand adverse event categorization according to MedDRA terminology.',
-      },
-    ],
-  },
-  3.2: {
-    overallRisk: 'high',
-    score: 35,
-    findings: [
-      {
-        level: 'high',
-        text: 'Manufacturing process validation data is incomplete.',
-        impact: 'High risk of major deficiency letter from regulatory authorities.',
-        recommendation:
-          'Conduct additional process validation runs and include complete data in amendment.',
-      },
-      {
-        level: 'medium',
-        text: "Stability data doesn't cover full shelf-life claim.",
-        impact: 'Potential for reduced approved shelf-life.',
-        recommendation:
-          'Consider reducing shelf-life claim or provide additional justification based on accelerated testing.',
-      },
-    ],
-  },
-};
+import { fetchSectionGuidance } from '@/api/coauthor';
 
 // Default risk assessment for sections without specific data
 const defaultRiskData = {
@@ -70,14 +28,62 @@ export default function RiskAnalysisWidget({ sectionId }) {
   const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
-    // Simulate API call delay
+    let isMounted = true;
     setLoading(true);
-    setTimeout(() => {
-      // Get section-specific risk data or default data
-      const data = mockRiskData[sectionId] || defaultRiskData;
-      setRiskData(data);
-      setLoading(false);
-    }, 600);
+
+    fetchSectionGuidance(sectionId)
+      .then(data => {
+        if (!isMounted) return;
+        const rules = Array.isArray(data?.rules) ? data.rules : [];
+
+        if (!rules.length) {
+          setRiskData(defaultRiskData);
+          return;
+        }
+
+        const severityWeight = {
+          critical: { level: 'high', score: 20 },
+          major: { level: 'medium', score: 10 },
+          minor: { level: 'low', score: 5 },
+          informational: { level: 'low', score: 2 },
+        };
+
+        const deductions = rules.reduce((total, rule) => {
+          const weight = severityWeight[rule.severity]?.score ?? 3;
+          return total + weight;
+        }, 0);
+
+        const score = Math.max(0, Math.min(100, 95 - deductions));
+        const overallRisk = rules.some(r => r.severity === 'critical')
+          ? 'high'
+          : rules.some(r => r.severity === 'major')
+            ? 'medium'
+            : 'low';
+
+        const findings = rules.slice(0, 4).map(rule => {
+          const level = severityWeight[rule.severity]?.level || 'low';
+          return {
+            level,
+            text: rule.description || rule.name || 'Potential compliance issue detected.',
+            impact: rule.category || 'Regulatory review impact unknown.',
+            recommendation: rule.remediation || 'Review this section against regulatory guidance.',
+          };
+        });
+
+        setRiskData({ overallRisk, score, findings });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setRiskData(defaultRiskData);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [sectionId]);
 
   if (loading) {

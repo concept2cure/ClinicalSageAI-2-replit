@@ -9,8 +9,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import {
   FileText, FileCheck, Calendar, Clock, AlertTriangle, CheckCircle, BarChart2, Users, ExternalLink, ChevronRight, Bookmark } from 'lucide-react'
-import securityService from '../../services/SecurityService';
 import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
+import { authService } from '../../services/authService';
 
 // Progress card component
 const ProgressCard = ({ title, current, total, icon, color, onClick }) => {
@@ -201,106 +201,20 @@ const ClientDashboard = () => {
       try {
         setLoading(true);
 
-        // In a real implementation, these would be API calls
-        // Get basic metrics data
-        const metricsData = {
-          documents: {
-            total: 156,
-            complete: 89,
+        const token = authService.getToken();
+        const response = await fetch('/api/portal/dashboard', {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-          tasks: {
-            total: 42,
-            complete: 27,
-          },
-          milestones: {
-            total: 12,
-            complete: 5,
-          },
-          issues: {
-            total: 18,
-            resolved: 15,
-          },
-        };
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.message || 'Unable to load dashboard data');
+        }
 
-        // Get upcoming deadlines
-        const deadlinesData = [
-          {
-            id: 1,
-            title: 'IND Application Submission',
-            date: '2025-05-15',
-            type: 'regulatory',
-            project: 'BTX-331',
-          },
-          {
-            id: 2,
-            title: 'CSR Final Draft Review',
-            date: '2025-05-10',
-            type: 'document',
-            project: 'BX-107',
-          },
-          {
-            id: 3,
-            title: 'Protocol Amendment Submission',
-            date: '2025-06-05',
-            type: 'regulatory',
-            project: 'BTX-331',
-          },
-          {
-            id: 4,
-            title: 'Data Safety Monitoring Board Meeting',
-            date: '2025-05-20',
-            type: 'meeting',
-            project: 'BX-107',
-          },
-        ];
-
-        // Get recent documents
-        const documentsData = [
-          {
-            id: 1,
-            name: 'BTX-331 IND Application.docx',
-            type: 'form',
-            updatedAt: '2025-04-26T10:15:00Z',
-            updatedBy: 'Sarah Johnson',
-            module: 'ind-wizard',
-          },
-          {
-            id: 2,
-            name: 'BX-107 Clinical Study Report.pdf',
-            type: 'report',
-            updatedAt: '2025-04-25T14:30:00Z',
-            updatedBy: 'Mark Wilson',
-            module: 'csr-intelligence',
-          },
-          {
-            id: 3,
-            name: 'BTX-331 Protocol v2.0.docx',
-            type: 'protocol',
-            updatedAt: '2025-04-24T09:45:00Z',
-            updatedBy: 'John Davis',
-            module: 'study-architect',
-          },
-          {
-            id: 4,
-            name: 'Patient Recruitment Status Report.xlsx',
-            type: 'report',
-            updatedAt: '2025-04-23T16:20:00Z',
-            updatedBy: 'Emily Chen',
-            module: 'trial-vault',
-          },
-          {
-            id: 5,
-            name: 'BTX-331 Chemistry Data Package.zip',
-            type: 'data',
-            updatedAt: '2025-04-22T11:05:00Z',
-            updatedBy: 'Michael Brown',
-            module: 'ind-wizard',
-          },
-        ];
-
-        setMetrics(metricsData);
-        setDeadlines(deadlinesData);
-        setRecentDocuments(documentsData);
+        setMetrics(payload.metrics || null);
+        setDeadlines(payload.deadlines || []);
+        setRecentDocuments(payload.recentDocuments || []);
         setLoading(false);
       } catch (err) {
         console.error('Error loading dashboard data:', err);
