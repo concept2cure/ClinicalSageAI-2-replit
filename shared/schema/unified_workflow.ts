@@ -18,8 +18,10 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema as createInsertSchemaRaw } from 'drizzle-zod';
 import { z } from 'zod';
+
+const createInsertSchema = createInsertSchemaRaw as unknown as (table: any, refine?: any) => any;
 
 // Enums
 export const documentStatusEnum = pgEnum('document_status', [
@@ -322,34 +324,34 @@ export const documentCommentsRelations = relations(documentComments, ({ one, man
 // Insert schemas
 export const insertUnifiedDocumentSchema = createInsertSchema(unifiedDocuments, {
   metadata: z.record(z.any()).optional(),
-});
+} as any);
 
 export const insertDocumentVersionSchema = createInsertSchema(documentVersions, {
   content: z.record(z.any()).optional(),
-});
+} as any);
 
 export const insertModuleDocumentSchema = createInsertSchema(moduleDocuments, {
   metadata: z.record(z.any()).optional(),
-});
+} as any);
 
 export const insertWorkflowTemplateSchema = createInsertSchema(workflowTemplates, {
   documentTypes: z.array(z.string()).optional(),
   defaultForTypes: z.array(z.string()).optional(),
-});
+} as any);
 
 export const insertWorkflowStepSchema = createInsertSchema(workflowSteps, {
   approverIds: z.array(z.string()),
   requiredActions: z.array(z.string()).optional(),
-});
+} as any);
 
 export const insertDocumentWorkflowSchema = createInsertSchema(documentWorkflows, {
   metadata: z.record(z.any()).optional(),
-});
+} as any);
 
 export const insertWorkflowApprovalSchema = createInsertSchema(workflowApprovals, {
   assignedTo: z.array(z.string()),
   requiredActions: z.array(z.string()).optional(),
-});
+} as any);
 
 // Types
 export type UnifiedDocument = typeof unifiedDocuments.$inferSelect;
