@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Chrome,
   Building2,
+  UserPlus,
 } from 'lucide-react';
 import { authService } from '@/services/authService';
 
@@ -219,6 +220,28 @@ export default function Login({ onLoginSuccess }) {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </form>
+
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 h-9 w-9 rounded-lg bg-white flex items-center justify-center border border-slate-200">
+                <UserPlus className="h-4 w-4 text-slate-700" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-slate-900">New client onboarding</h3>
+                <p className="mt-1 text-xs text-slate-600">
+                  Request access and we’ll route your onboarding to licensing and admin approval.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 h-9 w-full"
+                  onClick={() => setLocation('/request-access')}
+                >
+                  Request access
+                </Button>
+              </div>
+            </div>
+          </div>
 
           <div className="mt-6 text-center text-xs uppercase tracking-[0.2em] text-slate-400">
             Need an account?

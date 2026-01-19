@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowRight, BarChart3, BookOpen, CheckCircle, Clock, FileText, MessageSquare, Shield, TrendingUp, Zap } from 'lucide-react';
 import { useLumenAiAssistant } from '../contexts/LumenAiAssistantContext';
 import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
+import { authService } from '../services/authService';
 
 // Import component placeholders (these would be real components in production)
 import NextActionsSidebar from '../components/NextActionsSidebar';
@@ -103,6 +104,11 @@ const ClientPortalLanding = () => {
   
 
   useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      setLocation('/login');
+      return;
+    }
+
     // Log that the ClientPortalLanding component has mounted
     console.log('ClientPortalLanding component mounted');
     console.log('Current workspace settings:', workspaceSettings?.modules);

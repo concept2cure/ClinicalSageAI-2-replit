@@ -99,6 +99,7 @@ const Cerv2WorkbenchPage = lazy(() => import('./pages/cerv2/Cerv2WorkbenchPage')
 // Subscriptions / billing entry point
 const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
 const LoginScreen = lazy(() => import('./pages/Login'));
+const RequestAccessPage = lazy(() => import('./pages/RequestAccess'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
@@ -347,6 +348,13 @@ function App() {
                           </Suspense>
                         )}
                       </Route>
+                      <Route path="/request-access">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <RequestAccessPage />
+                          </Suspense>
+                        )}
+                      </Route>
                       <Route path="/submission-center" component={UnifiedSubmissionCenter} />
                       <Route path="/subscriptions">
                         {() => (
@@ -470,7 +478,24 @@ function App() {
                         )}
                       </Route>
                       <Route path="/client-portal">
-                        {() => <ClientPortalLanding />}
+                        {() => {
+                          let hasToken = false;
+                          try {
+                            hasToken = !!(
+                              localStorage.getItem('token') ||
+                              localStorage.getItem('authToken') ||
+                              localStorage.getItem('auth_token')
+                            );
+                          } catch (_e) {
+                            hasToken = false;
+                          }
+
+                          if (!hasToken) {
+                            return <Redirect to="/login" />;
+                          }
+
+                          return <ClientPortalLanding />;
+                        }}
                       </Route>
                       {/* IND Dashboard route DELETED per user request */}
                       {/* Unified eCTD System - combines IND Wizard and Co-Author */}
