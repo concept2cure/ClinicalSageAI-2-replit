@@ -584,6 +584,7 @@ app.get('/api/audit/events', async (req: Request, res: Response) => {
 
 // Initialize VaultDMSService
 import VaultDMSService from './services/VaultDMSService.js';
+import vaultAutoRoutes from './routes/vault-auto';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
@@ -760,6 +761,7 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Dev-only seed endpoint: Insert demo organization and projects for local development/testing
 app.post('/api/dev/seed-demo', async (_req, res) => {
   try {
+<<<<<<< HEAD
     if (process.env.NODE_ENV === 'production') {
       return res.status(403).json({ error: 'Seeding demo data is disabled in production' });
     }
@@ -805,6 +807,45 @@ app.post('/api/dev/seed-demo', async (_req, res) => {
       return res.status(500).json({ error: 'Failed to seed demo data' });
     } finally {
       client.release();
+=======
+    // Check multiple sources for organization/workspace context
+    const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
+    const organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organizationId = Number(organization_id);
+    const clientWorkspaceId = client_workspace_id ? Number(client_workspace_id) : null;
+
+    if (!organization_id || Number.isNaN(organizationId)) {
+      return res.status(400).json({ error: 'Organization ID is required' });
+    }
+    if (client_workspace_id && Number.isNaN(clientWorkspaceId)) {
+      return res.status(400).json({ error: 'Client workspace ID must be numeric' });
+    }
+
+    // Import database connection dynamically
+    const dbModule = await import('./db.js');
+    const { pool } = dbModule;
+
+    const { getActiveLicenseForOrganization } = await import('./services/quotaEnforcementService.js');
+    const license = await getActiveLicenseForOrganization(organizationId);
+
+    if (!license) {
+      return res.status(403).json({ error: 'No active license for this organization' });
+    }
+    
+    if (!pool) {
+      // Return empty array if database not available
+      return res.json([]);
+    }
+    
+    // Query projects from database - fetch all for the organization
+    let query = 'SELECT * FROM projects WHERE organization_id = $1';
+    const params: any[] = [organizationId];
+    
+    // Optionally filter by workspace if provided
+    if (clientWorkspaceId) {
+      params.push(clientWorkspaceId);
+      query += ` AND client_workspace_id = $${params.length}`;
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
   } catch (err) {
     console.error('❌ Unexpected error in seed endpoint:', err);
@@ -1424,7 +1465,304 @@ try {
   app.use('/api/export', exportRoutes);
   console.log('✅ Export API routes mounted successfully');
 } catch (error) {
+<<<<<<< HEAD
   console.error('❌ Failed to mount Export routes:', error);
+=======
+  console.error('Failed to mount ForesightAI routes:', error);
+}
+
+// Mount Biotech AI Intelligence RAG routes
+try {
+  const biotechRagRoutes = await import('./routes/biotech-rag.js');
+  app.use('/api/biotech-rag', biotechRagRoutes.default);
+  console.log('✅ Biotech AI Intelligence RAG API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Biotech RAG routes:', error);
+}
+
+// Mount FDA 510(k) routes
+try {
+  const fda510kModule = await import('./routes/fda510k-routes.js');
+  const fda510kRoutes = fda510kModule.default;
+  app.use('/api/fda510k', fda510kRoutes);
+  console.log('✅ FDA 510(k) API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount FDA 510(k) routes:', error);
+}
+
+// Mount Document Orchestration routes for 510(k) auto-population
+try {
+  const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
+  const docOrchestrationRoutes = docOrchestrationModule.default;
+  app.use(docOrchestrationRoutes);
+  console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
+} catch (error) {
+  console.error('❌ Failed to mount Document Orchestration routes:', error);
+}
+
+// Mount ESG Submission routes for FDA Electronic Submission Gateway
+try {
+  const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
+  const esgSubmissionRoutes = esgSubmissionModule.default;
+  app.use(esgSubmissionRoutes);
+  console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
+} catch (error) {
+  console.error('❌ Failed to mount ESG Submission routes:', error);
+}
+
+// Mount Medical Device Management routes
+try {
+  const medicalDeviceModule = await import('./routes/medical-device-routes.js');
+  const medicalDeviceRoutes = medicalDeviceModule.default;
+  app.use('/api/medical-devices', medicalDeviceRoutes);
+  console.log('✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)');
+} catch (error) {
+  console.error('❌ Failed to mount Medical Device routes:', error);
+}
+
+// Mount FDA Integration routes
+try {
+  const fdaIntegrationModule = await import('./routes/fda-integration-simple.js');
+  const fdaIntegrationRoutes = fdaIntegrationModule.default;
+  app.use('/api/fda', fdaIntegrationRoutes);
+  console.log('✅ FDA Integration API routes mounted successfully (ESG-ready)');
+} catch (error) {
+  console.error('❌ Failed to mount FDA Integration routes:', error);
+}
+
+// Mount CER (Clinical Evaluation Report) routes
+try {
+  const cerModule = await import('./routes/cer-routes.js');
+  const cerRoutes = cerModule.default;
+  app.use('/api/cer', cerRoutes);
+  console.log('✅ CER (Clinical Evaluation Report) API routes mounted successfully (MDR/IVDR compliant)');
+} catch (error) {
+  console.error('❌ Failed to mount CER routes:', error);
+}
+
+// CERV2 Unified Document Routes
+try {
+  const cerv2DocumentModule = await import('./routes/cerv2-document-routes.js');
+  const cerv2DocumentRoutes = cerv2DocumentModule.default;
+  app.use('/api/cerv2', cerv2DocumentRoutes);
+  console.log('✅ CERV2 unified document routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 document routes:', error);
+}
+
+// Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
+try {
+  const pubmedModule = await import('./routes/pubmed.js');
+  const pubmedRoutes = pubmedModule.default;
+  app.use('/api/pubmed', pubmedRoutes);
+  console.log('✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)');
+} catch (error) {
+  console.error('❌ Failed to mount PubMed routes:', error);
+}
+
+// Mount Literature Review routes
+try {
+  const literatureReviewModule = await import('./routes/literature-review.js');
+  const literatureReviewRoutes = literatureReviewModule.default;
+  app.use('/api/literature-review', literatureReviewRoutes);
+  console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
+} catch (error) {
+  console.error('❌ Failed to mount Literature Review routes:', error);
+}
+
+// Mount License Management routes
+try {
+  const licenseModule = await import('./routes/license-routes.js');
+  const licenseRoutes = licenseModule.default;
+  app.use('/', licenseRoutes);
+  console.log('✅ License Management API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount License routes:', error);
+}
+
+// Mount stability routes
+try {
+  const stabilityModule = await import('./src/routes/stability.router.js');
+  const stabilityRouter = stabilityModule.default;
+  app.use('/api/stability', stabilityRouter);
+  console.log('✅ Stability API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Stability routes:', error);
+}
+
+// Mount strategy routes
+// Disabled due to missing AI services - import strategyRouter from './src/routes/strategy.router.js';
+// app.use('/api/strategy', strategyRouter);
+
+console.log('✅ Enterprise API routes mounted successfully');
+
+// Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
+try {
+  const supplyChainModule = await import('./routes/supplyChain.routes.js');
+  const createSupplyChainRoutes = supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
+  app.use('/api/supply-chain', createSupplyChainRoutes());
+  console.log('✅ Supply Chain Management API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Supply Chain routes:', error);
+}
+
+// Mount Document Authoring routes with 21 CFR Part 11 compliance
+try {
+  const documentAuthoringModule = await import('./routes/documentAuthoring.routes.js');
+  const documentAuthoringRoutes = documentAuthoringModule.default;
+  app.use('/api/document-authoring', documentAuthoringRoutes);
+  console.log('✅ Document Authoring API routes mounted successfully (21 CFR Part 11 compliant)');
+} catch (error) {
+  console.error('❌ Failed to mount Document Authoring routes:', error);
+}
+
+// Mount eCTD Co-Author routes with database persistence
+try {
+  const coauthorModule = await import('./routes/coauthor.js');
+  const coauthorRoutes = coauthorModule.default;
+  app.use('/api/coauthor', coauthorRoutes);
+  console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Co-Author routes:', error);
+}
+
+// Mount eCTD Document Management routes with version control
+try {
+  const ectdDocumentsModule = await import('./routes/ectd-documents.js');
+  const ectdDocumentsRoutes = ectdDocumentsModule.default;
+  app.use('/api/ectd-documents', ectdDocumentsRoutes);
+  console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Documents routes:', error);
+}
+
+// Mount Document Data Center routes (integrated vault + 3-axis tagging for 510(k) file management)
+try {
+  const documentDataCenterModule = await import('./routes/document-data-center.js');
+  const documentDataCenterRoutes = documentDataCenterModule.default;
+  app.use('/api/device-data-center', documentDataCenterRoutes);
+  console.log('✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)');
+} catch (error) {
+  console.error('❌ Failed to mount Document Data Center routes:', error);
+}
+
+// Mount Data Room API routes
+try {
+  const evidenceModule = await import('./routes/evidence.js');
+  const evidenceRoutes = evidenceModule.default;
+  app.use('/api/evidence', evidenceRoutes);
+  console.log('✅ Evidence Management API routes mounted successfully (Data Room evidence search)');
+} catch (error) {
+  console.error('❌ Failed to mount Evidence routes:', error);
+}
+
+try {
+  const contentPlanModule = await import('./routes/content-plan.js');
+  const contentPlanRoutes = contentPlanModule.default;
+  app.use('/api/content-plan', contentPlanRoutes);
+  console.log('✅ Content Plan API routes mounted successfully (section tracking & evidence linking)');
+} catch (error) {
+  console.error('❌ Failed to mount Content Plan routes:', error);
+}
+
+try {
+  const smartBlocksModule = await import('./routes/smart-blocks.js');
+  const smartBlocksRoutes = smartBlocksModule.default;
+  app.use('/api/smart-blocks', smartBlocksRoutes);
+  console.log('✅ Smart Blocks API routes mounted successfully (auto-populated content)');
+} catch (error) {
+  console.error('❌ Failed to mount Smart Blocks routes:', error);
+}
+
+// Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
+try {
+  const evidenceManagementModule = await import('./routes/evidence-management.routes.js');
+  const evidenceManagementRoutes = evidenceManagementModule.default;
+  app.use('/api/evidence-management', evidenceManagementRoutes);
+  console.log('✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)');
+} catch (error) {
+  console.error('❌ Failed to mount Evidence Management routes:', error);
+}
+
+// Mount Demo Seed routes (for creating demo projects)
+try {
+  const seedDemoModule = await import('./routes/seed-demo.js');
+  const seedDemoRoutes = seedDemoModule.default;
+  app.use('/api/demo', seedDemoRoutes);
+  console.log('✅ Demo seeding API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Demo seed routes:', error);
+}
+
+// Mount Collaboration Center routes for 510(k) activity tracking
+try {
+  const collaborationModule = await import('./routes/collaboration.js');
+  const collaborationRoutes = collaborationModule.default;
+  app.use('/api/collaboration', collaborationRoutes);
+  console.log('✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)');
+} catch (error) {
+  console.error('❌ Failed to mount Collaboration Center routes:', error);
+}
+
+// Mount CERV2 Sections routes for 510(k) section management
+try {
+  const cerv2SectionsModule = await import('./routes/cerv2-sections.js');
+  const cerv2SectionsRoutes = cerv2SectionsModule.default;
+  app.use('/api/cerv2-sections', cerv2SectionsRoutes);
+  console.log('✅ CERV2 Sections API routes mounted successfully (510(k) section tree navigation)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 Sections routes:', error);
+}
+
+// Mount CERV2 Versions routes for version tracking and multi-section editing
+try {
+  const cerv2VersionsModule = await import('./routes/cerv2-versions.js');
+  const cerv2VersionsRoutes = cerv2VersionsModule.default;
+  app.use('/api/cerv2-versions', cerv2VersionsRoutes);
+  console.log('✅ CERV2 Versions API routes mounted successfully (version history & sessions)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 Versions routes:', error);
+}
+
+// Mount Content Atoms API routes
+try {
+  const atomsModule = await import('./routes/atoms.js');
+  const atomsRoutes = atomsModule.default;
+  app.use('/api/atoms', atomsRoutes);
+  console.log('✅ Content Atoms API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Atoms routes:', error);
+}
+
+// Mount Lumen Cortex Intelligence routes
+try {
+  const lumenCortexModule = await import('./routes/lumen-cortex');
+  const lumenCortexRoutes = lumenCortexModule.default;
+  app.use('/api/lumen-cortex', lumenCortexRoutes);
+  console.log('✅ Lumen Cortex routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+}
+
+// Mount Workflow API routes
+try {
+  const workflowModule = await import('./routes/workflow.js');
+  const workflowRoutes = workflowModule.default;
+  app.use('/api/workflow', workflowRoutes);
+  console.log('✅ Workflow API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Workflow routes:', error);
+}
+
+// Mount AI Drafting API routes
+try {
+  const draftingModule = await import('./routes/drafting.js');
+  const draftingRoutes = draftingModule.default;
+  app.use('/api/v1/drafting', draftingRoutes);
+  console.log('✅ AI Drafting API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount AI Drafting routes:', error);
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 }
 
 // Mount Unified Document Management System routes
@@ -1440,6 +1778,9 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Document Management routes:', error);
 }
+
+// Mount auto-vault integration routes
+app.use('/api/vault-auto', vaultAutoRoutes);
 
 // Serve uploaded SOPs
 const UPDIR = '/tmp/uploads';
@@ -3659,18 +4000,6 @@ app.get('/api/templates', async (req: Request, res: Response) => {
       success: false,
       error: 'Failed to fetch templates',
     });
-  }
-});
-
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
   }
 });
 

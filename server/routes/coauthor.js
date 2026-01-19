@@ -54,8 +54,29 @@ import {
 import ectdAuditService from '../services/ectdAuditService.js';
 import controlledVocabularyService from '../services/controlledVocabularyService.js';
 import globalChangeManagementService from '../services/globalChangeManagementService.js';
+import {
+  demoDocumentsResponse,
+  demoModuleTreeResponse,
+  demoValidationResponse
+} from '../data/coauthorDemoData.js';
 
 const router = express.Router();
+const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
+
+const requireOrganizationId = (req, res) => {
+  const rawOrgId = req.headers['x-organization-id'];
+  const organizationId = rawOrgId ? parseInt(rawOrgId, 10) : NaN;
+
+  if (!organizationId) {
+    res.status(400).json({
+      error: 'Organization context is required.',
+      details: 'Provide X-Organization-Id header.'
+    });
+    return null;
+  }
+
+  return organizationId;
+};
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -1608,7 +1629,12 @@ router.post('/documents/:id/route', async (req, res) => {
  */
 router.get('/documents', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id']) || 1;
+    if (isDemoMode) {
+      return res.json(demoDocumentsResponse);
+    }
+
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const { module, status, limit = 50, offset = 0 } = req.query;
 
     // Build query
@@ -2863,10 +2889,28 @@ router.get('/validate/latest/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
 
+    if (isDemoMode) {
+      return res.json({
+        ...demoValidationResponse,
+        validation: {
+          ...demoValidationResponse.validation,
+          documentId: parseInt(documentId, 10)
+        }
+      });
+    }
+
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
+
     const [latest] = await db
       .select()
       .from(coauthorValidationHistory)
-      .where(eq(coauthorValidationHistory.documentId, parseInt(documentId)))
+      .where(
+        and(
+          eq(coauthorValidationHistory.documentId, parseInt(documentId)),
+          eq(coauthorValidationHistory.organizationId, organizationId)
+        )
+      )
       .orderBy(desc(coauthorValidationHistory.performedAt))
       .limit(1);
 
@@ -6964,7 +7008,12 @@ router.post('/modules/:moduleId/documents', async (req, res) => {
  */
 router.get('/ectd-modules/tree-with-counts', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id']) || req.query.organizationId || 6;
+    if (isDemoMode) {
+      return res.json(demoModuleTreeResponse);
+    }
+
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     
     // Get all modules
     const modules = await db

@@ -12436,3 +12436,74 @@ export type InsertFda510kDataMapping = z.infer<typeof insertFda510kDataMappingSc
 // CER (CLINICAL EVALUATION REPORTS) - MDR/IVDR COMPLIANT
 // ============================================================================
 
+// ============================================================================
+// LUMEN CORTEX INTELLIGENCE CORE
+// ============================================================================
+
+export const lumenFilingDocuments = pgTable('lumen_filing_documents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  source: text('source').notNull(), // SEC, FDA, EMA, etc.
+  cik: text('cik').notNull(),
+  accessionNo: text('accession_no').notNull(),
+  filingDate: date('filing_date'),
+  reportYear: integer('report_year'),
+  companyName: text('company_name'),
+  formType: text('form_type').notNull(),
+  primaryDocument: text('primary_document'),
+  filingUrl: text('filing_url'),
+  content: text('content'),
+  extractedSignals: json('extracted_signals'),
+  rejectionSignals: json('rejection_signals'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  lumenFilingUniqueIdx: uniqueIndex('lumen_filing_unique_idx')
+    .on(table.organizationId, table.source, table.accessionNo),
+  lumenFilingOrgIdx: index('lumen_filing_org_idx').on(table.organizationId),
+  lumenFilingDateIdx: index('lumen_filing_date_idx').on(table.filingDate),
+}));
+
+export const lumenDataAtoms = pgTable('lumen_data_atoms', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  sourceType: text('source_type').notNull(), // csr, 10k, regulatory, device
+  sourceId: text('source_id'),
+  atomType: text('atom_type').notNull(), // rejection_reason, endpoint, safety_signal
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  structuredData: json('structured_data'),
+  tags: text('tags').array(),
+  confidence: real('confidence').default(0.7).notNull(),
+  status: text('status').default('active').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  lumenAtomOrgIdx: index('lumen_atom_org_idx').on(table.organizationId),
+  lumenAtomTypeIdx: index('lumen_atom_type_idx').on(table.atomType),
+  lumenAtomSourceIdx: index('lumen_atom_source_idx').on(table.sourceType, table.sourceId),
+}));
+
+export const lumenObservationTerms = pgTable('lumen_observation_terms', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  term: text('term').notNull(),
+  termType: text('term_type').default('objective').notNull(), // subjective/objective/mixed
+  category: text('category'),
+  sourceType: text('source_type').notNull(), // csr, 10k, regulatory
+  sourceId: text('source_id'),
+  weight: real('weight').default(1).notNull(),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  lumenTermOrgIdx: index('lumen_term_org_idx').on(table.organizationId),
+  lumenTermIdx: index('lumen_term_idx').on(table.term),
+  lumenTermSourceIdx: index('lumen_term_source_idx').on(table.sourceType, table.sourceId),
+}));

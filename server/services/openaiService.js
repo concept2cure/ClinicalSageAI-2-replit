@@ -1,7 +1,10 @@
 import OpenAI from 'openai';
 
+const KIMI_BASE_URL = process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1';
+
 class OpenAIService {
   constructor() {
+<<<<<<< HEAD
     // NOTE: env vars may be loaded after imports in server/index.ts.
     // Keep initialization lazy so availability reflects runtime env.
     this.isAvailable = false;
@@ -20,11 +23,23 @@ class OpenAIService {
   async analyzeRegulatoryDocument(text, documentType = 'CMC') {
     if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
+=======
+    this.client = new OpenAI({
+      apiKey: process.env.KIMI_API_KEY,
+      baseURL: KIMI_BASE_URL,
+    });
+    this.isAvailable = !!process.env.KIMI_API_KEY;
+  }
+
+  async analyzeRegulatoryDocument(text, documentType = 'CMC') {
+    if (!this.isAvailable) {
+      throw new Error('Kimi AI API key not available');
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
 
     try {
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4o', // Latest OpenAI model
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: [
           {
             role: 'system',
@@ -53,19 +68,24 @@ class OpenAIService {
 
       return JSON.parse(response.choices[0].message.content);
     } catch (error) {
-      console.error('OpenAI analysis error:', error);
+      console.error('Kimi AI analysis error:', error);
       throw error;
     }
   }
 
   async generateRegulatoryContent(prompt, documentType = 'CMC', requirements = {}) {
+<<<<<<< HEAD
     if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
+=======
+    if (!this.isAvailable) {
+      throw new Error('Kimi AI API key not available');
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
 
     try {
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4o',
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: [
           {
             role: 'system',
@@ -84,19 +104,24 @@ class OpenAIService {
 
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('OpenAI content generation error:', error);
+      console.error('Kimi AI content generation error:', error);
       throw error;
     }
   }
 
   async enhanceRegulatoryText(text, improvements = []) {
+<<<<<<< HEAD
     if (!this.ensureClient()) {
       throw new Error('OpenAI API key not available');
+=======
+    if (!this.isAvailable) {
+      throw new Error('Kimi AI API key not available');
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
     }
 
     try {
       const response = await this.client.chat.completions.create({
-        model: 'gpt-4o',
+        model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: [
           {
             role: 'system',
@@ -114,7 +139,7 @@ class OpenAIService {
 
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('OpenAI text enhancement error:', error);
+      console.error('Kimi AI text enhancement error:', error);
       throw error;
     }
   }

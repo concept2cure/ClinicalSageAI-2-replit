@@ -8,6 +8,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import dotenv from 'dotenv';
+import { getSslConfig } from './ssl';
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +26,7 @@ const client = postgres(dbUrl, {
   max: 10, // Maximum number of connections
   idle_timeout: 30, // Connection timeout in seconds
   max_lifetime: 60 * 30, // Maximum connection lifetime in seconds
-  ssl: dbUrl.includes('postgres://') ? { rejectUnauthorized: false } : false,
+  ssl: getSslConfig(dbUrl),
 });
 
 // Create a Drizzle ORM instance

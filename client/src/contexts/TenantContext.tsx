@@ -181,13 +181,9 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           // Found saved organization
         }
 
-        // If no saved organization or saved org not found, auto-select Biotech Innovations
-        // to access real pharmaceutical data
+        // If no saved organization or saved org not found, auto-select the first available organization
         if (!selectedOrg && orgData.length > 0) {
-          // No saved organization - auto-selecting for CMC data access
-          // Auto-select Biotech Innovations (ID: 7) which contains the Pembrolizumab project
-          selectedOrg = orgData.find(o => o.id === 7 || o.id === '7') || orgData[0];
-          // Auto-selected organization
+          selectedOrg = orgData[0];
         }
 
         if (selectedOrg) {

@@ -1,0 +1,155 @@
+{
+  "seed_version": "2026-01-17",
+  "purpose": "Demo tenant seed for Orthofix Medical Inc. (public data)",
+  "metadata": {
+    "record_tags": [
+      "demo",
+      "public-data",
+      "seed-kit",
+      "medical-device"
+    ],
+    "data_quality": {
+      "notes": [
+        "All non-public PII is intentionally left as an environment-substituted placeholder.",
+        "Records are based on public company information and device portfolio summaries."
+      ]
+    },
+    "sources": [
+      {
+        "label": "Company website (home)",
+        "url": "https://www.orthofix.com/"
+      },
+      {
+        "label": "Company products page",
+        "url": "https://www.orthofix.com/products/"
+      },
+      {
+        "label": "Company investor relations",
+        "url": "https://ir.orthofix.com/"
+      }
+    ]
+  },
+  "client": {
+    "slug": "orthofix",
+    "display_name": "Orthofix",
+    "legal_name": "Orthofix Medical Inc.",
+    "website": "https://www.orthofix.com",
+    "primary_domain": "orthofix.com",
+    "industry": "Medical Devices",
+    "description": "Orthofix is a global medical device company focused on spine and orthopedic solutions, including biologics, hardware, and orthobiologics/regen products.",
+    "headquarters": {
+      "city": "Lewisville",
+      "state": "TX",
+      "country": "US"
+    },
+    "preferred_time_zone": "America/Chicago",
+    "account": {
+      "environment": "demo",
+      "status": "active",
+      "plan": "demo-enterprise",
+      "seats_purchased": 5,
+      "seats_assigned": 1,
+      "billing": {
+        "billing_status": "not_applicable_demo",
+        "currency": "USD"
+      }
+    }
+  },
+  "users": [
+    {
+      "external_key": "orthofix-demo-admin",
+      "first_name": "Demo",
+      "last_name": "Admin",
+      "title": "Program Manager",
+      "email": "${PRIMARY_USER_EMAIL}",
+      "role": "client_admin",
+      "license": {
+        "type": "full",
+        "status": "active"
+      },
+      "preferences": {
+        "timezone": "America/Chicago",
+        "send_invite_email": false
+      },
+      "notes": [
+        "Email is injected from PRIMARY_USER_EMAIL. Use a demo alias unless you have explicit permission."
+      ]
+    }
+  ],
+  "onboarding": {
+    "stage": "completed",
+    "completed_at": "2026-01-17",
+    "checklist": [
+      {
+        "key": "company_profile",
+        "label": "Company profile completed",
+        "status": "done"
+      },
+      {
+        "key": "primary_user_added",
+        "label": "Primary user added and licensed",
+        "status": "done"
+      },
+      {
+        "key": "pipeline_seeded",
+        "label": "Pipeline seeded (products, studies, documents)",
+        "status": "done"
+      },
+      {
+        "key": "integrations",
+        "label": "Integrations",
+        "status": "skipped",
+        "notes": "Demo tenant: no production integrations."
+      },
+      {
+        "key": "security_review",
+        "label": "Security review",
+        "status": "skipped",
+        "notes": "Demo tenant: contains only public data."
+      }
+    ]
+  },
+  "indications": [
+    {
+      "code": "SPINE",
+      "name": "Spine"
+    },
+    {
+      "code": "ORTHOPEDICS",
+      "name": "Orthopedics"
+    },
+    {
+      "code": "BONE_HEALING",
+      "name": "Bone healing / regeneration"
+    }
+  ],
+  "programs": [
+    {
+      "code": "SPINE-FIXATION",
+      "name": "Spine fixation systems",
+      "indication_code": "SPINE",
+      "modality": "Implant hardware",
+      "stage": "Commercial",
+      "summary": "Spinal fixation systems and instrumentation used for stabilization and fusion procedures.",
+      "studies": []
+    },
+    {
+      "code": "BONE_GRAFT",
+      "name": "Bone graft and orthobiologics",
+      "indication_code": "BONE_HEALING",
+      "modality": "Biologic / graft materials",
+      "stage": "Commercial",
+      "summary": "Orthobiologics and bone grafting solutions designed to support fusion and bone regeneration.",
+      "studies": []
+    },
+    {
+      "code": "ORTHO_FIXATION",
+      "name": "Orthopedic fixation",
+      "indication_code": "ORTHOPEDICS",
+      "modality": "Implant hardware",
+      "stage": "Commercial",
+      "summary": "Orthopedic fixation systems for trauma and deformity correction applications.",
+      "studies": []
+    }
+  ]
+}

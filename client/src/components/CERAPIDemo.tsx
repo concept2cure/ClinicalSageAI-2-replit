@@ -20,6 +20,7 @@ import {
   LineChart, 
   Line
 } from 'recharts';
+import VaultMetadataPanel from './VaultMetadataPanel';
 
 // Types for API responses and component props
 type AdverseEvent = {
@@ -347,6 +348,7 @@ const CERAPIDemo: React.FC = () => {
   
   // Data state
   const [responseData, setResponseData] = useState<any>(null);
+  const [vaultDocumentId, setVaultDocumentId] = useState<string | number | null>(null);
   const [visualizationData, setVisualizationData] = useState<VisualizationData>({
     adverseEvents: [
       { name: 'Headache', count: 87 },
@@ -490,6 +492,13 @@ const CERAPIDemo: React.FC = () => {
       const data = await response.json();
       setResponseData(data);
       setDownloadReady(true);
+      setVaultDocumentId(
+        data?.vaultDocumentId ||
+          data?.vault_document_id ||
+          data?.data?.vaultDocumentId ||
+          data?.data?.vault_document_id ||
+          null
+      );
       
       // Process API response data for visualization
       try {
@@ -965,6 +974,27 @@ const CERAPIDemo: React.FC = () => {
                     {JSON.stringify(responseData, null, 2)}
                   </pre>
                 </div>
+              </motion.div>
+            )}
+
+            {vaultDocumentId && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
+                <VaultMetadataPanel
+                  documentId={vaultDocumentId}
+                  programId={
+                    responseData?.programId ||
+                    responseData?.data?.programId ||
+                    ndcCode ||
+                    deviceCode ||
+                    multiSourceCodes?.split(',')[0]?.trim() ||
+                    'cer-demo'
+                  }
+                />
               </motion.div>
             )}
           </AnimatePresence>

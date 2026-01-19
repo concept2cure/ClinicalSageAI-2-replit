@@ -20,9 +20,11 @@ import { authMiddleware, requireAdminRole, requireSuperAdminRole } from '../auth
 import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
+import { demoTenants } from '../data/demoTenantData.js';
 
 const logger = createScopedLogger('tenant-api');
 const router = Router();
+const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
 
 const demoTenants = [
   {
@@ -111,9 +113,57 @@ const updateTenantSchema = createTenantSchema.partial();
  */
 router.get('/', async (req, res) => {
   try {
+<<<<<<< HEAD
     // Dev/demo: always return seeded tenants so the UI can function without manual setup.
     // NOTE: This is intentionally unauthenticated in development only.
     if (process.env.NODE_ENV === 'development') return res.json(demoTenants);
+=======
+    if (isDemoMode) {
+      return res.json(demoTenants);
+    }
+
+    // For development, return mock data
+    if (process.env.NODE_ENV === 'development') {
+      return res.json([
+        {
+          id: 1,
+          name: 'Acme Medical Devices',
+          slug: 'acme-medical',
+          domain: 'acme-medical.example.com',
+          logo: null,
+          tier: 'professional',
+          maxUsers: 10,
+          maxProjects: 20,
+          maxStorage: 50,
+          status: 'active',
+        },
+        {
+          id: 2,
+          name: 'BioTech Solutions',
+          slug: 'biotech',
+          domain: null,
+          logo: null,
+          tier: 'enterprise',
+          maxUsers: 50,
+          maxProjects: 100,
+          maxStorage: 200,
+          status: 'active',
+        },
+        {
+          id: 3,
+          name: 'MedSoft Research',
+          slug: 'medsoft',
+          domain: 'research.medsoft.com',
+          logo: null,
+          tier: 'standard',
+          maxUsers: 5,
+          maxProjects: 10,
+          maxStorage: 5,
+          status: 'active',
+        },
+      ]);
+    }
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
     // If user is super admin, get all tenants
     if (req.userRole === 'super_admin') {

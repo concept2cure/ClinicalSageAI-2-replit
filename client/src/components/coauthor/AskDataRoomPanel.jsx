@@ -40,7 +40,7 @@ export default function AskDataRoomPanel({
   const [aiResponse, setAiResponse] = useState(null);
   const { toast } = useToast();
 
-  const organizationId = localStorage.getItem('currentOrganizationId') || '7';
+  const organizationId = localStorage.getItem('currentOrganizationId');
   const projectId = localStorage.getItem('currentProjectId');
 
   // Fetch Data Room documents/evidence
@@ -53,7 +53,7 @@ export default function AskDataRoomPanel({
       if (!response.ok) throw new Error('Failed to fetch Data Room items');
       return response.json();
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organizationId,
   });
 
   // Search Data Room mutation

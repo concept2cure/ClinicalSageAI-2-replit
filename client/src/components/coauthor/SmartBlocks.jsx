@@ -249,7 +249,7 @@ export default function SmartBlocks({
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const organizationId = localStorage.getItem('currentOrganizationId') || '7';
+  const organizationId = localStorage.getItem('currentOrganizationId');
   const projectId = localStorage.getItem('currentProjectId');
 
   // Filter templates based on category and search

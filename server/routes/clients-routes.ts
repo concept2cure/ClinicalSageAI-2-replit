@@ -8,10 +8,16 @@ import {
   projects,
   projectModules,
 } from '@shared/schema';
+<<<<<<< HEAD
 import { eq, and, sql } from 'drizzle-orm';
+=======
+import { eq, and } from 'drizzle-orm';
+import { demoClientsByOrg } from '../data/demoTenantData.js';
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 // Create a new router for client endpoints
 const router = Router();
+const isDemoMode = ['true', '1', 'yes'].includes(String(process.env.DEMO_MODE).toLowerCase());
 
 const isDbUnavailable = (error: unknown) => {
   const anyErr: any = error;
@@ -129,6 +135,14 @@ router.get('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Organization ID is required',
+      });
+    }
+
+    if (isDemoMode) {
+      const demoClients = demoClientsByOrg[String(organizationId)] || [];
+      return res.json({
+        success: true,
+        clients: demoClients,
       });
     }
 

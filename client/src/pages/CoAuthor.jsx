@@ -40,7 +40,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import NavigationBanner from '../components/common/NavigationBanner';
+<<<<<<< HEAD
 import EnhancedDocumentEditor from '../components/ectd/EnhancedDocumentEditor';
+=======
+import CommitmentIntelligenceHub from '../components/CommitmentIntelligenceHub';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTenantContext } from '@/contexts/TenantContext';
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
 
 // TipTap editor imports 
 // (These will be used once packages are installed, include them now for preparation)
@@ -228,6 +235,393 @@ export default function CoAuthor() {
   const [selectedContentAtom, setSelectedContentAtom] = useState(null);
   const [atomRegionFilter, setAtomRegionFilter] = useState('US');
   
+<<<<<<< HEAD
+=======
+  const { currentOrganization } = useTenantContext();
+  const currentOrganizationId = useMemo(() => {
+    if (!currentOrganization?.id) {
+      return null;
+    }
+    return String(currentOrganization.id);
+  }, [currentOrganization]);
+  
+  // Enhanced UI state for workflow panels
+  const [expandedWorkflowPhases, setExpandedWorkflowPhases] = useState({
+    author: true,
+    analyze: true,
+    collaborate: true,
+    package: true
+  });
+  const [activePhase, setActivePhase] = useState('author');
+  
+  // Module expansion state for sidebar navigation
+  const [moduleExpanded, setModuleExpanded] = useState({
+    module1: true,
+    module2: true,
+    module2_3: false, // Nested expansion for Module 2.3 subsections
+    module3: false,
+    module4: false,
+    module5: false,
+    protocols: false, // Study protocols expansion
+    amendments: false // Protocol amendments expansion
+  });
+  
+  // Fetch eCTD module tree from database with document counts
+  const { data: ectdModulesData, isLoading: isLoadingModules, error: modulesError, refetch: refetchModules } = useQuery({
+    queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganizationId }],
+    enabled: !!currentOrganizationId,
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    queryFn: async () => {
+      if (!currentOrganizationId) {
+        throw new Error('Organization context is required to load modules.');
+      }
+      const response = await fetch(`/api/coauthor/ectd-modules/tree-with-counts?organizationId=${currentOrganizationId}`, {
+        headers: {
+          'X-Organization-Id': currentOrganizationId
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch eCTD modules');
+      return response.json();
+    }
+  });
+
+  // Transform database tree structure to navigation format
+  const ectdNavigationTree = useMemo(() => {
+    if (!ectdModulesData?.tree) {
+      // Fallback to static structure if database fetch fails
+      return transformEctdToNavigation(ectdValidator.ectdStructure);
+    }
+
+    // Transform database format to navigation format - maintains 6-level hierarchy
+    // Ensures all nested levels use "sections" property for consistent UI rendering
+    const transformDbTreeToNav = (dbModules) => {
+      const transformModule = (module) => {
+        const transformed = {
+          id: module.moduleNumber,
+          title: module.moduleName,
+          folderPath: module.moduleNumber.replace(/\./g, '/'),
+          status: module.status || 'pending',
+          hasTemplate: false,
+          isLeaf: module.isLeaf,
+          documentCount: module.documentCount || 0,
+          moduleId: module.id,
+          sections: []
+        };
+        
+        // Recursively transform ALL children as "sections" to maintain nested structure
+        // This ensures renderSection can recursively render the full 6-level hierarchy
+        if (module.children && module.children.length > 0) {
+          transformed.sections = module.children.map(transformModule);
+        }
+        
+        return transformed;
+      };
+      
+      return dbModules.map(dbModule => ({
+        id: `module${dbModule.moduleNumber}`,
+        key: `m${dbModule.moduleNumber}`,
+        title: dbModule.moduleName,
+        folderPath: dbModule.moduleNumber,
+        sections: (dbModule.children || []).map(transformModule),
+        isExpanded: false,
+        status: dbModule.status || 'in-progress',
+        progress: 0,
+        documentCount: dbModule.documentCount || 0,
+        moduleId: dbModule.id
+      }));
+    };
+
+    return transformDbTreeToNav(ectdModulesData.tree);
+  }, [ectdModulesData]);
+  
+  // eCTD integration state for new components
+  const [selectedEctdTemplate, setSelectedEctdTemplate] = useState(null);
+  const [selectedEctdFiles, setSelectedEctdFiles] = useState([]);
+  const [workflowStep, setWorkflowStep] = useState(1); // 1-4 for workflow guide
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showFileBrowser, setShowFileBrowser] = useState(false);
+  const [showDocumentsPanel, setShowDocumentsPanel] = useState(true);
+  
+  // Bulk operation mode state (moved here to fix temporal dead zone)
+  const [bulkOperationMode, setBulkOperationMode] = useState(false);
+  
+  // Advanced IND Tree Features state (moved here to fix temporal dead zone)
+  const [moduleStatuses, setModuleStatuses] = useState({});
+  const [lastModifiedTimes, setLastModifiedTimes] = useState({});
+  const [documentAssignees, setDocumentAssignees] = useState({});
+  const [priorityFlags, setPriorityFlags] = useState({});
+  const [sectionExpanded, setSectionExpanded] = useState({});
+  
+  // Handle document selection from tree navigation (moved before renderSection to avoid temporal dead zone)
+  const handleDocumentSelect = async (sectionId, sectionTitle) => {
+    try {
+      // Check if document is already open in a tab
+      const existingTabIndex = openDocuments.findIndex(doc => doc.sectionId === sectionId);
+      if (existingTabIndex !== -1) {
+        // Document already open, switch to that tab
+        setActiveTabIndex(existingTabIndex);
+        toast({
+          title: "Document Already Open",
+          description: `Switched to ${sectionTitle} tab`,
+          duration: 2000,
+        });
+        return;
+      }
+
+      // Check if document exists or create from template
+      const organizationId = currentOrganizationId;
+      if (!organizationId) {
+        toast({
+          title: "Organization required",
+          description: "Select an organization to load documents.",
+          variant: "destructive"
+        });
+        return;
+      }
+      const response = await fetch(`/api/coauthor/documents/section/${sectionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Organization-Id': String(organizationId)
+        },
+      });
+
+      let newDocument;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.document) {
+          // Document exists, load it from database
+          newDocument = {
+            id: data.document.id,
+            title: `${sectionId} ${sectionTitle}`,
+            module: `Module ${sectionId.split('.')[0]}`,
+            lastEdited: data.document.updatedAt || 'Recently',
+            status: data.document.status || 'draft',
+            content: data.document.content || '',
+            sectionId: sectionId,
+            ectdModuleId: data.module.id,
+            moduleNumber: data.module.moduleNumber,
+            moduleName: data.module.moduleName,
+            saveStatus: 'saved',
+            scrollPosition: 0,
+            cursorPosition: 0
+          };
+          toast({
+            title: "Document Loaded",
+            description: `Loaded ${sectionTitle} for editing`,
+            duration: 3000,
+          });
+        } else {
+          // Document doesn't exist, offer to create from template
+          newDocument = await createDocumentFromTemplate(sectionId, sectionTitle);
+        }
+      } else {
+        // Create new document from template
+        newDocument = await createDocumentFromTemplate(sectionId, sectionTitle);
+      }
+      
+      // CRITICAL: Generate UDI tracking for Component-Centric Management System (CCMS)
+      // This enables component reuse and tracking across eCTD documents
+      if (newDocument) {
+        try {
+          const componentData = {
+            documentId: newDocument.id,
+            sectionId: sectionId,
+            title: `${sectionId} ${sectionTitle}`,
+            content: newDocument.content,
+            type: 'ectd-section',
+            metadata: {
+              module: newDocument.module,
+              status: newDocument.status,
+              udi: `UDI-${sectionId}-${Date.now()}` // Generate unique UDI for tracking
+            }
+          };
+          
+          // Call CCMS ingestion API to register component with UDI
+          const ingestResponse = await fetch('/api/coauthor/components/ingest', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(organizationId ? { 'x-organization-id': organizationId } : {})
+            },
+            body: JSON.stringify(componentData)
+          });
+          
+          if (ingestResponse.ok) {
+            const result = await ingestResponse.json();
+            console.log(`✅ UDI tracking enabled for section ${sectionId}:`, result.udi);
+            newDocument.udi = result.udi; // Store UDI with document
+          }
+        } catch (udiError) {
+          console.warn('UDI tracking not available, continuing without it:', udiError);
+          // Continue without UDI tracking - not blocking
+        }
+      }
+      
+      // Add document to open tabs
+      if (newDocument) {
+        setOpenDocuments(prev => [...prev, newDocument]);
+        setActiveTabIndex(openDocuments.length); // Switch to the new tab
+      }
+    } catch (error) {
+      console.error('Error selecting document:', error);
+      // For now, just create a mock document
+      const newDocument = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: `${sectionId} ${sectionTitle}`,
+        module: `Module ${sectionId.split('.')[0]}`,
+        lastEdited: 'Just now',
+        status: 'Draft',
+        content: getTemplateForSection(sectionId, sectionTitle),
+        sectionId: sectionId,
+        saveStatus: 'saved',
+        scrollPosition: 0,
+        cursorPosition: 0
+      };
+      
+      setOpenDocuments(prev => [...prev, newDocument]);
+      setActiveTabIndex(openDocuments.length);
+      
+      toast({
+        title: "Document Opened",
+        description: `Opened ${sectionTitle} for editing`,
+        duration: 3000,
+      });
+    }
+  };
+  
+  // Recursive function to render sections with nested children
+  const renderSection = useCallback((section, depth = 0) => {
+    const hasChildren = section.sections && section.sections.length > 0;
+    const paddingLeft = `${depth * 12}px`;
+    const isExpanded = sectionExpanded[section.id] || false;
+    
+    return (
+      <div key={section.id} style={{ marginLeft: paddingLeft }}>
+        <button 
+          className="w-full flex items-center justify-between text-sm py-1.5 px-2 hover:bg-blue-50 rounded-md transition-colors"
+          onClick={(e) => {
+            if (hasChildren && e.target.closest('.expand-toggle')) {
+              setSectionExpanded(prev => ({...prev, [section.id]: !prev[section.id]}));
+            } else {
+              handleDocumentSelect(section.id, section.title);
+            }
+          }}
+        >
+          <div className="flex items-center gap-2 flex-1">
+            {hasChildren && (
+              <ChevronRight 
+                className={`h-3 w-3 text-slate-400 transition-transform expand-toggle cursor-pointer ${isExpanded ? 'rotate-90' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSectionExpanded(prev => ({...prev, [section.id]: !prev[section.id]}));
+                }}
+              />
+            )}
+            {bulkOperationMode && (
+              <input 
+                type="checkbox"
+                className="rounded border-slate-300"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <span className={`text-xs ${selectedDocument === section.id ? 'text-blue-600 font-semibold' : 'text-slate-700'}`}>
+              {section.title}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {section.documentCount > 0 && (
+              <Badge variant="outline" className="h-4 text-[9px]">{section.documentCount}</Badge>
+            )}
+            {section.hasTemplate && (
+              <Badge variant="outline" className="h-4 text-[9px]">Template</Badge>
+            )}
+            <CheckCircle className={`h-3 w-3 ${section.status === 'completed' ? 'text-green-500' : 'text-gray-300'}`} />
+          </div>
+        </button>
+        {hasChildren && isExpanded && (
+          <div className="mt-1 space-y-1">
+            {section.sections.map(childSection => renderSection(childSection, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  }, [bulkOperationMode, selectedDocument, handleDocumentSelect, sectionExpanded]);
+  
+  // Function to render dynamic navigation tree from ectdStructure
+  const renderEctdNavigationModule = useCallback((module) => {
+    const isExpanded = moduleExpanded[module.id];
+    const statusColors = {
+      'approved': 'bg-green-100 text-green-700',
+      'under-review': 'bg-amber-100 text-amber-700',
+      'in-progress': 'bg-blue-100 text-blue-700',
+      'pending': 'bg-slate-100 text-slate-600'
+    };
+    
+    return (
+      <div key={module.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-2">
+        <button 
+          className="w-full flex items-center justify-between px-3 py-2.5 bg-gradient-to-r from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-colors"
+          onClick={() => setModuleExpanded(prev => ({...prev, [module.id]: !prev[module.id]}))}
+        >
+          <div className="flex items-center space-x-3 flex-1">
+            {bulkOperationMode && (
+              <input type="checkbox" className="rounded border-slate-300" />
+            )}
+            <div className="h-2 w-2 bg-blue-500 rounded-full" />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm text-slate-800">{module.title}</span>
+                {priorityFlags[module.id] === 'critical' && (
+                  <Badge className="h-4 bg-red-100 text-red-700 border-0 text-[10px]">Critical</Badge>
+                )}
+                <Badge variant="outline" className="h-4 text-[10px]">
+                  {module.documentCount || module.sections.length} docs
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <Progress value={module.progress || 0} className="h-1.5 flex-1" />
+                <span className="text-[10px] text-slate-500">{module.progress || 0}%</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-1">
+                {documentAssignees[module.id]?.slice(0, 3).map((assignee, idx) => (
+                  <div key={idx} className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center">
+                    <span className="text-[8px] text-white font-semibold">{assignee.initials}</span>
+                  </div>
+                ))}
+                {documentAssignees[module.id]?.length > 3 && (
+                  <div className="w-6 h-6 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center">
+                    <span className="text-[8px] text-slate-700">+{documentAssignees[module.id].length - 3}</span>
+                  </div>
+                )}
+              </div>
+              
+              <span className="text-[10px] text-slate-500">
+                {lastModifiedTimes[module.id] || '2 hours ago'}
+              </span>
+              
+              <Badge className={`h-5 text-[10px] ${statusColors[moduleStatuses[module.id]] || statusColors['pending']} border-0`}>
+                {moduleStatuses[module.id] || 'Pending'}
+              </Badge>
+            </div>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
+        {isExpanded && (
+          <div className="px-3 py-2 bg-white border-t border-slate-100">
+            <div className="space-y-1">
+              {module.sections.map(section => renderSection(section, 0))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }, [bulkOperationMode, moduleExpanded, priorityFlags, documentAssignees, lastModifiedTimes, moduleStatuses, selectedDocument]);
+  
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
   // Template Library state
   const [templateLibraryView, setTemplateLibraryView] = useState('atoms'); // 'atoms' or 'templates'
   const [templateRegionFilter, setTemplateRegionFilter] = useState('US');
@@ -371,7 +765,703 @@ export default function CoAuthor() {
   
   const { toast } = useToast();
   
+<<<<<<< HEAD
   // Commitment extraction state
+=======
+  // Collaboration state
+  const [isCollaborationConnected, setIsCollaborationConnected] = useState(false);
+  const [collaborators, setCollaborators] = useState([]);
+  const [collaborationActivities, setCollaborationActivities] = useState([]);
+  const [collaborationComments, setCollaborationComments] = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [cursors, setCursors] = useState([]);
+  const [selections, setSelections] = useState([]);
+  const [showCollaborationSidebar, setShowCollaborationSidebar] = useState(true);
+  const editorContainerRef = useRef(null);
+  
+  // Current user for collaboration
+  const currentUser = useMemo(() => ({
+    id: `user_${Math.random().toString(36).substr(2, 9)}`,
+    name: 'Current User', // In production, get from auth context
+    email: 'user@example.com',
+    avatar: null
+  }), []);
+  
+  // Initialize collaboration when document is selected
+  useEffect(() => {
+    if (selectedDocument && selectedDocument.id) {
+      // Connect to collaboration server
+      collaborationService.connect(selectedDocument.id, currentUser);
+      
+      // Set up event listeners
+      const unsubscribers = [];
+      
+      unsubscribers.push(
+        collaborationService.on('connection-status', ({ connected }) => {
+          setIsCollaborationConnected(connected);
+          if (connected) {
+            toast({
+              title: "Connected to collaboration server",
+              description: "You can now collaborate in real-time",
+              duration: 3000
+            });
+          }
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('state-initialized', (data) => {
+          setCollaborators(data.collaborators || []);
+          setCollaborationActivities(data.activities || []);
+          setCollaborationComments(data.comments || []);
+          setDocumentLocks(data.locks || []);
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('collaborator-joined', (data) => {
+          setCollaborators(collaborationService.getCollaborators());
+          setCollaborationActivities(collaborationService.getActivities());
+          if (data.collaborator && data.collaborator.id !== currentUser.id) {
+            toast({
+              title: `${data.collaborator.name} joined`,
+              description: "A collaborator has joined the document",
+              duration: 3000
+            });
+          }
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('collaborator-left', (data) => {
+          setCollaborators(collaborationService.getCollaborators());
+          setCollaborationActivities(collaborationService.getActivities());
+          setDocumentLocks(collaborationService.getLocks());
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('cursor-update', (cursor) => {
+          setCursors(prev => {
+            const updated = prev.filter(c => c.userId !== cursor.userId);
+            return [...updated, cursor];
+          });
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('selection-update', (selection) => {
+          setSelections(prev => {
+            const updated = prev.filter(s => s.userId !== selection.userId);
+            return [...updated, selection];
+          });
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('typing-update', ({ typingUsers }) => {
+          setTypingUsers(typingUsers);
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('comment-added', (data) => {
+          setCollaborationComments(collaborationService.getComments());
+          setCollaborationActivities(collaborationService.getActivities());
+          if (data.comment && data.comment.userId !== currentUser.id) {
+            toast({
+              title: "New comment",
+              description: `${data.comment.userName} added a comment`,
+              duration: 4000
+            });
+          }
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('mention-notification', (data) => {
+          toast({
+            title: `${data.mentionedBy} mentioned you`,
+            description: data.comment.content.substring(0, 100),
+            duration: 5000
+          });
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('section-locked', (data) => {
+          setDocumentLocks(collaborationService.getLocks());
+          setCollaborationActivities(collaborationService.getActivities());
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('section-unlocked', (data) => {
+          setDocumentLocks(collaborationService.getLocks());
+          setCollaborationActivities(collaborationService.getActivities());
+        })
+      );
+      
+      unsubscribers.push(
+        collaborationService.on('document-updated', (data) => {
+          setCollaborationActivities(collaborationService.getActivities());
+          // In a real app, you'd update the document content here
+        })
+      );
+      
+      // Cleanup on unmount or document change
+      return () => {
+        unsubscribers.forEach(unsub => unsub());
+        collaborationService.disconnect();
+      };
+    }
+  }, [selectedDocument, currentUser, toast]);
+  
+  // Hook for cursor tracking
+  useCollaborativeCursor(collaborationService, editorContainerRef);
+  useCollaborativeSelection(collaborationService, editorContainerRef);
+  
+  // Collaboration event handlers
+  const handleAddComment = useCallback((comment) => {
+    collaborationService.addComment(comment);
+  }, []);
+  
+  const handleResolveComment = useCallback((commentId) => {
+    collaborationService.resolveComment(commentId);
+    setCollaborationComments(prev => 
+      prev.map(c => c.id === commentId ? { ...c, resolved: true } : c)
+    );
+  }, []);
+  
+  const handleTypingStart = useCallback((section) => {
+    collaborationService.startTyping(section);
+  }, []);
+  
+  const handleTypingStop = useCallback(() => {
+    collaborationService.stopTyping();
+  }, []);
+  
+  const handleLockSection = useCallback(async (sectionId) => {
+    try {
+      await collaborationService.lockSection(sectionId);
+      toast({
+        title: "Section locked",
+        description: "You have exclusive editing rights for this section",
+        duration: 3000
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to lock section",
+        description: error.message,
+        variant: "destructive",
+        duration: 4000
+      });
+    }
+  }, [toast]);
+  
+  const handleUnlockSection = useCallback((sectionId) => {
+    collaborationService.unlockSection(sectionId);
+  }, []);
+  
+  // Function to close a document tab
+  const handleCloseTab = (index) => {
+    const documentToClose = openDocuments[index];
+    
+    // Check if document has unsaved changes
+    if (documentToClose.saveStatus === 'unsaved') {
+      if (!window.confirm(`Document "${documentToClose.title}" has unsaved changes. Close anyway?`)) {
+        return;
+      }
+    }
+    
+    // Remove document from open tabs
+    const newOpenDocs = openDocuments.filter((_, i) => i !== index);
+    
+    // If we're closing the active tab, switch to another
+    if (index === activeTabIndex) {
+      if (index >= newOpenDocs.length && newOpenDocs.length > 0) {
+        setActiveTabIndex(newOpenDocs.length - 1);
+      }
+    } else if (index < activeTabIndex) {
+      setActiveTabIndex(activeTabIndex - 1);
+    }
+    
+    setOpenDocuments(newOpenDocs);
+    
+    toast({
+      title: "Tab Closed",
+      description: `Closed ${documentToClose.title}`,
+      duration: 2000,
+    });
+  };
+  
+  // Function to switch tabs
+  const handleTabSwitch = (index) => {
+    // Save current tab's state before switching
+    if (selectedDocument) {
+      const updatedDocs = [...openDocuments];
+      updatedDocs[activeTabIndex] = {
+        ...selectedDocument,
+        scrollPosition: window.scrollY || 0
+      };
+      setOpenDocuments(updatedDocs);
+    }
+    
+    setActiveTabIndex(index);
+    
+    // Restore scroll position for new tab
+    const newDoc = openDocuments[index];
+    if (newDoc && newDoc.scrollPosition) {
+      setTimeout(() => window.scrollTo(0, newDoc.scrollPosition), 0);
+    }
+  };
+  
+  // Function to update document content in current tab
+  const updateCurrentDocument = (updates) => {
+    const updatedDocs = [...openDocuments];
+    updatedDocs[activeTabIndex] = {
+      ...updatedDocs[activeTabIndex],
+      ...updates
+    };
+    setOpenDocuments(updatedDocs);
+  };
+
+  // Create document from template with database persistence
+  const createDocumentFromTemplate = async (sectionId, sectionTitle) => {
+    try {
+      const templateContent = getTemplateForSection(sectionId, sectionTitle);
+      const organizationId = currentOrganizationId;
+      if (!organizationId) {
+        throw new Error('Organization context is required to create documents.');
+      }
+      
+      const moduleResponse = await fetch(`/api/coauthor/ectd-modules/${sectionId}`, {
+        headers: {
+          'X-Organization-Id': String(organizationId)
+        }
+      });
+      
+      if (!moduleResponse.ok) {
+        throw new Error('Module not found for this section');
+      }
+      
+      const moduleData = await moduleResponse.json();
+      const module = moduleData.module;
+      
+      const createResponse = await fetch(`/api/coauthor/modules/${module.id}/documents`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Organization-Id': String(organizationId)
+        },
+        body: JSON.stringify({
+          title: `${sectionId} ${sectionTitle}`,
+          content: templateContent,
+          status: 'draft'
+        })
+      });
+      
+      if (!createResponse.ok) {
+        throw new Error('Failed to create document in database');
+      }
+      
+      const { document: newDoc } = await createResponse.json();
+      
+      const documentForState = {
+        id: newDoc.id,
+        title: `${sectionId} ${sectionTitle}`,
+        module: `Module ${sectionId.split('.')[0]}`,
+        lastEdited: 'Just now',
+        status: 'draft',
+        content: templateContent,
+        sectionId: sectionId,
+        ectdModuleId: module.id,
+        moduleNumber: module.moduleNumber,
+        moduleName: module.moduleName
+      };
+      
+      // Invalidate tree cache to refresh document counts (matches query key structure)
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/coauthor/ectd-modules/tree-with-counts', { organizationId: currentOrganizationId }] 
+      });
+      
+      toast({
+        title: "Document Created",
+        description: `Created ${sectionTitle} and saved to database`,
+        variant: "success",
+        duration: 3000,
+      });
+      
+      return documentForState;
+    } catch (error) {
+      console.error('Error creating document from template:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.message || "Failed to create document from template",
+        variant: "destructive",
+      });
+      
+      return null;
+    }
+  };
+
+  // Get template content for a section - COMPLETE eCTD Module 1-5 Structure
+  const getTemplateForSection = (sectionId, sectionTitle) => {
+    const templates = {
+      // MODULE 1: Administrative Information
+      '1.0': `<h1>Cover Letter</h1>\n<p>Date: ${new Date().toLocaleDateString()}</p>\n<p>FDA Center for Drug Evaluation and Research</p>\n<p>Office of Pharmaceutical Quality</p>\n<p>10903 New Hampshire Avenue</p>\n<p>Silver Spring, MD 20993</p>\n\n<p>Dear Review Division,</p>\n<p>We are pleased to submit this Investigational New Drug (IND) application for [Drug Name], intended for the treatment of [Indication].</p>\n<p>This submission contains:</p>\n<ul>\n<li>Complete Chemistry, Manufacturing, and Controls information</li>\n<li>Nonclinical pharmacology and toxicology studies</li>\n<li>Clinical protocol for Phase [X] study</li>\n<li>Investigator information and qualifications</li>\n</ul>\n<p>We look forward to your review and approval to proceed with clinical investigations.</p>\n<p>Sincerely,</p>\n<p>[Regulatory Affairs Director]</p>`,
+      
+      '1.1': `<h1>Comprehensive Table of Contents</h1>\n<h2>Module 1: Administrative and Prescribing Information</h2>\n<p>1.0 Cover Letter</p>\n<p>1.1 Comprehensive Table of Contents</p>\n<p>1.2 FDA Form 1571</p>\n<p>1.3 IND Content</p>\n<p>1.14 Labeling</p>\n<h2>Module 2: Common Technical Document Summaries</h2>\n<p>2.1 CTD Table of Contents</p>\n<p>2.2 CTD Introduction</p>\n<p>2.3 Quality Overall Summary</p>\n<p>2.4 Nonclinical Overview</p>\n<p>2.5 Clinical Overview</p>\n<p>2.6 Nonclinical Written and Tabulated Summaries</p>\n<p>2.7 Clinical Summary</p>`,
+      
+      '1.2': `<h1>FDA Form 1571 - Investigational New Drug Application</h1>\n<h2>1. Sponsor Information</h2>\n<p>Name of Sponsor: [Sponsor Name]</p>\n<p>Address: [Complete Address]</p>\n<p>Telephone: [Phone]</p>\n<p>Fax: [Fax]</p>\n<h2>2. Submission Information</h2>\n<p>Date of Submission: ${new Date().toLocaleDateString()}</p>\n<p>IND Number: [If previously assigned]</p>\n<p>Serial Number: [001]</p>\n<h2>3. Information Amendment</h2>\n<p>☐ Initial IND</p>\n<p>☐ Information Amendment</p>\n<p>☐ Protocol Amendment</p>\n<h2>4. FDA Review Division</h2>\n<p>Division: [Review Division Name]</p>\n<h2>5. IND Safety Reports</p>\n<p>☐ 7-day telephone report followed by written report</p>\n<p>☐ 15-day written report</p>`,
+      
+      '1.3.1': `<h1>Introductory Statement</h1>\n<h2>Drug Substance Information</h2>\n<p>Name: [Drug Name]</p>\n<p>Code Name: [Code]</p>\n<p>Chemical Name: [IUPAC Name]</p>\n<p>Molecular Formula: [Formula]</p>\n<p>Molecular Weight: [MW]</p>\n<p>Pharmacological Class: [Class]</p>\n<h2>Drug Product Information</h2>\n<p>Dosage Form: [Form]</p>\n<p>Route of Administration: [Route]</p>\n<p>Strength: [Strength]</p>\n<h2>Regulatory History</h2>\n<p>Previous IND/NDA Numbers: [If applicable]</p>\n<p>Foreign Regulatory Status: [Status in other countries]</p>`,
+      
+      '1.3.2': `<h1>General Investigational Plan</h1>\n<h2>Rationale for Drug Development</h2>\n<p>[Scientific rationale and unmet medical need]</p>\n<h2>Development Strategy</h2>\n<p>Phase 1: [Objectives and timeline]</p>\n<p>Phase 2: [Objectives and timeline]</p>\n<p>Phase 3: [Objectives and timeline]</p>\n<h2>Indication(s) to be Studied</h2>\n<p>Primary: [Primary indication]</p>\n<p>Secondary: [Secondary indications if applicable]</p>\n<h2>General Approach</h2>\n<p>[Description of overall clinical development approach]</p>\n<h2>Clinical Studies Overview</h2>\n<p>[Summary of planned studies and objectives]</p>`,
+      
+      '1.3.3': `<h1>Investigator's Brochure</h1>\n<h2>Table of Contents</h2>\n<h2>Summary</h2>\n<p>[Brief summary of IB contents]</p>\n<h2>Introduction</h2>\n<p>[Background and rationale]</p>\n<h2>Physical, Chemical, and Pharmaceutical Properties</h2>\n<p>[Drug substance and product information]</p>\n<h2>Nonclinical Studies</h2>\n<h3>Pharmacology</h3>\n<p>[Pharmacology summary]</p>\n<h3>Pharmacokinetics and Metabolism</h3>\n<p>[PK/ADME summary]</p>\n<h3>Toxicology</h3>\n<p>[Toxicology summary]</p>\n<h2>Clinical Studies</h2>\n<p>[Previous human experience]</p>\n<h2>Summary of Data and Guidance</h2>\n<p>[Risk-benefit assessment]</p>`,
+      
+      '1.3.4': `<h1>Protocol(s)</h1>\n<h2>Protocol Title</h2>\n<p>[Full protocol title]</p>\n<h2>Protocol Number</h2>\n<p>[Protocol ID]</p>\n<h2>Phase</h2>\n<p>[Phase of study]</p>\n<h2>Objectives</h2>\n<h3>Primary Objective</h3>\n<p>[Primary objective]</p>\n<h3>Secondary Objectives</h3>\n<p>[Secondary objectives]</p>\n<h2>Study Design</h2>\n<p>[Study type, randomization, blinding]</p>\n<h2>Study Population</h2>\n<p>[Inclusion/exclusion criteria]</p>\n<h2>Treatment Plan</h2>\n<p>[Dosing regimen and duration]</p>\n<h2>Endpoints</h2>\n<p>[Primary and secondary endpoints]</p>\n<h2>Statistical Considerations</h2>\n<p>[Sample size and analysis plan]</p>`,
+      
+      '1.3.5': `<h1>Chemistry, Manufacturing, and Controls</h1>\n<h2>Drug Substance</h2>\n<h3>Manufacturer Information</h3>\n<p>[Name and address of manufacturer]</p>\n<h3>Manufacturing Process</h3>\n<p>[Brief description of synthesis]</p>\n<h3>Characterization</h3>\n<p>[Structure elucidation data]</p>\n<h3>Controls</h3>\n<p>[Specifications and analytical methods]</p>\n<h2>Drug Product</h2>\n<h3>Composition</h3>\n<p>[Qualitative and quantitative composition]</p>\n<h3>Manufacturing</h3>\n<p>[Manufacturing process description]</p>\n<h3>Controls</h3>\n<p>[Release and stability specifications]</p>\n<h2>Placebo</h2>\n<p>[Placebo composition if applicable]</p>\n<h2>Labeling</h2>\n<p>[Container labels]</p>`,
+      
+      '1.3.6': `<h1>Pharmacology and Toxicology</h1>\n<h2>Pharmacology</h2>\n<h3>Primary Pharmacodynamics</h3>\n<p>[Mechanism of action and primary effects]</p>\n<h3>Secondary Pharmacodynamics</h3>\n<p>[Secondary pharmacological effects]</p>\n<h3>Safety Pharmacology</h3>\n<p>[CNS, cardiovascular, respiratory assessments]</p>\n<h2>Pharmacokinetics</h2>\n<p>[ADME summary]</p>\n<h2>Toxicology</h2>\n<h3>Single Dose Toxicity</h3>\n<p>[Acute toxicity findings]</p>\n<h3>Repeat Dose Toxicity</h3>\n<p>[Chronic toxicity findings]</p>\n<h3>Genotoxicity</h3>\n<p>[Mutagenicity assessments]</p>\n<h3>Carcinogenicity</h3>\n<p>[If applicable]</p>\n<h3>Reproductive Toxicity</h3>\n<p>[Reproductive and developmental toxicity]</p>`,
+      
+      '1.3.7': `<h1>Previous Human Experience</h1>\n<h2>Clinical Studies</h2>\n<p>[Summary of any previous clinical studies]</p>\n<h2>Marketing Experience</h2>\n<p>[If marketed in other countries]</p>\n<h2>Safety Information</h2>\n<p>[Known adverse events and safety profile]</p>\n<h2>Efficacy Data</h2>\n<p>[Available efficacy information]</p>\n<h2>Publications</h2>\n<p>[Relevant literature references]</p>`,
+      
+      '1.14.1': `<h1>Draft Labeling</h1>\n<h2>Investigational Drug Label</h2>\n<p>INVESTIGATIONAL NEW DRUG</p>\n<p>Caution: New Drug - Limited by Federal Law to Investigational Use</p>\n<p>Drug Name: [Name]</p>\n<p>Strength: [Strength]</p>\n<p>Dosage Form: [Form]</p>\n<p>Route: [Route]</p>\n<p>Protocol: [Protocol Number]</p>\n<p>Sponsor: [Sponsor Name]</p>\n<p>Storage: [Storage conditions]</p>\n<p>Lot Number: [Lot]</p>\n<p>Expiration Date: [Date]</p>`,
+      
+      '1.14.2': `<h1>Final Labeling</h1>\n<p>[To be provided for NDA/BLA]</p>\n<h2>Package Insert</h2>\n<p>[Full prescribing information]</p>\n<h2>Container Labels</h2>\n<p>[Commercial container labels]</p>\n<h2>Carton Labels</h2>\n<p>[Carton labeling]</p>`,
+      
+      // MODULE 2: Common Technical Document Summaries
+      '2.1': `<h1>CTD Table of Contents</h1>\n<h2>Module 2: Common Technical Document Summaries</h2>\n<p>2.1 Table of Contents</p>\n<p>2.2 CTD Introduction</p>\n<p>2.3 Quality Overall Summary</p>\n<p>  2.3.S Drug Substance</p>\n<p>  2.3.P Drug Product</p>\n<p>  2.3.A Appendices</p>\n<p>  2.3.R Regional Information</p>\n<p>2.4 Nonclinical Overview</p>\n<p>2.5 Clinical Overview</p>\n<p>2.6 Nonclinical Written and Tabulated Summaries</p>\n<p>2.7 Clinical Summary</p>`,
+      
+      '2.2': `<h1>CTD Introduction</h1>\n<h2>Product Information</h2>\n<p>Proprietary Name: [Name]</p>\n<p>Non-proprietary Name: [INN]</p>\n<p>Dosage Form and Strength: [Form/Strength]</p>\n<p>Pharmacotherapeutic Group: [ATC Code]</p>\n<h2>General Introduction</h2>\n<p>[Overview of submission]</p>\n<h2>Quality Information</h2>\n<p>[Brief quality summary]</p>\n<h2>Nonclinical Information</h2>\n<p>[Brief nonclinical summary]</p>\n<h2>Clinical Information</h2>\n<p>[Brief clinical summary]</p>`,
+      
+      '2.3.S': `<h1>2.3.S Drug Substance</h1>\n<h2>S.1 General Information</h2>\n<h3>S.1.1 Nomenclature</h3>\n<p>[INN, chemical name, codes]</p>\n<h3>S.1.2 Structure</h3>\n<p>[Structural formula, molecular formula]</p>\n<h3>S.1.3 General Properties</h3>\n<p>[Physicochemical properties]</p>\n<h2>S.2 Manufacture</h2>\n<h3>S.2.1 Manufacturer(s)</h3>\n<p>[Name and address]</p>\n<h3>S.2.2 Description of Manufacturing Process</h3>\n<p>[Flow diagram and narrative]</p>\n<h3>S.2.3 Control of Materials</h3>\n<p>[Raw materials specifications]</p>\n<h3>S.2.4 Controls of Critical Steps</h3>\n<p>[In-process controls]</p>\n<h3>S.2.5 Process Validation</h3>\n<p>[Validation protocol and results]</p>\n<h2>S.3 Characterization</h2>\n<h3>S.3.1 Elucidation of Structure</h3>\n<p>[Spectroscopic data]</p>\n<h3>S.3.2 Impurities</h3>\n<p>[Impurity profile]</p>\n<h2>S.4 Control of Drug Substance</h2>\n<h3>S.4.1 Specification</h3>\n<p>[Release and shelf-life specs]</p>\n<h3>S.4.2 Analytical Procedures</h3>\n<p>[Methods description]</p>\n<h3>S.4.3 Validation</h3>\n<p>[Method validation]</p>\n<h3>S.4.4 Batch Analyses</h3>\n<p>[Batch data]</p>\n<h3>S.4.5 Justification of Specification</h3>\n<p>[Rationale for limits]</p>\n<h2>S.5 Reference Standards</h2>\n<p>[Reference standard information]</p>\n<h2>S.6 Container Closure System</h2>\n<p>[Description and specifications]</p>\n<h2>S.7 Stability</h2>\n<h3>S.7.1 Stability Summary</h3>\n<p>[Overview of stability program]</p>\n<h3>S.7.2 Post-approval Stability</h3>\n<p>[Commitment for ongoing stability]</p>\n<h3>S.7.3 Stability Data</h3>\n<p>[Tabulated stability results]</p>`,
+      
+      '2.3.P': `<h1>2.3.P Drug Product</h1>\n<h2>P.1 Description and Composition</h2>\n<p>[Dosage form, composition table]</p>\n<h2>P.2 Pharmaceutical Development</h2>\n<h3>P.2.1 Components of Drug Product</h3>\n<p>[Drug substance and excipients]</p>\n<h3>P.2.2 Drug Product</h3>\n<p>[Formulation development]</p>\n<h3>P.2.3 Manufacturing Process Development</h3>\n<p>[Process optimization]</p>\n<h3>P.2.4 Container Closure System</h3>\n<p>[Selection and suitability]</p>\n<h3>P.2.5 Microbiological Attributes</h3>\n<p>[Preservative effectiveness]</p>\n<h3>P.2.6 Compatibility</h3>\n<p>[Drug-excipient compatibility]</p>\n<h2>P.3 Manufacture</h2>\n<h3>P.3.1 Manufacturer(s)</h3>\n<p>[Manufacturing sites]</p>\n<h3>P.3.2 Batch Formula</h3>\n<p>[Commercial batch formula]</p>\n<h3>P.3.3 Description of Manufacturing Process</h3>\n<p>[Flow chart and narrative]</p>\n<h3>P.3.4 Controls of Critical Steps</h3>\n<p>[Critical process parameters]</p>\n<h3>P.3.5 Process Validation</h3>\n<p>[Validation protocol]</p>\n<h2>P.4 Control of Excipients</h2>\n<h3>P.4.1 Specifications</h3>\n<p>[Excipient specifications]</p>\n<h3>P.4.2 Analytical Procedures</h3>\n<p>[Test methods]</p>\n<h3>P.4.3 Validation</h3>\n<p>[Method validation]</p>\n<h3>P.4.4 Justification</h3>\n<p>[Specification justification]</p>\n<h2>P.5 Control of Drug Product</h2>\n<h3>P.5.1 Specification(s)</h3>\n<p>[Release and stability specs]</p>\n<h3>P.5.2 Analytical Procedures</h3>\n<p>[Test methods]</p>\n<h3>P.5.3 Validation</h3>\n<p>[Analytical validation]</p>\n<h3>P.5.4 Batch Analyses</h3>\n<p>[Batch results]</p>\n<h3>P.5.5 Characterization of Impurities</h3>\n<p>[Impurity identification]</p>\n<h3>P.5.6 Justification of Specification(s)</h3>\n<p>[Rationale]</p>\n<h2>P.6 Reference Standards</h2>\n<p>[Reference materials]</p>\n<h2>P.7 Container Closure System</h2>\n<p>[Packaging description]</p>\n<h2>P.8 Stability</h2>\n<h3>P.8.1 Stability Summary</h3>\n<p>[Stability overview]</p>\n<h3>P.8.2 Post-approval Stability</h3>\n<p>[Ongoing stability]</p>\n<h3>P.8.3 Stability Data</h3>\n<p>[Results tables]</p>`,
+      
+      '2.3.A': `<h1>2.3.A Appendices</h1>\n<h2>A.1 Facilities and Equipment</h2>\n<p>[Manufacturing facility information]</p>\n<h2>A.2 Adventitious Agents Safety Evaluation</h2>\n<p>[Viral safety assessment]</p>\n<h2>A.3 Excipients</h2>\n<p>[Novel excipient information]</p>`,
+      
+      '2.3.R': `<h1>2.3.R Regional Information</h1>\n<h2>Executed Batch Records</h2>\n<p>[Production batch records]</p>\n<h2>Comparability Protocols</h2>\n<p>[Post-approval change protocols]</p>\n<h2>Methods Validation Package</h2>\n<p>[US-specific validation data]</p>`,
+      
+      '2.4': `<h1>Nonclinical Overview</h1>\n<h2>Overview of Nonclinical Testing Strategy</h2>\n<p>[Rationale for nonclinical program]</p>\n<h2>Pharmacology</h2>\n<p>[Summary of pharmacological effects]</p>\n<h2>Pharmacokinetics</h2>\n<p>[ADME overview]</p>\n<h2>Toxicology</h2>\n<p>[Summary of toxicological findings]</p>\n<h2>Integrated Assessment</h2>\n<p>[Overall nonclinical conclusions]</p>\n<h2>List of Literature References</h2>\n<p>[Key nonclinical references]</p>`,
+      
+      '2.5': `<h1>Clinical Overview</h1>\n<h2>Product Development Rationale</h2>\n<p>[Clinical development strategy]</p>\n<h2>Overview of Biopharmaceutics</h2>\n<p>[Formulation and bioavailability]</p>\n<h2>Overview of Clinical Pharmacology</h2>\n<p>[PK/PD summary]</p>\n<h2>Overview of Efficacy</h2>\n<p>[Efficacy evidence summary]</p>\n<h2>Overview of Safety</h2>\n<p>[Safety profile summary]</p>\n<h2>Benefits and Risks Conclusions</h2>\n<p>[Overall benefit-risk assessment]</p>\n<h2>Literature References</h2>\n<p>[Clinical references]</p>`,
+      
+      '2.6.1': `<h1>Introduction to Nonclinical Summary</h1>\n<p>[Brief overview of nonclinical program]</p>\n<h2>Drug Substance</h2>\n<p>[Chemical and physical properties relevant to nonclinical studies]</p>\n<h2>Nonclinical Study Strategy</h2>\n<p>[Rationale for study selection]</p>`,
+      
+      '2.6.2': `<h1>Pharmacology Written Summary</h1>\n<h2>Primary Pharmacodynamics</h2>\n<p>[Mechanism of action studies]</p>\n<h2>Secondary Pharmacodynamics</h2>\n<p>[Additional pharmacological effects]</p>\n<h2>Safety Pharmacology</h2>\n<p>[Core battery studies]</p>\n<h2>Pharmacodynamic Drug Interactions</h2>\n<p>[PD interaction studies]</p>`,
+      
+      '2.6.3': `<h1>Pharmacokinetics Written Summary</h1>\n<h2>Absorption</h2>\n<p>[Absorption characteristics]</p>\n<h2>Distribution</h2>\n<p>[Tissue distribution]</p>\n<h2>Metabolism</h2>\n<p>[Metabolic pathways]</p>\n<h2>Excretion</h2>\n<p>[Elimination routes]</p>\n<h2>Pharmacokinetic Drug Interactions</h2>\n<p>[PK interactions]</p>`,
+      
+      '2.6.4': `<h1>Toxicology Written Summary</h1>\n<h2>Single-Dose Toxicity</h2>\n<p>[Acute toxicity findings]</p>\n<h2>Repeat-Dose Toxicity</h2>\n<p>[Subchronic and chronic studies]</p>\n<h2>Genotoxicity</h2>\n<p>[In vitro and in vivo studies]</p>\n<h2>Carcinogenicity</h2>\n<p>[Long-term studies]</p>\n<h2>Reproductive and Developmental Toxicity</h2>\n<p>[Fertility and teratology]</p>\n<h2>Local Tolerance</h2>\n<p>[Local irritation studies]</p>\n<h2>Other Toxicity Studies</h2>\n<p>[Special studies]</p>`,
+      
+      '2.7.1': `<h1>Summary of Biopharmaceutic Studies</h1>\n<h2>Background and Overview</h2>\n<p>[Biopharmaceutic development]</p>\n<h2>Formulation Development</h2>\n<p>[Evolution of formulation]</p>\n<h2>Bioavailability Studies</h2>\n<p>[BA study summaries]</p>\n<h2>Bioequivalence Studies</h2>\n<p>[BE study summaries]</p>\n<h2>In Vitro Dissolution</h2>\n<p>[Dissolution profiles]</p>\n<h2>Food Effect Studies</h2>\n<p>[Fed/fasted studies]</p>`,
+      
+      '2.7.2': `<h1>Summary of Clinical Pharmacology</h1>\n<h2>Background and Overview</h2>\n<p>[Clinical pharmacology program]</p>\n<h2>Pharmacokinetics</h2>\n<p>[Human PK characteristics]</p>\n<h2>Pharmacodynamics</h2>\n<p>[PD effects in humans]</p>\n<h2>PK/PD Relationships</h2>\n<p>[Exposure-response]</p>\n<h2>Special Populations</h2>\n<p>[Pediatric, geriatric, renal, hepatic]</p>\n<h2>Drug-Drug Interactions</h2>\n<p>[DDI study results]</p>`,
+      
+      '2.7.3': `<h1>Summary of Clinical Efficacy</h1>\n<h2>Background and Overview</h2>\n<p>[Efficacy development program]</p>\n<h2>Summary of Results</h2>\n<p>[Key efficacy findings]</p>\n<h2>Comparison and Analyses</h2>\n<p>[Cross-study comparisons]</p>\n<h2>Analysis of Subgroups</h2>\n<p>[Subgroup efficacy]</p>\n<h2>Persistence of Efficacy</h2>\n<p>[Long-term effectiveness]</p>`,
+      
+      '2.7.4': `<h1>Summary of Clinical Safety</h1>\n<h2>Exposure</h2>\n<p>[Patient exposure summary]</p>\n<h2>Adverse Events</h2>\n<p>[Common and serious AEs]</p>\n<h2>Clinical Laboratory Evaluations</h2>\n<p>[Lab abnormalities]</p>\n<h2>Vital Signs and Physical Findings</h2>\n<p>[Clinical observations]</p>\n<h2>Safety in Special Populations</h2>\n<p>[Subgroup safety]</p>\n<h2>Overdose and Abuse Potential</h2>\n<p>[Safety considerations]</p>`,
+      
+      // MODULE 3: Quality
+      '3.1': `<h1>Module 3 Table of Contents</h1>\n<h2>3.2 Body of Data</h2>\n<p>3.2.S Drug Substance</p>\n<p>3.2.P Drug Product</p>\n<p>3.2.A Appendices</p>\n<p>3.2.R Regional Information</p>\n<h2>3.3 Literature References</h2>`,
+      
+      '3.2.S.1': `<h1>S.1 General Information</h1>\n<h2>S.1.1 Nomenclature</h2>\n<p>INN: [International Nonproprietary Name]</p>\n<p>USAN: [US Adopted Name]</p>\n<p>Chemical Name: [IUPAC systematic name]</p>\n<p>Company Code: [Internal code]</p>\n<h2>S.1.2 Structure</h2>\n<p>[Structural formula diagram]</p>\n<p>Molecular Formula: [Formula]</p>\n<p>Molecular Weight: [MW]</p>\n<p>[Stereochemistry description]</p>\n<h2>S.1.3 General Properties</h2>\n<p>Appearance: [Physical description]</p>\n<p>Solubility: [Solubility profile]</p>\n<p>pH: [pH in solution]</p>\n<p>pKa: [Dissociation constants]</p>\n<p>Partition Coefficient: [Log P]</p>\n<p>Melting Point: [Temperature]</p>\n<p>Polymorphism: [Polymorphic forms]</p>`,
+      
+      '3.2.S.2': `<h1>S.2 Manufacture</h1>\n<h2>S.2.1 Manufacturer(s)</h2>\n<p>[Name and full address of all manufacturing sites]</p>\n<h2>S.2.2 Description of Manufacturing Process</h2>\n<p>[Detailed flow diagram]</p>\n<p>[Step-by-step process narrative]</p>\n<p>[Reaction conditions and equipment]</p>\n<h2>S.2.3 Control of Materials</h2>\n<p>[Starting materials specifications]</p>\n<p>[Reagents and solvents]</p>\n<p>[Catalysts]</p>\n<h2>S.2.4 Controls of Critical Steps</h2>\n<p>[Critical process parameters]</p>\n<p>[In-process testing]</p>\n<h2>S.2.5 Process Validation</h2>\n<p>[Validation protocol]</p>\n<p>[Batch analysis data]</p>\n<h2>S.2.6 Manufacturing Process Development</h2>\n<p>[Process optimization history]</p>`,
+      
+      '3.2.P.1': `<h1>P.1 Description and Composition of Drug Product</h1>\n<h2>Description</h2>\n<p>Dosage Form: [Tablet/Capsule/Solution etc.]</p>\n<p>Appearance: [Physical description]</p>\n<p>Route of Administration: [Oral/IV/etc.]</p>\n<h2>Composition</h2>\n<table>\n<tr><th>Component</th><th>Quality Standard</th><th>Function</th><th>Quantity per Unit</th></tr>\n<tr><td>[Active ingredient]</td><td>[USP/EP]</td><td>Active</td><td>[Amount]</td></tr>\n<tr><td>[Excipient 1]</td><td>[Standard]</td><td>[Function]</td><td>[Amount]</td></tr>\n</table>\n<h2>Container Closure</h2>\n<p>[Primary packaging description]</p>`,
+      
+      '3.2.P.2': `<h1>P.2 Pharmaceutical Development</h1>\n<h2>P.2.1 Components of Drug Product</h2>\n<h3>P.2.1.1 Drug Substance</h3>\n<p>[Key physicochemical properties affecting formulation]</p>\n<h3>P.2.1.2 Excipients</h3>\n<p>[Rationale for excipient selection]</p>\n<h2>P.2.2 Drug Product</h2>\n<h3>P.2.2.1 Formulation Development</h3>\n<p>[Development history and rationale]</p>\n<h3>P.2.2.2 Overages</h3>\n<p>[Justification for any overages]</p>\n<h3>P.2.2.3 Physicochemical Properties</h3>\n<p>[Relevant product characteristics]</p>\n<h2>P.2.3 Manufacturing Process Development</h2>\n<p>[Critical process variables]</p>\n<h2>P.2.4 Container Closure System</h2>\n<p>[Selection rationale and compatibility]</p>\n<h2>P.2.5 Microbiological Attributes</h2>\n<p>[Preservative effectiveness if applicable]</p>\n<h2>P.2.6 Compatibility</h2>\n<p>[Drug-excipient compatibility studies]</p>`,
+      
+      // Additional Module 3 templates - CRITICAL FOR MARKET LAUNCH
+      '3.2.S.3': `<h1>S.3 Characterisation</h1>\n<h2>S.3.1 Elucidation of Structure and Other Characteristics</h2>\n<p>Chemical Structure: [Molecular structure confirmation]</p>\n<p>Spectroscopic Data: [NMR, MS, IR, UV data]</p>\n<p>X-ray Crystallography: [Crystal structure if available]</p>\n<p>Stereochemistry: [Absolute and relative configuration]</p>\n<h2>S.3.2 Impurities</h2>\n<p>Organic Impurities: [Process-related and degradation products]</p>\n<p>Inorganic Impurities: [Residual catalysts, heavy metals]</p>\n<p>Residual Solvents: [Class 1, 2, 3 solvents]</p>\n<p>Genotoxic Impurities: [Assessment per ICH M7]</p>`,
+      
+      '3.2.S.4': `<h1>S.4 Control of Drug Substance</h1>\n<h2>S.4.1 Specification</h2>\n<p>Test Parameter | Method | Acceptance Criteria</p>\n<p>Appearance | Visual | [Criteria]</p>\n<p>Identity | IR/HPLC | [Criteria]</p>\n<p>Assay | HPLC | [98.0-102.0%]</p>\n<p>Impurities | HPLC | [Individual/Total limits]</p>\n<p>Water Content | Karl Fischer | [Limit]</p>\n<p>Residual Solvents | GC | [ICH limits]</p>\n<h2>S.4.2 Analytical Procedures</h2>\n<p>[Detailed description of each analytical method]</p>\n<h2>S.4.3 Validation of Analytical Procedures</h2>\n<p>Specificity: [Validation data]</p>\n<p>Linearity: [Range and correlation]</p>\n<p>Accuracy: [Recovery data]</p>\n<p>Precision: [Repeatability/Intermediate precision]</p>\n<p>Detection/Quantitation Limits: [LOD/LOQ]</p>\n<p>Robustness: [Method parameters tested]</p>\n<h2>S.4.4 Batch Analyses</h2>\n<p>[Tabulated results from representative batches]</p>\n<h2>S.4.5 Justification of Specification</h2>\n<p>[Rationale for acceptance criteria based on development data]</p>`,
+      
+      '3.2.S.5': `<h1>S.5 Reference Standards or Materials</h1>\n<h2>Primary Reference Standard</h2>\n<p>Source: [Internal/USP/EP]</p>\n<p>Lot Number: [Reference]</p>\n<p>Purity: [%]</p>\n<p>Storage Conditions: [Temperature/humidity]</p>\n<p>Retest Date: [Date]</p>\n<h2>Working Standards</h2>\n<p>Preparation: [Qualification procedure]</p>\n<p>Characterization: [Tests performed]</p>\n<p>Certification: [Against primary standard]</p>`,
+      
+      '3.2.S.6': `<h1>S.6 Container Closure System</h1>\n<h2>Description</h2>\n<p>Primary Packaging: [Type, material, size]</p>\n<p>Secondary Packaging: [If applicable]</p>\n<h2>Materials of Construction</h2>\n<p>Container: [Specifications]</p>\n<p>Closure: [Specifications]</p>\n<p>Liner/Seal: [If applicable]</p>\n<h2>Suitability Studies</h2>\n<p>Protection from Moisture: [Data]</p>\n<p>Protection from Light: [If required]</p>\n<p>Compatibility: [Drug substance-container interaction]</p>\n<p>Safety Assessment: [Extractables/Leachables if applicable]</p>`,
+      
+      '3.2.S.7': `<h1>S.7 Stability</h1>\n<h2>S.7.1 Stability Summary and Conclusions</h2>\n<p>Storage Conditions: [Long-term, accelerated, stress]</p>\n<p>Shelf Life: [Proposed expiry]</p>\n<p>Storage Statement: [Recommended storage]</p>\n<h2>S.7.2 Post-approval Stability Protocol</h2>\n<p>Testing Frequency: [Schedule]</p>\n<p>Test Parameters: [Stability-indicating tests]</p>\n<h2>S.7.3 Stability Data</h2>\n<p>Long-term Studies: [25°C/60% RH data]</p>\n<p>Accelerated Studies: [40°C/75% RH data]</p>\n<p>Stress Studies: [Photostability, thermal, humidity]</p>\n<p>[Tabulated stability results with trends]</p>`,
+      
+      '3.2.P.3': `<h1>P.3 Manufacture</h1>\n<h2>P.3.1 Manufacturer(s)</h2>\n<p>Manufacturing Site: [Name and address]</p>\n<p>Responsibilities: [Unit operations performed]</p>\n<h2>P.3.2 Batch Formula</h2>\n<table>\n<tr><th>Ingredient</th><th>Quantity per Batch</th><th>Quantity per Unit</th><th>Function</th></tr>\n<tr><td>[Drug substance]</td><td>[Amount]</td><td>[mg]</td><td>Active</td></tr>\n<tr><td>[Excipient]</td><td>[Amount]</td><td>[mg]</td><td>[Function]</td></tr>\n</table>\n<h2>P.3.3 Description of Manufacturing Process and Process Controls</h2>\n<p>[Flow diagram with critical steps highlighted]</p>\n<p>Step 1: [Dispensing and weighing]</p>\n<p>Step 2: [Blending]</p>\n<p>Step 3: [Granulation if applicable]</p>\n<p>Step 4: [Compression/Filling]</p>\n<p>Step 5: [Coating if applicable]</p>\n<p>Step 6: [Packaging]</p>\n<h2>P.3.4 Controls of Critical Steps and Intermediates</h2>\n<p>Critical Process Parameters: [List with ranges]</p>\n<p>In-Process Controls: [Tests and limits]</p>\n<h2>P.3.5 Process Validation and/or Evaluation</h2>\n<p>Validation Protocol: [Reference]</p>\n<p>Critical Quality Attributes: [CQAs]</p>\n<p>Process Performance Qualification: [PPQ batches]</p>`,
+      
+      '3.2.P.4': `<h1>P.4 Control of Excipients</h1>\n<h2>P.4.1 Specifications</h2>\n<p>Excipient Name: [Official name]</p>\n<p>Compendial Grade: [USP/EP/JP]</p>\n<p>Specifications: [Test parameters and limits]</p>\n<h2>P.4.2 Analytical Procedures</h2>\n<p>[Reference to compendial methods or detailed procedures]</p>\n<h2>P.4.3 Validation of Analytical Procedures</h2>\n<p>[If non-compendial methods used]</p>\n<h2>P.4.4 Justification of Specifications</h2>\n<p>[Rationale for specifications, especially for novel excipients]</p>\n<h2>P.4.5 Excipients of Human or Animal Origin</h2>\n<p>[TSE/BSE assessment if applicable]</p>\n<h2>P.4.6 Novel Excipients</h2>\n<p>[Full characterization if new excipient]</p>`,
+      
+      '3.2.P.5': `<h1>P.5 Control of Drug Product</h1>\n<h2>P.5.1 Specification(s)</h2>\n<table>\n<tr><th>Test</th><th>Method</th><th>Release Criteria</th><th>Shelf-life Criteria</th></tr>\n<tr><td>Appearance</td><td>Visual</td><td>[Description]</td><td>[Description]</td></tr>\n<tr><td>Identity</td><td>HPLC/UV</td><td>Positive</td><td>Positive</td></tr>\n<tr><td>Assay</td><td>HPLC</td><td>95.0-105.0%</td><td>90.0-110.0%</td></tr>\n<tr><td>Degradation Products</td><td>HPLC</td><td>[Limits]</td><td>[Limits]</td></tr>\n<tr><td>Uniformity</td><td>USP</td><td>Meets USP</td><td>N/A</td></tr>\n<tr><td>Dissolution</td><td>USP</td><td>NLT 80% in 30 min</td><td>NLT 80% in 30 min</td></tr>\n</table>\n<h2>P.5.2 Analytical Procedures</h2>\n<p>[Detailed method descriptions]</p>\n<h2>P.5.3 Validation of Analytical Procedures</h2>\n<p>[Validation reports for product-specific methods]</p>\n<h2>P.5.4 Batch Analyses</h2>\n<p>[Results from clinical, stability, and production batches]</p>\n<h2>P.5.5 Characterization of Impurities</h2>\n<p>[Identification and qualification of degradation products]</p>\n<h2>P.5.6 Justification of Specification(s)</h2>\n<p>[Rationale based on clinical experience and stability data]</p>`,
+      
+      '3.2.P.6': `<h1>P.6 Reference Standards or Materials</h1>\n<h2>Reference Standard for Drug Product Testing</h2>\n<p>Type: [Primary/Working standard]</p>\n<p>Source: [In-house/Compendial]</p>\n<p>Characterization: [Tests performed]</p>\n<p>Certificate of Analysis: [Reference]</p>\n<p>Storage: [Conditions]</p>\n<p>Requalification: [Frequency]</p>`,
+      
+      '3.2.P.7': `<h1>P.7 Container Closure System</h1>\n<h2>Packaging Components</h2>\n<p>Primary Container: [Bottle/Blister description]</p>\n<p>Closure: [Cap/Seal type]</p>\n<p>Desiccant: [If applicable]</p>\n<p>Secondary Packaging: [Carton]</p>\n<h2>Specifications</h2>\n<p>[Dimensional, physical, and chemical specifications]</p>\n<h2>Suitability</h2>\n<p>Light Protection: [If required]</p>\n<p>Moisture Protection: [Permeation data]</p>\n<p>Compatibility: [Product-package interaction studies]</p>\n<p>Child-Resistant Features: [If applicable]</p>\n<p>Extractables/Leachables: [Assessment]</p>`,
+      
+      '3.2.P.8': `<h1>P.8 Stability</h1>\n<h2>P.8.1 Stability Summary and Conclusion</h2>\n<p>Proposed Shelf Life: [Duration]</p>\n<p>Storage Conditions: [Temperature/humidity requirements]</p>\n<p>Package Configurations: [Tested configurations]</p>\n<h2>P.8.2 Post-approval Stability Protocol and Stability Commitment</h2>\n<p>Annual Batches: [Number committed]</p>\n<p>Testing Schedule: [Time points]</p>\n<p>Acceptance Criteria: [Stability specifications]</p>\n<h2>P.8.3 Stability Data</h2>\n<p>Long-term Conditions: [25°C/60% RH or 30°C/65% RH]</p>\n<p>Accelerated Conditions: [40°C/75% RH]</p>\n<p>Intermediate: [30°C/65% RH if needed]</p>\n<table>\n<tr><th>Storage Condition</th><th>Time</th><th>Assay</th><th>Degradants</th><th>Dissolution</th></tr>\n<tr><td>Long-term</td><td>0</td><td>[Result]</td><td>[Result]</td><td>[Result]</td></tr>\n<tr><td>Long-term</td><td>3M</td><td>[Result]</td><td>[Result]</td><td>[Result]</td></tr>\n</table>`,
+      
+      '3.2.A.1': `<h1>A.1 Facilities and Equipment</h1>\n<h2>Manufacturing Facility</h2>\n<p>Site Name: [Facility name]</p>\n<p>Address: [Complete address]</p>\n<p>FDA Establishment Identifier: [FEI number]</p>\n<p>EU Site Master File: [Reference if applicable]</p>\n<h2>Layout and Flow</h2>\n<p>[Facility floor plans showing material and personnel flows]</p>\n<p>Clean Room Classification: [ISO class/Grade]</p>\n<h2>Major Equipment</h2>\n<table>\n<tr><th>Equipment</th><th>Model</th><th>Capacity</th><th>Location</th></tr>\n<tr><td>[Mixer]</td><td>[Model]</td><td>[Capacity]</td><td>[Room]</td></tr>\n</table>\n<h2>Utilities</h2>\n<p>HVAC System: [Description]</p>\n<p>Water System: [Purified water/WFI specifications]</p>\n<p>Compressed Air: [Quality grade]</p>`,
+      
+      '3.2.A.2': `<h1>A.2 Adventitious Agents Safety Evaluation</h1>\n<h2>Viral Safety</h2>\n<p>Risk Assessment: [Materials of biological origin]</p>\n<p>Raw Materials Screening: [Testing performed]</p>\n<p>Manufacturing Process Controls: [Viral inactivation/removal steps]</p>\n<h2>TSE/BSE Risk Assessment</h2>\n<p>Animal-Derived Materials: [List if any]</p>\n<p>Source Country: [Geographic origin]</p>\n<p>Tissue Type: [Category I-IV]</p>\n<p>Certificates: [EDQM CEP if applicable]</p>\n<h2>Microbiological Control</h2>\n<p>Bioburden Monitoring: [Limits and frequency]</p>\n<p>Endotoxin Control: [For parenteral products]</p>\n<p>Sterility Assurance: [If terminally sterilized]</p>`,
+      
+      '3.2.A.3': `<h1>A.3 Excipients</h1>\n<h2>Novel Excipient Documentation</h2>\n<p>Chemical Name: [IUPAC name]</p>\n<p>Structure: [Chemical structure]</p>\n<p>Properties: [Physical and chemical properties]</p>\n<h2>Manufacturing Information</h2>\n<p>Synthesis Route: [Brief description]</p>\n<p>Purification: [Methods used]</p>\n<p>Specifications: [Quality standards]</p>\n<h2>Safety Data</h2>\n<p>Toxicology Studies: [Summary of safety studies]</p>\n<p>Human Experience: [If any prior use]</p>\n<p>Daily Intake: [Calculation of exposure]</p>\n<p>Qualification: [Justification for use level]</p>`,
+      
+      '3.3': `<h1>3.3 Literature References</h1>\n<h2>Quality-Related Publications</h2>\n<p>[1] Author(s). Title. Journal Year;Volume:Pages.</p>\n<p>[2] ICH Q1A(R2): Stability Testing of New Drug Substances and Products.</p>\n<p>[3] ICH Q3A(R2): Impurities in New Drug Substances.</p>\n<p>[4] ICH Q3B(R2): Impurities in New Drug Products.</p>\n<p>[5] ICH Q6A: Specifications for New Drug Substances and Products.</p>\n<h2>Analytical Methods References</h2>\n<p>[List of relevant analytical chemistry publications]</p>\n<h2>Formulation Development References</h2>\n<p>[List of pharmaceutical development literature]</p>\n<h2>Container Closure References</h2>\n<p>[Packaging-related publications and standards]</p>`,
+      
+      // MODULE 4: Nonclinical Study Reports
+      '4.1': `<h1>Module 4 Table of Contents</h1>\n<h2>4.2 Study Reports</h2>\n<p>4.2.1 Pharmacology</p>\n<p>  4.2.1.1 Primary Pharmacodynamics</p>\n<p>  4.2.1.2 Secondary Pharmacodynamics</p>\n<p>  4.2.1.3 Safety Pharmacology</p>\n<p>  4.2.1.4 Pharmacodynamic Drug Interactions</p>\n<p>4.2.2 Pharmacokinetics</p>\n<p>  4.2.2.1 Analytical Methods</p>\n<p>  4.2.2.2 Absorption</p>\n<p>  4.2.2.3 Distribution</p>\n<p>  4.2.2.4 Metabolism</p>\n<p>  4.2.2.5 Excretion</p>\n<p>4.2.3 Toxicology</p>\n<p>  4.2.3.1 Single-Dose Toxicity</p>\n<p>  4.2.3.2 Repeat-Dose Toxicity</p>\n<p>  4.2.3.3 Genotoxicity</p>\n<p>  4.2.3.4 Carcinogenicity</p>\n<p>  4.2.3.5 Reproductive and Developmental Toxicity</p>\n<p>  4.2.3.6 Local Tolerance</p>\n<p>  4.2.3.7 Other Toxicity Studies</p>\n<h2>4.3 Literature References</h2>`,
+      
+      '4.2.1.1': `<h1>Primary Pharmacodynamics</h1>\n<h2>Study Title</h2>\n<p>[Study identification]</p>\n<h2>Objectives</h2>\n<p>[Study objectives]</p>\n<h2>Methods</h2>\n<p>Test System: [In vitro/in vivo model]</p>\n<p>Test Article: [Drug substance]</p>\n<p>Dose Levels: [Doses tested]</p>\n<p>Route: [Administration route]</p>\n<h2>Results</h2>\n<p>[Key findings]</p>\n<p>[Dose-response relationships]</p>\n<h2>Conclusions</h2>\n<p>[Study conclusions regarding mechanism of action]</p>`,
+      
+      '4.2.2.1': `<h1>Analytical Methods and Validation</h1>\n<h2>Bioanalytical Methods</h2>\n<p>Method: [LC-MS/MS, etc.]</p>\n<p>Matrix: [Plasma, urine, tissue]</p>\n<p>Analytes: [Parent drug, metabolites]</p>\n<h2>Validation Parameters</h2>\n<p>Selectivity: [Results]</p>\n<p>Linearity: [Range]</p>\n<p>Accuracy: [% CV]</p>\n<p>Precision: [Intra/inter-day]</p>\n<p>LOQ: [Lower limit]</p>\n<p>Stability: [Conditions tested]</p>`,
+      
+      '4.2.3.1': `<h1>Single-Dose Toxicity</h1>\n<h2>Study Design</h2>\n<p>Species: [Rat, mouse]</p>\n<p>Route: [Oral, IV, etc.]</p>\n<p>Doses: [Dose levels]</p>\n<p>Animals/Group: [Number]</p>\n<h2>Observations</h2>\n<p>Clinical Signs: [Findings]</p>\n<p>Body Weight: [Changes]</p>\n<p>Food Consumption: [Effects]</p>\n<h2>Results</h2>\n<p>Mortality: [Incidence]</p>\n<p>LD50: [Value if determined]</p>\n<p>Target Organs: [Affected organs]</p>\n<h2>Conclusions</h2>\n<p>NOAEL: [No observed adverse effect level]</p>\n<p>MTD: [Maximum tolerated dose]</p>`,
+      
+      // Additional Module 4 templates - COMPLETE NONCLINICAL PACKAGE
+      '4.2.1.2': `<h1>Secondary Pharmacodynamics</h1>\n<h2>Study Objectives</h2>\n<p>[Effects beyond intended therapeutic target]</p>\n<h2>Test Systems</h2>\n<p>Receptor Binding Panel: [Receptors tested]</p>\n<p>Enzyme Assays: [Enzymes evaluated]</p>\n<p>Functional Assays: [Secondary effects assessed]</p>\n<h2>Results</h2>\n<p>Off-Target Binding: [Significant interactions]</p>\n<p>IC50/EC50 Values: [Potency at secondary targets]</p>\n<p>Selectivity Ratio: [Primary vs secondary activity]</p>\n<h2>Clinical Relevance</h2>\n<p>[Potential for off-target effects in humans]</p>`,
+      
+      '4.2.1.3': `<h1>Safety Pharmacology</h1>\n<h2>Core Battery Studies</h2>\n<h3>Cardiovascular System</h3>\n<p>hERG Assay: [IC50 value]</p>\n<p>Telemetry Study: [Heart rate, BP, ECG findings]</p>\n<p>QT Prolongation: [Assessment]</p>\n<h3>Central Nervous System</h3>\n<p>FOB/Irwin Test: [Behavioral observations]</p>\n<p>Motor Activity: [Effects on locomotion]</p>\n<p>Seizure Threshold: [Proconvulsant assessment]</p>\n<h3>Respiratory System</h3>\n<p>Respiratory Rate: [Changes observed]</p>\n<p>Tidal Volume: [Effects]</p>\n<p>Blood Gases: [O2/CO2 parameters]</p>\n<h2>Follow-up Studies</h2>\n<p>[Additional organ systems if indicated]</p>`,
+      
+      '4.2.1.4': `<h1>Pharmacodynamic Drug Interactions</h1>\n<h2>Study Design</h2>\n<p>Combination Tested: [Drug A + Drug B]</p>\n<p>Rationale: [Clinical relevance of combination]</p>\n<h2>Methods</h2>\n<p>Study Type: [In vitro/in vivo]</p>\n<p>Dose Levels: [Individual and combination doses]</p>\n<p>Endpoints: [Pharmacodynamic parameters]</p>\n<h2>Results</h2>\n<p>Interaction Type: [Additive/Synergistic/Antagonistic]</p>\n<p>Combination Index: [CI values]</p>\n<p>Isobologram Analysis: [If applicable]</p>\n<h2>Clinical Implications</h2>\n<p>[Potential for drug interactions in patients]</p>`,
+      
+      '4.2.2.2': `<h1>Absorption</h1>\n<h2>Study Design</h2>\n<p>Species: [Rat/Dog/Monkey]</p>\n<p>Route: [Oral/IV/SC/IM]</p>\n<p>Formulation: [Solution/Suspension/Solid]</p>\n<h2>Pharmacokinetic Parameters</h2>\n<p>Cmax: [Peak concentration]</p>\n<p>Tmax: [Time to peak]</p>\n<p>AUC: [Total exposure]</p>\n<p>Bioavailability: [F%]</p>\n<h2>Absorption Characteristics</h2>\n<p>Rate of Absorption: [Ka]</p>\n<p>Site of Absorption: [GI region]</p>\n<p>Food Effect: [Fed vs fasted]</p>\n<p>First-Pass Effect: [Extent]</p>\n<h2>Dose Proportionality</h2>\n<p>[Linear/Non-linear kinetics]</p>`,
+      
+      '4.2.2.3': `<h1>Distribution</h1>\n<h2>Tissue Distribution Study</h2>\n<p>Method: [QWBA/Tissue excision]</p>\n<p>Time Points: [Distribution kinetics]</p>\n<p>Key Tissues: [Brain, liver, kidney, etc.]</p>\n<h2>Results</h2>\n<p>Volume of Distribution: [Vd]</p>\n<p>Tissue:Plasma Ratios: [Key organs]</p>\n<p>CNS Penetration: [Brain:plasma ratio]</p>\n<p>Accumulation: [Tissues with retention]</p>\n<h2>Protein Binding</h2>\n<p>Plasma Protein Binding: [% bound]</p>\n<p>Primary Binding Proteins: [Albumin/AAG]</p>\n<h2>Blood Cell Partitioning</h2>\n<p>Blood:Plasma Ratio: [Value]</p>\n<p>RBC Binding: [Extent]</p>`,
+      
+      '4.2.2.4': `<h1>Metabolism</h1>\n<h2>In Vitro Studies</h2>\n<p>Microsomes: [Species tested]</p>\n<p>Hepatocytes: [Intrinsic clearance]</p>\n<p>S9 Fraction: [Phase I and II metabolism]</p>\n<h2>Metabolic Pathways</h2>\n<p>Phase I: [CYP enzymes involved]</p>\n<p>Phase II: [Conjugation reactions]</p>\n<p>Major Metabolites: [Structure and %]</p>\n<h2>In Vivo Studies</h2>\n<p>Metabolite Profiling: [Plasma, urine, feces]</p>\n<p>Species Comparison: [Human-relevant metabolites]</p>\n<p>Active Metabolites: [Pharmacological activity]</p>\n<h2>Enzyme Induction/Inhibition</h2>\n<p>CYP Induction: [Enzymes affected]</p>\n<p>CYP Inhibition: [IC50 values]</p>\n<p>Time-Dependent Inhibition: [If observed]</p>`,
+      
+      '4.2.2.5': `<h1>Excretion</h1>\n<h2>Mass Balance Study</h2>\n<p>Radiolabel: [14C or 3H position]</p>\n<p>Recovery: [% of dose recovered]</p>\n<p>Duration: [Collection period]</p>\n<h2>Routes of Elimination</h2>\n<p>Urinary Excretion: [% of dose]</p>\n<p>Fecal Excretion: [% of dose]</p>\n<p>Biliary Excretion: [If studied]</p>\n<p>Expired Air: [If applicable]</p>\n<h2>Excretion Kinetics</h2>\n<p>Half-life: [Terminal t1/2]</p>\n<p>Clearance: [Total body clearance]</p>\n<p>Renal Clearance: [If significant]</p>\n<h2>Metabolite Excretion</h2>\n<p>[Parent drug vs metabolites in excreta]</p>`,
+      
+      '4.2.2.6': `<h1>Pharmacokinetic Drug Interactions</h1>\n<h2>In Vitro DDI Studies</h2>\n<p>CYP Inhibition: [IC50 for CYP1A2, 2C9, 2C19, 2D6, 3A4]</p>\n<p>CYP Induction: [Fold change in enzyme activity]</p>\n<p>Transporter Studies: [P-gp, BCRP, OAT, OCT]</p>\n<h2>In Vivo DDI Studies</h2>\n<p>Perpetrator Studies: [Effect on probe substrates]</p>\n<p>Victim Studies: [Effect of inhibitors/inducers]</p>\n<h2>Results</h2>\n<p>AUC Ratio: [With/without interacting drug]</p>\n<p>Cmax Ratio: [Effect magnitude]</p>\n<p>Clinical DDI Risk: [Low/Moderate/High]</p>\n<h2>PBPK Modeling</h2>\n<p>[Predictions for untested scenarios]</p>`,
+      
+      '4.2.2.7': `<h1>Other Pharmacokinetic Studies</h1>\n<h2>Special Routes of Administration</h2>\n<p>Topical: [Skin penetration]</p>\n<p>Inhalation: [Lung deposition]</p>\n<p>Intrathecal: [CNS distribution]</p>\n<h2>Age-Related PK</h2>\n<p>Juvenile Animals: [Developmental differences]</p>\n<p>Aged Animals: [Geriatric considerations]</p>\n<h2>Disease Model PK</h2>\n<p>Disease State: [Effect on PK]</p>\n<p>Inflammatory Conditions: [Altered disposition]</p>\n<h2>Formulation Bridging</h2>\n<p>Clinical vs Nonclinical Forms: [Bioequivalence]</p>\n<p>Salt Forms: [Comparative PK]</p>\n<h2>Miscellaneous Studies</h2>\n<p>Melanin Binding: [If applicable]</p>\n<p>Photosafety: [Phototoxicity assessment]</p>`,
+      
+      '4.2.3.2': `<h1>Repeat-Dose Toxicity</h1>\n<h2>Study Design</h2>\n<p>Species: [Rat and dog/monkey]</p>\n<p>Duration: [4-week, 13-week, 26-week, 52-week]</p>\n<p>Dose Levels: [Low, mid, high, control]</p>\n<p>Route: [Clinical route]</p>\n<h2>In-Life Observations</h2>\n<p>Clinical Signs: [Daily observations]</p>\n<p>Body Weight: [Weekly measurements]</p>\n<p>Food Consumption: [Weekly]</p>\n<p>Ophthalmology: [Pre and post]</p>\n<p>ECG: [If indicated]</p>\n<h2>Clinical Pathology</h2>\n<p>Hematology: [Parameters and findings]</p>\n<p>Clinical Chemistry: [Liver, kidney markers]</p>\n<p>Urinalysis: [Abnormalities]</p>\n<p>Hormones: [If relevant]</p>\n<h2>Terminal Findings</h2>\n<p>Organ Weights: [Absolute and relative]</p>\n<p>Gross Pathology: [Macroscopic findings]</p>\n<p>Histopathology: [Microscopic changes]</p>\n<h2>Toxicokinetics</h2>\n<p>Exposure: [Cmax and AUC by dose]</p>\n<p>Accumulation: [Steady state]</p>\n<h2>NOAEL/LOAEL</h2>\n<p>NOAEL: [mg/kg/day and exposure margins]</p>\n<p>Target Organs: [Primary toxicities]</p>\n<p>Reversibility: [Recovery period findings]</p>`,
+      
+      '4.2.3.3': `<h1>Genotoxicity</h1>\n<h2>4.2.3.3.1 In Vitro Studies</h2>\n<h3>Bacterial Reverse Mutation (Ames)</h3>\n<p>Strains: [TA98, TA100, TA1535, TA1537, WP2]</p>\n<p>Concentrations: [Up to limit dose]</p>\n<p>Metabolic Activation: [±S9]</p>\n<p>Result: [Positive/Negative]</p>\n<h3>Chromosomal Aberration</h3>\n<p>Cell Type: [CHO, CHL, human lymphocytes]</p>\n<p>Concentrations: [Range tested]</p>\n<p>Exposure Time: [Short/continuous]</p>\n<p>Result: [Clastogenic: Yes/No]</p>\n<h3>Mouse Lymphoma/HPRT</h3>\n<p>Cell Line: [L5178Y/CHO]</p>\n<p>Endpoints: [Mutation frequency]</p>\n<p>Result: [Mutagenic: Yes/No]</p>\n<h2>4.2.3.3.2 In Vivo Studies</h2>\n<h3>Micronucleus Test</h3>\n<p>Species: [Mouse/Rat]</p>\n<p>Dose Levels: [Up to MTD]</p>\n<p>Sampling Time: [24, 48, 72 hr]</p>\n<p>Result: [MN frequency]</p>\n<h3>Comet Assay</h3>\n<p>Tissues: [Liver, stomach, etc.]</p>\n<p>DNA Damage: [% tail DNA]</p>\n<h2>Weight of Evidence</h2>\n<p>[Overall genotoxic potential assessment]</p>`,
+      
+      '4.2.3.3.1': `<h1>Genotoxicity - In Vitro</h1>\n<h2>Bacterial Reverse Mutation Test (Ames)</h2>\n<p>GLP Compliance: [Yes/No]</p>\n<p>Test Facility: [Name]</p>\n<p>Bacterial Strains: [S. typhimurium TA98, TA100, TA1535, TA1537, E. coli WP2]</p>\n<p>Concentration Range: [5 concentrations up to 5000 μg/plate]</p>\n<p>Metabolic System: [Rat liver S9, induced with Aroclor 1254]</p>\n<p>Controls: [Negative and strain-specific positive controls]</p>\n<h2>Results</h2>\n<p>Without S9: [Revertant colonies data]</p>\n<p>With S9: [Revertant colonies data]</p>\n<p>Cytotoxicity: [Concentration producing toxicity]</p>\n<p>Precipitation: [Concentration if observed]</p>\n<h2>Conclusion</h2>\n<p>Mutagenic Potential: [Positive/Negative/Equivocal]</p>`,
+      
+      '4.2.3.3.2': `<h1>Genotoxicity - In Vivo</h1>\n<h2>Mammalian Erythrocyte Micronucleus Test</h2>\n<p>Species/Strain: [Mouse/CD-1 or Rat/Sprague-Dawley]</p>\n<p>Route: [Oral gavage/IP]</p>\n<p>Dose Levels: [3 doses up to MTD]</p>\n<p>Treatment Schedule: [Single or repeated]</p>\n<p>Harvest Times: [24, 48 hr post-dose]</p>\n<h2>Analysis</h2>\n<p>Cells Scored: [2000 PCE per animal]</p>\n<p>PCE:NCE Ratio: [Cytotoxicity indicator]</p>\n<p>Micronucleated PCE: [Frequency]</p>\n<h2>Positive Control</h2>\n<p>Compound: [Cyclophosphamide/MMC]</p>\n<p>Response: [Fold increase]</p>\n<h2>Conclusion</h2>\n<p>Clastogenic/Aneugenic: [Yes/No]</p>\n<p>NOAEL for Genotoxicity: [mg/kg]</p>`,
+      
+      '4.2.3.4': `<h1>Carcinogenicity</h1>\n<h2>4.2.3.4.1 Long-term Studies</h2>\n<h3>2-Year Rat Study</h3>\n<p>Strain: [Sprague-Dawley/Wistar]</p>\n<p>Dose Groups: [0, low, mid, high mg/kg/day]</p>\n<p>Group Size: [50-60/sex/group]</p>\n<p>Survival: [% at study end]</p>\n<h3>2-Year Mouse Study</h3>\n<p>Strain: [CD-1/B6C3F1]</p>\n<p>Dose Selection: [Based on MTD]</p>\n<p>Tumor Incidence: [By organ system]</p>\n<h2>4.2.3.4.2 Short/Medium-term Studies</h2>\n<p>RasH2 Mouse: [26-week study]</p>\n<p>Tg.AC Mouse: [26-week dermal]</p>\n<p>p53+/- Mouse: [26-week study]</p>\n<h2>4.2.3.4.3 Other Studies</h2>\n<p>Mechanistic Studies: [Mode of action]</p>\n<p>Hormonal Studies: [If relevant]</p>\n<h2>Carcinogenic Risk Assessment</h2>\n<p>Tumors Observed: [Type and incidence]</p>\n<p>Human Relevance: [Weight of evidence]</p>\n<p>Safety Margin: [Exposure multiples]</p>`,
+      
+      '4.2.3.4.1': `<h1>Long-term Carcinogenicity Studies</h1>\n<h2>Two-Year Rat Carcinogenicity Study</h2>\n<p>Protocol Number: [Study ID]</p>\n<p>Strain: [Sprague-Dawley/Wistar/Fischer 344]</p>\n<p>Age at Start: [6-8 weeks]</p>\n<h3>Dose Selection</h3>\n<p>Rationale: [MTD, 25x human AUC, limit dose]</p>\n<p>Dose Levels: [0, X, Y, Z mg/kg/day]</p>\n<p>Human Equivalent Dose: [Exposure margins]</p>\n<h3>Study Conduct</h3>\n<p>Animals per Group: [50-60/sex/dose]</p>\n<p>Interim Sacrifice: [52 weeks if performed]</p>\n<p>Terminal Sacrifice: [104 weeks]</p>\n<h3>Results</h3>\n<p>Survival Rate: [% by group]</p>\n<p>Body Weight Effects: [% difference from control]</p>\n<p>Neoplastic Findings: [Tumor types and incidence]</p>\n<p>Non-neoplastic Findings: [Chronic toxicity]</p>\n<p>Statistical Analysis: [Peto test, Cochran-Armitage]</p>\n<h2>Conclusion</h2>\n<p>Carcinogenic Potential: [Positive/Negative]</p>\n<p>NOEL: [mg/kg/day]</p>`,
+      
+      '4.2.3.4.2': `<h1>Short or Medium-term Carcinogenicity Studies</h1>\n<h2>26-Week Transgenic Mouse Study</h2>\n<p>Model: [Tg.rasH2, Tg.AC, p53+/-]</p>\n<p>Justification: [Alternative to 2-year mouse]</p>\n<p>Dose Levels: [Based on 13-week study]</p>\n<p>Group Size: [25/sex/group]</p>\n<h2>Study Design</h2>\n<p>Positive Control: [Model-specific carcinogen]</p>\n<p>Vehicle Control: [Formulation vehicle]</p>\n<p>Duration: [26 weeks]</p>\n<h2>Endpoints</h2>\n<p>Clinical Observations: [Daily]</p>\n<p>Body Weights: [Weekly]</p>\n<p>Palpable Masses: [Weekly from week 13]</p>\n<p>Histopathology: [Comprehensive]</p>\n<h2>Results</h2>\n<p>Tumor Incidence: [Treatment-related increases]</p>\n<p>Latency: [Time to tumor]</p>\n<p>Multiplicity: [Tumors per animal]</p>\n<h2>Interpretation</h2>\n<p>Model Validation: [Positive control response]</p>\n<p>Test Article: [Carcinogenic: Yes/No]</p>`,
+      
+      '4.2.3.4.3': `<h1>Other Carcinogenicity Studies</h1>\n<h2>Mechanistic Studies</h2>\n<p>Initiation-Promotion: [If conducted]</p>\n<p>Cell Transformation: [In vitro assays]</p>\n<p>Tumor Promotion: [PKC activation, etc.]</p>\n<h2>Investigative Studies</h2>\n<p>Mode of Action: [Genotoxic/Non-genotoxic]</p>\n<p>Threshold Effect: [Evidence for/against]</p>\n<p>Species Specificity: [Relevance to humans]</p>\n<h2>Biomarker Studies</h2>\n<p>Proliferation Markers: [Ki-67, BrdU]</p>\n<p>Apoptosis: [TUNEL, Caspase-3]</p>\n<p>DNA Damage: [γH2AX, 8-OHdG]</p>\n<h2>Hormonal Assessments</h2>\n<p>Endocrine Effects: [If mechanism involves hormones]</p>\n<p>Receptor Binding: [ER, AR, TR]</p>\n<p>Steroidogenesis: [Effects on hormone synthesis]</p>\n<h2>Risk Assessment Support</h2>\n<p>Human Relevance Framework: [Application]</p>\n<p>Weight of Evidence: [Overall assessment]</p>`,
+      
+      '4.2.3.5': `<h1>Reproductive and Developmental Toxicity</h1>\n<h2>4.2.3.5.1 Fertility and Early Embryonic Development</h2>\n<p>Species: [Rat typically]</p>\n<p>Treatment Period: [4 weeks premating through implantation]</p>\n<p>Endpoints: [Fertility index, implantation]</p>\n<p>NOAEL: [mg/kg/day]</p>\n<h2>4.2.3.5.2 Embryo-Fetal Development</h2>\n<p>Species: [Rat and rabbit]</p>\n<p>Treatment: [Organogenesis period]</p>\n<p>Maternal Toxicity: [Body weight, clinical signs]</p>\n<p>Fetal Effects: [Malformations, variations]</p>\n<p>Teratogenic: [Yes/No]</p>\n<h2>4.2.3.5.3 Pre and Postnatal Development</h2>\n<p>Treatment: [Implantation through lactation]</p>\n<p>F1 Assessments: [Survival, growth, development]</p>\n<p>Behavioral Tests: [Learning, memory, motor]</p>\n<p>F1 Reproduction: [Fertility of offspring]</p>\n<h2>4.2.3.5.4 Juvenile Animal Studies</h2>\n<p>Age at Start: [Postnatal day]</p>\n<p>Development: [Physical, sexual, neurobehavioral]</p>\n<p>Pediatric NOAEL: [mg/kg/day]</p>`,
+      
+      '4.2.3.5.1': `<h1>Fertility and Early Embryonic Development</h1>\n<h2>Study Design</h2>\n<p>Species/Strain: [Rat/Sprague-Dawley]</p>\n<p>Dose Groups: [0, low, mid, high mg/kg/day]</p>\n<p>Group Size: [20-25/sex/group]</p>\n<h2>Treatment Schedule</h2>\n<p>Males: [4 weeks before mating through mating]</p>\n<p>Females: [2 weeks before mating through GD 7]</p>\n<p>Mating Period: [Up to 2 weeks]</p>\n<h2>Male Assessments</h2>\n<p>Sperm Parameters: [Count, motility, morphology]</p>\n<p>Reproductive Organs: [Weights and histopathology]</p>\n<p>Fertility Index: [% males siring litters]</p>\n<h2>Female Assessments</h2>\n<p>Estrous Cycle: [Length and regularity]</p>\n<p>Mating Index: [% mated]</p>\n<p>Fertility Index: [% pregnant]</p>\n<p>Preimplantation Loss: [Calculation]</p>\n<h2>Embryonic Development</h2>\n<p>Corpora Lutea: [Number]</p>\n<p>Implantations: [Number and distribution]</p>\n<p>Early Resorptions: [Incidence]</p>\n<h2>Conclusion</h2>\n<p>NOAEL Fertility: [mg/kg/day]</p>\n<p>NOAEL Early Embryonic: [mg/kg/day]</p>`,
+      
+      '4.2.3.5.2': `<h1>Embryo-Fetal Development (Teratology)</h1>\n<h2>Study Design - Rat</h2>\n<p>Strain: [Sprague-Dawley/Wistar]</p>\n<p>Treatment Period: [GD 6-17]</p>\n<p>Dose Groups: [0, low, mid, high mg/kg/day]</p>\n<p>Group Size: [20-25 mated females/group]</p>\n<h2>Study Design - Rabbit</h2>\n<p>Strain: [New Zealand White]</p>\n<p>Treatment Period: [GD 6-18]</p>\n<p>Cesarean Section: [GD 29]</p>\n<h2>Maternal Evaluations</h2>\n<p>Clinical Signs: [Daily]</p>\n<p>Body Weight: [GD 0, 6, 9, 12, 15, 18, 20]</p>\n<p>Food Consumption: [Throughout gestation]</p>\n<p>Gross Pathology: [At termination]</p>\n<h2>Litter Observations</h2>\n<p>Viable Fetuses: [Number]</p>\n<p>Dead Fetuses: [Number]</p>\n<p>Resorptions: [Early and late]</p>\n<p>Fetal Weights: [Individual]</p>\n<h2>Fetal Examinations</h2>\n<p>External: [All fetuses]</p>\n<p>Visceral: [50% of fetuses]</p>\n<p>Skeletal: [All or 50% of fetuses]</p>\n<p>Malformations: [Type and incidence]</p>\n<p>Variations: [Type and incidence]</p>\n<h2>Results</h2>\n<p>Maternal NOAEL: [mg/kg/day]</p>\n<p>Developmental NOAEL: [mg/kg/day]</p>\n<p>Teratogenic Potential: [Yes/No]</p>`,
+      
+      '4.2.3.5.3': `<h1>Prenatal and Postnatal Development</h1>\n<h2>Study Design</h2>\n<p>Species: [Rat]</p>\n<p>Treatment: [GD 6 through LD 20]</p>\n<p>Dose Groups: [0, low, mid, high mg/kg/day]</p>\n<p>F0 Females: [20-25/group]</p>\n<h2>F0 Maternal Assessments</h2>\n<p>Pregnancy: [Duration, dystocia]</p>\n<p>Parturition: [Normal/abnormal]</p>\n<p>Lactation: [Behavior and performance]</p>\n<p>Clinical Pathology: [If performed]</p>\n<h2>F1 Generation Evaluations</h2>\n<p>Viability Index: [PND 0, 4, 7, 14, 21]</p>\n<p>Body Weight: [Birth through maturity]</p>\n<p>Physical Development: [Pinna unfolding, eye opening]</p>\n<p>Sexual Maturation: [Vaginal opening, preputial separation]</p>\n<h2>F1 Neurobehavioral Assessment</h2>\n<p>Motor Activity: [Open field]</p>\n<p>Learning and Memory: [Water maze, passive avoidance]</p>\n<p>Sensory Function: [Auditory startle]</p>\n<p>Social Behavior: [If evaluated]</p>\n<h2>F1 Reproductive Assessment</h2>\n<p>Mating: [F1 animals at maturity]</p>\n<p>Fertility: [Pregnancy rate]</p>\n<p>F2 Litter: [Size and viability]</p>\n<h2>Conclusion</h2>\n<p>Maternal NOAEL: [mg/kg/day]</p>\n<p>F1 NOAEL: [mg/kg/day]</p>\n<p>F1 Reproductive NOAEL: [mg/kg/day]</p>`,
+      
+      '4.2.3.5.4': `<h1>Studies in Juvenile Animals</h1>\n<h2>Study Rationale</h2>\n<p>Pediatric Indication: [Age range]</p>\n<p>Developmental Concerns: [Specific organs/systems]</p>\n<h2>Study Design</h2>\n<p>Species: [Rat typically, dog if warranted]</p>\n<p>Age at Start: [PND 4, 7, 14, or 21]</p>\n<p>Duration: [Comparable to pediatric use]</p>\n<p>Dose Groups: [Scaled to pediatric exposure]</p>\n<h2>Age-Specific Assessments</h2>\n<p>Growth: [Body weight, bone length]</p>\n<p>CNS Development: [Behavior, learning, reflexes]</p>\n<p>Sexual Maturation: [Timing and completeness]</p>\n<p>Organ Development: [Age-specific histopathology]</p>\n<h2>Special Endpoints</h2>\n<p>Bone Development: [Growth plates, density]</p>\n<p>Immune Function: [TDAR, lymphocyte subsets]</p>\n<p>Neurodevelopment: [Motor, sensory, cognitive]</p>\n<p>Reproductive Development: [Gonads, hormones]</p>\n<h2>Recovery Assessment</h2>\n<p>Reversibility: [Post-treatment recovery]</p>\n<p>Delayed Effects: [Long-term follow-up]</p>\n<h2>Results</h2>\n<p>Juvenile-Specific Effects: [Vs adult animals]</p>\n<p>Pediatric NOAEL: [mg/kg/day]</p>\n<p>Age-Based Dosing: [Recommendations]</p>`,
+      
+      '4.2.3.6': `<h1>Local Tolerance</h1>\n<h2>Dermal Irritation</h2>\n<p>Species: [Rabbit]</p>\n<p>Application: [Single, semi-occlusive]</p>\n<p>Scoring: [Draize scale]</p>\n<p>Result: [Non-irritant/Mild/Moderate/Severe]</p>\n<h2>Ocular Irritation</h2>\n<p>Species: [Rabbit]</p>\n<p>Volume: [0.1 mL or 0.1 g]</p>\n<p>Observations: [Cornea, iris, conjunctiva]</p>\n<p>Classification: [Non-irritant/Irritant/Corrosive]</p>\n<h2>Parenteral Routes</h2>\n<p>Intramuscular: [Injection site reactions]</p>\n<p>Subcutaneous: [Local effects]</p>\n<p>Intravenous: [Vascular irritation]</p>\n<p>Intrathecal: [Neurotoxicity]</p>\n<h2>Mucosal Tolerance</h2>\n<p>Vaginal: [Irritation scoring]</p>\n<p>Rectal: [Local effects]</p>\n<p>Nasal: [Mucosal changes]</p>\n<h2>Skin Sensitization</h2>\n<p>Method: [Buehler, GPMT, LLNA]</p>\n<p>Result: [Sensitizer: Yes/No]</p>\n<p>Potency: [Weak/Moderate/Strong]</p>`,
+      
+      '4.2.3.7': `<h1>Other Toxicity Studies</h1>\n<h2>4.2.3.7.1 Antigenicity</h2>\n<p>Antibody Formation: [Anti-drug antibodies]</p>\n<p>Neutralizing Activity: [Impact on efficacy]</p>\n<p>Cross-Reactivity: [Endogenous proteins]</p>\n<h2>4.2.3.7.2 Immunotoxicity</h2>\n<p>TDAR: [T-cell dependent antibody response]</p>\n<p>Immunophenotyping: [Lymphocyte subsets]</p>\n<p>Cytokine Release: [Profile]</p>\n<p>Host Resistance: [Infection models]</p>\n<h2>4.2.3.7.3 Mechanistic Studies</h2>\n<p>Target Validation: [Knockout/transgenic]</p>\n<p>Toxicity Mechanisms: [Pathway analysis]</p>\n<p>Biomarkers: [Safety/efficacy markers]</p>\n<h2>4.2.3.7.4 Dependence</h2>\n<p>Physical Dependence: [Withdrawal signs]</p>\n<p>Reinforcement: [Self-administration]</p>\n<p>Tolerance: [Dose escalation]</p>\n<h2>4.2.3.7.5 Metabolites</h2>\n<p>Major Metabolites: [Separate toxicity]</p>\n<p>Unique Human Metabolites: [Qualification]</p>\n<h2>4.2.3.7.6 Impurities</h2>\n<p>Process Impurities: [Qualification studies]</p>\n<p>Degradants: [Forced degradation]</p>\n<h2>4.2.3.7.7 Other</h2>\n<p>Phototoxicity: [3T3 NRU, clinical phototesting]</p>\n<p>Combination Toxicity: [Drug combinations]</p>\n<p>Special Studies: [Product-specific concerns]</p>`,
+      
+      '4.2.3.7.1': `<h1>Antigenicity Studies</h1>\n<h2>Immunogenicity Assessment</h2>\n<p>Test Article: [Drug substance/product]</p>\n<p>Species: [Mouse, rat, monkey as appropriate]</p>\n<p>Route: [Clinical route]</p>\n<p>Duration: [Repeat-dose study duration]</p>\n<h2>Antibody Detection</h2>\n<p>Method: [ELISA, ECL, RIA]</p>\n<p>Screening Assay: [Sensitivity, specificity]</p>\n<p>Confirmatory Assay: [Competition with drug]</p>\n<p>Titration: [Antibody levels]</p>\n<h2>Antibody Characterization</h2>\n<p>Isotype: [IgG, IgM, IgE]</p>\n<p>Neutralizing Activity: [Bioassay/cell-based]</p>\n<p>Cross-Reactivity: [Related proteins]</p>\n<p>Epitope Mapping: [If performed]</p>\n<h2>Impact Assessment</h2>\n<p>PK Effect: [Altered clearance]</p>\n<p>PD Effect: [Reduced activity]</p>\n<p>Safety: [Immune complex, anaphylaxis]</p>\n<h2>Clinical Relevance</h2>\n<p>Predictivity: [Animal to human translation]</p>\n<p>Risk Factors: [Patient population]</p>\n<p>Mitigation: [Strategies if needed]</p>`,
+      
+      '4.2.3.7.2': `<h1>Immunotoxicity Studies</h1>\n<h2>Standard Immunotoxicity Battery</h2>\n<p>Study Type: [28-day repeat dose with enhanced endpoints]</p>\n<p>Species: [Rat or mouse]</p>\n<p>Standard Parameters: [Hematology with differentials]</p>\n<p>Organ Weights: [Spleen, thymus, lymph nodes]</p>\n<p>Histopathology: [Lymphoid organs, bone marrow]</p>\n<h2>Functional Assays</h2>\n<h3>T-Cell Dependent Antibody Response (TDAR)</h3>\n<p>Antigen: [SRBC or KLH]</p>\n<p>Timing: [Immunization schedule]</p>\n<p>Endpoint: [IgM and/or IgG titers]</p>\n<p>Result: [% suppression or enhancement]</p>\n<h3>Immunophenotyping</h3>\n<p>Cell Types: [T, B, NK cells]</p>\n<p>Subsets: [CD4+, CD8+, etc.]</p>\n<p>Activation Markers: [If relevant]</p>\n<h2>Additional Assays</h2>\n<p>NK Cell Activity: [Cytotoxicity assay]</p>\n<p>Macrophage Function: [Phagocytosis]</p>\n<p>Cytokine Production: [Multiplex analysis]</p>\n<p>DTH Response: [Delayed hypersensitivity]</p>\n<h2>Host Resistance Models</h2>\n<p>Bacterial: [Listeria, Streptococcus]</p>\n<p>Viral: [Influenza, CMV]</p>\n<p>Parasitic: [If relevant]</p>\n<p>Tumor: [B16F10, PYB6]</p>`,
+      
+      '4.2.3.7.3': `<h1>Mechanistic Toxicity Studies</h1>\n<h2>Mode of Action Studies</h2>\n<p>Hypothesis: [Proposed mechanism]</p>\n<p>Key Events: [Molecular initiating event → Adverse outcome]</p>\n<p>Evidence: [In vitro and in vivo data]</p>\n<h2>Molecular Studies</h2>\n<p>Gene Expression: [Transcriptomics]</p>\n<p>Protein Expression: [Proteomics]</p>\n<p>Metabolomics: [Metabolic changes]</p>\n<p>Pathway Analysis: [Affected pathways]</p>\n<h2>Cellular Studies</h2>\n<p>Cell Death: [Apoptosis vs necrosis]</p>\n<p>Oxidative Stress: [ROS, GSH, lipid peroxidation]</p>\n<p>Mitochondrial Function: [Membrane potential, ATP]</p>\n<p>Cell Cycle: [Proliferation, arrest]</p>\n<h2>Organ-Specific Mechanisms</h2>\n<p>Hepatotoxicity: [Enzyme induction, cholestasis]</p>\n<p>Nephrotoxicity: [Tubular damage, glomerular]</p>\n<p>Cardiotoxicity: [Ion channels, contractility]</p>\n<p>Neurotoxicity: [Neurotransmitters, myelination]</p>\n<h2>Species Differences</h2>\n<p>Comparative Studies: [Rat vs dog vs human]</p>\n<p>In Vitro: [Primary cells, cell lines]</p>\n<p>Human Relevance: [Translation assessment]</p>`,
+      
+      '4.2.3.7.4': `<h1>Dependence Studies</h1>\n<h2>Physical Dependence</h2>\n<p>Species: [Rat or monkey]</p>\n<p>Treatment Duration: [Sufficient for dependence]</p>\n<p>Withdrawal Method: [Abrupt or antagonist-precipitated]</p>\n<p>Signs Monitored: [Species-specific checklist]</p>\n<p>Severity Score: [Quantitative assessment]</p>\n<h2>Reinforcement/Reward</h2>\n<h3>Self-Administration</h3>\n<p>Species: [Rat or monkey]</p>\n<p>Route: [IV typically]</p>\n<p>Schedule: [FR, PR]</p>\n<p>Comparison: [Known drugs of abuse]</p>\n<h3>Conditioned Place Preference</h3>\n<p>Species: [Mouse or rat]</p>\n<p>Conditioning Sessions: [Number and duration]</p>\n<p>Result: [Preference or aversion]</p>\n<h2>Tolerance</h2>\n<p>Endpoint: [Pharmacological effect]</p>\n<p>Development: [Time course]</p>\n<p>Cross-Tolerance: [Related drugs]</p>\n<h2>CNS Effects</h2>\n<p>Drug Discrimination: [Training drug]</p>\n<p>Locomotor Sensitization: [Repeated dosing]</p>\n<p>EEG/Sleep: [Patterns if relevant]</p>\n<h2>Abuse Liability Assessment</h2>\n<p>Overall Risk: [Low/Moderate/High]</p>\n<p>DEA Scheduling: [Recommendation]</p>`,
+      
+      '4.2.3.7.5': `<h1>Metabolite Toxicity Studies</h1>\n<h2>Metabolite Identification</h2>\n<p>Major Metabolites: [>10% of parent AUC]</p>\n<p>Human-Specific: [Not formed in animals]</p>\n<p>Disproportionate: [Higher in humans]</p>\n<h2>Metabolite Qualification</h2>\n<p>Exposure Coverage: [Animal:human ratio]</p>\n<p>Standalone Studies: [When required]</p>\n<p>Test System: [In vitro or in vivo]</p>\n<h2>In Vitro Studies</h2>\n<p>Cytotoxicity: [IC50 values]</p>\n<p>Genotoxicity: [Ames, chromosomal aberration]</p>\n<p>Receptor Binding: [Off-target effects]</p>\n<p>hERG: [Cardiac safety]</p>\n<h2>In Vivo Studies</h2>\n<p>Acute Toxicity: [If metabolite available]</p>\n<p>Repeat Dose: [Duration based on exposure]</p>\n<p>Target Organs: [Comparison to parent]</p>\n<h2>Risk Assessment</h2>\n<p>MIST Guidance: [FDA compliance]</p>\n<p>Safety Margins: [Based on metabolite levels]</p>\n<p>Clinical Monitoring: [Recommendations]</p>`,
+      
+      '4.2.3.7.6': `<h1>Impurity Qualification Studies</h1>\n<h2>Impurity Identification</h2>\n<p>Process-Related: [Starting materials, intermediates]</p>\n<p>Degradation Products: [Storage, stress conditions]</p>\n<p>Elemental Impurities: [Class 1, 2, 3]</p>\n<h2>Qualification Thresholds</h2>\n<p>ICH Q3A (DS): [0.15% or 1 mg/day]</p>\n<p>ICH Q3B (DP): [0.2% or 2 mg/day]</p>\n<p>Genotoxic: [TTC 1.5 μg/day]</p>\n<h2>Toxicological Assessment</h2>\n<h3>Literature Review</h3>\n<p>Structural Alerts: [DEREK, CASE Ultra]</p>\n<p>Class Effects: [Related compounds]</p>\n<p>Published Data: [Toxicity information]</p>\n<h3>In Silico Assessment</h3>\n<p>QSAR Models: [Multiple systems]</p>\n<p>Expert Rules: [ICH M7 compliant]</p>\n<p>Prediction: [Positive/Negative/Equivocal]</p>\n<h3>Experimental Studies</h3>\n<p>Bacterial Mutagenicity: [Ames test]</p>\n<p>General Toxicity: [Repeat dose if needed]</p>\n<p>Spiking Studies: [Impurity added to API]</p>\n<h2>Conclusion</h2>\n<p>Qualified Level: [% or ppm]</p>\n<p>Control Strategy: [Specification limit]</p>`,
+      
+      '4.2.3.7.7': `<h1>Other Toxicity Studies</h1>\n<h2>Phototoxicity</h2>\n<p>UV Absorption: [>290 nm spectrum]</p>\n<p>3T3 NRU Assay: [PIF and MPE values]</p>\n<p>In Vivo: [Pigmented rat or guinea pig]</p>\n<p>Clinical Testing: [If positive signals]</p>\n<h2>Combination Toxicity</h2>\n<p>Rationale: [Clinical use scenario]</p>\n<p>Study Design: [Factorial or parallel]</p>\n<p>Interactions: [Additive, synergistic, antagonistic]</p>\n<p>Safety Margins: [Combined exposure]</p>\n<h2>Special Population Studies</h2>\n<p>Renal Impairment Model: [5/6 nephrectomy]</p>\n<p>Hepatic Impairment Model: [CCl4, bile duct ligation]</p>\n<p>Disease Models: [Toxicity in disease state]</p>\n<p>Aged Animals: [Geriatric considerations]</p>\n<h2>Route-Specific Studies</h2>\n<p>Inhalation: [Particle size, lung deposition]</p>\n<p>Topical: [Skin penetration, accumulation]</p>\n<p>Ocular: [Systemic absorption, local effects]</p>\n<h2>Excipient Compatibility</h2>\n<p>Novel Excipients: [Safety qualification]</p>\n<p>Compatibility: [Drug-excipient interactions]</p>\n<p>Extractables/Leachables: [Container closure]</p>\n<h2>Bridging Studies</h2>\n<p>Formulation Changes: [Bioequivalence]</p>\n<p>Manufacturing Changes: [Comparability]</p>\n<p>Salt Forms: [Toxicity comparison]</p>`,
+      
+      '4.3': `<h1>4.3 Literature References</h1>\n<h2>Pharmacology References</h2>\n<p>[1] Author et al. Primary target validation. J Pharmacol Exp Ther. Year;Vol:Pages.</p>\n<p>[2] Author et al. Safety pharmacology of drug class. Toxicol Appl Pharmacol. Year;Vol:Pages.</p>\n<h2>Pharmacokinetics References</h2>\n<p>[3] Author et al. Species comparison of metabolism. Drug Metab Dispos. Year;Vol:Pages.</p>\n<p>[4] Author et al. Drug-drug interaction potential. Clin Pharmacol Ther. Year;Vol:Pages.</p>\n<h2>Toxicology References</h2>\n<p>[5] Author et al. Mechanism of toxicity. Toxicol Sci. Year;Vol:Pages.</p>\n<p>[6] ICH S1A: Carcinogenicity Testing Guidelines.</p>\n<p>[7] ICH S5(R3): Reproductive Toxicology Guidelines.</p>\n<p>[8] ICH S6(R1): Biotechnology-Derived Products.</p>\n<p>[9] ICH S7A: Safety Pharmacology.</p>\n<p>[10] ICH S9: Anticancer Pharmaceuticals.</p>\n<p>[11] ICH M3(R2): Nonclinical Safety Studies.</p>\n<p>[12] ICH M7(R1): Mutagenic Impurities.</p>\n<h2>Species-Specific References</h2>\n<p>[List relevant species-specific toxicology literature]</p>\n<h2>Class Effect References</h2>\n<p>[Literature on similar compounds or drug class]</p>`,
+      
+      // MODULE 5: Clinical Study Reports
+      '5.1': `<h1>Module 5 Table of Contents</h1>\n<h2>5.2 Tabular Listing of All Clinical Studies</h2>\n<h2>5.3 Clinical Study Reports</h2>\n<p>5.3.1 Reports of Biopharmaceutic Studies</p>\n<p>  5.3.1.1 Bioavailability Studies</p>\n<p>  5.3.1.2 Comparative BA and BE Studies</p>\n<p>  5.3.1.3 In Vitro-In Vivo Correlation</p>\n<p>  5.3.1.4 Bioanalytical Methods</p>\n<p>5.3.2 Reports of Studies Using Human Biomaterials</p>\n<p>5.3.3 Reports of Human PK Studies</p>\n<p>  5.3.3.1 Healthy Subject PK</p>\n<p>  5.3.3.2 Patient PK</p>\n<p>  5.3.3.3 Intrinsic Factor PK</p>\n<p>  5.3.3.4 Extrinsic Factor PK</p>\n<p>  5.3.3.5 Population PK</p>\n<p>5.3.4 Reports of Human PD Studies</p>\n<p>  5.3.4.1 Healthy Subject PD</p>\n<p>  5.3.4.2 Patient PD</p>\n<p>5.3.5 Reports of Efficacy and Safety Studies</p>\n<p>  5.3.5.1 Controlled Clinical Studies</p>\n<p>  5.3.5.2 Uncontrolled Clinical Studies</p>\n<p>  5.3.5.3 Analysis of Data from More Than One Study</p>\n<p>  5.3.5.4 Other Clinical Study Reports</p>\n<p>5.3.6 Reports of Post-Marketing Experience</p>\n<p>5.3.7 Case Report Forms and Individual Patient Listings</p>\n<h2>5.4 Literature References</h2>`,
+      
+      '5.3.1.1': `<h1>Bioavailability Study Report</h1>\n<h2>Protocol Number</h2>\n<p>[Study ID]</p>\n<h2>Study Title</h2>\n<p>[Full title]</p>\n<h2>Principal Investigator</h2>\n<p>[Name and institution]</p>\n<h2>Study Objectives</h2>\n<p>Primary: [Primary objective]</p>\n<p>Secondary: [Secondary objectives]</p>\n<h2>Study Design</h2>\n<p>Type: [Crossover/parallel]</p>\n<p>Randomization: [Method]</p>\n<p>Blinding: [Open/single/double]</p>\n<h2>Study Population</h2>\n<p>Number of Subjects: [N]</p>\n<p>Demographics: [Age, gender, race]</p>\n<h2>Treatments</h2>\n<p>Test: [Test formulation]</p>\n<p>Reference: [Reference formulation]</p>\n<h2>Pharmacokinetic Results</h2>\n<p>Cmax: [Mean ± SD]</p>\n<p>AUC: [Mean ± SD]</p>\n<p>Tmax: [Median range]</p>\n<p>Bioavailability: [F%]</p>\n<h2>Safety Results</h2>\n<p>Adverse Events: [Summary]</p>\n<h2>Conclusions</h2>\n<p>[Study conclusions]</p>`,
+      
+      '5.3.5.1': `<h1>Controlled Clinical Study Report</h1>\n<h2>Title Page</h2>\n<p>Protocol Number: [ID]</p>\n<p>Study Title: [Full title]</p>\n<p>Study Phase: [Phase 1/2/3]</p>\n<p>Study Dates: [Start - End]</p>\n<h2>Synopsis</h2>\n<p>[Brief study summary]</p>\n<h2>Study Objectives</h2>\n<p>Primary Endpoint: [Description]</p>\n<p>Secondary Endpoints: [List]</p>\n<h2>Methodology</h2>\n<p>Study Design: [RCT details]</p>\n<p>Study Duration: [Length]</p>\n<p>Sample Size: [N and power calculation]</p>\n<h2>Study Population</h2>\n<p>Inclusion Criteria: [List]</p>\n<p>Exclusion Criteria: [List]</p>\n<p>Demographics: [Baseline characteristics]</p>\n<h2>Efficacy Results</h2>\n<p>Primary Endpoint: [Results with CI and p-value]</p>\n<p>Secondary Endpoints: [Results]</p>\n<h2>Safety Results</h2>\n<p>Adverse Events: [Incidence and severity]</p>\n<p>Serious Adverse Events: [Details]</p>\n<p>Deaths: [If any]</p>\n<p>Discontinuations: [Reasons]</p>\n<h2>Discussion</h2>\n<p>[Interpretation of results]</p>\n<h2>Conclusions</h2>\n<p>[Overall study conclusions]</p>`,
+      
+      // Additional Module 5 templates - COMPLETE CLINICAL PACKAGE FOR MARKET LAUNCH
+      '5.2': `<h1>5.2 Tabular Listing of All Clinical Studies</h1>\n<table>\n<tr>\n<th>Study ID</th>\n<th>Study Design</th>\n<th>Test Product</th>\n<th>Objectives</th>\n<th>Subject Population</th>\n<th>No. of Subjects</th>\n<th>Duration</th>\n<th>Study Report Location</th>\n</tr>\n<tr>\n<td>[Protocol #]</td>\n<td>[Design type]</td>\n<td>[Dose/regimen]</td>\n<td>[Primary objective]</td>\n<td>[Healthy/patients]</td>\n<td>[N]</td>\n<td>[Treatment duration]</td>\n<td>[Module section]</td>\n</tr>\n</table>\n<h2>Clinical Pharmacology Studies</h2>\n<p>[Tabular listing of all PK/PD studies]</p>\n<h2>Efficacy and Safety Studies</h2>\n<p>[Tabular listing of all pivotal and supportive studies]</p>\n<h2>Post-Marketing Studies</h2>\n<p>[If applicable]</p>`,
+      
+      '5.3.1.2': `<h1>Comparative Bioavailability and Bioequivalence Studies</h1>\n<h2>Study Information</h2>\n<p>Protocol Number: [Study ID]</p>\n<p>Study Title: [BE study title]</p>\n<p>Principal Investigator: [Name and site]</p>\n<h2>Study Design</h2>\n<p>Type: [2-way crossover, parallel, replicate]</p>\n<p>Sequence: [Treatment sequences]</p>\n<p>Washout Period: [Duration between periods]</p>\n<p>Fed/Fasted: [Prandial state]</p>\n<h2>Study Products</h2>\n<p>Test: [Test formulation details]</p>\n<p>Reference: [RLD or comparator details]</p>\n<p>Dose: [Strength administered]</p>\n<h2>Subjects</h2>\n<p>Number Enrolled: [N]</p>\n<p>Number Completed: [N]</p>\n<p>Demographics: [Age, gender, BMI]</p>\n<h2>Pharmacokinetic Results</h2>\n<table>\n<tr><th>Parameter</th><th>Test (Mean ± SD)</th><th>Reference (Mean ± SD)</th><th>Ratio (%)</th><th>90% CI</th></tr>\n<tr><td>Cmax</td><td>[Value]</td><td>[Value]</td><td>[Ratio]</td><td>[CI]</td></tr>\n<tr><td>AUC0-t</td><td>[Value]</td><td>[Value]</td><td>[Ratio]</td><td>[CI]</td></tr>\n<tr><td>AUC0-∞</td><td>[Value]</td><td>[Value]</td><td>[Ratio]</td><td>[CI]</td></tr>\n</table>\n<h2>Bioequivalence Conclusion</h2>\n<p>Criteria Met: [Yes/No]</p>\n<p>Acceptance Range: [80.00-125.00%]</p>`,
+      
+      '5.3.1.3': `<h1>In Vitro-In Vivo Correlation Study Reports</h1>\n<h2>Study Objective</h2>\n<p>IVIVC Level: [Level A/B/C]</p>\n<p>Purpose: [Establish IVIVC for formulation development]</p>\n<h2>In Vitro Methods</h2>\n<p>Dissolution Method: [USP apparatus, medium, speed]</p>\n<p>Formulations Tested: [Fast, medium, slow release]</p>\n<p>Dissolution Profiles: [% dissolved vs time]</p>\n<h2>In Vivo Studies</h2>\n<p>Study Design: [Crossover study details]</p>\n<p>Subjects: [N subjects]</p>\n<p>Sampling: [PK sampling times]</p>\n<h2>IVIVC Development</h2>\n<p>Deconvolution Method: [Wagner-Nelson, Loo-Riegelman]</p>\n<p>In Vivo Input: [Fraction absorbed vs time]</p>\n<p>Correlation Model: [Linear, non-linear]</p>\n<p>R²: [Correlation coefficient]</p>\n<h2>Validation</h2>\n<p>Internal Validation: [Cross-validation results]</p>\n<p>External Validation: [If performed]</p>\n<p>Prediction Error: [%PE for Cmax and AUC]</p>\n<h2>Application</h2>\n<p>Biowaivers: [Justification for future changes]</p>\n<p>Dissolution Specifications: [Proposed specs based on IVIVC]</p>`,
+      
+      '5.3.1.4': `<h1>Reports of Bioanalytical and Analytical Methods for Human Studies</h1>\n<h2>Bioanalytical Method</h2>\n<p>Analyte(s): [Parent drug and metabolites]</p>\n<p>Biological Matrix: [Plasma, serum, urine, CSF]</p>\n<p>Analytical Technique: [LC-MS/MS, HPLC-UV, etc.]</p>\n<p>Internal Standard: [IS used]</p>\n<h2>Method Validation</h2>\n<h3>Selectivity</h3>\n<p>Blank Samples: [N samples tested]</p>\n<p>Interfering Peaks: [None/resolved]</p>\n<h3>Calibration Curve</h3>\n<p>Range: [LLOQ to ULOQ]</p>\n<p>Regression Model: [Linear, 1/x² weighting]</p>\n<p>R²: [Correlation coefficient]</p>\n<h3>Accuracy and Precision</h3>\n<p>Intra-day: [CV% and %Bias]</p>\n<p>Inter-day: [CV% and %Bias]</p>\n<p>LLOQ: [Performance at LLOQ]</p>\n<h3>Stability</h3>\n<p>Bench-top: [Hours at room temperature]</p>\n<p>Freeze-thaw: [Number of cycles]</p>\n<p>Long-term: [Months at -20°C/-80°C]</p>\n<p>Processed Sample: [Autosampler stability]</p>\n<h2>Incurred Sample Reanalysis</h2>\n<p>Samples Reanalyzed: [% of study samples]</p>\n<p>Acceptance: [% within ±20%]</p>`,
+      
+      '5.3.2.1': `<h1>Plasma Protein Binding Study Reports</h1>\n<h2>Study Design</h2>\n<p>Method: [Equilibrium dialysis, ultrafiltration, ultracentrifugation]</p>\n<p>Species: [Human plasma/serum]</p>\n<p>Temperature: [37°C]</p>\n<p>Duration: [Equilibration time]</p>\n<h2>Test Concentrations</h2>\n<p>Concentrations Tested: [Range covering therapeutic levels]</p>\n<p>Clinical Relevance: [Expected Cmax, Css]</p>\n<h2>Results</h2>\n<p>% Bound: [Mean ± SD]</p>\n<p>Concentration Dependency: [Linear/non-linear]</p>\n<p>Unbound Fraction (fu): [Value]</p>\n<h2>Special Populations</h2>\n<p>Renal Impairment: [Plasma from uremic patients]</p>\n<p>Hepatic Impairment: [Plasma from cirrhotic patients]</p>\n<p>Pregnancy: [If relevant]</p>\n<h2>Protein Binding Partners</h2>\n<p>Primary Proteins: [Albumin, α1-acid glycoprotein]</p>\n<p>Binding Sites: [If determined]</p>\n<h2>Clinical Significance</h2>\n<p>Drug-Drug Displacement: [Potential for interactions]</p>\n<p>Dosing Implications: [Based on unbound concentration]</p>`,
+      
+      '5.3.2.2': `<h1>Reports of Hepatic Metabolism and Drug Interaction Studies</h1>\n<h2>In Vitro Metabolism</h2>\n<h3>Test System</h3>\n<p>Human Liver Microsomes: [Pooled, N donors]</p>\n<p>Hepatocytes: [Fresh/cryopreserved]</p>\n<p>Recombinant Enzymes: [CYPs tested]</p>\n<h3>Metabolite Identification</h3>\n<p>Major Pathways: [Phase I and II]</p>\n<p>Metabolites Formed: [Structures and %]</p>\n<p>CYP Enzymes: [CYP3A4, 2D6, 2C9, etc.]</p>\n<h2>Enzyme Phenotyping</h2>\n<p>Reaction Phenotyping: [% contribution of each CYP]</p>\n<p>Chemical Inhibition: [Selective inhibitors used]</p>\n<p>Correlation Analysis: [With CYP activities]</p>\n<h2>Drug-Drug Interaction Potential</h2>\n<h3>As Substrate</h3>\n<p>Major Pathway: [Primary CYP]</p>\n<p>fm Value: [Fraction metabolized]</p>\n<p>Victim Potential: [Low/Moderate/High]</p>\n<h3>As Inhibitor</h3>\n<p>IC50 Values: [For each CYP]</p>\n<p>[I]/Ki Ratio: [Prediction of DDI risk]</p>\n<p>Time-Dependent Inhibition: [KI, kinact if applicable]</p>\n<h3>As Inducer</h3>\n<p>Fold Induction: [CYP1A2, 2B6, 3A4]</p>\n<p>EC50: [Concentration for induction]</p>\n<p>Emax: [Maximum induction]</p>`,
+      
+      '5.3.2.3': `<h1>Studies Using Other Human Biomaterials</h1>\n<h2>Study Type</h2>\n<p>Biomaterial: [Skin, blood cells, tissues]</p>\n<p>Purpose: [Specific study objective]</p>\n<h2>Transporter Studies</h2>\n<h3>Uptake Transporters</h3>\n<p>OATP1B1/1B3: [Substrate/inhibitor assessment]</p>\n<p>OAT1/3: [Renal uptake]</p>\n<p>OCT2: [Renal and hepatic uptake]</p>\n<h3>Efflux Transporters</h3>\n<p>P-glycoprotein: [Substrate/inhibitor]</p>\n<p>BCRP: [Breast cancer resistance protein]</p>\n<p>MRP2: [Biliary excretion]</p>\n<h2>Blood Cell Partitioning</h2>\n<p>Blood:Plasma Ratio: [Value]</p>\n<p>Temperature: [37°C]</p>\n<p>Hematocrit Effect: [If assessed]</p>\n<h2>Skin Penetration</h2>\n<p>Method: [Franz cell, tape stripping]</p>\n<p>Penetration Rate: [μg/cm²/hr]</p>\n<p>Skin Layers: [Stratum corneum, epidermis, dermis]</p>\n<h2>Other Studies</h2>\n<p>Melanin Binding: [If performed]</p>\n<p>DNA Binding: [If relevant]</p>\n<p>Tissue Slices: [Ex vivo metabolism]</p>`,
+      
+      '5.3.3.1': `<h1>Healthy Subject Pharmacokinetic and Initial Tolerability</h1>\n<h2>Study Design</h2>\n<p>Phase: [Phase 1]</p>\n<p>Design: [SAD, MAD, food effect]</p>\n<p>Randomization: [Ratio of active:placebo]</p>\n<p>Blinding: [Double-blind/open-label]</p>\n<h2>Single Ascending Dose (SAD)</h2>\n<p>Dose Levels: [Starting dose to maximum]</p>\n<p>Dose Escalation: [Scheme and stopping rules]</p>\n<p>Subjects per Cohort: [N active + N placebo]</p>\n<h3>PK Parameters</h3>\n<table>\n<tr><th>Dose</th><th>Cmax</th><th>Tmax</th><th>AUC</th><th>t½</th><th>CL/F</th></tr>\n<tr><td>[Dose 1]</td><td>[Value]</td><td>[Value]</td><td>[Value]</td><td>[Value]</td><td>[Value]</td></tr>\n</table>\n<p>Dose Proportionality: [Linear/non-linear]</p>\n<h2>Multiple Ascending Dose (MAD)</h2>\n<p>Dosing Duration: [Days]</p>\n<p>Steady State: [Day reached]</p>\n<p>Accumulation Ratio: [Rss]</p>\n<h2>Food Effect</h2>\n<p>Meal Type: [High-fat, standard]</p>\n<p>Fed/Fasted Ratio: [Cmax and AUC ratios]</p>\n<p>Clinical Significance: [Impact on dosing]</p>\n<h2>Safety and Tolerability</h2>\n<p>MTD: [Maximum tolerated dose if reached]</p>\n<p>DLTs: [Dose-limiting toxicities]</p>\n<p>Common AEs: [Most frequent events]</p>`,
+      
+      '5.3.3.2': `<h1>Patient Pharmacokinetic and Initial Tolerability</h1>\n<h2>Study Population</h2>\n<p>Disease State: [Target indication]</p>\n<p>Severity: [Mild/moderate/severe]</p>\n<p>Sample Size: [N patients]</p>\n<p>Demographics: [Age, gender, race distribution]</p>\n<h2>Study Design</h2>\n<p>Dosing Regimen: [Dose and frequency]</p>\n<p>Duration: [Treatment period]</p>\n<p>PK Sampling: [Intensive/sparse sampling]</p>\n<h2>PK Results in Patients</h2>\n<p>Steady-State Parameters:</p>\n<table>\n<tr><th>Parameter</th><th>Mean ± SD</th><th>CV%</th><th>Range</th></tr>\n<tr><td>Cmax,ss</td><td>[Value]</td><td>[%]</td><td>[Min-Max]</td></tr>\n<tr><td>Cmin,ss</td><td>[Value]</td><td>[%]</td><td>[Min-Max]</td></tr>\n<tr><td>AUCτ</td><td>[Value]</td><td>[%]</td><td>[Min-Max]</td></tr>\n</table>\n<h2>Comparison to Healthy Subjects</h2>\n<p>Exposure Ratio: [Patient:healthy ratio]</p>\n<p>Clearance Differences: [CL/F comparison]</p>\n<p>Volume Differences: [V/F comparison]</p>\n<h2>Disease Effect</h2>\n<p>Disease Severity: [Impact on PK]</p>\n<p>Biomarkers: [Correlation with PK]</p>\n<p>Dose Adjustment: [If needed]</p>\n<h2>Tolerability in Patients</h2>\n<p>Safety Profile: [AE summary]</p>\n<p>Discontinuations: [Reasons and rate]</p>`,
+      
+      '5.3.3.3': `<h1>Intrinsic Factor Pharmacokinetic Studies</h1>\n<h2>Renal Impairment Study</h2>\n<p>Groups: [Normal, mild, moderate, severe, ESRD]</p>\n<p>Classification: [eGFR or CrCl ranges]</p>\n<p>Dialysis: [Effect of hemodialysis if studied]</p>\n<h3>PK Results</h3>\n<table>\n<tr><th>Group</th><th>N</th><th>AUC Ratio</th><th>Cmax Ratio</th><th>t½ (hr)</th></tr>\n<tr><td>Normal</td><td>[N]</td><td>1.00</td><td>1.00</td><td>[Value]</td></tr>\n<tr><td>Mild RI</td><td>[N]</td><td>[Ratio]</td><td>[Ratio]</td><td>[Value]</td></tr>\n</table>\n<p>Dose Recommendation: [Adjustment needed]</p>\n<h2>Hepatic Impairment Study</h2>\n<p>Groups: [Normal, Child-Pugh A, B, C]</p>\n<p>Matching: [Age, weight, gender matched]</p>\n<h3>PK Results</h3>\n<p>Exposure Changes: [By severity]</p>\n<p>Protein Binding: [Changes in fu]</p>\n<p>Metabolite Ratios: [Altered metabolism]</p>\n<p>Dose Recommendation: [Adjustment needed]</p>\n<h2>Age Effect</h2>\n<h3>Pediatric</h3>\n<p>Age Groups: [Ranges studied]</p>\n<p>Weight-Based Dosing: [mg/kg]</p>\n<p>Maturation Effects: [On CL and V]</p>\n<h3>Geriatric</h3>\n<p>Age Range: [65-75, >75 years]</p>\n<p>PK Differences: [Vs younger adults]</p>\n<p>Dose Adjustment: [If recommended]</p>`,
+      
+      '5.3.3.4': `<h1>Extrinsic Factor Pharmacokinetic Studies</h1>\n<h2>Drug-Drug Interaction Studies</h2>\n<h3>Study as Victim</h3>\n<p>Perpetrator Drug: [Strong CYP inhibitor/inducer]</p>\n<p>Design: [Crossover or parallel]</p>\n<p>Results:</p>\n<table>\n<tr><th>PK Parameter</th><th>Alone</th><th>With Perpetrator</th><th>Ratio</th><th>90% CI</th></tr>\n<tr><td>AUC</td><td>[Value]</td><td>[Value]</td><td>[Ratio]</td><td>[CI]</td></tr>\n<tr><td>Cmax</td><td>[Value]</td><td>[Value]</td><td>[Ratio]</td><td>[CI]</td></tr>\n</table>\n<p>Clinical Significance: [Dosing recommendations]</p>\n<h3>Study as Perpetrator</h3>\n<p>Victim Drug: [Sensitive substrate]</p>\n<p>Results: [Effect on victim drug PK]</p>\n<p>Interaction Classification: [Weak/moderate/strong]</p>\n<h2>Food-Drug Interactions</h2>\n<p>Meal Types: [Standard, high-fat, high-calorie]</p>\n<p>Timing: [With meal, 30 min after, etc.]</p>\n<p>Effect on PK: [Cmax and AUC changes]</p>\n<p>Dosing Recommendation: [With/without food]</p>\n<h2>Other Extrinsic Factors</h2>\n<h3>Smoking</h3>\n<p>Effect: [On CYP1A2 substrates]</p>\n<h3>Alcohol</h3>\n<p>Interaction: [If studied]</p>\n<h3>Herbal Products</h3>\n<p>St. John's Wort: [CYP3A4 induction]</p>\n<p>Other Herbals: [If relevant]</p>`,
+      
+      '5.3.3.5': `<h1>Population Pharmacokinetic Studies</h1>\n<h2>Analysis Dataset</h2>\n<p>Studies Included: [List of studies]</p>\n<p>Number of Subjects: [Total N]</p>\n<p>Number of Observations: [PK samples]</p>\n<p>Dosing Regimens: [Range of doses/schedules]</p>\n<h2>Model Development</h2>\n<h3>Structural Model</h3>\n<p>Compartments: [1, 2, or 3 compartment]</p>\n<p>Absorption: [First-order, zero-order, transit]</p>\n<p>Elimination: [Linear, non-linear]</p>\n<h3>Statistical Model</h3>\n<p>Inter-individual Variability: [On CL, V, Ka]</p>\n<p>Residual Error: [Proportional, additive, combined]</p>\n<h2>Covariate Analysis</h2>\n<p>Covariates Tested: [Demographics, labs, disease]</p>\n<p>Significant Covariates:</p>\n<ul>\n<li>On CL/F: [Weight, renal function, etc.]</li>\n<li>On V/F: [Weight, gender, etc.]</li>\n</ul>\n<p>Final Model: [Equations with covariates]</p>\n<h2>Model Validation</h2>\n<p>Goodness of Fit: [Plots]</p>\n<p>Bootstrap: [N runs, CI of parameters]</p>\n<p>VPC: [Visual predictive check]</p>\n<h2>Simulations</h2>\n<p>Dose Optimization: [By subgroup]</p>\n<p>Special Populations: [Predicted exposures]</p>\n<p>Dosing Recommendations: [Based on simulations]</p>`,
+      
+      '5.3.4.1': `<h1>Healthy Subject Pharmacodynamic Studies</h1>\n<h2>Study Design</h2>\n<p>Type: [PD assessment in Phase 1]</p>\n<p>Subjects: [N healthy volunteers]</p>\n<p>Doses: [Range tested]</p>\n<p>Duration: [Single/multiple dose]</p>\n<h2>Pharmacodynamic Assessments</h2>\n<h3>Biomarkers</h3>\n<p>Primary PD Marker: [Biomarker name]</p>\n<p>Baseline Value: [Mean ± SD]</p>\n<p>Maximum Change: [Emax]</p>\n<p>Time Course: [Onset, peak, duration]</p>\n<h3>Functional Measures</h3>\n<p>Physiological: [HR, BP, ECG parameters]</p>\n<p>Laboratory: [Relevant lab markers]</p>\n<p>Imaging: [If performed]</p>\n<h2>PK/PD Relationship</h2>\n<p>Model: [Emax, linear, sigmoid]</p>\n<p>EC50: [Concentration for 50% effect]</p>\n<p>Hill Coefficient: [If sigmoid]</p>\n<p>Hysteresis: [Present/absent]</p>\n<h2>Dose-Response</h2>\n<table>\n<tr><th>Dose</th><th>Cmax</th><th>PD Effect</th><th>Duration</th></tr>\n<tr><td>[Dose 1]</td><td>[Conc]</td><td>[% change]</td><td>[Hours]</td></tr>\n</table>\n<h2>Safety Pharmacodynamics</h2>\n<p>QTc: [Effect on cardiac repolarization]</p>\n<p>CNS: [Cognitive/psychomotor effects]</p>\n<p>Other: [System-specific assessments]</p>`,
+      
+      '5.3.4.2': `<h1>Patient Pharmacodynamic Studies</h1>\n<h2>Study Population</h2>\n<p>Indication: [Disease studied]</p>\n<p>Number of Patients: [N]</p>\n<p>Disease Severity: [Baseline characteristics]</p>\n<p>Prior Treatments: [Washout requirements]</p>\n<h2>Study Design</h2>\n<p>Type: [Dose-ranging, proof-of-concept]</p>\n<p>Duration: [Treatment period]</p>\n<p>Doses/Regimens: [Groups tested]</p>\n<p>Control: [Placebo/active comparator]</p>\n<h2>Efficacy Biomarkers</h2>\n<p>Primary Marker: [Disease-specific biomarker]</p>\n<p>Baseline: [Mean ± SD]</p>\n<p>Change from Baseline: [By dose group]</p>\n<p>Time to Effect: [Onset of action]</p>\n<p>Duration: [Sustained effect]</p>\n<h2>Clinical Endpoints</h2>\n<p>Symptom Scores: [Patient-reported outcomes]</p>\n<p>Functional Measures: [Disease-specific]</p>\n<p>Quality of Life: [If assessed]</p>\n<h2>Dose-Response in Patients</h2>\n<table>\n<tr><th>Dose Group</th><th>N</th><th>PD Response</th><th>Clinical Response</th></tr>\n<tr><td>Placebo</td><td>[N]</td><td>[%]</td><td>[%]</td></tr>\n<tr><td>Low Dose</td><td>[N]</td><td>[%]</td><td>[%]</td></tr>\n</table>\n<h2>PK/PD in Disease</h2>\n<p>Model: [Relationship in patients]</p>\n<p>Target Engagement: [% receptor occupancy]</p>\n<p>Therapeutic Window: [Effective concentration range]</p>`,
+      
+      '5.3.5.2': `<h1>Uncontrolled Clinical Studies</h1>\n<h2>Study Information</h2>\n<p>Protocol Number: [Study ID]</p>\n<p>Study Title: [Open-label extension or single-arm study]</p>\n<p>Study Rationale: [Why uncontrolled design]</p>\n<h2>Study Design</h2>\n<p>Type: [Open-label extension, compassionate use, single-arm]</p>\n<p>Duration: [Length of treatment/follow-up]</p>\n<p>Dose/Regimen: [Fixed or flexible dosing]</p>\n<h2>Patient Population</h2>\n<p>Number Enrolled: [N]</p>\n<p>Source: [Roll-over from controlled studies or de novo]</p>\n<p>Key Inclusion: [Criteria]</p>\n<p>Demographics: [Baseline characteristics]</p>\n<h2>Efficacy Assessments</h2>\n<p>Maintenance of Effect: [From controlled studies]</p>\n<p>Long-term Outcomes: [Sustained response rates]</p>\n<p>Patient-Reported Outcomes: [Quality of life, satisfaction]</p>\n<table>\n<tr><th>Time Point</th><th>N</th><th>Response Rate</th><th>Mean Change</th></tr>\n<tr><td>Month 3</td><td>[N]</td><td>[%]</td><td>[Value]</td></tr>\n<tr><td>Month 6</td><td>[N]</td><td>[%]</td><td>[Value]</td></tr>\n</table>\n<h2>Safety Results</h2>\n<p>Exposure: [Patient-years]</p>\n<p>Long-term Safety: [New signals]</p>\n<p>Discontinuations: [Reasons over time]</p>\n<p>Deaths: [Causality assessment]</p>`,
+      
+      '5.3.5.3': `<h1>Reports of Analyses of Data from More Than One Study</h1>\n<h2>Integrated Analysis Scope</h2>\n<p>Type: [ISS (Integrated Summary of Safety) / ISE (Integrated Summary of Efficacy)]</p>\n<p>Studies Included: [List of pooled studies]</p>\n<p>Total Patients: [N across studies]</p>\n<p>Rationale: [Reason for pooling]</p>\n<h2>Pooling Strategy</h2>\n<p>Similarity Assessment: [Study designs, populations]</p>\n<p>Dose Groups: [How combined]</p>\n<p>Statistical Methods: [Fixed/random effects]</p>\n<h2>Integrated Efficacy Analysis</h2>\n<h3>Primary Endpoint</h3>\n<p>Overall Effect Size: [Pooled estimate with CI]</p>\n<p>Heterogeneity: [I² statistic]</p>\n<p>Forest Plot: [Visual representation]</p>\n<h3>Subgroup Analyses</h3>\n<table>\n<tr><th>Subgroup</th><th>N</th><th>Effect Size</th><th>95% CI</th><th>P-interaction</th></tr>\n<tr><td>Age <65</td><td>[N]</td><td>[Value]</td><td>[CI]</td><td>[p]</td></tr>\n<tr><td>Age ≥65</td><td>[N]</td><td>[Value]</td><td>[CI]</td><td>[p]</td></tr>\n</table>\n<h2>Integrated Safety Analysis</h2>\n<p>Total Exposure: [Patient-years]</p>\n<p>Common Adverse Events: [Pooled incidence]</p>\n<p>Serious Adverse Events: [Overall rate]</p>\n<p>Risk Factors: [Predictors of AEs]</p>\n<h2>Meta-Analysis Results</h2>\n<p>Number Needed to Treat: [NNT]</p>\n<p>Number Needed to Harm: [NNH]</p>\n<p>Benefit-Risk: [Overall assessment]</p>`,
+      
+      '5.3.5.4': `<h1>Other Clinical Study Reports</h1>\n<h2>Bridging Studies</h2>\n<p>Purpose: [Ethnic bridging, pediatric extrapolation]</p>\n<p>Design: [PK/PD comparison]</p>\n<p>Population: [Target group vs reference]</p>\n<p>Results: [Similarity assessment]</p>\n<p>Conclusion: [Dose adjustment needed?]</p>\n<h2>Dose-Finding Studies</h2>\n<p>Design: [Adaptive, dose-ranging]</p>\n<p>Doses Tested: [Range and rationale]</p>\n<p>Primary Endpoint: [Efficacy measure]</p>\n<p>Dose-Response Model: [Emax, linear, etc.]</p>\n<p>Selected Dose: [For Phase 3]</p>\n<h2>Immunogenicity Studies</h2>\n<p>Assay: [Method for ADA detection]</p>\n<p>Incidence: [% with anti-drug antibodies]</p>\n<p>Neutralizing Antibodies: [% with NAbs]</p>\n<p>Impact on PK: [Clearance changes]</p>\n<p>Impact on Efficacy: [Loss of response]</p>\n<p>Impact on Safety: [Hypersensitivity]</p>\n<h2>Human Factors Studies</h2>\n<p>Device/Delivery: [If applicable]</p>\n<p>User Groups: [Patients, caregivers, HCP]</p>\n<p>Use Scenarios: [Simulated use testing]</p>\n<p>Use Errors: [Critical tasks]</p>\n<p>Risk Mitigation: [Label changes, training]</p>\n<h2>Expanded Access</h2>\n<p>Program Type: [Compassionate use, treatment IND]</p>\n<p>Patients Treated: [N]</p>\n<p>Key Findings: [Safety in broader population]</p>`,
+      
+      '5.3.6': `<h1>5.3.6 Reports of Postmarketing Experience</h1>\n<h2>Postmarketing Surveillance</h2>\n<p>Reporting Period: [Date range]</p>\n<p>Estimated Patient Exposure: [Patient-years or prescriptions]</p>\n<p>Geographic Distribution: [Countries/regions]</p>\n<h2>Spontaneous Adverse Event Reports</h2>\n<p>Total Reports: [N]</p>\n<p>Serious Reports: [N and %]</p>\n<p>Fatal Cases: [N with causality assessment]</p>\n<h3>Most Frequently Reported Events</h3>\n<table>\n<tr><th>Event</th><th>Number</th><th>Reporting Rate</th><th>Seriousness</th></tr>\n<tr><td>[AE 1]</td><td>[N]</td><td>[Per 100,000]</td><td>[% serious]</td></tr>\n</table>\n<h2>Signal Detection</h2>\n<p>New Safety Signals: [Identified signals]</p>\n<p>Disproportionality Analysis: [PRR, ROR results]</p>\n<p>Actions Taken: [Label changes, REMS, etc.]</p>\n<h2>Periodic Safety Update Reports</h2>\n<p>PSUR/PBRER Period: [Dates]</p>\n<p>Benefit-Risk Balance: [Current assessment]</p>\n<p>Risk Minimization: [Effectiveness of measures]</p>\n<h2>Post-Approval Studies</h2>\n<p>Required Studies: [FDA PMR/PMC]</p>\n<p>Registry Studies: [Disease or product registries]</p>\n<p>Outcomes Studies: [Real-world effectiveness]</p>\n<h2>Literature Review</h2>\n<p>Published Case Reports: [Summary]</p>\n<p>Epidemiological Studies: [Key findings]</p>\n<p>Meta-Analyses: [Safety findings]</p>`,
+      
+      '5.3.7': `<h1>5.3.7 Case Report Forms and Individual Patient Listings</h1>\n<h2>Case Report Forms</h2>\n<p>Format: [Electronic/Paper CRF]</p>\n<p>Studies Included: [List of studies with CRFs]</p>\n<p>Blank CRF: [Reference to location]</p>\n<p>Annotated CRF: [With database variable names]</p>\n<h2>Individual Patient Data Listings</h2>\n<h3>Demographic Data</h3>\n<p>Contents: [Age, sex, race, weight, height]</p>\n<p>Format: [By study and patient]</p>\n<h3>Efficacy Data</h3>\n<p>Primary Endpoints: [Individual patient results]</p>\n<p>Secondary Endpoints: [Individual patient results]</p>\n<p>Time Course: [Longitudinal data]</p>\n<h3>Safety Data</h3>\n<p>Adverse Events: [Verbatim and coded terms]</p>\n<p>Laboratory Values: [Individual results with flags]</p>\n<p>Vital Signs: [Individual measurements]</p>\n<p>ECG Data: [Individual parameters]</p>\n<h2>Serious Adverse Event Narratives</h2>\n<p>Format: [Patient narrative template]</p>\n<p>Contents: [Medical history, event description, outcome]</p>\n<p>Deaths: [Detailed narratives for all deaths]</p>\n<p>Other SAEs: [Narratives for significant events]</p>\n<h2>Data Listings Organization</h2>\n<p>Sort Order: [By study, site, patient]</p>\n<p>Cross-Reference: [To study reports]</p>\n<p>Electronic Format: [PDF, SAS datasets]</p>\n<p>Data Standards: [CDISC SDTM/ADaM]</p>`,
+      
+      '5.4': `<h1>5.4 Literature References</h1>\n<h2>Clinical Pharmacology References</h2>\n<p>[1] Author et al. First-in-human study of drug X. Clin Pharmacol Ther. Year;Vol:Pages.</p>\n<p>[2] Author et al. Population PK/PD analysis. J Clin Pharmacol. Year;Vol:Pages.</p>\n<h2>Efficacy References</h2>\n<p>[3] Author et al. Phase 3 randomized controlled trial. N Engl J Med. Year;Vol:Pages.</p>\n<p>[4] Author et al. Long-term efficacy results. Lancet. Year;Vol:Pages.</p>\n<h2>Safety References</h2>\n<p>[5] Author et al. Integrated safety analysis. Drug Saf. Year;Vol:Pages.</p>\n<p>[6] Author et al. Postmarketing surveillance results. Pharmacoepidemiol Drug Saf. Year;Vol:Pages.</p>\n<h2>Disease State References</h2>\n<p>[7] Treatment guidelines for indication. Professional Society. Year.</p>\n<p>[8] Epidemiology and burden of disease. Review article. Year.</p>\n<h2>Regulatory Guidance</h2>\n<p>[9] FDA Guidance: Clinical Pharmacology Considerations.</p>\n<p>[10] ICH E6(R2): Good Clinical Practice.</p>\n<p>[11] ICH E8: General Considerations for Clinical Trials.</p>\n<p>[12] ICH E9: Statistical Principles for Clinical Trials.</p>\n<h2>Meta-Analyses and Systematic Reviews</h2>\n<p>[List relevant systematic reviews comparing drug to standard of care]</p>\n<h2>Real-World Evidence</h2>\n<p>[Publications using real-world data/registries]</p>`
+    };
+    
+    return templates[sectionId] || `<h1>${sectionId} ${sectionTitle}</h1>\n<p>This section contains regulatory information for ${sectionTitle}.</p>\n<h2>Overview</h2>\n<p>[Section overview]</p>\n<h2>Requirements</h2>\n<p>[Regulatory requirements]</p>\n<h2>Content</h2>\n<p>[Content to be added]</p>`;
+  };
+  
+  // Use shared data from submission center
+  React.useEffect(() => {
+    if (sharedData && Object.keys(sharedData).length > 0) {
+      console.log('eCTD Co-Author received shared data:', sharedData);
+      
+      // Update IND data with shared data
+      setIndData(prev => ({
+        ...prev,
+        ...sharedData,
+        manufacturingData: sharedData.manufacturingData || prev?.manufacturingData,
+        clinicalData: sharedData.clinicalData || prev?.clinicalData
+      }));
+      
+      // Pre-populate document metadata
+      if (sharedData.drugName || sharedData.sponsor) {
+        setDocumentMetadata(prev => ({
+          ...prev,
+          product: sharedData.drugName || prev.product,
+          sponsor: sharedData.sponsor || prev.sponsor
+        }));
+      }
+      
+    }
+  }, [sharedData, selectedDocument, onDocumentUpdate]);
+
+  // Initialize session and load IND submission data on mount
+  React.useEffect(() => {
+    // Get or retrieve session from localStorage
+    let storedSessionId = localStorage.getItem('ind_session_id');
+    if (!storedSessionId) {
+      storedSessionId = `SESSION-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('ind_session_id', storedSessionId);
+    }
+    setSessionId(storedSessionId);
+    
+    // Get submission ID from localStorage
+    const storedSubmissionId = localStorage.getItem('ind_submission_id');
+    if (storedSubmissionId) {
+      setSubmissionId(storedSubmissionId);
+    }
+  }, []);
+  
+  // Fetch active IND submission data
+  const { data: activeSubmission, isLoading: isLoadingSubmission } = useQuery({
+    queryKey: ['ind-submission', 'active', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      
+      const response = await apiRequest('/api/ind-submissions/active', {
+        method: 'GET',
+        headers: {
+          'X-Session-Id': sessionId,
+          'X-Organization-Id': '1',
+          'X-User-Id': '1'
+        }
+      });
+      
+      if (response.success && response.data) {
+        setSubmissionId(response.data.submissionId);
+        localStorage.setItem('ind_submission_id', response.data.submissionId);
+        
+        // Extract IND data for use in eCTD
+        const indDataExtracted = {
+          drugName: response.data.drugName,
+          indication: response.data.indication,
+          sponsor: response.data.sponsor,
+          phase: response.data.phase,
+          submissionSummary: response.data.submissionSummary,
+          module2Data: response.data.module2Data,
+          module3Data: response.data.module3Data,
+          module5Data: response.data.module5Data,
+          indStepData: response.data.indStepData || {},
+          indStepsCompleted: response.data.indStepsCompleted || {}
+        };
+        
+        setIndData(indDataExtracted);
+        
+        // Pre-populate document metadata with IND data
+        if (indDataExtracted.drugName || indDataExtracted.sponsor) {
+          setDocumentMetadata(prev => ({
+            ...prev,
+            product: indDataExtracted.drugName || prev.product,
+            sponsor: indDataExtracted.sponsor || prev.sponsor
+          }));
+        }
+        
+        return response.data;
+      }
+      
+      return null;
+    },
+    enabled: !!sessionId,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+  
+  // Generate pre-populated content based on IND data
+  const generatePrePopulatedContent = React.useCallback(() => {
+    if (!indData) return '';
+    
+    const { drugName, indication, phase, sponsor, module2Data, module5Data } = indData;
+    
+    return `
+      <h1>Module 2.5 Clinical Overview - ${drugName || 'Drug'}</h1>
+      <h2>Product Information</h2>
+      <p><strong>Drug Name:</strong> ${drugName || 'To be specified'}</p>
+      <p><strong>Indication:</strong> ${indication || 'To be specified'}</p>
+      <p><strong>Sponsor:</strong> ${sponsor || 'To be specified'}</p>
+      <p><strong>Development Phase:</strong> ${phase || 'Phase I'}</p>
+      
+      <h2>2.5.1 Product Development Rationale</h2>
+      <p>${module2Data?.qualityOverview || 'The product development rationale will be based on the IND submission data.'}</p>
+      
+      <h2>2.5.2 Overview of Biopharmaceutics</h2>
+      <p>${module2Data?.drugSubstance?.description || 'Biopharmaceutical properties and formulation development details from IND.'}</p>
+      
+      <h2>2.5.5 Safety Profile</h2>
+      <p>The safety profile of ${drugName || 'the investigational drug'} is being evaluated in ${phase || 'Phase I'} clinical trials for the treatment of ${indication || 'the target indication'}.</p>
+      
+      <h2>Clinical Protocol Summary</h2>
+      <p>${module5Data?.studyDesign?.summary || 'Clinical protocol information will be imported from the IND submission.'}</p>
+    `;
+  }, [indData]);
+  
+  // Commitment Intelligence Hub - Full Featured EXTRACT System
+  const [commitmentIntelligenceHubOpen, setCommitmentIntelligenceHubOpen] = useState(false);
+  
+  // Legacy simple dialog state (keeping for backward compatibility)
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
   const [commitmentExtractionDialogOpen, setCommitmentExtractionDialogOpen] = useState(false);
   const [isExtractingCommitments, setIsExtractingCommitments] = useState(false);
   const [extractedCommitments, setExtractedCommitments] = useState(null);
@@ -684,6 +1774,227 @@ export default function CoAuthor() {
       }
     ]
   });
+<<<<<<< HEAD
+=======
+  
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationError, setValidationError] = useState(null);
+  const [validationLoadError, setValidationLoadError] = useState(null);
+  const [validationStatusMessage, setValidationStatusMessage] = useState(null);
+  const [selectedAgency, setSelectedAgency] = useState('FDA');
+  const [validationHistory, setValidationHistory] = useState([]);
+  
+  // Function to perform document validation
+  const performDocumentValidation = async (documentId = null, agency = selectedAgency) => {
+    setIsValidating(true);
+    setValidationError(null);
+    
+    try {
+      // Use selectedDocument if no documentId provided
+      const docId = documentId || selectedDocument?.id;
+      
+      if (!docId) {
+        throw new Error('No document selected for validation');
+      }
+      
+      // Call validation API
+      const response = await apiRequest('/api/coauthor/validate', {
+        method: 'POST',
+        body: {
+          documentId: docId,
+          agency: agency
+        }
+      });
+      
+      if (response.success) {
+        // Update validation results
+        setValidationResults({
+          completeness: Math.round((response.passedRules / response.totalRules) * 100),
+          consistency: 92, // These can be calculated from specific rule categories
+          references: 65,
+          regulatory: Math.round(response.complianceScore),
+          complianceScore: response.complianceScore,
+          totalIssues: response.totalIssues,
+          criticalIssues: response.criticalIssues,
+          majorIssues: response.majorIssues,
+          minorIssues: response.minorIssues,
+          informationalIssues: response.informationalIssues,
+          issues: response.issues.map((issue, index) => ({
+            id: index + 1,
+            ruleId: issue.ruleId,
+            severity: issue.severity,
+            section: issue.location || 'Document',
+            description: issue.issue || issue.ruleName,
+            suggestion: issue.remediation,
+            autoFixAvailable: issue.autoFixAvailable,
+            autoFixLogic: issue.autoFixLogic,
+            category: issue.category
+          }))
+        });
+        
+        toast({
+          title: "Validation Complete",
+          description: `Found ${response.totalIssues} issues. Compliance score: ${response.complianceScore}%`,
+          variant: response.criticalIssues > 0 ? "destructive" : "default"
+        });
+      } else {
+        throw new Error(response.error || 'Validation failed');
+      }
+    } catch (error) {
+      setValidationError(error.message);
+      toast({
+        title: "Validation Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      
+      // Set default empty results on error
+      setValidationResults({
+        completeness: 0,
+        consistency: 0,
+        references: 0,
+        regulatory: 0,
+        complianceScore: 0,
+        totalIssues: 0,
+        criticalIssues: 0,
+        majorIssues: 0,
+        minorIssues: 0,
+        informationalIssues: 0,
+        issues: []
+      });
+    } finally {
+      setIsValidating(false);
+    }
+  };
+  
+  // Function to fetch validation history
+  const fetchValidationHistory = async (documentId) => {
+    try {
+      const response = await apiRequest(`/api/coauthor/validate/history/${documentId}?limit=5`);
+      if (response.success) {
+        setValidationHistory(response.history);
+        setValidationLoadError(null);
+      }
+    } catch (error) {
+      setValidationLoadError('Unable to load validation history.');
+    }
+  };
+  
+  // Function to export validation report
+  const exportValidationReport = async (validationId, format = 'JSON') => {
+    try {
+      const response = await fetch(`/api/coauthor/validate/export/${validationId}?format=${format}`);
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `validation-report-${validationId}.${format.toLowerCase()}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Report Exported",
+        description: `Validation report exported as ${format}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Auto-validation on document change (debounced)
+  useEffect(() => {
+    if (selectedDocument?.id) {
+      // Fetch latest validation results for the document
+      const fetchLatestValidation = async () => {
+        try {
+          setValidationLoadError(null);
+          const response = await apiRequest(`/api/coauthor/validate/latest/${selectedDocument.id}`);
+          if (response.success && response.hasValidation) {
+            setValidationStatusMessage(null);
+            const validation = response.validation;
+            setValidationResults({
+              completeness: Math.round((validation.passedRules / (validation.passedRules + validation.failedRules)) * 100),
+              consistency: 92,
+              references: 65,
+              regulatory: Math.round(validation.complianceScore),
+              complianceScore: validation.complianceScore,
+              totalIssues: validation.totalIssues,
+              criticalIssues: validation.criticalIssues,
+              majorIssues: validation.majorIssues,
+              minorIssues: validation.minorIssues,
+              informationalIssues: validation.informationalIssues,
+              issues: validation.validationResults?.issues?.map((issue, index) => ({
+                id: index + 1,
+                ruleId: issue.ruleId,
+                severity: issue.severity,
+                section: issue.location || 'Document',
+                description: issue.issue || issue.ruleName,
+                suggestion: issue.remediation,
+                autoFixAvailable: issue.autoFixAvailable,
+                autoFixLogic: issue.autoFixLogic,
+                category: issue.category
+              })) || []
+            });
+          } else if (response.success && !response.hasValidation) {
+            setValidationStatusMessage(response.message || 'No validation data available yet.');
+            setValidationResults(prev => ({
+              ...prev,
+              issues: [],
+              totalIssues: 0,
+              criticalIssues: 0,
+              majorIssues: 0,
+              minorIssues: 0,
+              informationalIssues: 0
+            }));
+          }
+        } catch (error) {
+          setValidationLoadError('Unable to load validation results.');
+        }
+      };
+      
+      fetchLatestValidation();
+      fetchValidationHistory(selectedDocument.id);
+    }
+  }, [selectedDocument?.id]);
+  
+  // Real-time validation with debouncing
+  const [validationTimer, setValidationTimer] = useState(null);
+  const [autoValidationEnabled, setAutoValidationEnabled] = useState(true);
+  
+  // Debounced validation function
+  const triggerDebouncedValidation = useCallback(() => {
+    if (!autoValidationEnabled || !selectedDocument?.id) return;
+    
+    // Clear existing timer
+    if (validationTimer) {
+      clearTimeout(validationTimer);
+    }
+    
+    // Set new timer for validation (3 seconds after user stops typing)
+    const newTimer = setTimeout(() => {
+      performDocumentValidation(selectedDocument.id, selectedAgency);
+    }, 3000);
+    
+    setValidationTimer(newTimer);
+  }, [selectedDocument?.id, selectedAgency, autoValidationEnabled, validationTimer]);
+  
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimer) {
+        clearTimeout(validationTimer);
+      }
+    };
+  }, [validationTimer]);
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
   // Phase 5 export options defined at the top of the component
   
   // AI query submission handler
@@ -2918,6 +4229,741 @@ export default function CoAuthor() {
                 {activeDoc.title}
                 {isLoading && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
               </Badge>
+<<<<<<< HEAD
+=======
+            </div>
+            
+            {/* Collaboration Presence */}
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4 text-slate-600" />
+              <div className="flex -space-x-2">
+                <div className="w-7 h-7 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center">
+                  <span className="text-xs text-white font-semibold">JS</span>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-green-500 border-2 border-white flex items-center justify-center">
+                  <span className="text-xs text-white font-semibold">MK</span>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center">
+                  <span className="text-xs text-white font-semibold">+2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area - Master-Detail Layout with Collaboration */}
+      <div className="flex h-[calc(100vh-200px)] relative" ref={editorContainerRef}>
+        {/* Left Sidebar - Collapsible Document Navigation & Recent Documents */}
+        <div className={`${isTreeOpen ? 'w-80' : 'w-0'} transition-all duration-300 border-r border-slate-200 bg-white overflow-hidden flex-shrink-0`}>
+          <div className="w-80 h-full overflow-y-auto">
+            <div className="p-4">
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Documents</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Navigation & Recent Files</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg transition-colors" 
+                  onClick={() => setIsTreeOpen(false)}
+                  title="Close Sidebar"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Recent Documents Section - Collapsible */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-700">Recent Documents</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewDocumentDialogOpen(true)}
+                    className="h-7 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    New
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {/* Loading State */}
+                  {documentsLoading && (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="p-2.5 rounded-lg bg-slate-50 animate-pulse">
+                          <div className="flex items-start space-x-2">
+                            <div className="h-4 w-4 bg-slate-200 rounded" />
+                            <div className="flex-1">
+                              <div className="h-4 bg-slate-200 rounded w-3/4 mb-1" />
+                              <div className="h-3 bg-slate-100 rounded w-1/2" />
+                            </div>
+                            <div className="h-5 w-12 bg-slate-200 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Error State */}
+                  {!documentsLoading && documentsError && (
+                    <div className="p-4 rounded-lg border border-red-200 bg-red-50">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm text-red-700 font-medium">Failed to load documents</p>
+                          <p className="text-xs text-red-600 mt-1">{documentsError?.message || 'Please try again later'}</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 h-7 text-xs"
+                            onClick={() => refetchDocuments()}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Retry
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Empty State */}
+                  {!documentsLoading && !documentsError && documents.length === 0 && (
+                    <div className="p-4 rounded-lg border border-dashed border-slate-300 bg-slate-50">
+                      <div className="flex items-start space-x-2">
+                        <FileText className="h-4 w-4 text-slate-400 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm text-slate-600 font-medium">No documents yet</p>
+                          <p className="text-xs text-slate-500 mt-1">Create your first document to get started</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 h-7 text-xs"
+                            onClick={() => setNewDocumentDialogOpen(true)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Create Document
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Documents List */}
+                  {!documentsLoading && !documentsError && documents.length > 0 && (
+                    <>
+                      {documents.slice(0, 5).map((doc) => (
+                        <div 
+                          key={doc.id}
+                          className={`p-2.5 rounded-lg cursor-pointer transition-all ${
+                            selectedDocument?.id === doc.id 
+                              ? 'bg-blue-50 border border-blue-200' 
+                              : 'hover:bg-slate-50 border border-transparent'
+                          }`}
+                          onClick={() => setSelectedDocument(doc)}
+                        >
+                          <div className="flex items-start space-x-2">
+                            <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{doc.title}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">
+                                {doc.module} • {doc.lastEdited}
+                              </div>
+                            </div>
+                            <Badge 
+                              className={`text-[10px] ${
+                                doc.status === 'Final' ? 'bg-green-100 text-green-700 border-0' : 
+                                doc.status === 'In Review' ? 'bg-amber-100 text-amber-700 border-0' :
+                                'bg-slate-100 text-slate-600 border-0'
+                              }`}
+                            >
+                              {doc.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-3 text-xs text-blue-600 hover:text-blue-700"
+                  onClick={() => {/* Show all documents */}}
+                >
+                  View All Documents →
+                </Button>
+              </div>
+
+              {/* Enhanced Module Navigation with Advanced Features */}
+              <div className="space-y-2">
+                {/* Search and Filter Bar */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search documents..."
+                      className="pl-10 h-9 text-sm"
+                      value={treeSearchQuery}
+                      onChange={(e) => setTreeSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  {/* Filter Options */}
+                  <div className="flex gap-2 mt-2">
+                    <Select value={treeFilterOptions.status} onValueChange={(value) => setTreeFilterOptions({...treeFilterOptions, status: value})}>
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="not-started">Not Started</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="under-review">Under Review</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={treeFilterOptions.priority} onValueChange={(value) => setTreeFilterOptions({...treeFilterOptions, priority: value})}>
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Priority</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {bulkOperationMode && (
+                      <div className="ml-auto flex gap-1">
+                        <Button size="sm" variant="outline" className="h-7 text-xs">
+                          <Download className="h-3 w-3 mr-1" />
+                          Export
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs">
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Assign
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-slate-700">eCTD Structure</h4>
+                    {ectdModulesData?.totalModules && (
+                      <Badge variant="outline" className="h-5 text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                        {ectdModulesData.totalModules} modules
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-xs"
+                    onClick={() => setBulkOperationMode(!bulkOperationMode)}
+                  >
+                    {bulkOperationMode ? 'Cancel' : 'Bulk Edit'}
+                  </Button>
+                </div>
+                
+                {/* Dynamic eCTD Navigation with all 181 modules from database */}
+                {isLoadingModules ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="bg-white rounded-lg border border-slate-200 p-4 animate-pulse">
+                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : modulesError ? (
+                  <div className="p-4 rounded-lg border border-red-200 bg-red-50">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-red-700 font-medium">Failed to load eCTD modules</p>
+                        <p className="text-xs text-red-600 mt-1">
+                          {modulesError?.message || 'Please try again later.'}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 h-7 text-xs"
+                          onClick={() => refetchModules()}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {ectdNavigationTree && ectdNavigationTree.length > 0 ? (
+                      ectdNavigationTree.map(module => renderEctdNavigationModule(module))
+                    ) : (
+                      <div className="text-center py-4 text-sm text-slate-500">
+                        No eCTD modules found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t">
+                <div className="text-sm font-medium mb-2">Document Health</div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Completeness</span>
+                      <span className="font-medium">72%</span>
+                    </div>
+                    <Progress value={72} className="h-2 bg-slate-100" indicatorClassName="bg-blue-600" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Consistency</span>
+                      <span className="font-medium">86%</span>
+                    </div>
+                    <Progress value={86} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Issue Resolution</span>
+                      <span className="font-medium">63%</span>
+                    </div>
+                    <Progress value={63} className="h-2 bg-slate-100" indicatorClassName="bg-amber-600" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* EmbeddedFileBrowser Component - File Management */}
+              <div className="mt-6 pt-6 border-t">
+                <div className="text-sm font-medium mb-3">File Browser</div>
+                <EmbeddedFileBrowser 
+                  selectedFiles={selectedEctdFiles}
+                  onFilesSelected={setSelectedEctdFiles}
+                  workflowStep={workflowStep}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* AI Assistant Panel - Enterprise Grade Feature */}
+        {aiAssistantOpen && (
+          <div className="w-80 border rounded-md overflow-hidden bg-white shadow-md flex-shrink-0 mr-6">
+            <div className="sticky top-0">
+              <div className="bg-blue-50 border-b p-3 flex justify-between items-center">
+                <div className="flex items-center">
+                  <Sparkles className="h-4 w-4 mr-2 text-blue-600" />
+                  <h3 className="font-medium text-sm">AI Document Assistant</h3>
+                </div>
+                <div className="flex space-x-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAiAssistantOpen(false)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="border-b">
+                <div className="flex p-1">
+                  <Button 
+                    variant={aiAssistantMode === 'suggestions' ? 'subtle' : 'ghost'} 
+                    className="flex-1 h-8 text-xs rounded-none" 
+                    onClick={() => setAiAssistantMode('suggestions')}
+                  >
+                    <Lightbulb className="h-3 w-3 mr-1" />
+                    Suggestions
+                  </Button>
+                  <Button 
+                    variant={aiAssistantMode === 'compliance' ? 'subtle' : 'ghost'} 
+                    className="flex-1 h-8 text-xs rounded-none" 
+                    onClick={() => setAiAssistantMode('compliance')}
+                  >
+                    <ClipboardCheck className="h-3 w-3 mr-1" />
+                    Compliance
+                  </Button>
+                  <Button 
+                    variant={aiAssistantMode === 'formatting' ? 'subtle' : 'ghost'} 
+                    className="flex-1 h-8 text-xs rounded-none" 
+                    onClick={() => setAiAssistantMode('formatting')}
+                  >
+                    <ListChecks className="h-3 w-3 mr-1" />
+                    Formatting
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-3 max-h-[calc(100vh-14rem)] overflow-y-auto space-y-3">
+                {aiAssistantMode === 'suggestions' && (
+                  <>
+                    <div className="pb-2 border-b mb-2">
+                      <div className="flex items-center mb-2 text-sm font-medium text-slate-700">
+                        <Bot className="h-4 w-4 mr-1.5 text-blue-600" />
+                        <span>Content Suggestions</span>
+                      </div>
+                      <p className="text-xs text-slate-500">The AI can suggest text improvements, missing content, and help you complete sections.</p>
+                    </div>
+                  
+                    {(aiSuggestions || []).filter(s => s.type === 'completion').map(suggestion => (
+                      <div key={suggestion.id} className="bg-blue-50 rounded-md p-3 border border-blue-100">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center">
+                            <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                            <span className="text-xs font-medium">Section {suggestion.section}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                              <Check className="h-3.5 w-3.5 text-green-600" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                              <X className="h-3.5 w-3.5 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-700">{suggestion.text}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700">Insert</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs">Modify</Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="border border-dashed rounded-md p-3 text-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Zap className="h-5 w-5 text-amber-500" />
+                        <p className="text-xs text-slate-500">Ask the AI to help you complete this section or improve specific text.</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs h-7"
+                          onClick={() => {
+                            setAiUserQuery("Generate comprehensive content suggestions for this eCTD section");
+                            handleAiQuerySubmit({ preventDefault: () => {} });
+                          }}
+                          disabled={aiIsLoading}
+                        >
+                          {aiIsLoading ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            "Generate Suggestions"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {aiAssistantMode === 'compliance' && (
+                  <>
+                    <div className="pb-2 border-b mb-2">
+                      <div className="flex items-center mb-2 text-sm font-medium text-slate-700">
+                        <ClipboardCheck className="h-4 w-4 mr-1.5 text-blue-600" />
+                        <span>Regulatory Compliance</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Checks your document against FDA, EMA and ICH guidelines.</p>
+                    </div>
+                    
+                    {(aiSuggestions || []).filter(s => s.type === 'compliance').map(suggestion => (
+                      <div key={suggestion.id} className="bg-amber-50 rounded-md p-3 border border-amber-100">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center">
+                            <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                            <span className="text-xs font-medium">Section {suggestion.section}</span>
+                          </div>
+                          <Badge className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-100">Compliance</Badge>
+                        </div>
+                        <p className="text-xs text-slate-700">{suggestion.text}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700">Fix Issue</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs">Ignore</Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="p-3 bg-green-50 rounded-md border border-green-100">
+                      <div className="flex items-center mb-2">
+                        <CheckCircle className="h-4 w-4 mr-1.5 text-green-600" />
+                        <span className="text-sm font-medium">ICH M4E Compliant</span>
+                      </div>
+                      <p className="text-xs text-slate-700">Your document structure follows ICH M4E guidelines for Clinical Overview format.</p>
+                    </div>
+                    
+                    <Button className="w-full text-xs" variant="outline">
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      Run Full Compliance Check
+                    </Button>
+                  </>
+                )}
+                
+                {aiAssistantMode === 'formatting' && (
+                  <>
+                    <div className="pb-2 border-b mb-2">
+                      <div className="flex items-center mb-2 text-sm font-medium text-slate-700">
+                        <ListChecks className="h-4 w-4 mr-1.5 text-blue-600" />
+                        <span>Format Assistance</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Fix tables, improve formatting, and apply consistent styles.</p>
+                    </div>
+                    
+                    {(aiSuggestions || []).filter(s => s.type === 'formatting').map(suggestion => (
+                      <div key={suggestion.id} className="bg-slate-50 rounded-md p-3 border border-slate-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center">
+                            <Info className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                            <span className="text-xs font-medium">Section {suggestion.section}</span>
+                          </div>
+                          <Badge className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-100">Format</Badge>
+                        </div>
+                        <p className="text-xs text-slate-700">{suggestion.text}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" className="h-7 text-xs">Apply Fix</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs">Preview</Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="p-3 rounded-md border border-slate-200">
+                      <div className="flex items-center mb-2">
+                        <Settings className="h-4 w-4 mr-1.5 text-slate-600" />
+                        <span className="text-sm font-medium">Format Settings</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span>Apply ICH formatting</span>
+                          <Badge>Enabled</Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span>Auto-fix tables</span>
+                          <Badge>Enabled</Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span>Standardize headings</span>
+                          <Badge>Enabled</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="border-t p-2 bg-slate-50">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <span className="text-xs text-slate-500">Powered by OpenAI GPT-4o</span>
+                  <Button variant="ghost" size="sm" className="h-6 flex items-center justify-center text-xs">
+                    <Settings className="h-3 w-3 mr-1" />
+                    Settings
+                  </Button>
+                </div>
+                
+                {aiError && (
+                  <div className="mb-2 p-2 text-xs bg-red-50 border border-red-200 rounded-md text-red-600">
+                    <div className="flex items-center mb-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      <span className="font-medium">Error</span>
+                    </div>
+                    <p>{aiError}</p>
+                  </div>
+                )}
+                
+                {aiResponse && aiAssistantMode === 'suggestions' && (
+                  <div className="mb-2 p-2 text-xs bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-start">
+                      <Sparkles className="h-3 w-3 mr-1 mt-0.5 text-blue-600" />
+                      <div>
+                        <span className="font-medium text-blue-800">AI Suggestions</span>
+                        <p className="text-slate-700 mt-1 whitespace-pre-wrap">
+                          {typeof aiResponse.suggestions === 'string' 
+                            ? aiResponse.suggestions 
+                            : aiResponse.answer || aiResponse.recommendation || JSON.stringify(aiResponse)}
+                        </p>
+                        {aiResponse.metadata?.isRealAI && (
+                          <div className="mt-2 text-xs text-blue-600">
+                            <Badge variant="outline" className="text-xs">
+                              <Check className="h-3 w-3 mr-1" />
+                              OpenAI {aiResponse.metadata.model || 'GPT-4o'}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {aiResponse && aiAssistantMode === 'ask' && (
+                  <div className="mb-2 p-2 text-xs bg-slate-50 border rounded-md">
+                    <div className="flex items-start">
+                      <Bot className="h-3 w-3 mr-1 mt-0.5 text-indigo-600" />
+                      <div>
+                        <span className="font-medium text-indigo-800">Response</span>
+                        <p className="text-slate-700 mt-1 whitespace-pre-wrap">
+                          {aiResponse.answer || aiResponse.recommendation || JSON.stringify(aiResponse)}
+                        </p>
+                        {aiResponse.isRealAI && (
+                          <div className="mt-2 text-xs text-indigo-600">
+                            <Badge variant="outline" className="text-xs">
+                              <Check className="h-3 w-3 mr-1" />
+                              OpenAI {aiResponse.model || 'GPT-4o'}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {aiResponse && aiAssistantMode === 'compliance' && (
+                  <div className="mb-2 p-2 text-xs bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-start">
+                      <ShieldCheck className="h-3 w-3 mr-1 mt-0.5 text-green-600" />
+                      <div>
+                        <span className="font-medium text-green-800">Compliance Check</span>
+                        <p className="text-slate-700 mt-1 whitespace-pre-wrap">
+                          {aiResponse.compliance || aiResponse.recommendation || JSON.stringify(aiResponse)}
+                        </p>
+                        {aiResponse.isRealAI && (
+                          <div className="mt-2 text-xs text-green-600">
+                            <Badge variant="outline" className="text-xs">
+                              <Check className="h-3 w-3 mr-1" />
+                              OpenAI {aiResponse.model || 'GPT-4o'}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {aiResponse && aiAssistantMode === 'formatting' && (
+                  <div className="mb-2 p-2 text-xs bg-purple-50 border border-purple-200 rounded-md">
+                    <div className="flex items-start">
+                      <FileEdit className="h-3 w-3 mr-1 mt-0.5 text-purple-600" />
+                      <div>
+                        <span className="font-medium text-purple-800">Formatting Analysis</span>
+                        <p className="text-slate-700 mt-1 whitespace-pre-wrap">
+                          {aiResponse.formatting || aiResponse.recommendation || JSON.stringify(aiResponse)}
+                        </p>
+                        {aiResponse.isRealAI && (
+                          <div className="mt-2 text-xs text-purple-600">
+                            <Badge variant="outline" className="text-xs">
+                              <Check className="h-3 w-3 mr-1" />
+                              OpenAI {aiResponse.model || 'GPT-4o'}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <form onSubmit={handleAiQuerySubmit} className="relative">
+                  <input 
+                    type="text" 
+                    className="w-full h-8 text-xs pl-3 pr-8 rounded-md border" 
+                    placeholder="Ask the AI Assistant..." 
+                    value={aiUserQuery}
+                    onChange={(e) => setAiUserQuery(e.target.value)}
+                    disabled={aiIsLoading}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="absolute right-1 top-1 h-6 w-6 p-0" 
+                    size="icon"
+                    disabled={aiIsLoading || !aiUserQuery.trim()}
+                  >
+                    {aiIsLoading ? (
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+                    ) : (
+                      <Send className="h-3 w-3" />
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+      
+        {/* Main Workspace - Document Editor (Primary Focus 70-80% width) */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Document Editor - Primary Workspace */}
+          <div className="flex-1 bg-white overflow-hidden flex flex-col">
+            {/* WorkflowGuide - 4-Step Progress Indicator */}
+            <div className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white px-4 py-3">
+              <WorkflowGuide 
+                currentStep={workflowStep}
+                onStepChange={setWorkflowStep}
+                selectedTemplate={selectedEctdTemplate}
+                selectedFiles={selectedEctdFiles}
+                compiledDocuments={openDocuments}
+              />
+            </div>
+            
+            {/* Document Tabs */}
+            {openDocuments.length > 0 && (
+              <div className="border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center px-4 overflow-x-auto">
+                  <div className="flex space-x-1 py-2">
+                    {openDocuments.map((doc, index) => (
+                      <div
+                        key={doc.id}
+                        className={`flex items-center px-3 py-1.5 rounded-t-lg cursor-pointer transition-colors ${
+                          index === activeTabIndex
+                            ? 'bg-white border-t border-l border-r border-slate-200 text-slate-900'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                        }`}
+                        onClick={() => handleTabSwitch(index)}
+                        data-testid={`tab-${doc.sectionId}`}
+                      >
+                        <FileText className="h-3.5 w-3.5 mr-2" />
+                        <span className="text-sm font-medium mr-2 max-w-[200px] truncate">
+                          {doc.title}
+                        </span>
+                        {doc.saveStatus === 'unsaved' && (
+                          <span className="h-2 w-2 bg-yellow-500 rounded-full mr-2" title="Unsaved changes" />
+                        )}
+                        {doc.saveStatus === 'saving' && (
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin text-blue-500" />
+                        )}
+                        {openDocuments.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCloseTab(index);
+                            }}
+                            className="ml-1 hover:bg-slate-300 rounded p-0.5"
+                            data-testid={`close-tab-${doc.sectionId}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Add new document button */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setNewDocumentDialogOpen(true)}
+                    className="ml-2 h-7 px-2"
+                    data-testid="button-new-tab"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
             )}
           </div>
           
@@ -3499,12 +5545,708 @@ export default function CoAuthor() {
               />
             </div>
             
+<<<<<<< HEAD
             <div>
               <label className="text-sm font-medium mb-2 block">eCTD Module</label>
               <select
                 value={documentModule}
                 onChange={(e) => setDocumentModule(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+=======
+            <div className="border rounded-md">
+              <div className="bg-slate-50 p-2 font-medium border-b text-sm">Document Access Controls</div>
+              <div className="p-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">Document Locking</div>
+                    <Button
+                      size="sm"
+                      variant={documentLocked ? "destructive" : "outline"}
+                      onClick={() => setDocumentLocked(!documentLocked)}
+                      className="h-8"
+                    >
+                      {documentLocked ? (
+                        <>
+                          <Lock className="h-3.5 w-3.5 mr-1.5" />
+                          Unlock Document
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-3.5 w-3.5 mr-1.5" />
+                          Lock for Editing
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {documentLocked ? 
+                      "Document is currently locked. Only you can make changes." : 
+                      "Lock the document to prevent others from making changes while you edit."}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <div className="text-xs text-muted-foreground flex items-center">
+              <Info className="h-3 w-3 mr-1 text-blue-500" />
+              All document access is logged for audit purposes
+            </div>
+            <Button onClick={() => setTeamCollabOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Document Validation Dialog */}
+      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] flex flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <FileCheck className="h-5 w-5 mr-2" />
+                Document Validation Report
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={selectedAgency} onValueChange={setSelectedAgency}>
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue placeholder="Agency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FDA">FDA</SelectItem>
+                    <SelectItem value="EMA">EMA</SelectItem>
+                    <SelectItem value="PMDA">PMDA</SelectItem>
+                    <SelectItem value="HealthCanada">Health Canada</SelectItem>
+                    <SelectItem value="ALL">All Agencies</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  onClick={() => performDocumentValidation()}
+                  disabled={isValidating || !selectedDocument}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isValidating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Validating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Run Validation
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDocument ? (
+                <>
+                  Validation for: <strong>{selectedDocument.title || 'Current Document'}</strong> | 
+                  Module: <strong>{selectedDocument.module || 'Unknown'}</strong> | 
+                  Compliance Score: <strong className={validationResults.complianceScore >= 80 ? 'text-green-600' : 'text-amber-600'}>
+                    {validationResults.complianceScore}%
+                  </strong>
+                </>
+              ) : (
+                'Select a document to validate'
+              )}
+            </DialogDescription>
+            {(validationError || validationLoadError || validationStatusMessage) && (
+              <div
+                className={`mt-3 rounded-md border px-3 py-2 text-xs ${
+                  validationError || validationLoadError
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-600'
+                }`}
+              >
+                {validationError || validationLoadError || validationStatusMessage}
+              </div>
+            )}
+          </DialogHeader>
+          
+          <div className="flex-grow overflow-auto">
+            <Tabs defaultValue="issues" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="issues" className="flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Issues ({validationResults.issues.length})
+                </TabsTrigger>
+                <TabsTrigger value="compliance" className="flex items-center">
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Compliance
+                </TabsTrigger>
+                <TabsTrigger value="references" className="flex items-center">
+                  <Link className="h-4 w-4 mr-2" />
+                  References
+                </TabsTrigger>
+                <TabsTrigger value="guidance" className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Guidance
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="issues" className="mt-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Validation Issues ({validationResults.totalIssues})</h3>
+                  <div className="flex items-center space-x-3">
+                    {validationResults.criticalIssues > 0 && (
+                      <Badge variant="outline" className="flex items-center space-x-1 bg-red-50 text-red-700 border-red-200">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>Critical: {validationResults.criticalIssues}</span>
+                      </Badge>
+                    )}
+                    {validationResults.majorIssues > 0 && (
+                      <Badge variant="outline" className="flex items-center space-x-1 bg-amber-50 text-amber-700 border-amber-200">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>Major: {validationResults.majorIssues}</span>
+                      </Badge>
+                    )}
+                    {validationResults.minorIssues > 0 && (
+                      <Badge variant="outline" className="flex items-center space-x-1 bg-blue-50 text-blue-700 border-blue-200">
+                        <Info className="h-3 w-3" />
+                        <span>Minor: {validationResults.minorIssues}</span>
+                      </Badge>
+                    )}
+                    {validationResults.informationalIssues > 0 && (
+                      <Badge variant="outline" className="flex items-center space-x-1 bg-gray-50 text-gray-700 border-gray-200">
+                        <Info className="h-3 w-3" />
+                        <span>Info: {validationResults.informationalIssues}</span>
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {validationResults.issues.length === 0 && !validationError && !validationLoadError && (
+                  <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
+                    No validation issues to show yet. Run validation to generate a report.
+                  </div>
+                )}
+
+                {validationResults.issues.length > 0 && (
+                  <div className="border rounded-md">
+                    <div className="grid grid-cols-5 gap-4 p-3 border-b bg-slate-50 font-medium text-sm">
+                      <div>Severity</div>
+                      <div>Location</div>
+                      <div className="col-span-2">Issue</div>
+                      <div>Action</div>
+                    </div>
+
+                    <div className="divide-y max-h-[300px] overflow-y-auto">
+                      {validationResults.issues.map((issue) => (
+                        <div key={issue.id} className="grid grid-cols-5 gap-4 p-3 text-sm hover:bg-slate-50">
+                          <div>
+                            {issue.severity === 'critical' && (
+                              <Badge className="bg-red-100 text-red-800 border-red-200">Critical</Badge>
+                            )}
+                            {issue.severity === 'major' && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">Major</Badge>
+                            )}
+                            {issue.severity === 'minor' && (
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200">Minor</Badge>
+                            )}
+                            {issue.severity === 'info' && (
+                              <Badge className="bg-slate-100 text-slate-800 border-slate-200">Info</Badge>
+                            )}
+                          </div>
+                          <div className="font-medium">Section {issue.section}</div>
+                          <div className="col-span-2">
+                            <div>{issue.description}</div>
+                            <div className="text-xs text-slate-500 mt-1">Suggestion: {issue.suggestion}</div>
+                          </div>
+                          <div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 border-blue-200 text-blue-700"
+                            >
+                              <ArrowUpRight className="h-3 w-3 mr-1" />
+                              Fix Issue
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-slate-50 border rounded-md p-3">
+                  <h4 className="font-medium text-sm mb-2 flex items-center">
+                    <FileWarning className="h-4 w-4 mr-2 text-amber-600" />
+                    AI-Powered Recommendation
+                  </h4>
+                  <p className="text-sm text-slate-600">
+                    Based on analysis of your document and regulatory requirements, we recommend addressing the critical citation issue in Section 2.5.4 first. Consider using the Citation Assistant to automatically search for relevant references from your literature database.
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="compliance" className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Regulatory Compliance</h3>
+                    <div className="border rounded-md p-4 space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>FDA Guidelines Compliance</span>
+                          <span className="font-medium">{validationResults.regulatory}%</span>
+                        </div>
+                        <Progress value={validationResults.regulatory} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>ICH M4 Compliance</span>
+                          <span className="font-medium">94%</span>
+                        </div>
+                        <Progress value={94} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>EMA Guidelines Compliance</span>
+                          <span className="font-medium">81%</span>
+                        </div>
+                        <Progress value={81} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium text-sm mb-3">Missing Required Elements</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex items-start">
+                          <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
+                            <span className="text-xs">!</span>
+                          </div>
+                          <div>Comprehensive risk-benefit analysis in section 2.5.6</div>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
+                            <span className="text-xs">!</span>
+                          </div>
+                          <div>Discussion of results in specific populations (elderly, pediatric)</div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Content Assessment</h3>
+                    <div className="border rounded-md p-4 space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Content Completeness</span>
+                          <span className="font-medium">{validationResults.completeness}%</span>
+                        </div>
+                        <Progress value={validationResults.completeness} className="h-2 bg-slate-100" indicatorClassName="bg-blue-600" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Internal Consistency</span>
+                          <span className="font-medium">{validationResults.consistency}%</span>
+                        </div>
+                        <Progress value={validationResults.consistency} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Scientific Accuracy</span>
+                          <span className="font-medium">89%</span>
+                        </div>
+                        <Progress value={89} className="h-2 bg-slate-100" indicatorClassName="bg-green-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium text-sm mb-3">Documentation Consistency</h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                            Consistent with Investigator's Brochure
+                          </div>
+                          <Badge className="bg-green-100 text-green-700">Verified</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                            Consistent with Non-Clinical Overview
+                          </div>
+                          <Badge className="bg-green-100 text-green-700">Verified</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <AlertCircle className="h-4 w-4 mr-2 text-amber-600" />
+                            Consistent with Clinical Study Reports
+                          </div>
+                          <Badge className="bg-amber-100 text-amber-700">Needs Review</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="references" className="mt-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Reference Analysis</h3>
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="outline" className="flex items-center space-x-1 bg-blue-50 text-blue-700 border-blue-200">
+                      <Link className="h-3 w-3" />
+                      <span>Total: 47</span>
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center space-x-1 bg-red-50 text-red-700 border-red-200">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>Missing: 8</span>
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="border rounded-md">
+                  <div className="flex justify-between items-center p-3 bg-slate-50 border-b">
+                    <h4 className="font-medium text-sm">Reference Validation Status</h4>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-xs bg-slate-100 px-2 py-1 rounded flex items-center">
+                        <Filter className="h-3 w-3 mr-1" />
+                        Filter
+                      </div>
+                      <div className="text-xs bg-slate-100 px-2 py-1 rounded flex items-center">
+                        <CheckSquare className="h-3 w-3 mr-1" />
+                        Select All
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="divide-y max-h-[300px] overflow-y-auto">
+                    <div className="p-3 hover:bg-slate-50">
+                      <div className="flex justify-between">
+                        <div className="flex items-start space-x-2">
+                          <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">Missing citation in Section 2.5.4</div>
+                            <div className="text-xs text-slate-500 mt-1">Claim about efficacy requires statistical significance reference</div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 border-blue-200 text-blue-700"
+                        >
+                          <Link className="h-3 w-3 mr-1" />
+                          Add Reference
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 hover:bg-slate-50">
+                      <div className="flex justify-between">
+                        <div className="flex items-start space-x-2">
+                          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">Reference format inconsistency</div>
+                            <div className="text-xs text-slate-500 mt-1">Multiple citation styles detected (Vancouver and APA)</div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 border-blue-200 text-blue-700"
+                        >
+                          <CheckSquare className="h-3 w-3 mr-1" />
+                          Standardize
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 hover:bg-slate-50">
+                      <div className="flex justify-between">
+                        <div className="flex items-start space-x-2">
+                          <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">Outdated reference in Section 2.5.3</div>
+                            <div className="text-xs text-slate-500 mt-1">Reference #18 has been superseded by newer publication</div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 border-blue-200 text-blue-700"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Update
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2 text-sm bg-slate-50 p-3 rounded-md border">
+                  <HelpCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Reference Management Tips</p>
+                    <p className="mt-1 text-slate-600">
+                      You can use the AI Reference Assistant to automatically scan your document for claims requiring citations and match them with appropriate references from your literature database.
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="guidance" className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="border rounded-md">
+                    <div className="bg-slate-50 p-3 border-b font-medium flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+                        Context Hints & Regulatory Guidance
+                      </span>
+                      <Badge className="bg-green-100 text-green-700">Real-time</Badge>
+                    </div>
+                    <div className="divide-y">
+                      {/* Dynamic Context Hints based on current section */}
+                      <div className="p-3 bg-amber-50 border-b border-amber-100">
+                        <div className="flex items-start space-x-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm text-amber-900">Risk Assessment Alert</div>
+                            <div className="text-xs text-amber-700 mt-1">
+                              Module 2.5 Clinical Overview requires comprehensive benefit-risk assessment per ICH M4E(R2) Section 2.5.6
+                            </div>
+                            <div className="mt-2 space-y-1">
+                              <div className="text-xs text-amber-600">Key Risk Areas to Address:</div>
+                              <ul className="text-xs text-amber-700 space-y-0.5 ml-4 list-disc">
+                                <li>Serious Adverse Events (SAEs) - Document all SAEs with causality assessment</li>
+                                <li>Drug-Drug Interactions - Include metabolic pathway analysis</li>
+                                <li>Special Populations - Elderly, pediatric, hepatic/renal impairment</li>
+                                <li>Risk Mitigation Strategies - REMS or RMP requirements</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 hover:bg-slate-50">
+                        <div className="flex items-start space-x-2">
+                          <FileText className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">ICH M4E(R2) - Clinical Overview Requirements</div>
+                            <div className="text-xs text-slate-500 mt-1">Critical regulatory reference for Module 2.5</div>
+                            <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                              <div className="font-medium text-blue-900 mb-1">Mandatory Sections:</div>
+                              <ul className="space-y-0.5 text-blue-700">
+                                <li>• 2.5.1 Product Development Rationale</li>
+                                <li>• 2.5.2 Overview of Biopharmaceutics</li>
+                                <li>• 2.5.3 Overview of Clinical Pharmacology</li>
+                                <li>• 2.5.4 Overview of Efficacy</li>
+                                <li>• 2.5.5 Overview of Safety</li>
+                                <li className="font-medium">• 2.5.6 Benefits and Risks Conclusions</li>
+                              </ul>
+                            </div>
+                            <Button 
+                              variant="link" 
+                              size="sm" 
+                              className="h-6 px-0 text-blue-600 mt-2"
+                              onClick={() => toast({
+                                title: "ICH M4E(R2) Guidance",
+                                description: "Opening regulatory guidance document...",
+                              })}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View Full Guidance
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 hover:bg-slate-50">
+                        <div className="flex items-start space-x-2">
+                          <Shield className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">FDA Safety Assessment Requirements</div>
+                            <div className="text-xs text-slate-500 mt-1">Updated March 2024 - Enhanced safety reporting</div>
+                            <div className="mt-2 p-2 bg-green-50 rounded text-xs">
+                              <div className="font-medium text-green-900 mb-1">Required Safety Analyses:</div>
+                              <ul className="space-y-0.5 text-green-700">
+                                <li>• Integrated Summary of Safety (ISS)</li>
+                                <li>• Pooled Safety Analysis by System Organ Class</li>
+                                <li>• Time-to-Event Analysis for Key AEs</li>
+                                <li>• Dose-Response Safety Assessment</li>
+                                <li>• QT/QTc Interval Analysis (if applicable)</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 hover:bg-slate-50">
+                        <div className="flex items-start space-x-2">
+                          <Globe className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="font-medium text-sm">EMA Benefit-Risk Methodology</div>
+                            <div className="text-xs text-slate-500 mt-1 flex items-center">
+                              <AlertCircle className="h-3 w-3 mr-1 text-amber-600" />
+                              New PrOACT-URL framework required
+                            </div>
+                            <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
+                              <div className="font-medium text-purple-900 mb-1">Framework Components:</div>
+                              <ul className="space-y-0.5 text-purple-700">
+                                <li>• Problem formulation</li>
+                                <li>• Objectives identification</li>
+                                <li>• Alternatives assessment</li>
+                                <li>• Consequences evaluation</li>
+                                <li>• Trade-offs analysis</li>
+                                <li>• Uncertainty assessment</li>
+                                <li>• Risk tolerance</li>
+                                <li>• Linked decisions</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-md">
+                    <div className="bg-slate-50 p-3 border-b font-medium flex items-center">
+                      <Brain className="h-4 w-4 mr-2 text-indigo-600" />
+                      AI-Powered Compliance Hints
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Real-time compliance suggestions */}
+                      <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <h4 className="font-medium text-sm text-red-900 flex items-center">
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          Critical Compliance Gap Detected
+                        </h4>
+                        <div className="text-xs text-red-700 mt-2">
+                          <p>Your Module 2.5.5 Safety Overview is missing required elements:</p>
+                          <ul className="mt-2 space-y-1 ml-4 list-disc">
+                            <li>No discussion of deaths or other serious adverse events</li>
+                            <li>Missing analysis of discontinuations due to AEs</li>
+                            <li>Laboratory findings summary not included</li>
+                            <li>Vital signs and ECG data not addressed</li>
+                          </ul>
+                          <Button 
+                            size="sm" 
+                            className="mt-3 bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => toast({
+                              title: "Auto-fixing compliance gaps",
+                              description: "AI is generating missing safety sections...",
+                            })}
+                          >
+                            <Wand2 className="h-3 w-3 mr-1" />
+                            Auto-Generate Missing Sections
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <h4 className="font-medium text-sm text-blue-900 flex items-center">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Statistical Analysis Requirements
+                        </h4>
+                        <div className="text-xs text-blue-700 mt-2">
+                          <p>Based on your clinical data, include these analyses:</p>
+                          <ul className="mt-2 space-y-1 ml-4 list-disc">
+                            <li>Primary endpoint: Change from baseline with ANCOVA</li>
+                            <li>Missing data: Multiple imputation sensitivity analysis</li>
+                            <li>Subgroup analyses: Pre-specified in SAP</li>
+                            <li>Multiplicity adjustments: Hochberg procedure</li>
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                        <h4 className="font-medium text-sm text-green-900 flex items-center">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Best Practice Recommendations
+                        </h4>
+                        <div className="text-xs text-green-700 mt-2">
+                          <p>Enhance your submission quality:</p>
+                          <ul className="mt-2 space-y-1 ml-4 list-disc">
+                            <li>Use forest plots for subgroup efficacy analyses</li>
+                            <li>Include Kaplan-Meier curves for time-to-event data</li>
+                            <li>Provide waterfall plots for tumor response (oncology)</li>
+                            <li>Add swimmer plots for treatment duration</li>
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="border-indigo-200 text-indigo-700"
+                          onClick={() => toast({
+                            title: "Generating compliance report",
+                            description: "Full regulatory compliance analysis in progress...",
+                          })}
+                        >
+                          <FileCheck className="h-4 w-4 mr-2" />
+                          Full Compliance Check
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="border-purple-200 text-purple-700"
+                          onClick={() => toast({
+                            title: "Risk assessment started",
+                            description: "Analyzing regulatory risks and mitigation strategies...",
+                          })}
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          Risk Assessment
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Additional Context Hints Bar */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <Sparkles className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm text-indigo-900">Intelligent Context Hint</h4>
+                      <p className="text-xs text-indigo-700 mt-1">
+                        Based on your current section (Module 2.5 Clinical Overview), similar successful submissions have included:
+                      </p>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        <div className="bg-white/70 rounded px-2 py-1">
+                          <div className="text-xs font-medium text-indigo-900">Efficacy Tables</div>
+                          <div className="text-xs text-indigo-600">15-20 tables average</div>
+                        </div>
+                        <div className="bg-white/70 rounded px-2 py-1">
+                          <div className="text-xs font-medium text-indigo-900">Safety Figures</div>
+                          <div className="text-xs text-indigo-600">8-12 figures typical</div>
+                        </div>
+                        <div className="bg-white/70 rounded px-2 py-1">
+                          <div className="text-xs font-medium text-indigo-900">Page Count</div>
+                          <div className="text-xs text-indigo-600">60-80 pages standard</div>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="h-6 px-0 text-indigo-600 mt-2"
+                        onClick={() => toast({
+                          title: "Loading similar submissions",
+                          description: "Fetching approved submission templates...",
+                        })}
+                      >
+                        View Similar Approved Submissions →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          <div className="flex items-center justify-between border-t pt-4 mt-4">
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-blue-200 text-blue-700"
+>>>>>>> codex/implement-liquid-csr-ingestion-pipeline
               >
                 <option value="">Select Module</option>
                 <option value="2.5">Module 2.5 - Clinical Overview</option>
