@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import * as authClient from '@/lib/authClient';
 
 interface TrialSageUser {
   id: string;
@@ -18,65 +18,45 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to convert Supabase User to TrialSageUser
-const convertUser = (supabaseUser: any | null): TrialSageUser | null => {
-  if (!supabaseUser) return null;
-
-  return {
-    id: supabaseUser.id,
-    email: supabaseUser.email || '',
-    username: supabaseUser.user_metadata?.username || supabaseUser.email?.split('@')[0] || '',
-  };
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<TrialSageUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in via Supabase session
+    // Check if user is already logged in on mount
     const checkAuthStatus = async () => {
       try {
-        // Get the current session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          setUser(convertUser(session.user));
+        const accessToken = authClient.getAccessToken();
+        
+        if (accessToken) {
+          // Fetch user profile
+          const profile = await authClient.getProfile();
+          setUser({
+            id: profile.id,
+            email: profile.email,
+            username: profile.username,
+          });
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+        // Clear invalid tokens
+        await authClient.logout();
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Setup auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(convertUser(session?.user || null));
-      setIsLoading(false);
-    });
-
     checkAuthStatus();
-
-    // Cleanup subscription on unmount
-    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      setUser(convertUser(data.user));
+      const result = await authClient.login({ email, password });
+      
+      if (result.user) {
+        setUser(result.user);
+      }
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -88,23 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (email: string, username: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      // In Supabase, signUp might not automatically log the user in
-      // if email confirmation is required
-      if (data.user) {
-        setUser(convertUser(data.user));
-      }
+      await authClient.register({ email, username, password });
+      
+      // After successful registration, log the user in
+      await login(email, password);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -116,9 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      await authClient.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
