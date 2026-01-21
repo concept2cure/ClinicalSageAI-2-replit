@@ -3506,6 +3506,7 @@ export const documentProcessingAudit = pgTable('document_processing_audit', {
   qualityScore: real('quality_score'),
   metadata: json('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   processingDocIdx: index('doc_processing_audit_doc_idx').on(table.documentId),
   processingStepIdx: index('doc_processing_audit_step_idx').on(table.processingStep),
@@ -3532,6 +3533,7 @@ export const documentHumanAnnotations = pgTable('document_human_annotations', {
   isUsedForTraining: boolean('is_used_for_training').default(false),
   metadata: json('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   annotationDocIdx: index('doc_annotations_doc_idx').on(table.documentId),
   annotationHierarchyIdx: index('doc_annotations_hierarchy_idx').on(table.hierarchyId),
@@ -3628,11 +3630,13 @@ export const insertDocumentProcessingAuditSchema = createInsertSchema(
 ).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertDocumentHumanAnnotationSchema = createInsertSchema(documentHumanAnnotations).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertDocumentRejectionAnalysisSchema = createInsertSchema(documentRejectionAnalysis).omit({
