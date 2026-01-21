@@ -1722,6 +1722,90 @@ export const medicalDevices = pgTable('medical_devices', {
   statusIdx: index('medical_devices_status_idx').on(table.regulatoryStatus),
 }));
 
+// Medical Device Lifecycle Stages - concept through post-market
+export const deviceLifecycleStages = pgTable('device_lifecycle_stages', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceId: integer('device_id')
+    .notNull()
+    .references(() => medicalDevices.id),
+  stage: text('stage').notNull(), // concept, design, verification, validation, clinical, regulatory, commercialization, post_market
+  stageOrder: integer('stage_order'),
+  status: text('status').default('planned').notNull(), // planned, in_progress, completed, blocked
+  startDate: timestamp('start_date'),
+  targetDate: timestamp('target_date'),
+  completedDate: timestamp('completed_date'),
+  ownerId: integer('owner_id').references(() => users.id),
+  evidence: json('evidence'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  lifecycleDeviceIdx: index('device_lifecycle_device_idx').on(table.deviceId),
+  lifecycleStageIdx: index('device_lifecycle_stage_idx').on(table.stage),
+  lifecycleStatusIdx: index('device_lifecycle_status_idx').on(table.status),
+}));
+
+// Diagnostic Assays & Tests - companion diagnostics and device-linked assays
+export const diagnosticAssays = pgTable('diagnostic_assays', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceId: integer('device_id').references(() => medicalDevices.id),
+  assayName: text('assay_name').notNull(),
+  assayType: text('assay_type'), // molecular, immunoassay, imaging, biomarker_panel
+  intendedUse: text('intended_use'),
+  specimenType: text('specimen_type'),
+  analyte: text('analyte'),
+  platform: text('platform'),
+  biomarkers: text('biomarkers').array(),
+  performanceMetrics: json('performance_metrics'), // sensitivity, specificity, ppv, npv
+  regulatoryStatus: text('regulatory_status').default('development'),
+  approvedRegions: text('approved_regions').array(),
+  clinicalEvidence: json('clinical_evidence'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  assayOrgIdx: index('diagnostic_assays_org_idx').on(table.organizationId),
+  assayDeviceIdx: index('diagnostic_assays_device_idx').on(table.deviceId),
+  assayTypeIdx: index('diagnostic_assays_type_idx').on(table.assayType),
+  assayStatusIdx: index('diagnostic_assays_status_idx').on(table.regulatoryStatus),
+}));
+
+// Post-Market Surveillance Events - complaints, adverse events, recalls
+export const devicePostMarketEvents = pgTable('device_post_market_events', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceId: integer('device_id')
+    .notNull()
+    .references(() => medicalDevices.id),
+  eventType: text('event_type').notNull(), // complaint, adverse_event, recall, field_safety_notice
+  eventDate: timestamp('event_date'),
+  reportNumber: text('report_number'),
+  severity: text('severity'),
+  description: text('description'),
+  patientImpact: text('patient_impact'),
+  regulatoryAgency: text('regulatory_agency'),
+  status: text('status').default('open').notNull(), // open, investigation, closed
+  rootCause: text('root_cause'),
+  correctiveAction: text('corrective_action'),
+  reportMetadata: json('report_metadata'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  postMarketDeviceIdx: index('device_post_market_device_idx').on(table.deviceId),
+  postMarketTypeIdx: index('device_post_market_type_idx').on(table.eventType),
+  postMarketStatusIdx: index('device_post_market_status_idx').on(table.status),
+  postMarketAgencyIdx: index('device_post_market_agency_idx').on(table.regulatoryAgency),
+}));
+
 // 510(k) Submissions Table
 export const fda510kSubmissions = pgTable('fda_510k_submissions', {
   id: serial('id').primaryKey(),
@@ -2373,6 +2457,13 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   projects: many(projects),
   clientWorkspaces: many(clientWorkspaces),
   projectTemplates: many(projectTemplates),
+  medicalDevices: many(medicalDevices),
+  deviceLifecycleStages: many(deviceLifecycleStages),
+  diagnosticAssays: many(diagnosticAssays),
+  devicePostMarketEvents: many(devicePostMarketEvents),
+  regulatoryDataElements: many(regulatoryDataElements),
+  regulatoryDataElementValues: many(regulatoryDataElementValues),
+  regulatoryDocumentHarvests: many(regulatoryDocumentHarvests),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2874,6 +2965,129 @@ export const insertCerFaersDataSchema = createInsertSchema(cerFaersData).omit({
 
 export type CerFaersData = InferSelectModel<typeof cerFaersData>;
 export type InsertCerFaersData = z.infer<typeof insertCerFaersDataSchema>;
+
+/**
+ * Global Evidence & Data Element Catalog
+ *
+ * Captures atomic data elements across device, diagnostic, clinical, operational,
+ * financial, lab, and genomics domains for regulatory traceability.
+ */
+export const regulatoryDataElements = pgTable('regulatory_data_elements', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  elementKey: text('element_key').notNull(), // canonical identifier
+  elementLabel: text('element_label').notNull(),
+  domain: text('domain').notNull(), // clinical, operational, financial, lab, genomics, regulatory, device, diagnostics
+  dataType: text('data_type').notNull(), // string, number, date, boolean, json
+  description: text('description'),
+  sourceSystem: text('source_system'),
+  required: boolean('required').default(false),
+  sensitive: boolean('sensitive').default(false),
+  allowedValues: json('allowed_values'),
+  units: text('units'),
+  lineage: json('lineage'), // source/target mappings
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  elementOrgIdx: index('reg_data_elements_org_idx').on(table.organizationId),
+  elementKeyIdx: uniqueIndex('reg_data_elements_key_idx').on(table.organizationId, table.elementKey),
+  elementDomainIdx: index('reg_data_elements_domain_idx').on(table.domain),
+}));
+
+/**
+ * Data Element Values - atomic capture of data values across domains
+ */
+export const regulatoryDataElementValues = pgTable('regulatory_data_element_values', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  elementId: integer('element_id')
+    .notNull()
+    .references(() => regulatoryDataElements.id, { onDelete: 'cascade' }),
+  deviceId: integer('device_id').references(() => medicalDevices.id),
+  diagnosticAssayId: integer('diagnostic_assay_id').references(() => diagnosticAssays.id),
+  projectId: integer('project_id').references(() => projects.id),
+  sourceDocumentId: uuid('source_document_id').references(() => documents.id),
+  sourceRecordId: text('source_record_id'),
+  valueText: text('value_text'),
+  valueNumber: decimal('value_number'),
+  valueDate: timestamp('value_date'),
+  valueJson: json('value_json'),
+  confidence: real('confidence').default(1),
+  units: text('units'),
+  capturedBy: integer('captured_by').references(() => users.id),
+  capturedAt: timestamp('captured_at').defaultNow().notNull(),
+  metadata: json('metadata'),
+}, (table) => ({
+  elementValueIdx: index('reg_data_element_value_idx').on(table.elementId),
+  elementValueDeviceIdx: index('reg_data_element_device_idx').on(table.deviceId),
+  elementValueAssayIdx: index('reg_data_element_assay_idx').on(table.diagnosticAssayId),
+}));
+
+/**
+ * Regulatory Document Harvest - CSR, CTD, rejection letters, and related extracts
+ */
+export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  sourceType: text('source_type').notNull(), // csr, ctd, rejection_letter, guidance, clinical_report
+  sourceDocumentId: uuid('source_document_id').references(() => ragDocuments.id),
+  submissionId: text('submission_id'),
+  deviceId: integer('device_id').references(() => medicalDevices.id),
+  documentTitle: text('document_title'),
+  documentDate: date('document_date'),
+  extractionStatus: text('extraction_status').default('pending').notNull(), // pending, processing, completed, failed
+  extractedData: json('extracted_data'),
+  keyFindings: json('key_findings'),
+  rejectionReason: text('rejection_reason'),
+  extractedAtoms: json('extracted_atoms'), // pointers to lumen_data_atoms
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  harvestOrgIdx: index('reg_doc_harvest_org_idx').on(table.organizationId),
+  harvestSourceIdx: index('reg_doc_harvest_source_idx').on(table.sourceType),
+  harvestStatusIdx: index('reg_doc_harvest_status_idx').on(table.extractionStatus),
+  harvestDeviceIdx: index('reg_doc_harvest_device_idx').on(table.deviceId),
+}));
+
+// Insert schemas for new regulatory data tables
+export const insertRegulatoryDataElementSchema = createInsertSchema(regulatoryDataElements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRegulatoryDataElementValueSchema = createInsertSchema(
+  regulatoryDataElementValues
+).omit({
+  id: true,
+  capturedAt: true,
+});
+
+export const insertRegulatoryDocumentHarvestSchema = createInsertSchema(
+  regulatoryDocumentHarvests
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for new regulatory data tables
+export type RegulatoryDataElement = InferSelectModel<typeof regulatoryDataElements>;
+export type InsertRegulatoryDataElement = z.infer<typeof insertRegulatoryDataElementSchema>;
+
+export type RegulatoryDataElementValue = InferSelectModel<typeof regulatoryDataElementValues>;
+export type InsertRegulatoryDataElementValue = z.infer<typeof insertRegulatoryDataElementValueSchema>;
+
+export type RegulatoryDocumentHarvest = InferSelectModel<typeof regulatoryDocumentHarvests>;
+export type InsertRegulatoryDocumentHarvest = z.infer<typeof insertRegulatoryDocumentHarvestSchema>;
 
 /**
  * CER Literature Table
@@ -11224,6 +11438,24 @@ export const insertDeviceComponentSchema = createInsertSchema(deviceComponents).
   updatedAt: true,
 });
 
+export const insertDeviceLifecycleStageSchema = createInsertSchema(deviceLifecycleStages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDiagnosticAssaySchema = createInsertSchema(diagnosticAssays).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDevicePostMarketEventSchema = createInsertSchema(devicePostMarketEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Type definitions for Device Data Center
 export type DeviceDataCenter = InferSelectModel<typeof deviceDataCenter>;
 export type InsertDeviceDataCenter = z.infer<typeof insertDeviceDataCenterSchema>;
@@ -11236,6 +11468,15 @@ export type InsertDeviceTestStandard = z.infer<typeof insertDeviceTestStandardSc
 
 export type DeviceComponent = InferSelectModel<typeof deviceComponents>;
 export type InsertDeviceComponent = z.infer<typeof insertDeviceComponentSchema>;
+
+export type DeviceLifecycleStage = InferSelectModel<typeof deviceLifecycleStages>;
+export type InsertDeviceLifecycleStage = z.infer<typeof insertDeviceLifecycleStageSchema>;
+
+export type DiagnosticAssay = InferSelectModel<typeof diagnosticAssays>;
+export type InsertDiagnosticAssay = z.infer<typeof insertDiagnosticAssaySchema>;
+
+export type DevicePostMarketEvent = InferSelectModel<typeof devicePostMarketEvents>;
+export type InsertDevicePostMarketEvent = z.infer<typeof insertDevicePostMarketEventSchema>;
 
 // ============================================================================
 // 510(k) WORKFLOW MANAGEMENT - COMPLETE END-TO-END TRACKING
