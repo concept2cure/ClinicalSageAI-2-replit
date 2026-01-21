@@ -3741,7 +3741,7 @@ export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', 
   validationStatus: text('validation_status').default('pending').notNull(), // pending, verified, flagged, rejected
   legalDefensibilityScore: real('legal_defensibility_score'),
   riskLevel: text('risk_level').default('medium'), // low, medium, high, critical
-  reviewerId: integer('reviewer_id').references(() => users.id),
+  reviewerId: integer('reviewer_id').references(() => users.id), // nullable until review is assigned
   reviewedAt: timestamp('reviewed_at'),
   decision: text('decision'),
   rationale: text('rationale'),
