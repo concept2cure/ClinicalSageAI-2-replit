@@ -40,6 +40,11 @@ import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantConta
 import { memoryOptimizer } from './utils/memoryOptimizer';
 import { AnimatedPipeline } from './components/ModernDashboardUI';
 
+if (import.meta.env.PROD) {
+  console.log = () => {};
+  console.warn = () => {};
+}
+
 // Initialize memory optimization
 memoryOptimizer.startPeriodicCleanup();
 
