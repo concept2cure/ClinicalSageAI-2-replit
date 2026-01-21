@@ -2464,6 +2464,14 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   regulatoryDataElements: many(regulatoryDataElements),
   regulatoryDataElementValues: many(regulatoryDataElementValues),
   regulatoryDocumentHarvests: many(regulatoryDocumentHarvests),
+  documentHierarchy: many(documentHierarchy),
+  documentExtractedTables: many(documentExtractedTables),
+  documentExtractedFigures: many(documentExtractedFigures),
+  documentExtractedAdverseEvents: many(documentExtractedAdverseEvents),
+  documentExtractedEndpoints: many(documentExtractedEndpoints),
+  documentProcessingAudits: many(documentProcessingAudit),
+  documentHumanAnnotations: many(documentHumanAnnotations),
+  documentRejectionAnalyses: many(documentRejectionAnalysis),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2604,6 +2612,146 @@ export const regulatoryDocumentHarvestsRelations = relations(
     }),
   })
 );
+
+export const documentHierarchyRelations = relations(documentHierarchy, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [documentHierarchy.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentHierarchy.documentId],
+    references: [documents.id],
+  }),
+  parent: one(documentHierarchy, {
+    fields: [documentHierarchy.parentId],
+    references: [documentHierarchy.id],
+  }),
+  children: many(documentHierarchy),
+  extractedTables: many(documentExtractedTables),
+  extractedFigures: many(documentExtractedFigures),
+}));
+
+export const documentExtractedTablesRelations = relations(documentExtractedTables, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [documentExtractedTables.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentExtractedTables.documentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [documentExtractedTables.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+  adverseEvents: many(documentExtractedAdverseEvents),
+  endpoints: many(documentExtractedEndpoints),
+}));
+
+export const documentExtractedFiguresRelations = relations(documentExtractedFigures, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documentExtractedFigures.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentExtractedFigures.documentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [documentExtractedFigures.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+}));
+
+export const documentExtractedAdverseEventsRelations = relations(
+  documentExtractedAdverseEvents,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [documentExtractedAdverseEvents.organizationId],
+      references: [organizations.id],
+    }),
+    document: one(documents, {
+      fields: [documentExtractedAdverseEvents.documentId],
+      references: [documents.id],
+    }),
+    table: one(documentExtractedTables, {
+      fields: [documentExtractedAdverseEvents.tableId],
+      references: [documentExtractedTables.id],
+    }),
+    hierarchy: one(documentHierarchy, {
+      fields: [documentExtractedAdverseEvents.hierarchyId],
+      references: [documentHierarchy.id],
+    }),
+  })
+);
+
+export const documentExtractedEndpointsRelations = relations(documentExtractedEndpoints, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documentExtractedEndpoints.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentExtractedEndpoints.documentId],
+    references: [documents.id],
+  }),
+  table: one(documentExtractedTables, {
+    fields: [documentExtractedEndpoints.tableId],
+    references: [documentExtractedTables.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [documentExtractedEndpoints.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+}));
+
+export const documentProcessingAuditRelations = relations(documentProcessingAudit, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documentProcessingAudit.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentProcessingAudit.documentId],
+    references: [documents.id],
+  }),
+}));
+
+export const documentHumanAnnotationsRelations = relations(documentHumanAnnotations, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documentHumanAnnotations.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentHumanAnnotations.documentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [documentHumanAnnotations.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+  annotatedByUser: one(users, {
+    fields: [documentHumanAnnotations.annotatedBy],
+    references: [users.id],
+  }),
+  reviewedByUser: one(users, {
+    fields: [documentHumanAnnotations.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const documentRejectionAnalysisRelations = relations(documentRejectionAnalysis, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [documentRejectionAnalysis.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [documentRejectionAnalysis.documentId],
+    references: [documents.id],
+  }),
+  harvest: one(regulatoryDocumentHarvests, {
+    fields: [documentRejectionAnalysis.harvestId],
+    references: [regulatoryDocumentHarvests.id],
+  }),
+}));
 
 export const projectDocumentsRelations = relations(projectDocuments, ({ one }) => ({
   project: one(cerProjects, {
@@ -3175,6 +3323,250 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
   harvestDeviceIdx: index('reg_doc_harvest_device_idx').on(table.deviceId),
 }));
 
+/**
+ * Document Hierarchy & Extraction Tables
+ *
+ * Structured document parsing for CSR/CTD/rejection letters.
+ */
+export const documentHierarchy = pgTable('document_hierarchy', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  parentId: integer('parent_id').references(() => documentHierarchy.id),
+  hierarchyLevel: integer('hierarchy_level').notNull(), // 1=doc, 2=module, 3=section, 4=subsection, 5=element
+  elementType: text('element_type').notNull(), // module, section, table, figure, listing, text_block
+  elementId: text('element_id'),
+  elementTitle: text('element_title'),
+  elementNumber: text('element_number'),
+  sectionNumber: text('section_number'),
+  sectionName: text('section_name'),
+  pageStart: integer('page_start'),
+  pageEnd: integer('page_end'),
+  lineStart: integer('line_start'),
+  lineEnd: integer('line_end'),
+  fullText: text('full_text'),
+  ocrText: text('ocr_text'),
+  contentHash: text('content_hash'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  hierarchyDocIdx: index('doc_hierarchy_doc_idx').on(table.documentId, table.hierarchyLevel, table.pageStart),
+  hierarchyParentIdx: index('doc_hierarchy_parent_idx').on(table.parentId),
+  hierarchyTypeIdx: index('doc_hierarchy_type_idx').on(table.elementType),
+}));
+
+export const documentExtractedTables = pgTable('document_extracted_tables', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  tableNumber: text('table_number'),
+  tableTitle: text('table_title'),
+  tableCaption: text('table_caption'),
+  footnotes: text('footnotes'),
+  rowCount: integer('row_count'),
+  columnCount: integer('column_count'),
+  columnHeaders: text('column_headers').array(),
+  tableData: json('table_data'),
+  tableType: text('table_type'), // demographics, efficacy, safety, disposition
+  primaryEndpoint: boolean('primary_endpoint').default(false),
+  statisticalTests: json('statistical_tests'),
+  sourcePageNumbers: integer('source_page_numbers').array(),
+  extractionConfidence: real('extraction_confidence'),
+  requiresManualReview: boolean('requires_manual_review').default(false),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  extractedTableDocIdx: index('doc_extracted_table_doc_idx').on(table.documentId, table.tableNumber),
+  extractedTableTypeIdx: index('doc_extracted_table_type_idx').on(table.tableType),
+  extractedTableHierarchyIdx: index('doc_extracted_table_hierarchy_idx').on(table.hierarchyId),
+}));
+
+export const documentExtractedFigures = pgTable('document_extracted_figures', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  figureNumber: text('figure_number'),
+  figureTitle: text('figure_title'),
+  figureCaption: text('figure_caption'),
+  figureType: text('figure_type'), // kaplan_meier, forest_plot, scatter_plot
+  imagePath: text('image_path'),
+  ocrText: text('ocr_text'),
+  imageMetadata: json('image_metadata'),
+  extractedDataPoints: json('extracted_data_points'),
+  statisticalAnnotation: json('statistical_annotation'),
+  sourcePageNumbers: integer('source_page_numbers').array(),
+  extractionConfidence: real('extraction_confidence'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  extractedFigureDocIdx: index('doc_extracted_figure_doc_idx').on(table.documentId, table.figureNumber),
+  extractedFigureTypeIdx: index('doc_extracted_figure_type_idx').on(table.figureType),
+  extractedFigureHierarchyIdx: index('doc_extracted_figure_hierarchy_idx').on(table.hierarchyId),
+}));
+
+export const documentExtractedAdverseEvents = pgTable('document_extracted_adverse_events', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  tableId: integer('table_id').references(() => documentExtractedTables.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  ptCode: text('pt_code'),
+  ptTerm: text('pt_term'),
+  socTerm: text('soc_term'),
+  treatmentGroup: text('treatment_group'),
+  numberAffected: integer('number_affected'),
+  totalSubjects: integer('total_subjects'),
+  incidenceRate: decimal('incidence_rate', { precision: 6, scale: 2 }),
+  severityGrade: integer('severity_grade'),
+  isSeriousAe: boolean('is_serious_ae').default(false),
+  isTreatmentRelated: boolean('is_treatment_related').default(false),
+  leadingToDiscontinuation: boolean('leading_to_discontinuation').default(false),
+  leadingToDeath: boolean('leading_to_death').default(false),
+  sourceTableNumber: text('source_table_number'),
+  sourcePages: integer('source_pages').array(),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  extractedAeDocIdx: index('doc_extracted_ae_doc_idx').on(table.documentId, table.ptCode),
+  extractedAeGroupIdx: index('doc_extracted_ae_group_idx').on(table.treatmentGroup),
+}));
+
+export const documentExtractedEndpoints = pgTable('document_extracted_endpoints', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  tableId: integer('table_id').references(() => documentExtractedTables.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  endpointName: text('endpoint_name'),
+  endpointType: text('endpoint_type'), // primary, secondary, exploratory
+  timepoint: text('timepoint'),
+  analysisPopulation: text('analysis_population'),
+  treatmentGroup: text('treatment_group'),
+  nValue: integer('n_value'),
+  meanValue: decimal('mean_value', { precision: 12, scale: 4 }),
+  medianValue: decimal('median_value', { precision: 12, scale: 4 }),
+  sdValue: decimal('sd_value', { precision: 12, scale: 4 }),
+  ciLower: decimal('ci_lower', { precision: 12, scale: 4 }),
+  ciUpper: decimal('ci_upper', { precision: 12, scale: 4 }),
+  pValue: decimal('p_value', { precision: 12, scale: 10 }),
+  statisticalMethod: text('statistical_method'),
+  isSignificant: boolean('is_significant'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  extractedEndpointDocIdx: index('doc_extracted_endpoint_doc_idx').on(table.documentId, table.endpointType),
+  extractedEndpointNameIdx: index('doc_extracted_endpoint_name_idx').on(table.endpointName),
+}));
+
+export const documentProcessingAudit = pgTable('document_processing_audit', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  processingStep: text('processing_step').notNull(),
+  stepStatus: text('step_status').notNull(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  durationMs: integer('duration_ms'),
+  processorVersion: text('processor_version'),
+  modelUsed: text('model_used'),
+  parameters: json('parameters'),
+  itemsProcessed: integer('items_processed'),
+  errorsEncountered: integer('errors_encountered'),
+  qualityScore: real('quality_score'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  processingDocIdx: index('doc_processing_audit_doc_idx').on(table.documentId),
+  processingStepIdx: index('doc_processing_audit_step_idx').on(table.processingStep),
+  processingStatusIdx: index('doc_processing_audit_status_idx').on(table.stepStatus),
+}));
+
+export const documentHumanAnnotations = pgTable('document_human_annotations', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  annotatedBy: integer('annotated_by').references(() => users.id),
+  annotationType: text('annotation_type').notNull(), // correction, validation, rejection, query
+  annotationText: text('annotation_text').notNull(),
+  originalValue: text('original_value'),
+  correctedValue: text('corrected_value'),
+  reviewedAt: timestamp('reviewed_at'),
+  reviewedBy: integer('reviewed_by').references(() => users.id),
+  isResolved: boolean('is_resolved').default(false),
+  isUsedForTraining: boolean('is_used_for_training').default(false),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  annotationDocIdx: index('doc_annotations_doc_idx').on(table.documentId),
+  annotationHierarchyIdx: index('doc_annotations_hierarchy_idx').on(table.hierarchyId),
+  annotationResolvedIdx: index('doc_annotations_resolved_idx').on(table.isResolved),
+}));
+
+export const documentRejectionAnalysis = pgTable('document_rejection_analysis', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .notNull()
+    .references(() => documents.id),
+  harvestId: integer('harvest_id').references(() => regulatoryDocumentHarvests.id),
+  rejectingAgency: text('rejecting_agency'),
+  reviewDivision: text('review_division'),
+  rejectionDate: date('rejection_date'),
+  deficiencyCount: integer('deficiency_count'),
+  deficiencies: json('deficiencies'),
+  clinicalDeficiencies: integer('clinical_deficiencies'),
+  cmcDeficiencies: integer('cmc_deficiencies'),
+  nonclinicalDeficiencies: integer('nonclinical_deficiencies'),
+  labelingDeficiencies: integer('labeling_deficiencies'),
+  referencedSubmissions: text('referenced_submissions').array(),
+  similarRejectionIds: json('similar_rejection_ids'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  rejectionDocIdx: index('doc_rejection_doc_idx').on(table.documentId),
+  rejectionAgencyIdx: index('doc_rejection_agency_idx').on(table.rejectingAgency),
+  rejectionDateIdx: index('doc_rejection_date_idx').on(table.rejectionDate),
+}));
+
 // Insert schemas for new regulatory data tables
 export const insertRegulatoryDataElementSchema = createInsertSchema(regulatoryDataElements).omit({
   id: true,
@@ -3197,6 +3589,58 @@ export const insertRegulatoryDocumentHarvestSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertDocumentHierarchySchema = createInsertSchema(documentHierarchy).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentExtractedTableSchema = createInsertSchema(documentExtractedTables).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentExtractedFigureSchema = createInsertSchema(documentExtractedFigures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentExtractedAdverseEventSchema = createInsertSchema(
+  documentExtractedAdverseEvents
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentExtractedEndpointSchema = createInsertSchema(
+  documentExtractedEndpoints
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentProcessingAuditSchema = createInsertSchema(
+  documentProcessingAudit
+).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDocumentHumanAnnotationSchema = createInsertSchema(documentHumanAnnotations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDocumentRejectionAnalysisSchema = createInsertSchema(documentRejectionAnalysis).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types for new regulatory data tables
 export type RegulatoryDataElement = InferSelectModel<typeof regulatoryDataElements>;
 export type InsertRegulatoryDataElement = z.infer<typeof insertRegulatoryDataElementSchema>;
@@ -3206,6 +3650,30 @@ export type InsertRegulatoryDataElementValue = z.infer<typeof insertRegulatoryDa
 
 export type RegulatoryDocumentHarvest = InferSelectModel<typeof regulatoryDocumentHarvests>;
 export type InsertRegulatoryDocumentHarvest = z.infer<typeof insertRegulatoryDocumentHarvestSchema>;
+
+export type DocumentHierarchy = InferSelectModel<typeof documentHierarchy>;
+export type InsertDocumentHierarchy = z.infer<typeof insertDocumentHierarchySchema>;
+
+export type DocumentExtractedTable = InferSelectModel<typeof documentExtractedTables>;
+export type InsertDocumentExtractedTable = z.infer<typeof insertDocumentExtractedTableSchema>;
+
+export type DocumentExtractedFigure = InferSelectModel<typeof documentExtractedFigures>;
+export type InsertDocumentExtractedFigure = z.infer<typeof insertDocumentExtractedFigureSchema>;
+
+export type DocumentExtractedAdverseEvent = InferSelectModel<typeof documentExtractedAdverseEvents>;
+export type InsertDocumentExtractedAdverseEvent = z.infer<typeof insertDocumentExtractedAdverseEventSchema>;
+
+export type DocumentExtractedEndpoint = InferSelectModel<typeof documentExtractedEndpoints>;
+export type InsertDocumentExtractedEndpoint = z.infer<typeof insertDocumentExtractedEndpointSchema>;
+
+export type DocumentProcessingAudit = InferSelectModel<typeof documentProcessingAudit>;
+export type InsertDocumentProcessingAudit = z.infer<typeof insertDocumentProcessingAuditSchema>;
+
+export type DocumentHumanAnnotation = InferSelectModel<typeof documentHumanAnnotations>;
+export type InsertDocumentHumanAnnotation = z.infer<typeof insertDocumentHumanAnnotationSchema>;
+
+export type DocumentRejectionAnalysis = InferSelectModel<typeof documentRejectionAnalysis>;
+export type InsertDocumentRejectionAnalysis = z.infer<typeof insertDocumentRejectionAnalysisSchema>;
 
 /**
  * CER Literature Table
