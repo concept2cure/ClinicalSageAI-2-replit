@@ -2487,6 +2487,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   dataRetentionPolicies: many(dataRetentionPolicies),
   sensitiveDataFlags: many(sensitiveDataFlags),
   regulatoryDefensiveLedger: many(regulatoryDefensiveLedger),
+  clinicalTruthStore: many(clinicalTruthStore),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2787,6 +2788,13 @@ export const regulatoryDefensiveLedgerRelations = relations(
     }),
   })
 );
+
+export const clinicalTruthStoreRelations = relations(clinicalTruthStore, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [clinicalTruthStore.organizationId],
+    references: [organizations.id],
+  }),
+}));
 
 export const documentHierarchyRelations = relations(documentHierarchy, ({ one, many }) => ({
   organization: one(organizations, {
@@ -3510,8 +3518,10 @@ export const smartFragments = pgTable('smart_fragments', {
     .references(() => documents.id),
   hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
   ectdSectionPath: text('ectd_section_path').notNull(),
+  jurisdiction: text('jurisdiction').default('Global'),
   fragmentType: text('fragment_type'), // text, table_summary, figure_description, regulatory_logic
   rawContent: text('raw_content'),
+  contentProse: text('content_prose'),
   redactedContent: text('redacted_content'),
   metadata: json('metadata'),
   embedding: vector('embedding', { dimensions: 1536 }), // text-embedding-3-small
@@ -3519,6 +3529,9 @@ export const smartFragments = pgTable('smart_fragments', {
   tokenCount: integer('token_count'),
   contentHash: text('content_hash'),
   sourceType: text('source_type'), // csr, ctd, guidance
+  objectivityScore: real('objectivity_score'),
+  subjectivityScore: real('subjectivity_score'),
+  adversarialSignals: json('adversarial_signals'),
   containsSensitiveData: boolean('contains_sensitive_data').default(false),
   redactionStatus: text('redaction_status').default('unredacted'),
   partitionKey: text('partition_key'),
@@ -3759,6 +3772,25 @@ export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', 
 }, (table) => ({
   defensiveLedgerFactIdx: index('rdl_fact_idx').on(table.factType, table.factId),
   defensiveLedgerStatusIdx: index('rdl_status_idx').on(table.validationStatus),
+}));
+
+export const clinicalTruthStore = pgTable('clinical_truth_store', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  nctId: text('nct_id').unique(),
+  substanceId: text('substance_id').references(() => globalSubstances.uniiCode),
+  metricName: text('metric_name').notNull(),
+  metricValueFloat: real('metric_value_float'),
+  metricValueText: text('metric_value_text'),
+  isPrimaryEndpoint: boolean('is_primary_endpoint').default(false),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: json('metadata'),
+}, (table) => ({
+  truthNctIdx: index('clinical_truth_nct_idx').on(table.nctId),
+  truthSubstanceIdx: index('clinical_truth_substance_idx').on(table.substanceId),
+  truthMetricIdx: index('clinical_truth_metric_idx').on(table.metricName),
 }));
 
 /**
@@ -4188,6 +4220,11 @@ export const insertRegulatoryDefensiveLedgerSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertClinicalTruthStoreSchema = createInsertSchema(clinicalTruthStore).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const insertStandardsBodySchema = createInsertSchema(standardsBodies).omit({
   id: true,
   createdAt: true,
@@ -4317,6 +4354,9 @@ export type InsertStudyTruthMetric = z.infer<typeof insertStudyTruthMetricSchema
 
 export type RegulatoryDefensiveLedger = InferSelectModel<typeof regulatoryDefensiveLedger>;
 export type InsertRegulatoryDefensiveLedger = z.infer<typeof insertRegulatoryDefensiveLedgerSchema>;
+
+export type ClinicalTruthStore = InferSelectModel<typeof clinicalTruthStore>;
+export type InsertClinicalTruthStore = z.infer<typeof insertClinicalTruthStoreSchema>;
 
 export type StandardsBody = InferSelectModel<typeof standardsBodies>;
 export type InsertStandardsBody = z.infer<typeof insertStandardsBodySchema>;
