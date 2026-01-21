@@ -128,6 +128,8 @@ const AdminProfile = lazy(() => import('./pages/AdminProfile'));
 const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
 const FDACompliancePage = lazy(() => import('./pages/FDACompliancePage'));
 const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
+const ModuleSettingsPage = lazy(() => import('./pages/ModuleSettingsPage'));
+const PreSubmissionValidation = lazy(() => import('./pages/PreSubmissionValidation'));
 
 // VAULT Document Browser page
 const VaultBrowserPage = lazy(() => import('./pages/VaultBrowser'));
@@ -349,8 +351,20 @@ function App() {
                       <Route path="/" component={ClientPortalLanding} />
                       <Route path="/submission-center" component={UnifiedSubmissionCenter} />
                       <Route path="/client-portal" component={ClientPortalLanding} />
-        <Route path="/module-settings" component={() => import('./pages/ModuleSettingsPage')} />
-        <Route path="/pre-submission-validation" component={() => import('./pages/PreSubmissionValidation')} />
+                      <Route path="/module-settings">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <ModuleSettingsPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/pre-submission-validation">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <PreSubmissionValidation />
+                          </Suspense>
+                        )}
+                      </Route>
                       <Route path="/dashboard" component={ClientPortalLanding} />
                       {/* Client Portal Sub-Pages */}
                       <Route path="/client-portal/vault">
