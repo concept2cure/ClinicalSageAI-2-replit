@@ -3746,7 +3746,8 @@ export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', 
     .notNull(),
   legalDefensibilityScore: real('legal_defensibility_score'),
   riskLevel: text('risk_level', { enum: regulatoryDefensiveRiskValues })
-    .default('medium'),
+    .default('medium')
+    .notNull(),
   reviewerId: integer('reviewer_id').references(() => users.id), // nullable until review is assigned
   reviewedAt: timestamp('reviewed_at'),
   decision: text('decision'),
