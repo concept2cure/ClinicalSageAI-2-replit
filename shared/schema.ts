@@ -2483,6 +2483,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   trainingDatasets: many(trainingDatasets),
   dataRetentionPolicies: many(dataRetentionPolicies),
   sensitiveDataFlags: many(sensitiveDataFlags),
+  regulatoryDefensiveLedger: many(regulatoryDefensiveLedger),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2765,6 +2766,28 @@ export const sensitiveDataFlagsRelations = relations(sensitiveDataFlags, ({ one 
     references: [organizations.id],
   }),
 }));
+
+export const globalSubstancesRelations = relations(globalSubstances, ({}) => ({}));
+
+export const studyTruthMetricsRelations = relations(studyTruthMetrics, ({}) => ({}));
+
+export const regulatoryDefensiveLedgerRelations = relations(
+  regulatoryDefensiveLedger,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [regulatoryDefensiveLedger.organizationId],
+      references: [organizations.id],
+    }),
+    fragment: one(smartFragments, {
+      fields: [regulatoryDefensiveLedger.fragmentId],
+      references: [smartFragments.id],
+    }),
+    reviewer: one(users, {
+      fields: [regulatoryDefensiveLedger.reviewerId],
+      references: [users.id],
+    }),
+  })
+);
 
 export const documentHierarchyRelations = relations(documentHierarchy, ({ one, many }) => ({
   organization: one(organizations, {
@@ -3686,6 +3709,56 @@ export const sensitiveDataFlags = pgTable('sensitive_data_flags', {
 }));
 
 /**
+ * Regulatory Defensive Layer (RDL) - Ground Truth & Audit Ledger
+ */
+export const globalSubstances = pgTable('global_substances', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  substanceName: text('substance_name').notNull(),
+  uniiCode: text('unii_code').unique(),
+  registrationStatus: json('registration_status'), // regional approval/status data
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  substanceNameIdx: index('global_substances_name_idx').on(table.substanceName),
+  substanceUniiIdx: index('global_substances_unii_idx').on(table.uniiCode),
+}));
+
+export const studyTruthMetrics = pgTable('study_truth_metrics', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  nctId: text('nct_id').unique(),
+  primaryEndpointPValue: real('primary_endpoint_p_value'),
+  adverseEventProfile: json('adverse_event_profile'),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  metadata: json('metadata'),
+}, (table) => ({
+  truthNctIdx: index('study_truth_metrics_nct_idx').on(table.nctId),
+}));
+
+export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  fragmentId: uuid('fragment_id').references(() => smartFragments.id),
+  factType: text('fact_type').notNull(),
+  factId: text('fact_id').notNull(),
+  validationStatus: text('validation_status').default('pending').notNull(), // pending, verified, flagged, rejected
+  legalDefensibilityScore: real('legal_defensibility_score'),
+  riskLevel: text('risk_level'), // low, medium, high, critical
+  reviewerId: integer('reviewer_id').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at'),
+  decision: text('decision'),
+  rationale: text('rationale'),
+  sourceReferences: json('source_references'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  defensiveLedgerFactIdx: index('rdl_fact_idx').on(table.factType, table.factId),
+  defensiveLedgerStatusIdx: index('rdl_status_idx').on(table.validationStatus),
+}));
+
+/**
  * Global Standards Bodies, Standards, and Data Models
  */
 export const standardsBodies = pgTable('standards_bodies', {
@@ -4093,6 +4166,25 @@ export const insertSensitiveDataFlagSchema = createInsertSchema(sensitiveDataFla
   updatedAt: true,
 });
 
+export const insertGlobalSubstanceSchema = createInsertSchema(globalSubstances).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudyTruthMetricSchema = createInsertSchema(studyTruthMetrics).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export const insertRegulatoryDefensiveLedgerSchema = createInsertSchema(
+  regulatoryDefensiveLedger
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertStandardsBodySchema = createInsertSchema(standardsBodies).omit({
   id: true,
   createdAt: true,
@@ -4213,6 +4305,15 @@ export type InsertDataRetentionAssignment = z.infer<typeof insertDataRetentionAs
 
 export type SensitiveDataFlag = InferSelectModel<typeof sensitiveDataFlags>;
 export type InsertSensitiveDataFlag = z.infer<typeof insertSensitiveDataFlagSchema>;
+
+export type GlobalSubstance = InferSelectModel<typeof globalSubstances>;
+export type InsertGlobalSubstance = z.infer<typeof insertGlobalSubstanceSchema>;
+
+export type StudyTruthMetric = InferSelectModel<typeof studyTruthMetrics>;
+export type InsertStudyTruthMetric = z.infer<typeof insertStudyTruthMetricSchema>;
+
+export type RegulatoryDefensiveLedger = InferSelectModel<typeof regulatoryDefensiveLedger>;
+export type InsertRegulatoryDefensiveLedger = z.infer<typeof insertRegulatoryDefensiveLedgerSchema>;
 
 export type StandardsBody = InferSelectModel<typeof standardsBodies>;
 export type InsertStandardsBody = z.infer<typeof insertStandardsBodySchema>;
