@@ -3780,7 +3780,7 @@ export const clinicalTruthStore = pgTable('clinical_truth_store', {
   organizationId: integer('organization_id')
     .notNull()
     .references(() => organizations.id),
-  nctId: text('nct_id'),
+  nctId: text('nct_id').notNull(),
   substanceId: text('substance_id').references(() => globalSubstances.uniiCode),
   metricName: text('metric_name').notNull(),
   metricValueFloat: real('metric_value_float'), // numeric facts (e.g., p-value, Cmax, AE rate); populate only one metric value field
@@ -3790,8 +3790,7 @@ export const clinicalTruthStore = pgTable('clinical_truth_store', {
   metadata: json('metadata'),
 }, (table) => ({
   truthNctUnique: uniqueIndex('clinical_truth_nct_metric_unique_idx')
-    .on(table.nctId, table.metricName, table.substanceId)
-    .where(sql`${table.nctId} is not null`), // enforce per-metric uniqueness when NCT ID is provided
+    .on(table.nctId, table.metricName, table.substanceId), // enforce per-metric uniqueness
   truthNctIdx: index('clinical_truth_nct_idx').on(table.nctId),
   truthSubstanceIdx: index('clinical_truth_substance_idx').on(table.substanceId),
   truthMetricIdx: index('clinical_truth_metric_idx').on(table.metricName),
