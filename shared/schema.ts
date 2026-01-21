@@ -50,6 +50,9 @@ const vector = (name: string, config: { dimensions: number }) =>
     },
   })(name);
 
+const regulatoryDefensiveStatusValues = ['pending', 'verified', 'flagged', 'rejected'] as const;
+const regulatoryDefensiveRiskValues = ['low', 'medium', 'high', 'critical'] as const;
+
 /**
  * Organizations (Tenants) Table
  *
@@ -3738,9 +3741,12 @@ export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', 
   fragmentId: uuid('fragment_id').references(() => smartFragments.id),
   factType: text('fact_type').notNull(),
   factId: text('fact_id').notNull(),
-  validationStatus: text('validation_status').default('pending').notNull(), // pending, verified, flagged, rejected
+  validationStatus: text('validation_status', { enum: regulatoryDefensiveStatusValues })
+    .default('pending')
+    .notNull(),
   legalDefensibilityScore: real('legal_defensibility_score'),
-  riskLevel: text('risk_level').default('medium'), // low, medium, high, critical
+  riskLevel: text('risk_level', { enum: regulatoryDefensiveRiskValues })
+    .default('medium'),
   reviewerId: integer('reviewer_id').references(() => users.id), // nullable until review is assigned
   reviewedAt: timestamp('reviewed_at'),
   decision: text('decision'),
