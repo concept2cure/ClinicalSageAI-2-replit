@@ -2568,9 +2568,9 @@ export const regulatoryDataElementValuesRelations = relations(
       fields: [regulatoryDataElementValues.diagnosticAssayId],
       references: [diagnosticAssays.id],
     }),
-    project: one(cerProjects, {
+    project: one(projects, {
       fields: [regulatoryDataElementValues.projectId],
-      references: [cerProjects.id],
+      references: [projects.id],
     }),
     sourceDocument: one(documents, {
       fields: [regulatoryDataElementValues.sourceDocumentId],
