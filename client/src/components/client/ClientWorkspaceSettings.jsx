@@ -38,6 +38,11 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
   const { currentClientWorkspace, currentOrganization, refreshClientWorkspaces } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const logDebug = (...args) => {
+    if (!import.meta.env.PROD) {
+      console.log(...args);
+    }
+  };
 
   // Track tab state
   const [activeTab, setActiveTab] = useState('general');
@@ -45,9 +50,9 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
   // Use prop clientId if provided, otherwise fall back to tenant context
   const clientId = propClientId || currentClientWorkspace?.id;
 
-  // Debug the prop clientId and context values
+  // Debug the prop clientId and context values (dev only)
   React.useEffect(() => {
-    console.log('🔧 ClientWorkspaceSettings Debug:', {
+    logDebug('🔧 ClientWorkspaceSettings Debug:', {
       propClientId,
       currentClientWorkspace,
       resolvedClientId: clientId,
@@ -65,7 +70,9 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
     queryKey: ['/api/clients', clientId, 'settings'],
     queryFn: () => {
       if (!clientId) {
-        console.warn('No client workspace selected. Cannot fetch workspace settings.');
+        if (!import.meta.env.PROD) {
+          console.warn('No client workspace selected. Cannot fetch workspace settings.');
+        }
         return Promise.resolve(null);
       }
       return apiRequest(`/api/clients/${clientId}/settings`).catch(err => {
@@ -77,8 +84,8 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
     enabled: !!clientId,
     // Load saved data, use defaults only when no saved data exists
     select: data => {
-      console.log('📥 Raw settings data from API:', data);
-      console.log('📥 Module data from API:', data?.modules);
+      logDebug('📥 Raw settings data from API:', data);
+      logDebug('📥 Module data from API:', data?.modules);
       
       if (!data) return null; // Let defaults be handled elsewhere
 

@@ -98,7 +98,7 @@ import ComponentManagementSystem from '../components/coauthor/ComponentManagemen
 import UnifiedDocumentUpload from '../components/unified/UnifiedDocumentUpload';
 
 // Data Room Ask Panel Component
-const DataRoomAskPanel = ({ onInsertContent, isCollapsed = false }) => {
+const DataRoomAskPanel = ({ onInsertContent, isCollapsed = false, tenantHeaders }) => {
   const [query, setQuery] = useState('');
   const [isQuerying, setIsQuerying] = useState(false);
   const [queryResults, setQueryResults] = useState(null);
@@ -123,7 +123,7 @@ const DataRoomAskPanel = ({ onInsertContent, isCollapsed = false }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Organization-Id': localStorage.getItem('currentOrganizationId') || '7',
+          ...tenantHeaders,
         },
         body: JSON.stringify({
           query,
@@ -274,7 +274,7 @@ const DataRoomAskPanel = ({ onInsertContent, isCollapsed = false }) => {
 };
 
 // Content Plan Component
-const ContentPlanView = ({ projectId }) => {
+const ContentPlanView = ({ projectId, tenantHeaders }) => {
   const [contentPlan, setContentPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -288,7 +288,7 @@ const ContentPlanView = ({ projectId }) => {
     try {
       const response = await fetch(`/api/content-plan/${projectId || 'default'}`, {
         headers: {
-          'X-Organization-Id': localStorage.getItem('currentOrganizationId') || '7',
+          ...tenantHeaders,
         },
       });
       
@@ -400,7 +400,7 @@ const ContentPlanView = ({ projectId }) => {
 };
 
 // Smart Blocks Component
-const SmartBlocksPanel = ({ onInsertBlock }) => {
+const SmartBlocksPanel = ({ onInsertBlock, tenantHeaders }) => {
   const [smartBlocks, setSmartBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -413,7 +413,7 @@ const SmartBlocksPanel = ({ onInsertBlock }) => {
     try {
       const response = await fetch('/api/smart-blocks', {
         headers: {
-          'X-Organization-Id': localStorage.getItem('currentOrganizationId') || '7',
+          ...tenantHeaders,
         },
       });
       
@@ -435,7 +435,7 @@ const SmartBlocksPanel = ({ onInsertBlock }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Organization-Id': localStorage.getItem('currentOrganizationId') || '7',
+          ...tenantHeaders,
         },
         body: JSON.stringify({
           context: {
@@ -536,9 +536,11 @@ export default function DataRoomPage() {
   const [selectedEvidence, setSelectedEvidence] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const { toast } = useToast();
-  const { organizationId, tenantId } = useTenantContext();
+  const { currentOrganization, getTenantHeaders } = useTenantContext();
   const { evidenceGraph, getEvidenceByType, generateCitations } = useEvidenceGraph();
   const queryClient = useQueryClient();
+  const tenantHeaders = getTenantHeaders();
+  const organizationId = currentOrganization?.id;
 
   // Load statistics
   useEffect(() => {
@@ -549,13 +551,13 @@ export default function DataRoomPage() {
     try {
       const [vaultRes, dataRes, ccmsRes] = await Promise.all([
         fetch('/api/vault/statistics', {
-          headers: { 'X-Organization-Id': organizationId },
+          headers: { ...tenantHeaders },
         }),
         fetch('/api/device-data-center/statistics', {
-          headers: { 'X-Organization-Id': organizationId },
+          headers: { ...tenantHeaders },
         }),
         fetch('/api/coauthor/components/statistics', {
-          headers: { 'X-Organization-Id': organizationId },
+          headers: { ...tenantHeaders },
         }),
       ]);
 
@@ -710,9 +712,15 @@ export default function DataRoomPage() {
               {/* Analyze Tab */}
               <TabsContent value="analyze" className="mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <ContentPlanView projectId={localStorage.getItem('currentProjectId')} />
+                      <ContentPlanView
+                        projectId={localStorage.getItem('currentProjectId')}
+                        tenantHeaders={tenantHeaders}
+                      />
                   <div className="space-y-6">
-                    <SmartBlocksPanel onInsertBlock={handleContentInsert} />
+                      <SmartBlocksPanel
+                        onInsertBlock={handleContentInsert}
+                        tenantHeaders={tenantHeaders}
+                      />
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -872,9 +880,10 @@ export default function DataRoomPage() {
               <ResizableHandle />
               <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
                 <div className="h-full border-l">
-                  <DataRoomAskPanel 
+                  <DataRoomAskPanel
                     onInsertContent={handleContentInsert}
                     isCollapsed={false}
+                    tenantHeaders={tenantHeaders}
                   />
                 </div>
               </ResizablePanel>

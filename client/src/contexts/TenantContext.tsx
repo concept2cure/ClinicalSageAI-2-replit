@@ -289,10 +289,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
     if (currentOrganization) {
       headers['X-Org-ID'] = String(currentOrganization.id);
+      headers['x-organization-id'] = String(currentOrganization.id);
     }
 
     if (currentClientWorkspace) {
       headers['X-Client-ID'] = currentClientWorkspace.id;
+      headers['x-client-id'] = currentClientWorkspace.id;
     }
 
     if (currentModule) {

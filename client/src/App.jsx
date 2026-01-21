@@ -48,23 +48,35 @@ import { packageMonitor } from './services/packageMonitorService.js';
 import { dependencyLoader, preloadCriticalComponents } from './utils/dependencyLoader.js';
 
 // Preload critical components for document editor
+const logInfo = (...args) => {
+  if (!import.meta.env.PROD) {
+    console.log(...args);
+  }
+};
+
+const logWarn = (...args) => {
+  if (!import.meta.env.PROD) {
+    console.warn(...args);
+  }
+};
+
 const initializeDependencyHardening = async () => {
   try {
-    console.log('🔧 Initializing dependency hardening system...');
+    logInfo('🔧 Initializing dependency hardening system...');
 
     // Verify package status
     const packageStatus = await packageMonitor.verifyAllPackages();
-    console.log('📦 Package verification complete:', packageStatus);
+    logInfo('📦 Package verification complete:', packageStatus);
 
     // Preload critical components
     const preloadResults = await preloadCriticalComponents();
-    console.log('⚡ Component preloading complete:', preloadResults);
+    logInfo('⚡ Component preloading complete:', preloadResults);
 
     // Check if emergency fallback is needed
     if (preloadResults.failed > 0) {
-      console.warn('⚠️ Some components failed to load, fallback mode activated');
+      logWarn('⚠️ Some components failed to load, fallback mode activated');
     } else {
-      console.log('✅ All critical components loaded successfully');
+      logInfo('✅ All critical components loaded successfully');
     }
 
     return true;

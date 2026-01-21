@@ -48,6 +48,7 @@ import {
 } from '../components/ui/dialog';
 import { useToast } from '../hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTenantContext } from '@/contexts/TenantContext';
 
 const DocumentTemplates = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +71,7 @@ const DocumentTemplates = () => {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { getTenantHeaders } = useTenantContext();
 
   // Fetch templates with React Query
   const {
@@ -91,7 +93,7 @@ const DocumentTemplates = () => {
 
       const response = await fetch(`/api/templates?${params}`, {
         headers: {
-          'x-organization-id': '7', // Use organization 7 which has the templates
+          ...getTenantHeaders(),
         },
       });
       if (!response.ok) throw new Error('Failed to fetch templates');
@@ -105,7 +107,7 @@ const DocumentTemplates = () => {
     queryFn: async () => {
       const response = await fetch('/api/templates/recent/documents', {
         headers: {
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
       });
       if (!response.ok) throw new Error('Failed to fetch recent documents');
@@ -119,7 +121,7 @@ const DocumentTemplates = () => {
     queryFn: async () => {
       const response = await fetch('/api/templates/featured/list', {
         headers: {
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
       });
       if (!response.ok) throw new Error('Failed to fetch featured templates');
@@ -141,7 +143,7 @@ const DocumentTemplates = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
         body: JSON.stringify({ usageType, documentTitle }),
       });
@@ -160,7 +162,7 @@ const DocumentTemplates = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
         body: JSON.stringify(templateData),
       });
@@ -185,7 +187,7 @@ const DocumentTemplates = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
         body: JSON.stringify(updateData),
       });
@@ -205,7 +207,7 @@ const DocumentTemplates = () => {
     mutationFn: async templateId => {
       const response = await fetch(`/api/templates/${templateId}`, {
         method: 'DELETE',
-        headers: { 'x-organization-id': '7' },
+        headers: { ...getTenantHeaders() },
       });
       if (!response.ok) throw new Error('Failed to delete template');
       return response.json();
@@ -223,7 +225,7 @@ const DocumentTemplates = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': '7',
+          ...getTenantHeaders(),
         },
         body: JSON.stringify({ newName }),
       });

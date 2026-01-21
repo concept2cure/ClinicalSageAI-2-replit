@@ -53,18 +53,20 @@ const ClientSecuritySettings = ({ clientId: propClientId }) => {
   // Use prop clientId if provided, otherwise fall back to tenant context
   const clientId = propClientId || currentClientWorkspace?.id;
 
-  // Debug the TenantContext values and prop clientId
+  // Debug the TenantContext values and prop clientId (dev only)
   React.useEffect(() => {
-    console.log('🔧 ClientSecuritySettings Debug:', {
-      propClientId,
-      currentClientWorkspace,
-      resolvedClientId: clientId,
-      totalClientWorkspaces: clientWorkspaces?.length || 0,
-      currentOrganization: currentOrganization?.id,
-      filteredClientWorkspaces:
-        clientWorkspaces?.filter(c => c.organizationId === String(currentOrganization?.id))
-          ?.length || 0,
-    });
+    if (!import.meta.env.PROD) {
+      console.log('🔧 ClientSecuritySettings Debug:', {
+        propClientId,
+        currentClientWorkspace,
+        resolvedClientId: clientId,
+        totalClientWorkspaces: clientWorkspaces?.length || 0,
+        currentOrganization: currentOrganization?.id,
+        filteredClientWorkspaces:
+          clientWorkspaces?.filter(c => c.organizationId === String(currentOrganization?.id))
+            ?.length || 0,
+      });
+    }
   }, [propClientId, currentClientWorkspace, clientWorkspaces, currentOrganization, clientId]);
 
   // Fetch security settings for the client
@@ -77,7 +79,9 @@ const ClientSecuritySettings = ({ clientId: propClientId }) => {
     queryKey: ['/api/clients', clientId, 'security-settings'],
     queryFn: () => {
       if (!clientId) {
-        console.warn('No client workspace selected. Cannot fetch security settings.');
+        if (!import.meta.env.PROD) {
+          console.warn('No client workspace selected. Cannot fetch security settings.');
+        }
         return Promise.resolve(null);
       }
       return apiRequest(`/api/clients/${clientId}/security-settings`).catch(err => {
