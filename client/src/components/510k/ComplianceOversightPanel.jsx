@@ -223,6 +223,13 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
     ...localRtaIssues,
     ...(complianceReport?.report?.complianceIssues || [])
   ];
+  const localIssueCounts = combinedIssues.reduce(
+    (acc, issue) => {
+      acc[issue.severity] = (acc[issue.severity] || 0) + 1;
+      return acc;
+    },
+    { critical: 0, major: 0, minor: 0, suggestion: 0 }
+  );
   const fallbackScore = Math.max(0, 100 - combinedIssues.length * 8);
   const complianceScore = complianceReport?.report?.complianceScore ?? fallbackScore;
   const scoreColor = complianceScore >= 80 ? 'text-green-500' : 
@@ -447,25 +454,25 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
           <div className="text-center">
             <div className="text-xs text-gray-500">Critical</div>
             <div className="text-lg font-bold text-red-500">
-              {complianceReport?.report?.issues?.critical || 0}
+              {complianceReport?.report?.issues?.critical ?? localIssueCounts.critical}
             </div>
           </div>
           <div className="text-center">
             <div className="text-xs text-gray-500">Major</div>
             <div className="text-lg font-bold text-orange-500">
-              {complianceReport?.report?.issues?.major || 0}
+              {complianceReport?.report?.issues?.major ?? localIssueCounts.major}
             </div>
           </div>
           <div className="text-center">
             <div className="text-xs text-gray-500">Minor</div>
             <div className="text-lg font-bold text-yellow-500">
-              {complianceReport?.report?.issues?.minor || 0}
+              {complianceReport?.report?.issues?.minor ?? localIssueCounts.minor}
             </div>
           </div>
           <div className="text-center">
             <div className="text-xs text-gray-500">Suggestions</div>
             <div className="text-lg font-bold text-blue-500">
-              {complianceReport?.report?.issues?.suggestions || 0}
+              {complianceReport?.report?.issues?.suggestions ?? localIssueCounts.suggestion}
             </div>
           </div>
         </div>
