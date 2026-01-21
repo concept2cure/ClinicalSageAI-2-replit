@@ -3783,15 +3783,15 @@ export const clinicalTruthStore = pgTable('clinical_truth_store', {
   nctId: text('nct_id'),
   substanceId: text('substance_id').references(() => globalSubstances.uniiCode),
   metricName: text('metric_name').notNull(),
-  metricValueFloat: real('metric_value_float'), // numeric facts (e.g., p-value, Cmax, AE rate)
-  metricValueText: text('metric_value_text'), // qualitative facts (e.g., "moderate renal signal")
+  metricValueFloat: real('metric_value_float'), // numeric facts (e.g., p-value, Cmax, AE rate); populate only one metric value field
+  metricValueText: text('metric_value_text'), // qualitative facts (e.g., "moderate renal signal"); populate only one metric value field
   isPrimaryEndpoint: boolean('is_primary_endpoint').default(false),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   metadata: json('metadata'),
 }, (table) => ({
-  truthNctUnique: uniqueIndex('clinical_truth_nct_unique_idx')
-    .on(table.nctId)
-    .where(sql`${table.nctId} is not null`), // enforce uniqueness when NCT ID is provided
+  truthNctUnique: uniqueIndex('clinical_truth_nct_metric_unique_idx')
+    .on(table.nctId, table.metricName, table.substanceId)
+    .where(sql`${table.nctId} is not null`), // enforce per-metric uniqueness when NCT ID is provided
   truthNctIdx: index('clinical_truth_nct_idx').on(table.nctId),
   truthSubstanceIdx: index('clinical_truth_substance_idx').on(table.substanceId),
   truthMetricIdx: index('clinical_truth_metric_idx').on(table.metricName),
