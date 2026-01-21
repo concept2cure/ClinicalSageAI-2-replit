@@ -2568,9 +2568,9 @@ export const regulatoryDataElementValuesRelations = relations(
       fields: [regulatoryDataElementValues.diagnosticAssayId],
       references: [diagnosticAssays.id],
     }),
-    project: one(projects, {
+    project: one(cerProjects, {
       fields: [regulatoryDataElementValues.projectId],
-      references: [projects.id],
+      references: [cerProjects.id],
     }),
     sourceDocument: one(documents, {
       fields: [regulatoryDataElementValues.sourceDocumentId],
@@ -3129,7 +3129,7 @@ export const regulatoryDataElementValues = pgTable('regulatory_data_element_valu
   deviceId: integer('device_id').references(() => medicalDevices.id),
   diagnosticAssayId: integer('diagnostic_assay_id').references(() => diagnosticAssays.id),
   projectId: integer('project_id').references(() => projects.id),
-  sourceDocumentId: uuid('source_document_id').references(() => documents.id),
+  sourceDocumentId: integer('source_document_id').references(() => documents.id),
   sourceRecordId: text('source_record_id'),
   valueText: text('value_text'),
   valueNumber: decimal('value_number'),
@@ -3155,7 +3155,7 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
     .notNull()
     .references(() => organizations.id),
   sourceType: text('source_type').notNull(), // csr, ctd, rejection_letter, guidance, clinical_report
-  sourceDocumentId: uuid('source_document_id').references(() => documents.id),
+  sourceDocumentId: integer('source_document_id').references(() => documents.id),
   submissionId: text('submission_id'),
   deviceId: integer('device_id').references(() => medicalDevices.id),
   documentTitle: text('document_title'),
@@ -3164,7 +3164,7 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
   extractedData: json('extracted_data'),
   keyFindings: json('key_findings'),
   rejectionReason: text('rejection_reason'),
-  extractedAtoms: json('extracted_atoms'), // pointers to extracted atoms (see lumenDataAtoms)
+  extractedAtoms: json('extracted_atoms'), // pointers to extracted atom records
   createdBy: integer('created_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
