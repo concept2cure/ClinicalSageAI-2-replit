@@ -2472,6 +2472,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   documentProcessingAudits: many(documentProcessingAudit),
   documentHumanAnnotations: many(documentHumanAnnotations),
   documentRejectionAnalyses: many(documentRejectionAnalysis),
+  standardsBodies: many(standardsBodies),
+  standardsCatalog: many(standardsCatalog),
+  standardDataModels: many(standardDataModels),
+  standardRequirements: many(standardRequirements),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2612,6 +2616,33 @@ export const regulatoryDocumentHarvestsRelations = relations(
     }),
   })
 );
+
+export const standardsBodiesRelations = relations(standardsBodies, ({ many }) => ({
+  standards: many(standardsCatalog),
+}));
+
+export const standardsCatalogRelations = relations(standardsCatalog, ({ one, many }) => ({
+  body: one(standardsBodies, {
+    fields: [standardsCatalog.bodyId],
+    references: [standardsBodies.id],
+  }),
+  dataModels: many(standardDataModels),
+  requirements: many(standardRequirements),
+}));
+
+export const standardDataModelsRelations = relations(standardDataModels, ({ one }) => ({
+  standard: one(standardsCatalog, {
+    fields: [standardDataModels.standardId],
+    references: [standardsCatalog.id],
+  }),
+}));
+
+export const standardRequirementsRelations = relations(standardRequirements, ({ one }) => ({
+  standard: one(standardsCatalog, {
+    fields: [standardRequirements.standardId],
+    references: [standardsCatalog.id],
+  }),
+}));
 
 export const documentHierarchyRelations = relations(documentHierarchy, ({ one, many }) => ({
   organization: one(organizations, {
@@ -3324,6 +3355,82 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
 }));
 
 /**
+ * Global Standards Bodies, Standards, and Data Models
+ */
+export const standardsBodies = pgTable('standards_bodies', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(), // HL7, ICH, ISO, CDISC
+  acronym: text('acronym'),
+  region: text('region'),
+  description: text('description'),
+  website: text('website'),
+  isActive: boolean('is_active').default(true),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  bodyNameIdx: uniqueIndex('standards_body_name_idx').on(table.name),
+  bodyAcronymIdx: index('standards_body_acronym_idx').on(table.acronym),
+}));
+
+export const standardsCatalog = pgTable('standards_catalog', {
+  id: serial('id').primaryKey(),
+  bodyId: integer('body_id')
+    .notNull()
+    .references(() => standardsBodies.id),
+  standardCode: text('standard_code').notNull(), // FHIR, SCDM, SDTM, ADaM, ICH E6
+  standardName: text('standard_name').notNull(),
+  version: text('version'),
+  category: text('category'), // data_model, guidance, compliance, terminology
+  description: text('description'),
+  releaseDate: date('release_date'),
+  status: text('status').default('active').notNull(), // draft, active, deprecated, retired
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  standardCodeIdx: uniqueIndex('standards_catalog_code_idx').on(table.standardCode, table.version),
+  standardBodyIdx: index('standards_catalog_body_idx').on(table.bodyId),
+  standardCategoryIdx: index('standards_catalog_category_idx').on(table.category),
+}));
+
+export const standardDataModels = pgTable('standard_data_models', {
+  id: serial('id').primaryKey(),
+  standardId: integer('standard_id')
+    .notNull()
+    .references(() => standardsCatalog.id),
+  modelName: text('model_name').notNull(), // FHIR, SCDM, CDASH
+  modelVersion: text('model_version'),
+  schemaUri: text('schema_uri'),
+  description: text('description'),
+  dataDomains: text('data_domains').array(), // clinical, labs, genomics, operational
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  modelStandardIdx: index('standard_model_standard_idx').on(table.standardId),
+  modelNameIdx: index('standard_model_name_idx').on(table.modelName),
+}));
+
+export const standardRequirements = pgTable('standard_requirements', {
+  id: serial('id').primaryKey(),
+  standardId: integer('standard_id')
+    .notNull()
+    .references(() => standardsCatalog.id),
+  requirementCode: text('requirement_code'),
+  requirementText: text('requirement_text').notNull(),
+  requirementType: text('requirement_type'), // must, should, may
+  complianceScope: text('compliance_scope'), // data, process, security, validation
+  sourceReference: text('source_reference'), // clause or section
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  requirementStandardIdx: index('standard_requirement_standard_idx').on(table.standardId),
+  requirementScopeIdx: index('standard_requirement_scope_idx').on(table.complianceScope),
+}));
+
+/**
  * Document Hierarchy & Extraction Tables
  *
  * Structured document parsing for CSR/CTD/rejection letters.
@@ -3591,6 +3698,30 @@ export const insertRegulatoryDocumentHarvestSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertStandardsBodySchema = createInsertSchema(standardsBodies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStandardsCatalogSchema = createInsertSchema(standardsCatalog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStandardDataModelSchema = createInsertSchema(standardDataModels).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStandardRequirementSchema = createInsertSchema(standardRequirements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDocumentHierarchySchema = createInsertSchema(documentHierarchy).omit({
   id: true,
   createdAt: true,
@@ -3654,6 +3785,18 @@ export type InsertRegulatoryDataElementValue = z.infer<typeof insertRegulatoryDa
 
 export type RegulatoryDocumentHarvest = InferSelectModel<typeof regulatoryDocumentHarvests>;
 export type InsertRegulatoryDocumentHarvest = z.infer<typeof insertRegulatoryDocumentHarvestSchema>;
+
+export type StandardsBody = InferSelectModel<typeof standardsBodies>;
+export type InsertStandardsBody = z.infer<typeof insertStandardsBodySchema>;
+
+export type StandardsCatalog = InferSelectModel<typeof standardsCatalog>;
+export type InsertStandardsCatalog = z.infer<typeof insertStandardsCatalogSchema>;
+
+export type StandardDataModel = InferSelectModel<typeof standardDataModels>;
+export type InsertStandardDataModel = z.infer<typeof insertStandardDataModelSchema>;
+
+export type StandardRequirement = InferSelectModel<typeof standardRequirements>;
+export type InsertStandardRequirement = z.infer<typeof insertStandardRequirementSchema>;
 
 export type DocumentHierarchy = InferSelectModel<typeof documentHierarchy>;
 export type InsertDocumentHierarchy = z.infer<typeof insertDocumentHierarchySchema>;
