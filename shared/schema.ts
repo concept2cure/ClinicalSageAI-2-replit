@@ -2767,10 +2767,6 @@ export const sensitiveDataFlagsRelations = relations(sensitiveDataFlags, ({ one 
   }),
 }));
 
-export const globalSubstancesRelations = relations(globalSubstances, ({}) => ({}));
-
-export const studyTruthMetricsRelations = relations(studyTruthMetrics, ({}) => ({}));
-
 export const regulatoryDefensiveLedgerRelations = relations(
   regulatoryDefensiveLedger,
   ({ one }) => ({
@@ -3744,7 +3740,7 @@ export const regulatoryDefensiveLedger = pgTable('regulatory_defensive_ledger', 
   factId: text('fact_id').notNull(),
   validationStatus: text('validation_status').default('pending').notNull(), // pending, verified, flagged, rejected
   legalDefensibilityScore: real('legal_defensibility_score'),
-  riskLevel: text('risk_level'), // low, medium, high, critical
+  riskLevel: text('risk_level').default('medium'), // low, medium, high, critical
   reviewerId: integer('reviewer_id').references(() => users.id),
   reviewedAt: timestamp('reviewed_at'),
   decision: text('decision'),
