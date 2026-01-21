@@ -25,11 +25,12 @@ function validateTenantAccess(req, res, next) {
   const publicPaths = [
     '/api/auth/login',
     '/api/auth/signup',
+    '/api/auth/sso',
     '/api/status',
     '/api/security-status',
   ];
 
-  if (publicPaths.includes(req.path)) {
+  if (publicPaths.includes(req.path) || req.path.startsWith('/api/auth/sso')) {
     return next();
   }
 

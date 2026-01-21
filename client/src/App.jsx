@@ -36,9 +36,11 @@ import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
 import { SubmissionProvider } from './contexts/SubmissionContext.jsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
+import { useAuth } from './contexts/AuthContext';
 import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantContainer';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 import { AnimatedPipeline } from './components/ModernDashboardUI';
+import { PharmaIntelligenceDeck } from './components/analytics/PharmaIntelligenceDeck';
 
 if (import.meta.env.PROD) {
   console.log = () => {};
@@ -115,14 +117,15 @@ const LoadingPage = () => (
 import ClientPortalLanding from './pages/ClientPortalLanding';
 import HomeLanding from './pages/HomeLanding';
 import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
+import Login from './pages/Login';
+import { AuditLogPage } from './pages/AuditLogPage';
 
 // Lazy load all other pages grouped by related functionality
 // Stability-related pages - REMOVED: Stability only exists within CMC Blueprint
 
 // CER-related pages
 const CERPage = lazy(() => import('./pages/CerPage'));
-// Import the original CERV2Page directly, not the wrapper
-const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+const CERV2Page = lazy(() => import('./pages/CERV2'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 const LumenCortexPage = lazy(() => import('./pages/LumenCortexPage'));
@@ -180,6 +183,7 @@ const ModuleSectionEditorPage = lazy(() => import('./pages/ModuleSectionEditorPa
 
 // eCTD Co-Author Module subpages
 const ValidationDashboard = lazy(() => import('./pages/ValidationDashboard'));
+const CoAuthorPage = lazy(() => import('./pages/CoAuthorPage'));
 
 const DocumentTemplates = lazy(() => import('./pages/DocumentTemplates'));
 const DocumentViewer = lazy(() => import('./pages/DocumentViewer'));
@@ -248,6 +252,7 @@ function App() {
   // Default tab for the UnifiedTopNavV3 component
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Initial loading state management - removed artificial delay
   useEffect(() => {
@@ -256,12 +261,13 @@ function App() {
   }, []);
 
   // Get current location to determine when to show the unified nav
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const isAuthPage = location === '/login' || location === '/signup';
 
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/' || location === '/client-portal' || isAuthPage;
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
@@ -273,6 +279,21 @@ function App() {
   // Always show navigation for CERV2 pages
   const shouldShowNav =
     isCERV2Page || (!isLandingPage && !isRegulatoryHub && !isCoAuthorPage && !isDashboardPage);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    const publicPaths = ['/login', '/signup'];
+    const isPublicPath = publicPaths.some(path => location === path);
+
+    if (isAuthenticated) {
+      return;
+    }
+
+    if (!isPublicPath) {
+      setLocation('/login');
+    }
+  }, [authLoading, isAuthenticated, location, setLocation]);
 
   // Define CSR navigation items as per specifications
   const csrNavItems = [
@@ -291,7 +312,7 @@ function App() {
       : [];
 
   // Show loading screen during initial hydration
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <svg
@@ -352,10 +373,21 @@ function App() {
                   {/* Main Content */}
                   <main className="min-h-screen bg-gray-100">
                     <Switch>
-                      {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
-                      <Route path="/" component={ClientPortalLanding} />
+                      {/* Authentication routes */}
+                      <Route path="/login" component={Login} />
+                      <Route path="/signup">{() => <Redirect to="/login" />}</Route>
+                      {/* Default entry renders the enterprise login page */}
+                      <Route path="/" component={Login} />
                       <Route path="/submission-center" component={UnifiedSubmissionCenter} />
                       <Route path="/client-portal" component={ClientPortalLanding} />
+                      <Route path="/analytics">
+                        {() => (
+                          <div className="p-8 bg-slate-50 min-h-screen">
+                            <PharmaIntelligenceDeck />
+                          </div>
+                        )}
+                      </Route>
+                      <Route path="/audit-log" component={AuditLogPage} />
                       <Route path="/module-settings">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
@@ -1370,6 +1402,13 @@ function App() {
                           </Suspense>
                         )}
                       </Route>{' '}
+                      <Route path="/co-author">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <CoAuthorPage />
+                          </Suspense>
+                        )}
+                      </Route>{' '}
                       {/* Full eCTD Co-Author Module */}
                       <Route path="/coauthor/validation">
                         {() => (
@@ -1880,15 +1919,15 @@ function App() {
                       </Route>
 
                       {/* Document Editor Routes removed - using enhanced CMC document authoring module instead */}
-                      {/* Default Redirect to Client Portal */}
+                      {/* Default Redirect to Login */}
                       <Route>
                         {() => {
-                          // Automatically redirect to client portal
-                          window.location.href = '/client-portal';
+                          // Automatically redirect to login
+                          window.location.href = '/login';
                           return (
                             <div className="flex flex-col items-center justify-center p-8">
                               <h2 className="text-xl font-medium mb-4">
-                                Redirecting to Client Portal...
+                                Redirecting to Login...
                               </h2>
                               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
                             </div>

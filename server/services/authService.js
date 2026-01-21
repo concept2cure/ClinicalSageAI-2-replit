@@ -15,6 +15,7 @@ const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 const RESET_TOKEN_EXPIRY_HOURS = 1; // 1 hour
 
+
 /**
  * Register a new user
  * @param {string} email - User email
@@ -59,6 +60,154 @@ export async function register(email, username, password) {
   }
 }
 
+async function ensureUniqueUsername(base) {
+  let candidate = base;
+  let counter = 0;
+
+  while (true) {
+    const result = await query('SELECT 1 FROM auth_users WHERE username = $1', [candidate]);
+    if (result.rows.length === 0) {
+      return candidate;
+    }
+    counter += 1;
+    candidate = `${base}${counter}`;
+  }
+}
+
+function normalizeUsername(name, email) {
+  const raw = name || (email ? email.split('@')[0] : 'user');
+  const base = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '')
+    .slice(0, 24);
+
+  if (base.length >= 3) {
+    return base;
+  }
+
+  const fallback = `user${Math.floor(Math.random() * 10000)}`;
+  return fallback;
+}
+
+async function getTenantContextForAuthUser(email) {
+  if (!email) {
+    return null;
+  }
+
+  const userResult = await query(
+    `SELECT id, default_organization_id
+     FROM users
+     WHERE email = $1
+     LIMIT 1`,
+    [email.toLowerCase()]
+  );
+
+  if (userResult.rows.length === 0) {
+    return null;
+  }
+
+  const appUser = userResult.rows[0];
+
+  const membershipResult = await query(
+    `SELECT
+        ou.organization_id,
+        ou.role,
+        ou.permissions,
+        o.name,
+        o.slug,
+        o.tier
+      FROM organization_users ou
+      INNER JOIN organizations o ON o.id = ou.organization_id
+      WHERE ou.user_id = $1
+      ORDER BY ou.created_at ASC`,
+    [appUser.id]
+  );
+
+  if (membershipResult.rows.length === 0) {
+    return null;
+  }
+
+  const defaultOrgId = appUser.default_organization_id;
+  const primaryOrg =
+    (defaultOrgId
+      ? membershipResult.rows.find(row => row.organization_id === defaultOrgId)
+      : membershipResult.rows[0]) || membershipResult.rows[0];
+
+  return {
+    appUserId: appUser.id,
+    organizationId: primaryOrg.organization_id,
+    role: primaryOrg.role,
+    permissions: primaryOrg.permissions || {},
+    organizations: membershipResult.rows.map(row => ({
+      id: row.organization_id,
+      name: row.name,
+      slug: row.slug,
+      tier: row.tier,
+      role: row.role,
+    })),
+  };
+}
+
+/**
+ * Authenticate or create a user via SSO provider and generate tokens
+ * @param {Object} profile - SSO profile
+ * @param {string} profile.email - User email
+ * @param {string} profile.name - User display name
+ * @param {string} profile.provider - SSO provider
+ * @param {string} ipAddress - Client IP address
+ * @param {string} userAgent - Client user agent
+ * @returns {Promise<Object>} Access token, refresh token, and user data
+ */
+export async function loginWithSsoProfile(profile, ipAddress = null, userAgent = null) {
+  const email = profile?.email?.toLowerCase();
+
+  if (!email) {
+    throw new Error('SSO profile did not provide an email address');
+  }
+
+  const userResult = await query('SELECT * FROM auth_users WHERE email = $1', [email]);
+
+  let user = userResult.rows[0];
+
+  if (!user) {
+    const usernameBase = normalizeUsername(profile?.name, email);
+    const username = await ensureUniqueUsername(usernameBase);
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);
+
+    const insertResult = await query(
+      `INSERT INTO auth_users (email, username, password_hash, email_verified, is_active)
+       VALUES ($1, $2, $3, true, true)
+       RETURNING id, email, username, created_at, is_active, email_verified`,
+      [email, username, passwordHash]
+    );
+
+    user = insertResult.rows[0];
+  } else if (!user.is_active) {
+    throw new Error('Account is disabled');
+  }
+
+  await query('UPDATE auth_users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+
+  const tenantContext = await getTenantContextForAuthUser(user.email);
+  if (!tenantContext) {
+    throw new Error('User is not associated with any organization. Please contact support.');
+  }
+
+  const accessToken = generateAccessToken({ ...user, ...tenantContext });
+  const refreshToken = await generateRefreshToken(user.id, ipAddress, userAgent);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    },
+  };
+}
+
 /**
  * Authenticate user and generate tokens
  * @param {string} email - User email
@@ -72,17 +221,18 @@ export async function login(email, password, ipAddress = null, userAgent = null)
     throw new Error('Email and password are required');
   }
 
+  const normalizedEmail = email.toLowerCase();
   // Find user by email
   const userResult = await query(
     'SELECT * FROM auth_users WHERE email = $1',
-    [email.toLowerCase()]
+    [normalizedEmail]
   );
 
-  if (userResult.rows.length === 0) {
+  let user = userResult.rows[0];
+
+  if (!user) {
     throw new Error('Invalid email or password');
   }
-
-  const user = userResult.rows[0];
 
   // Check if user is active
   if (!user.is_active) {
@@ -101,8 +251,13 @@ export async function login(email, password, ipAddress = null, userAgent = null)
     [user.id]
   );
 
+  const tenantContext = await getTenantContextForAuthUser(user.email);
+  if (!tenantContext) {
+    throw new Error('User is not associated with any organization. Please contact support.');
+  }
+
   // Generate tokens
-  const accessToken = generateAccessToken(user);
+  const accessToken = generateAccessToken({ ...user, ...tenantContext });
   const refreshToken = await generateRefreshToken(user.id, ipAddress, userAgent);
 
   // Return tokens and user data (without password hash)
@@ -180,10 +335,16 @@ export async function refresh(refreshToken, ipAddress = null, userAgent = null) 
   );
 
   // Generate new tokens
+  const tenantContext = await getTenantContextForAuthUser(tokenData.email);
+  if (!tenantContext) {
+    throw new Error('User is not associated with any organization. Please contact support.');
+  }
+
   const user = {
     id: tokenData.user_id,
     email: tokenData.email,
     username: tokenData.username,
+    ...tenantContext,
   };
 
   const newAccessToken = generateAccessToken(user);
@@ -314,6 +475,11 @@ function generateAccessToken(user) {
     id: user.id,
     email: user.email,
     username: user.username,
+    appUserId: user.appUserId,
+    organizationId: user.organizationId,
+    role: user.role,
+    permissions: user.permissions || {},
+    organizations: user.organizations || [],
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -349,7 +515,11 @@ async function generateRefreshToken(userId, ipAddress = null, userAgent = null) 
  */
 export function verifyAccessToken(token) {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.organizationId) {
+      throw new Error('Invalid access token: missing organization context');
+    }
+    return decoded;
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       throw new Error('Access token expired');
@@ -398,6 +568,7 @@ export async function cleanupExpiredTokens() {
 export default {
   register,
   login,
+  loginWithSsoProfile,
   logout,
   refresh,
   requestPasswordReset,

@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { useLocation, Link } from 'wouter';
 import {
   Users,
@@ -116,6 +117,7 @@ import ProjectManagerGrid from '@/components/project-manager/ProjectManagerGrid'
 import CMCCopilot from '@/components/cmc/CMCCopilot';
 
 const MultiTenantEnterprisePortal = () => {
+  return <ClientPortalLanding />;
   // State hooks
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');

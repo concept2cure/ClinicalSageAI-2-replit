@@ -8,6 +8,7 @@ import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
 import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
+import { useAuth } from './contexts/AuthContext';
 import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantContainer';
 import EmbeddedCodingAgent from './components/ai/EmbeddedCodingAgent.jsx';
 import SelfHealingStatusPanel from './components/SelfHealingStatusPanel';
@@ -37,6 +38,8 @@ const LoadingPage = () => (
 import ClientPortalLanding from './pages/ClientPortalLanding';
 import HomeLanding from './pages/HomeLanding';
 import CodingAgentPage from './pages/CodingAgentPage';
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
 
 // Lazy load all other pages grouped by related functionality
 // CER-related pages
@@ -154,6 +157,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
   const [showDevInterface, setShowDevInterface] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = e => {
@@ -182,12 +186,13 @@ function App() {
   }, []);
 
   // Get current location to determine when to show the unified nav
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const isAuthPage = location === '/login' || location === '/signup';
 
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/' || location === '/client-portal' || isAuthPage;
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
@@ -199,6 +204,24 @@ function App() {
   // Always show navigation for CERV2 pages
   const shouldShowNav =
     isCERV2Page || (!isLandingPage && !isRegulatoryHub && !isCoAuthorPage && !isDashboardPage);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    const publicPaths = ['/login', '/signup'];
+    const isPublicPath = publicPaths.some(path => location === path);
+
+    if (isAuthenticated) {
+      if (location === '/' || location === '/login' || location === '/signup') {
+        setLocation('/client-portal');
+      }
+      return;
+    }
+
+    if (!isPublicPath) {
+      setLocation('/login');
+    }
+  }, [authLoading, isAuthenticated, location, setLocation]);
 
   // Define CSR navigation items as per specifications
   const csrNavItems = [
@@ -217,7 +240,7 @@ function App() {
       : [];
 
   // Show loading screen during initial hydration
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <svg
@@ -282,12 +305,32 @@ function App() {
                   {/* Main Content */}
                   <main className="min-h-screen bg-gray-100">
                     <Switch>
-                      {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
-                      <Route path="/" component={ClientPortalLanding} />
+                      {/* Authentication routes */}
+                      <Route path="/login">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LoginPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/signup">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <SignupPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      {/* Default entry renders the login page to enforce authentication */}
+                      <Route path="/">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LoginPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      {/* Client Portal entry point */}
                       <Route path="/client-portal" component={ClientPortalLanding} />
                       <Route path="/dashboard" component={ClientPortalLanding} />
-                      {/* Client Portal becomes a secondary entry point */}
-                      <Route path="/client-portal" component={ClientPortalLanding} />
                       {/* Client Portal Sub-Pages */}
                       <Route path="/client-portal/vault">
                         {() => (
@@ -994,15 +1037,15 @@ function App() {
                       <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
                       <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
                       {/* Document Editor Routes removed - using enhanced CMC document authoring module instead */}
-                      {/* Default Redirect to Client Portal */}
+                      {/* Default Redirect to Login */}
                       <Route>
                         {() => {
-                          // Automatically redirect to client portal
-                          window.location.href = '/client-portal';
+                          // Automatically redirect to login
+                          window.location.href = '/login';
                           return (
                             <div className="flex flex-col items-center justify-center p-8">
                               <h2 className="text-xl font-medium mb-4">
-                                Redirecting to Client Portal...
+                                Redirecting to Login...
                               </h2>
                               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
                             </div>

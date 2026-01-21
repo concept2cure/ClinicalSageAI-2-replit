@@ -95,7 +95,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
-          <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="h-14 flex items-center justify-between px-3 border-b border-gray-200 dark:border-gray-800">
             {!sidebarCollapsed && (
               <Link href="/">
                 <a className="text-emerald-600 dark:text-emerald-500 font-bold text-xl">
@@ -121,14 +121,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </div>
 
           {/* Navigation links */}
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="flex-1 overflow-y-auto py-3">
             <nav className="space-y-1 px-2">
               {menuItems.map((item) => (
                 <Link key={item.path} href={item.path}>
                   <a
                     className={`flex items-center ${
                       sidebarCollapsed ? "justify-center" : "justify-start"
-                    } px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    } px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       isActive(item.path)
                         ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-500"
                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
@@ -143,13 +143,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </div>
 
           {/* Bottom actions */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <div className="space-y-3">
+          <div className="p-3 border-t border-gray-200 dark:border-gray-800">
+            <div className="space-y-2">
               <Link href="/settings">
                 <a
                   className={`flex items-center ${
                     sidebarCollapsed ? "justify-center" : "justify-start"
-                  } px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
+                  } px-2.5 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
                 >
                   <Settings size={20} />
                   {!sidebarCollapsed && <span className="ml-3">Settings</span>}
@@ -159,7 +159,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 onClick={toggleTheme}
                 className={`flex items-center ${
                   sidebarCollapsed ? "justify-center w-full" : "justify-start"
-                } px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
+                } px-2.5 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
               >
                 {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
                 {!sidebarCollapsed && (
@@ -178,7 +178,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         }`}
       >
         {/* Top navbar */}
-        <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 z-10">
+        <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 z-10">
           <div className="flex items-center">
             <button
               className="lg:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -220,7 +220,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-slate-900">
+        <main className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-slate-900">
           {children}
         </main>
       </div>

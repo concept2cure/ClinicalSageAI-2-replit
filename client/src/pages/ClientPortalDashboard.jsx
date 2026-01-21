@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Activity, FileText, Beaker, Clock, ArrowRight } from 'lucide-react';
+import { Link } from 'wouter';
+import IngestionAirlock from '../components/admin/IngestionAirlock';
+import { PharmaIntelligenceDeck } from '../components/analytics/PharmaIntelligenceDeck';
 import {
   Card,
   CardContent,
@@ -15,6 +19,29 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocation } from 'wouter';
 
+const StatusWidget = ({ title, count, lastActive, icon: Icon, color, link }) => (
+  <Link
+    href={link}
+    className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group"
+  >
+    <div className="flex justify-between items-start mb-4">
+      <div className={`p-3 rounded-lg ${color} text-white`}>
+        <Icon size={24} />
+      </div>
+      <div className="flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-blue-600">
+        OPEN <ArrowRight size={12} />
+      </div>
+    </div>
+    <div className="text-3xl font-black text-slate-800 mb-1">{count}</div>
+    <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">{title}</div>
+    {lastActive && (
+      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+        <Clock size={10} /> Last: {new Date(lastActive).toLocaleDateString()}
+      </div>
+    )}
+  </Link>
+);
+
 const ClientPortalDashboard = () => {
   const { toast } = useToast();
   const [activeModule, setActiveModule] = useState('vault');
@@ -27,6 +54,7 @@ const ClientPortalDashboard = () => {
   const [documents, setDocuments] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [activeProjects, setActiveProjects] = useState([]);
+  const [metrics, setMetrics] = useState(null);
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
@@ -34,8 +62,39 @@ const ClientPortalDashboard = () => {
       fetchDocuments();
       fetchActivity();
       fetchProjects();
+      fetchDashboardMetrics();
     }
   }, [authenticated]);
+
+  const getAuthToken = () => {
+    return localStorage.getItem('accessToken') || localStorage.getItem('token');
+  };
+
+  const getOrganizationId = () => {
+    return (
+      localStorage.getItem('organizationId') ||
+      localStorage.getItem('selectedOrganizationId') ||
+      ''
+    );
+  };
+
+  const fetchDashboardMetrics = async () => {
+    try {
+      const token = getAuthToken();
+      const organizationId = getOrganizationId();
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (organizationId) headers['x-organization-id'] = organizationId;
+
+      const response = await fetch('/api/dashboard/summary', { headers });
+      const data = await response.json();
+      if (response.ok) {
+        setMetrics(data);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard metrics', error);
+    }
+  };
 
   const handleLogin = e => {
     e.preventDefault();
@@ -335,11 +394,51 @@ const ClientPortalDashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome, John</h1>
-          <p className="text-gray-500">Last login: April 26, 2025, 8:12 AM EDT</p>
+          <h1 className="text-2xl font-bold text-slate-800">Command Center</h1>
+          <p className="text-slate-500 text-sm">Real-time status of your regulatory pipeline.</p>
         </div>
 
-        {/* Stats overview */}
+        {metrics && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatusWidget
+              title="Active 510(k) Drafts"
+              count={metrics.device?.count ?? 0}
+              lastActive={metrics.device?.lastActive}
+              icon={FileText}
+              color="bg-blue-600"
+              link="/co-author"
+            />
+            <StatusWidget
+              title="CMC Projects"
+              count={metrics.cmc?.count ?? 0}
+              lastActive={metrics.cmc?.lastActive}
+              icon={Beaker}
+              color="bg-purple-600"
+              link="/cmc"
+            />
+            <StatusWidget
+              title="Protocol Intelligence"
+              count={metrics.pharma?.count ?? 0}
+              lastActive={metrics.pharma?.lastActive}
+              icon={Activity}
+              color="bg-emerald-500"
+              link="/analytics"
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          <div className="lg:col-span-2">
+            <PharmaIntelligenceDeck />
+          </div>
+          <div>
+            <div className="mb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              Quick Ingest
+            </div>
+            <IngestionAirlock onIngested={fetchDashboardMetrics} />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="p-6">

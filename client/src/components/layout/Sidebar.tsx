@@ -1,276 +1,61 @@
 import React from 'react';
-import { Link, useLocation } from 'wouter';
-import {
-  LayoutDashboard,
-  FileText,
-  Upload,
-  BarChart2,
-  Settings,
-  HelpCircle,
-  Lightbulb,
-  BookOpen,
-  XCircle,
-  Menu,
-  ClipboardList,
-  Globe,
-  Database,
-  FileSymlink,
-  Microscope,
-  FileCheck,
-  Briefcase,
-  AlertTriangle,
-  Target,
-  Beaker,
-  GraduationCap,
-  BarChart,
-  LineChart,
-  PieChart,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useLocation } from 'wouter';
+import { LayoutDashboard, Stethoscope, ShieldCheck, Database, LogOut, FileEdit } from 'lucide-react';
 
-interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-}
+export const Sidebar = () => {
+  const [location, setLocation] = useLocation();
 
-interface NavItemProps {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  end?: boolean;
-}
-
-function NavItem({ href, icon, children, end = false }: NavItemProps) {
-  const [location] = useLocation();
-  const isActive = end ? location === href : location.startsWith(href);
-
-  return (
-    <div>
-      <Link
-        href={href}
-        className={cn(
-          'group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150',
-          isActive
-            ? 'bg-primary/10 text-primary'
-            : 'text-slate-700 hover:bg-slate-100 hover:text-primary'
-        )}
-      >
-        <div
-          className={cn(
-            'mr-3 h-5 w-5 flex-shrink-0',
-            isActive ? 'text-primary' : 'text-slate-500 group-hover:text-primary'
-          )}
-        >
-          {icon}
-        </div>
-        {children}
-      </Link>
+  const NavItem = ({ icon: Icon, label, path }: any) => (
+    <div
+      onClick={() => setLocation(path)}
+      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all mb-1 ${
+        location === path
+          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+      }`}
+    >
+      <Icon size={18} />
+      <span className="text-sm font-bold">{label}</span>
     </div>
   );
-}
 
-export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   return (
-    <>
-      {/* Mobile sidebar backdrop */}
-      <div
-        className={cn(
-          'fixed inset-0 z-40 bg-slate-600 bg-opacity-75 transition-opacity ease-linear duration-300',
-          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        )}
-        onClick={() => setSidebarOpen(false)}
-        aria-hidden="true"
-      />
-
-      {/* Mobile sidebar */}
-      <div
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 w-72 flex flex-col bg-white transform transition ease-in-out duration-300 shadow-lg',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        )}
-      >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 bg-slate-50">
-          <div className="flex items-center">
-            <Database className="h-7 w-7 text-primary" />
-            <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              TrialSage
-            </span>
-          </div>
-          <button
-            type="button"
-            className="h-10 w-10 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-500 focus:outline-none"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <XCircle className="h-6 w-6" />
-          </button>
-        </div>
-
-        <div className="flex-1 h-0 overflow-y-auto">
-          <nav className="px-3 py-5 space-y-1">
-            <NavItem href="/dashboard" icon={<LayoutDashboard />}>
-              Dashboard
-            </NavItem>
-            <NavItem href="/reports" icon={<FileText />}>
-              CSR Reports
-            </NavItem>
-            <NavItem href="/upload" icon={<Upload />}>
-              Upload CSR
-            </NavItem>
-            <NavItem href="/analytics" icon={<BarChart2 />}>
-              Analytics
-            </NavItem>
-            <NavItem href="/statistical-modeling" icon={<FileSymlink />}>
-              Statistical Modeling
-            </NavItem>
-            <NavItem href="/use-cases" icon={<BookOpen />}>
-              Use Case Library
-            </NavItem>
-            <NavItem href="/fail-map" icon={<AlertTriangle />}>
-              Real-World Fail Map
-            </NavItem>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                AI Tools
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/protocol-designer" icon={<ClipboardList />}>
-                  Protocol Designer
-                </NavItem>
-                <NavItem href="/study-design-agent" icon={<Lightbulb />}>
-                  Study Design Agent
-                </NavItem>
-                <NavItem href="/translation" icon={<Globe />}>
-                  Translation Service
-                </NavItem>
-                <NavItem href="/academic-knowledge-demo" icon={<GraduationCap />}>
-                  Academic Knowledge
-                </NavItem>
-              </div>
-            </div>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Strategic Services
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/competitive-intelligence" icon={<Target />}>
-                  Strategic Intelligence
-                </NavItem>
-              </div>
-            </div>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Settings
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/settings" icon={<Settings />}>
-                  Account Settings
-                </NavItem>
-              </div>
-            </div>
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Lumen Bio
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/lumen-bio/dashboard" icon={<Microscope />}>
-                  Lumen Bio Dashboard
-                </NavItem>
-              </div>
-            </div>
-          </nav>
+    <div className="w-64 bg-slate-900 h-screen flex flex-col p-4 border-r border-slate-800 flex-shrink-0">
+      <div className="flex items-center gap-2 mb-10 px-2 pt-2">
+        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-black text-white text-lg">C</div>
+        <div className="font-bold text-white tracking-wider text-sm">
+          CLINICAL<span className="text-blue-500">SAGE</span>
         </div>
       </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:border-r lg:border-slate-200 lg:bg-white lg:shadow-sm">
-        <div className="h-16 flex items-center justify-center px-6 border-b border-slate-200 bg-slate-50">
-          <Database className="h-8 w-8 text-primary" />
-          <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            TrialSage
-          </span>
+      <div className="flex-1 overflow-y-auto">
+        <div className="text-[10px] font-bold text-slate-600 uppercase mb-2 px-2 tracking-widest mt-2">
+          Modules
         </div>
+        <NavItem icon={LayoutDashboard} label="Pharma Command" path="/client-portal" />
+        <NavItem icon={Stethoscope} label="Medical Device (CERV2)" path="/cerv2" />
+        <NavItem icon={FileEdit} label="eCTD Co-Author" path="/co-author" />
 
-        <div className="flex-1 flex flex-col overflow-y-auto pt-5">
-          <nav className="flex-1 px-3 space-y-1">
-            <NavItem href="/dashboard" icon={<LayoutDashboard />}>
-              Dashboard
-            </NavItem>
-            <NavItem href="/reports" icon={<FileText />}>
-              CSR Reports
-            </NavItem>
-            <NavItem href="/upload" icon={<Upload />}>
-              Upload CSR
-            </NavItem>
-            <NavItem href="/analytics" icon={<BarChart2 />}>
-              Analytics
-            </NavItem>
-            <NavItem href="/statistical-modeling" icon={<FileSymlink />}>
-              Statistical Modeling
-            </NavItem>
-            <NavItem href="/use-cases" icon={<BookOpen />}>
-              Use Case Library
-            </NavItem>
-            <NavItem href="/fail-map" icon={<AlertTriangle />}>
-              Real-World Fail Map
-            </NavItem>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                AI Tools
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/protocol-designer" icon={<ClipboardList />}>
-                  Protocol Designer
-                </NavItem>
-                <NavItem href="/study-design-agent" icon={<Lightbulb />}>
-                  Study Design Agent
-                </NavItem>
-                <NavItem href="/translation" icon={<Globe />}>
-                  Translation Service
-                </NavItem>
-                <NavItem href="/academic-knowledge-demo" icon={<GraduationCap />}>
-                  Academic Knowledge
-                </NavItem>
-              </div>
-            </div>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Strategic Services
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/competitive-intelligence" icon={<Target />}>
-                  Strategic Intelligence
-                </NavItem>
-              </div>
-            </div>
-
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Settings
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/settings" icon={<Settings />}>
-                  Account Settings
-                </NavItem>
-              </div>
-            </div>
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Lumen Bio
-              </h3>
-              <div className="space-y-1">
-                <NavItem href="/lumen-bio/dashboard" icon={<Microscope />}>
-                  Lumen Bio Dashboard
-                </NavItem>
-              </div>
-            </div>
-          </nav>
+        <div className="text-[10px] font-bold text-slate-600 uppercase mb-2 px-2 tracking-widest mt-8">
+          Intelligence
         </div>
+        <NavItem icon={Database} label="Deep Genome Vault" path="/vault" />
+
+        <div className="text-[10px] font-bold text-slate-600 uppercase mb-2 px-2 tracking-widest mt-8">
+          Compliance
+        </div>
+        <NavItem icon={ShieldCheck} label="Audit Trail" path="/audit-log" />
       </div>
-    </>
+
+      <div className="border-t border-slate-800 pt-4 mt-2">
+        <button
+          onClick={() => setLocation('/')}
+          className="w-full flex items-center gap-3 p-2 text-slate-500 hover:text-white cursor-pointer transition-colors rounded hover:bg-slate-800"
+        >
+          <LogOut size={16} />
+          <span className="text-xs font-bold">Secure Logout</span>
+        </button>
+      </div>
+    </div>
   );
-}
+};

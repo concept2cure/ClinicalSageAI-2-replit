@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { useLocation, Link } from 'wouter';
 import {
   Users,
@@ -591,6 +592,7 @@ const formatRelativeTime = dateString => {
 };
 
 const EnterpriseClientPortalFinal = () => {
+  return <ClientPortalLanding />;
   // State management
   const [activeModule, setActiveModule] = useState('dashboard');
   const [selectedOrg, setSelectedOrg] = useState(organizations[0]);

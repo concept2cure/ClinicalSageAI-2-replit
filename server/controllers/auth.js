@@ -27,6 +27,8 @@ export function checkAuth(req, res, next) {
     // Verify and decode token
     const decoded = authService.verifyAccessToken(token);
     req.user = decoded;
+    req.organizationId = decoded.organizationId;
+    req.tenantId = decoded.organizationId;
     next();
   } catch (error) {
     return res.status(401).json({ 

@@ -216,6 +216,22 @@ const requireSameOrganization = (req, res, next) => {
 };
 
 /**
+ * Enforce tenant context on authenticated requests
+ * Ensures organizationId is present and bound to the request context
+ */
+const enforceTenant = (req, res, next) => {
+  if (!req.user || !req.user.organizationId) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Tenant context required',
+    });
+  }
+
+  req.organizationId = req.user.organizationId;
+  next();
+};
+
+/**
  * Check if route is public (no authentication required)
  */
 const isPublicRoute = path => {
@@ -235,8 +251,10 @@ const isPublicRoute = path => {
 
 module.exports = {
   authenticateJWT,
+  authenticateToken: authenticateJWT,
   requireRole,
   requirePermission,
   requireSameOrganization,
+  enforceTenant,
   isPublicRoute,
 };

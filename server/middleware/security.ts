@@ -184,6 +184,28 @@ export const validationSchemas = {
 };
 
 /**
+ * Enterprise security shield middleware
+ * Applies Helmet headers and rate limiting on auth routes.
+ */
+export const applySecurityMiddleware = (app: import('express').Express) => {
+  app.use(securityHeaders);
+
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      error: 'Too many requests from this IP, please try again after 15 minutes.',
+    },
+  });
+
+  app.use('/api/auth/', limiter);
+
+  console.log('[SECURITY] 🛡️ Enterprise Shield Active (Helmet + Rate Limiting)');
+};
+
+/**
  * Generic input validation middleware factory
  */
 export const validateInput = (schema: z.ZodSchema) => {

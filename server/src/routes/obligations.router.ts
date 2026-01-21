@@ -7,12 +7,15 @@
 import { Router } from 'express';
 import { getPool } from '../../db/pool';
 import OpenAI from 'openai';
+import { checkAuth } from '../../controllers/auth.js';
 
 // Database connection
 const pool = getPool();
 
 const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+router.use(checkAuth);
 
 // Helper: Insert obligation audit event
 const logObligationEvent = async (
@@ -38,6 +41,9 @@ const logObligationEvent = async (
 // Helper: AI Extraction Service for Obligations from Documents
 const extractObligationsFromText = async (text: string, context: any = {}) => {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('AI provider not configured');
+    }
     const prompt = `
 You are an expert regulatory affairs specialist. Extract regulatory obligations, commitments, and requirements from the following document text.
 
@@ -295,6 +301,13 @@ router.post('/:subId/obligations/ingest', async (req, res) => {
       productId,
       region,
     });
+
+    if (!extractedObligations || extractedObligations.length === 0) {
+      return res.status(422).json({
+        success: false,
+        error: 'No obligations detected from provided content',
+      });
+    }
 
     const createdObligations = [];
 

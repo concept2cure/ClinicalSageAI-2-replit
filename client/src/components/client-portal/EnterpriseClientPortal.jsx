@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { useLocation, Link } from 'wouter';
 import {
   Users,
@@ -293,6 +294,7 @@ const ProjectKPICard = ({ title, value, target, icon, change, trend }) => {
 
 // Enterprise Client Portal Component
 const EnterpriseClientPortal = () => {
+  return <ClientPortalLanding />;
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [organizations, setOrganizations] = useState([]);

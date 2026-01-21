@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ClientPortalLanding from './ClientPortalLanding';
 import { Link } from 'wouter';
 
 /**
@@ -8,6 +9,7 @@ import { Link } from 'wouter';
  * and guaranteed stability
  */
 const StandaloneClientPortal = () => {
+  return <ClientPortalLanding />;
   // Local state management
   const [activeModule, setActiveModule] = useState('dashboard');
   const [selectedOrg, setSelectedOrg] = useState('Acme CRO');

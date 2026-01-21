@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import {
   Users,
   Building,
@@ -21,6 +22,7 @@ import {
  * A minimalist but functional client portal with navigation and module switching
  */
 const SimplePortal = () => {
+  return <ClientPortalLanding />;
   const [activeModule, setActiveModule] = useState('dashboard');
 
   // Handle module change

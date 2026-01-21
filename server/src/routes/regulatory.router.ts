@@ -32,8 +32,10 @@ import {
 import crypto from 'crypto';
 import fs from 'fs';
 import multer from 'multer';
+import OpenAI from 'openai';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Database connection
 const router = Router();
@@ -918,6 +920,278 @@ router.get('/policy/:region/versions', async (req, res) => {
     res.json(rows);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET policy system health for a region
+router.get('/policy/health', async (req, res) => {
+  try {
+    const region = (req.query.region || 'FDA').toString().toUpperCase();
+    const policy = await loadPolicy(region);
+    const { rows } = await q<any>(
+      `select version, created_at from reg_rulesets where region=$1 and is_active=true order by created_at desc limit 1`,
+      [region]
+    );
+    const active = rows[0] || null;
+    const lastSync = active?.created_at ? new Date(active.created_at).toISOString() : null;
+    const daysOld = active?.created_at
+      ? Math.max(0, (Date.now() - new Date(active.created_at).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    const status = !active ? 'error' : daysOld > 180 ? 'error' : daysOld > 90 ? 'warning' : 'healthy';
+    const issues = status === 'error' ? 2 : status === 'warning' ? 1 : 0;
+    const aiHealthScore = !active ? 0 : Math.max(60, Math.round(100 - (daysOld || 0) * 0.4));
+
+    const systems = [
+      'Gatekeeper v2',
+      'M3 Builder',
+      'Q12 Changes',
+      'Questions Hub',
+      'eCTD Packager',
+      'RPI Dashboard',
+    ].map(system => ({
+      system,
+      status,
+      policy_version: policy?.meta?.version || active?.version || 'unknown',
+      last_sync: lastSync,
+      issues,
+      ai_health_score: aiHealthScore,
+    }));
+
+    res.json({ region, systems });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to load policy health' });
+  }
+});
+
+// GET policy metrics for a region
+router.get('/policy/metrics', async (req, res) => {
+  try {
+    const region = (req.query.region || 'FDA').toString().toUpperCase();
+    const policy = await loadPolicy(region);
+
+    const totalSubsResult = await q<any>(
+      `select count(*)::int as total from reg_submissions where region=$1`,
+      [region]
+    );
+    const totalSubs = totalSubsResult.rows[0]?.total || 0;
+
+    const activeSubsResult = await q<any>(
+      `select count(*)::int as total from reg_submissions where region=$1 and status not in ('COMPLETED','ARCHIVED','CANCELLED')`,
+      [region]
+    );
+    const activeSubs = activeSubsResult.rows[0]?.total || 0;
+
+    const pendingReviewsResult = await q<any>(
+      `select count(*)::int as total from reg_submissions where region=$1 and status in ('IN_REVIEW','PENDING_REVIEW','REVIEW')`,
+      [region]
+    );
+    const pendingReviews = pendingReviewsResult.rows[0]?.total || 0;
+
+    const criticalIssuesResult = await q<any>(
+      `select count(distinct s.sub_id)::int as total
+       from reg_sequences s
+       join reg_preflight_issues i on i.seq_id = s.seq_id
+       join reg_submissions sub on sub.sub_id = s.sub_id
+       where sub.region=$1 and i.severity='CRITICAL'`,
+      [region]
+    );
+    const criticalSubs = criticalIssuesResult.rows[0]?.total || 0;
+    const complianceScore = totalSubs
+      ? Math.round(((totalSubs - criticalSubs) / totalSubs) * 1000) / 10
+      : null;
+
+    let coveragePercentage: number | null = null;
+    const requiredSections = policy?.module3?.requiredSections || [];
+    if (totalSubs > 0 && requiredSections.length > 0) {
+      const sectionsResult = await q<any>(
+        `select s.sub_id, sec.code
+         from reg_m3_sections sec
+         join reg_submissions s on s.sub_id = sec.sub_id
+         where s.region=$1`,
+        [region]
+      );
+
+      const bySub = new Map<string, Set<string>>();
+      for (const row of sectionsResult.rows) {
+        if (!bySub.has(row.sub_id)) bySub.set(row.sub_id, new Set());
+        bySub.get(row.sub_id)?.add(row.code);
+      }
+
+      let totalCoverage = 0;
+      for (const [subId, codes] of bySub.entries()) {
+        const present = requiredSections.filter((req: string) =>
+          Array.from(codes).some(code => code.startsWith(req))
+        );
+        totalCoverage += present.length / requiredSections.length;
+      }
+
+      coveragePercentage = bySub.size
+        ? Math.round((totalCoverage / bySub.size) * 1000) / 10
+        : null;
+    }
+
+    const { rows } = await q<any>(
+      `select version, created_at from reg_rulesets where region=$1 and is_active=true order by created_at desc limit 1`,
+      [region]
+    );
+
+    res.json({
+      region,
+      compliance_score: complianceScore,
+      coverage_percentage: coveragePercentage,
+      last_updated: rows[0]?.created_at || null,
+      active_submissions: activeSubs,
+      pending_reviews: pendingReviews,
+      ai_optimization_score: null,
+      predictive_accuracy: null,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to load policy metrics' });
+  }
+});
+
+// GET AI policy recommendations for a region
+router.get('/policy/recommendations', async (req, res) => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({ error: 'AI provider not configured' });
+    }
+
+    const region = (req.query.region || 'FDA').toString().toUpperCase();
+    const policy = await loadPolicy(region);
+
+    const prompt = `You are a regulatory policy expert. Review the following policy JSON and propose up to 5 concrete recommendations to improve compliance, efficiency, and clarity. Return JSON with array "recommendations" of objects with fields: id, type (optimization|compliance|risk|efficiency), title, description, impact (high|medium|low), confidence (0-100), action, estimated_savings. Policy JSON:\n${JSON.stringify(policy)}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a senior regulatory policy advisor.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = completion.choices[0]?.message?.content || '{}';
+    const parsed = JSON.parse(content);
+    res.json({ region, recommendations: parsed.recommendations || [] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to generate recommendations' });
+  }
+});
+
+// POST AI policy assistant query
+router.post('/policy/assistant', async (req, res) => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({ error: 'AI provider not configured' });
+    }
+    const region = (req.body?.region || 'FDA').toString().toUpperCase();
+    const query = (req.body?.query || '').toString().trim();
+    if (!query) return res.status(400).json({ error: 'Query is required' });
+
+    const policy = await loadPolicy(region);
+    const prompt = `You are a regulatory policy advisor. Use the policy JSON below to answer the question precisely and cite relevant sections of the policy when possible.\n\nPolicy JSON:\n${JSON.stringify(policy)}\n\nQuestion: ${query}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'Answer clearly and concisely with regulatory rigor.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.2,
+    });
+
+    res.json({
+      region,
+      response: completion.choices[0]?.message?.content || 'No response generated.',
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to process policy query' });
+  }
+});
+
+// POST validate active policy integrity
+router.post('/policy/validate', async (req, res) => {
+  try {
+    const region = (req.body?.region || 'FDA').toString().toUpperCase();
+    const policy = await loadPolicy(region);
+    const result = await validatePolicy(policy);
+    res.json({ region, ...result });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Policy validation failed' });
+  }
+});
+
+// POST simulate policy impact for a region
+router.post('/policy/simulate', async (req, res) => {
+  try {
+    const region = (req.body?.region || 'FDA').toString().toUpperCase();
+    const policy = await loadPolicy(region);
+
+    const totalSubsResult = await q<any>(
+      `select count(*)::int as total from reg_submissions where region=$1`,
+      [region]
+    );
+    const totalSubs = totalSubsResult.rows[0]?.total || 0;
+
+    const criticalIssuesResult = await q<any>(
+      `select count(distinct s.sub_id)::int as total
+       from reg_sequences s
+       join reg_preflight_issues i on i.seq_id = s.seq_id
+       join reg_submissions sub on sub.sub_id = s.sub_id
+       where sub.region=$1 and i.severity='CRITICAL'`,
+      [region]
+    );
+    const criticalSubs = criticalIssuesResult.rows[0]?.total || 0;
+    const complianceScore = totalSubs
+      ? Math.round(((totalSubs - criticalSubs) / totalSubs) * 1000) / 10
+      : null;
+
+    res.json({
+      region,
+      affected_submissions: totalSubs,
+      compliance_improvement: null,
+      estimated_time_savings: null,
+      risk_reduction: policy?.module3?.stability?.requireAccelerated ? 'Medium' : 'Low',
+      systems_impacted: ['Gatekeeper v2', 'M3 Builder', 'Q12 Changes'],
+      recommendations: complianceScore === null
+        ? ['Insufficient submission data to simulate impact.']
+        : [`Current compliance score is ${complianceScore}%. Review critical preflight issues to improve.`],
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Policy simulation failed' });
+  }
+});
+
+// POST apply AI recommendation (auditable change request)
+router.post('/policy/recommendations/apply', async (req, res) => {
+  try {
+    const region = (req.body?.region || 'FDA').toString().toUpperCase();
+    const recommendation = req.body?.recommendation;
+    if (!recommendation) return res.status(400).json({ error: 'Recommendation is required' });
+
+    await q(`
+      CREATE TABLE IF NOT EXISTS reg_policy_actions (
+        action_id SERIAL PRIMARY KEY,
+        region TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        payload_json JSONB NOT NULL,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const actor = (req.headers['x-user-name'] || req.headers['x-user'] || 'user').toString();
+    const { rows } = await q<any>(
+      `insert into reg_policy_actions (region, action_type, payload_json, created_by)
+       values ($1, $2, $3, $4) returning action_id, created_at`,
+      [region, 'AI_RECOMMENDATION_APPLY', recommendation, actor]
+    );
+
+    res.json({ success: true, action: rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to apply recommendation' });
   }
 });
 

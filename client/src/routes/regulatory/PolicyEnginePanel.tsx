@@ -104,20 +104,20 @@ interface PolicyImpact {
 }
 
 interface PolicyMetrics {
-  compliance_score: number;
-  coverage_percentage: number;
-  last_updated: string;
-  active_submissions: number;
-  pending_reviews: number;
-  ai_optimization_score: number;
-  predictive_accuracy: number;
+  compliance_score: number | null;
+  coverage_percentage: number | null;
+  last_updated: string | null;
+  active_submissions: number | null;
+  pending_reviews: number | null;
+  ai_optimization_score: number | null;
+  predictive_accuracy: number | null;
 }
 
 interface SystemHealth {
   system: string;
   status: 'healthy' | 'warning' | 'error';
   policy_version: string;
-  last_sync: string;
+  last_sync: string | null;
   issues: number;
   ai_health_score: number;
 }
@@ -182,102 +182,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
   const regions = ['FDA', 'EMA', 'PMDA'];
 
-  // Enhanced mock data with AI features
-  const mockSystemHealth: SystemHealth[] = [
-    {
-      system: 'Gatekeeper v2',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '2 mins ago',
-      issues: 0,
-      ai_health_score: 98.5,
-    },
-    {
-      system: 'M3 Builder',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '5 mins ago',
-      issues: 0,
-      ai_health_score: 96.2,
-    },
-    {
-      system: 'Q12 Changes',
-      status: 'warning',
-      policy_version: '2025.08.15',
-      last_sync: '1 hour ago',
-      issues: 2,
-      ai_health_score: 78.1,
-    },
-    {
-      system: 'Questions Hub',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '3 mins ago',
-      issues: 0,
-      ai_health_score: 94.7,
-    },
-    {
-      system: 'eCTD Packager',
-      status: 'error',
-      policy_version: '2025.07.20',
-      last_sync: '6 hours ago',
-      issues: 5,
-      ai_health_score: 52.3,
-    },
-    {
-      system: 'RPI Dashboard',
-      status: 'healthy',
-      policy_version: '2025.09.01',
-      last_sync: '1 min ago',
-      issues: 0,
-      ai_health_score: 97.8,
-    },
-  ];
-
-  const mockPolicyMetrics: PolicyMetrics = {
-    compliance_score: 94.7,
-    coverage_percentage: 87.3,
-    last_updated: '2025-09-01T10:30:00Z',
-    active_submissions: 23,
-    pending_reviews: 7,
-    ai_optimization_score: 92.1,
-    predictive_accuracy: 89.4,
+  const formatLastSync = (value?: string | null) => {
+    if (!value) return 'No sync recorded';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'No sync recorded' : date.toLocaleString();
   };
-
-  const mockAiRecommendations: AIRecommendation[] = [
-    {
-      id: '1',
-      type: 'optimization',
-      title: 'Optimize Stability Coverage Threshold',
-      description:
-        'AI analysis suggests reducing FDA stability requirement from 12 to 10 months based on recent approvals',
-      impact: 'high',
-      confidence: 94.2,
-      action: 'Update FDA policy stability.minCoverageMonths to 10',
-      estimated_savings: '3.2 weeks per submission',
-    },
-    {
-      id: '2',
-      type: 'compliance',
-      title: 'Harmonize EMA Response Days',
-      description:
-        'Detected inconsistency between EMA policy (28 days) and recent guidance (25 days)',
-      impact: 'medium',
-      confidence: 87.6,
-      action: 'Update EMA defaultResponseDays to 25',
-      estimated_savings: '3 days faster responses',
-    },
-    {
-      id: '3',
-      type: 'risk',
-      title: 'PMDA Classification Gap Detected',
-      description: 'Missing Q12 classification for ProcessChange_Equipment in PMDA policy',
-      impact: 'high',
-      confidence: 96.1,
-      action: 'Add ProcessChange_Equipment mapping',
-      estimated_savings: 'Prevent submission delays',
-    },
-  ];
 
   const loadPolicy = async (region: string) => {
     try {
@@ -289,6 +198,48 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       console.error('Failed to load policy:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSystemHealth = async (region: string) => {
+    try {
+      const response = await fetch(`/api/reg/policy/health?region=${region}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load system health');
+      }
+      setSystemHealth(data.systems || []);
+    } catch (error) {
+      console.error('Failed to load system health:', error);
+      setSystemHealth([]);
+    }
+  };
+
+  const loadPolicyMetrics = async (region: string) => {
+    try {
+      const response = await fetch(`/api/reg/policy/metrics?region=${region}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load policy metrics');
+      }
+      setPolicyMetrics(data);
+    } catch (error) {
+      console.error('Failed to load policy metrics:', error);
+      setPolicyMetrics(null);
+    }
+  };
+
+  const loadAiRecommendations = async (region: string) => {
+    try {
+      const response = await fetch(`/api/reg/policy/recommendations?region=${region}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load AI recommendations');
+      }
+      setAiRecommendations(data.recommendations || []);
+    } catch (error) {
+      console.error('Failed to load AI recommendations:', error);
+      setAiRecommendations([]);
     }
   };
 
@@ -369,78 +320,96 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
   React.useEffect(() => {
     loadPolicy(activeRegion);
     loadVersions(activeRegion);
-    setSystemHealth(mockSystemHealth);
-    setPolicyMetrics(mockPolicyMetrics);
-    setAiRecommendations(mockAiRecommendations);
+    loadSystemHealth(activeRegion);
+    loadPolicyMetrics(activeRegion);
+    loadAiRecommendations(activeRegion);
   }, [activeRegion]);
 
   const runPolicySimulation = async () => {
     if (!policy) return;
     setLoading(true);
-
-    setTimeout(() => {
-      setSimulationResults({
-        affected_submissions: 15,
-        compliance_improvement: 12.3,
-        estimated_time_savings: '4.2 hours/week',
-        risk_reduction: 'Medium',
-        systems_impacted: ['Gatekeeper v2', 'M3 Builder', 'Q12 Changes'],
-        recommendations: [
-          'Update stability coverage threshold will improve compliance by 8.5%',
-          'New IR response timeframe aligns with industry best practices',
-          'Q12 classification changes may require team training',
-        ],
+    try {
+      const response = await fetch('/api/reg/policy/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region: activeRegion }),
       });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Policy simulation failed');
+      }
+      setSimulationResults(data);
+    } catch (error) {
+      console.error('Policy simulation failed:', error);
+      setSimulationResults(null);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const validatePolicyIntegrity = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const updatedHealth = mockSystemHealth.map(system => ({
-        ...system,
-        last_sync: 'Just now',
-        status: Math.random() > 0.8 ? 'warning' : ('healthy' as any),
-        ai_health_score: Math.random() * 20 + 80,
-      }));
-      setSystemHealth(updatedHealth);
+    try {
+      const response = await fetch('/api/reg/policy/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region: activeRegion }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Policy validation failed');
+      }
+      await loadSystemHealth(activeRegion);
+      await loadPolicyMetrics(activeRegion);
+    } catch (error) {
+      console.error('Policy validation failed:', error);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleAiQuery = async () => {
     if (!aiQuery.trim()) return;
-
     setAiLoading(true);
-    setTimeout(() => {
-      // Simulate AI responses based on query
-      let response = '';
-      const query = aiQuery.toLowerCase();
-
-      if (query.includes('stability') || query.includes('coverage')) {
-        response = `Based on current FDA guidance and industry benchmarks, the optimal stability coverage for ${activeRegion} submissions is 10-12 months. Your current policy (12 months) aligns with regulatory expectations but may be conservative. Consider: (1) Recent FDA approvals show 90% acceptance with 10-month data, (2) EMA typically requires 12 months but accepts 9 months with justification, (3) PMDA follows ICH Q1A guidelines (12 months). AI Recommendation: Maintain current requirements but allow case-by-case flexibility.`;
-      } else if (query.includes('response') || query.includes('days')) {
-        response = `${activeRegion} response timelines analysis: Current policy sets ${activeRegion === 'FDA' ? '30' : activeRegion === 'EMA' ? '28' : '30'} days. AI analysis of 500+ recent submissions shows: (1) Average agency response: FDA 24 days, EMA 21 days, PMDA 28 days, (2) Industry best practice: 20-25 days, (3) Your current timeframe is appropriate but could be optimized to 25 days for competitive advantage while maintaining quality.`;
-      } else if (query.includes('optimize') || query.includes('improve')) {
-        response = `AI Policy Optimization Report for ${activeRegion}: (1) **Compliance Score**: Current 94.7% can reach 97%+ with targeted improvements, (2) **Key Opportunities**: Stability thresholds (-2 months), Response times (-3 days), Q12 classifications (+15% coverage), (3) **ROI**: Estimated 15-20% time savings per submission, (4) **Risk**: Low - changes align with recent regulatory trends. Implement gradually with A/B testing.`;
+    try {
+      const response = await fetch('/api/reg/policy/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region: activeRegion, query: aiQuery }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setAiResponse(data.response || 'No response generated.');
       } else {
-        response = `AI Policy Assistant: I can help with policy optimization, regulatory compliance, impact analysis, and system integration. Try asking about: "How can I optimize stability requirements?", "What are the latest response time benchmarks?", "Analyze policy compliance gaps", or "Compare regional policy differences". I have access to regulatory databases, industry benchmarks, and predictive models.`;
+        setAiResponse(data.error || 'AI response unavailable.');
       }
-
-      setAiResponse(response);
+    } catch (error) {
+      console.error('AI query failed:', error);
+      setAiResponse('AI response unavailable.');
+    } finally {
       setAiLoading(false);
-    }, 1200);
+    }
   };
 
   const applyAiRecommendation = async (recommendation: AIRecommendation) => {
     setLoading(true);
-    setTimeout(() => {
-      alert(
-        `Applied AI recommendation: ${recommendation.title}. Policy will be updated and deployed across all integrated systems.`
-      );
+    try {
+      const response = await fetch('/api/reg/policy/recommendations/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region: activeRegion, recommendation }),
+      });
+      if (!response.ok) {
+        const payload = await response.json();
+        alert(payload.error || 'Failed to apply recommendation');
+        return;
+      }
+      alert('Recommendation logged for review and policy change workflow.');
+    } catch (error) {
+      alert('Failed to apply recommendation');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -466,13 +435,15 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Compliance Score</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {policyMetrics?.compliance_score}%
+                  {policyMetrics?.compliance_score !== null && policyMetrics?.compliance_score !== undefined
+                    ? `${policyMetrics.compliance_score}%`
+                    : 'N/A'}
                 </p>
               </div>
               <Shield className="h-8 w-8 text-green-600" />
             </div>
             <div className="mt-2">
-              <Progress value={policyMetrics?.compliance_score} className="h-2" />
+              <Progress value={policyMetrics?.compliance_score ?? 0} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -482,13 +453,15 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Policy Coverage</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {policyMetrics?.coverage_percentage}%
+                  {policyMetrics?.coverage_percentage !== null && policyMetrics?.coverage_percentage !== undefined
+                    ? `${policyMetrics.coverage_percentage}%`
+                    : 'N/A'}
                 </p>
               </div>
               <Target className="h-8 w-8 text-blue-600" />
             </div>
             <div className="mt-2">
-              <Progress value={policyMetrics?.coverage_percentage} className="h-2" />
+              <Progress value={policyMetrics?.coverage_percentage ?? 0} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -498,13 +471,15 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">AI Optimization</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {policyMetrics?.ai_optimization_score}%
+                  {policyMetrics?.ai_optimization_score !== null && policyMetrics?.ai_optimization_score !== undefined
+                    ? `${policyMetrics.ai_optimization_score}%`
+                    : 'N/A'}
                 </p>
               </div>
               <Brain className="h-8 w-8 text-purple-600" />
             </div>
             <div className="mt-2">
-              <Progress value={policyMetrics?.ai_optimization_score} className="h-2" />
+              <Progress value={policyMetrics?.ai_optimization_score ?? 0} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -513,7 +488,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Submissions</p>
-                <p className="text-2xl font-bold">{policyMetrics?.active_submissions}</p>
+                <p className="text-2xl font-bold">
+                  {policyMetrics?.active_submissions ?? 'N/A'}
+                </p>
               </div>
               <Activity className="h-8 w-8 text-indigo-600" />
             </div>
@@ -525,7 +502,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Predictive Accuracy</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {policyMetrics?.predictive_accuracy}%
+                  {policyMetrics?.predictive_accuracy !== null && policyMetrics?.predictive_accuracy !== undefined
+                    ? `${policyMetrics.predictive_accuracy}%`
+                    : 'N/A'}
                 </p>
               </div>
               <TrendingUp className="h-8 w-8 text-orange-600" />
@@ -544,7 +523,12 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {aiRecommendations.map((recommendation: AIRecommendation) => (
+            {aiRecommendations.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                No AI recommendations available. Configure the AI provider or generate new policy insights.
+              </div>
+            ) : (
+            aiRecommendations.map((recommendation: AIRecommendation) => (
               <div
                 key={recommendation.id}
                 className="border rounded-lg p-4 bg-gradient-to-r from-purple-50 to-blue-50"
@@ -599,7 +583,8 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -645,7 +630,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      v{system.policy_version} • {system.last_sync}
+                      v{system.policy_version} • {formatLastSync(system.last_sync)}
                     </p>
                   </div>
                 </div>
@@ -998,13 +983,16 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           <div className="flex justify-between">
                             <span>Compliance Improvement:</span>
                             <span className="font-medium text-green-600">
-                              +{simulationResults.compliance_improvement}%
+                              {simulationResults.compliance_improvement !== null &&
+                              simulationResults.compliance_improvement !== undefined
+                                ? `+${simulationResults.compliance_improvement}%`
+                                : 'N/A'}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Time Savings:</span>
                             <span className="font-medium text-blue-600">
-                              {simulationResults.estimated_time_savings}
+                              {simulationResults.estimated_time_savings || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -1280,14 +1268,17 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                         </div>
                         <div className="text-center p-3 bg-green-50 rounded-lg">
                           <p className="text-2xl font-bold text-green-600">
-                            +{simulationResults.compliance_improvement}%
+                            {simulationResults.compliance_improvement !== null &&
+                            simulationResults.compliance_improvement !== undefined
+                              ? `+${simulationResults.compliance_improvement}%`
+                              : 'N/A'}
                           </p>
                           <p className="text-xs text-muted-foreground">Compliance Improvement</p>
                         </div>
                       </div>
                       <div className="p-3 bg-purple-50 rounded-lg text-center">
                         <p className="text-xl font-bold text-purple-600">
-                          {simulationResults.estimated_time_savings}
+                          {simulationResults.estimated_time_savings || 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Estimated Time Savings Per Week
@@ -1296,7 +1287,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Risk Assessment:</Label>
                         <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
-                          <span className="text-sm">{simulationResults.risk_reduction}</span>
+                          <span className="text-sm">{simulationResults.risk_reduction || 'N/A'}</span>
                           <Badge variant="outline" className="text-yellow-600">
                             Acceptable
                           </Badge>
@@ -1316,7 +1307,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {simulationResults.systems_impacted.map((system: string, index: number) => (
+                      {(simulationResults.systems_impacted || []).map((system: string, index: number) => (
                         <div
                           key={index}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -1336,15 +1327,19 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           AI Recommendations:
                         </Label>
                         <div className="space-y-2">
-                          {simulationResults.recommendations.map((rec: string, index: number) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-2 p-2 bg-blue-50 rounded text-sm"
-                            >
-                              <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                              <span>{rec}</span>
-                            </div>
-                          ))}
+                          {(simulationResults.recommendations || []).length === 0 ? (
+                            <div className="text-sm text-slate-500">No recommendations available.</div>
+                          ) : (
+                            (simulationResults.recommendations || []).map((rec: string, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 p-2 bg-blue-50 rounded text-sm"
+                              >
+                                <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                <span>{rec}</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1424,7 +1419,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </div>
                           <div className="flex justify-between">
                             <span>Last Sync:</span>
-                            <span className="font-medium">{system.last_sync}</span>
+                            <span className="font-medium">{formatLastSync(system.last_sync)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>AI Health Score:</span>

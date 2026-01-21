@@ -1,4 +1,42 @@
-version: '3.9'
+version: '3.8'
+
+services:
+  # 1. THE APPLICATION
+  clinicalsage:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/clinicalsage
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - JWT_SECRET=supersecret_dev_key
+    depends_on:
+      - db
+    networks:
+      - sage-net
+
+  # 2. THE DATABASE (With Vector Support)
+  db:
+    image: ankane/pgvector:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=clinicalsage
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/db/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - sage-net
+
+volumes:
+  postgres_data:
+
+networks:
+  sage-net:version: '3.9'
 services:
   vault-api:
     build: .

@@ -43,24 +43,13 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       await signup(data.email, data.username, data.password);
-      // toast call replaced
-  // Original: toast({
-        title: 'Account created successfully',
-        description: 'Welcome to TrialSage!',
-      })
-  console.log('Toast would show:', {
+      toast({
         title: 'Account created successfully',
         description: 'Welcome to TrialSage!',
       });
       setLocation('/dashboard');
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
-        title: 'Signup failed',
-        description: error instanceof Error ? error.message : 'An error occurred during signup',
-        variant: 'destructive',
-      })
-  console.log('Toast would show:', {
+      toast({
         title: 'Signup failed',
         description: error instanceof Error ? error.message : 'An error occurred during signup',
         variant: 'destructive',

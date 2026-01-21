@@ -52,6 +52,7 @@ export function setupMiddleware(app: Express): void {
       req.path === '/api/health' ||
       req.path.startsWith('/api/auth/login') ||
       req.path.startsWith('/api/auth/register') ||
+      req.path.startsWith('/api/auth/sso') ||
       req.path.startsWith('/api/public')
     ) {
       return next();

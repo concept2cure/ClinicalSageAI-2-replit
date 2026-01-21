@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowRight,
   Lock,
@@ -17,7 +18,6 @@ import {
   Network,
   Users,
 } from 'lucide-react';
-import * as authClient from '@/lib/authClient';
 
 const Colors = {
   primary: '#2563eb',
@@ -27,10 +27,16 @@ const Colors = {
 export default function Login({ onLoginSuccess }) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [ssoStatus, setSsoStatus] = useState({
+    googleConfigured: false,
+    microsoftConfigured: false,
+  });
+  const [ssoChecked, setSsoChecked] = useState(false);
 
   const isValid = useMemo(() => email.trim().length > 0 && password.trim().length > 0, [email, password]);
 
@@ -38,6 +44,7 @@ export default function Login({ onLoginSuccess }) {
     const params = new URLSearchParams(window.location.search);
     const error = params.get('error');
     const token = params.get('token');
+    const refreshToken = params.get('refreshToken');
 
     if (error) {
       toast({
@@ -54,15 +61,59 @@ export default function Login({ onLoginSuccess }) {
       localStorage.setItem('token', token);
       localStorage.setItem('authToken', token);
       localStorage.setItem('auth_token', token);
-      toast({
-        title: 'Login successful',
-        description: 'Redirecting to your client portal…',
-      });
-      onLoginSuccess?.();
-      window.history.replaceState({}, '', '/login');
-      setTimeout(() => setLocation('/client-portal'), 500);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+      (async () => {
+        try {
+          await refreshUser();
+          toast({
+            title: 'Login successful',
+            description: 'Redirecting to your client portal…',
+          });
+          onLoginSuccess?.();
+          window.history.replaceState({}, '', '/login');
+          setTimeout(() => setLocation('/client-portal'), 500);
+        } catch (error) {
+          toast({
+            title: 'Login failed',
+            description: error instanceof Error ? error.message : 'Unable to load your profile.',
+            variant: 'destructive',
+          });
+        }
+      })();
     }
-  }, [onLoginSuccess, setLocation, toast]);
+  }, [onLoginSuccess, refreshUser, setLocation, toast]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadSsoStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/sso/status');
+        const payload = await response.json();
+        if (mounted && payload) {
+          setSsoStatus({
+            googleConfigured: Boolean(payload.googleConfigured),
+            microsoftConfigured: Boolean(payload.microsoftConfigured),
+          });
+        }
+      } catch (error) {
+        if (mounted) {
+          setSsoStatus({ googleConfigured: false, microsoftConfigured: false });
+        }
+      } finally {
+        if (mounted) {
+          setSsoChecked(true);
+        }
+      }
+    };
+
+    loadSsoStatus();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogin = async event => {
     event.preventDefault();
@@ -70,19 +121,7 @@ export default function Login({ onLoginSuccess }) {
     setErrorMessage('');
     setLoading(true);
     try {
-      const result = await authClient.login({
-        email,
-        password,
-      });
-
-      if (!result?.accessToken) {
-        throw new Error(result?.message || 'Login failed.');
-      }
-
-      localStorage.setItem('accessToken', result.accessToken);
-      localStorage.setItem('token', result.accessToken);
-      localStorage.setItem('authToken', result.accessToken);
-      localStorage.setItem('auth_token', result.accessToken);
+      await login(email, password);
 
       toast({
         title: 'Login successful',
@@ -127,7 +166,7 @@ export default function Login({ onLoginSuccess }) {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-6xl grid gap-8 lg:grid-cols-[1.05fr_0.95fr] items-start">
+      <div className="w-full max-w-xl">
         <Card className="w-full border-0 shadow-[0_12px_30px_rgba(15,23,42,0.1)] rounded-2xl">
           <CardContent className="p-10">
           <div className="text-center mb-10">
@@ -146,6 +185,7 @@ export default function Login({ onLoginSuccess }) {
               type="button"
               variant="outline"
               className="w-full h-12 gap-3"
+              disabled={ssoChecked && !ssoStatus.microsoftConfigured}
               onClick={() => handleSSO('Microsoft')}
             >
               <Building2 className="h-5 w-5 text-blue-600" />
@@ -155,12 +195,19 @@ export default function Login({ onLoginSuccess }) {
               type="button"
               variant="outline"
               className="w-full h-12 gap-3"
+              disabled={ssoChecked && !ssoStatus.googleConfigured}
               onClick={() => handleSSO('Google')}
             >
               <Chrome className="h-5 w-5 text-red-500" />
               Continue with Google
             </Button>
           </div>
+
+          {ssoChecked && (!ssoStatus.googleConfigured || !ssoStatus.microsoftConfigured) ? (
+            <div className="mt-3 text-xs text-amber-600">
+              Single sign-on is not fully configured in this environment.
+            </div>
+          ) : null}
 
           <div className="my-6">
             <div className="relative">
@@ -296,49 +343,6 @@ export default function Login({ onLoginSuccess }) {
           </CardContent>
         </Card>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
-              <ShieldCheck className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Enterprise access control</h2>
-              <p className="text-sm text-slate-600">
-                Secure multi-tenant login for CROs, biotech sponsors, and consultants.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
-              <Network className="mt-0.5 h-5 w-5 text-slate-700" />
-              <div>
-                <p className="text-sm font-semibold text-slate-900">CRO parent → child hierarchy</p>
-                <p className="text-xs text-slate-600">
-                  Govern multiple biotech clients with inherited policies and project-level security.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
-              <Users className="mt-0.5 h-5 w-5 text-slate-700" />
-              <div>
-                <p className="text-sm font-semibold text-slate-900">User onboarding & entitlements</p>
-                <p className="text-xs text-slate-600">
-                  Provision teams, contractors, and consultants with scoped permissions.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
-              <ShieldCheck className="mt-0.5 h-5 w-5 text-slate-700" />
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Enterprise security controls</p>
-                <p className="text-xs text-slate-600">
-                  SSO, MFA, audit logs, and policy enforcement aligned to regulated programs.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

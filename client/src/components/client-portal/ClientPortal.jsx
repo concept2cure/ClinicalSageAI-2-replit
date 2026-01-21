@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { useLocation, Link } from 'wouter';
 import {
   Users,
@@ -25,6 +26,7 @@ import { useModuleIntegration } from '../integration/ModuleIntegrationLayer';
 
 // Client Portal dashboard component
 const ClientPortal = () => {
+  return <ClientPortalLanding />;
   const [location, setLocation] = useLocation();
   const [clientOrganization, setClientOrganization] = useState(null);
   const [parentOrganization, setParentOrganization] = useState(null);

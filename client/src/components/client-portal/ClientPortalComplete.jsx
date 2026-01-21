@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { useLocation, Link } from 'wouter';
 import {
   Users,
@@ -63,6 +64,7 @@ import ReportsQuickWidget from '../ReportsQuickWidget';
 
 // Client Portal dashboard component
 const ClientPortal = () => {
+  return <ClientPortalLanding />;
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [organizations, setOrganizations] = useState([]);

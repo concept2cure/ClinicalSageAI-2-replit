@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useLumenAiAssistant } from '../contexts/LumenAiAssistantContext';
 import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import component placeholders (these would be real components in production)
 import NextActionsSidebar from '../components/NextActionsSidebar';
@@ -77,6 +78,7 @@ const ClientPortalLanding = () => {
     aiContext = { openAssistant: () => {} };
   }
   const { openAssistant } = aiContext;
+  const { logout } = useAuth();
 
   // Fetch client workspace settings to control module visibility
   const clientId = currentClientWorkspace?.id;
@@ -304,7 +306,7 @@ const ClientPortalLanding = () => {
           id: 'audit',
           title: 'Audit Trail Dashboard',
           description: 'Enterprise audit analytics, anomaly detection, and exports',
-          path: '/audit',
+          path: '/audit-log',
         },
         {
           id: 'support',
@@ -454,18 +456,18 @@ const ClientPortalLanding = () => {
       )}
 
       {!loading && !error && (
-        <div className="container mx-auto py-8 px-4">
+        <div className="container mx-auto py-6 px-4">
           {/* Professional Header with Logo */}
-          <div className="mb-8 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-              <div className="flex items-center gap-4">
+          <div className="mb-6 bg-white rounded-xl shadow-lg p-4 border border-gray-100">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+              <div className="flex items-center gap-3">
                 <img
                   src={concept2cureLogo}
                   alt="Concept2Cure"
-                  className="h-12 w-auto object-contain"
+                  className="h-10 w-auto object-contain"
                 />
-                <div className="border-l-2 border-gray-200 pl-4">
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                <div className="border-l-2 border-gray-200 pl-3">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
                     Client Portal
                   </h1>
                   <p className="text-gray-600 mt-1 text-sm">
@@ -474,8 +476,8 @@ const ClientPortalLanding = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1.5 bg-white hover:bg-gray-50 transition-colors">
                   <Building className="h-5 w-5 text-blue-600" />
                   <div>
                     <div className="text-xs text-gray-500">Organization</div>
@@ -483,7 +485,7 @@ const ClientPortalLanding = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-white hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1.5 bg-white hover:bg-gray-50 transition-colors">
                   <Users className="h-5 w-5 text-blue-600" />
                   <div>
                     <div className="text-xs text-gray-500">Workspace</div>
@@ -494,7 +496,7 @@ const ClientPortalLanding = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setLocation('/settings?tab=module-management')}
-                    className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-white hover:bg-blue-50 transition-all duration-150"
+                    className="flex items-center gap-2 border border-gray-200 rounded-lg px-2 py-1.5 bg-white hover:bg-blue-50 transition-all duration-150"
                   >
                     <Settings className="h-5 w-5 text-blue-600" />
                     <div className="text-left">
@@ -504,7 +506,7 @@ const ClientPortalLanding = () => {
                   </button>
                   <button
                     onClick={() => setLocation('/support')}
-                    className="flex items-center gap-2 border border-blue-200 rounded-lg p-2 bg-blue-50 hover:bg-blue-100 transition-all duration-150"
+                    className="flex items-center gap-2 border border-blue-200 rounded-lg px-2 py-1.5 bg-blue-50 hover:bg-blue-100 transition-all duration-150"
                   >
                     <Bot className="h-5 w-5 text-blue-600" />
                     <div className="text-left">
@@ -532,13 +534,25 @@ const ClientPortalLanding = () => {
                     <Brain className="h-4 w-4 mr-2" />
                     Lumen Insights
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-200 text-red-600 hover:bg-red-50"
+                    onClick={async () => {
+                      await logout();
+                      setLocation('/login');
+                    }}
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
               </div>
             </div>
 
             {/* Current Context Info */}
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <div className="flex flex-wrap gap-8">
+            <div className="mt-4 border-t border-gray-100 pt-3">
+              <div className="flex flex-wrap gap-5">
                 <div>
                   <div className="text-xs text-gray-500">Current Organization</div>
                   <div className="text-sm font-medium">
@@ -576,7 +590,7 @@ const ClientPortalLanding = () => {
           </div>
 
           {/* Welcome Header Section */}
-          <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="flex items-start justify-between gap-3 mb-6">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900">
                 Welcome to {currentOrganization?.name || 'Concept2Cure Platform'}
@@ -589,14 +603,14 @@ const ClientPortalLanding = () => {
 
 
           {/* Prominent Submission Center Banner */}
-          <div className="mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-xl p-8 text-white">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-xl p-6 text-white">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
               <div className="flex-1">
-                <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
                   🚀 Unified Regulatory Submission Center
                   <Badge className="bg-yellow-400 text-black">NEW</Badge>
                 </h2>
-                <p className="text-lg opacity-95 mb-4">
+                <p className="text-base opacity-95 mb-3">
                   Complete workflow orchestration from IND preparation through eCTD submission - all in one integrated workspace
                 </p>
                 <div className="flex flex-wrap gap-3 text-sm">
@@ -622,10 +636,10 @@ const ClientPortalLanding = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 <Button
                   size="lg"
-                  className="bg-white text-blue-600 hover:bg-gray-100 font-bold px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="bg-white text-blue-600 hover:bg-gray-100 font-bold px-6 py-4 text-base shadow-lg hover:shadow-xl transition-all duration-200"
                   onClick={() => setLocation('/submission-center')}
                 >
                   <BarChart className="h-6 w-6 mr-2" />
@@ -641,11 +655,11 @@ const ClientPortalLanding = () => {
 
           {/* Main Content - Modules Only */}
           <div className="max-w-6xl mx-auto">
-            <div className="mb-8 text-center">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
                 Concept2Cure Platform Modules
               </h2>
-              <p className="text-gray-600 text-lg">Navigate your complete regulatory workflow with intelligent automation</p>
+              <p className="text-gray-600 text-base">Navigate your complete regulatory workflow with intelligent automation</p>
             </div>
 
             {/* Workflow Sections */}
@@ -656,31 +670,31 @@ const ClientPortalLanding = () => {
                 <Skeleton className="h-48 w-full" />
               </div>
             ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {workflowSections.map((section, sectionIndex) => (
                 <div key={sectionIndex} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-200/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
                   {/* Section Header */}
-                  <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-6 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-sm">
+                  <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-sm">
                         {section.icon}
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold tracking-tight">{section.title}</h3>
+                        <h3 className="text-lg font-bold tracking-tight">{section.title}</h3>
                         <p className="text-sm opacity-95 mt-0.5">{section.description}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Section Modules */}
-                  <div className="p-4">
-                    <div className="grid grid-cols-1 gap-3">
+                  <div className="p-3">
+                    <div className="grid grid-cols-1 gap-2.5">
                       {section.modules.map(module => (
                         <div
                           key={module.id}
                           data-testid={`module-card-${module.id}`}
                           onClick={() => handleModuleSelect(module.id)}
-                          className={`relative rounded-xl p-5 cursor-pointer transition-all duration-300 transform
+                          className={`relative rounded-xl p-4 cursor-pointer transition-all duration-300 transform
                             hover:scale-[0.98] active:scale-[0.96] hover:shadow-xl
                             ${module.highlight
                               ? 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 border-2 border-blue-200/50 shadow-lg shadow-blue-100/30'

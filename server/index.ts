@@ -13,6 +13,7 @@ import fs from 'fs';
 import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { applySecurityMiddleware } from './middleware/security';
 
 // Prefer IPv4 DNS results to avoid IPv6 connection issues in some environments
 dns.setDefaultResultOrder('ipv4first');
@@ -59,6 +60,15 @@ import sectionsRouter from './routes/sections.js';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
+import analyticsRoutes from './routes/analytics';
+import regulatoryRoutes from './src/routes/regulatory.router';
+import { obligationsRouter } from './src/routes/obligations.router';
+import ingestRoutes from './routes/ingest';
+import evidenceRoutes from './routes/evidence';
+import writerRoutes from './routes/writer';
+import draftsRoutes from './routes/drafts';
+import cmcRoutes from './routes/cmc';
+import dashboardRoutes from './routes/dashboard';
 
 // Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api.js';
@@ -66,6 +76,10 @@ import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.set('trust proxy', 1);
+
+applySecurityMiddleware(app);
 
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
@@ -161,7 +175,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add basic CORS headers to allow frontend communication
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const allowedOrigin = process.env.CORS_ORIGIN || '*';
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
+  res.header('Vary', 'Origin');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-organization-id');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
@@ -324,6 +340,20 @@ app.use('/api/templates', templateRoutes);
 // Mount template usage and catalog routes
 import templatesUsageRoutes from './routes/templates-usage.js';
 app.use('/api', templatesUsageRoutes);
+
+// Mount live analytics routes
+app.use('/api/analytics', analyticsRoutes);
+// Mount regulatory compliance routes
+app.use('/api/reg', regulatoryRoutes);
+app.use('/api/reg/obligations', obligationsRouter);
+// Mount ingestion routes
+app.use('/api/ingest', ingestRoutes);
+// Mount evidence bridge routes
+app.use('/api/evidence', evidenceRoutes);
+app.use('/api/writer', writerRoutes);
+app.use('/api/drafts', draftsRoutes);
+app.use('/api/cmc', cmcRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Import and mount AI routes
 import aiRoutes from './api/ai/routes.js';

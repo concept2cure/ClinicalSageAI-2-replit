@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import ClientPortalLanding from '../../pages/ClientPortalLanding';
 import { Link, useLocation } from 'wouter';
 import {
   FileText,
@@ -67,6 +68,7 @@ const modules = [
 ];
 
 const SimpleWorkingPortal = () => {
+  return <ClientPortalLanding />;
   const [location] = useLocation();
 
   return (

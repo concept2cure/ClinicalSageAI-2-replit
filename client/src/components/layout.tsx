@@ -35,7 +35,7 @@ export function HeaderSection({ children, className }: LayoutProps) {
  * Content section for page body content
  */
 export function ContentSection({ children, className }: LayoutProps) {
-  return <section className={cn('w-full py-8', className)}>{children}</section>;
+  return <section className={cn('w-full py-6', className)}>{children}</section>;
 }
 
 /**
@@ -43,7 +43,7 @@ export function ContentSection({ children, className }: LayoutProps) {
  */
 export function CardGrid({ children, className }: LayoutProps) {
   return (
-    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8', className)}>
+    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6', className)}>
       {children}
     </div>
   );
