@@ -2487,6 +2487,124 @@ export const cerProjectsRelations = relations(cerProjects, ({ one, many }) => ({
   approvals: many(cerApprovals),
 }));
 
+export const medicalDevicesRelations = relations(medicalDevices, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [medicalDevices.organizationId],
+    references: [organizations.id],
+  }),
+  lifecycleStages: many(deviceLifecycleStages),
+  diagnosticAssays: many(diagnosticAssays),
+  postMarketEvents: many(devicePostMarketEvents),
+  dataElementValues: many(regulatoryDataElementValues),
+  documentHarvests: many(regulatoryDocumentHarvests),
+}));
+
+export const deviceLifecycleStagesRelations = relations(deviceLifecycleStages, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [deviceLifecycleStages.organizationId],
+    references: [organizations.id],
+  }),
+  device: one(medicalDevices, {
+    fields: [deviceLifecycleStages.deviceId],
+    references: [medicalDevices.id],
+  }),
+  owner: one(users, {
+    fields: [deviceLifecycleStages.ownerId],
+    references: [users.id],
+  }),
+}));
+
+export const diagnosticAssaysRelations = relations(diagnosticAssays, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [diagnosticAssays.organizationId],
+    references: [organizations.id],
+  }),
+  device: one(medicalDevices, {
+    fields: [diagnosticAssays.deviceId],
+    references: [medicalDevices.id],
+  }),
+  dataElementValues: many(regulatoryDataElementValues),
+}));
+
+export const devicePostMarketEventsRelations = relations(devicePostMarketEvents, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [devicePostMarketEvents.organizationId],
+    references: [organizations.id],
+  }),
+  device: one(medicalDevices, {
+    fields: [devicePostMarketEvents.deviceId],
+    references: [medicalDevices.id],
+  }),
+  createdBy: one(users, {
+    fields: [devicePostMarketEvents.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const regulatoryDataElementsRelations = relations(regulatoryDataElements, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [regulatoryDataElements.organizationId],
+    references: [organizations.id],
+  }),
+  values: many(regulatoryDataElementValues),
+}));
+
+export const regulatoryDataElementValuesRelations = relations(
+  regulatoryDataElementValues,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [regulatoryDataElementValues.organizationId],
+      references: [organizations.id],
+    }),
+    element: one(regulatoryDataElements, {
+      fields: [regulatoryDataElementValues.elementId],
+      references: [regulatoryDataElements.id],
+    }),
+    device: one(medicalDevices, {
+      fields: [regulatoryDataElementValues.deviceId],
+      references: [medicalDevices.id],
+    }),
+    diagnosticAssay: one(diagnosticAssays, {
+      fields: [regulatoryDataElementValues.diagnosticAssayId],
+      references: [diagnosticAssays.id],
+    }),
+    project: one(projects, {
+      fields: [regulatoryDataElementValues.projectId],
+      references: [projects.id],
+    }),
+    sourceDocument: one(documents, {
+      fields: [regulatoryDataElementValues.sourceDocumentId],
+      references: [documents.id],
+    }),
+    capturedByUser: one(users, {
+      fields: [regulatoryDataElementValues.capturedBy],
+      references: [users.id],
+    }),
+  })
+);
+
+export const regulatoryDocumentHarvestsRelations = relations(
+  regulatoryDocumentHarvests,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [regulatoryDocumentHarvests.organizationId],
+      references: [organizations.id],
+    }),
+    device: one(medicalDevices, {
+      fields: [regulatoryDocumentHarvests.deviceId],
+      references: [medicalDevices.id],
+    }),
+    sourceDocument: one(documents, {
+      fields: [regulatoryDocumentHarvests.sourceDocumentId],
+      references: [documents.id],
+    }),
+    createdByUser: one(users, {
+      fields: [regulatoryDocumentHarvests.createdBy],
+      references: [users.id],
+    }),
+  })
+);
+
 export const projectDocumentsRelations = relations(projectDocuments, ({ one }) => ({
   project: one(cerProjects, {
     fields: [projectDocuments.projectId],
@@ -3037,7 +3155,7 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
     .notNull()
     .references(() => organizations.id),
   sourceType: text('source_type').notNull(), // csr, ctd, rejection_letter, guidance, clinical_report
-  sourceDocumentId: uuid('source_document_id').references(() => ragDocuments.id),
+  sourceDocumentId: uuid('source_document_id').references(() => documents.id),
   submissionId: text('submission_id'),
   deviceId: integer('device_id').references(() => medicalDevices.id),
   documentTitle: text('document_title'),
