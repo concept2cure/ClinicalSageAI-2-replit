@@ -3046,7 +3046,7 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
   extractedData: json('extracted_data'),
   keyFindings: json('key_findings'),
   rejectionReason: text('rejection_reason'),
-  extractedAtoms: json('extracted_atoms'), // pointers to lumen_data_atoms
+  extractedAtoms: json('extracted_atoms'), // pointers to extracted atoms (see lumenDataAtoms)
   createdBy: integer('created_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
