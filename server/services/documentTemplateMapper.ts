@@ -19,10 +19,20 @@ const ESTAR_TEMPLATE_MAPPING = {
       'contactName': 'workflow.contactName',
       'contactEmail': 'workflow.contactEmail',
       'contactPhone': 'workflow.contactPhone',
+      'raContactName': 'workflow.raContactName',
+      'raContactEmail': 'workflow.raContactEmail',
+      'raContactPhone': 'workflow.raContactPhone',
       'dunsNumber': 'workflow.dunsNumber',
       'establishmentNumber': 'workflow.establishmentNumber',
+      'addressStreet': 'workflow.address.street',
+      'addressCity': 'workflow.address.city',
+      'addressState': 'workflow.address.state',
+      'addressZip': 'workflow.address.zip',
+      'addressCountry': 'workflow.address.country',
       'submissionDate': 'workflow.metadata.submissionDate',
-      'correspondenceEmail': 'workflow.correspondenceEmail'
+      'correspondenceEmail': 'workflow.correspondenceEmail',
+      'userFeeReference': 'workflow.userFeeReference',
+      'smallBusinessDetermination': 'workflow.smallBusinessDetermination'
     }
   },
 
@@ -37,7 +47,10 @@ const ESTAR_TEMPLATE_MAPPING = {
       'regulationNumber': 'workflow.regulationNumber',
       'deviceClass': 'workflow.deviceClass',
       'submissionType': 'workflow.submissionType',
-      'panelCode': 'workflow.panelCode'
+      'panelCode': 'workflow.panelCode',
+      'advisoryCommittee': 'workflow.advisoryCommittee',
+      'rxUse': 'workflow.rxUse',
+      'otcUse': 'workflow.otcUse'
     }
   },
 
@@ -60,18 +73,46 @@ const ESTAR_TEMPLATE_MAPPING = {
         workflowPath: 'workflow.deviceModels',
         isArray: true
       },
+      'deviceModelFamily': {
+        templateField: 'deviceDescription.modelFamily',
+        workflowPath: 'workflow.deviceModelFamily'
+      },
       'accessories': {
         templateField: 'deviceDescription.accessories',
         workflowPath: 'workflow.deviceAccessories',
         isArray: true
       },
-      'technicalSpecifications': {
-        templateField: 'deviceDescription.specifications',
-        workflowPath: 'workflow.technicalSpecifications'
+      'accessoriesNotes': {
+        templateField: 'deviceDescription.accessoriesNotes',
+        workflowPath: 'workflow.accessoriesNotes'
       },
-      'materialsComposition': {
-        templateField: 'deviceDescription.materials',
-        workflowPath: 'workflow.materialsComposition'
+      'technicalCharacteristics': {
+        templateField: 'deviceDescription.technicalCharacteristics',
+        workflowPath: 'workflow.technicalCharacteristics'
+      },
+      'principlesOfOperation': {
+        templateField: 'deviceDescription.principlesOfOperation',
+        workflowPath: 'workflow.principlesOfOperation'
+      },
+      'components': {
+        templateField: 'deviceDescription.components',
+        workflowPath: 'workflow.components'
+      },
+      'criticalMaterials': {
+        templateField: 'deviceDescription.criticalMaterials',
+        workflowPath: 'workflow.criticalMaterials'
+      },
+      'energySource': {
+        templateField: 'deviceDescription.energySource',
+        workflowPath: 'workflow.energySource'
+      },
+      'environmentOfUse': {
+        templateField: 'deviceDescription.environmentOfUse',
+        workflowPath: 'workflow.environmentOfUse'
+      },
+      'patientPopulation': {
+        templateField: 'deviceDescription.patientPopulation',
+        workflowPath: 'workflow.patientPopulation'
       }
     }
   },
@@ -88,6 +129,10 @@ const ESTAR_TEMPLATE_MAPPING = {
       'predicateManufacturer': {
         templateField: 'se.predicateManufacturer',
         workflowPath: 'workflow.predicateManufacturer'
+      },
+      'equivalenceRationale': {
+        templateField: 'se.equivalenceRationale',
+        workflowPath: 'workflow.equivalenceRationale'
       },
       'comparisonTable': {
         templateField: 'se.comparisonTable',
@@ -107,18 +152,28 @@ const ESTAR_TEMPLATE_MAPPING = {
     subsections: {
       'benchTesting': {
         templateField: 'performance.benchTesting',
-        workflowPath: 'workflow.testingData.bench',
-        conditional: 'workflow.testingData.hasBenchTesting'
+        workflowPath: 'workflow.testingBench'
       },
       'animalTesting': {
         templateField: 'performance.animalTesting', 
-        workflowPath: 'workflow.testingData.animal',
-        conditional: 'workflow.testingData.hasAnimalTesting'
+        workflowPath: 'workflow.testingAnimal'
       },
       'clinicalData': {
         templateField: 'performance.clinicalData',
-        workflowPath: 'workflow.testingData.clinical',
+        workflowPath: 'workflow.clinicalDataSummary',
         conditional: 'workflow.hasClinicalData'
+      },
+      'electricalSafetyEmc': {
+        templateField: 'performance.electricalSafetyEmc',
+        workflowPath: 'workflow.testingEmc'
+      },
+      'shelfLifePackaging': {
+        templateField: 'performance.shelfLifePackaging',
+        workflowPath: 'workflow.testingShelfLife'
+      },
+      'usabilityHumanFactors': {
+        templateField: 'performance.usabilityHumanFactors',
+        workflowPath: 'workflow.testingUsability'
       }
     }
   },
@@ -132,13 +187,37 @@ const ESTAR_TEMPLATE_MAPPING = {
         templateField: 'software.levelOfConcern',
         workflowPath: 'workflow.softwareLevel'
       },
-      'softwareDescription': {
-        templateField: 'software.description',
-        workflowPath: 'workflow.softwareDescription'
+      'softwareComplexity': {
+        templateField: 'software.complexity',
+        workflowPath: 'workflow.softwareComplexity'
       },
-      'cybersecurity': {
-        templateField: 'software.cybersecurity',
-        workflowPath: 'workflow.cybersecurityData',
+      'connectivity': {
+        templateField: 'software.connectivity',
+        workflowPath: 'workflow.connectivity'
+      },
+      'updateMechanism': {
+        templateField: 'software.updateMechanism',
+        workflowPath: 'workflow.updateMechanism'
+      },
+      'phiHandling': {
+        templateField: 'software.phiHandling',
+        workflowPath: 'workflow.phiHandling'
+      },
+      'sbomAvailable': {
+        templateField: 'software.sbomAvailable',
+        workflowPath: 'workflow.sbomAvailable'
+      },
+      'authEncryption': {
+        templateField: 'software.authEncryption',
+        workflowPath: 'workflow.authEncryption'
+      },
+      'vulnerabilityManagement': {
+        templateField: 'software.vulnerabilityManagement',
+        workflowPath: 'workflow.vulnerabilityManagement'
+      },
+      'cyberLabeling': {
+        templateField: 'software.cyberLabeling',
+        workflowPath: 'workflow.cyberLabeling',
         conditional: 'workflow.isCyberDevice'
       }
     }
@@ -157,9 +236,13 @@ const ESTAR_TEMPLATE_MAPPING = {
         templateField: 'biocomp.contactDuration',
         workflowPath: 'workflow.contactDuration'
       },
+      'iso10993Mapping': {
+        templateField: 'biocomp.iso10993Mapping',
+        workflowPath: 'workflow.iso10993Mapping'
+      },
       'testingSummary': {
         templateField: 'biocomp.testingSummary',
-        workflowPath: 'workflow.biocompatibilityData'
+        workflowPath: 'workflow.biocompSummary'
       }
     }
   },
@@ -177,9 +260,74 @@ const ESTAR_TEMPLATE_MAPPING = {
         templateField: 'sterility.sal',
         workflowPath: 'workflow.sterilitySAL'
       },
-      'validationData': {
-        templateField: 'sterility.validation',
-        workflowPath: 'workflow.sterilityValidation'
+      'endotoxinLimits': {
+        templateField: 'sterility.endotoxinLimits',
+        workflowPath: 'workflow.endotoxinLimits'
+      },
+      'pyrogenLimits': {
+        templateField: 'sterility.pyrogenLimits',
+        workflowPath: 'workflow.pyrogenLimits'
+      },
+      'packagingIntegrity': {
+        templateField: 'sterility.packagingIntegrity',
+        workflowPath: 'workflow.packagingIntegrity'
+      },
+      'shelfLife': {
+        templateField: 'sterility.shelfLife',
+        workflowPath: 'workflow.shelfLife'
+      }
+    }
+  },
+
+  // Labeling & UDI
+  'LABELING': {
+    templateSection: 'labeling',
+    subsections: {
+      'ifuAvailable': {
+        templateField: 'labeling.ifuAvailable',
+        workflowPath: 'workflow.ifuAvailable'
+      },
+      'labelingNotes': {
+        templateField: 'labeling.notes',
+        workflowPath: 'workflow.labelingNotes'
+      },
+      'udiNotes': {
+        templateField: 'labeling.udiNotes',
+        workflowPath: 'workflow.udiNotes'
+      },
+      'artworkReferences': {
+        templateField: 'labeling.artworkReferences',
+        workflowPath: 'workflow.artworkReferences'
+      }
+    }
+  },
+
+  // Standards & Declarations
+  'STANDARDS': {
+    templateSection: 'standards',
+    subsections: {
+      'recognizedStandards': {
+        templateField: 'standards.recognized',
+        workflowPath: 'workflow.standardsList'
+      },
+      'declarations': {
+        templateField: 'standards.declarations',
+        workflowPath: 'workflow.declarationsOfConformity'
+      }
+    }
+  },
+
+  // Attachments metadata
+  'ATTACHMENTS': {
+    templateSection: 'attachments',
+    subsections: {
+      'summary': {
+        templateField: 'attachments.summary',
+        workflowPath: 'workflow.attachmentsSummary'
+      },
+      'tags': {
+        templateField: 'attachments.tags',
+        workflowPath: 'workflow.attachmentsTags'
       }
     }
   }

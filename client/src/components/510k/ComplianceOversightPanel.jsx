@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   AlertTriangle, 
@@ -92,9 +92,139 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
       minute: '2-digit' 
     });
   };
+
+  const localRtaIssues = useMemo(() => {
+    if (!currentData) return [];
+
+    const issues = [];
+    const addIssue = (field, issue, severity, suggestedFix, fdaRequirement) => {
+      issues.push({
+        field,
+        issue,
+        severity,
+        suggestedFix,
+        fdaRequirement: fdaRequirement || 'FDA Refuse-to-Accept (RTA) Checklist'
+      });
+    };
+
+    if (!currentData.applicantName) {
+      addIssue(
+        'Applicant Name',
+        'Applicant name is missing on administrative forms.',
+        'critical',
+        'Enter the legal applicant name in Setup → Company Information.'
+      );
+    }
+
+    if (!currentData.contactName || !currentData.contactEmail) {
+      addIssue(
+        'Contact Information',
+        'Primary contact name and email are required.',
+        'critical',
+        'Provide contact name and email to complete FDA 3514.'
+      );
+    }
+
+    if (!currentData.deviceName || !currentData.productCode) {
+      addIssue(
+        'Device Identification',
+        'Device name and product code are required for 510(k) submission.',
+        'critical',
+        'Complete device identification in the intake section.'
+      );
+    }
+
+    if (!currentData.intendedUse || !currentData.indicationsForUse) {
+      addIssue(
+        'Intended Use',
+        'Intended use and indications for use are required.',
+        'major',
+        'Provide intended use and indications statements.'
+      );
+    }
+
+    if (!currentData.summaryChoice) {
+      addIssue(
+        '510(k) Summary/Statement',
+        'Summary type selection is required.',
+        'major',
+        'Select 510(k) Summary or Statement in intake.'
+      );
+    }
+
+    if (!currentData.truthfulAccurate) {
+      addIssue(
+        'Truthful & Accurate Statement',
+        'Attestation is required prior to submission.',
+        'major',
+        'Check the Truthful and Accurate attestation.'
+      );
+    }
+
+    if (currentData.hasClinicalData && currentData.clinicalDataUsed && !currentData.clinicalDataSummary) {
+      addIssue(
+        'Clinical Data Summary',
+        'Clinical data summary is missing for FDA 3674.',
+        'major',
+        'Provide a clinical data summary in intake.'
+      );
+    }
+
+    if (currentData.hasSoftware && !currentData.softwareLevel) {
+      addIssue(
+        'Software Level of Concern',
+        'Software level of concern is required for software devices.',
+        'major',
+        'Select software level of concern in intake.'
+      );
+    }
+
+    if (currentData.isSterile && !currentData.sterilizationMethod) {
+      addIssue(
+        'Sterilization Method',
+        'Sterilization method is required for sterile devices.',
+        'major',
+        'Provide sterilization method and SAL details.'
+      );
+    }
+
+    if (currentData.hasPatientContacting && !currentData.iso10993Mapping) {
+      addIssue(
+        'Biocompatibility Planning',
+        'ISO 10993 endpoint mapping is missing.',
+        'major',
+        'Map ISO 10993 endpoints for patient contact.'
+      );
+    }
+
+    if (!currentData.rxUse && !currentData.otcUse) {
+      addIssue(
+        'Rx/OTC Use',
+        'Rx/OTC use designation is missing.',
+        'minor',
+        'Select Rx and/or OTC use in intake.'
+      );
+    }
+
+    if (!currentData.environmentOfUse || !currentData.patientPopulation) {
+      addIssue(
+        'Use Environment',
+        'Environment of use and patient population are incomplete.',
+        'minor',
+        'Complete environment of use and patient population fields.'
+      );
+    }
+
+    return issues;
+  }, [currentData]);
   
   // Calculate compliance score
-  const complianceScore = complianceReport?.report?.complianceScore || 0;
+  const combinedIssues = [
+    ...localRtaIssues,
+    ...(complianceReport?.report?.complianceIssues || [])
+  ];
+  const fallbackScore = Math.max(0, 100 - combinedIssues.length * 8);
+  const complianceScore = complianceReport?.report?.complianceScore ?? fallbackScore;
   const scoreColor = complianceScore >= 80 ? 'text-green-500' : 
                      complianceScore >= 60 ? 'text-yellow-500' : 'text-red-500';
   
@@ -147,9 +277,9 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
           {/* Compliance Issues Tab */}
           <TabsContent value="compliance" className="mt-4">
             <ScrollArea className="h-[400px] w-full">
-              {complianceReport?.report?.complianceIssues?.length > 0 ? (
+              {combinedIssues.length > 0 ? (
                 <div className="space-y-3">
-                  {complianceReport.report.complianceIssues.map((issue, index) => (
+                  {combinedIssues.map((issue, index) => (
                     <Alert
                       key={index}
                       className={`cursor-pointer transition-all ${

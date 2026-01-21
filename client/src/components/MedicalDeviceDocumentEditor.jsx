@@ -225,6 +225,30 @@ const MedicalDeviceDocumentEditor = ({
   // Transform database sections to component format with autofill
   const fda510kSections = useMemo(() => {
     if (!sectionsResponse?.sections) return [];
+
+    const autoFillMap = {
+      applicant_name: deviceProfile.applicantName || deviceProfile.manufacturer,
+      contact_name: deviceProfile.contactName,
+      contact_email: deviceProfile.contactEmail,
+      contact_phone: deviceProfile.contactPhone,
+      ra_contact_name: deviceProfile.raContactName,
+      ra_contact_email: deviceProfile.raContactEmail,
+      ra_contact_phone: deviceProfile.raContactPhone,
+      duns_number: deviceProfile.dunsNumber,
+      establishment_reg: deviceProfile.establishmentNumber,
+      device_name: deviceProfile.deviceName,
+      device_class: deviceProfile.deviceClass || deviceProfile.mdClass,
+      product_code: deviceProfile.productCode,
+      intended_use: deviceProfile.intendedUse,
+      indications_for_use: deviceProfile.indicationsForUse,
+      patient_population: deviceProfile.patientPopulation,
+      use_environment: deviceProfile.environmentOfUse,
+      summary_type: deviceProfile.summaryChoice,
+      truthful_statement: deviceProfile.truthfulAccurate,
+      rx_use: deviceProfile.rxUse,
+      otc_use: deviceProfile.otcUse,
+      clinical_data_summary: deviceProfile.clinicalDataSummary
+    };
     
     return sectionsResponse.sections.map(section => {
       const fields = section.fields || [];
@@ -232,6 +256,10 @@ const MedicalDeviceDocumentEditor = ({
       // Apply autofill based on deviceProfile
       const fieldsWithAutofill = fields.map(field => {
         const fieldWithAutofill = { ...field };
+
+        if (autoFillMap[field.id] !== undefined && autoFillMap[field.id] !== null) {
+          fieldWithAutofill.autoFill = autoFillMap[field.id];
+        }
         
         // Auto-fill manufacturer
         if (field.id === 'applicant_name' && deviceProfile.manufacturer) {
@@ -279,8 +307,8 @@ const MedicalDeviceDocumentEditor = ({
       category: 'Administrative',
       fields: [
         { id: 'fda_form_3601', label: 'FDA Form 3601 Completed', type: 'checkbox', required: true },
-        { id: 'applicant_name', label: 'Applicant Name', type: 'text', required: true, autoFill: deviceProfile.manufacturer },
-        { id: 'payment_confirmation', label: 'Payment Confirmation Number', type: 'text', required: false },
+        { id: 'applicant_name', label: 'Applicant Name', type: 'text', required: true, autoFill: deviceProfile.applicantName || deviceProfile.manufacturer },
+        { id: 'payment_confirmation', label: 'Payment Confirmation Number', type: 'text', required: false, autoFill: deviceProfile.userFeeReference },
         { id: 'fee_amount', label: 'Fee Amount', type: 'text', required: false }
       ]
     },
@@ -292,15 +320,15 @@ const MedicalDeviceDocumentEditor = ({
       category: 'Administrative',
       fields: [
         { id: 'fda_form_3514', label: 'FDA Form 3514 Completed', type: 'checkbox', required: true },
-        { id: 'submission_type', label: 'Submission Type', type: 'select', options: ['Traditional 510(k)', 'Special 510(k)', 'Abbreviated 510(k)'], required: true },
+        { id: 'submission_type', label: 'Submission Type', type: 'select', options: ['Traditional 510(k)', 'Special 510(k)', 'Abbreviated 510(k)'], required: true, autoFill: deviceProfile.submissionType },
         { id: 'device_name', label: 'Device Trade Name', type: 'text', required: true, autoFill: deviceProfile.deviceName },
-        { id: 'device_class', label: 'Device Class', type: 'select', options: ['Class I', 'Class II', 'Class III'], required: true, autoFill: deviceProfile.mdClass },
+        { id: 'device_class', label: 'Device Class', type: 'select', options: ['Class I', 'Class II', 'Class III'], required: true, autoFill: deviceProfile.deviceClass || deviceProfile.mdClass },
         { id: 'product_code', label: 'Product Code', type: 'text', required: true, autoFill: deviceProfile.productCode },
-        { id: 'contact_name', label: 'Contact Person', type: 'text', required: true },
-        { id: 'contact_phone', label: 'Phone', type: 'tel', required: true },
-        { id: 'contact_email', label: 'Email', type: 'email', required: true },
-        { id: 'establishment_reg', label: 'Establishment Registration Number', type: 'text', required: true },
-        { id: 'duns_number', label: 'DUNS Number', type: 'text', required: false }
+        { id: 'contact_name', label: 'Contact Person', type: 'text', required: true, autoFill: deviceProfile.contactName },
+        { id: 'contact_phone', label: 'Phone', type: 'tel', required: true, autoFill: deviceProfile.contactPhone },
+        { id: 'contact_email', label: 'Email', type: 'email', required: true, autoFill: deviceProfile.contactEmail },
+        { id: 'establishment_reg', label: 'Establishment Registration Number', type: 'text', required: true, autoFill: deviceProfile.establishmentNumber },
+        { id: 'duns_number', label: 'DUNS Number', type: 'text', required: false, autoFill: deviceProfile.dunsNumber }
       ]
     },
     {
@@ -324,10 +352,10 @@ const MedicalDeviceDocumentEditor = ({
       category: 'Administrative',
       fields: [
         { id: 'intended_use', label: 'Intended Use Statement', type: 'textarea', required: true, autoFill: deviceProfile.intendedUse },
-        { id: 'prescription_use', label: 'Prescription Use (Rx)', type: 'checkbox', required: false },
-        { id: 'otc_use', label: 'Over-The-Counter Use (OTC)', type: 'checkbox', required: false },
-        { id: 'patient_population', label: 'Patient Population', type: 'textarea', required: true },
-        { id: 'use_environment', label: 'Environment of Use', type: 'select', options: ['Hospital', 'Clinic', 'Home Use', 'Emergency Care', 'Laboratory', 'Point of Care'], required: true },
+        { id: 'prescription_use', label: 'Prescription Use (Rx)', type: 'checkbox', required: false, autoFill: deviceProfile.rxUse },
+        { id: 'otc_use', label: 'Over-The-Counter Use (OTC)', type: 'checkbox', required: false, autoFill: deviceProfile.otcUse },
+        { id: 'patient_population', label: 'Patient Population', type: 'textarea', required: true, autoFill: deviceProfile.patientPopulation },
+        { id: 'use_environment', label: 'Environment of Use', type: 'select', options: ['Hospital', 'Clinic', 'Home Use', 'Emergency Care', 'Laboratory', 'Point of Care'], required: true, autoFill: deviceProfile.environmentOfUse },
         { id: 'indications_consistency', label: 'Statement Matches All Submission Content', type: 'checkbox', required: true }
       ]
     },
@@ -338,13 +366,13 @@ const MedicalDeviceDocumentEditor = ({
       icon: FileText,
       category: 'Administrative',
       fields: [
-        { id: 'summary_type', label: 'Type', type: 'select', options: ['510(k) Summary (21 CFR 807.92)', '510(k) Statement (21 CFR 807.93)'], required: true },
-        { id: 'submitter_info', label: 'Submitter Information', type: 'textarea', required: true },
-        { id: 'device_classification', label: 'Device Classification & Product Code', type: 'text', required: true },
+        { id: 'summary_type', label: 'Type', type: 'select', options: ['510(k) Summary (21 CFR 807.92)', '510(k) Statement (21 CFR 807.93)'], required: true, autoFill: deviceProfile.summaryChoice },
+        { id: 'submitter_info', label: 'Submitter Information', type: 'textarea', required: true, autoFill: deviceProfile.applicantName },
+        { id: 'device_classification', label: 'Device Classification & Product Code', type: 'text', required: true, autoFill: deviceProfile.deviceClass || deviceProfile.productCode },
         { id: 'predicate_identification', label: 'Predicate Device(s) Identification', type: 'textarea', required: true },
-        { id: 'device_description_summary', label: 'Device Description', type: 'textarea', required: true },
-        { id: 'se_discussion_summary', label: 'Substantial Equivalence Discussion', type: 'textarea', required: true },
-        { id: 'performance_data_summary', label: 'Performance Data Summary', type: 'textarea', required: true }
+        { id: 'device_description_summary', label: 'Device Description', type: 'textarea', required: true, autoFill: deviceProfile.technicalCharacteristics || deviceProfile.principlesOfOperation },
+        { id: 'se_discussion_summary', label: 'Substantial Equivalence Discussion', type: 'textarea', required: true, autoFill: deviceProfile.equivalenceRationale },
+        { id: 'performance_data_summary', label: 'Performance Data Summary', type: 'textarea', required: true, autoFill: deviceProfile.testingBench || deviceProfile.testingEmc }
       ]
     },
     {
@@ -354,8 +382,8 @@ const MedicalDeviceDocumentEditor = ({
       icon: Shield,
       category: 'Administrative',
       fields: [
-        { id: 'truthful_statement', label: 'Truthful and Accurate Statement (21 CFR 807.87)', type: 'checkbox', required: true },
-        { id: 'signatory_name', label: 'Signatory Name', type: 'text', required: true },
+        { id: 'truthful_statement', label: 'Truthful and Accurate Statement (21 CFR 807.87)', type: 'checkbox', required: true, autoFill: deviceProfile.truthfulAccurate },
+        { id: 'signatory_name', label: 'Signatory Name', type: 'text', required: true, autoFill: deviceProfile.raContactName || deviceProfile.contactName },
         { id: 'signatory_title', label: 'Title', type: 'text', required: true },
         { id: 'signature_date', label: 'Date', type: 'date', required: true, autoFill: new Date().toISOString().split('T')[0] }
       ]
