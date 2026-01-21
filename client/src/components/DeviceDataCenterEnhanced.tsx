@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -197,6 +198,7 @@ export default function DeviceDataCenterEnhanced({
   mode = 'full' 
 }: DeviceDataCenterEnhancedProps) {
   const { toast } = useToast();
+  const { getTenantHeaders } = useTenantContext();
   const [selectedRequirement, setSelectedRequirement] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,7 +272,7 @@ export default function DeviceDataCenterEnhanced({
       const response = await fetch('/api/device-data-center/upload', {
         method: 'POST',
         headers: {
-          'X-Organization-Id': '7'
+          ...getTenantHeaders()
         },
         body: formData
       });
