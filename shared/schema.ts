@@ -2476,6 +2476,13 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   standardsCatalog: many(standardsCatalog),
   standardDataModels: many(standardDataModels),
   standardRequirements: many(standardRequirements),
+  smartFragments: many(smartFragments),
+  extractedEmbeddings: many(extractedEmbeddings),
+  controlledVocabularies: many(controlledVocabularies),
+  dataQualityReviews: many(dataQualityReviews),
+  trainingDatasets: many(trainingDatasets),
+  dataRetentionPolicies: many(dataRetentionPolicies),
+  sensitiveDataFlags: many(sensitiveDataFlags),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2641,6 +2648,121 @@ export const standardRequirementsRelations = relations(standardRequirements, ({ 
   standard: one(standardsCatalog, {
     fields: [standardRequirements.standardId],
     references: [standardsCatalog.id],
+  }),
+}));
+
+export const smartFragmentsRelations = relations(smartFragments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [smartFragments.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [smartFragments.documentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [smartFragments.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+}));
+
+export const extractedEmbeddingsRelations = relations(extractedEmbeddings, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [extractedEmbeddings.organizationId],
+    references: [organizations.id],
+  }),
+  document: one(documents, {
+    fields: [extractedEmbeddings.documentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [extractedEmbeddings.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+}));
+
+export const controlledVocabulariesRelations = relations(controlledVocabularies, ({ one, many }) => ({
+  standard: one(standardsCatalog, {
+    fields: [controlledVocabularies.standardId],
+    references: [standardsCatalog.id],
+  }),
+  synonyms: many(controlledVocabularySynonyms),
+}));
+
+export const controlledVocabularySynonymsRelations = relations(
+  controlledVocabularySynonyms,
+  ({ one }) => ({
+    term: one(controlledVocabularies, {
+      fields: [controlledVocabularySynonyms.termId],
+      references: [controlledVocabularies.id],
+    }),
+  })
+);
+
+export const factProvenanceRelations = relations(factProvenance, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [factProvenance.organizationId],
+    references: [organizations.id],
+  }),
+  sourceDocument: one(documents, {
+    fields: [factProvenance.sourceDocumentId],
+    references: [documents.id],
+  }),
+  hierarchy: one(documentHierarchy, {
+    fields: [factProvenance.hierarchyId],
+    references: [documentHierarchy.id],
+  }),
+}));
+
+export const dataQualityReviewsRelations = relations(dataQualityReviews, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [dataQualityReviews.organizationId],
+    references: [organizations.id],
+  }),
+  reviewer: one(users, {
+    fields: [dataQualityReviews.reviewerId],
+    references: [users.id],
+  }),
+}));
+
+export const trainingDatasetsRelations = relations(trainingDatasets, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [trainingDatasets.organizationId],
+    references: [organizations.id],
+  }),
+  createdByUser: one(users, {
+    fields: [trainingDatasets.createdBy],
+    references: [users.id],
+  }),
+  items: many(trainingDatasetItems),
+}));
+
+export const trainingDatasetItemsRelations = relations(trainingDatasetItems, ({ one }) => ({
+  dataset: one(trainingDatasets, {
+    fields: [trainingDatasetItems.datasetId],
+    references: [trainingDatasets.id],
+  }),
+}));
+
+export const dataRetentionPoliciesRelations = relations(dataRetentionPolicies, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [dataRetentionPolicies.organizationId],
+    references: [organizations.id],
+  }),
+  assignments: many(dataRetentionAssignments),
+}));
+
+export const dataRetentionAssignmentsRelations = relations(dataRetentionAssignments, ({ one }) => ({
+  policy: one(dataRetentionPolicies, {
+    fields: [dataRetentionAssignments.policyId],
+    references: [dataRetentionPolicies.id],
+  }),
+}));
+
+export const sensitiveDataFlagsRelations = relations(sensitiveDataFlags, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [sensitiveDataFlags.organizationId],
+    references: [organizations.id],
   }),
 }));
 
@@ -3355,6 +3477,215 @@ export const regulatoryDocumentHarvests = pgTable('regulatory_document_harvests'
 }));
 
 /**
+ * Vectorized Knowledge Fabric & AI Readiness
+ */
+export const smartFragments = pgTable('smart_fragments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  documentId: integer('document_id')
+    .references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  ectdSectionPath: text('ectd_section_path').notNull(),
+  fragmentType: text('fragment_type'), // text, table_summary, figure_description, regulatory_logic
+  rawContent: text('raw_content'),
+  redactedContent: text('redacted_content'),
+  metadata: json('metadata'),
+  embedding: vector('embedding', { dimensions: 1536 }), // text-embedding-3-small
+  embeddingModel: text('embedding_model').default('text-embedding-3-small'),
+  tokenCount: integer('token_count'),
+  contentHash: text('content_hash'),
+  sourceType: text('source_type'), // csr, ctd, guidance
+  containsSensitiveData: boolean('contains_sensitive_data').default(false),
+  redactionStatus: text('redaction_status').default('unredacted'),
+  partitionKey: text('partition_key'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  fragmentOrgIdx: index('smart_fragments_org_idx').on(table.organizationId),
+  fragmentDocIdx: index('smart_fragments_doc_idx').on(table.documentId),
+  fragmentSectionIdx: index('smart_fragments_section_idx').on(table.ectdSectionPath),
+}));
+
+export const extractedEmbeddings = pgTable('extracted_embeddings', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  entityType: text('entity_type').notNull(), // table, figure, adverse_event, endpoint
+  entityId: text('entity_id').notNull(),
+  documentId: integer('document_id').references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  embedding: vector('embedding', { dimensions: 1536 }),
+  embeddingModel: text('embedding_model').default('text-embedding-3-small'),
+  contentHash: text('content_hash'),
+  partitionKey: text('partition_key'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  embedEntityIdx: index('extracted_embeddings_entity_idx').on(table.entityType, table.entityId),
+  embedDocIdx: index('extracted_embeddings_doc_idx').on(table.documentId),
+}));
+
+export const controlledVocabularies = pgTable('controlled_vocabularies', {
+  id: serial('id').primaryKey(),
+  standardId: integer('standard_id').references(() => standardsCatalog.id),
+  termCode: text('term_code').notNull(),
+  termName: text('term_name').notNull(),
+  domain: text('domain'), // MedDRA, ICD-10, LOINC
+  termType: text('term_type'),
+  definition: text('definition'),
+  status: text('status').default('active').notNull(),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  vocabTermIdx: uniqueIndex('controlled_vocab_term_idx').on(table.standardId, table.termCode),
+  vocabDomainIdx: index('controlled_vocab_domain_idx').on(table.domain),
+}));
+
+export const controlledVocabularySynonyms = pgTable('controlled_vocabulary_synonyms', {
+  id: serial('id').primaryKey(),
+  termId: integer('term_id')
+    .notNull()
+    .references(() => controlledVocabularies.id, { onDelete: 'cascade' }),
+  synonym: text('synonym').notNull(),
+  locale: text('locale'),
+  isPreferred: boolean('is_preferred').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  synonymTermIdx: index('controlled_vocab_synonym_term_idx').on(table.termId),
+  synonymIdx: index('controlled_vocab_synonym_idx').on(table.synonym),
+}));
+
+export const factProvenance = pgTable('fact_provenance', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  factType: text('fact_type').notNull(), // regulatory_data_element, endpoint, adverse_event
+  factId: text('fact_id').notNull(),
+  sourceDocumentId: integer('source_document_id').references(() => documents.id),
+  hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
+  sourcePageStart: integer('source_page_start'),
+  sourcePageEnd: integer('source_page_end'),
+  extractionJobId: text('extraction_job_id'),
+  modelUsed: text('model_used'),
+  modelVersion: text('model_version'),
+  confidence: real('confidence'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  provenanceFactIdx: index('fact_provenance_fact_idx').on(table.factType, table.factId),
+  provenanceDocIdx: index('fact_provenance_doc_idx').on(table.sourceDocumentId),
+}));
+
+export const dataQualityReviews = pgTable('data_quality_reviews', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  score: real('score'),
+  status: text('status').default('pending').notNull(), // pending, approved, rejected
+  decision: text('decision'),
+  reviewerId: integer('reviewer_id').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at'),
+  overrideReason: text('override_reason'),
+  notes: text('notes'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  qualityEntityIdx: index('data_quality_entity_idx').on(table.entityType, table.entityId),
+  qualityStatusIdx: index('data_quality_status_idx').on(table.status),
+}));
+
+export const trainingDatasets = pgTable('training_datasets', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  datasetName: text('dataset_name').notNull(),
+  modelVersion: text('model_version'),
+  description: text('description'),
+  sourceSummary: json('source_summary'),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  trainingDatasetIdx: index('training_dataset_idx').on(table.organizationId, table.datasetName),
+}));
+
+export const trainingDatasetItems = pgTable('training_dataset_items', {
+  id: serial('id').primaryKey(),
+  datasetId: integer('dataset_id')
+    .notNull()
+    .references(() => trainingDatasets.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  label: text('label'),
+  confidence: real('confidence'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  datasetItemIdx: index('training_dataset_item_idx').on(table.datasetId),
+}));
+
+export const dataRetentionPolicies = pgTable('data_retention_policies', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  policyName: text('policy_name').notNull(),
+  retentionDays: integer('retention_days'),
+  legalHold: boolean('legal_hold').default(false),
+  appliesTo: text('applies_to').array(), // entity types
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  retentionOrgIdx: index('retention_policy_org_idx').on(table.organizationId),
+}));
+
+export const dataRetentionAssignments = pgTable('data_retention_assignments', {
+  id: serial('id').primaryKey(),
+  policyId: integer('policy_id')
+    .notNull()
+    .references(() => dataRetentionPolicies.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  partitionKey: text('partition_key'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  retentionEntityIdx: index('retention_assignment_entity_idx').on(table.entityType, table.entityId),
+  retentionPolicyIdx: index('retention_assignment_policy_idx').on(table.policyId),
+}));
+
+export const sensitiveDataFlags = pgTable('sensitive_data_flags', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  containsPhi: boolean('contains_phi').default(false),
+  containsPii: boolean('contains_pii').default(false),
+  maskingStatus: text('masking_status').default('unmasked'),
+  redactedFields: json('redacted_fields'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  sensitiveEntityIdx: index('sensitive_entity_idx').on(table.entityType, table.entityId),
+  sensitiveStatusIdx: index('sensitive_status_idx').on(table.maskingStatus),
+}));
+
+/**
  * Global Standards Bodies, Standards, and Data Models
  */
 export const standardsBodies = pgTable('standards_bodies', {
@@ -3698,6 +4029,70 @@ export const insertRegulatoryDocumentHarvestSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertSmartFragmentSchema = createInsertSchema(smartFragments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExtractedEmbeddingSchema = createInsertSchema(extractedEmbeddings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertControlledVocabularySchema = createInsertSchema(controlledVocabularies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertControlledVocabularySynonymSchema = createInsertSchema(
+  controlledVocabularySynonyms
+).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFactProvenanceSchema = createInsertSchema(factProvenance).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDataQualityReviewSchema = createInsertSchema(dataQualityReviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTrainingDatasetSchema = createInsertSchema(trainingDatasets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTrainingDatasetItemSchema = createInsertSchema(trainingDatasetItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDataRetentionPolicySchema = createInsertSchema(dataRetentionPolicies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDataRetentionAssignmentSchema = createInsertSchema(dataRetentionAssignments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSensitiveDataFlagSchema = createInsertSchema(sensitiveDataFlags).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertStandardsBodySchema = createInsertSchema(standardsBodies).omit({
   id: true,
   createdAt: true,
@@ -3785,6 +4180,39 @@ export type InsertRegulatoryDataElementValue = z.infer<typeof insertRegulatoryDa
 
 export type RegulatoryDocumentHarvest = InferSelectModel<typeof regulatoryDocumentHarvests>;
 export type InsertRegulatoryDocumentHarvest = z.infer<typeof insertRegulatoryDocumentHarvestSchema>;
+
+export type SmartFragment = InferSelectModel<typeof smartFragments>;
+export type InsertSmartFragment = z.infer<typeof insertSmartFragmentSchema>;
+
+export type ExtractedEmbedding = InferSelectModel<typeof extractedEmbeddings>;
+export type InsertExtractedEmbedding = z.infer<typeof insertExtractedEmbeddingSchema>;
+
+export type ControlledVocabulary = InferSelectModel<typeof controlledVocabularies>;
+export type InsertControlledVocabulary = z.infer<typeof insertControlledVocabularySchema>;
+
+export type ControlledVocabularySynonym = InferSelectModel<typeof controlledVocabularySynonyms>;
+export type InsertControlledVocabularySynonym = z.infer<typeof insertControlledVocabularySynonymSchema>;
+
+export type FactProvenance = InferSelectModel<typeof factProvenance>;
+export type InsertFactProvenance = z.infer<typeof insertFactProvenanceSchema>;
+
+export type DataQualityReview = InferSelectModel<typeof dataQualityReviews>;
+export type InsertDataQualityReview = z.infer<typeof insertDataQualityReviewSchema>;
+
+export type TrainingDataset = InferSelectModel<typeof trainingDatasets>;
+export type InsertTrainingDataset = z.infer<typeof insertTrainingDatasetSchema>;
+
+export type TrainingDatasetItem = InferSelectModel<typeof trainingDatasetItems>;
+export type InsertTrainingDatasetItem = z.infer<typeof insertTrainingDatasetItemSchema>;
+
+export type DataRetentionPolicy = InferSelectModel<typeof dataRetentionPolicies>;
+export type InsertDataRetentionPolicy = z.infer<typeof insertDataRetentionPolicySchema>;
+
+export type DataRetentionAssignment = InferSelectModel<typeof dataRetentionAssignments>;
+export type InsertDataRetentionAssignment = z.infer<typeof insertDataRetentionAssignmentSchema>;
+
+export type SensitiveDataFlag = InferSelectModel<typeof sensitiveDataFlags>;
+export type InsertSensitiveDataFlag = z.infer<typeof insertSensitiveDataFlagSchema>;
 
 export type StandardsBody = InferSelectModel<typeof standardsBodies>;
 export type InsertStandardsBody = z.infer<typeof insertStandardsBodySchema>;
