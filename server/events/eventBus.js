@@ -2,22 +2,17 @@
  * Event Bus for IND Wizard
  *
  * Provides a publish-subscribe mechanism for events across the application,
- * supporting both internal application events and real-time client notifications.
+ * supporting both internal application events and database persistence.
  *
  * Features:
- * - Supabase Realtime channel for persistence and cross-server support
+ * - Database persistence for event tracking
  * - In-memory event subscription for local processing
  * - Support for webhook notifications
  * - Event filtering by type and payload properties
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { query } from '../lib/db.js';
 import logger from '../utils/logger.js';
-
-// Initialize clients
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // In-memory subscribers
 const subscribers = [];
@@ -27,219 +22,161 @@ const subscribers = [];
  */
 class EventBus {
   constructor() {
-    this.supabase = supabase;
-    this.channel = null;
     this.initialized = false;
-
-    // Initialize Supabase channel
     this.initialize();
   }
 
   /**
-   * Initialize the Supabase realtime channel
+   * Initialize the event bus
    */
   async initialize() {
     if (this.initialized) return;
 
     try {
-      this.channel = this.supabase
-        .channel('ind_events')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'ind_events' },
-          payload => this.handleDatabaseEvent(payload.new)
+      // Ensure ind_events table exists
+      await query(`
+        CREATE TABLE IF NOT EXISTS ind_events (
+          id SERIAL PRIMARY KEY,
+          event_type VARCHAR(255) NOT NULL,
+          payload JSONB NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          processed BOOLEAN DEFAULT FALSE
         )
-        .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') {
-            logger.info('EventBus: Supabase realtime channel subscribed');
-            this.initialized = true;
-          } else if (status === 'CHANNEL_ERROR') {
-            logger.error(`EventBus: Supabase channel error: ${err?.message || 'Unknown error'}`);
-          }
-        });
-    } catch (error) {
-      logger.error(`EventBus: Failed to initialize Supabase channel: ${error.message}`);
-
-      // Fallback to in-memory only mode
+      `);
+      
       this.initialized = true;
-      logger.warn('EventBus: Operating in in-memory mode only');
+      logger.info('Event bus initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize event bus:', error);
     }
-  }
-
-  /**
-   * Handle events received from the database
-   *
-   * @param {Object} event - Event data from database
-   */
-  handleDatabaseEvent(event) {
-    // Notify all subscribers
-    this.notifySubscribers(event);
-  }
-
-  /**
-   * Subscribe to events
-   *
-   * @param {Object} options - Subscription options
-   * @param {Function} callback - Function to call with events
-   * @returns {Object} - Subscription object with unsubscribe method
-   */
-  subscribe(options, callback) {
-    const subscription = {
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-      options,
-      callback,
-    };
-
-    subscribers.push(subscription);
-
-    // Return unsubscribe method
-    return {
-      id: subscription.id,
-      unsubscribe: () => this.unsubscribe(subscription.id),
-    };
-  }
-
-  /**
-   * Unsubscribe from events
-   *
-   * @param {string} subscriptionId - ID of subscription to remove
-   * @returns {boolean} - Success indicator
-   */
-  unsubscribe(subscriptionId) {
-    const index = subscribers.findIndex(sub => sub.id === subscriptionId);
-
-    if (index !== -1) {
-      subscribers.splice(index, 1);
-      return true;
-    }
-
-    return false;
   }
 
   /**
    * Publish an event
-   *
-   * @param {Object} event - Event data
-   * @returns {Promise<boolean>} - Success indicator
+   * @param {string} eventType - Type of the event
+   * @param {Object} payload - Event data
    */
-  async publish(event) {
+  async publish(eventType, payload) {
     try {
-      // Ensure event has required properties
-      const normalizedEvent = {
-        type: event.type || 'unknown',
-        payload: event.payload || {},
-        timestamp: event.timestamp || new Date().toISOString(),
+      // Store event in database
+      const result = await query(
+        'INSERT INTO ind_events (event_type, payload) VALUES ($1, $2) RETURNING *',
+        [eventType, JSON.stringify(payload)]
+      );
+
+      const event = {
+        eventType,
+        payload,
+        timestamp: new Date().toISOString(),
       };
 
-      // Store in database
-      const { error } = await this.supabase.from('ind_events').insert({
-        event_type: normalizedEvent.type,
-        payload: normalizedEvent.payload,
-        ts: normalizedEvent.timestamp,
-      });
+      // Notify in-memory subscribers
+      this.notifySubscribers(event);
 
-      if (error) {
-        logger.error(`EventBus: Error storing event in database: ${error.message}`);
-        // Continue anyway to notify in-memory subscribers
-      }
-
-      // Notify all subscribers immediately (don't wait for database callback)
-      this.notifySubscribers(normalizedEvent);
-
-      return true;
+      logger.info(\`Event published: \${eventType}\`, { id: result.rows[0].id });
+      return result.rows[0];
     } catch (error) {
-      logger.error(`EventBus: Error publishing event: ${error.message}`);
-      return false;
+      logger.error(\`Failed to publish event: \${eventType}\`, error);
+      throw error;
     }
   }
 
   /**
-   * Notify all relevant subscribers of an event
-   *
-   * @param {Object} event - Event data
+   * Subscribe to events
+   * @param {string|Array<string>} eventTypes - Event type(s) to subscribe to
+   * @param {Function} callback - Function to call when event occurs
+   * @param {Object} filter - Optional filter for payload properties
+   * @returns {Function} Unsubscribe function
+   */
+  subscribe(eventTypes, callback, filter = null) {
+    const types = Array.isArray(eventTypes) ? eventTypes : [eventTypes];
+    const subscriber = {
+      eventTypes: types,
+      callback,
+      filter,
+    };
+
+    subscribers.push(subscriber);
+    logger.info(\`Subscribed to events: \${types.join(', ')}\`);
+
+    // Return unsubscribe function
+    return () => {
+      const index = subscribers.indexOf(subscriber);
+      if (index > -1) {
+        subscribers.splice(index, 1);
+        logger.info(\`Unsubscribed from events: \${types.join(', ')}\`);
+      }
+    };
+  }
+
+  /**
+   * Notify subscribers of an event
+   * @param {Object} event - Event object
    */
   notifySubscribers(event) {
-    subscribers.forEach(subscriber => {
+    for (const subscriber of subscribers) {
       try {
-        const { options, callback } = subscriber;
-
         // Check if subscriber is interested in this event type
-        if (options.type && options.type !== event.type) {
-          return;
+        if (!subscriber.eventTypes.includes('*') && !subscriber.eventTypes.includes(event.eventType)) {
+          continue;
         }
 
-        // Check if subscriber is interested in this submission ID
-        if (
-          options.submissionId &&
-          event.payload.submission_id !== options.submissionId &&
-          event.payload.submissionId !== options.submissionId
-        ) {
-          return;
+        // Apply filter if provided
+        if (subscriber.filter && !this.matchesFilter(event.payload, subscriber.filter)) {
+          continue;
         }
 
-        // Call the subscriber callback
-        callback(event);
+        // Call subscriber callback
+        subscriber.callback(event);
       } catch (error) {
-        logger.error(`EventBus: Error notifying subscriber: ${error.message}`);
+        logger.error(\`Error in event subscriber for \${event.eventType}:\`, error);
       }
-    });
+    }
+  }
+
+  /**
+   * Check if payload matches filter
+   * @param {Object} payload - Event payload
+   * @param {Object} filter - Filter criteria
+   * @returns {boolean}
+   */
+  matchesFilter(payload, filter) {
+    for (const [key, value] of Object.entries(filter)) {
+      if (payload[key] !== value) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
    * Get recent events
-   *
-   * @param {Object} options - Query options
-   * @returns {Promise<Array>} - Array of events
+   * @param {string} eventType - Optional event type filter
+   * @param {number} limit - Maximum number of events to return
+   * @returns {Promise<Array>} Array of events
    */
-  async getRecentEvents(options = {}) {
+  async getEvents(eventType = null, limit = 100) {
     try {
-      let query = this.supabase.from('ind_events').select('*');
-
-      // Apply filters
-      if (options.type) {
-        query = query.eq('event_type', options.type);
+      let sql = 'SELECT * FROM ind_events';
+      const params = [];
+      
+      if (eventType) {
+        sql += ' WHERE event_type = $1';
+        params.push(eventType);
       }
+      
+      sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1);
+      params.push(limit);
 
-      if (options.submissionId) {
-        query = query.eq('payload->submission_id', options.submissionId);
-      }
-
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
-      // Order by timestamp descending (newest first)
-      query = query.order('ts', { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) {
-        throw new Error(`Error fetching events: ${error.message}`);
-      }
-
-      return data;
+      const result = await query(sql, params);
+      return result.rows;
     } catch (error) {
-      logger.error(`EventBus: Error getting recent events: ${error.message}`);
-      return [];
+      logger.error('Failed to get events:', error);
+      throw error;
     }
   }
 }
 
-// Create and export a singleton instance
-export const eventBus = new EventBus();
-
-// Export a simplified listener function for backward compatibility
-export function listenEvents(callback) {
-  return eventBus.subscribe({}, callback);
-}
-
-// Export a simplified publish function for backward compatibility
-export async function publish(event) {
-  return eventBus.publish(event);
-}
-
-export default {
-  eventBus,
-  listenEvents,
-  publish,
-};
+// Export singleton instance
+const eventBus = new EventBus();
+export default eventBus;

@@ -7,12 +7,8 @@
  * - Validating document metadata against reference model
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { query } from '../lib/db.js';
 import { logger } from '../utils/logger.js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * Get detailed information about a document subtype
@@ -21,22 +17,38 @@ const supabase = createClient(supabaseUrl, supabaseKey);
  */
 export async function getSubtype(id) {
   try {
-    const { data, error } = await supabase
-      .from('document_subtypes')
-      .select(
-        `
-        *,
-        document_types:type_id (*),
-        lifecycle:lifecycle_id (*)
-      `
-      )
-      .eq('id', id)
-      .single();
+    const result = await query(
+      `SELECT 
+        ds.*,
+        dt.id as type_id, dt.name as type_name, dt.description as type_description,
+        lc.id as lifecycle_id, lc.name as lifecycle_name, lc.start_state
+      FROM document_subtypes ds
+      LEFT JOIN document_types dt ON ds.type_id = dt.id
+      LEFT JOIN lifecycle lc ON ds.lifecycle_id = lc.id
+      WHERE ds.id = $1`,
+      [id]
+    );
 
-    if (error) throw error;
-    if (!data) throw new Error(`Subtype with ID '${id}' not found`);
+    if (result.rows.length === 0) {
+      throw new Error(`Subtype with ID '${id}' not found`);
+    }
 
-    return data;
+    const row = result.rows[0];
+    
+    // Format to match previous structure
+    return {
+      ...row,
+      document_types: {
+        id: row.type_id,
+        name: row.type_name,
+        description: row.type_description,
+      },
+      lifecycle: {
+        id: row.lifecycle_id,
+        name: row.lifecycle_name,
+        start_state: row.start_state,
+      },
+    };
   } catch (error) {
     logger.error({ err: error, subtypeId: id }, 'Error fetching document subtype');
     throw error;
@@ -50,12 +62,13 @@ export async function getSubtype(id) {
  */
 export async function getFolder(id) {
   try {
-    const { data, error } = await supabase.from('folders').select('*').eq('id', id).single();
+    const result = await query('SELECT * FROM folders WHERE id = $1', [id]);
 
-    if (error) throw error;
-    if (!data) throw new Error(`Folder with ID '${id}' not found`);
+    if (result.rows.length === 0) {
+      throw new Error(`Folder with ID '${id}' not found`);
+    }
 
-    return data;
+    return result.rows[0];
   } catch (error) {
     logger.error({ err: error, folderId: id }, 'Error fetching folder');
     throw error;
@@ -138,32 +151,31 @@ export async function calculateRetentionDates(subtypeId, tenantId = null) {
     let retentionRule = null;
 
     if (tenantId) {
-      const { data, error } = await supabase
-        .from('retention_rules')
-        .select('*')
-        .eq('document_subtype_id', subtypeId)
-        .eq('tenant_id', tenantId)
-        .maybeSingle();
+      const tenantRuleResult = await query(
+        'SELECT * FROM retention_rules WHERE document_subtype_id = $1 AND tenant_id = $2',
+        [subtypeId, tenantId]
+      );
 
-      if (!error) {
-        retentionRule = data;
+      if (tenantRuleResult.rows.length > 0) {
+        retentionRule = tenantRuleResult.rows[0];
       }
     }
 
     // If no tenant-specific rule, get default from subtype
     if (!retentionRule) {
-      const { data, error } = await supabase
-        .from('document_subtypes')
-        .select('review_interval, archive_after, delete_after')
-        .eq('id', subtypeId)
-        .single();
+      const subtypeResult = await query(
+        'SELECT review_interval, archive_after, delete_after FROM document_subtypes WHERE id = $1',
+        [subtypeId]
+      );
 
-      if (error) throw error;
+      if (subtypeResult.rows.length === 0) {
+        throw new Error(`Subtype with ID '${subtypeId}' not found`);
+      }
 
       retentionRule = {
-        archive_after: data.archive_after,
-        delete_after: data.delete_after,
-        review_interval: data.review_interval,
+        archive_after: subtypeResult.rows[0].archive_after,
+        delete_after: subtypeResult.rows[0].delete_after,
+        review_interval: subtypeResult.rows[0].review_interval,
       };
     }
 
