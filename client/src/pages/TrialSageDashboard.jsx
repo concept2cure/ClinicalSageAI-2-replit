@@ -76,19 +76,19 @@ export default function TrialSageDashboard() {
     },
     {
       id: 'cer-developer',
-      name: 'CER Generator',
+      name: 'Medical Device & Diagnostics Regulatory Module',
       icon: <FileText className="w-6 h-6 text-emerald-600" />,
       description:
-        'Generate compliant Clinical Evaluation Reports with real-time safety data integration from FAERS, MAUDE, and EUDAMED.',
+        'Generate regulatory evaluation reports with real-time safety data integration from FAERS, MAUDE, and EUDAMED.',
       status: 'operational',
       capabilities: [
-        'Automated report structure generation',
+        'Automated report structure compilation',
         'Intelligent data sourcing from regulatory databases',
         'Region-specific format compliance (EU, US, Japan)',
         'Statistical trending of adverse events over time',
       ],
       metrics: [
-        { label: 'CERs Generated', value: '87' },
+        { label: 'Regulatory Reports', value: '87' },
         { label: 'Data Sources', value: '3' },
         { label: 'Average Time', value: '4.3 hrs' },
       ],

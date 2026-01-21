@@ -186,7 +186,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                   Protocol Designer
                 </NavItem>
                 <NavItem href="/cer-generator" icon={<FileCheck className="text-indigo-500" />}>
-                  CER Generator
+                  Medical Device & Diagnostics
                 </NavItem>
                 <NavItem
                   href="/study-design-agent"
@@ -330,7 +330,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                   Protocol Designer
                 </NavItem>
                 <NavItem href="/cer-generator" icon={<FileCheck className="text-indigo-500" />}>
-                  CER Generator
+                  Regulatory Builder
                 </NavItem>
                 <NavItem
                   href="/study-design-agent"

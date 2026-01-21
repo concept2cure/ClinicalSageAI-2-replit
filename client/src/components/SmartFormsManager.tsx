@@ -263,7 +263,7 @@ export default function SmartFormsManager({ projectId }: SmartFormsManagerProps)
                 SMART Forms Manager
               </CardTitle>
               <CardDescription>
-                Intelligent FDA form generation with auto-population from CERV2 workflow data
+                Intelligent FDA form generation with auto-population from Medical Device & Diagnostics Regulatory Module workflow data
               </CardDescription>
             </div>
             <div className="flex gap-2">

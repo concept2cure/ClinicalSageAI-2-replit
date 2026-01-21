@@ -433,7 +433,7 @@ const CERStreamingGenerator = ({
 
     toast({
       title: 'Generator Reset',
-      description: 'CER generator has been reset',
+      description: 'Regulatory builder has been reset',
     });
   };
 
@@ -1056,10 +1056,10 @@ const CERStreamingGenerator = ({
         <div>
           <h2 className="text-2xl font-bold flex items-center">
             <FileText className="h-6 w-6 mr-2 text-primary" />
-            CER Generator
+            Regulatory Builder
           </h2>
           <p className="text-gray-500">
-            Generate regulatory-compliant clinical evaluation reports with AI assistance
+            Generate regulatory evaluation reports with AI assistance
           </p>
         </div>
 
@@ -1072,7 +1072,7 @@ const CERStreamingGenerator = ({
           ) : generationState === 'idle' ? (
             <Button onClick={startGeneration}>
               <FlaskConical className="h-4 w-4 mr-2" />
-              Generate CER
+              Generate Report
             </Button>
           ) : null}
         </div>

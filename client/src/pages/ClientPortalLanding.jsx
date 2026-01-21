@@ -100,6 +100,8 @@ const ClientPortalLanding = () => {
     'coauthor': 'ectdEnabled',
     'cmc': 'cmcEnabled',
     'medical-device': 'medicalDeviceEnabled',
+    'lumen-cortex': 'lumenCortexEnabled',
+    'atoms': 'atomsEnabled',
     'module-editor': 'moduleSectionEditorEnabled',
     'enhanced-editor': 'enhancedDocumentEditorEnabled',
     'study-regulatory-suite': 'studyRegulatoryEnabled', // Unified module toggle
@@ -107,6 +109,10 @@ const ClientPortalLanding = () => {
     'vault': 'vaultEnabled',
     'analytics': 'analyticsEnabled',
     'submission-center': 'submissionCenterEnabled',
+    'admin': 'adminEnabled',
+    'security': 'securityEnabled',
+    'audit': 'auditEnabled',
+    'support': 'supportEnabled',
     // 'ind': 'indEnabled', // DELETED per user request
     // 'ectd-unified': 'ectdUnifiedEnabled', // DELETED per user request
   };
@@ -141,7 +147,7 @@ const ClientPortalLanding = () => {
         status: 'pending',
         progress: 28,
         lastUpdated: '2025-04-18',
-        modules: ['CER Generator'],
+        modules: ['Medical Device & Diagnostics Regulatory Module'],
       },
       {
         id: 'proj-004',
@@ -189,8 +195,9 @@ const ClientPortalLanding = () => {
         },
         {
           id: 'medical-device',
-          title: 'Medical Device & Diagnostics RA™',
-          description: 'Next-generation regulatory automation for medical device and diagnostics submissions',
+          title: 'Medical Device & Diagnostics Regulatory Module',
+          description:
+            'Jurisdiction-agnostic regulatory automation for 510(k), PMA, and EU MDR CER submissions',
           path: '/cerv2',
         },
       ]
@@ -215,6 +222,26 @@ const ClientPortalLanding = () => {
           highlight: true,
         },
       ]
+    },
+    {
+      title: 'LUMEN CORTEX & ATOMS',
+      icon: <Brain className="h-5 w-5" />,
+      description: 'Intelligence core, knowledge atoms, and evidence signals',
+      modules: [
+        {
+          id: 'lumen-cortex',
+          title: 'Lumen Cortex™',
+          description: 'Evidence harvesting, observation terms, and knowledge signals',
+          path: '/lumen-cortex',
+          highlight: true,
+        },
+        {
+          id: 'atoms',
+          title: 'ATOMS Registry™',
+          description: 'Structured content atoms and reusable evidence blocks',
+          path: '/atoms',
+        },
+      ],
     },
     {
       title: 'REGULATORY INTELLIGENCE',
@@ -255,6 +282,37 @@ const ClientPortalLanding = () => {
           path: '/analytics',
         },
       ]
+    },
+    {
+      title: 'ADMIN, SECURITY & SUPPORT',
+      icon: <Shield className="h-5 w-5" />,
+      description: 'Enterprise admin controls, compliance, and live support',
+      modules: [
+        {
+          id: 'admin',
+          title: 'Client Admin Console',
+          description: 'User access, licensing, and workspace governance',
+          path: '/admin',
+        },
+        {
+          id: 'security',
+          title: 'Security & Compliance',
+          description: '21 CFR Part 11 compliance, audit trails, and blockchain security',
+          path: '/security',
+        },
+        {
+          id: 'audit',
+          title: 'Audit Trail Dashboard',
+          description: 'Enterprise audit analytics, anomaly detection, and exports',
+          path: '/audit',
+        },
+        {
+          id: 'support',
+          title: 'Support Command Center',
+          description: 'Full-access operational support and embedded agent',
+          path: '/support',
+        },
+      ],
     },
   ];
 
@@ -445,7 +503,7 @@ const ClientPortalLanding = () => {
                     </div>
                   </button>
                   <button
-                    onClick={() => setLocation('/ai')}
+                    onClick={() => setLocation('/support')}
                     className="flex items-center gap-2 border border-blue-200 rounded-lg p-2 bg-blue-50 hover:bg-blue-100 transition-all duration-150"
                   >
                     <Bot className="h-5 w-5 text-blue-600" />
@@ -469,7 +527,7 @@ const ClientPortalLanding = () => {
                     size="sm"
                     variant="outline"
                     className="border-purple-200 text-purple-600 hover:bg-purple-50"
-                    onClick={() => setLocation('/lumen-insights')}
+                    onClick={() => setLocation('/lumen-cortex')}
                   >
                     <Brain className="h-4 w-4 mr-2" />
                     Lumen Insights

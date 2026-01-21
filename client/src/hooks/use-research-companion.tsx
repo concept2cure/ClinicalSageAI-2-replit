@@ -61,7 +61,7 @@ export const ResearchCompanionProvider: React.FC<{ children: ReactNode }> = ({ c
       } else if (path[0] === "study-design-agent") {
         context = "Study Design Agent";
       } else if (path[0] === "enhanced-cer-dashboard") {
-        context = "Enhanced CER Dashboard";
+        context = "Enhanced Regulatory Dashboard";
       } else if (path[0] === "settings") {
         context = "Settings";
       } else {

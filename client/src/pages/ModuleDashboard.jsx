@@ -40,7 +40,13 @@ export default function ModuleDashboard() {
   ];
 
   const trialsageModules = [
-    { id: 'cer', title: 'CER Generator™', to: '/cerv2', progress: 80, risk: 'low' },
+    {
+      id: 'cer',
+      title: 'Medical Device & Diagnostics Regulatory Module',
+      to: '/cerv2',
+      progress: 80,
+      risk: 'low',
+    },
     { id: 'ind', title: 'IND Wizard™', to: '/ind-wizard', progress: 65, risk: 'med' },
     { id: 'vault', title: 'TrialSage Vault™', to: '/vault', progress: 90, risk: 'low' },
   ];
@@ -118,7 +124,7 @@ export default function ModuleDashboard() {
           onClick={() => (window.location.href = '/cerv2')}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-lg text-lg font-semibold"
         >
-          Go to CER Generator
+          Go to Medical Device & Diagnostics Regulatory Module
         </Button>
       </div>
     </div>

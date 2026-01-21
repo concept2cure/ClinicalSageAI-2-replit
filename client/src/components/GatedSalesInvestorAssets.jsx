@@ -83,12 +83,16 @@ export default function GatedSalesInvestorAssets() {
       ],
     },
     {
-      category: 'CER Solutions Package',
+      category: 'Regulatory Evaluation Package',
       color: 'bg-purple-600',
       description:
-        'Templates and guides for building compliant Clinical Evaluation Reports for medical devices.',
+        'Templates and guides for building compliant regulatory evaluation reports for medical devices.',
       items: [
-        { title: 'MDR/IVDR CER Template', link: '/downloads/cer-template.docx', type: 'Template' },
+        {
+          title: 'MDR/IVDR Evaluation Template',
+          link: '/downloads/cer-template.docx',
+          type: 'Template',
+        },
         {
           title: 'Literature Review Guide',
           link: '/downloads/lit-review-guide.pdf',

@@ -161,7 +161,7 @@ const CerGeneratorPage = () => {
       <div className="mb-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold mb-1">CER Generator</h1>
+            <h1 className="text-3xl font-bold mb-1">Medical Device & Diagnostics Regulatory Module</h1>
             <p className="text-gray-600">
               AI-powered Clinical Evaluation Report generator with automated workflows
             </p>
@@ -172,7 +172,7 @@ const CerGeneratorPage = () => {
               onClick={() => (window.location.href = '/cerv2/info')}
               className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
             >
-              <Brain className="h-4 w-4 mr-2" /> Learn More About CER Generator
+              <Brain className="h-4 w-4 mr-2" /> Learn More About Medical Device & Diagnostics
             </Button>
           </div>
         </div>
@@ -184,11 +184,11 @@ const CerGeneratorPage = () => {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">
-                Create a Clinical Evaluation Report in 3 Simple Steps
+                Create a Regulatory Submission in 3 Simple Steps
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Choose a section type and provide context in the CER Builder</li>
+                  <li>Choose a section type and provide context in the Regulatory Builder</li>
                   <li>Generate and add each needed section to your report</li>
                   <li>Export your completed report as PDF or DOCX format</li>
                 </ol>
@@ -227,7 +227,7 @@ const CerGeneratorPage = () => {
             <BarChart4 className="h-4 w-4 mr-2" /> Dashboard
           </TabsTrigger>
           <TabsTrigger value="generator" className="flex items-center">
-            <Brain className="h-4 w-4 mr-2" /> CER Builder
+            <Brain className="h-4 w-4 mr-2" /> Regulatory Builder
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center">
             <Settings className="h-4 w-4 mr-2" /> Settings
@@ -246,9 +246,9 @@ const CerGeneratorPage = () => {
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>CER Generator Settings</CardTitle>
+              <CardTitle>Module Settings</CardTitle>
               <CardDescription>
-                Configure your preferences for the CER Generator module
+                Configure your preferences for the Medical Device & Diagnostics Regulatory Module
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

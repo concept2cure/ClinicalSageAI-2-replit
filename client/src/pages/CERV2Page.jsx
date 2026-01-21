@@ -1776,7 +1776,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Welcome to CERV2 - Your 510(k) Submission Builder
+                      Welcome to Medical Device & Diagnostics Regulatory Module - Your 510(k) Submission Builder
                     </h3>
                     {/* Resume Button for returning users */}
                     {deviceProfile && Object.keys(deviceProfile).length > 0 && (
@@ -4254,7 +4254,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <h4 className="font-semibold text-purple-900 mb-1">SMART Forms System</h4>
                   <p className="text-sm text-purple-800">
                     Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, and special submissions.
-                    All forms feature intelligent auto-population from CERV2 workflow data, AI-powered field suggestions,
+                    All forms feature intelligent auto-population from the Medical Device & Diagnostics Regulatory Module workflow data, AI-powered field suggestions,
                     and real-time synchronization across all stages.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">

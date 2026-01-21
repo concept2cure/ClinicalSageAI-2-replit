@@ -1,8 +1,9 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import dns from 'dns';
 import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
-import { setupVite } from './vite';
+import { setupVite, serveStatic } from './vite';
 // import rateLimit from 'express-rate-limit';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
@@ -12,6 +13,16 @@ import fs from 'fs';
 import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+
+// Prefer IPv4 DNS results to avoid IPv6 connection issues in some environments
+dns.setDefaultResultOrder('ipv4first');
+
+// Load .env.local first (if present), then .env
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
+dotenv.config();
 
 // Import enterprise services
 import openaiService from './services/openaiService.js';
@@ -235,11 +246,11 @@ app.get('/api/health', async (req: Request, res: Response) => {
   res.json(healthData);
 });
 
-// Mount authentication routes (SECURE)
+// Mount authentication routes (Neon JWT)
 try {
-  const { router: authRouter } = await import('./auth.js');
+  const authRouter = (await import('./routes/auth.js')).default;
   app.use('/api/auth', authRouter);
-  console.log('✅ Authentication API routes mounted successfully (JWT-based with organizationId)');
+  console.log('✅ Authentication API routes mounted successfully (Neon JWT)');
 } catch (error) {
   console.error('❌ Failed to mount auth routes:', error);
 }
@@ -3896,9 +3907,17 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  const server = createServer(app);
+
+  if (process.env.NODE_ENV !== 'production') {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
+
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on port " + PORT);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log('Server running on port ' + PORT);
   });
 
 }

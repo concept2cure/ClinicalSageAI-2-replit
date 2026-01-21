@@ -41,11 +41,10 @@ export default function CerModule() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-2xl font-bold text-blue-800">
-                Clinical Evaluation Report Generator
+                Medical Device & Diagnostics Regulatory Module
               </CardTitle>
               <CardDescription className="text-blue-700">
-                Generate regulatory-compliant Clinical Evaluation Reports with advanced AI
-                assistance
+                Generate regulatory evaluation reports with advanced AI assistance
               </CardDescription>
             </div>
             <div className="flex space-x-4">
@@ -56,9 +55,10 @@ export default function CerModule() {
         </CardHeader>
         <CardContent>
           <p className="text-blue-700 mb-4">
-            TrialSage's CER Generator automatically creates Clinical Evaluation Reports that follow
-            EU MDR, FDA, and international guidelines. Upload your device data, select literature,
-            customize templates, and generate professional reports.
+            TrialSage's Medical Device & Diagnostics Regulatory Module automatically creates
+            regulatory evaluation reports that follow EU MDR, FDA, and international guidelines.
+            Upload your device data, select literature, customize templates, and generate
+            professional reports.
           </p>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

@@ -755,7 +755,7 @@ const MultiTenantEnterprisePortal = () => {
               </div>
             </button>
 
-            {/* CER Generator Module */}
+            {/* Medical Device & Diagnostics Regulatory Module */}
             <button
               className={`px-4 py-3 font-medium border-b-2 transition-colors ${
                 activeTab === 'cer2v'
@@ -769,7 +769,7 @@ const MultiTenantEnterprisePortal = () => {
             >
               <div className="flex items-center whitespace-nowrap">
                 <FileCheck size={16} className="mr-2" />
-                <span className="font-semibold">Medical Device and Diagnostics</span>
+                <span className="font-semibold">Medical Device & Diagnostics</span>
               </div>
             </button>
 
@@ -1000,7 +1000,7 @@ const MultiTenantEnterprisePortal = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="hidden">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="cer2v">Medical Device and Diagnostics</TabsTrigger>
+            <TabsTrigger value="cer2v">Medical Device & Diagnostics</TabsTrigger>
             <TabsTrigger value="ind-wizard">IND Wizard</TabsTrigger>
             <TabsTrigger value="ectd-author">eCTD Author</TabsTrigger>
             <TabsTrigger value="cmc-module">CMC Module</TabsTrigger>
@@ -1013,11 +1013,13 @@ const MultiTenantEnterprisePortal = () => {
             <TabsTrigger value="lumen-insights">Lumen Insights</TabsTrigger>
           </TabsList>
 
-          {/* Medical Device and Diagnostics Module Tab */}
+          {/* Medical Device & Diagnostics Regulatory Module Tab */}
           <TabsContent value="cer2v" className="space-y-6">
             <div className="flex items-center mb-6">
               <FileCheck className="h-6 w-6 text-green-600 mr-2" />
-              <h1 className="text-2xl font-bold text-gray-800">Medical Device and Diagnostics</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Medical Device & Diagnostics Regulatory Module
+              </h1>
               <div className="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                 Enterprise Feature
               </div>
@@ -1025,7 +1027,7 @@ const MultiTenantEnterprisePortal = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                {/* Main Medical Device and Diagnostics Content - Load the actual CERV2Page component in an iframe */}
+                {/* Main Medical Device & Diagnostics Content - Load the actual CERV2Page component in an iframe */}
                 <div
                   className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
                   style={{ height: 'calc(100vh - 230px)' }}
@@ -1033,13 +1035,13 @@ const MultiTenantEnterprisePortal = () => {
                   <iframe
                     src="/cerv2"
                     className="w-full h-full border-0"
-                    title="Medical Device and Diagnostics"
+                    title="Medical Device & Diagnostics Regulatory Module"
                   ></iframe>
                 </div>
               </div>
 
               <div className="space-y-6">
-                {/* Medical Device and Diagnostics Quick Actions */}
+                {/* Medical Device & Diagnostics Quick Actions */}
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>

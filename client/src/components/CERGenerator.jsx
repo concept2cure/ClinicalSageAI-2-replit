@@ -258,7 +258,7 @@ export default function CERGenerator() {
             <p>
               Visit the{' '}
               <a href="/enhanced-cer-dashboard" className="text-blue-600 hover:underline">
-                Enhanced CER Dashboard
+                Enhanced Regulatory Dashboard
               </a>{' '}
               to compare multiple products, view interactive visualizations, and get AI-powered
               insights.

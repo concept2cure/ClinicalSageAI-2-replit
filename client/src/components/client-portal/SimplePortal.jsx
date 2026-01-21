@@ -70,7 +70,7 @@ const SimplePortal = () => {
               </div>
             </button>
 
-            {/* CER2V Module */}
+            {/* Medical Device & Diagnostics Regulatory Module */}
             <button
               className={`px-4 py-3 font-medium border-b-2 transition-colors ${
                 activeModule === 'cer2v'
@@ -81,7 +81,7 @@ const SimplePortal = () => {
             >
               <div className="flex items-center whitespace-nowrap">
                 <FileText className="h-4 w-4 mr-2" />
-                <span className="font-semibold">CER2V</span>
+                <span className="font-semibold">Medical Device & Diagnostics</span>
               </div>
             </button>
 
@@ -322,19 +322,21 @@ const SimplePortal = () => {
           </div>
         )}
 
-        {/* CER2V Module */}
+        {/* Medical Device & Diagnostics Regulatory Module */}
         {activeModule === 'cer2v' && (
           <div>
             <div className="flex items-center mb-6">
               <FileText className="h-6 w-6 text-green-600 mr-2" />
-              <h1 className="text-2xl font-bold">CER2V Module</h1>
+              <h1 className="text-2xl font-bold">Medical Device & Diagnostics Regulatory Module</h1>
               <div className="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                 Enterprise Feature
               </div>
             </div>
 
             <div className="bg-green-50 p-8 rounded-xl border border-green-200 text-center">
-              <h2 className="text-xl font-medium text-green-800 mb-2">CER2V Module Content</h2>
+              <h2 className="text-xl font-medium text-green-800 mb-2">
+                Medical Device & Diagnostics Regulatory Module Content
+              </h2>
               <p className="text-green-700 mb-4">
                 Clinical Evaluation Report management and generation
               </p>
@@ -426,7 +428,9 @@ const SimplePortal = () => {
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
                     <FileText className="h-5 w-5 text-green-600" />
                   </div>
-                  <p className="text-sm font-medium">CER2V Reports</p>
+                  <p className="text-sm font-medium">
+                    Medical Device & Diagnostics Regulatory Module Reports
+                  </p>
                 </div>
 
                 <div className="p-4 bg-white rounded-lg border border-pink-200 text-center">

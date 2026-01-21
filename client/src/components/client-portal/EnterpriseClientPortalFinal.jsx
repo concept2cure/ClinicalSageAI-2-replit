@@ -458,7 +458,7 @@ const modules = [
   { id: 'dashboard', name: 'Dashboard', icon: Layout, color: 'slate' },
   {
     id: 'cer',
-    name: 'CER2V™',
+    name: 'Medical Device & Diagnostics Regulatory Module',
     icon: FileText,
     color: 'green',
     description: 'Clinical Evaluation Report generation and management',
@@ -1586,13 +1586,15 @@ const EnterpriseClientPortalFinal = () => {
           </div>
         )}
 
-        {/* CER2V Module */}
+        {/* Medical Device & Diagnostics Regulatory Module */}
         {activeModule === 'cer' && (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="mb-6">
               <Alert className="bg-green-50 border-green-200">
                 <FileText className="h-5 w-5 text-green-600" />
-                <AlertTitle className="text-green-800">CER2V™ Module</AlertTitle>
+                <AlertTitle className="text-green-800">
+                  Medical Device & Diagnostics Regulatory Module
+                </AlertTitle>
                 <AlertDescription className="text-green-700">
                   Generate and manage Clinical Evaluation Reports with AI-powered literature
                   analysis and device safety assessment.
@@ -1662,7 +1664,7 @@ const EnterpriseClientPortalFinal = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>CER2V™ Features</CardTitle>
+                    <CardTitle>Medical Device & Diagnostics Regulatory Module Features</CardTitle>
                     <CardDescription>
                       Advanced capabilities for regulatory compliance
                     </CardDescription>
@@ -2119,7 +2121,7 @@ const EnterpriseClientPortalFinal = () => {
                         <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
                           <FileText className="h-6 w-6 text-green-600" />
                         </div>
-                        <h3 className="font-medium">CER2V™</h3>
+                        <h3 className="font-medium">Medical Device & Diagnostics Regulatory Module</h3>
                         <p className="text-xs text-gray-500 mt-1">6 report types</p>
                       </div>
 
@@ -2327,7 +2329,7 @@ const EnterpriseClientPortalFinal = () => {
                           </div>
                         </div>
                         <div className="flex items-center">
-                          <Badge className="mr-3">CER2V</Badge>
+                          <Badge className="mr-3">Medical Device & Diagnostics</Badge>
                           <Button variant="outline" size="sm">
                             View
                           </Button>

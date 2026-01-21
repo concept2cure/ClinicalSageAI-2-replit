@@ -3,8 +3,8 @@
 const CerGenerator = () => {
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold">CER Generator™</h1>
-      <p>Create Clinical Evaluation Reports (CER) following EU MDR guidelines intelligently.</p>
+      <h1 className="text-2xl font-bold">Medical Device & Diagnostics Regulatory Module</h1>
+      <p>Create regulatory evaluation reports following global guidelines intelligently.</p>
     </div>
   );
 };

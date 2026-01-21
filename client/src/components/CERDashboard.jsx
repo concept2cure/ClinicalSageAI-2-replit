@@ -97,13 +97,13 @@ export default function CERDashboard() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ borderBottom: '3px solid #3498db', paddingBottom: '10px', color: '#2c3e50' }}>
-        CER Analytics Dashboard
+        Medical Device & Diagnostics Regulatory Module Dashboard
       </h1>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-        {/* Individual CER Generator Section */}
+        {/* Regulatory Module Workbench Section */}
         <section>
-          <h2>Single CER Generator</h2>
+          <h2>Regulatory Module Workbench</h2>
           <CERGenerator />
         </section>
 

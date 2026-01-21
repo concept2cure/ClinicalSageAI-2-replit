@@ -63,8 +63,8 @@ const DirectDevInterface = () => {
 
   const quickActions = [
     {
-      label: 'Add new CER feature',
-      request: 'Add a new feature to the CER generator module',
+      label: 'Add regulatory module feature',
+      request: 'Add a new feature to the Medical Device & Diagnostics Regulatory Module',
     },
     {
       label: 'Enhance AI Assistant',

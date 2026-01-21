@@ -1,7 +1,7 @@
 /**
  * CER API Service
  *
- * Provides utility functions for interacting with the CER Generator API endpoints.
+ * Provides utility functions for interacting with the regulatory module API endpoints.
  * Centralizes all API calls related to CER generation, export, FAERS data fetching,
  * device equivalence comparison, and regulatory compliance scoring.
  *

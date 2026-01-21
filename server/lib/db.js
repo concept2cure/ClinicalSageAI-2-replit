@@ -7,8 +7,18 @@
 
 import pg from 'pg';
 import dotenv from 'dotenv';
+import dns from 'dns';
+import fs from 'fs';
+import path from 'path';
 
-// Load environment variables
+// Prefer IPv4 DNS results to avoid IPv6 connection issues in some environments
+dns.setDefaultResultOrder('ipv4first');
+
+// Load environment variables (.env.local first if present)
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
 dotenv.config();
 
 const { Pool } = pg;
@@ -20,7 +30,26 @@ if (!process.env.DATABASE_URL && !process.env.NEON_DATABASE_URL) {
 }
 
 // Use NEON_DATABASE_URL if available, otherwise fall back to DATABASE_URL
-const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+const rawConnectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+
+const normalizeConnectionString = value => {
+  try {
+    const url = new URL(value);
+    const hostaddr = url.searchParams.get('hostaddr');
+    const hostOverride = url.searchParams.get('host');
+    if (hostOverride) {
+      url.hostname = hostOverride;
+    }
+    url.searchParams.delete('host');
+    url.searchParams.delete('hostaddr');
+    return { connectionString: url.toString(), hostaddr };
+  } catch (_err) {
+    return { connectionString: value, hostaddr: null };
+  }
+};
+
+const normalized = rawConnectionString ? normalizeConnectionString(rawConnectionString) : { connectionString: rawConnectionString, hostaddr: null };
+const connectionString = normalized.connectionString;
 
 // Create connection pool
 const pool = new Pool({
@@ -28,6 +57,8 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false, // Neon requires SSL
   },
+  family: 4,
+  ...(normalized.hostaddr ? { hostaddr: normalized.hostaddr } : {}),
   max: 20, // Maximum number of connections in the pool
   idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
   connectionTimeoutMillis: 10000, // Wait 10 seconds for a connection

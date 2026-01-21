@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { getAccessToken } from './authClient';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -15,11 +16,21 @@ export const apiRequest = async (
   // Get organization ID from localStorage
   const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
   
+  const accessToken =
+    getAccessToken() ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('auth_token');
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'x-organization-id': organizationId,
     ...customHeaders,
   };
+
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   const options: RequestInit = {
     method,

@@ -93,7 +93,7 @@ const CustomerValidation = ({ t }) => {
     },
     {
       quote: t(
-        'The CER Generator has completely transformed our MDR compliance workflow. What used to take 3-4 weeks now takes days, and the reports are more comprehensive than our manually created ones.'
+        'The Medical Device & Diagnostics Regulatory Module has completely transformed our MDR compliance workflow. What used to take 3-4 weeks now takes days, and the reports are more comprehensive than our manually created ones.'
       ),
       name: 'Elena Rodriguez',
       title: t('Medical Director, EuroMed Devices'),

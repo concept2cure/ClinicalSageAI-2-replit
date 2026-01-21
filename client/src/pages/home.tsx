@@ -94,7 +94,7 @@ export default function Home() {
 
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-800">
               <h3 className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                <FileCheck className="h-4 w-4" /> CER Generator
+                <FileCheck className="h-4 w-4" /> Medical Device & Diagnostics Regulatory Module
               </h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
                 Automated Clinical Evaluation Reports with FDA FAERS data integration, MEDDEV 2.7/1
@@ -193,7 +193,9 @@ export default function Home() {
                         Try Now
                       </div>
                       <FileText className="mb-2 h-10 w-10" />
-                      <h3 className="text-xl font-bold">CER Generator</h3>
+                      <h3 className="text-xl font-bold">
+                        Medical Device & Diagnostics Regulatory Module
+                      </h3>
                       <p className="text-teal-100">
                         Generate intelligent Clinical Evaluation Reports from FAERS data
                       </p>

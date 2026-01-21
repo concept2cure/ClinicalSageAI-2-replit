@@ -9,7 +9,7 @@ const CERDashboardAccessButton = () => {
       <Link href="/enhanced-cer-dashboard">
         <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg">
           <FileCheck className="mr-2 h-5 w-5" />
-          CER Dashboard
+          Regulatory Dashboard
         </Button>
       </Link>
     </div>

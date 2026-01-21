@@ -1,7 +1,20 @@
 // Database connection setup
 import { Pool } from 'pg';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import EventEmitter from 'events';
+import dns from 'dns';
+import fs from 'fs';
+import path from 'path';
+
+// Prefer IPv4 DNS results to avoid IPv6 connection issues in some environments
+dns.setDefaultResultOrder('ipv4first');
+
+// Load .env.local first if present, then .env
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
+dotenv.config();
 
 // Database connection status tracker
 export const dbStatus = {
@@ -14,10 +27,34 @@ export const dbStatus = {
   events: new EventEmitter(),
 };
 
+const normalizeConnectionString = value => {
+  try {
+    const url = new URL(value);
+    const hostaddr = url.searchParams.get('hostaddr');
+    const hostOverride = url.searchParams.get('host');
+    if (hostOverride) {
+      url.hostname = hostOverride;
+    }
+    url.searchParams.delete('host');
+    url.searchParams.delete('hostaddr');
+    return { connectionString: url.toString(), hostaddr };
+  } catch (_err) {
+    return { connectionString: value, hostaddr: null };
+  }
+};
+
+const rawConnectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+const normalized = rawConnectionString
+  ? normalizeConnectionString(rawConnectionString)
+  : { connectionString: rawConnectionString, hostaddr: null };
+const connectionString = normalized.connectionString;
+
 // Create a new database pool with the connection string from environment variables
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionString,
+  ssl: { rejectUnauthorized: false },
+  family: 4,
+  ...(normalized.hostaddr ? { hostaddr: normalized.hostaddr } : {}),
   // Add connection timeout and retry settings
   connectionTimeoutMillis: 5000, // 5 seconds (reduced for faster failure detection)
   idleTimeoutMillis: 30000, // 30 seconds

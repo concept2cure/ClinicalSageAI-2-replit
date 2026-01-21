@@ -1,7 +1,7 @@
 /**
- * CER QA Checklist PDF Generator
+ * Regulatory QA Checklist PDF Generator
  *
- * Utility function to generate a downloadable PDF version of the CER QA Checklist
+ * Utility function to generate a downloadable PDF version of the regulatory QA Checklist
  */
 import { jsPDF } from 'jspdf';
 
@@ -15,7 +15,7 @@ export function generateQAChecklistPDF() {
   // Add title
   doc.setFontSize(20);
   doc.setTextColor(0, 51, 153); // Corporate blue
-  doc.text('TrialSage CER Generator - QA Checklist', 20, 20);
+  doc.text('TrialSage Regulatory Module - QA Checklist', 20, 20);
 
   // Add subtitle
   doc.setFontSize(12);
@@ -33,7 +33,7 @@ export function generateQAChecklistPDF() {
     {
       title: '1. Navigation & Entry',
       items: [
-        'Sidebar shows "CER Generator" in blue highlight',
+        'Sidebar shows "Medical Device & Diagnostics" in blue highlight',
         'Clicking it routes to /cer',
         'Page loads without console errors',
       ],
@@ -60,7 +60,7 @@ export function generateQAChecklistPDF() {
     {
       title: '4. Live Preview',
       items: [
-        'CER title renders at top',
+        'Report title renders at top',
         'Drafted sections display correctly with formatting',
         'FAERS table displays adverse events (if present)',
         'Comparator list shows risk scores',

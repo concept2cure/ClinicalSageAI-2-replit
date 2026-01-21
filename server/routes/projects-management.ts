@@ -49,11 +49,6 @@ router.get('/', async (req, res) => {
       return res.status(403).json({ error: 'No active license for this organization' });
     }
 
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-
     // Get projects from database
     const orgProjects = await db
       .select()
@@ -224,12 +219,16 @@ router.post('/', async (req, res) => {
 
     try {
       const now = new Date();
-      const { userName, userRole } = getRequestActor(req);
+      const { userName: requestUserName, userRole: requestUserRole } = getRequestActor(req);
       const userName =
+        requestUserName ||
         (req.headers['x-user-name'] as string) ||
         (req.headers['x-user-email'] as string) ||
         'system';
-      const userRole = (req.headers['x-user-role'] as string) || null;
+      const userRole =
+        requestUserRole ||
+        (req.headers['x-user-role'] as string) ||
+        null;
 
       await db.insert(auditEvents).values({
         organizationId: validatedData.organizationId,

@@ -23,7 +23,13 @@ import {
 
 const modules = [
   { id: 'dashboard', name: 'Dashboard', path: '/dashboard', color: 'blue', icon: Layout },
-  { id: 'cerv2', name: 'CER2V™', path: '/cerv2', color: 'green', icon: FileText },
+  {
+    id: 'cerv2',
+    name: 'Medical Device & Diagnostics Regulatory Module',
+    path: '/cerv2',
+    color: 'green',
+    icon: FileText,
+  },
   {
     id: 'ind-wizard',
     name: 'IND Wizard™',

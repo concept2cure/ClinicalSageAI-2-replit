@@ -12,7 +12,8 @@ import {
   BarChart, 
   Database,
   Shield,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  LifeBuoy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -72,7 +73,7 @@ const ModuleSettings = () => {
     },
     { 
       id: 'cerv2', 
-      name: 'Medical Device & Diagnostics RA™', 
+      name: 'Medical Device & Diagnostics Regulatory Module', 
       icon: <Shield className="h-5 w-5" />,
       description: 'Regulatory automation for medical device submissions',
       enabled: true 
@@ -83,6 +84,48 @@ const ModuleSettings = () => {
       icon: <Brain className="h-5 w-5" />,
       description: 'Translational Intelligence Engine',
       enabled: true 
+    },
+    {
+      id: 'lumen-cortex',
+      name: 'Lumen Cortex™',
+      icon: <Brain className="h-5 w-5" />,
+      description: 'Evidence harvesting and intelligence signal processing',
+      enabled: true,
+    },
+    {
+      id: 'atoms',
+      name: 'ATOMS Registry™',
+      icon: <Database className="h-5 w-5" />,
+      description: 'Reusable structured content blocks and evidence atoms',
+      enabled: true,
+    },
+    {
+      id: 'admin',
+      name: 'Client Admin Console',
+      icon: <SettingsIcon className="h-5 w-5" />,
+      description: 'Workspace governance, user management, and licensing',
+      enabled: true,
+    },
+    {
+      id: 'security',
+      name: 'Security & Compliance',
+      icon: <Shield className="h-5 w-5" />,
+      description: '21 CFR Part 11 compliance, audit trails, and controls',
+      enabled: true,
+    },
+    {
+      id: 'support',
+      name: 'Support Command Center',
+      icon: <LifeBuoy className="h-5 w-5" />,
+      description: 'Full-access support workflows and embedded agent',
+      enabled: true,
+    },
+    {
+      id: 'audit',
+      name: 'Audit Trail Dashboard',
+      icon: <Shield className="h-5 w-5" />,
+      description: 'Enterprise audit analytics and compliance visibility',
+      enabled: true,
     }
   ];
 

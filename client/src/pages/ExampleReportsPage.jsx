@@ -148,12 +148,12 @@ const csrReports = [
   },
 ];
 
-// Example CER (Clinical Evaluation Report) data
+// Example regulatory evaluation report data
 const cerReports = [
   {
     id: 7,
     title: 'Adalimumab Clinical Evaluation Report',
-    type: 'CER',
+    type: 'Regulatory',
     date: 'April 15, 2025',
     category: 'Immunology',
     description:
@@ -168,7 +168,7 @@ const cerReports = [
   {
     id: 8,
     title: 'Semaglutide Post-Market Surveillance Report',
-    type: 'CER',
+    type: 'Regulatory',
     date: 'March 28, 2025',
     category: 'Endocrinology',
     description:
@@ -182,8 +182,8 @@ const cerReports = [
   },
   {
     id: 9,
-    title: 'Pembrolizumab CER with Safety Monitoring',
-    type: 'CER',
+    title: 'Pembrolizumab Clinical Evaluation with Safety Monitoring',
+    type: 'Regulatory',
     date: 'March 10, 2025',
     category: 'Oncology',
     description:
@@ -198,7 +198,7 @@ const cerReports = [
   {
     id: 10,
     title: 'Infliximab Regulatory Compliance Report',
-    type: 'CER',
+    type: 'Regulatory',
     date: 'February 20, 2025',
     category: 'Immunology',
     description:
@@ -213,7 +213,7 @@ const cerReports = [
   {
     id: 11,
     title: 'Ustekinumab Annual Safety Update Report',
-    type: 'CER',
+    type: 'Regulatory',
     date: 'February 5, 2025',
     category: 'Dermatology',
     description:
@@ -228,7 +228,7 @@ const cerReports = [
   {
     id: 12,
     title: 'Apixaban Comparative Safety Analysis',
-    type: 'CER',
+    type: 'Regulatory',
     date: 'January 25, 2025',
     category: 'Cardiology',
     description:
@@ -377,7 +377,7 @@ export default function ExampleReportsPage() {
           <Link href="/cer-generator">
             <Button size="sm" variant="outline" className="gap-1">
               <FileBarChart2 className="h-4 w-4" />
-              CER Generator
+              Regulatory Builder
             </Button>
           </Link>
           <Link href="/protocol-generator">
@@ -393,7 +393,7 @@ export default function ExampleReportsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Example Reports</h1>
         <p className="text-muted-foreground max-w-3xl">
           Browse our library of high-quality example reports to see how LumenTrialGuide.AI can
-          transform your clinical research with CSR intelligence and CER reporting.
+          transform your clinical research with CSR intelligence and regulatory reporting.
         </p>
       </div>
 
@@ -402,7 +402,7 @@ export default function ExampleReportsPage() {
           <TabsList className="mb-0">
             <TabsTrigger value="all">All Reports</TabsTrigger>
             <TabsTrigger value="csr">CSR Intelligence</TabsTrigger>
-            <TabsTrigger value="cer">CER Reports</TabsTrigger>
+            <TabsTrigger value="cer">Regulatory Reports</TabsTrigger>
           </TabsList>
 
           <div className="flex flex-1 sm:max-w-md">
@@ -436,7 +436,7 @@ export default function ExampleReportsPage() {
           <div className="mb-4">
             <h2 className="text-xl font-bold">All Report Types</h2>
             <p className="text-sm text-muted-foreground">
-              Browse our complete collection of CSR Intelligence and CER reports
+              Browse our complete collection of CSR Intelligence and regulatory reports
             </p>
           </div>
         </TabsContent>
@@ -452,9 +452,9 @@ export default function ExampleReportsPage() {
 
         <TabsContent value="cer" className="mt-6">
           <div className="mb-4">
-            <h2 className="text-xl font-bold">Clinical Evaluation Reports (CERs)</h2>
+            <h2 className="text-xl font-bold">Regulatory Evaluation Reports</h2>
             <p className="text-sm text-muted-foreground">
-              AI-generated CERs using FDA FAERS data and regulatory frameworks
+              AI-generated evaluations using multi-jurisdiction safety data and regulatory frameworks
             </p>
           </div>
         </TabsContent>
@@ -577,9 +577,9 @@ export default function ExampleReportsPage() {
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 pointer-events-none" />
           <CardHeader>
-            <CardTitle>CER Solutions Platform</CardTitle>
+            <CardTitle>Medical Device & Diagnostics Regulatory Module</CardTitle>
             <CardDescription>
-              Generate comprehensive Clinical Evaluation Reports with FDA FAERS data
+              Generate comprehensive regulatory evaluations with multi-source safety data
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -588,9 +588,9 @@ export default function ExampleReportsPage() {
                 <FileBarChart2 className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-medium">Automated CER Generation</h3>
+                <h3 className="font-medium">Automated Regulatory Compilation</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create regulatory-compliant Clinical Evaluation Reports with a single NDC code
+                  Create regulatory-compliant evaluations using product identifiers and evidence packs
                 </p>
               </div>
             </div>
@@ -621,7 +621,7 @@ export default function ExampleReportsPage() {
           </CardContent>
           <CardFooter>
             <Link href="/enhanced-cer-dashboard">
-              <Button>Try CER Dashboard</Button>
+              <Button>Open Regulatory Dashboard</Button>
             </Link>
           </CardFooter>
         </Card>
@@ -632,7 +632,9 @@ export default function ExampleReportsPage() {
 
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="item-1">
-            <AccordionTrigger>What's the difference between CSR and CER reports?</AccordionTrigger>
+            <AccordionTrigger>
+              What's the difference between CSR and regulatory evaluation reports?
+            </AccordionTrigger>
             <AccordionContent>
               <p className="mb-2">
                 <strong>Clinical Study Reports (CSRs)</strong> document the methods and results of
@@ -640,10 +642,10 @@ export default function ExampleReportsPage() {
                 end of a clinical trial.
               </p>
               <p>
-                <strong>Clinical Evaluation Reports (CERs)</strong> focus on post-market
-                surveillance and ongoing safety monitoring of medical products. They compile
-                real-world data from sources like FDA FAERS to maintain regulatory compliance after
-                a product has been approved.
+                <strong>Regulatory evaluation reports</strong> focus on post-market surveillance and
+                ongoing safety monitoring of medical products. They compile real-world data from
+                sources like FDA FAERS to maintain regulatory compliance after a product has been
+                approved.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -657,10 +659,11 @@ export default function ExampleReportsPage() {
                 practices, and success factors from historical trial data.
               </p>
               <p>
-                The CER reports are generated using our CER Solutions platform, which combines data
-                from FDA FAERS with AI-powered narrative generation and visualization tools. Each
-                report follows either MEDDEV 2.7/1 Rev. 4 structure (for medical devices) or similar
-                pharmaceutical industry standards for post-market surveillance reporting.
+                The regulatory evaluation reports are generated using the Medical Device &
+                Diagnostics Regulatory Module, which combines data from FDA FAERS with AI-powered
+                narrative generation and visualization tools. Each report follows MEDDEV 2.7/1
+                Rev. 4 structure (for medical devices) or similar pharmaceutical industry standards
+                for post-market surveillance reporting.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -678,10 +681,10 @@ export default function ExampleReportsPage() {
                 receive tailored analysis based on similar trials in our database.
               </p>
               <p>
-                For CERs, you can generate custom reports using NDC codes or other product
-                identifiers. Our platform will pull the relevant data from FDA FAERS and other
-                sources, apply AI-powered analysis, and create a comprehensive report tailored to
-                your product's safety profile.
+                For regulatory evaluations, you can generate custom reports using NDC codes or
+                other product identifiers. Our platform will pull the relevant data from FDA FAERS
+                and other sources, apply AI-powered analysis, and create a comprehensive report
+                tailored to your product's safety profile.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -692,8 +695,9 @@ export default function ExampleReportsPage() {
               <p>
                 Yes, our reports are designed to meet the requirements of major regulatory bodies
                 including FDA, EMA, PMDA, and others. The structure and content follow established
-                guidelines such as ICH E3 for CSRs and MEDDEV 2.7/1 Rev. 4 for medical device CERs
-                and similar pharmaceutical industry standards for drug CERs. However, final
+                guidelines such as ICH E3 for CSRs and MEDDEV 2.7/1 Rev. 4 for medical device
+                evaluations and similar pharmaceutical industry standards for drug evaluations.
+                However, final
                 regulatory compliance is the responsibility of the manufacturer or sponsor.
               </p>
             </AccordionContent>
@@ -718,7 +722,7 @@ export default function ExampleReportsPage() {
           <div className="md:w-2/3">
             <h2 className="text-2xl font-bold mb-4">Ready to Get Started?</h2>
             <p className="mb-6">
-              Access our complete platform for CSR intelligence and CER reporting. Design better
+              Access our complete platform for CSR intelligence and regulatory reporting. Design better
               trials, generate comprehensive evaluation reports, and accelerate regulatory
               submissions with LumenTrialGuide.AI.
             </p>
@@ -732,7 +736,7 @@ export default function ExampleReportsPage() {
               <Link href="/enhanced-cer-dashboard">
                 <Button className="bg-white text-indigo-700 hover:bg-slate-100">
                   <FileBarChart2 className="h-4 w-4 mr-2" />
-                  Try CER Generator
+                  Open Regulatory Builder
                 </Button>
               </Link>
               <Link href="/dashboard">
@@ -758,7 +762,7 @@ export default function ExampleReportsPage() {
                 <span className="font-medium">Real-time FAERS data</span>
               </div>
               <p className="text-sm text-indigo-100">
-                Generate CERs with the latest FDA FAERS data for post-market surveillance
+                Generate regulatory evaluations with the latest FDA FAERS data for post-market surveillance
               </p>
             </div>
           </div>

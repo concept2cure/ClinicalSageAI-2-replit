@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 
 /**
- * Literature Search Panel Component for CER Generator
+ * Literature Search Panel Component for the regulatory module
  *
  * Provides functionality to search PubMed and Google Scholar for literature related to a medical device,
  * select relevant papers, generate summaries, and create citations for integration into the CER.

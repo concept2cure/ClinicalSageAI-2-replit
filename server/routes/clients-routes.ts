@@ -415,6 +415,12 @@ router.patch('/:id', async (req, res) => {
             vaultEnabled: true,
             csrEnabled: true,
             analyticsEnabled: true,
+            lumenCortexEnabled: true,
+            atomsEnabled: true,
+            adminEnabled: true,
+            securityEnabled: true,
+            auditEnabled: true,
+            supportEnabled: true,
           },
           integrationSettings: {
             enableExternalSharing: false,
@@ -792,6 +798,8 @@ router.get('/:id/settings', async (req, res) => {
         ectdEnabled: true, // eCTD Co-Author - DO NOT TOUCH
         cmcEnabled: true,
         medicalDeviceEnabled: true,
+        lumenCortexEnabled: true,
+        atomsEnabled: true,
         moduleSectionEditorEnabled: true,
         enhancedDocumentEditorEnabled: true,
         protocolDesignerEnabled: true,
@@ -803,6 +811,10 @@ router.get('/:id/settings', async (req, res) => {
         analyticsEnabled: true,
         studyArchitectEnabled: true,
         submissionCenterEnabled: true,
+        adminEnabled: true,
+        securityEnabled: true,
+        auditEnabled: true,
+        supportEnabled: true,
         // ectdUnifiedEnabled: true, // DELETED per user request
       },
       integration: {

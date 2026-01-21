@@ -30,7 +30,7 @@ const StandaloneClientPortal = () => {
 
   const modules = [
     { id: 'dashboard', name: 'Dashboard', color: 'gray' },
-    { id: 'cer', name: 'CER2V™', color: 'green' },
+    { id: 'cer', name: 'Medical Device & Diagnostics Regulatory Module', color: 'green' },
     { id: 'ind', name: 'IND Wizard™', color: 'blue' },
     { id: 'ectd', name: 'eCTD Author™', color: 'purple' },
     { id: 'cmc', name: 'CMC Module™', color: 'amber' },
@@ -383,18 +383,22 @@ const StandaloneClientPortal = () => {
           </div>
         )}
 
-        {/* CER2V Module */}
+        {/* Medical Device & Diagnostics Regulatory Module */}
         {activeModule === 'cer' && (
           <div>
             <div className="flex items-center mb-6">
-              <h1 className="text-2xl font-bold text-green-700">CER2V Module</h1>
+              <h1 className="text-2xl font-bold text-green-700">
+                Medical Device & Diagnostics Regulatory Module
+              </h1>
               <div className="ml-4 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                 Enterprise Feature
               </div>
             </div>
 
             <div className="bg-green-50 p-8 rounded-xl border border-green-200 text-center">
-              <h2 className="text-xl font-medium text-green-800 mb-2">CER2V Module Content</h2>
+              <h2 className="text-xl font-medium text-green-800 mb-2">
+                Medical Device & Diagnostics Regulatory Module Content
+              </h2>
               <p className="text-green-700 mb-4">
                 Clinical Evaluation Report management and generation
               </p>
@@ -507,7 +511,9 @@ const StandaloneClientPortal = () => {
                       />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium">CER2V Reports</p>
+                  <p className="text-sm font-medium">
+                    Medical Device & Diagnostics Regulatory Module Reports
+                  </p>
                 </div>
 
                 <div className="p-4 bg-white rounded-lg border border-pink-200 text-center">

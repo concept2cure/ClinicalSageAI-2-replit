@@ -6,10 +6,10 @@ export default function SimpleCERGeneratorPage() {
     <div className="container py-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Interactive CER Generator</h1>
+          <h1 className="text-3xl font-bold mb-2">Interactive Regulatory Builder</h1>
           <p className="text-muted-foreground">
-            Quickly generate Clinical Evaluation Reports by entering an NDC code. The system uses
-            FDA FAERS data and advanced AI to create comprehensive, regulatory-compliant reports.
+            Quickly generate regulatory evaluation reports by entering an NDC code. The system uses
+            FDA FAERS data and advanced AI to create comprehensive, regulatory-compliant outputs.
           </p>
         </div>
 

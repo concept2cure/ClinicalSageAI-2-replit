@@ -26,7 +26,7 @@ export default function SidebarNav() {
         <NavItem
           icon={ClipboardCheck}
           href="/cer"
-          label="CER Generator"
+          label="Medical Device & Diagnostics"
           className="font-semibold text-blue-700"
         />
       </nav>

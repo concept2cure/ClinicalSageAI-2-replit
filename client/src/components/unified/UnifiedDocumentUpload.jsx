@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
  * This component provides document upload functionality for ALL modules:
  * - Lumen AI Agent
  * - eCTD Co-Author
- * - CER v2 Generator
+ * - Medical Device & Diagnostics Regulatory Module
  * - IND Wizard
  * - Document Vault
  * - Any future modules
@@ -91,7 +91,7 @@ const UnifiedDocumentUpload = ({
       color: 'bg-green-100 border-green-200',
     },
     'cer-v2': {
-      name: 'CER v2 Generator',
+      name: 'Medical Device & Diagnostics Regulatory Module',
       icon: '🏥',
       description: 'Upload clinical data for CER generation',
       color: 'bg-purple-100 border-purple-200',

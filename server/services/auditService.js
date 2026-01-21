@@ -1,11 +1,8 @@
-import { Pool } from 'pg';
+import { pool } from '../lib/db.js';
 
 class AuditService {
   constructor() {
-    this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    });
+    this.pool = pool;
     this.initializeTables();
   }
 
@@ -27,6 +24,31 @@ class AuditService {
           session_id VARCHAR(255),
           severity VARCHAR(20) DEFAULT 'info'
         );
+      `);
+
+      // Ensure required columns exist on legacy tables before creating indexes
+      await this.pool.query(`
+        ALTER TABLE audit_logs
+          ADD COLUMN IF NOT EXISTS tenant_id INTEGER,
+          ADD COLUMN IF NOT EXISTS user_id INTEGER,
+          ADD COLUMN IF NOT EXISTS action VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS resource_type VARCHAR(100),
+          ADD COLUMN IF NOT EXISTS resource_id VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS details JSONB,
+          ADD COLUMN IF NOT EXISTS ip_address INET,
+          ADD COLUMN IF NOT EXISTS user_agent TEXT,
+          ADD COLUMN IF NOT EXISTS timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          ADD COLUMN IF NOT EXISTS session_id VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS severity VARCHAR(20) DEFAULT 'info';
+      `);
+      await this.pool.query(`
+        UPDATE audit_logs
+        SET tenant_id = 1
+        WHERE tenant_id IS NULL;
+      `);
+      await this.pool.query(`
+        ALTER TABLE audit_logs
+        ALTER COLUMN tenant_id SET NOT NULL;
       `);
 
       // Create indexes for performance

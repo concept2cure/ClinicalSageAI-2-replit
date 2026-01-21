@@ -108,6 +108,14 @@ const CERPage = lazy(() => import('./pages/CerPage'));
 const CERV2Page = lazy(() => import('./pages/CERV2Page'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
+const LumenCortexPage = lazy(() => import('./pages/LumenCortexPage'));
+const AtomsRegistryPage = lazy(() => import('./pages/AtomsRegistryPage'));
+const SupportHub = lazy(() => import('./pages/SupportHub'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AdminProfile = lazy(() => import('./pages/AdminProfile'));
+const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
+const FDACompliancePage = lazy(() => import('./pages/FDACompliancePage'));
+const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
 
 // VAULT Document Browser page
 const VaultBrowserPage = lazy(() => import('./pages/VaultBrowser'));
@@ -447,6 +455,62 @@ function App() {
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
                             <CERPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/lumen-cortex">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <LumenCortexPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/atoms">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <AtomsRegistryPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/admin">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <AdminPage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/admin/profile">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <AdminProfile />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/admin/notifications">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <AdminNotifications />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/security">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <FDACompliancePage />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/audit">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <AuditTrailDashboard />
+                          </Suspense>
+                        )}
+                      </Route>
+                      <Route path="/support">
+                        {() => (
+                          <Suspense fallback={<LoadingPage />}>
+                            <SupportHub />
                           </Suspense>
                         )}
                       </Route>
@@ -1368,7 +1432,7 @@ function App() {
                           </Suspense>
                         )}
                       </Route>{' '}
-                      {/* CER Generator page route */}
+                      {/* Regulatory module page route */}
                       <Route path="/cerV2">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
@@ -1376,7 +1440,7 @@ function App() {
                           </Suspense>
                         )}
                       </Route>{' '}
-                      {/* Advanced CER Generator page route */}
+                      {/* Advanced regulatory module page route */}
                       <Route path="/cerv2">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
@@ -1384,7 +1448,7 @@ function App() {
                           </Suspense>
                         )}
                       </Route>{' '}
-                      {/* Additional lowercase route for Advanced CER Generator */}
+                      {/* Additional lowercase route for advanced regulatory module */}
                       <Route path="/cerv2/info">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
@@ -1392,7 +1456,7 @@ function App() {
                           </Suspense>
                         )}
                       </Route>{' '}
-                      {/* CER Generator Landing page with detailed info */}
+                      {/* Regulatory module landing page with detailed info */}
                       {/* role-test route removed - was test content */}
                       <Route path="/blueprint">
                         {() => (
@@ -1742,22 +1806,22 @@ function App() {
                         {() => (
                           <div className="flex flex-col items-center justify-center p-8">
                             <h2 className="text-2xl font-bold mb-4 text-indigo-700">
-                              Redirecting to CER Generator
+                              Redirecting to Medical Device & Diagnostics Regulatory Module
                             </h2>
                             <p className="mb-4 text-gray-600">
-                              The URL you're trying to access is being redirected to the CER
-                              Generator module.
+                              The URL you're trying to access is being redirected to the Medical
+                              Device & Diagnostics Regulatory Module.
                             </p>
                             <Button
                               onClick={() => (window.location.href = '/cerv2')}
                               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
                             >
-                              Go to CER Generator
+                              Go to Medical Device & Diagnostics
                             </Button>
                           </div>
                         )}
                       </Route>
-                      {/* CER Generator catch-all routes */}
+                      {/* Regulatory module catch-all routes */}
                       <Route path="/cer-generator/*">{() => <CERV2Page />}</Route>
                       <Route path="/client-portal/cer-generator/*">{() => <CERV2Page />}</Route>
                       <Route path="/cerv2/*">{() => <CERV2Page />}</Route>

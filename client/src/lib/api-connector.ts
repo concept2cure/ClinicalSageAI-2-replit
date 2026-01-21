@@ -95,7 +95,7 @@ const csrIntelligenceApi = {
 };
 
 /**
- * CER Generator API Service
+ * Regulatory module API service
  */
 const cerGeneratorApi = {
   // Get CERs with filters and pagination

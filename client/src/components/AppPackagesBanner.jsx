@@ -96,8 +96,8 @@ export default function AppPackagesBanner({ currentPath }) {
     },
     {
       icon: <Beaker size={20} />,
-      title: 'CER Generator',
-      description: 'Clinical Evaluation Report generation and optimization',
+      title: 'Medical Device & Diagnostics Regulatory Module',
+      description: 'Jurisdiction-agnostic regulatory rendering for 510(k), PMA, and EU MDR CER',
       to: '/cer-generator',
       path: '/cer-generator',
     },

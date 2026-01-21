@@ -121,12 +121,12 @@ const FDAFAERSGenerator = () => {
       // toast call replaced
   // Original: toast({
         title: "Error Saving Report",
-        description: err.message || "Failed to save CER report",
+        description: err.message || "Failed to save regulatory report",
         variant: "destructive",
       })
   console.log('Toast would show:', {
         title: "Error Saving Report",
-        description: err.message || "Failed to save CER report",
+        description: err.message || "Failed to save regulatory report",
         variant: "destructive",
       });
     }
@@ -135,9 +135,9 @@ const FDAFAERSGenerator = () => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>FDA FAERS Automatic CER Generator</CardTitle>
+        <CardTitle>FDA FAERS Regulatory Report Builder</CardTitle>
         <CardDescription>
-          Generate Clinical Evaluation Reports from FDA FAERS data by providing an NDC code
+          Generate regulatory evaluation reports from FDA FAERS data by providing an NDC code
         </CardDescription>
       </CardHeader>
       

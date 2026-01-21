@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -50,6 +51,7 @@ import {
 } from 'lucide-react';
 import PredicateFinderPanel from './PredicateFinderPanel';
 import { ComplianceOversightPanel } from './ComplianceOversightPanel';
+import DocumentGenerationPanel from './DocumentGenerationPanel';
 
 // Workflow configuration based on the enhanced 510k specification
 const WORKFLOW_CONFIG = {
@@ -206,7 +208,9 @@ const Enhanced510kIntakeWorkflow = ({
     projectName: existingProject?.name || '',
     projectDescription: existingProject?.description || '',
     submissionType: 'traditional', // traditional, abbreviated, special
-    
+    entryMode: 'manual',
+    aiAssistContext: '',
+
     // Company information
     applicantName: '',
     dunsNumber: '',
@@ -214,6 +218,11 @@ const Enhanced510kIntakeWorkflow = ({
     contactName: '',
     contactEmail: '',
     contactPhone: '',
+    raContactName: '',
+    raContactEmail: '',
+    raContactPhone: '',
+    smallBusinessDetermination: false,
+    userFeeReference: '',
     address: {
       street: '',
       city: '',
@@ -221,39 +230,95 @@ const Enhanced510kIntakeWorkflow = ({
       zip: '',
       country: 'USA'
     },
-    
+
     // Device information
     deviceName: '',
     deviceModels: '',
+    deviceModelFamily: '',
     deviceAccessories: '',
+    accessoriesNotes: '',
     productCode: '',
     regulationNumber: '',
+    advisoryCommittee: '',
     deviceClass: '2',
     intendedUse: '',
     indicationsForUse: '',
+    rxUse: false,
+    otcUse: false,
+    environmentOfUse: '',
+    patientPopulation: '',
     technicalCharacteristics: '',
-    
-    // Toggles/Flags
-    hassSoftware: false,
+    principlesOfOperation: '',
+    components: '',
+    criticalMaterials: '',
+    energySource: '',
+
+    // Testing & standards
+    testingBench: '',
+    testingEmc: '',
+    testingShelfLife: '',
+    testingUsability: '',
+    standardsList: '',
+    declarationsOfConformity: '',
+
+    // Labeling
+    ifuAvailable: false,
+    labelingNotes: '',
+    udiNotes: '',
+    artworkReferences: '',
+
+    // Attachments
+    attachmentsSummary: '',
+    attachmentsTags: '',
+
+    // Software & Cybersecurity
+    hasSoftware: false,
+    softwareLevel: '',
+    softwareComplexity: 'basic',
+    connectivity: '',
+    phiHandling: '',
+    updateMechanism: '',
+    sbomAvailable: false,
+    authEncryption: '',
+    vulnerabilityManagement: '',
+    cyberLabeling: '',
     isCyberDevice: false,
+
+    // Sterility & Biocompatibility
     isSterile: false,
-    hasClinicalData: false,
+    sterilizationMethod: '',
+    sterilitySAL: '',
+    endotoxinLimits: '',
+    pyrogenLimits: '',
+    packagingIntegrity: '',
+    shelfLife: '',
     hasPatientContacting: true,
     contactDuration: 'limited', // limited, prolonged, permanent
     contactType: 'skin', // skin, mucosal, blood, tissue
-    
+    iso10993Mapping: '',
+    biocompSummary: '',
+
+    // Clinical data
+    hasClinicalData: false,
+    clinicalDataUsed: false,
+    clinicalDataSummary: '',
+
+    // Forms & attestations
+    summaryChoice: '',
+    truthfulAccurate: false,
+
     // Predicate information
     primaryPredicateKNumber: '',
     predicateManufacturer: '',
     predicateDeviceName: '',
     predicateClearanceDate: '',
     additionalPredicates: [],
-    
+
     // Strategy
     equivalenceRationale: '',
     programJustification: '',
-    
-    // Standards & Testing
+
+    // Standards & Testing workflow tracking
     recognizedStandards: [],
     testingPlan: {
       benchTesting: { required: true, planned: false, completed: false },
@@ -265,11 +330,11 @@ const Enhanced510kIntakeWorkflow = ({
       usability: { required: false, planned: false, completed: false },
       clinical: { required: false, planned: false, completed: false }
     },
-    
+
     // Artifacts & Documents
     artifacts: {},
     uploadedFiles: {},
-    
+
     // Progress tracking
     stageProgress: {
       setup: { status: 'draft', completion: 0, gates: {} },
@@ -281,6 +346,9 @@ const Enhanced510kIntakeWorkflow = ({
       submit_ai: { status: 'todo', completion: 0, gates: {} }
     }
   });
+  const [aiDraftStatus, setAiDraftStatus] = useState('idle');
+  const [aiDraftContent, setAiDraftContent] = useState('');
+  const isAiAssistEnabled = workflowData.entryMode === 'ai';
   
   // ============================================================================
   // API Integration for Workflow Data Persistence
@@ -352,7 +420,12 @@ const Enhanced510kIntakeWorkflow = ({
   // Load existing workflow data when component mounts or when API data changes
   useEffect(() => {
     if (existingWorkflowData?.workflow?.workflowData) {
-      setWorkflowData(existingWorkflowData.workflow.workflowData);
+      const incomingData = existingWorkflowData.workflow.workflowData;
+      const normalizedData = {
+        ...incomingData,
+        hasSoftware: incomingData.hasSoftware ?? incomingData.hassSoftware ?? false
+      };
+      setWorkflowData(normalizedData);
       if (existingWorkflowData.workflow.currentStep) {
         const stageIndex = WORKFLOW_CONFIG.stages.findIndex(s => s.id === existingWorkflowData.workflow.currentStep);
         if (stageIndex >= 0) setCurrentStage(stageIndex);
@@ -361,7 +434,8 @@ const Enhanced510kIntakeWorkflow = ({
       // Fallback to existing project data if no API data
       setWorkflowData(prev => ({
         ...prev,
-        ...existingProject.metadata.workflow
+        ...existingProject.metadata.workflow,
+        hasSoftware: existingProject.metadata.workflow.hasSoftware ?? existingProject.metadata.workflow.hassSoftware ?? prev.hasSoftware
       }));
     }
   }, [existingWorkflowData, existingProject]);
@@ -397,6 +471,10 @@ const Enhanced510kIntakeWorkflow = ({
       }
       
       current[keys[keys.length - 1]] = value;
+
+      if (path === 'hasSoftware' && !value) {
+        newData.isCyberDevice = false;
+      }
       
       // Auto-save to backend and trigger document generation mapping
       if (projectId) {
@@ -412,10 +490,275 @@ const Enhanced510kIntakeWorkflow = ({
       return newData;
     });
   };
+
+  const buildAiIntakeContext = () => {
+    const contextBlocks = [
+      workflowData.projectName && `Project: ${workflowData.projectName}`,
+      workflowData.deviceName && `Device: ${workflowData.deviceName}`,
+      workflowData.deviceModels && `Models: ${workflowData.deviceModels}`,
+      workflowData.productCode && `Product Code: ${workflowData.productCode}`,
+      workflowData.regulationNumber && `Regulation: ${workflowData.regulationNumber}`,
+      workflowData.advisoryCommittee && `Advisory Committee: ${workflowData.advisoryCommittee}`,
+      workflowData.intendedUse && `Intended Use: ${workflowData.intendedUse}`,
+      workflowData.indicationsForUse && `Indications: ${workflowData.indicationsForUse}`,
+      workflowData.technicalCharacteristics && `Technical Characteristics: ${workflowData.technicalCharacteristics}`,
+      workflowData.principlesOfOperation && `Principles of Operation: ${workflowData.principlesOfOperation}`,
+      workflowData.patientPopulation && `Patient Population: ${workflowData.patientPopulation}`,
+      workflowData.environmentOfUse && `Environment of Use: ${workflowData.environmentOfUse}`,
+      workflowData.hasSoftware ? 'Contains software' : 'No software',
+      workflowData.isCyberDevice ? 'Cybersecurity considerations required' : null,
+      workflowData.isSterile ? 'Sterile device' : 'Non-sterile device',
+      workflowData.hasClinicalData ? 'Clinical data required' : null,
+      workflowData.aiAssistContext && `Additional context: ${workflowData.aiAssistContext}`
+    ].filter(Boolean);
+
+    return contextBlocks.join('\n');
+  };
+
+  const handleGenerateAiDraft = async () => {
+    if (!projectId) {
+      toast({
+        title: 'Project Required',
+        description: 'Create or select a project to run AI-assisted intake drafting.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!workflowData.deviceName || !workflowData.productCode) {
+      toast({
+        title: 'Missing Required Fields',
+        description: 'Provide device name and product code before requesting AI assistance.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setAiDraftStatus('drafting');
+    setAiDraftContent('');
+
+    try {
+      const startResponse = await apiRequest('/api/v1/drafting/start_task', {
+        method: 'POST',
+        data: {
+          documentType: '510k-intake',
+          module: '510k',
+          section: 'device-intake',
+          requirements: {
+            deviceClass: workflowData.deviceClass,
+            hasSoftware: workflowData.hasSoftware,
+            isSterile: workflowData.isSterile,
+            hasClinicalData: workflowData.hasClinicalData
+          },
+          context: buildAiIntakeContext(),
+          prompt: 'Generate a concise intake narrative and suggestions for intended use, indications, and technical description.'
+        }
+      });
+
+      const taskId = startResponse?.taskId;
+      if (!taskId) {
+        throw new Error('AI task could not be started');
+      }
+
+      const taskResponse = await apiRequest(`/api/v1/drafting/task/${taskId}`);
+      const content = taskResponse?.task?.result?.content || '';
+
+      if (!content) {
+        throw new Error('AI drafting returned empty content');
+      }
+
+      setAiDraftContent(content);
+      setAiDraftStatus('ready');
+      toast({
+        title: 'AI Draft Ready',
+        description: 'Review the AI draft and apply it to the intake fields as needed.'
+      });
+    } catch (error) {
+      console.error('AI drafting error:', error);
+      setAiDraftStatus('error');
+      toast({
+        title: 'AI Draft Failed',
+        description: error.message || 'Unable to generate AI draft. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const applyAiDraft = () => {
+    if (!aiDraftContent) return;
+
+    const updates = {
+      intendedUse: workflowData.intendedUse || aiDraftContent,
+      indicationsForUse: workflowData.indicationsForUse || aiDraftContent,
+      technicalCharacteristics: workflowData.technicalCharacteristics || aiDraftContent,
+      principlesOfOperation: workflowData.principlesOfOperation || aiDraftContent
+    };
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        updateWorkflowData(key, value);
+      }
+    });
+
+    setAiDraftStatus('applied');
+    toast({
+      title: 'AI Draft Applied',
+      description: 'AI-generated content has been applied to empty intake fields.'
+    });
+  };
+
+  const markStageComplete = (stageId) => {
+    updateWorkflowData(`stageProgress.${stageId}.status`, 'complete');
+    updateWorkflowData(`stageProgress.${stageId}.completion`, 100);
+  };
+
+  const renderStrategySection = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Substantial Equivalence Strategy</CardTitle>
+        <CardDescription>Define predicate alignment and rationale</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="equivalence-rationale">Equivalence Rationale</Label>
+          <Textarea
+            id="equivalence-rationale"
+            value={workflowData.equivalenceRationale}
+            onChange={(e) => updateWorkflowData('equivalenceRationale', e.target.value)}
+            placeholder="Summarize how the device is substantially equivalent to predicate(s)."
+            rows={4}
+            data-testid="textarea-equivalence-rationale"
+          />
+        </div>
+        <div>
+          <Label htmlFor="program-justification">Program Justification</Label>
+          <Textarea
+            id="program-justification"
+            value={workflowData.programJustification}
+            onChange={(e) => updateWorkflowData('programJustification', e.target.value)}
+            placeholder="Explain submission path selection, reference guidance or standards."
+            rows={3}
+            data-testid="textarea-program-justification"
+          />
+        </div>
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={() => saveWorkflowMutation.mutate()}
+            disabled={saveWorkflowMutation.isPending}
+            data-testid="button-save-strategy"
+          >
+            {saveWorkflowMutation.isPending ? 'Saving...' : 'Save Strategy'}
+          </Button>
+          <Button
+            onClick={() => {
+              markStageComplete('strategy');
+              setCurrentStage(2);
+              setActiveSection('standards_matrix');
+            }}
+            disabled={!workflowData.equivalenceRationale}
+            data-testid="button-continue-to-evidence-plan"
+          >
+            Continue to Evidence Plan
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderEvidencePlanSection = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Standards & Declarations</CardTitle>
+          <CardDescription>Document recognized standards and declarations of conformity</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="standards-list-evidence">Recognized Standards</Label>
+            <Textarea
+              id="standards-list-evidence"
+              value={workflowData.standardsList}
+              onChange={(e) => updateWorkflowData('standardsList', e.target.value)}
+              placeholder="IEC 60601-1, ISO 10993-1, IEC 62304, etc."
+              rows={3}
+              data-testid="textarea-standards-evidence"
+            />
+          </div>
+          <div>
+            <Label htmlFor="declarations-evidence">Declarations of Conformity</Label>
+            <Textarea
+              id="declarations-evidence"
+              value={workflowData.declarationsOfConformity}
+              onChange={(e) => updateWorkflowData('declarationsOfConformity', e.target.value)}
+              placeholder="List declarations and supporting files."
+              rows={2}
+              data-testid="textarea-declarations-evidence"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Integrated Test Plan</CardTitle>
+          <CardDescription>Confirm planned evidence generation for each discipline</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
+          {Object.entries(workflowData.testingPlan).map(([key, plan]) => (
+            <div key={key} className="rounded-lg border p-3 space-y-2">
+              <div className="font-semibold text-sm capitalize">{key.replace(/_/g, ' ')}</div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`testing-${key}-planned`}>Planned</Label>
+                <Switch
+                  id={`testing-${key}-planned`}
+                  checked={plan.planned}
+                  onCheckedChange={(checked) => updateWorkflowData(`testingPlan.${key}.planned`, checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`testing-${key}-required`}>Required</Label>
+                <Switch
+                  id={`testing-${key}-required`}
+                  checked={plan.required}
+                  onCheckedChange={(checked) => updateWorkflowData(`testingPlan.${key}.required`, checked)}
+                />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={() => saveWorkflowMutation.mutate()}
+          disabled={saveWorkflowMutation.isPending}
+          data-testid="button-save-evidence-plan"
+        >
+          {saveWorkflowMutation.isPending ? 'Saving...' : 'Save Evidence Plan'}
+        </Button>
+        <Button
+          onClick={() => {
+            markStageComplete('evidence_plan');
+            setCurrentStage(3);
+            setActiveSection('bench_testing');
+          }}
+          disabled={!workflowData.standardsList}
+          data-testid="button-continue-to-evidence"
+        >
+          Continue to Evidence Collection
+          <ChevronRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  );
   
   // Render device intake form
   const renderDeviceIntakeForm = () => (
-    <div className="space-y-6" data-testid="enhanced-device-intake">
+    <TooltipProvider>
+      <div className="space-y-6" data-testid="enhanced-device-intake">
       {/* Project Information */}
       <Card>
         <CardHeader>
@@ -463,6 +806,585 @@ const Enhanced510kIntakeWorkflow = ({
               data-testid="textarea-project-description"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Software & Cybersecurity */}
+      {(workflowData.hasSoftware || workflowData.isCyberDevice) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Software & Cybersecurity</CardTitle>
+            <CardDescription>Software level of concern, connectivity, and cybersecurity controls</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="software-level">Software Level of Concern</Label>
+                <Select
+                  value={workflowData.softwareLevel}
+                  onValueChange={(value) => updateWorkflowData('softwareLevel', value)}
+                >
+                  <SelectTrigger id="software-level" data-testid="select-software-level">
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="minor">Minor</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="major">Major</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="software-complexity">Software Complexity</Label>
+                <Select
+                  value={workflowData.softwareComplexity}
+                  onValueChange={(value) => updateWorkflowData('softwareComplexity', value)}
+                >
+                  <SelectTrigger id="software-complexity" data-testid="select-software-complexity">
+                    <SelectValue placeholder="Select complexity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="basic">Basic</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="connectivity">Connectivity</Label>
+                <Input
+                  id="connectivity"
+                  value={workflowData.connectivity}
+                  onChange={(e) => updateWorkflowData('connectivity', e.target.value)}
+                  placeholder="Wi-Fi, Bluetooth, cellular, wired"
+                  data-testid="input-connectivity"
+                />
+              </div>
+              <div>
+                <Label htmlFor="update-mechanism">Update Mechanism</Label>
+                <Input
+                  id="update-mechanism"
+                  value={workflowData.updateMechanism}
+                  onChange={(e) => updateWorkflowData('updateMechanism', e.target.value)}
+                  placeholder="OTA, service tool, local update"
+                  data-testid="input-update-mechanism"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="phi-handling">PHI / Data Handling</Label>
+              <Textarea
+                id="phi-handling"
+                value={workflowData.phiHandling}
+                onChange={(e) => updateWorkflowData('phiHandling', e.target.value)}
+                placeholder="Describe PHI, encryption, storage, and access controls"
+                rows={2}
+                data-testid="textarea-phi-handling"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <Label htmlFor="sbom">SBOM Available</Label>
+                <Switch
+                  id="sbom"
+                  checked={workflowData.sbomAvailable}
+                  onCheckedChange={(checked) => updateWorkflowData('sbomAvailable', checked)}
+                  data-testid="switch-sbom"
+                />
+              </div>
+              <div>
+                <Label htmlFor="auth-encryption">Authentication & Encryption</Label>
+                <Input
+                  id="auth-encryption"
+                  value={workflowData.authEncryption}
+                  onChange={(e) => updateWorkflowData('authEncryption', e.target.value)}
+                  placeholder="MFA, TLS 1.2+, AES-256"
+                  data-testid="input-auth-encryption"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="vulnerability-management">Vulnerability Management</Label>
+              <Textarea
+                id="vulnerability-management"
+                value={workflowData.vulnerabilityManagement}
+                onChange={(e) => updateWorkflowData('vulnerabilityManagement', e.target.value)}
+                placeholder="Monitoring, patch cadence, disclosure process"
+                rows={2}
+                data-testid="textarea-vulnerability-management"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cyber-labeling">Cybersecurity Labeling</Label>
+              <Textarea
+                id="cyber-labeling"
+                value={workflowData.cyberLabeling}
+                onChange={(e) => updateWorkflowData('cyberLabeling', e.target.value)}
+                placeholder="Security instructions for users/operators"
+                rows={2}
+                data-testid="textarea-cyber-labeling"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sterility & Biocompatibility */}
+      {(workflowData.isSterile || workflowData.hasPatientContacting) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sterility & Biocompatibility</CardTitle>
+            <CardDescription>Capture sterility validation and biocompatibility requirements</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {workflowData.isSterile && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="sterilization-method">Sterilization Method</Label>
+                    <Input
+                      id="sterilization-method"
+                      value={workflowData.sterilizationMethod}
+                      onChange={(e) => updateWorkflowData('sterilizationMethod', e.target.value)}
+                      placeholder="EtO, gamma, steam, aseptic"
+                      data-testid="input-sterilization-method"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sterility-sal">Sterility Assurance Level (SAL)</Label>
+                    <Input
+                      id="sterility-sal"
+                      value={workflowData.sterilitySAL}
+                      onChange={(e) => updateWorkflowData('sterilitySAL', e.target.value)}
+                      placeholder="e.g., 10^-6"
+                      data-testid="input-sterility-sal"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="endotoxin-limits">Endotoxin Limits</Label>
+                    <Input
+                      id="endotoxin-limits"
+                      value={workflowData.endotoxinLimits}
+                      onChange={(e) => updateWorkflowData('endotoxinLimits', e.target.value)}
+                      placeholder="EU/device or EU/mL"
+                      data-testid="input-endotoxin-limits"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pyrogen-limits">Pyrogen Limits</Label>
+                    <Input
+                      id="pyrogen-limits"
+                      value={workflowData.pyrogenLimits}
+                      onChange={(e) => updateWorkflowData('pyrogenLimits', e.target.value)}
+                      placeholder="Applicable limits or NA"
+                      data-testid="input-pyrogen-limits"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="packaging-integrity">Packaging Integrity</Label>
+                    <Input
+                      id="packaging-integrity"
+                      value={workflowData.packagingIntegrity}
+                      onChange={(e) => updateWorkflowData('packagingIntegrity', e.target.value)}
+                      placeholder="Seal strength, dye penetration"
+                      data-testid="input-packaging-integrity"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="shelf-life">Shelf Life</Label>
+                    <Input
+                      id="shelf-life"
+                      value={workflowData.shelfLife}
+                      onChange={(e) => updateWorkflowData('shelfLife', e.target.value)}
+                      placeholder="Months/years"
+                      data-testid="input-shelf-life"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {workflowData.hasPatientContacting && (
+              <>
+                <div>
+                  <Label htmlFor="iso-mapping">ISO 10993 Mapping</Label>
+                  <Textarea
+                    id="iso-mapping"
+                    value={workflowData.iso10993Mapping}
+                    onChange={(e) => updateWorkflowData('iso10993Mapping', e.target.value)}
+                    placeholder="List applicable ISO 10993 endpoints and rationale"
+                    rows={2}
+                    data-testid="textarea-iso-mapping"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="biocomp-summary">Biocompatibility Summary</Label>
+                  <Textarea
+                    id="biocomp-summary"
+                    value={workflowData.biocompSummary}
+                    onChange={(e) => updateWorkflowData('biocompSummary', e.target.value)}
+                    placeholder="Summary of test strategy and results"
+                    rows={2}
+                    data-testid="textarea-biocomp-summary"
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Testing & Standards Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Testing & Standards Summary</CardTitle>
+          <CardDescription>High-level testing plans and standards declarations</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="testing-bench">Bench/Performance Testing</Label>
+              <Textarea
+                id="testing-bench"
+                value={workflowData.testingBench}
+                onChange={(e) => updateWorkflowData('testingBench', e.target.value)}
+                placeholder="Summary of bench testing strategy"
+                rows={2}
+                data-testid="textarea-testing-bench"
+              />
+            </div>
+            <div>
+              <Label htmlFor="testing-emc">Electrical Safety & EMC</Label>
+              <Textarea
+                id="testing-emc"
+                value={workflowData.testingEmc}
+                onChange={(e) => updateWorkflowData('testingEmc', e.target.value)}
+                placeholder="IEC 60601-1, 60601-1-2, etc."
+                rows={2}
+                data-testid="textarea-testing-emc"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="testing-shelf-life">Shelf Life / Packaging</Label>
+              <Textarea
+                id="testing-shelf-life"
+                value={workflowData.testingShelfLife}
+                onChange={(e) => updateWorkflowData('testingShelfLife', e.target.value)}
+                placeholder="Aging, packaging integrity"
+                rows={2}
+                data-testid="textarea-testing-shelf-life"
+              />
+            </div>
+            <div>
+              <Label htmlFor="testing-usability">Usability / Human Factors</Label>
+              <Textarea
+                id="testing-usability"
+                value={workflowData.testingUsability}
+                onChange={(e) => updateWorkflowData('testingUsability', e.target.value)}
+                placeholder="IEC 62366, FDA guidance"
+                rows={2}
+                data-testid="textarea-testing-usability"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="standards-list">Recognized Standards</Label>
+            <Textarea
+              id="standards-list"
+              value={workflowData.standardsList}
+              onChange={(e) => updateWorkflowData('standardsList', e.target.value)}
+              placeholder="List standards and versions"
+              rows={2}
+              data-testid="textarea-standards-list"
+            />
+          </div>
+          <div>
+            <Label htmlFor="declarations">Declarations of Conformity</Label>
+            <Textarea
+              id="declarations"
+              value={workflowData.declarationsOfConformity}
+              onChange={(e) => updateWorkflowData('declarationsOfConformity', e.target.value)}
+              placeholder="Identify declarations and supporting documentation"
+              rows={2}
+              data-testid="textarea-declarations"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Labeling & UDI */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Labeling & UDI</CardTitle>
+          <CardDescription>IFU, labeling content, and UDI references</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <Label htmlFor="ifu-available">IFU Available</Label>
+            <Switch
+              id="ifu-available"
+              checked={workflowData.ifuAvailable}
+              onCheckedChange={(checked) => updateWorkflowData('ifuAvailable', checked)}
+              data-testid="switch-ifu-available"
+            />
+          </div>
+          <div>
+            <Label htmlFor="labeling-notes">Labeling Notes</Label>
+            <Textarea
+              id="labeling-notes"
+              value={workflowData.labelingNotes}
+              onChange={(e) => updateWorkflowData('labelingNotes', e.target.value)}
+              placeholder="Key labeling statements and use limitations"
+              rows={2}
+              data-testid="textarea-labeling-notes"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="udi-notes">UDI Notes</Label>
+              <Textarea
+                id="udi-notes"
+                value={workflowData.udiNotes}
+                onChange={(e) => updateWorkflowData('udiNotes', e.target.value)}
+                placeholder="UDI-DI/UDI-PI format and labeling"
+                rows={2}
+                data-testid="textarea-udi-notes"
+              />
+            </div>
+            <div>
+              <Label htmlFor="artwork-references">Artwork References</Label>
+              <Textarea
+                id="artwork-references"
+                value={workflowData.artworkReferences}
+                onChange={(e) => updateWorkflowData('artworkReferences', e.target.value)}
+                placeholder="Labels, IFU, packaging artwork IDs"
+                rows={2}
+                data-testid="textarea-artwork-references"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Attachments Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Attachments Summary</CardTitle>
+          <CardDescription>Capture files and supporting evidence to upload</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="attachments-summary">Attachment Summary</Label>
+            <Textarea
+              id="attachments-summary"
+              value={workflowData.attachmentsSummary}
+              onChange={(e) => updateWorkflowData('attachmentsSummary', e.target.value)}
+              placeholder="List key evidence files, reports, and references"
+              rows={2}
+              data-testid="textarea-attachments-summary"
+            />
+          </div>
+          <div>
+            <Label htmlFor="attachments-tags">Attachment Tags</Label>
+            <Input
+              id="attachments-tags"
+              value={workflowData.attachmentsTags}
+              onChange={(e) => updateWorkflowData('attachmentsTags', e.target.value)}
+              placeholder="bench, biocomp, sterilization, software"
+              data-testid="input-attachments-tags"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Clinical Data */}
+      {workflowData.hasClinicalData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Clinical Data</CardTitle>
+            <CardDescription>Document clinical evidence and trial registration requirements</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <Label htmlFor="clinical-data-used" className="flex items-center gap-2">
+                Clinical data will be submitted
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-gray-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    If clinical studies are included, FDA Form 3674 is required.
+                  </TooltipContent>
+                </Tooltip>
+              </Label>
+              <Switch
+                id="clinical-data-used"
+                checked={workflowData.clinicalDataUsed}
+                onCheckedChange={(checked) => updateWorkflowData('clinicalDataUsed', checked)}
+                data-testid="switch-clinical-data-used"
+              />
+            </div>
+            {workflowData.clinicalDataUsed && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  Clinical data selected — FDA Form 3674 will be required in the Authoring stage.
+                </AlertDescription>
+              </Alert>
+            )}
+            <div>
+              <Label htmlFor="clinical-data-summary">Clinical Data Summary</Label>
+              <Textarea
+                id="clinical-data-summary"
+                value={workflowData.clinicalDataSummary}
+                onChange={(e) => updateWorkflowData('clinicalDataSummary', e.target.value)}
+                placeholder="Study design, enrollment, endpoints, key outcomes"
+                rows={3}
+                data-testid="textarea-clinical-data-summary"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Technical Description */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Technical Description</CardTitle>
+          <CardDescription>Device composition, principles, and core technical characteristics</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="technical-characteristics">Technical Characteristics</Label>
+            <Textarea
+              id="technical-characteristics"
+              value={workflowData.technicalCharacteristics}
+              onChange={(e) => updateWorkflowData('technicalCharacteristics', e.target.value)}
+              placeholder="Key performance, design features, and technologies"
+              rows={3}
+              data-testid="textarea-technical-characteristics"
+            />
+          </div>
+          <div>
+            <Label htmlFor="principles-operation">Principles of Operation</Label>
+            <Textarea
+              id="principles-operation"
+              value={workflowData.principlesOfOperation}
+              onChange={(e) => updateWorkflowData('principlesOfOperation', e.target.value)}
+              placeholder="Describe how the device achieves intended function"
+              rows={3}
+              data-testid="textarea-principles-operation"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="components">Components</Label>
+              <Textarea
+                id="components"
+                value={workflowData.components}
+                onChange={(e) => updateWorkflowData('components', e.target.value)}
+                placeholder="Major components or subassemblies"
+                rows={2}
+                data-testid="textarea-components"
+              />
+            </div>
+            <div>
+              <Label htmlFor="critical-materials">Critical Materials</Label>
+              <Textarea
+                id="critical-materials"
+                value={workflowData.criticalMaterials}
+                onChange={(e) => updateWorkflowData('criticalMaterials', e.target.value)}
+                placeholder="Patient-contacting or critical materials"
+                rows={2}
+                data-testid="textarea-critical-materials"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Entry Mode */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-purple-600" />
+            Data Entry Mode
+          </CardTitle>
+          <CardDescription>Toggle between manual data entry and AI-assisted completion</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="entry-mode" className="flex items-center gap-2">
+              AI-assisted completion
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Use AI to draft intake narratives from your provided context. You remain in control of final edits.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
+            <Switch
+              id="entry-mode"
+              checked={isAiAssistEnabled}
+              onCheckedChange={(checked) => updateWorkflowData('entryMode', checked ? 'ai' : 'manual')}
+              data-testid="switch-entry-mode"
+            />
+          </div>
+
+          {isAiAssistEnabled && (
+            <div className="space-y-3 rounded-lg border bg-purple-50 p-4">
+              <Label htmlFor="ai-assist-context">AI Intake Context</Label>
+              <Textarea
+                id="ai-assist-context"
+                value={workflowData.aiAssistContext}
+                onChange={(e) => updateWorkflowData('aiAssistContext', e.target.value)}
+                placeholder="Provide high-level device context, prior submissions, or key clinical/technical notes for the AI assistant."
+                rows={3}
+              />
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handleGenerateAiDraft}
+                  disabled={aiDraftStatus === 'drafting'}
+                  data-testid="button-ai-draft"
+                >
+                  {aiDraftStatus === 'drafting' ? 'Drafting...' : 'Generate AI Draft'}
+                </Button>
+                {aiDraftContent && (
+                  <Button variant="outline" onClick={applyAiDraft} data-testid="button-ai-apply">
+                    Apply Draft to Empty Fields
+                  </Button>
+                )}
+              </div>
+              {aiDraftContent && (
+                <Textarea
+                  value={aiDraftContent}
+                  onChange={(e) => setAiDraftContent(e.target.value)}
+                  rows={4}
+                  className="bg-white"
+                  data-testid="textarea-ai-draft"
+                />
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -541,6 +1463,119 @@ const Enhanced510kIntakeWorkflow = ({
                 onChange={(e) => updateWorkflowData('establishmentNumber', e.target.value)}
                 placeholder="FDA establishment number"
                 data-testid="input-establishment"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="address-street">Street Address</Label>
+              <Input
+                id="address-street"
+                value={workflowData.address.street}
+                onChange={(e) => updateWorkflowData('address.street', e.target.value)}
+                placeholder="123 Main St"
+                data-testid="input-address-street"
+              />
+            </div>
+            <div>
+              <Label htmlFor="address-city">City</Label>
+              <Input
+                id="address-city"
+                value={workflowData.address.city}
+                onChange={(e) => updateWorkflowData('address.city', e.target.value)}
+                placeholder="Boston"
+                data-testid="input-address-city"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="address-state">State/Province</Label>
+              <Input
+                id="address-state"
+                value={workflowData.address.state}
+                onChange={(e) => updateWorkflowData('address.state', e.target.value)}
+                placeholder="MA"
+                data-testid="input-address-state"
+              />
+            </div>
+            <div>
+              <Label htmlFor="address-zip">ZIP/Postal Code</Label>
+              <Input
+                id="address-zip"
+                value={workflowData.address.zip}
+                onChange={(e) => updateWorkflowData('address.zip', e.target.value)}
+                placeholder="02110"
+                data-testid="input-address-zip"
+              />
+            </div>
+            <div>
+              <Label htmlFor="address-country">Country</Label>
+              <Input
+                id="address-country"
+                value={workflowData.address.country}
+                onChange={(e) => updateWorkflowData('address.country', e.target.value)}
+                placeholder="USA"
+                data-testid="input-address-country"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="ra-contact-name">Regulatory Contact Name</Label>
+              <Input
+                id="ra-contact-name"
+                value={workflowData.raContactName}
+                onChange={(e) => updateWorkflowData('raContactName', e.target.value)}
+                placeholder="Regulatory lead"
+                data-testid="input-ra-contact-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ra-contact-email">Regulatory Contact Email</Label>
+              <Input
+                id="ra-contact-email"
+                type="email"
+                value={workflowData.raContactEmail}
+                onChange={(e) => updateWorkflowData('raContactEmail', e.target.value)}
+                placeholder="ra@company.com"
+                data-testid="input-ra-contact-email"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ra-contact-phone">Regulatory Contact Phone</Label>
+              <Input
+                id="ra-contact-phone"
+                type="tel"
+                value={workflowData.raContactPhone}
+                onChange={(e) => updateWorkflowData('raContactPhone', e.target.value)}
+                placeholder="+1 (555) 123-9876"
+                data-testid="input-ra-contact-phone"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <Label htmlFor="small-business">Small Business Determination</Label>
+              <Switch
+                id="small-business"
+                checked={workflowData.smallBusinessDetermination}
+                onCheckedChange={(checked) => updateWorkflowData('smallBusinessDetermination', checked)}
+                data-testid="switch-small-business"
+              />
+            </div>
+            <div>
+              <Label htmlFor="user-fee">User Fee Reference (FDA 3601)</Label>
+              <Input
+                id="user-fee"
+                value={workflowData.userFeeReference}
+                onChange={(e) => updateWorkflowData('userFeeReference', e.target.value)}
+                placeholder="Payment confirmation or reference"
+                data-testid="input-user-fee"
               />
             </div>
           </div>
@@ -624,6 +1659,17 @@ const Enhanced510kIntakeWorkflow = ({
               data-testid="textarea-device-models"
             />
           </div>
+
+          <div>
+            <Label htmlFor="device-model-family">Model Family / Variants</Label>
+            <Input
+              id="device-model-family"
+              value={workflowData.deviceModelFamily}
+              onChange={(e) => updateWorkflowData('deviceModelFamily', e.target.value)}
+              placeholder="Family name or variant grouping"
+              data-testid="input-device-model-family"
+            />
+          </div>
           
           <div>
             <Label htmlFor="device-accessories">Accessories (if applicable)</Label>
@@ -635,6 +1681,84 @@ const Enhanced510kIntakeWorkflow = ({
               rows={2}
               data-testid="textarea-device-accessories"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="accessories-notes">Accessory Notes</Label>
+            <Input
+              id="accessories-notes"
+              value={workflowData.accessoriesNotes}
+              onChange={(e) => updateWorkflowData('accessoriesNotes', e.target.value)}
+              placeholder="Accessory indications or limitations"
+              data-testid="input-accessories-notes"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="advisory-committee">Advisory Committee</Label>
+              <Input
+                id="advisory-committee"
+                value={workflowData.advisoryCommittee}
+                onChange={(e) => updateWorkflowData('advisoryCommittee', e.target.value)}
+                placeholder="e.g., Cardiovascular"
+                data-testid="input-advisory-committee"
+              />
+            </div>
+            <div>
+              <Label htmlFor="energy-source">Energy Source</Label>
+              <Input
+                id="energy-source"
+                value={workflowData.energySource}
+                onChange={(e) => updateWorkflowData('energySource', e.target.value)}
+                placeholder="Electrical, mechanical, battery"
+                data-testid="input-energy-source"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <Label htmlFor="rx-use">Rx Use</Label>
+              <Switch
+                id="rx-use"
+                checked={workflowData.rxUse}
+                onCheckedChange={(checked) => updateWorkflowData('rxUse', checked)}
+                data-testid="switch-rx-use"
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <Label htmlFor="otc-use">OTC Use</Label>
+              <Switch
+                id="otc-use"
+                checked={workflowData.otcUse}
+                onCheckedChange={(checked) => updateWorkflowData('otcUse', checked)}
+                data-testid="switch-otc-use"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="environment-use">Environment of Use</Label>
+              <Input
+                id="environment-use"
+                value={workflowData.environmentOfUse}
+                onChange={(e) => updateWorkflowData('environmentOfUse', e.target.value)}
+                placeholder="Hospital, clinic, home"
+                data-testid="input-environment-use"
+              />
+            </div>
+            <div>
+              <Label htmlFor="patient-population">Patient Population</Label>
+              <Input
+                id="patient-population"
+                value={workflowData.patientPopulation}
+                onChange={(e) => updateWorkflowData('patientPopulation', e.target.value)}
+                placeholder="Adults, pediatrics, neonates"
+                data-testid="input-patient-population"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -813,6 +1937,53 @@ const Enhanced510kIntakeWorkflow = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary & Attestation */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Summary & Attestation</CardTitle>
+          <CardDescription>Confirm the submission summary type and certification</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="summary-choice" className="flex items-center gap-2">
+              510(k) Summary or Statement
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Choose either a 510(k) Summary (most common) or a 510(k) Statement (FD&C Act 513(i)(1)(B)).
+                </TooltipContent>
+              </Tooltip>
+            </Label>
+            <Select
+              value={workflowData.summaryChoice}
+              onValueChange={(value) => updateWorkflowData('summaryChoice', value)}
+            >
+              <SelectTrigger id="summary-choice" data-testid="select-summary-choice">
+                <SelectValue placeholder="Select summary type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="summary">510(k) Summary</SelectItem>
+                <SelectItem value="statement">510(k) Statement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="truthful-accurate"
+              checked={workflowData.truthfulAccurate}
+              onCheckedChange={(checked) => updateWorkflowData('truthfulAccurate', !!checked)}
+              data-testid="checkbox-truthful-accurate"
+            />
+            <Label htmlFor="truthful-accurate">
+              I certify the information provided is truthful and accurate.
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Save & Continue */}
       <div className="flex justify-between">
@@ -838,7 +2009,13 @@ const Enhanced510kIntakeWorkflow = ({
             setActiveSection('predicate_search');
             toast({ title: "Device Intake Complete", description: "Moving to Predicate Search" });
           }}
-          disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
+          disabled={
+            !workflowData.deviceName ||
+            !workflowData.productCode ||
+            !workflowData.intendedUse ||
+            !workflowData.summaryChoice ||
+            !workflowData.truthfulAccurate
+          }
           data-testid="button-continue-to-predicate"
         >
           Continue to Predicate Search
@@ -846,6 +2023,7 @@ const Enhanced510kIntakeWorkflow = ({
         </Button>
       </div>
     </div>
+    </TooltipProvider>
   );
   
   // Render main workflow interface
@@ -1006,31 +2184,55 @@ const Enhanced510kIntakeWorkflow = ({
               />
             </div>
           )}
-          
-          {/* Additional stages will be implemented... */}
-          {currentStage > 0 && (
+          {currentStage === 1 && activeSection === 'se_strategy' && renderStrategySection()}
+
+          {currentStage === 2 && (
+            <div className="space-y-4">
+              {activeSection === 'standards_matrix' && renderEvidencePlanSection()}
+              {activeSection === 'test_plan' && renderEvidencePlanSection()}
+            </div>
+          )}
+
+          {currentStage > 2 && (
             <Card>
               <CardHeader>
                 <CardTitle>{WORKFLOW_CONFIG.stages[currentStage].name}</CardTitle>
                 <CardDescription>{WORKFLOW_CONFIG.stages[currentStage].description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Stage {currentStage + 1} content will be implemented here...
-                </p>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    This stage is ready for evidence upload and authoring workflows. Continue in the document editor and evidence modules to complete this phase.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           )}
         </div>
         
-        {/* Right Sidebar - Compliance Oversight */}
+        {/* Right Sidebar - Compliance & Documents */}
         <div className="col-span-4">
-          <ComplianceOversightPanel
-            projectId={projectId}
-            currentData={workflowData}
-            stage={WORKFLOW_CONFIG.stages[currentStage].id}
-            section={activeSection}
-          />
+          <Tabs defaultValue="oversight" className="space-y-4">
+            <TabsList className="w-full">
+              <TabsTrigger value="oversight" className="flex-1">Compliance Oversight</TabsTrigger>
+              <TabsTrigger value="documents" className="flex-1">Documents Under Production</TabsTrigger>
+            </TabsList>
+            <TabsContent value="oversight">
+              <ComplianceOversightPanel
+                projectId={projectId}
+                currentData={workflowData}
+                stage={WORKFLOW_CONFIG.stages[currentStage].id}
+                section={activeSection}
+              />
+            </TabsContent>
+            <TabsContent value="documents">
+              <DocumentGenerationPanel
+                projectId={projectId}
+                projectData={workflowData}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

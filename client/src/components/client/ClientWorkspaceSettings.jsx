@@ -931,14 +931,14 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
                     <div className="space-y-0.5 pointer-events-none">
                       <div className="flex items-center">
                         <Label htmlFor="medicalDeviceEnabled" className="text-base">
-                          Medical Device & Diagnostics RA™
+                          Medical Device & Diagnostics Regulatory Module
                         </Label>
                         <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-200">
                           Regulatory
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Next-generation regulatory automation for medical device and diagnostics submissions
+                        Jurisdiction-agnostic regulatory automation for 510(k), PMA, and EU MDR CER submissions
                       </p>
                     </div>
                     <div className="flex-shrink-0" data-testid="toggle-medicalDeviceEnabled">

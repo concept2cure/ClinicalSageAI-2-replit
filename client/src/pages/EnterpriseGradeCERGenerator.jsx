@@ -2003,7 +2003,9 @@ const EnterpriseGradeCERGenerator = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white">TrialSage™ CER Generator</h1>
+                <h1 className="text-3xl font-bold text-white">
+                  TrialSage™ Medical Device & Diagnostics Regulatory Module
+                </h1>
                 <p className="mt-2 text-rose-100 max-w-3xl">
                   AI-powered regulatory writing, reimagined for speed, accuracy, and global
                   compliance.

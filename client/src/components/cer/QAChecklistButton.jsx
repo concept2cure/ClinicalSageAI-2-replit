@@ -15,7 +15,7 @@ import {
 /**
  * QA Checklist Button Component
  *
- * Provides a button to view and download the CER Generator QA checklist
+ * Provides a button to view and download the regulatory module QA checklist
  * for final verification before stakeholder review.
  */
 export default function QAChecklistButton({ variant = 'default' }) {
@@ -37,7 +37,7 @@ export default function QAChecklistButton({ variant = 'default' }) {
 
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-blue-700">CER QA Checklist</DialogTitle>
+          <DialogTitle className="text-blue-700">Regulatory QA Checklist</DialogTitle>
           <DialogDescription>
             Use this checklist to verify all features are working correctly before stakeholder
             review.
@@ -48,7 +48,7 @@ export default function QAChecklistButton({ variant = 'default' }) {
           <section>
             <h3 className="text-lg font-medium mb-2">1. Navigation & Entry</h3>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Sidebar shows "CER Generator" in blue highlight</li>
+              <li>Sidebar shows "Medical Device & Diagnostics" in blue highlight</li>
               <li>Clicking it routes to /cer</li>
               <li>Page loads without console errors</li>
             </ul>
@@ -78,7 +78,7 @@ export default function QAChecklistButton({ variant = 'default' }) {
           <section>
             <h3 className="text-lg font-medium mb-2">4. Live Preview</h3>
             <ul className="list-disc pl-6 space-y-1">
-              <li>CER title renders at top</li>
+              <li>Report title renders at top</li>
               <li>Drafted sections display correctly with formatting</li>
               <li>FAERS table displays adverse events (if present)</li>
               <li>Comparator list shows risk scores</li>

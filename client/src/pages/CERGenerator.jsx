@@ -12,7 +12,9 @@ export default function CERGenerator() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Link>
-            <h1 className="text-xl font-semibold text-[#1d1d1f] ml-6">CER Generator™</h1>
+            <h1 className="text-xl font-semibold text-[#1d1d1f] ml-6">
+              Medical Device & Diagnostics Regulatory Module
+            </h1>
           </div>
         </div>
       </header>
@@ -21,12 +23,12 @@ export default function CERGenerator() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-[#f2f7ff] p-6 rounded-lg mb-8">
             <h2 className="text-2xl font-semibold text-[#1d1d1f] mb-4">
-              Clinical Evaluation Report Generator
+              Jurisdiction-Agnostic Regulatory Intelligence
             </h2>
             <p className="text-[#424245] mb-4">
-              Generate compliant clinical evaluation reports with intelligent data extraction from
-              regulatory sources. This module leverages AI to streamline the creation of CERs for
-              medical devices and pharmaceuticals.
+              Build a single regulatory case (claims, evidence, standards, outcomes) and render it
+              into FDA 510(k), PMA, and EU MDR CER formats without rewriting content or losing
+              traceability.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div className="bg-white p-4 rounded border border-[#e5e5e7]">
@@ -75,7 +77,7 @@ export default function CERGenerator() {
           </div>
 
           <div className="bg-white border border-[#e5e5e7] rounded-lg p-6 mb-8">
-            <h3 className="text-xl font-medium text-[#1d1d1f] mb-4">Generate New CER</h3>
+            <h3 className="text-xl font-medium text-[#1d1d1f] mb-4">Build Regulatory Case</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-[#1d1d1f] mb-2">

@@ -26,7 +26,9 @@ const CerGeneratorLandingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold text-indigo-800 mb-8">TrialSage™ CER Generator</h1>
+        <h1 className="text-3xl font-bold text-indigo-800 mb-8">
+          Medical Device & Diagnostics Regulatory Module
+        </h1>
 
         {/* Hero Section */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
@@ -34,22 +36,22 @@ const CerGeneratorLandingPage = () => {
             <div className="lg:w-1/2 space-y-6">
               <div>
                 <h2 className="text-2xl font-semibold text-indigo-700 mb-2">
-                  AI-Powered Clinical Evaluation Automation
+                  Jurisdiction-Agnostic Regulatory Automation
                 </h2>
-                <h3 className="text-xl text-indigo-600 mb-4">EU MDR 2017/745 & FDA Submissions</h3>
+                <h3 className="text-xl text-indigo-600 mb-4">
+                  FDA 510(k) • PMA • EU MDR CER
+                </h3>
               </div>
 
               <p className="text-gray-600">
-                Our next-generation regulatory automation module eliminates bottlenecks in medical
-                device and combination product submissions. Built for compliance with{' '}
-                <span className="font-semibold">EU MDR 2017/745</span>, FDA post-market
-                expectations, and ISO 14155 guidance.
+                This module models a single regulatory truth (claims, evidence, standards, outcomes)
+                and deterministically renders it into FDA 510(k), FDA PMA, and EU MDR CER formats
+                without rewriting or losing traceability.
               </p>
 
               <p className="text-gray-600">
-                This is not a template engine—it is a true{' '}
-                <span className="font-semibold">clinical intelligence system</span> that analyzes,
-                compares, and generates highly defensible CERs in minutes, not months.
+                Jurisdictions are rendering targets, not separate workflows. The underlying evidence
+                graph remains consistent across every export.
               </p>
 
               <div className="pt-4">
@@ -57,7 +59,7 @@ const CerGeneratorLandingPage = () => {
                   onClick={() => setLocation('/cerv2')}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
-                  Start Using CER Generator <ChevronRight className="ml-2 h-5 w-5" />
+                  Start Using Medical Device & Diagnostics <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </div>

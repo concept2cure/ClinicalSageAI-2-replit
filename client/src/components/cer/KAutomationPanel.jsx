@@ -469,7 +469,7 @@ export default function KAutomationPanel() {
             onClick={() => setSelectedModule('cer')}
           >
             <ClipboardList className="h-5 w-5 min-w-5" />
-            {!sidebarCollapsed && <span className="ml-3 text-sm">CER Generator</span>}
+            {!sidebarCollapsed && <span className="ml-3 text-sm">Regulatory Builder</span>}
           </Button>
 
           <Button
@@ -670,7 +670,7 @@ export default function KAutomationPanel() {
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 flex items-center">
             <ClipboardList className="h-5 w-5 mr-2 text-blue-600" />
-            CER Generator
+            Regulatory Builder
           </h2>
         </div>
 
@@ -747,7 +747,9 @@ export default function KAutomationPanel() {
         <div className="bg-white border-b flex items-center justify-between p-3">
           <div className="flex items-center">
             <h1 className="font-semibold text-xl text-gray-800 mr-8">
-              {selectedModule === '510k' ? '510(k) Submission Workflow' : 'CER Generator'}
+              {selectedModule === '510k'
+                ? '510(k) Submission Workflow'
+                : 'Medical Device & Diagnostics Regulatory Module'}
             </h1>
 
             <div className="hidden md:flex items-center space-x-1">

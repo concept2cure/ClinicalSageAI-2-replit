@@ -88,7 +88,7 @@ export default function CERDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="p-8">
-        <h2 className="text-xl">Please log in to access the CER Dashboard.</h2>
+        <h2 className="text-xl">Please log in to access the Regulatory Dashboard.</h2>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function CERDashboard() {
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <div className="p-8 max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-extrabold">Concept2Cure CER Dashboard</h1>
+          <h1 className="text-4xl font-extrabold">Concept2Cure Regulatory Dashboard</h1>
           <Button variant="outline" onClick={toggleTheme} className="gap-2">
             {theme === 'light' ? (
               <>

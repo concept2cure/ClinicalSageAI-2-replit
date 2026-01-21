@@ -16,9 +16,9 @@ import { Link } from 'wouter';
 
 export const cerSolutionsUseCase = {
   id: 'cer-solutions',
-  title: 'Clinical Evaluation Report (CER) Solutions',
+  title: 'Regulatory Evaluation Solutions',
   description:
-    'Automate the generation, analysis, and tracking of Clinical Evaluation Reports (CERs) to maintain regulatory compliance and derive actionable insights from post-market surveillance data.',
+    'Automate the generation, analysis, and tracking of regulatory evaluation reports to maintain regulatory compliance and derive actionable insights from post-market surveillance data.',
   category: 'Regulatory Compliance',
   heroImage: '/images/use-cases/cer-solutions-hero.svg',
   lastUpdated: '2025-04-15',
@@ -30,10 +30,11 @@ export const cerSolutionsUseCase = {
       <section>
         <h2 className="text-2xl font-bold mb-4">Overview</h2>
         <p className="text-slate-700 dark:text-slate-300 mb-4">
-          Clinical Evaluation Reports (CERs) are critical documents required by regulatory bodies to
+          Clinical evaluation reports are critical documents required by regulatory bodies to
           demonstrate safety and performance of medical devices and pharmaceutical products
-          throughout their lifecycle. LumenTrialGuide.AI's CER Solutions provide a comprehensive
-          suite of tools for generating, analyzing, and maintaining CERs with automated data
+          throughout their lifecycle. LumenTrialGuide.AI's Regulatory Evaluation Solutions provide
+          a comprehensive suite of tools for generating, analyzing, and maintaining evaluation
+          reports with automated data
           pipelines from FDA FAERS, enhanced visualization capabilities, and AI-powered narrative
           generation.
         </p>
@@ -47,8 +48,8 @@ export const cerSolutionsUseCase = {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Automatically generate comprehensive CERs from NDC codes using FDA FAERS data and AI
-                narrative synthesis.
+                Automatically generate comprehensive evaluation reports from NDC codes using FDA
+                FAERS data and AI narrative synthesis.
               </p>
             </CardContent>
           </Card>
@@ -156,7 +157,7 @@ export const cerSolutionsUseCase = {
                 <li className="flex items-start">
                   <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
                   <span className="text-sm">
-                    Want to streamline CER creation and updates to reduce manual effort
+                    Want to streamline regulatory evaluation creation and updates to reduce manual effort
                   </span>
                 </li>
                 <li className="flex items-start">
@@ -227,7 +228,7 @@ export const cerSolutionsUseCase = {
                 <li className="flex items-start">
                   <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
                   <span className="text-sm">
-                    Need integrated views of both CSR and CER data for comprehensive insights
+                    Need integrated views of both CSR and regulatory evaluation data for comprehensive insights
                   </span>
                 </li>
                 <li className="flex items-start">
@@ -245,7 +246,8 @@ export const cerSolutionsUseCase = {
       <section>
         <h2 className="text-2xl font-bold mb-4">Example Reports</h2>
         <p className="text-slate-700 dark:text-slate-300 mb-6">
-          Our CER Solutions generate comprehensive reports following MEDDEV 2.7/1 Rev. 4 structure
+          Our Regulatory Evaluation Solutions generate comprehensive reports following MEDDEV
+          2.7/1 Rev. 4 structure
           and ISO 14155 requirements. Below are example reports that showcase the capabilities of
           our system.
         </p>
@@ -257,7 +259,7 @@ export const cerSolutionsUseCase = {
             </div>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Adalimumab CER</CardTitle>
+                <CardTitle>Adalimumab Evaluation Report</CardTitle>
                 <Badge>Enhanced</Badge>
               </div>
             </CardHeader>
@@ -290,7 +292,7 @@ export const cerSolutionsUseCase = {
             </div>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Semaglutide CER</CardTitle>
+                <CardTitle>Semaglutide Evaluation Report</CardTitle>
                 <Badge>AI-Generated</Badge>
               </div>
             </CardHeader>
@@ -331,15 +333,17 @@ export const cerSolutionsUseCase = {
       <section className="bg-gradient-to-r from-indigo-600 to-blue-700 text-white p-6 rounded-lg">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
-            <h2 className="text-2xl font-bold mb-4">Start Using CER Solutions Today</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              Start Using the Medical Device & Diagnostics Regulatory Module
+            </h2>
             <p className="mb-6">
-              Transform your post-market surveillance process with automated CER generation,
-              enhanced analytics, and regulatory-compliant reporting.
+              Transform your post-market surveillance process with automated regulatory
+              compilation, enhanced analytics, and regulatory-compliant reporting.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/cer-generator">
                 <Button className="bg-white text-indigo-700 hover:bg-slate-100">
-                  Try CER Generator
+                  Open Regulatory Builder
                 </Button>
               </Link>
               <Link href="/enhanced-cer-dashboard">
@@ -355,7 +359,7 @@ export const cerSolutionsUseCase = {
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />
-                  <span>80% reduction in CER preparation time</span>
+                  <span>80% reduction in regulatory evaluation preparation time</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />

@@ -209,7 +209,7 @@ const ClientLicenseTab = ({ clientId, clientDetail }) => {
                 Medical Device Submission License
               </CardTitle>
               <CardDescription>
-                {clientDetail?.name} - CERV2 Module Access
+                {clientDetail?.name} - Medical Device & Diagnostics Regulatory Module Access
               </CardDescription>
             </div>
             <Badge variant={status.color}>
@@ -236,7 +236,7 @@ const ClientLicenseTab = ({ clientId, clientDetail }) => {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Share this URL with the client for direct access to their CERV2 medical device submissions
+                  Share this URL with the client for direct access to their Medical Device & Diagnostics submissions
                 </p>
               </div>
 
@@ -245,7 +245,7 @@ const ClientLicenseTab = ({ clientId, clientDetail }) => {
                 <Label className="text-sm font-medium mb-2 block">License Key</Label>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs p-2 bg-white border rounded">
-                    {showPrivateKey ? (license.licenseKey || 'CERV2-XXXX-XXXX-XXXX') : '••••-••••-••••-••••'}
+                    {showPrivateKey ? (license.licenseKey || 'MDD-XXXX-XXXX-XXXX') : '••••-••••-••••-••••'}
                   </code>
                   <Button
                     variant="outline"
@@ -270,7 +270,7 @@ const ClientLicenseTab = ({ clientId, clientDetail }) => {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>No License Issued</AlertTitle>
               <AlertDescription>
-                Configure and issue a license to enable CERV2 medical device submissions for this client.
+                Configure and issue a license to enable Medical Device & Diagnostics submissions for this client.
               </AlertDescription>
             </Alert>
           )}
@@ -282,7 +282,7 @@ const ClientLicenseTab = ({ clientId, clientDetail }) => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Stethoscope className="h-5 w-5" />
-            Medical Device & Diagnostics Features
+            Medical Device & Diagnostics Regulatory Module Features
           </CardTitle>
           <CardDescription>
             Configure access to FDA and EU regulatory submission types

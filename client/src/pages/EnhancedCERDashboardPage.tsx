@@ -47,8 +47,8 @@ const DEVICE_CODES: Product[] = [
 ];
 
 /**
- * EnhancedCERDashboardPage - Advanced dashboard for Clinical Evaluation Reports
- * 
+ * EnhancedCERDashboardPage - Advanced dashboard for regulatory evaluation reports
+ *
  * Features:
  * - Authentication flow
  * - Product selection (NDC codes and device codes)
@@ -91,11 +91,11 @@ const EnhancedCERDashboardPage: React.FC = () => {
     // toast call replaced
   // Original: toast({
       title: "Authentication successful",
-      description: "You have been granted access to the CER Dashboard."
+      description: "You have been granted access to the Regulatory Dashboard."
     })
   console.log('Toast would show:', {
       title: "Authentication successful",
-      description: "You have been granted access to the CER Dashboard."
+      description: "You have been granted access to the Regulatory Dashboard."
     });
   }, [toast]);
 
@@ -107,11 +107,11 @@ const EnhancedCERDashboardPage: React.FC = () => {
     // toast call replaced
   // Original: toast({
       title: "Logged out",
-      description: "You have been logged out of the CER Dashboard."
+      description: "You have been logged out of the Regulatory Dashboard."
     })
   console.log('Toast would show:', {
       title: "Logged out",
-      description: "You have been logged out of the CER Dashboard."
+      description: "You have been logged out of the Regulatory Dashboard."
     });
   }, [toast]);
 
@@ -215,7 +215,7 @@ const EnhancedCERDashboardPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Authentication Required</DialogTitle>
             <DialogDescription>
-              You need to authenticate to access the Enhanced CER Dashboard.
+              You need to authenticate to access the Enhanced Regulatory Dashboard.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -245,9 +245,9 @@ const EnhancedCERDashboardPage: React.FC = () => {
     <div className="container mx-auto py-8 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Enhanced CER Dashboard</h1>
+          <h1 className="text-3xl font-bold">Enhanced Regulatory Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Interactive Clinical Evaluation Report Analysis and Monitoring
+            Interactive regulatory evaluation analysis and monitoring
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -257,7 +257,7 @@ const EnhancedCERDashboardPage: React.FC = () => {
           </Button>
           <Button variant="outline" onClick={() => navigate('/cer-generator')}>
             <FileText className="mr-2 h-4 w-4" />
-            Simple CER
+            Regulatory Builder
           </Button>
         </div>
       </div>

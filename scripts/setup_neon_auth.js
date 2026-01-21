@@ -11,6 +11,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+// Load environment variables (.env.local first if present)
+const envLocalPath = path.join(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
+// Prefer IPv4 DNS results to avoid IPv6 connection issues
+dns.setDefaultResultOrder('ipv4first');
 
 // Load environment variables
 dotenv.config();
@@ -19,7 +28,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Check for required environment variables
-const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+const rawConnectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+
+const normalizeConnectionString = value => {
+  try {
+    const url = new URL(value);
+    const hostaddr = url.searchParams.get('hostaddr');
+    const hostOverride = url.searchParams.get('host');
+    if (hostOverride) {
+      url.hostname = hostOverride;
+    }
+    url.searchParams.delete('host');
+    url.searchParams.delete('hostaddr');
+    return { connectionString: url.toString(), hostaddr };
+  } catch (_err) {
+    return { connectionString: value, hostaddr: null };
+  }
+};
+
+const normalized = rawConnectionString ? normalizeConnectionString(rawConnectionString) : { connectionString: rawConnectionString, hostaddr: null };
+const connectionString = normalized.connectionString;
 
 if (!connectionString) {
   console.error('❌ Missing NEON_DATABASE_URL or DATABASE_URL environment variable');
@@ -35,6 +63,8 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false, // Neon requires SSL
   },
+  family: 4,
+  ...(normalized.hostaddr ? { hostaddr: normalized.hostaddr } : {}),
 });
 
 async function setupAuthSchema() {

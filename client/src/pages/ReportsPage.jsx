@@ -44,7 +44,7 @@ import {
 /**
  * Comprehensive Reports Page Component
  *
- * This page provides a unified interface for accessing all report types in the CERV2 module,
+ * This page provides a unified interface for accessing all report types in the Medical Device & Diagnostics Regulatory Module,
  * with dynamic filter controls, results display, and PDF export functionality.
  */
 const ReportsPage = () => {

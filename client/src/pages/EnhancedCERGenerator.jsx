@@ -72,7 +72,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-// Sample data for our CER Generator
+// Sample data for our regulatory module
 const recentReports = [
   {
     id: 'CER-2024-0412',
@@ -700,7 +700,7 @@ const NewCERWizard = ({ selectedTemplate, selectedProduct, onCancel, onComplete 
   );
 };
 
-// Main CER Generator Component
+// Main regulatory module component
 export default function EnhancedCERGenerator() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -820,9 +820,9 @@ export default function EnhancedCERGenerator() {
               {/* Dashboard Tab */}
               <TabsContent value="dashboard" className="mt-6">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">CER Dashboard</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Regulatory Dashboard</h2>
                   <p className="text-gray-600">
-                    Monitor your clinical evaluation reports, track status, and identify actionable
+                    Monitor your regulatory evaluation reports, track status, and identify actionable
                     insights.
                   </p>
                 </div>
@@ -1248,8 +1248,8 @@ export default function EnhancedCERGenerator() {
                 Seamless Integration with Your Regulatory Workflow
               </h3>
               <p className="text-gray-600 mt-1 max-w-2xl">
-                CER Generator integrates with our IND Accelerator and Submission Builder for a
-                complete regulatory solution.
+                The Medical Device & Diagnostics Regulatory Module integrates with our IND
+                Accelerator and Submission Builder for a complete regulatory solution.
               </p>
             </div>
             <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">

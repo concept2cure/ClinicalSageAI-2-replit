@@ -69,6 +69,29 @@ class RegulatoryAIServicePhase3 {
       if (!db) {
         return;
       }
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS ai_token_budget (
+          id INTEGER PRIMARY KEY,
+          daily_limit INTEGER NOT NULL,
+          tokens_used INTEGER NOT NULL DEFAULT 0,
+          reset_at TIMESTAMP NOT NULL,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS ai_dead_letter_queue (
+          id SERIAL PRIMARY KEY,
+          operation TEXT NOT NULL,
+          request_data JSONB,
+          error_message TEXT,
+          retry_count INTEGER DEFAULT 0,
+          max_retries INTEGER DEFAULT 3,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          processed_at TIMESTAMP
+        )
+      `);
+
       // Load token budget from database (using id=1 for global budget)
       const [budgetResult] = await db.execute(sql`
         SELECT * FROM ai_token_budget 
