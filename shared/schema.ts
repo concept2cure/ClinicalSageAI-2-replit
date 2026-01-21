@@ -52,6 +52,7 @@ const vector = (name: string, config: { dimensions: number }) =>
 
 const regulatoryDefensiveStatusValues = ['pending', 'verified', 'flagged', 'rejected'] as const;
 const regulatoryDefensiveRiskValues = ['low', 'medium', 'high', 'critical'] as const;
+const defaultJurisdiction = 'Global';
 
 /**
  * Organizations (Tenants) Table
@@ -3518,7 +3519,7 @@ export const smartFragments = pgTable('smart_fragments', {
     .references(() => documents.id),
   hierarchyId: integer('hierarchy_id').references(() => documentHierarchy.id),
   ectdSectionPath: text('ectd_section_path').notNull(),
-  jurisdiction: text('jurisdiction').default('Global'),
+  jurisdiction: text('jurisdiction').default(defaultJurisdiction),
   fragmentType: text('fragment_type'), // text, table_summary, figure_description, regulatory_logic
   rawContent: text('raw_content'),
   contentProse: text('content_prose'),
@@ -3779,15 +3780,18 @@ export const clinicalTruthStore = pgTable('clinical_truth_store', {
   organizationId: integer('organization_id')
     .notNull()
     .references(() => organizations.id),
-  nctId: text('nct_id').unique(),
+  nctId: text('nct_id'),
   substanceId: text('substance_id').references(() => globalSubstances.uniiCode),
   metricName: text('metric_name').notNull(),
-  metricValueFloat: real('metric_value_float'),
-  metricValueText: text('metric_value_text'),
+  metricValueFloat: real('metric_value_float'), // populate for numeric facts
+  metricValueText: text('metric_value_text'), // populate for qualitative facts
   isPrimaryEndpoint: boolean('is_primary_endpoint').default(false),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   metadata: json('metadata'),
 }, (table) => ({
+  truthNctUnique: uniqueIndex('clinical_truth_nct_unique_idx')
+    .on(table.nctId)
+    .where(sql`${table.nctId} is not null`),
   truthNctIdx: index('clinical_truth_nct_idx').on(table.nctId),
   truthSubstanceIdx: index('clinical_truth_substance_idx').on(table.substanceId),
   truthMetricIdx: index('clinical_truth_metric_idx').on(table.metricName),
