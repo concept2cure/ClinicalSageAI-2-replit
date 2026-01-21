@@ -3790,7 +3790,7 @@ export const clinicalTruthStore = pgTable('clinical_truth_store', {
   metadata: json('metadata'),
 }, (table) => ({
   truthNctUnique: uniqueIndex('clinical_truth_nct_metric_unique_idx')
-    .on(table.nctId, table.metricName, table.substanceId), // enforce per-metric uniqueness
+    .on(table.nctId, table.metricName), // enforce per-metric uniqueness
   truthNctIdx: index('clinical_truth_nct_idx').on(table.nctId),
   truthSubstanceIdx: index('clinical_truth_substance_idx').on(table.substanceId),
   truthMetricIdx: index('clinical_truth_metric_idx').on(table.metricName),
