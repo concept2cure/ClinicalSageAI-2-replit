@@ -96,8 +96,13 @@ update_main() {
 get_branches_to_sync() {
     log_info "Identifying branches to sync..."
     
-    # Get all remote branches excluding main and HEAD
-    git branch -r | grep -v '\->' | grep -v 'origin/main' | sed 's/origin\///' | sort -u
+    # Use git for-each-ref for more robust branch enumeration
+    # This handles branch names with special characters properly
+    git for-each-ref --format='%(refname:short)' refs/remotes/origin/ | \
+        grep -v '^origin/HEAD$' | \
+        grep -v '^origin/main$' | \
+        sed 's|^origin/||' | \
+        sort -u
 }
 
 # Function to sync a single branch
@@ -138,8 +143,17 @@ sync_branch() {
     
     log_info "Merging main into $branch..."
     
+    # Create audit-friendly commit message with timestamp
+    local sync_timestamp=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+    local commit_msg="Merge main into $branch - automated sync
+
+Sync timestamp: $sync_timestamp
+Source: main branch (origin/main)
+Target: $branch
+Automated by: scripts/sync-branches.sh"
+    
     # Attempt to merge main into current branch
-    if git merge origin/main --no-edit --no-ff -m "Merge main into $branch - automated sync"; then
+    if git merge origin/main --no-edit --no-ff -m "$commit_msg"; then
         log_success "Successfully merged main into $branch"
         
         # Push the changes
