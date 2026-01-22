@@ -306,7 +306,16 @@ main() {
     
     # Return to original branch
     log_info "Returning to original branch: $ORIGINAL_BRANCH"
-    git checkout "$ORIGINAL_BRANCH" 2>/dev/null || git checkout main 2>/dev/null || true
+    if ! git checkout "$ORIGINAL_BRANCH" 2>/dev/null; then
+        log_warning "Could not return to original branch: $ORIGINAL_BRANCH"
+        if git checkout main 2>/dev/null; then
+            log_info "Checked out main branch instead"
+        else
+            log_warning "Could not checkout main branch either - staying on current branch"
+            local current=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+            log_warning "Current branch: $current"
+        fi
+    fi
     
     echo ""
     log_info "End time: $(date)"
