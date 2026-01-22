@@ -15,8 +15,9 @@ To manually synchronize all branches with the latest changes from `main`:
 ### Automated Synchronization
 
 The system runs automatically:
-- **Schedule**: Weekly on Mondays at 2 AM UTC
-- **Manual**: Trigger via GitHub Actions UI
+- **On push to main**: Immediately syncs all branches when main is updated
+- **Daily schedule**: Runs at 2 AM UTC every day for additional safety
+- **Manual**: Trigger via GitHub Actions UI anytime
 - **On-Demand**: Via repository dispatch events
 
 ## How It Works

@@ -1,6 +1,11 @@
 name: Sync Branches with Main
 
 on:
+  # Trigger on push to main branch (automated sync when main changes)
+  push:
+    branches:
+      - main
+  
   # Allow manual triggering
   workflow_dispatch:
     inputs:
@@ -13,9 +18,9 @@ on:
           - 'true'
           - 'false'
   
-  # Scheduled execution (runs weekly on Monday at 2 AM UTC)
+  # Scheduled execution (runs daily at 2 AM UTC for additional safety)
   schedule:
-    - cron: '0 2 * * 1'
+    - cron: '0 2 * * *'
   
   # Can be triggered by repository dispatch
   repository_dispatch:

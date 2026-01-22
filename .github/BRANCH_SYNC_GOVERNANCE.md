@@ -113,8 +113,9 @@ Location: `.github/workflows/sync-branches.yml`
 Purpose: Scheduled and manual triggering of branch synchronization
 
 Triggers:
-- **Schedule**: Runs automatically (e.g., daily, weekly)
-- **Manual**: Can be triggered via GitHub Actions UI
+- **On push to main**: Automatically runs when main branch is updated
+- **Daily schedule**: Runs at 2 AM UTC every day
+- **Manual**: Can be triggered via GitHub Actions UI anytime
 - **On demand**: Via repository dispatch events
 
 Features:
