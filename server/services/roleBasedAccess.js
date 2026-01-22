@@ -1,4 +1,4 @@
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 
 class RoleBasedAccessService {
   constructor() {

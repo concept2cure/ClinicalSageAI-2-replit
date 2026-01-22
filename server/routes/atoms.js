@@ -2,8 +2,21 @@ import express from 'express';
 import { db } from '../db/index.js';
 import { and, eq, ilike, sql, desc } from 'drizzle-orm';
 import { lumenDataAtoms } from '../../shared/schema.ts';
+import { checkAuth } from '../controllers/auth.js';
 
 const router = express.Router();
+
+const hasOrganizationAccess = (req, organizationId) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (tokenOrgId && tokenOrgId === organizationId) {
+    return true;
+  }
+
+  const orgs = req.user?.organizations;
+  return Array.isArray(orgs) && orgs.some(org => Number(org.id) === organizationId);
+};
+
+router.use(checkAuth);
 
 const resolveOrganizationId = req =>
   req.organizationId || req.query.organizationId || req.body?.organizationId;
@@ -18,6 +31,13 @@ router.get('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'organizationId is required',
+      });
+    }
+
+    if (!hasOrganizationAccess(req, Number(orgId))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this organization',
       });
     }
 
@@ -87,6 +107,13 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    if (!hasOrganizationAccess(req, Number(orgId))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this organization',
+      });
+    }
+
     const [atom] = await db
       .select()
       .from(lumenDataAtoms)
@@ -138,6 +165,12 @@ router.post('/', async (req, res) => {
       });
     }
 
+    if (!hasOrganizationAccess(req, Number(orgId))) {
+      return res.status(403).json({
+        error: 'Access denied to this organization',
+      });
+    }
+
     const [newAtom] = await db
       .insert(lumenDataAtoms)
       .values({
@@ -183,6 +216,12 @@ router.put('/:id', async (req, res) => {
       });
     }
 
+    if (!hasOrganizationAccess(req, Number(orgId))) {
+      return res.status(403).json({
+        error: 'Access denied to this organization',
+      });
+    }
+
     const [updatedAtom] = await db
       .update(lumenDataAtoms)
       .set({
@@ -225,6 +264,12 @@ router.delete('/:id', async (req, res) => {
     if (!orgId) {
       return res.status(400).json({
         error: 'organizationId is required',
+      });
+    }
+
+    if (!hasOrganizationAccess(req, Number(orgId))) {
+      return res.status(403).json({
+        error: 'Access denied to this organization',
       });
     }
 

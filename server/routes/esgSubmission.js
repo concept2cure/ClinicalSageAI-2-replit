@@ -10,7 +10,7 @@
  */
 
 import { Router } from 'express';
-import { verifyJwt } from '../middleware/auth.js';
+import { verifyJwt } from '../middleware/auth.cjs';
 import {
   createEsgSubmission,
   generateSubmissionPackage,

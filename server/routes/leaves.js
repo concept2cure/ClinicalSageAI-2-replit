@@ -2,6 +2,17 @@ import express from 'express';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      error: 'Leaf hydration demo endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Store active SSE connections per leafId
 const sseConnections = new Map();
 

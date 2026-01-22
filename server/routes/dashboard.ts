@@ -1,7 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 // @ts-ignore - JavaScript middleware file
-import { authenticateToken, enforceTenant } from '../middleware/auth';
+// @ts-ignore - JavaScript middleware file
+import * as authMiddleware from '../middleware/auth.cjs';
+
+const { authenticateToken, enforceTenant } = authMiddleware as {
+  authenticateToken: (req: Request, res: Response, next: () => void) => void;
+  enforceTenant: (req: Request, res: Response, next: () => void) => void;
+};
 
 const router = Router();
 router.use(authenticateToken);

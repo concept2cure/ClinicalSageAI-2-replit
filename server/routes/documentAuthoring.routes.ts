@@ -33,7 +33,9 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import speakeasy from 'speakeasy';
 import { Server as SocketIOServer } from 'socket.io';
+import { logAudit } from '../utils/audit.js';
 
 // Extend Express Request interface
 declare global {
@@ -823,9 +825,37 @@ router.post('/signatures', authenticateJWT, async (req: Request, res: Response) 
     }
 
     // Verify MFA if enabled
-    if ((user[0] as any).mfaEnabled && mfaToken) {
-      // MFA verification logic would go here
-      // For now, we'll assume it's valid
+    const mfaConfig = ((user[0] as any).preferences as any)?.mfa || {};
+    const mfaEnabled = Boolean((user[0] as any).mfaEnabled ?? mfaConfig.enabled);
+    if (mfaEnabled) {
+      if (!mfaToken) {
+        return res.status(401).json({
+          success: false,
+          error: 'MFA token required',
+        });
+      }
+
+      const secret = (user[0] as any).mfaSecret || mfaConfig.secret;
+      if (!secret) {
+        return res.status(409).json({
+          success: false,
+          error: 'MFA secret not configured for this user',
+        });
+      }
+
+      const isValid = speakeasy.totp.verify({
+        secret: String(secret),
+        encoding: 'base32',
+        token: String(mfaToken),
+        window: 2,
+      });
+
+      if (!isValid) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid MFA token',
+        });
+      }
     }
 
     // Get document and version
@@ -1530,22 +1560,45 @@ router.post('/mfa/verify', authenticateJWT, async (req: Request, res: Response) 
       });
     }
 
-    if (!(user[0] as any).mfaEnabled) {
+    const mfaConfig = ((user[0] as any).preferences as any)?.mfa || {};
+    const mfaEnabled = Boolean((user[0] as any).mfaEnabled ?? mfaConfig.enabled);
+    if (!mfaEnabled) {
       return res.status(400).json({
         success: false,
         error: 'MFA is not enabled for this user'
       });
     }
 
-    // Verify MFA token (would use actual MFA library like speakeasy)
-    // const isValid = speakeasy.totp.verify({ secret: user[0].mfaSecret, token, window: 2 });
-    const isValid = true; // Placeholder
+    const secret = (user[0] as any).mfaSecret || mfaConfig.secret;
+    if (!secret) {
+      return res.status(409).json({
+        success: false,
+        error: 'MFA secret not configured for this user',
+      });
+    }
+
+    const isValid = speakeasy.totp.verify({
+      secret: String(secret),
+      encoding: 'base32',
+      token: String(token),
+      window: 2,
+    });
 
     if (!isValid) {
       return res.status(401).json({
         success: false,
         error: 'Invalid MFA token'
       });
+    }
+
+    if (mfaEnabled && user[0]?.id && user[0]?.defaultOrganizationId) {
+      logAudit(
+        String(user[0].defaultOrganizationId),
+        String(user[0].id),
+        'MFA_SUCCESS',
+        `MFA verified for action: ${action || 'unknown'}`,
+        req.ip
+      );
     }
 
     // Generate MFA session token

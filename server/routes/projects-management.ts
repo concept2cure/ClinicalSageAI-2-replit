@@ -5,8 +5,21 @@ import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/
 import { and, eq } from 'drizzle-orm';
 import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
+import { checkAuth } from '../controllers/auth.js';
 
 const router = Router();
+
+const hasOrganizationAccess = (req: any, organizationId: number) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (tokenOrgId && tokenOrgId === organizationId) {
+    return true;
+  }
+
+  const orgs = req.user?.organizations;
+  return Array.isArray(orgs) && orgs.some((org: any) => Number(org.id) === organizationId);
+};
+
+router.use(checkAuth);
 
 // Validation schemas
 const createProjectSchema = z.object({
@@ -41,6 +54,10 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: tenantContext.error });
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
+
+    if (!hasOrganizationAccess(req, organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
 
     console.log('🔍 GET projects request - organizationId:', organizationId, 'from:', req.headers['x-organization-id'] ? 'header' : 'query');
 
@@ -85,6 +102,10 @@ router.get('/:projectId', async (req, res) => {
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
 
+    if (!hasOrganizationAccess(req, organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
@@ -124,6 +145,10 @@ router.post('/', async (req, res) => {
     console.log('Create project request received:', req.body);
 
     const validatedData = createProjectSchema.parse(req.body);
+
+    if (!hasOrganizationAccess(req, validatedData.organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
 
     const license = await getActiveLicenseForOrganization(validatedData.organizationId);
     if (!license) {
@@ -281,6 +306,10 @@ router.delete('/:projectId', async (req, res) => {
       return res.status(400).json({ error: tenantContext.error });
     }
     const { organizationId } = tenantContext;
+
+    if (!hasOrganizationAccess(req, organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
 
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });

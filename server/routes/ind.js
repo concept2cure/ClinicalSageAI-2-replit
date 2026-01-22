@@ -2,6 +2,18 @@ import express from 'express';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'IND wizard mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Import template service for real document generation
 import templateService from '../services/templateUsageService.js';
 

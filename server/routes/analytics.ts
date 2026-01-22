@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 import { checkAuth } from '../controllers/auth.js';
 
 const router = Router();

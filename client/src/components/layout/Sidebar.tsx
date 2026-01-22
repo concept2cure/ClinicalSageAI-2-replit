@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { LayoutDashboard, Stethoscope, ShieldCheck, Database, LogOut, FileEdit } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Database, LogOut, FileEdit, Shield } from 'lucide-react';
 
 export const Sidebar = () => {
   const [location, setLocation] = useLocation();
@@ -44,7 +44,7 @@ export const Sidebar = () => {
         <div className="text-[10px] font-bold text-slate-600 uppercase mb-2 px-2 tracking-widest mt-8">
           Compliance
         </div>
-        <NavItem icon={ShieldCheck} label="Audit Trail" path="/audit-log" />
+        <NavItem icon={Shield} label="Audit Logs" path="/audit" />
       </div>
 
       <div className="border-t border-slate-800 pt-4 mt-2">

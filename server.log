@@ -1,0 +1,23 @@
+
+> rest-express@1.0.0 dev
+> node cleanup-toastify.js && NODE_OPTIONS="--trace-warnings" tsx --inspect server/index.ts
+
+react-toastify not found in node_modules (good!)
+Vite cache not found or already cleared
+Toast dependency cleanup complete!
+Checking critical dependencies...
+✅ All critical dependencies verified and ready
+Starting build size optimization...
+Build size optimization complete!
+Debugger listening on ws://127.0.0.1:9229/b46a6513-2fe2-480c-af02-95cc3cbf5739
+For help, see: https://nodejs.org/en/docs/inspector
+file:///workspaces/ClinicalSageAI-2-replit/server/services/auditService.js:1
+import { pool } from '../lib/db.js';
+         ^^^^
+SyntaxError: The requested module '../lib/db.js' does not provide an export named 'pool'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:226:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:335:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.21.1

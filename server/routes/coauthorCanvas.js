@@ -1,6 +1,18 @@
 import express from 'express';
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'Co-author canvas mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Mock CTD sections database
 let ctdSections = [
   {

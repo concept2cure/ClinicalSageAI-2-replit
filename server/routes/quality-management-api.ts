@@ -433,6 +433,12 @@ router.get(
       // In a real implementation, this would examine validation results,
       // section completeness, and other quality data stored in the database
 
+      if (process.env.DEMO_MODE !== 'true') {
+        return res.status(501).json({
+          error: 'Quality metrics are not configured. Set DEMO_MODE=true for placeholder metrics.',
+        });
+      }
+
       // For now, we'll provide a placeholder response
       const metrics = {
         cerProjectId: cerProjectIdNumber,

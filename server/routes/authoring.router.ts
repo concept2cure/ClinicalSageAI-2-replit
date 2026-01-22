@@ -1905,7 +1905,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     const section = sectionResult.rows[0];
 
     // Try to use OpenAI service if available
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env. 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{
       try {
         const { default: OpenAI } = await import('openai');
         const openai = new OpenAI({

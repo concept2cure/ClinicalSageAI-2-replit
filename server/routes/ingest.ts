@@ -4,7 +4,7 @@ import pdf from 'pdf-parse';
 import { toSql } from 'pgvector';
 import fs from 'fs';
 import path from 'path';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 import { checkAuth } from '../controllers/auth.js';
 import auditService from '../services/auditService.js';
 import { generateEmbedding } from '../utils/ai_engine.js';

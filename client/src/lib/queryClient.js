@@ -17,6 +17,14 @@ api.interceptors.request.use(
     if (orgId) {
       config.headers['x-organization-id'] = orgId;
     }
+    const accessToken =
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('auth_token');
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
     // DO NOT fallback to default - let server validate and reject if missing
     // This ensures proper multi-tenant isolation
     return config;

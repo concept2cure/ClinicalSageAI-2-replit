@@ -5,6 +5,7 @@
  */
 
 import * as authService from '../services/authService.js';
+import { logAudit } from '../utils/audit.js';
 
 /**
  * Check Authentication Middleware
@@ -98,6 +99,18 @@ export async function handleLogin(req, res) {
     const userAgent = req.headers['user-agent'];
 
     const result = await authService.login(email, password, ipAddress, userAgent);
+    const tokenPayload = authService.verifyAccessToken(result.accessToken);
+
+    if (tokenPayload?.organizationId) {
+      const auditUserId = tokenPayload.appUserId || tokenPayload.id || 'SYSTEM';
+      logAudit(
+        String(tokenPayload.organizationId),
+        String(auditUserId),
+        'USER_LOGIN_SUCCESS',
+        `Login via ${req.ip}`,
+        req.ip
+      );
+    }
 
     res.json({
       success: true,

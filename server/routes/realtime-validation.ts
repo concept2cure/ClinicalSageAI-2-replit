@@ -8,7 +8,12 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import realTimeValidationService from '../services/realTimeValidationService';
 // @ts-ignore - JavaScript middleware file
-import { authenticateToken } from '../middleware/auth';
+// @ts-ignore - JavaScript middleware file
+import * as authMiddleware from '../middleware/auth.cjs';
+
+const { authenticateToken } = authMiddleware as {
+  authenticateToken: (req: Request, res: Response, next: () => void) => void;
+};
 // @ts-ignore - JavaScript middleware file
 import { requireOrganizationContext } from '../middleware/tenantContext';
 

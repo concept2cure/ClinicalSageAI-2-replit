@@ -10,6 +10,8 @@ import { pool } from '../db.js';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 /**
  * Get protocol data for a specific project
  */
@@ -191,6 +193,13 @@ router.post('/:projectId/protocol/generate-content', async (req, res) => {
 
   if (!fieldId) {
     return res.status(400).json({ error: 'Field ID is required' });
+  }
+
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'Protocol content generation requires DEMO_MODE=true',
+    });
   }
 
   try {

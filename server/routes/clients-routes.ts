@@ -5,23 +5,130 @@ import {
   organizations,
   clientWorkspaceSettings,
   clientSecuritySettings,
+  clientAccess,
   projects,
   projectModules,
+  cerProjects,
+  projectDocuments,
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { checkAuth } from '../controllers/auth.js';
+import { getTenantContext } from '../utils/tenantContext';
 
 // Create a new router for client endpoints
 const router = Router();
 
 // Note: We now save clients directly to the database
 
+const hasOrganizationAccess = (req: any, organizationId: number) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (tokenOrgId && tokenOrgId === organizationId) {
+    return true;
+  }
+
+  const orgs = req.user?.organizations;
+  return Array.isArray(orgs) && orgs.some((org: any) => Number(org.id) === organizationId);
+};
+
+const requireSuperAdminRole = (req: any, res: any, next: any) => {
+  const role = req.user?.role;
+  if (role !== 'super_admin') {
+    return res.status(403).json({ success: false, error: 'Super admin permissions required' });
+  }
+  return next();
+};
+
+const getAuthorizedOrganizationId = (req: any, res: any) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) {
+    res.status(400).json({ success: false, error: tenantContext.error });
+    return null;
+  }
+
+  const { organizationId } = tenantContext;
+  if (!hasOrganizationAccess(req, organizationId)) {
+    res.status(403).json({ success: false, error: 'Access denied to this organization' });
+    return null;
+  }
+
+  return organizationId;
+};
+
+const getAuthorizedClientWorkspace = async (req: any, res: any, clientWorkspaceId: string) => {
+  const id = parseInt(clientWorkspaceId, 10);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ success: false, error: 'Invalid client workspace ID' });
+    return null;
+  }
+
+  const [clientWorkspace] = await db
+    .select({
+      id: clientWorkspaces.id,
+      organizationId: clientWorkspaces.organizationId,
+      name: clientWorkspaces.name,
+    })
+    .from(clientWorkspaces)
+    .where(eq(clientWorkspaces.id, id));
+
+  if (!clientWorkspace) {
+    res.status(404).json({ success: false, error: 'Client workspace not found' });
+    return null;
+  }
+
+  if (!hasOrganizationAccess(req, clientWorkspace.organizationId)) {
+    res.status(403).json({ success: false, error: 'Access denied to this client workspace' });
+    return null;
+  }
+
+  return clientWorkspace;
+};
+
+router.use(checkAuth);
+
 /**
  * Get ALL clients from ALL organizations (user preference)
  * API: GET /api/clients/all
  */
-router.get('/all', async (req, res) => {
+router.get('/all', requireSuperAdminRole, async (req, res) => {
   try {
     console.log('Fetching ALL client workspaces from ALL organizations');
+
+    const projectCounts = await db
+      .select({
+        clientWorkspaceId: projects.clientWorkspaceId,
+        totalProjects: sql<number>`count(*)`,
+        activeProjects: sql<number>`sum(case when ${projects.status} = 'active' then 1 else 0 end)`,
+        lastActivity: sql<Date>`max(${projects.updatedAt})`,
+      })
+      .from(projects)
+      .groupBy(projects.clientWorkspaceId);
+
+    const memberCounts = await db
+      .select({
+        clientWorkspaceId: clientAccess.clientWorkspaceId,
+        memberCount: sql<number>`count(distinct ${clientAccess.userId})`,
+      })
+      .from(clientAccess)
+      .groupBy(clientAccess.clientWorkspaceId);
+
+    const storageUsage = await db
+      .select({
+        clientWorkspaceId: cerProjects.clientWorkspaceId,
+        bytesUsed: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
+      })
+      .from(cerProjects)
+      .leftJoin(projectDocuments, eq(projectDocuments.projectId, cerProjects.id))
+      .groupBy(cerProjects.clientWorkspaceId);
+
+    const projectCountMap = new Map(
+      projectCounts.map(row => [row.clientWorkspaceId, row])
+    );
+    const memberCountMap = new Map(
+      memberCounts.map(row => [row.clientWorkspaceId, row.memberCount])
+    );
+    const storageMap = new Map(
+      storageUsage.map(row => [row.clientWorkspaceId, row.bytesUsed])
+    );
 
     // Fetch ALL client workspaces from database regardless of organization
     const clients = await db
@@ -48,22 +155,30 @@ router.get('/all', async (req, res) => {
     console.log(`Found ${clients.length} total client workspaces across all organizations`);
 
     // Transform data to match frontend expectations
-    const transformedClients = clients.map(client => ({
+    const transformedClients = clients.map(client => {
+      const counts = projectCountMap.get(client.id);
+      const storageBytes = storageMap.get(client.id) || 0;
+      const lastActivity =
+        counts?.lastActivity || client.updatedAt || client.createdAt || new Date();
+
+      return {
       id: String(client.id),
       name: client.name,
       slug: client.slug,
       organizationId: String(client.organizationId),
       organizationName: client.organizationName,
       logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: counts?.activeProjects ?? 0,
+      totalProjects: counts?.totalProjects ?? 0,
       quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
+      storageUsedGB: Number((storageBytes / (1024 * 1024 * 1024)).toFixed(2)),
       quotaStorageGB: client.quotaStorage || 1,
-      lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
+      lastActivity: new Date(lastActivity).toISOString(),
       description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
+      teamMembers: memberCountMap.get(client.id) || 0,
       status: client.status || 'active',
-    }));
+    };
+    });
 
     return res.json({
       success: true,
@@ -84,16 +199,52 @@ router.get('/all', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { organizationId } = req.query;
-
+    const organizationId = getAuthorizedOrganizationId(req, res);
     if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Organization ID is required',
-      });
+      return;
     }
 
     console.log(`Fetching client workspaces for organization: ${organizationId}`);
+
+    const projectCounts = await db
+      .select({
+        clientWorkspaceId: projects.clientWorkspaceId,
+        totalProjects: sql<number>`count(*)`,
+        activeProjects: sql<number>`sum(case when ${projects.status} = 'active' then 1 else 0 end)`,
+        lastActivity: sql<Date>`max(${projects.updatedAt})`,
+      })
+      .from(projects)
+      .where(eq(projects.organizationId, organizationId))
+      .groupBy(projects.clientWorkspaceId);
+
+    const memberCounts = await db
+      .select({
+        clientWorkspaceId: clientAccess.clientWorkspaceId,
+        memberCount: sql<number>`count(distinct ${clientAccess.userId})`,
+      })
+      .from(clientAccess)
+      .where(eq(clientAccess.organizationId, organizationId))
+      .groupBy(clientAccess.clientWorkspaceId);
+
+    const storageUsage = await db
+      .select({
+        clientWorkspaceId: cerProjects.clientWorkspaceId,
+        bytesUsed: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
+      })
+      .from(cerProjects)
+      .leftJoin(projectDocuments, eq(projectDocuments.projectId, cerProjects.id))
+      .where(eq(cerProjects.organizationId, organizationId))
+      .groupBy(cerProjects.clientWorkspaceId);
+
+    const projectCountMap = new Map(
+      projectCounts.map(row => [row.clientWorkspaceId, row])
+    );
+    const memberCountMap = new Map(
+      memberCounts.map(row => [row.clientWorkspaceId, row.memberCount])
+    );
+    const storageMap = new Map(
+      storageUsage.map(row => [row.clientWorkspaceId, row.bytesUsed])
+    );
 
     // Fetch client workspaces from database
     const clients = await db
@@ -116,26 +267,34 @@ router.get('/', async (req, res) => {
       })
       .from(clientWorkspaces)
       .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
-      .where(eq(clientWorkspaces.organizationId, parseInt(organizationId as string)));
+      .where(eq(clientWorkspaces.organizationId, organizationId));
 
     console.log(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
     // Transform data to match frontend expectations
-    const transformedClients = clients.map(client => ({
+    const transformedClients = clients.map(client => {
+      const counts = projectCountMap.get(client.id);
+      const storageBytes = storageMap.get(client.id) || 0;
+      const lastActivity =
+        counts?.lastActivity || client.updatedAt || client.createdAt || new Date();
+
+      return {
       id: String(client.id),
       name: client.name,
       slug: client.slug,
       organizationId: String(client.organizationId),
       logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: counts?.activeProjects ?? 0,
+      totalProjects: counts?.totalProjects ?? 0,
       quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
+      storageUsedGB: Number((storageBytes / (1024 * 1024 * 1024)).toFixed(2)),
       quotaStorageGB: client.quotaStorage || 1,
-      lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
+      lastActivity: new Date(lastActivity).toISOString(),
       description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
+      teamMembers: memberCountMap.get(client.id) || 0,
       status: client.status || 'active',
-    }));
+    };
+    });
 
     return res.json({
       success: true,
@@ -156,7 +315,11 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { name, slug, quotaProjects, quotaStorageGB, organizationId = '1' } = req.body;
+    const { name, slug, quotaProjects, quotaStorageGB } = req.body;
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
 
     // Validate required fields
     if (!name || !slug) {
@@ -174,7 +337,7 @@ router.post('/', async (req, res) => {
       .values({
         name,
         slug,
-        organizationId: parseInt(organizationId),
+        organizationId,
         description: `Client workspace for ${name}`,
         logo: '/logos/default-client.png',
         status: 'active',
@@ -198,12 +361,13 @@ router.post('/', async (req, res) => {
       organizationId: String(newClient.organizationId),
       logo: newClient.logo,
       activeProjects: 0,
+      totalProjects: 0,
       quotaProjects: newClient.quotaProjects,
       storageUsedGB: 0,
       quotaStorageGB: newClient.quotaStorage,
       lastActivity: newClient.updatedAt.toISOString(),
       description: newClient.description,
-      teamMembers: 1,
+      teamMembers: 0,
       settings: {
         notificationsEnabled: true,
         autoBackup: true,
@@ -278,22 +442,67 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    if (!hasOrganizationAccess(req, client.organizationId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this client workspace',
+      });
+    }
+
     console.log(`Client found:`, client.name);
 
-    // Transform data to match frontend expectations with mock project data
+    const clientId = parseInt(id);
+    const clientProjects = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        status: projects.status,
+        type: projects.type,
+        progress: projects.progress,
+        updatedAt: projects.updatedAt,
+        createdAt: projects.createdAt,
+      })
+      .from(projects)
+      .where(eq(projects.clientWorkspaceId, clientId));
+
+    const activeProjects = clientProjects.filter(project => project.status === 'active').length;
+
+    const [{ memberCount = 0 } = {}] = await db
+      .select({
+        memberCount: sql<number>`count(distinct ${clientAccess.userId})`,
+      })
+      .from(clientAccess)
+      .where(eq(clientAccess.clientWorkspaceId, clientId));
+
+    const [{ bytesUsed = 0 } = {}] = await db
+      .select({
+        bytesUsed: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
+      })
+      .from(cerProjects)
+      .leftJoin(projectDocuments, eq(projectDocuments.projectId, cerProjects.id))
+      .where(eq(cerProjects.clientWorkspaceId, clientId));
+
+    const lastProjectActivity = clientProjects.reduce<Date | null>((latest, project) => {
+      if (!project.updatedAt) return latest;
+      return !latest || project.updatedAt > latest ? project.updatedAt : latest;
+    }, null);
+    const lastActivity = lastProjectActivity || client.updatedAt || client.createdAt || new Date();
+
+    // Transform data to match frontend expectations
     const clientData = {
       id: String(client.id),
       name: client.name,
       slug: client.slug,
       organizationId: String(client.organizationId),
       logo: client.logo || '/logos/default-client.png',
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects,
+      totalProjects: clientProjects.length,
       quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
+      storageUsedGB: Number((bytesUsed / (1024 * 1024 * 1024)).toFixed(2)),
       quotaStorageGB: client.quotaStorage || 1,
-      lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
+      lastActivity: new Date(lastActivity).toISOString(),
       description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
+      teamMembers: memberCount,
       status: client.status || 'active',
       settings: {
         notificationsEnabled: true,
@@ -301,7 +510,15 @@ router.get('/:id', async (req, res) => {
         dataRetentionDays: 2555,
         complianceLevel: 'FDA 21 CFR Part 11',
       },
-      projects: [], // TODO: Fetch from projects table
+      projects: clientProjects.map(project => ({
+        id: String(project.id),
+        name: project.name,
+        status: project.status,
+        type: project.type,
+        progress: project.progress,
+        updatedAt: project.updatedAt?.toISOString(),
+        createdAt: project.createdAt?.toISOString(),
+      })),
     };
 
     res.json({
@@ -325,6 +542,11 @@ router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    const clientWorkspace = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspace) {
+      return;
+    }
 
     console.log(`Updating client workspace ${id} with data:`, updates);
 
@@ -485,6 +707,11 @@ router.get('/:id/security-settings', async (req, res) => {
   try {
     const { id } = req.params;
 
+    const clientWorkspace = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspace) {
+      return;
+    }
+
     console.log(`Fetching security settings for client: ${id}`);
 
     // Try to fetch existing security settings from database
@@ -587,6 +814,11 @@ router.patch('/:id/security-settings', async (req, res) => {
     const { id } = req.params;
     const settings = req.body;
 
+    const clientWorkspace = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspace) {
+      return;
+    }
+
     console.log('Updating security settings for client', id, ':', Object.keys(settings));
 
     // Validate that client ID exists
@@ -594,19 +826,6 @@ router.patch('/:id/security-settings', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Client ID is required',
-      });
-    }
-
-    // Get client workspace to validate existence and get organizationId
-    const [clientWorkspace] = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.id, parseInt(id)));
-
-    if (!clientWorkspace) {
-      return res.status(404).json({
-        success: false,
-        error: 'Client workspace not found',
       });
     }
 
@@ -671,7 +890,11 @@ router.patch('/:id/security-settings', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const clientId = parseInt(id);
+    const clientWorkspace = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspace) {
+      return;
+    }
+    const clientId = clientWorkspace.id;
 
     console.log(`Deleting client workspace ${id} with cascade deletion from database`);
 
@@ -761,6 +984,11 @@ router.delete('/:id', async (req, res) => {
 router.get('/:id/settings', async (req, res) => {
   try {
     const { id } = req.params;
+
+    const clientWorkspaceAccess = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspaceAccess) {
+      return;
+    }
 
     console.log(`Fetching workspace settings for client: ${id}`);
 
@@ -878,6 +1106,11 @@ router.patch('/:id/settings', async (req, res) => {
   try {
     const { id } = req.params;
     const settings = req.body;
+
+    const clientWorkspaceAccess = await getAuthorizedClientWorkspace(req, res, id);
+    if (!clientWorkspaceAccess) {
+      return;
+    }
 
     console.log('Updating workspace settings for client', id, ':', Object.keys(settings));
     console.log('Request params:', req.params);

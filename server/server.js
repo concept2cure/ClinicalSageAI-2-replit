@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import projectsStatusRoutes from './routes/projectsStatus.js';
+import projectsRoutes from './routes/projects.js';
 import indAssemblerRoutes from './routes/indAssembler.js';
 import indWizardAPIRoutes from './routes/indWizardAPI.js';
 import documentsRoutes from './routes/documents.js';
@@ -87,7 +88,10 @@ app.post('/api/coauthor/generate/test', (req, res) => {
 });
 
 // API Routes
-app.use('/api/projects', projectsStatusRoutes);
+// NOTE: projectsRoutes must be registered BEFORE projectsStatusRoutes
+// to ensure POST /api/projects is handled correctly before GET /api/projects/status
+app.use('/api/projects', projectsRoutes);
+app.use('/api/projects/status', projectsStatusRoutes);
 app.use('/api/ind', indAssemblerRoutes);
 app.use('/api/ind/wizard', indWizardAPIRoutes);
 app.use('/api/docs', documentsRoutes);

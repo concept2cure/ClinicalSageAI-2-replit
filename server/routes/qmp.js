@@ -10,6 +10,18 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'QMP mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Mock QMP data (in a real app, this would come from a database)
 const qmpData = {
   metadata: {

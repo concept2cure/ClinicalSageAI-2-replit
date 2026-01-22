@@ -4,7 +4,29 @@
  */
 import express from 'express';
 import documentDataCenterService from '../services/DocumentDataCenterService';
+import { checkAuth } from '../controllers/auth.js';
 const router = express.Router();
+
+const getAuthorizedOrganizationId = (req: any, res: any) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (!tokenOrgId) {
+    res.status(403).json({ error: 'Organization context missing' });
+    return null;
+  }
+
+  const headerOrgId = req.headers['x-organization-id']
+    ? parseInt(req.headers['x-organization-id'] as string, 10)
+    : null;
+
+  if (headerOrgId && headerOrgId !== tokenOrgId) {
+    res.status(403).json({ error: 'Organization mismatch' });
+    return null;
+  }
+
+  return tokenOrgId;
+};
+
+router.use(checkAuth);
 
 // Reference data initialization will happen on-demand per tenant
 // when they first access the Document Data Center
@@ -14,7 +36,10 @@ router.post('/upload',
   documentDataCenterService.getUploadMiddleware(),
   async (req, res) => {
     try {
-      const organizationId = parseInt(req.headers['x-organization-id'] as string);
+      const organizationId = getAuthorizedOrganizationId(req, res);
+      if (!organizationId) {
+        return;
+      }
       const userId = req.headers['x-user-id'] as string || 'user';
       
       if (!req.file) {
@@ -44,7 +69,10 @@ router.post('/upload',
 // Get all documents with filtering
 router.get('/files', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const { search, category, standard, component } = req.query;
 
     // Build filter array from query params
@@ -75,7 +103,10 @@ router.get('/files', async (req, res) => {
 // Deep search endpoint
 router.post('/search/deep', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const { query, filters } = req.body;
 
     const result = await documentDataCenterService.deepSearch(
@@ -94,7 +125,10 @@ router.post('/search/deep', async (req, res) => {
 // Update document tags
 router.patch('/files/:id/tags', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const documentId = parseInt(req.params.id);
     const userId = req.headers['x-user-id'] as string || 'user';
 
@@ -117,7 +151,10 @@ router.patch('/files/:id/tags', async (req, res) => {
 // Get document citations
 router.post('/citations', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const { documentIds } = req.body;
 
     if (!documentIds || !Array.isArray(documentIds)) {
@@ -139,7 +176,10 @@ router.post('/citations', async (req, res) => {
 // Get statistics
 router.get('/stats', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     
     const result = await documentDataCenterService.getStatistics(organizationId);
     
@@ -230,7 +270,10 @@ router.get('/components', async (req, res) => {
 // Delete document
 router.delete('/file/:id', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const documentId = parseInt(req.params.id);
     
     // For now, return success (would implement actual delete)
@@ -244,7 +287,10 @@ router.delete('/file/:id', async (req, res) => {
 // Get single document file
 router.get('/file/:id', async (req, res) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = getAuthorizedOrganizationId(req, res);
+    if (!organizationId) {
+      return;
+    }
     const documentId = parseInt(req.params.id);
     
     // Would implement actual file retrieval and streaming

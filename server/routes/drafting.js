@@ -2,6 +2,18 @@ import express from 'express';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'Drafting mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 /**
  * POST /api/v1/drafting/start_task - Start an AI drafting task
  */

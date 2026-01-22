@@ -1,7 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 // @ts-ignore - JavaScript middleware file
-import { authenticateToken, enforceTenant } from '../middleware/auth';
+import * as authMiddleware from '../middleware/auth.cjs';
+
+const { authenticateToken, enforceTenant } = authMiddleware as {
+  authenticateToken: (req: Request, res: Response, next: () => void) => void;
+  enforceTenant: (req: Request, res: Response, next: () => void) => void;
+};
+import { logAudit } from '../utils/audit.js';
 
 const router = Router();
 router.use(authenticateToken);
@@ -109,6 +115,15 @@ router.post('/save', async (req: Request, res: Response) => {
       `;
       result = await pool.query(query, [String(tenantId), normalizedTitle, type, data ?? {}, String(userId)]);
     }
+
+    const action = id ? 'CMC_UPDATE' : 'CMC_CREATE';
+    logAudit(
+      String(tenantId),
+      String(userId),
+      action,
+      `Project: ${normalizedTitle}, Type: ${type}`,
+      req.ip
+    );
     res.json({ success: true, id: result.rows[0]?.id });
   } catch (error) {
     console.error('[CMC SAVE ERROR]', error);
@@ -117,6 +132,9 @@ router.post('/save', async (req: Request, res: Response) => {
 });
 
 router.post('/audit', async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  const auditTenant = authReq.user?.organizationId;
+  const auditUser = authReq.user?.id || 'SYSTEM';
   const { impurities } = req.body as { impurities?: ImpurityEntry[] };
   const issues: string[] = [];
 
@@ -155,6 +173,18 @@ router.post('/audit', async (req: Request, res: Response) => {
     issues,
     timestamp: new Date().toISOString(),
   });
+
+  if (auditTenant) {
+    const issueCount = issues.length;
+    const status = issueCount === 0 ? 'PASSED' : 'FAILED';
+    logAudit(
+      String(auditTenant),
+      String(auditUser),
+      'CMC_COMPLIANCE_CHECK',
+      `Result: ${status}. Issues found: ${issueCount}`,
+      req.ip
+    );
+  }
 });
 
 export default router;

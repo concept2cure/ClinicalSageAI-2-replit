@@ -1,0 +1,186 @@
+{
+  "name": "Root",
+  "node_type": "root",
+  "children": [
+    {
+      "name": "m1",
+      "node_type": "folder",
+      "sequence_number": 1,
+      "children": [
+        {
+          "name": "us",
+          "node_type": "folder",
+          "sequence_number": 1,
+          "children": [
+            { "name": "cover-letter", "node_type": "folder", "sequence_number": 1 },
+            { "name": "administrative-info", "node_type": "folder", "sequence_number": 2 },
+            { "name": "application-forms", "node_type": "folder", "sequence_number": 3 },
+            { "name": "labeling", "node_type": "folder", "sequence_number": 4 },
+            { "name": "product-information", "node_type": "folder", "sequence_number": 5 },
+            { "name": "certifications", "node_type": "folder", "sequence_number": 6 },
+            { "name": "meeting-minutes", "node_type": "folder", "sequence_number": 7 },
+            { "name": "commitments", "node_type": "folder", "sequence_number": 8 },
+            { "name": "correspondence", "node_type": "folder", "sequence_number": 9 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "m2",
+      "node_type": "folder",
+      "sequence_number": 2,
+      "children": [
+        {
+          "name": "ctd-summaries",
+          "node_type": "folder",
+          "sequence_number": 1,
+          "children": [
+            { "name": "introduction", "node_type": "folder", "sequence_number": 1 },
+            { "name": "quality-overall-summary", "node_type": "folder", "sequence_number": 2 },
+            { "name": "nonclinical-overview", "node_type": "folder", "sequence_number": 3 },
+            { "name": "nonclinical-written-summary", "node_type": "folder", "sequence_number": 4 },
+            { "name": "clinical-overview", "node_type": "folder", "sequence_number": 5 },
+            { "name": "clinical-summary", "node_type": "folder", "sequence_number": 6 },
+            { "name": "nonclinical-tabulated-summary", "node_type": "folder", "sequence_number": 7 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "m3",
+      "node_type": "folder",
+      "sequence_number": 3,
+      "children": [
+        {
+          "name": "quality",
+          "node_type": "folder",
+          "sequence_number": 1,
+          "children": [
+            {
+              "name": "drug-substance",
+              "node_type": "folder",
+              "sequence_number": 1,
+              "children": [
+                { "name": "general-information", "node_type": "folder", "sequence_number": 1 },
+                { "name": "manufacture", "node_type": "folder", "sequence_number": 2 },
+                { "name": "characterization", "node_type": "folder", "sequence_number": 3 },
+                { "name": "control-of-drug-substance", "node_type": "folder", "sequence_number": 4 },
+                { "name": "reference-standards", "node_type": "folder", "sequence_number": 5 },
+                { "name": "container-closure-system", "node_type": "folder", "sequence_number": 6 },
+                { "name": "stability", "node_type": "folder", "sequence_number": 7 }
+              ]
+            },
+            {
+              "name": "drug-product",
+              "node_type": "folder",
+              "sequence_number": 2,
+              "children": [
+                { "name": "description-composition", "node_type": "folder", "sequence_number": 1 },
+                { "name": "pharmaceutical-development", "node_type": "folder", "sequence_number": 2 },
+                { "name": "manufacture", "node_type": "folder", "sequence_number": 3 },
+                { "name": "control-of-excipients", "node_type": "folder", "sequence_number": 4 },
+                { "name": "control-of-drug-product", "node_type": "folder", "sequence_number": 5 },
+                { "name": "reference-standards", "node_type": "folder", "sequence_number": 6 },
+                { "name": "container-closure-system", "node_type": "folder", "sequence_number": 7 },
+                { "name": "stability", "node_type": "folder", "sequence_number": 8 }
+              ]
+            },
+            { "name": "appendices", "node_type": "folder", "sequence_number": 3 },
+            { "name": "regional-information", "node_type": "folder", "sequence_number": 4 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "m4",
+      "node_type": "folder",
+      "sequence_number": 4,
+      "children": [
+        {
+          "name": "nonclinical-study-reports",
+          "node_type": "folder",
+          "sequence_number": 1,
+          "children": [
+            { "name": "pharmacology", "node_type": "folder", "sequence_number": 1 },
+            { "name": "pharmacokinetics", "node_type": "folder", "sequence_number": 2 },
+            {
+              "name": "toxicology",
+              "node_type": "folder",
+              "sequence_number": 3,
+              "children": [
+                { "name": "single-dose-toxicity", "node_type": "folder", "sequence_number": 1 },
+                { "name": "repeat-dose-toxicity", "node_type": "folder", "sequence_number": 2 },
+                { "name": "genotoxicity", "node_type": "folder", "sequence_number": 3 },
+                { "name": "carcinogenicity", "node_type": "folder", "sequence_number": 4 },
+                { "name": "reproductive-toxicity", "node_type": "folder", "sequence_number": 5 },
+                { "name": "local-tolerance", "node_type": "folder", "sequence_number": 6 },
+                { "name": "other-toxicity-studies", "node_type": "folder", "sequence_number": 7 }
+              ]
+            },
+            { "name": "literature-references", "node_type": "folder", "sequence_number": 4 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "m5",
+      "node_type": "folder",
+      "sequence_number": 5,
+      "children": [
+        {
+          "name": "clinical-study-reports",
+          "node_type": "folder",
+          "sequence_number": 1,
+          "children": [
+            {
+              "name": "tabular-listing-clinical-studies",
+              "node_type": "folder",
+              "sequence_number": 1
+            },
+            {
+              "name": "study-reports",
+              "node_type": "folder",
+              "sequence_number": 2,
+              "children": [
+                { "name": "biopharmaceutic-studies", "node_type": "folder", "sequence_number": 1 },
+                {
+                  "name": "pk-studies",
+                  "node_type": "folder",
+                  "sequence_number": 2,
+                  "children": [
+                    { "name": "healthy-subjects", "node_type": "folder", "sequence_number": 1 },
+                    { "name": "patients", "node_type": "folder", "sequence_number": 2 },
+                    { "name": "intrinsic-factors", "node_type": "folder", "sequence_number": 3 },
+                    { "name": "extrinsic-factors", "node_type": "folder", "sequence_number": 4 },
+                    { "name": "population-pk", "node_type": "folder", "sequence_number": 5 }
+                  ]
+                },
+                {
+                  "name": "pd-studies",
+                  "node_type": "folder",
+                  "sequence_number": 3,
+                  "children": [
+                    { "name": "healthy-subjects", "node_type": "folder", "sequence_number": 1 },
+                    { "name": "patients", "node_type": "folder", "sequence_number": 2 }
+                  ]
+                },
+                {
+                  "name": "efficacy-safety-studies",
+                  "node_type": "folder",
+                  "sequence_number": 4,
+                  "children": [
+                    { "name": "controlled-studies", "node_type": "folder", "sequence_number": 1 },
+                    { "name": "uncontrolled-studies", "node_type": "folder", "sequence_number": 2 },
+                    { "name": "other-studies", "node_type": "folder", "sequence_number": 3 }
+                  ]
+                },
+                { "name": "post-marketing-experience", "node_type": "folder", "sequence_number": 5 }
+              ]
+            },
+            { "name": "literature-references", "node_type": "folder", "sequence_number": 3 }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -14,6 +14,8 @@ import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { applySecurityMiddleware } from './middleware/security';
+import { ensureCoreTables } from './db/ensureCoreTables';
+import { login as authLogin } from './services/authService.js';
 
 // Prefer IPv4 DNS results to avoid IPv6 connection issues in some environments
 dns.setDefaultResultOrder('ipv4first');
@@ -43,6 +45,18 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+const requireDemoMode = (res: Response, feature: string) => {
+  if (!isDemoMode()) {
+    res.status(501).json({
+      success: false,
+      error: `${feature} is not available without DEMO_MODE=true`,
+    });
+    return false;
+  }
+  return true;
+};
+
 // Import CMC route handlers
 import cmcProjectRoutes from './api/cmc/projectRoutes.js';
 import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.js';
@@ -69,6 +83,7 @@ import writerRoutes from './routes/writer';
 import draftsRoutes from './routes/drafts';
 import cmcRoutes from './routes/cmc';
 import dashboardRoutes from './routes/dashboard';
+import auditRoutes from './routes/audit';
 
 // Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api.js';
@@ -76,6 +91,26 @@ import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+ensureCoreTables().catch((error) => {
+  console.error('❌ Core table bootstrap failed:', error);
+});
+
+const runAuthSelfCheck = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
+
+  const email = (process.env.ADMIN_EMAIL || 'jm.smith@concept2cure.pro').toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || 'demo123';
+
+  try {
+    await authLogin(email, password, '127.0.0.1', 'auth-self-check');
+    console.log('✅ Auth self-check succeeded for', email);
+  } catch (error) {
+    console.error('❌ Auth self-check failed:', error);
+  }
+};
 
 app.set('trust proxy', 1);
 
@@ -173,6 +208,11 @@ app.use(httpLogger); // Add structured logging
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Lightweight health check for availability validation
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Add basic CORS headers to allow frontend communication
 app.use((req, res, next) => {
   const allowedOrigin = process.env.CORS_ORIGIN || '*';
@@ -185,6 +225,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Kick off auth self-check after middleware is wired
+runAuthSelfCheck();
 
 // Apply security middleware - COMMENTED OUT DUE TO MISSING IMPORT
 // app.use(securityMiddleware.sanitizeInput); // Sanitize all inputs
@@ -276,62 +319,6 @@ app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
 });
 
-// Mount basic routes including /api/projects
-// Direct mount /api/projects here to ensure it works
-app.get('/api/projects', async (req, res) => {
-  try {
-    // Check multiple sources for organization/workspace context
-    const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'];
-    const organizationId = Number(organization_id);
-    const clientWorkspaceId = client_workspace_id ? Number(client_workspace_id) : null;
-
-    if (!organization_id || Number.isNaN(organizationId)) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-    if (client_workspace_id && Number.isNaN(clientWorkspaceId)) {
-      return res.status(400).json({ error: 'Client workspace ID must be numeric' });
-    }
-
-    // Import database connection dynamically
-    const dbModule = await import('./db.js');
-    const { pool } = dbModule;
-
-    const { getActiveLicenseForOrganization } = await import('./services/quotaEnforcementService.js');
-    const license = await getActiveLicenseForOrganization(organizationId);
-
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-    
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
-    }
-    
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organizationId];
-    
-    // Optionally filter by workspace if provided
-    if (clientWorkspaceId) {
-      params.push(clientWorkspaceId);
-      query += ` AND client_workspace_id = $${params.length}`;
-    }
-    
-    query += ' ORDER BY created_at DESC';
-    
-    console.log('Fetching projects with query:', query, 'params:', params);
-    const result = await pool.query(query, params);
-    console.log('Found projects:', result.rows?.length || 0);
-    
-    res.json(result.rows || []);
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    res.status(500).json({ error: 'Failed to fetch projects' });
-  }
-});
-console.log('✅ /api/projects route mounted directly');
 
 // Register template routes
 import templateRoutes from './api/templates/routes.js';
@@ -354,6 +341,7 @@ app.use('/api/writer', writerRoutes);
 app.use('/api/drafts', draftsRoutes);
 app.use('/api/cmc', cmcRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Import and mount AI routes
 import aiRoutes from './api/ai/routes.js';
@@ -557,6 +545,7 @@ try {
   const documentDataCenterModule = await import('./routes/document-data-center.js');
   const documentDataCenterRoutes = documentDataCenterModule.default;
   app.use('/api/device-data-center', documentDataCenterRoutes);
+  app.use('/api/document-data-center', documentDataCenterRoutes);
   console.log('✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)');
 } catch (error) {
   console.error('❌ Failed to mount Document Data Center routes:', error);
@@ -705,6 +694,7 @@ app.use('/uploads', express.static(UPDIR));
 // CSR search endpoint
 app.get('/api/csr/search', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR search')) return;
     const { query, limit = 10 } = req.query;
     debugLog('CSR search endpoint called', { query, limit });
 
@@ -779,6 +769,7 @@ app.get('/api/csr-intelligence', (req: Request, res: Response) => {
 // CSR Intelligence analytics endpoint
 app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR intelligence analytics')) return;
     const { type = 'dashboard' } = req.query;
     debugLog('CSR intelligence analytics endpoint called', { type });
 
@@ -836,6 +827,7 @@ app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) =
 // CSR Intelligence stats endpoint
 app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR intelligence stats')) return;
     debugLog('CSR intelligence stats endpoint called');
 
     const statsData = {
@@ -902,6 +894,7 @@ app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
 // CSR Intelligence factual insights endpoint
 app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR intelligence factual insights')) return;
     debugLog('Factual insights endpoint called');
 
     // For now, return a structured response until we can import the service
@@ -954,6 +947,7 @@ app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Resp
 // CSR real data ALL endpoint - fallback when file-based route not available
 app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR real data')) return;
     const { limit = 10 } = req.query;
     debugLog('CSR real data all endpoint called', { limit });
 
@@ -1030,6 +1024,7 @@ app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
 // CSR real data stats endpoint for dashboard metrics
 app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   try {
+    if (!requireDemoMode(res, 'CSR real data stats')) return;
     debugLog('CSR real data stats endpoint called');
 
     const statsData = {
@@ -3845,11 +3840,21 @@ async function startServer() {
   // Mount API routes BEFORE Vite middleware
   debugLog('Mounting API routes...');
   try {
-    const tenantsRoutes = await import('./routes/tenants-simple.js');
-    app.use('/api/tenants', tenantsRoutes.default);
+    const tenantsRoutes = await import('./routes/tenants');
+    app.use('/api/tenants', tenantsRoutes.default || tenantsRoutes);
     console.log('✅ Tenants routes mounted successfully');
   } catch (error) {
     console.error('Failed to mount tenants routes:', error);
+  }
+
+  if (process.env.DEMO_MODE === 'true') {
+    try {
+      const tenantsDemoRoutes = await import('./routes/tenants-simple.js');
+      app.use('/api/tenants-demo', tenantsDemoRoutes.default);
+      console.log('✅ Tenants demo routes mounted successfully');
+    } catch (error) {
+      console.error('Failed to mount tenants demo routes:', error);
+    }
   }
 
   try {
@@ -3858,6 +3863,14 @@ async function startServer() {
     console.log('✅ Multi-agency validation routes mounted successfully');
   } catch (error) {
     console.error('Failed to mount multi-agency validation routes:', error);
+  }
+
+  try {
+    const aiDocumentRoutes = await import('./routes/ai-document.js');
+    app.use('/api/ai-document', aiDocumentRoutes.default || aiDocumentRoutes);
+    console.log('✅ AI document routes mounted successfully');
+  } catch (error) {
+    console.error('Failed to mount AI document routes:', error);
   }
 
   try {
@@ -3937,12 +3950,50 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  // Mount eCTD seeder routes
+  try {
+    const ectdSeederRoutes = await import('./routes/ectdSeeder');
+    app.use('/api/ectd-seeder', ectdSeederRoutes.default || ectdSeederRoutes);
+    console.log('✅ eCTD seeder routes mounted at /api/ectd-seeder');
+  } catch (error) {
+    console.error('Failed to mount eCTD seeder routes:', error);
+  }
+
+  // --- API 404 (must be BEFORE SPA catch-all) ---
+  app.use('/api', (req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Unknown API route',
+      path: req.originalUrl,
+      method: req.method,
+    });
+  });
+
+  // --- API error handler (prevents Express default HTML error pages) ---
+  app.use('/api', (err: any, req: any, res: any, next: any) => {
+    console.error('API Error:', err);
+    const status = err?.statusCode || err?.status || 500;
+    res.status(status).json({
+      success: false,
+      error: err?.message || 'Internal server error',
+      path: req.originalUrl,
+    });
+  });
+
   const server = createServer(app);
 
   if (process.env.NODE_ENV !== 'production') {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    try {
+      serveStatic(app);
+    } catch (error) {
+      console.warn(
+        'Static build not found, falling back to Vite dev middleware:',
+        (error as Error).message
+      );
+      await setupVite(app, server);
+    }
   }
 
   const PORT = process.env.PORT || 5000;

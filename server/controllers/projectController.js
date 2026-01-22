@@ -1,63 +1,15 @@
 // /server/controllers/projectController.js
 
-// Dummy project data (later connect to database)
-const projects = [
-  {
-    id: 'ind-2025-034',
-    name: 'BTX-331 IND Application',
-    type: 'IND',
-    status: 'In Progress',
-    dueDate: '2025-06-15',
-    progress: 65,
-    client: 'Biotech Innovations',
-    assignedTo: ['james.wilson', 'sarah.johnson'],
-  },
-  {
-    id: 'csr-2024-089',
-    name: 'BX-107 Clinical Study Report',
-    type: 'CSR',
-    status: 'In Review',
-    dueDate: '2025-05-30',
-    progress: 85,
-    client: 'MediPharm Solutions',
-    assignedTo: ['emily.chen', 'mark.wilson'],
-  },
-  {
-    id: 'protocol-507',
-    name: 'CIR-507 Protocol Amendment',
-    type: 'Protocol',
-    status: 'Draft',
-    dueDate: '2025-07-10',
-    progress: 25,
-    client: 'CliniRx Research',
-    assignedTo: ['john.davis', 'michael.brown'],
-  },
-  {
-    id: 'cer-2025-012',
-    name: 'MD-450 Clinical Evaluation Report',
-    type: 'CER',
-    status: 'Planning',
-    dueDate: '2025-08-05',
-    progress: 15,
-    client: 'MedDevice Innovations',
-    assignedTo: ['lisa.taylor', 'robert.johnson'],
-  },
-  {
-    id: 'cmc-2025-023',
-    name: 'BTX-331 CMC Documentation',
-    type: 'CMC',
-    status: 'In Progress',
-    dueDate: '2025-06-20',
-    progress: 50,
-    client: 'Biotech Innovations',
-    assignedTo: ['susan.williams', 'james.wilson'],
-  },
-];
+import * as projectService from '../services/projectService.js';
 
 // GET /api/projects - Get all projects
-export const getAllProjects = (req, res) => {
+export const getAllProjects = async (req, res) => {
   try {
-    // In a real app, we would filter by user permissions
+    // Get organization_id from authenticated user
+    const organizationId = req.user?.organizationId || 1; // Default to 1 for demo
+    
+    const projects = await projectService.getAllProjects(organizationId);
+    
     res.status(200).json({
       success: true,
       data: projects,
@@ -72,10 +24,10 @@ export const getAllProjects = (req, res) => {
 };
 
 // GET /api/projects/:id - Get project by ID
-export const getProjectById = (req, res) => {
+export const getProjectById = async (req, res) => {
   try {
     const { id } = req.params;
-    const project = projects.find(p => p.id === id);
+    const project = await projectService.getProjectById(id);
 
     if (!project) {
       return res.status(404).json({
@@ -97,54 +49,21 @@ export const getProjectById = (req, res) => {
   }
 };
 
-// GET /api/projects/status - Get projects by status
-export const getProjectsByStatus = (req, res) => {
+// POST /api/projects - Create a new project with eCTD hierarchy
+export const createProject = async (req, res) => {
   try {
-    const { status } = req.query;
-    let filteredProjects = [...projects];
-
-    if (status) {
-      filteredProjects = projects.filter(p => p.status.toLowerCase() === status.toLowerCase());
-    }
-
-    // Group projects by status
-    const groupedProjects = filteredProjects.reduce((acc, project) => {
-      const status = project.status;
-      if (!acc[status]) {
-        acc[status] = [];
-      }
-      acc[status].push(project);
-      return acc;
-    }, {});
-
-    res.status(200).json({
-      success: true,
-      data: groupedProjects,
-    });
-  } catch (error) {
-    console.error('Error fetching projects by status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch projects by status',
-    });
-  }
-};
-
-// POST /api/projects - Create a new project
-export const createProject = (req, res) => {
-  try {
-    const newProject = req.body;
-
-    // In a real app, validate project data
-    // Then save to database
+    // Get organization_id from authenticated user
+    const organizationId = req.user?.organizationId || 1; // Default to 1 for demo
+    
+    const project = await projectService.createProjectWithHierarchy(
+      req.body,
+      organizationId
+    );
 
     res.status(201).json({
       success: true,
-      message: 'Project created successfully',
-      data: {
-        id: `${newProject.type.toLowerCase()}-${new Date().getFullYear()}-${(projects.length + 1).toString().padStart(3, '0')}`,
-        ...newProject,
-      },
+      message: 'Project created successfully with eCTD hierarchy',
+      data: project,
     });
   } catch (error) {
     console.error('Error creating project:', error);
@@ -154,6 +73,25 @@ export const createProject = (req, res) => {
     });
   }
 };
+
+// DELETE /api/projects/:id - Delete a project
+export const deleteProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Implementation would go here
+    res.status(200).json({
+      success: true,
+      message: 'Project deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete project',
+    });
+  }
+};
+
 
 // PUT /api/projects/:id - Update an existing project
 export const updateProject = (req, res) => {

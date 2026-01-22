@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import { toSql } from 'pgvector';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 import { checkAuth } from '../controllers/auth.js';
 import { generateEmbedding } from '../utils/ai_engine.js';
 import auditService from '../services/auditService.js';
+import { logAudit } from '../utils/audit.js';
 
 const router = Router();
 
@@ -44,6 +45,7 @@ interface DraftRequestBody {
 }
 
 interface AuthUser {
+  id?: string | number;
   organizationId?: string | number;
   appUserId?: string | number;
 }
@@ -269,6 +271,15 @@ INSTRUCTIONS:
       sessionId: req.headers['x-session-id'] || null,
       severity: auditService.SEVERITY.INFO,
     });
+
+    const auditUserId = authReq.user?.appUserId ?? authReq.user?.id ?? 'SYSTEM';
+    logAudit(
+      String(tokenTenantId),
+      String(auditUserId),
+      'AI_DRAFT_GENERATE',
+      `Generated section '${normalizedSectionType}' for context: ${trimmedContext.substring(0, 30)}...`,
+      req.ip
+    );
 
     res.json({
       data: structuredDraft,

@@ -11,6 +11,9 @@
  * - Multi-tenant isolation of AI services
  */
 
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 const express = require('express');
 const router = express.Router();
 const { OpenAI } = require('openai');
@@ -20,6 +23,8 @@ const path = require('path');
 const validateTenantAccess = require('../middleware/validateTenantAccess');
 const { auditLog } = require('../services/auditService');
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Configure OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -27,6 +32,15 @@ const openai = new OpenAI({
 
 // Apply tenant validation to all AI document routes
 router.use(validateTenantAccess);
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      error: 'AI document processing is not configured. Set DEMO_MODE=true for simulated output.',
+    });
+  }
+  next();
+});
 
 /**
  * Process document with AI upon upload
@@ -558,4 +572,4 @@ function simulateInsightExtraction(documentId) {
   };
 }
 
-module.exports = router;
+export default router;

@@ -16,6 +16,12 @@ if (!fs.existsSync(SAP_DIR)) {
 // Generate Statistical Analysis Plan (SAP) based on protocol data
 router.post('/generate', express.json(), async (req, res) => {
   try {
+    if (process.env.DEMO_MODE !== 'true') {
+      return res.status(501).json({
+        error: 'SAP generation uses placeholder power calculations. Set DEMO_MODE=true to enable this demo endpoint.',
+      });
+    }
+
     // Validate request body
     const requestSchema = z.object({
       protocol_id: z.string().optional(),

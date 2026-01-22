@@ -36,8 +36,8 @@ const projects = [
   },
 ];
 
-// GET /api/projects/status
-router.get('/status', (req, res) => {
+// GET /api/projects/status (mounted at /api/projects/status, so this becomes /api/projects/status/)
+router.get('/', (req, res) => {
   console.log('[API] Returning sample project status data');
   try {
     res.json({ success: true, projects: projects });

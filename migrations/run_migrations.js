@@ -14,12 +14,62 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
+// Load environment variables (.env.local first if present)
+const envLocalPath = path.join(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
 dotenv.config();
+
+const rawConnectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!rawConnectionString) {
+  console.error('DATABASE_URL or NEON_DATABASE_URL is not set.');
+  process.exit(1);
+}
+
+const normalizeConnectionString = value => {
+  try {
+    const url = new URL(value);
+    const hostaddr = url.searchParams.get('hostaddr');
+    const hostOverride = url.searchParams.get('host');
+    if (hostOverride) {
+      url.hostname = hostOverride;
+    }
+    url.searchParams.delete('host');
+    url.searchParams.delete('hostaddr');
+    return { connectionString: url.toString(), hostaddr };
+  } catch (_err) {
+    return { connectionString: value, hostaddr: null };
+  }
+};
+
+const normalized = normalizeConnectionString(rawConnectionString);
+const connectionString = normalized.connectionString;
+
+const requiresSsl = value => {
+  if (!value) {
+    return false;
+  }
+
+  const normalizedValue = value.toLowerCase();
+  if (normalizedValue.includes('sslmode=disable') || normalizedValue.includes('ssl=false')) {
+    return false;
+  }
+
+  return (
+    normalizedValue.includes('neon.tech') ||
+    normalizedValue.includes('neondb') ||
+    normalizedValue.includes('sslmode=require')
+  );
+};
 
 // Create a database connection pool
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
+  ssl: requiresSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
+  family: 4,
+  ...(normalized.hostaddr ? { hostaddr: normalized.hostaddr } : {}),
 });
 
 async function runMigration(filePath) {

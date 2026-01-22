@@ -5,18 +5,12 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import {
   organizations,
   organizationUsers,
-  users,
-  insertOrganizationSchema,
 } from '../../shared/schema';
-import {
-  requireOrganizationContext,
-  validateTenantAccessMiddleware,
-} from '../middleware/tenantContext';
-import { authMiddleware, requireAdminRole, requireSuperAdminRole } from '../auth';
+import { checkAuth } from '../controllers/auth.js';
 import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
@@ -41,12 +35,50 @@ const createTenantSchema = z.object({
   maxStorage: z.number().int().positive().optional(),
   settings: z.record(z.any()).optional(),
 });
-
 // Schema for tenant update
 const updateTenantSchema = createTenantSchema.partial();
 
+const hasOrganizationAccess = (req: any, tenantId: number) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (tokenOrgId && tokenOrgId === tenantId) {
+    return true;
+  }
+
+  const orgs = req.user?.organizations;
+  return Array.isArray(orgs) && orgs.some((org: any) => Number(org.id) === tenantId);
+};
+
+const requireOrganizationAccess = (req: any, res: any, next: any) => {
+  const tenantId = parseInt(req.params.id, 10);
+  if (Number.isNaN(tenantId)) {
+    return res.status(400).json({ error: 'Invalid tenant ID' });
+  }
+
+  if (!hasOrganizationAccess(req, tenantId)) {
+    return res.status(403).json({ error: 'Access denied to this tenant' });
+  }
+
+  return next();
+};
+
+const requireAdminRole = (req: any, res: any, next: any) => {
+  const role = req.user?.role;
+  if (!role || (role !== 'admin' && role !== 'super_admin')) {
+    return res.status(403).json({ error: 'Admin permissions required' });
+  }
+  return next();
+};
+
+const requireSuperAdminRole = (req: any, res: any, next: any) => {
+  const role = req.user?.role;
+  if (role !== 'super_admin') {
+    return res.status(403).json({ error: 'Super admin permissions required' });
+  }
+  return next();
+};
+
 // Apply auth middleware to all tenant routes
-router.use(authMiddleware);
+router.use(checkAuth);
 
 /**
  * GET /api/tenants
@@ -97,13 +129,13 @@ router.get('/', async (req, res) => {
     }
 
     // If user is super admin, get all tenants
-    if (req.userRole === 'super_admin') {
+    if (req.user?.role === 'super_admin') {
       const allTenants = await db.select().from(organizations);
       return res.json(allTenants);
     }
 
     // Otherwise, get tenants the user has access to
-    if (!req.userId) {
+    if (!req.user?.id) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
@@ -114,7 +146,7 @@ router.get('/', async (req, res) => {
       })
       .from(organizationUsers)
       .innerJoin(organizations, eq(organizations.id, organizationUsers.organizationId))
-      .where(eq(organizationUsers.userId, req.userId));
+      .where(eq(organizationUsers.userId, req.user.id));
 
     const tenants = userOrgs.map(row => row.organization);
     res.json(tenants);
@@ -128,7 +160,7 @@ router.get('/', async (req, res) => {
  * GET /api/tenants/:id
  * Get details for a specific tenant
  */
-router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
+router.get('/:id', requireOrganizationAccess, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {
@@ -186,7 +218,7 @@ router.post(
       // If no organizations exist, allow any authenticated user to create the first one
       if (!orgCount || orgCount.length === 0) {
         // Still require authentication
-        if (!req.userId) {
+        if (!req.user?.id) {
           return res.status(401).json({ error: 'Authentication required' });
         }
         return next();
@@ -194,7 +226,7 @@ router.post(
       
       // In development, allow admin role to create organizations
       if (process.env.NODE_ENV === 'development') {
-        if (!req.userRole || (req.userRole !== 'admin' && req.userRole !== 'super_admin')) {
+        if (!req.user?.role || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
           return res.status(403).json({ error: 'Admin or super admin permissions required' });
         }
         return next();
@@ -237,10 +269,10 @@ router.post(
         .returning();
 
       // Add the creating user as an admin of the new organization
-      if (req.userId && newTenant[0]) {
+      if (req.user?.id && newTenant[0]) {
         await db.insert(organizationUsers).values({
           organizationId: newTenant[0].id,
-          userId: req.userId,
+          userId: req.user.id,
           role: 'admin',
           joinedAt: new Date(),
         });
@@ -262,7 +294,7 @@ router.post(
  * Update an existing tenant
  * Requires admin role or super_admin role
  */
-router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (req, res) => {
+router.patch('/:id', requireOrganizationAccess, requireAdminRole, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {
@@ -359,7 +391,7 @@ router.delete('/:id', requireSuperAdminRole, async (req, res) => {
  * Generate a new API key for a tenant
  * Requires admin role
  */
-router.post('/:id/api-key', validateTenantAccessMiddleware, requireAdminRole, async (req, res) => {
+router.post('/:id/api-key', requireOrganizationAccess, requireAdminRole, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {

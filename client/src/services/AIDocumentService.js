@@ -20,7 +20,7 @@
  */
 export async function generateDocumentTags(documentId, options = {}) {
   try {
-    const response = await fetch('/api/ai/extract-tags', {
+    const response = await fetch('/api/ai-document/extract-tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -9,7 +9,7 @@
  */
 
 import { Router } from 'express';
-import { verifyJwt } from '../middleware/auth.js';
+import { verifyJwt } from '../middleware/auth.cjs';
 import { inspectorAuth } from '../middleware/inspectorAuth.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { logEvent } from '../middleware/ledgerLog.js';

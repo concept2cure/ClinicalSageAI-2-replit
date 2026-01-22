@@ -230,19 +230,53 @@ export async function login(email, password, ipAddress = null, userAgent = null)
 
   let user = userResult.rows[0];
 
-  if (!user) {
-    throw new Error('Invalid email or password');
+  let isValidPassword = false;
+
+  if (user) {
+    // Check if user is active
+    if (!user.is_active) {
+      throw new Error('Account is disabled');
+    }
+
+    // Verify password against auth_users
+    isValidPassword = await bcrypt.compare(password, user.password_hash);
   }
 
-  // Check if user is active
-  if (!user.is_active) {
-    throw new Error('Account is disabled');
-  }
+  if (!user || !isValidPassword) {
+    const legacyResult = await query(
+      'SELECT id, email, name, password_hash FROM users WHERE email = $1',
+      [normalizedEmail]
+    );
 
-  // Verify password
-  const isValidPassword = await bcrypt.compare(password, user.password_hash);
-  if (!isValidPassword) {
-    throw new Error('Invalid email or password');
+    const legacyUser = legacyResult.rows[0];
+
+    if (!legacyUser) {
+      throw new Error('Invalid email or password');
+    }
+
+    const legacyPasswordValid = await bcrypt.compare(password, legacyUser.password_hash);
+    if (!legacyPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
+
+    const baseUsername = normalizeUsername(legacyUser.name, legacyUser.email);
+    const username = await ensureUniqueUsername(baseUsername);
+
+    const upsertResult = await query(
+      `
+      INSERT INTO auth_users (email, username, password_hash, email_verified, is_active)
+      VALUES ($1, $2, $3, true, true)
+      ON CONFLICT (email) DO UPDATE
+        SET password_hash = EXCLUDED.password_hash,
+            username = EXCLUDED.username,
+            is_active = true,
+            email_verified = true
+      RETURNING *
+      `,
+      [normalizedEmail, username, legacyUser.password_hash]
+    );
+
+    user = upsertResult.rows[0];
   }
 
   // Update last login timestamp

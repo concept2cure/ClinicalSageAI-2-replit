@@ -8,7 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { validateAuth, checkOrganizationAccess } = require('../middleware/auth');
+const { validateAuth, checkOrganizationAccess } = require('../middleware/auth.cjs');
 const { OpenAI } = require('openai');
 const { handleApiError } = require('../utils/errorHandler');
 const logger = require('../utils/logger');

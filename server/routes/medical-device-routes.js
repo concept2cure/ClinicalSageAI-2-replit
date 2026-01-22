@@ -13,7 +13,7 @@ import { promises as fs } from 'fs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { authenticateJWT } = require('../middleware/auth');
+const { authenticateJWT } = require('../middleware/auth.cjs');
 
 const router = express.Router();
 
