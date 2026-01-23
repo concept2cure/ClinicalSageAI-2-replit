@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Create database connection pool
 const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Get content plan for a project

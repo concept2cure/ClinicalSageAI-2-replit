@@ -9,7 +9,7 @@ let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
-    const dbUrl = process.env.DATABASE_URL;
+    const dbUrl = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
     
     // Detect SSL requirements from URL
     const requiresSSL = dbUrl?.includes('supabase.co') || 

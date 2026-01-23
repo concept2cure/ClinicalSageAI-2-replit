@@ -8,8 +8,8 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 
 // Initialize database connection
-const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL })
+const pool = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL })
   : null;
 
 // In-memory job storage if no database is available

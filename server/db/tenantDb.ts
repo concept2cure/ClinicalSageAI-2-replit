@@ -16,7 +16,7 @@ import postgres from 'postgres';
 import { TenantContext } from '../middleware/tenantContext';
 
 // Database connection
-const connectionString = process.env.DATABASE_URL as string;
+const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL as string;
 const client = postgres(connectionString);
 export const db = drizzle(client);
 

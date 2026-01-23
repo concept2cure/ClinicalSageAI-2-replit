@@ -11,7 +11,7 @@
 
 import { Pool } from 'pg';
 
-const db = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 
 /**
  * Get license information for an organization/client

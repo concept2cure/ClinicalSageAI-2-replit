@@ -11,7 +11,7 @@ import { Pool } from 'pg';
 class LumenRegulatoryIntelligenceHub {
   constructor() {
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
     });
     this.ichService = new ICHRegulatoryIntelligenceService();
     this.regulatoryDatabase = this.initializeComprehensiveRegulatoryDatabase();

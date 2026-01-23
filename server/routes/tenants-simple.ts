@@ -8,7 +8,7 @@ import postgres from 'postgres';
 const router = Router();
 
 // Use the same connection method as the main db
-const connectionString = process.env.DATABASE_URL || '';
+const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
 const sql = postgres(connectionString, {
   ssl:
     connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'

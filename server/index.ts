@@ -205,7 +205,7 @@ pool
     
     // Enterprise: Verify all core tables exist on startup
     try {
-      const result = await ensureCoreTables(process.env.DATABASE_URL);
+      const result = await ensureCoreTables(process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL);
       if (result.success) {
         console.log(`✅ All ${result.existingTables.length} core database tables verified`);
       } else if (result.missingCritical.length > 0) {
@@ -274,6 +274,22 @@ try {
   console.error('❌ Failed to mount auth routes:', error);
 }
 
+// Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
+try {
+  const authEnterpriseModule = await import('./routes/authEnterprise.js');
+  const authEnterpriseRouter = authEnterpriseModule.default;
+  if (authEnterpriseRouter && (typeof authEnterpriseRouter === 'function' || authEnterpriseRouter.handle)) {
+    app.use('/api/auth/enterprise', authEnterpriseRouter);
+    console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
+    console.log('   - Multi-step auth flow: check-email → verify-password → verify-mfa → select-organization');
+    console.log('   - Rate limiting, account lockout, MFA support enabled');
+  } else {
+    console.warn('⚠️ Enterprise auth router not found - enterprise auth routes skipped');
+  }
+} catch (error) {
+  console.error('❌ Failed to mount enterprise auth routes:', error);
+}
+
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
@@ -285,7 +301,24 @@ app.get('/api/projects', async (req, res) => {
   try {
     // Check multiple sources for organization/workspace context  
     const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
+    let organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    
+    // Try to get organization from JWT token
+    if (!organization_id) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.substring(7);
+          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+          organization_id = payload.organizationId;
+        } catch (e) {
+          // Token parsing failed, use default
+        }
+      }
+    }
+    
+    // Default to org 2 (Concept2Cure) if no org specified
+    organization_id = organization_id || '2';
     
     // Import database connection dynamically
     const dbModule = await import('./db.js');

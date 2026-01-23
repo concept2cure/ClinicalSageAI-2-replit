@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import express from 'express';
 import axios from 'axios';
 const router = express.Router();
-const db = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 
 // Configure API endpoints
 const FDA_API_ENDPOINT = 'https://api.fda.gov/device/510k.json';

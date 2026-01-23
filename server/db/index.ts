@@ -1,7 +1,7 @@
 /**
  * Database Connection
  *
- * This file sets up the database connection using the DATABASE_URL from environment variables.
+ * This file sets up the database connection using DATABASE_NEON_NEW_SECRET or DATABASE_URL from environment variables.
  */
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
@@ -10,15 +10,15 @@ import { getSslConfig } from './ssl';
 
 const logger = createScopedLogger('database');
 
-// Initialize the database connection
-const connectionString = process.env.DATABASE_URL || '';
+// Initialize the database connection - prefer DATABASE_NEON_NEW_SECRET
+const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
 const demoMode = process.env.DEMO_MODE === 'true';
 
 if (!connectionString) {
   if (demoMode) {
-    logger.warn('DATABASE_URL not set; running in DEMO_MODE with mocked data');
+    logger.warn('DATABASE_NEON_NEW_SECRET/DATABASE_URL not set; running in DEMO_MODE with mocked data');
   } else {
-    logger.error('DATABASE_URL environment variable not set');
+    logger.error('DATABASE_NEON_NEW_SECRET or DATABASE_URL environment variable not set');
     process.exit(1);
   }
 }

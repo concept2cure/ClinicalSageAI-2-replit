@@ -17,14 +17,17 @@ const logger = createScopedLogger('database');
 // Database connection pool
 let pool: Pool | null = null;
 
+// Get database URL - prefer DATABASE_NEON_NEW_SECRET, fall back to DATABASE_URL
+const databaseUrl = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
+
 // Initialize database connection
 try {
-  // Check if DATABASE_URL is available
-  if (process.env.DATABASE_URL) {
+  // Check if database URL is available
+  if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: getSslConfig(process.env.DATABASE_URL),
+      connectionString: databaseUrl,
+      ssl: getSslConfig(databaseUrl),
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
       connectionTimeoutMillis: 5000, // How long to wait for a connection to become available
@@ -62,7 +65,7 @@ try {
       logger.error('Unexpected database error', { error: err.message });
     });
   } else {
-    logger.warn('DATABASE_URL not found, database features will be unavailable');
+    logger.warn('DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable');
   }
 } catch (error: any) {
   logger.error('Failed to initialize database', { error: error.message });

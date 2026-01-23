@@ -23,7 +23,7 @@ async function addFounderUser() {
 
     // Connect to the database
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
     });
 
     // Check if founder user already exists

@@ -124,7 +124,7 @@ router.get('/equivalence-status/:deviceId', authenticateJWT, async (req, res) =>
       // Use the database pool for these queries
       const { Pool } = require('pg');
       const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
       });
 
       // Log the database check
@@ -614,7 +614,7 @@ router.get('/workflow-transition/:fromStep/:toStep', authenticateJWT, async (req
         // First verify the device exists and has required profile data
         const { Pool } = require('pg');
         const pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
+          connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
         });
 
         // Log that we're about to query the database

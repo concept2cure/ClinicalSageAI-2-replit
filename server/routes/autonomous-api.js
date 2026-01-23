@@ -212,7 +212,7 @@ async function checkDatabaseHealth() {
     // Check database connection
     const { Pool } = await import('pg');
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
     });
 
     await pool.query('SELECT 1');

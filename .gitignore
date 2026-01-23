@@ -3,3 +3,15 @@ node_modules/
 dist/
 .cache/
 .cerv2_program_id
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+.DS_Store
+kimi-cli/

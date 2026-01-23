@@ -44,82 +44,71 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Try database lookup first
+    // Database lookup - NO FALLBACKS
     let user = null;
     let userOrg = null;
 
-    try {
-      const userResult = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, loginIdentifier.toLowerCase()))
-        .limit(1);
+    const userResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, loginIdentifier.toLowerCase()))
+      .limit(1);
 
-      if (userResult.length > 0) {
-        user = userResult[0];
-
-        // Get user's organization
-        const orgUserResult = await db
-          .select()
-          .from(organizationUsers)
-          .where(eq(organizationUsers.userId, user.id))
-          .limit(1);
-
-        if (orgUserResult.length > 0) {
-          const orgResult = await db
-            .select()
-            .from(organizations)
-            .where(eq(organizations.id, orgUserResult[0].organizationId))
-            .limit(1);
-          
-          if (orgResult.length > 0) {
-            userOrg = orgResult[0];
-          }
-        }
-
-        // Verify password if user has passwordHash
-        if (user.passwordHash) {
-          const isValid = await bcrypt.compare(password, user.passwordHash);
-          if (!isValid) {
-            return res.status(401).json({
-              success: false,
-              error: 'INVALID_CREDENTIALS',
-              message: 'Invalid email or password',
-            });
-          }
-        }
-      }
-    } catch (dbError) {
-      console.warn('[AUTH] Database lookup failed, falling back to demo mode:', dbError.message);
+    if (userResult.length === 0) {
+      console.warn(`[AUTH] User not found: ${loginIdentifier}`);
+      return res.status(401).json({
+        success: false,
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
+      });
     }
 
-    // Fallback to demo authentication if no database user found
-    if (!user) {
-      // Demo/development credentials
-      const demoUsers = {
-        'admin@trialsage.ai': { password: 'admin', role: 'admin', name: 'Admin User' },
-        'admin': { password: 'admin', role: 'admin', name: 'Admin User' },
-        'demo@trialsage.ai': { password: 'demo', role: 'user', name: 'Demo User' },
-      };
+    user = userResult[0];
 
-      const demoUser = demoUsers[loginIdentifier.toLowerCase()];
-      if (!demoUser || demoUser.password !== password) {
-        return res.status(401).json({
-          success: false,
-          error: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password',
-        });
+    // Verify password - REQUIRED
+    if (!user.passwordHash) {
+      console.error(`[AUTH] User ${loginIdentifier} has no password hash`);
+      return res.status(401).json({
+        success: false,
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
+      });
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      console.warn(`[AUTH] Invalid password for: ${loginIdentifier}`);
+      return res.status(401).json({
+        success: false,
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
+      });
+    }
+
+    // Get user's organization and role
+    let userRole = 'user';
+    try {
+      const orgUserResult = await db
+        .select()
+        .from(organizationUsers)
+        .where(eq(organizationUsers.userId, user.id))
+        .limit(1);
+
+      if (orgUserResult.length > 0) {
+        userRole = orgUserResult[0].role || 'user';
+        
+        const orgResult = await db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, orgUserResult[0].organizationId))
+          .limit(1);
+        
+        if (orgResult.length > 0) {
+          userOrg = orgResult[0];
+        }
       }
-
-      user = {
-        id: 1,
-        email: loginIdentifier.includes('@') ? loginIdentifier : `${loginIdentifier}@trialsage.ai`,
-        username: loginIdentifier,
-        name: demoUser.name,
-        role: demoUser.role,
-        status: 'active',
-      };
-      userOrg = { id: 1, name: 'Demo Organization', slug: 'demo' };
+    } catch (orgError) {
+      console.warn('[AUTH] Organization lookup failed:', orgError.message);
     }
 
     // Check if user is active
@@ -135,8 +124,8 @@ router.post('/login', async (req, res) => {
     const tokenPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role || 'user',
-      organizationId: userOrg?.id || 1,
+      role: userRole,
+      organizationId: userOrg?.id || user.defaultOrganizationId || 1,
     };
 
     // Generate JWT token
@@ -154,10 +143,10 @@ router.post('/login', async (req, res) => {
     const userInfo = {
       id: user.id,
       email: user.email,
-      name: user.name || user.username,
-      role: user.role || 'user',
-      organizationId: userOrg?.id || 1,
-      organizationName: userOrg?.name || 'Default',
+      name: user.name,
+      role: userRole,
+      organizationId: userOrg?.id || user.defaultOrganizationId || 1,
+      organizationName: userOrg?.name || 'Concept2Cure',
     };
 
     res.cookie('user', JSON.stringify(userInfo), {

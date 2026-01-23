@@ -6,7 +6,7 @@ const PROD = 'DP-001'; // replace if dynamic product selection exists
 
 // Database connection
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 const q = async (text, params = []) => {

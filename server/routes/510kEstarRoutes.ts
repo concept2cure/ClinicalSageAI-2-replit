@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 const logger = createScopedLogger('estar-routes');
 export const router = Router();
-const db = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 
 // Define validation schemas
 const validateProjectIdSchema = z.object({

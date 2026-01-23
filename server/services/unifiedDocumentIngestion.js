@@ -108,7 +108,7 @@ const REGULATORY_CONFIG = {
 
 // Initialize services
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const dbPool = new Pool({ connectionString: process.env.DATABASE_URL });
+const dbPool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 const textProcessor = new TextProcessor();
 
 // Central storage configuration
