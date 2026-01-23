@@ -1,16 +1,24 @@
 import { Pool } from 'pg';
-import { getSslConfig } from './ssl';
+import dns from 'dns';
+
+// Force IPv4 to prevent ENETUNREACH errors in environments without IPv6
+dns.setDefaultResultOrder('ipv4first');
 
 // Centralized database pool - single source of truth
 let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-
+    const dbUrl = process.env.DATABASE_URL;
+    
+    // Detect SSL requirements from URL
+    const requiresSSL = dbUrl?.includes('supabase.co') || 
+                        dbUrl?.includes('neon.tech') || 
+                        dbUrl?.includes('sslmode=require');
+    
     pool = new Pool({
-      connectionString,
-      ssl: getSslConfig(connectionString),
+      connectionString: dbUrl,
+      ssl: requiresSSL ? { rejectUnauthorized: false } : false,
       // Connection pool settings for stability
       max: 20,
       idleTimeoutMillis: 30000,
