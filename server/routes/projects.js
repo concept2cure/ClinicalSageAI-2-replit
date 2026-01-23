@@ -1,15 +1,20 @@
 // /server/routes/projects.js
 
-const express = require('express');
-const projectController = require('../controllers/projectController');
+import express from 'express';
+import * as projectController from '../controllers/projectController.js';
 
 const router = express.Router();
 
-// GET /api/projects/status - Get projects by status
-// Note: This must be before the /:id route to avoid conflicts
-router.get('/projects', projectController.getAllProjects);
-
 // GET /api/projects - Get all projects
-router.get('/projects/:id', projectController.getProjectById);
+router.get('/', projectController.getAllProjects);
 
-module.exports = router;
+// POST /api/projects - Create a new project
+router.post('/', projectController.createProject);
+
+// GET /api/projects/:id - Get project by ID
+router.get('/:id', projectController.getProjectById);
+
+// DELETE /api/projects/:id - Delete a project
+router.delete('/:id', projectController.deleteProject);
+
+export default router;

@@ -135,7 +135,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const AdminProfile = lazy(() => import('./pages/AdminProfile'));
 const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
 const FDACompliancePage = lazy(() => import('./pages/FDACompliancePage'));
-const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
+// AuditTrailDashboard replaced by Compliance Vault audit UI
 const ModuleSettingsPage = lazy(() => import('./pages/ModuleSettingsPage'));
 const PreSubmissionValidation = lazy(() => import('./pages/PreSubmissionValidation'));
 
@@ -223,7 +223,7 @@ const FulleCTDCoAuthor = lazy(() => import('./pages/FulleCTDCoAuthor'));
 // ContextDemoPage removed - was demo content
 const BlueprintPage = lazy(() => import('./pages/BlueprintPage'));
 const CitationManagerPage = lazy(() => import('./pages/CitationManagerPage'));
-const AuditPage = lazy(() => import('./pages/AuditPage'));
+const AuditPage = lazy(() => import('./pages/AuditPage.tsx'));
 const SignaturePage = lazy(() => import('./pages/SignaturePage'));
 // RoleTest removed - was test content
 
@@ -566,7 +566,7 @@ function App() {
                       <Route path="/audit">
                         {() => (
                           <Suspense fallback={<LoadingPage />}>
-                            <AuditTrailDashboard />
+                            <AuditPage />
                           </Suspense>
                         )}
                       </Route>
@@ -1544,13 +1544,6 @@ function App() {
                         )}
                       </Route>{' '}
                       {/* Citation Manager page route */}
-                      <Route path="/audit">
-                        {() => (
-                          <Suspense fallback={<LoadingPage />}>
-                            <AuditPage />
-                          </Suspense>
-                        )}
-                      </Route>{' '}
                       {/* Audit Trail page route */}
                       <Route path="/signature">
                         {() => (

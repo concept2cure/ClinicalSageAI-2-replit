@@ -14,6 +14,18 @@ import { createInsertSchema } from 'drizzle-zod';
 
 const router = Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'Supply chain mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // ============================================================================
 // MOCK DATA FOR PHARMACEUTICAL SUPPLY CHAIN
 // ============================================================================

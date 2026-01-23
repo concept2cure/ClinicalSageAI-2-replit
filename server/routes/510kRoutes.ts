@@ -14,6 +14,8 @@ const generateId = () => {
 
 const router = Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Simple in-memory storage for device profiles during development
 // In production, this would use a database
 const deviceProfiles = new Map();
@@ -404,6 +406,12 @@ router.post(
  */
 router.post('/generate-section', async (req: Request, res: Response) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        error: 'AI section generation is not configured. Set DEMO_MODE=true for mock output.',
+      });
+    }
     const { organizationId } = (req as any).tenantContext;
 
     // Extract section type and device profile from request body
@@ -439,6 +447,12 @@ router.post('/generate-section', async (req: Request, res: Response) => {
  */
 router.post('/validate-submission', async (req: Request, res: Response) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        error: 'Submission validation is not configured. Set DEMO_MODE=true for mock output.',
+      });
+    }
     const { organizationId } = (req as any).tenantContext;
 
     // Extract submission data from request body

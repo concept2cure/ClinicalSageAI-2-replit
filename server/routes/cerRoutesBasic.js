@@ -7,6 +7,8 @@ const router = express.Router();
 const { Pool } = require('pg');
 const crypto = require('crypto');
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Initialize database connection
 const pool = process.env.DATABASE_URL
   ? new Pool({ connectionString: process.env.DATABASE_URL })
@@ -14,6 +16,15 @@ const pool = process.env.DATABASE_URL
 
 // In-memory job storage if no database is available
 const jobsInMemory = new Map();
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      error: 'CER demo endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
 
 // Middleware for basic authentication (simplified)
 const authenticate = (req, res, next) => {

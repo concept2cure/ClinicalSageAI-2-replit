@@ -1,6 +1,6 @@
 import express from 'express';
 import supabase from '../lib/supabaseClient.js';
-import { verifyJwt, requireRoles } from '../middleware/auth.js';
+import { verifyJwt, requireRoles } from '../middleware/auth.cjs';
 
 const router = express.Router();
 

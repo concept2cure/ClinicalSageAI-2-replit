@@ -15,6 +15,17 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const securityMiddleware = require('../middleware/security');
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      error: 'Blockchain mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Mock blockchain storage (replace with actual blockchain integration in production)
 const blockchainRegistry = new Map();
 const transactionLogs = [];

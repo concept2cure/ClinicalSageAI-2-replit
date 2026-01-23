@@ -8,7 +8,7 @@
 
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
-import { verifyJwt } from '../middleware/auth.js';
+import { verifyJwt } from '../middleware/auth.cjs';
 import { logger } from '../utils/logger.js';
 
 const router = express.Router();

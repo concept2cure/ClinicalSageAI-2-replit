@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { toSql } from 'pgvector';
-import { pool } from '../lib/db.js';
+import pool from '../lib/db.js';
 import { checkAuth } from '../controllers/auth.js';
 import auditService from '../services/auditService.js';
 import { generateEmbedding } from '../utils/ai_engine.js';

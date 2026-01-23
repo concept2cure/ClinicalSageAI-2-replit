@@ -1,0 +1,21 @@
+import pool from '../lib/db.js';
+
+export const logAudit = async (
+	tenantId: string,
+	userId: string,
+	action: string,
+	details: string,
+	ipAddress: string | null = null
+) => {
+	try {
+		pool
+			.query(
+				`INSERT INTO audit_logs (tenant_id, user_id, action, details, ip_address, timestamp)
+				 VALUES ($1, $2, $3, $4, $5, NOW())`,
+				[tenantId, userId, action, details, ipAddress]
+			)
+			.catch(err => console.error('[AUDIT INSERT ERROR]', err));
+	} catch (e) {
+		console.error('[AUDIT ERROR]', e);
+	}
+};

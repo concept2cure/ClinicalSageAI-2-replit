@@ -5,6 +5,10 @@ export const requiresSsl = (connectionString?: string): boolean => {
 
   const normalized = connectionString.toLowerCase();
 
+  if (normalized.includes('sslmode=disable') || normalized.includes('ssl=false')) {
+    return false;
+  }
+
   return (
     normalized.startsWith('postgres://') ||
     normalized.startsWith('postgresql://') ||

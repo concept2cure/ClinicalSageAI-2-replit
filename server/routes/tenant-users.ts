@@ -1,8 +1,58 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { checkAuth } from '../controllers/auth.js';
 
 const router = Router();
+
+const hasOrganizationAccess = (req: any, organizationId: number) => {
+  const tokenOrgId = Number(req.organizationId || req.user?.organizationId);
+  if (tokenOrgId && tokenOrgId === organizationId) {
+    return true;
+  }
+
+  const orgs = req.user?.organizations;
+  return Array.isArray(orgs) && orgs.some((org: any) => Number(org.id) === organizationId);
+};
+
+const requireOrganizationAccess = (req: any, res: any, next: any) => {
+  const organizationId = parseInt(req.params.organizationId || req.params.tenantId, 10);
+  if (Number.isNaN(organizationId)) {
+    return res.status(400).json({ error: 'Invalid organization ID' });
+  }
+
+  if (!hasOrganizationAccess(req, organizationId)) {
+    return res.status(403).json({ error: 'Access denied to this organization' });
+  }
+
+  return next();
+};
+
+const fetchUsersByOrganization = async (organizationId: number) => {
+  const query = `
+      SELECT 
+        u.id,
+        u.email,
+        u.name,
+        u.title,
+        u.department,
+        u.avatar,
+        u.status,
+        u.last_login as "lastLogin",
+        u.created_at as "createdAt",
+        ou.role,
+        ou.created_at as "joinedAt"
+      FROM users u
+      INNER JOIN organization_users ou ON u.id = ou.user_id
+      WHERE ou.organization_id = $1
+      ORDER BY u.name ASC
+    `;
+
+  const result = await pool.query(query, [organizationId]);
+  return result.rows;
+};
+
+router.use(checkAuth);
 
 // Schema for user creation
 const createUserSchema = z.object({
@@ -29,7 +79,7 @@ const updateUserRoleSchema = z.object({
  * GET /api/tenant-users/:tenantId
  * Get users for a specific tenant
  */
-router.get('/:tenantId', async (req, res) => {
+router.get('/:tenantId', requireOrganizationAccess, async (req, res) => {
   try {
     if (!pool) {
       console.error('Database pool not available');
@@ -41,32 +91,49 @@ router.get('/:tenantId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
 
-    // Get users for this organization with their roles
-    const query = `
-      SELECT 
-        u.id,
-        u.email,
-        u.name,
-        u.title,
-        u.department,
-        u.avatar,
-        u.status,
-        u.last_login as "lastLogin",
-        u.created_at as "createdAt",
-        ou.role,
-        ou.created_at as "joinedAt"
-      FROM users u
-      INNER JOIN organization_users ou ON u.id = ou.user_id
-      WHERE ou.organization_id = $1
-      ORDER BY u.name ASC
-    `;
-
-    const result = await pool.query(query, [tenantId]);
-    console.log(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
-    res.json(result.rows);
+    const users = await fetchUsersByOrganization(tenantId);
+    console.log(`Retrieved ${users.length} users for organization ${tenantId}`);
+    res.json(users);
   } catch (error) {
     console.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
+  }
+});
+
+/**
+ * GET /api/tenant-users?organizationId=1
+ * Compatibility endpoint for query-based organization ID
+ */
+router.get('/', async (req, res) => {
+  try {
+    if (!pool) {
+      console.error('Database pool not available');
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    const organizationIdParam = req.query.organizationId || req.headers['x-organization-id'];
+    if (!organizationIdParam) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing organizationId',
+      });
+    }
+
+    const organizationId = parseInt(organizationIdParam as string, 10);
+    if (Number.isNaN(organizationId)) {
+      return res.status(400).json({ error: 'Invalid organization ID' });
+    }
+
+    if (!hasOrganizationAccess(req, organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+
+    const users = await fetchUsersByOrganization(organizationId);
+    console.log(`Retrieved ${users.length} users for organization ${organizationId}`);
+    return res.json(users);
+  } catch (error) {
+    console.error('Error retrieving tenant users', error);
+    return res.status(500).json({ error: 'Failed to retrieve tenant users' });
   }
 });
 
@@ -90,6 +157,10 @@ router.post('/', async (req, res) => {
     const organizationId = validatedData.organizationId;
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
+    if (!hasOrganizationAccess(req, organizationId)) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
     }
     
     // Use atomic user creation with quota enforcement
@@ -267,7 +338,7 @@ router.post('/legacy', async (req, res) => {
  * PATCH /api/tenant-users/:organizationId/:userId
  * Update user role in organization
  */
-router.patch('/:organizationId/:userId', async (req, res) => {
+router.patch('/:organizationId/:userId', requireOrganizationAccess, async (req, res) => {
   try {
     if (!pool) {
       console.error('Database pool not available');
@@ -311,7 +382,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
  * DELETE /api/tenant-users/:organizationId/:userId
  * Remove user from organization
  */
-router.delete('/:organizationId/:userId', async (req, res) => {
+router.delete('/:organizationId/:userId', requireOrganizationAccess, async (req, res) => {
   try {
     if (!pool) {
       console.error('Database pool not available');

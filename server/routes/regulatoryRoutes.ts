@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.cjs';
 import * as regService from '../services/regulatoryService.js';
 
 const router = express.Router();

@@ -5,6 +5,12 @@ import { DOC_TYPES } from '../../shared/docTypes.js';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+const requireDemoMode = (res) =>
+  res.status(501).json({
+    error: 'Medical device document demo endpoints require DEMO_MODE=true',
+  });
+
 // Middleware to check tenant
 const checkTenant = (req, res, next) => {
   const tenantId = req.headers['x-tenant-id'] || req.query.tenantId || 'default';
@@ -42,6 +48,10 @@ router.post('/validate', checkTenant, async (req, res) => {
 // Save document
 router.post('/documents/save', checkTenant, async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return requireDemoMode(res);
+    }
+
     const { documentId, documentType, content, metadata } = req.body;
     const tenantId = req.tenantId;
     
@@ -93,6 +103,10 @@ router.post('/documents/save', checkTenant, async (req, res) => {
 // Get document
 router.get('/documents/:id', checkTenant, async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return requireDemoMode(res);
+    }
+
     const { id } = req.params;
     const tenantId = req.tenantId;
     const key = `${tenantId}:${id}`;
@@ -117,6 +131,10 @@ router.get('/documents/:id', checkTenant, async (req, res) => {
 // Export document (PDF/DOCX)
 router.post('/documents/export', checkTenant, async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return requireDemoMode(res);
+    }
+
     const { documentId, documentType, content, format, deviceProfile } = req.body;
     const { formatDocument, generateCoverPage, validateDocumentCompleteness } = await import('../common/exportFormats.mjs');
     
@@ -197,6 +215,10 @@ router.post('/documents/export', checkTenant, async (req, res) => {
 // List documents for tenant
 router.get('/documents', checkTenant, async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return requireDemoMode(res);
+    }
+
     const tenantId = req.tenantId;
     const documents = [];
     

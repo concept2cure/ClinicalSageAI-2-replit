@@ -4,9 +4,18 @@ const OpenAI = require('openai');
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Document save endpoint
 router.post('/save', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        message: 'Document save is not configured. Set DEMO_MODE=true for simulated output.',
+      });
+    }
+
     const {
       title,
       content,
@@ -53,6 +62,13 @@ router.post('/save', async (req, res) => {
 // Auto-save endpoint
 router.post('/auto-save', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        message: 'Auto-save is not configured. Set DEMO_MODE=true for simulated output.',
+      });
+    }
+
     const { title, content, timestamp } = req.body;
 
     // Auto-save functionality

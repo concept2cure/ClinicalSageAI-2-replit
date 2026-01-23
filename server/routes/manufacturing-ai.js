@@ -4,6 +4,8 @@ import { exportModule3 } from '../src/services/module3/exporters/manufacturingEx
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // POST /api/cmc/manufacturing/ai/review
 router.post('/ai/review', async (req, res) => {
   try {
@@ -20,6 +22,12 @@ router.post('/ai/review', async (req, res) => {
 // POST /api/cmc/manufacturing/ai/simulate-deficiency
 router.post('/ai/simulate-deficiency', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        error: 'Deficiency simulation is not configured. Set DEMO_MODE=true for simulated output.',
+      });
+    }
+
     const snapshot = req.body?.snapshot || {};
     const useLLM = !!req.body?.useLLM;
     const out = await simulateDeficiency(snapshot, { useLLM });

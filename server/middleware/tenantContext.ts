@@ -31,8 +31,14 @@ declare global {
  */
 export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
   // Extract tenant context from headers
-  const organizationId = (req.headers['x-org-id'] as string) || null;
-  const clientWorkspaceId = (req.headers['x-client-id'] as string) || null;
+  const organizationId =
+    (req.headers['x-organization-id'] as string) ||
+    (req.headers['x-org-id'] as string) ||
+    null;
+  const clientWorkspaceId =
+    (req.headers['x-client-workspace-id'] as string) ||
+    (req.headers['x-client-id'] as string) ||
+    null;
   const module = (req.headers['x-module'] as string) || null;
 
   // Create tenant context object

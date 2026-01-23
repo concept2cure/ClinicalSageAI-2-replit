@@ -11,6 +11,18 @@ import { promisify } from 'util';
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'Submission gateway simulation requires DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

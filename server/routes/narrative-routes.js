@@ -3,31 +3,136 @@ const router = express.Router();
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { db } from '../db';
+import { cerFaersData, cdiscDeviceDe } from '@shared/schema';
+import { and, eq, gte, lte, isNotNull } from 'drizzle-orm';
 
-// Helper function to generate random trend data
-function generateTrendData(startDate, endDate, periods, code) {
-  const trendData = {};
+const normalizeSeverity = (severity) => String(severity || '').toLowerCase();
+
+const isSeriousSeverity = (severity) => {
+  const value = normalizeSeverity(severity);
+  return [
+    'serious',
+    'severe',
+    'critical',
+    'life-threatening',
+    'life threatening',
+    'fatal',
+    'death',
+  ].includes(value);
+};
+
+const buildBuckets = (startDate, endDate, periods) => {
   const start = new Date(startDate);
   const end = new Date(endDate);
-  const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
-  const periodLength = Math.max(1, Math.floor(daysDiff / periods));
-
-  // Use the product code to seed the random number generator for consistent results
-  const seed = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const totalMs = Math.max(0, end.getTime() - start.getTime());
+  const bucketMs = Math.max(1, Math.floor(totalMs / periods));
+  const buckets = [];
 
   for (let i = 0; i < periods; i++) {
-    const date = new Date(start);
-    date.setDate(date.getDate() + i * periodLength);
-    const dateKey = date.toISOString().split('T')[0];
-
-    // Generate a value based on the seed and period
-    const baseValue = ((seed * (i + 1)) % 15) + 3; // Between 3 and 17
-    const randomFactor = Math.sin(seed * (i + 1)) * 2.5;
-    trendData[dateKey] = Math.floor(baseValue + randomFactor);
+    const bucketStart = new Date(start.getTime() + i * bucketMs);
+    const bucketEnd = i === periods - 1 ? end : new Date(start.getTime() + (i + 1) * bucketMs);
+    const label = bucketStart.toISOString().split('T')[0];
+    buckets.push({ label, start: bucketStart, end: bucketEnd });
   }
 
-  return trendData;
-}
+  return { buckets, bucketMs, start, end };
+};
+
+const buildTrendFromEvents = (startDate, endDate, periods, events) => {
+  const { buckets, bucketMs, start, end } = buildBuckets(startDate, endDate, periods);
+  const trend = Object.fromEntries(buckets.map(bucket => [bucket.label, 0]));
+
+  for (const event of events) {
+    if (!event?.eventDate) continue;
+    const eventDate = new Date(event.eventDate);
+    if (Number.isNaN(eventDate.getTime())) continue;
+    if (eventDate < start || eventDate > end) continue;
+    const index = Math.min(
+      buckets.length - 1,
+      Math.max(0, Math.floor((eventDate.getTime() - start.getTime()) / bucketMs))
+    );
+    const bucket = buckets[index];
+    trend[bucket.label] = (trend[bucket.label] || 0) + 1;
+  }
+
+  return trend;
+};
+
+const parsePeriods = (value) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 6;
+};
+
+const ensureDatabase = () => {
+  if (!db) {
+    throw new Error('Database is not configured');
+  }
+};
+
+const fetchFaersAnalysis = async ({ code, startDate, endDate, periods, severity }) => {
+  ensureDatabase();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const filters = [
+    eq(cerFaersData.faersId, code),
+    isNotNull(cerFaersData.eventDate),
+    gte(cerFaersData.eventDate, start),
+    lte(cerFaersData.eventDate, end),
+  ];
+  if (severity && severity !== 'all') {
+    filters.push(eq(cerFaersData.severity, severity));
+  }
+
+  const rows = await db
+    .select({
+      eventDate: cerFaersData.eventDate,
+      severity: cerFaersData.severity,
+    })
+    .from(cerFaersData)
+    .where(and(...filters));
+
+  const trend = buildTrendFromEvents(startDate, endDate, periods, rows);
+  const seriousCount = rows.filter(row => isSeriousSeverity(row.severity)).length;
+
+  return {
+    trend,
+    totalCount: rows.length,
+    seriousCount,
+  };
+};
+
+const fetchDeviceAnalysis = async ({ code, startDate, endDate, periods, severity }) => {
+  ensureDatabase();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const filters = [
+    eq(cdiscDeviceDe.deviceId, code),
+    isNotNull(cdiscDeviceDe.eventDate),
+    gte(cdiscDeviceDe.eventDate, start),
+    lte(cdiscDeviceDe.eventDate, end),
+  ];
+  if (severity && severity !== 'all') {
+    filters.push(eq(cdiscDeviceDe.severity, severity));
+  }
+
+  const rows = await db
+    .select({
+      eventDate: cdiscDeviceDe.eventDate,
+      severity: cdiscDeviceDe.severity,
+    })
+    .from(cdiscDeviceDe)
+    .where(and(...filters));
+
+  const trend = buildTrendFromEvents(startDate, endDate, periods, rows);
+  const seriousCount = rows.filter(row => isSeriousSeverity(row.severity)).length;
+
+  return {
+    trend,
+    totalCount: rows.length,
+    seriousCount,
+  };
+};
 
 // Helper function to generate narrative text
 function generateNarrative(type, code, trend, startDate, endDate) {
@@ -115,16 +220,22 @@ function generateNarrative(type, code, trend, startDate, endDate) {
 }
 
 // FAERS narrative endpoint
-router.get('/faers/:code', (req, res) => {
+router.get('/faers/:code', async (req, res) => {
   try {
     const { code } = req.params;
     const { periods = 6, start_date, end_date, severity = 'all' } = req.query;
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
-    // Generate trend data
-    const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
+    const { trend, totalCount, seriousCount } = await fetchFaersAnalysis({
+      code,
+      startDate,
+      endDate,
+      periods: normalizedPeriods,
+      severity,
+    });
 
     // Generate narrative
     const narrative = generateNarrative('faers', code, trend, startDate, endDate);
@@ -135,7 +246,8 @@ router.get('/faers/:code', (req, res) => {
       trend,
       narrative,
       analysis: {
-        total_events: Object.values(trend).reduce((sum, count) => sum + count, 0),
+        total_events: totalCount,
+        serious_events: seriousCount,
         reporting_periods: Object.keys(trend).length,
         start_date: startDate,
         end_date: endDate,
@@ -159,9 +271,15 @@ router.get('/faers/:code/pdf', async (req, res) => {
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
-    // Generate trend data
-    const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
+    const { trend, totalCount, seriousCount } = await fetchFaersAnalysis({
+      code,
+      startDate,
+      endDate,
+      periods: normalizedPeriods,
+      severity,
+    });
 
     // Generate narrative
     const narrative = generateNarrative('faers', code, trend, startDate, endDate);
@@ -186,10 +304,8 @@ router.get('/faers/:code/pdf', async (req, res) => {
       const analysisData = {
         source: 'FAERS',
         product_code: code,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.floor(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.3
-        ), // Simulated serious count
+        total_count: totalCount,
+        serious_count: seriousCount,
         trend: trend,
       };
 
@@ -266,16 +382,22 @@ router.get('/faers/:code/pdf', async (req, res) => {
 });
 
 // Device narrative endpoint
-router.get('/device/:code', (req, res) => {
+router.get('/device/:code', async (req, res) => {
   try {
     const { code } = req.params;
     const { periods = 6, start_date, end_date, severity = 'all' } = req.query;
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
-    // Generate trend data
-    const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
+    const { trend, totalCount, seriousCount } = await fetchDeviceAnalysis({
+      code,
+      startDate,
+      endDate,
+      periods: normalizedPeriods,
+      severity,
+    });
 
     // Generate narrative
     const narrative = generateNarrative('device', code, trend, startDate, endDate);
@@ -286,7 +408,8 @@ router.get('/device/:code', (req, res) => {
       trend,
       narrative,
       analysis: {
-        total_events: Object.values(trend).reduce((sum, count) => sum + count, 0),
+        total_events: totalCount,
+        serious_events: seriousCount,
         reporting_periods: Object.keys(trend).length,
         start_date: startDate,
         end_date: endDate,
@@ -310,9 +433,15 @@ router.get('/device/:code/pdf', async (req, res) => {
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
-    // Generate trend data
-    const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
+    const { trend, totalCount, seriousCount } = await fetchDeviceAnalysis({
+      code,
+      startDate,
+      endDate,
+      periods: normalizedPeriods,
+      severity,
+    });
 
     // Generate narrative
     const narrative = generateNarrative('device', code, trend, startDate, endDate);
@@ -337,10 +466,8 @@ router.get('/device/:code/pdf', async (req, res) => {
       const analysisData = {
         source: 'MAUDE',
         product_code: code,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.floor(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.25
-        ), // Simulated serious count
+        total_count: totalCount,
+        serious_count: seriousCount,
         trend: trend,
       };
 
@@ -417,7 +544,7 @@ router.get('/device/:code/pdf', async (req, res) => {
 });
 
 // Multi-source narrative endpoint
-router.post('/multi', (req, res) => {
+router.post('/multi', async (req, res) => {
   try {
     const {
       ndc_codes = [],
@@ -430,40 +557,53 @@ router.post('/multi', (req, res) => {
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
     const analyses = [];
 
-    // Generate FAERS data for each NDC code
-    for (const code of ndc_codes) {
-      if (!code) continue;
+    const faersAnalyses = await Promise.all(
+      ndc_codes
+        .filter(Boolean)
+        .map(async code => {
+          const { trend, totalCount, seriousCount } = await fetchFaersAnalysis({
+            code,
+            startDate,
+            endDate,
+            periods: normalizedPeriods,
+            severity,
+          });
+          return {
+            source: 'FAERS',
+            product_code: code,
+            trend,
+            total_count: totalCount,
+            serious_count: seriousCount,
+          };
+        })
+    );
 
-      const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
-      analyses.push({
-        source: 'FAERS',
-        product_code: code,
-        trend,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.round(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.3
-        ), // Mocked serious count (30%)
-      });
-    }
+    const deviceAnalyses = await Promise.all(
+      device_codes
+        .filter(Boolean)
+        .map(async code => {
+          const { trend, totalCount, seriousCount } = await fetchDeviceAnalysis({
+            code,
+            startDate,
+            endDate,
+            periods: normalizedPeriods,
+            severity,
+          });
+          return {
+            source: 'MDR',
+            product_code: code,
+            trend,
+            total_count: totalCount,
+            serious_count: seriousCount,
+          };
+        })
+    );
 
-    // Generate device data for each device code
-    for (const code of device_codes) {
-      if (!code) continue;
-
-      const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
-      analyses.push({
-        source: 'MDR',
-        product_code: code,
-        trend,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.round(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.25
-        ), // Mocked serious count (25%)
-      });
-    }
+    analyses.push(...faersAnalyses, ...deviceAnalyses);
 
     // Generate combined narrative
     let narrative = `# Multi-Source Clinical Evaluation Report\n\n`;
@@ -478,8 +618,9 @@ router.post('/multi', (req, res) => {
 
       const totalEvents = analyses.reduce((sum, a) => sum + a.total_count, 0);
       const totalSerious = analyses.reduce((sum, a) => sum + a.serious_count, 0);
+      const seriousRate = totalEvents > 0 ? Math.round((totalSerious / totalEvents) * 100) : 0;
 
-      narrative += `A total of ${totalEvents} adverse events/incidents were identified, of which ${totalSerious} (${Math.round((totalSerious / totalEvents) * 100)}%) were classified as serious.\n\n`;
+      narrative += `A total of ${totalEvents} adverse events/incidents were identified, of which ${totalSerious} (${seriousRate}%) were classified as serious.\n\n`;
 
       narrative += `## Source Data Overview\n\n`;
 
@@ -565,9 +706,10 @@ router.post('/multi', (req, res) => {
           secondHalf.reduce((sum, [_, count]) => sum + count, 0) / secondHalf.length;
 
         const overallTrend = secondHalfAvg > firstHalfAvg ? 'increasing' : 'decreasing';
-        const percentChange = Math.abs(
-          Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
-        );
+        const percentChange =
+          firstHalfAvg === 0
+            ? 0
+            : Math.abs(Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100));
 
         narrative += `1. **Overall Trend**: The combined data shows an ${overallTrend} trend with approximately ${percentChange}% change between the first and second half of the reporting period.\n\n`;
       }
@@ -589,9 +731,9 @@ router.post('/multi', (req, res) => {
       }
 
       if (totalSerious > totalEvents * 0.4) {
-        narrative += `The high proportion of serious events (${Math.round((totalSerious / totalEvents) * 100)}%) is concerning and requires immediate attention.\n\n`;
+        narrative += `The high proportion of serious events (${seriousRate}%) is concerning and requires immediate attention.\n\n`;
       } else {
-        narrative += `The proportion of serious events (${Math.round((totalSerious / totalEvents) * 100)}%) is within expected ranges for these product categories.\n\n`;
+        narrative += `The proportion of serious events (${seriousRate}%) is within expected ranges for these product categories.\n\n`;
       }
 
       // Add recommendations
@@ -638,40 +780,53 @@ router.post('/multi/pdf', async (req, res) => {
 
     const startDate = start_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = end_date || new Date().toISOString();
+    const normalizedPeriods = parsePeriods(periods);
 
     const analyses = [];
 
-    // Generate FAERS data for each NDC code
-    for (const code of ndc_codes) {
-      if (!code) continue;
+    const faersAnalyses = await Promise.all(
+      ndc_codes
+        .filter(Boolean)
+        .map(async code => {
+          const { trend, totalCount, seriousCount } = await fetchFaersAnalysis({
+            code,
+            startDate,
+            endDate,
+            periods: normalizedPeriods,
+            severity,
+          });
+          return {
+            source: 'FAERS',
+            product_code: code,
+            trend,
+            total_count: totalCount,
+            serious_count: seriousCount,
+          };
+        })
+    );
 
-      const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
-      analyses.push({
-        source: 'FAERS',
-        product_code: code,
-        trend,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.round(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.3
-        ), // Mocked serious count (30%)
-      });
-    }
+    const deviceAnalyses = await Promise.all(
+      device_codes
+        .filter(Boolean)
+        .map(async code => {
+          const { trend, totalCount, seriousCount } = await fetchDeviceAnalysis({
+            code,
+            startDate,
+            endDate,
+            periods: normalizedPeriods,
+            severity,
+          });
+          return {
+            source: 'MDR',
+            product_code: code,
+            trend,
+            total_count: totalCount,
+            serious_count: seriousCount,
+          };
+        })
+    );
 
-    // Generate device data for each device code
-    for (const code of device_codes) {
-      if (!code) continue;
-
-      const trend = generateTrendData(startDate, endDate, parseInt(periods, 10), code);
-      analyses.push({
-        source: 'MDR',
-        product_code: code,
-        trend,
-        total_count: Object.values(trend).reduce((sum, count) => sum + count, 0),
-        serious_count: Math.round(
-          Object.values(trend).reduce((sum, count) => sum + count, 0) * 0.25
-        ), // Mocked serious count (25%)
-      });
-    }
+    analyses.push(...faersAnalyses, ...deviceAnalyses);
 
     // Generate combined narrative
     let narrative = `# Multi-Source Clinical Evaluation Report\n\n`;
@@ -687,8 +842,9 @@ router.post('/multi/pdf', async (req, res) => {
 
       const totalEvents = analyses.reduce((sum, a) => sum + a.total_count, 0);
       const totalSerious = analyses.reduce((sum, a) => sum + a.serious_count, 0);
+      const seriousRate = totalEvents > 0 ? Math.round((totalSerious / totalEvents) * 100) : 0;
 
-      narrative += `A total of ${totalEvents} adverse events/incidents were identified, of which ${totalSerious} (${Math.round((totalSerious / totalEvents) * 100)}%) were classified as serious.\n\n`;
+      narrative += `A total of ${totalEvents} adverse events/incidents were identified, of which ${totalSerious} (${seriousRate}%) were classified as serious.\n\n`;
 
       // Rest of narrative generation from the /multi endpoint...
       // (Similar to the code above)

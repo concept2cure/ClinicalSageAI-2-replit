@@ -121,7 +121,13 @@ export default function Login({ onLoginSuccess }) {
     setErrorMessage('');
     setLoading(true);
     try {
-      await login(email, password);
+      const timeoutMs = 15000;
+      await Promise.race([
+        login(email, password),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Login timed out. Please try again.')), timeoutMs)
+        ),
+      ]);
 
       toast({
         title: 'Login successful',

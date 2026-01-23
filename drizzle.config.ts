@@ -1,13 +1,23 @@
 import { defineConfig } from 'drizzle-kit';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath, override: true });
+}
+dotenv.config();
 
 const databaseUrl =
   process.env.DATABASE_URL_ADMIN ??
   process.env.NEON_DATABASE_URL_ADMIN ??
-  process.env.DATABASE_URL;
+  process.env.DATABASE_URL ??
+  process.env.NEON_DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error(
-    'DATABASE_URL_ADMIN, NEON_DATABASE_URL_ADMIN, or DATABASE_URL must be set to run migrations',
+    'DATABASE_URL_ADMIN, NEON_DATABASE_URL_ADMIN, DATABASE_URL, or NEON_DATABASE_URL must be set to run migrations',
   );
 }
 

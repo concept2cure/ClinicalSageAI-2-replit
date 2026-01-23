@@ -16,6 +16,8 @@ dotenv.config();
 // Create router
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -38,6 +40,15 @@ const extractTenantContext = (req: Request, res: Response, next: Function) => {
 
 // Apply tenant context middleware to all routes
 router.use(extractTenantContext);
+
+router.use((req: Request, res: Response, next: Function) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      error: '510(k) compliance simulation requires DEMO_MODE=true',
+    });
+  }
+  next();
+});
 
 /**
  * GET /api/fda510k/compliance-results/:projectId

@@ -19,7 +19,12 @@ import { db } from '../db';
 import { documents, components, organizations } from '../../shared/schema';
 import { eq, and, sql, desc, gte, lte } from 'drizzle-orm';
 // @ts-ignore - JavaScript middleware file
-import { authenticateToken } from '../middleware/auth';
+// @ts-ignore - JavaScript middleware file
+import * as authMiddleware from '../middleware/auth.cjs';
+
+const { authenticateToken } = authMiddleware as {
+  authenticateToken: (req: Request, res: Response, next: () => void) => void;
+};
 // @ts-ignore - JavaScript middleware file
 import { requireOrganizationContext } from '../middleware/tenantContext';
 
@@ -28,6 +33,8 @@ if (!db) {
 }
 
 const router = Router();
+
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
 
 // Apply authentication and organization context middleware
 router.use(authenticateToken);
@@ -356,6 +363,12 @@ router.post('/validate', async (req, res) => {
  */
 router.get('/trends', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        error: 'Compliance trends require DEMO_MODE=true',
+      });
+    }
     const { organizationId } = req as any;
     const { period = '30d', agency } = req.query;
     
@@ -412,6 +425,12 @@ router.get('/trends', async (req, res) => {
  */
 router.get('/report/:submissionId', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        error: 'Compliance report requires DEMO_MODE=true',
+      });
+    }
     const { organizationId } = req as any;
     const { submissionId } = req.params;
     

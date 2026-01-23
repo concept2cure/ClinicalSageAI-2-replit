@@ -7,7 +7,7 @@
  */
 
 import { Router } from 'express';
-import { verifyJwt } from '../middleware/auth.js';
+import { verifyJwt } from '../middleware/auth.cjs';
 import { supabase } from '../lib/supabaseClient.js';
 import { logger } from '../utils/logger.js';
 

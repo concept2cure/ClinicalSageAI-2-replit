@@ -223,6 +223,13 @@ router.get('/export-pdf', async (req, res) => {
 // Get basic usage statistics for the CER module
 router.get('/stats', async (req, res) => {
   try {
+    if (process.env.DEMO_MODE !== 'true') {
+      return res.status(501).json({
+        success: false,
+        message: 'CER stats are not configured. Set DEMO_MODE=true for placeholder stats.',
+      });
+    }
+
     // In a real implementation, this would fetch actual usage statistics
     // For now, return placeholder stats
     return res.json({

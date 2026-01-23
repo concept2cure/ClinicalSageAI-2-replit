@@ -17,6 +17,18 @@ const execPromise = promisify(exec);
 const router = express.Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
+router.use((req, res, next) => {
+  if (!isDemoMode()) {
+    return res.status(501).json({
+      success: false,
+      error: 'QMP audit mock endpoints require DEMO_MODE=true',
+    });
+  }
+  next();
+});
+
 // Mock data for QMP audit trail (in a real app, this would come from a database)
 const qmpAuditTrail = [
   {

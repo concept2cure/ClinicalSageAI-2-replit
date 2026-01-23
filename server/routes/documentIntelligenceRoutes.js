@@ -17,6 +17,8 @@ const {
 
 const router = express.Router();
 
+const isDemoMode = () => process.env.DEMO_MODE === 'true';
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -261,6 +263,13 @@ router.post('/validate', async (req, res) => {
  */
 router.post('/apply', async (req, res) => {
   try {
+    if (!isDemoMode()) {
+      return res.status(501).json({
+        success: false,
+        message: 'Apply extracted data is not configured. Set DEMO_MODE=true for simulated output.',
+      });
+    }
+
     const { extractedData, deviceProfileId, options } = req.body;
 
     if (!extractedData || !deviceProfileId) {

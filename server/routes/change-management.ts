@@ -11,7 +11,12 @@ import { db } from '../db';
 import { changeRequests, components, componentVersions } from '../../shared/schema';
 import { eq, and, sql, desc, ilike } from 'drizzle-orm';
 // @ts-ignore - JavaScript middleware file
-import { authenticateToken } from '../middleware/auth';
+// @ts-ignore - JavaScript middleware file
+import * as authMiddleware from '../middleware/auth.cjs';
+
+const { authenticateToken } = authMiddleware as {
+  authenticateToken: (req: Request, res: Response, next: () => void) => void;
+};
 // @ts-ignore - JavaScript middleware file
 import { requireOrganizationContext } from '../middleware/tenantContext';
 
