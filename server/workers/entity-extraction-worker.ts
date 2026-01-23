@@ -1,0 +1,327 @@
+/**
+ * Entity Extraction Worker
+ * 
+ * Upgrades document ingestion to extract structured entities, not just text chunks.
+ * This is the foundation of the Neuro-Symbolic Knowledge Graph.
+ * 
+ * Extracts:
+ * - Clinical entities (Drug, Dose, Indication, Population)
+ * - Statistical entities (p-values, CIs, effect sizes)
+ * - Regulatory entities (NCT IDs, IND numbers)
+ * - Document entities (Protocol versions, amendments)
+ */
+
+import OpenAI from 'openai';
+import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
+
+export type EntityType = 
+  | 'DRUG_SUBSTANCE' | 'DRUG_PRODUCT' | 'DOSE' | 'ROUTE_OF_ADMINISTRATION'
+  | 'INDICATION' | 'POPULATION' | 'SAMPLE_SIZE' | 'STUDY_PHASE' | 'STUDY_DESIGN'
+  | 'PRIMARY_ENDPOINT' | 'SECONDARY_ENDPOINT' | 'SAFETY_ENDPOINT'
+  | 'P_VALUE' | 'CONFIDENCE_INTERVAL' | 'EFFECT_SIZE' | 'HAZARD_RATIO'
+  | 'ADVERSE_EVENT' | 'SERIOUS_ADVERSE_EVENT'
+  | 'NCT_ID' | 'IND_NUMBER' | 'NDA_NUMBER' | 'BLA_NUMBER'
+  | 'PROTOCOL_VERSION' | 'AMENDMENT' | 'SECTION_REFERENCE'
+  | 'SPONSOR' | 'CRO' | 'INVESTIGATOR' | 'SITE'
+  | 'DATE' | 'DURATION' | 'MEASUREMENT' | 'OTHER';
+
+export interface ExtractedEntity {
+  entityType: EntityType;
+  entityValue: string;
+  normalizedValue?: string;
+  confidenceScore: number;
+  sourceSpan?: { start: number; end: number; text: string };
+  numericValue?: number;
+  unit?: string;
+  context?: string;
+}
+
+export interface ExtractionResult {
+  atomId: string;
+  entities: ExtractedEntity[];
+  relationships: Array<{
+    sourceEntity: string;
+    targetEntity: string;
+    relationshipType: string;
+    confidence: number;
+  }>;
+  metadata: {
+    processingTimeMs: number;
+    modelUsed: string;
+    entityCount: number;
+  };
+}
+
+const ENTITY_EXTRACTION_PROMPT = `You are an expert clinical/regulatory document analyzer. Extract structured entities from the following text.
+
+For each entity, provide:
+- entityType: One of [DRUG_SUBSTANCE, DRUG_PRODUCT, DOSE, ROUTE_OF_ADMINISTRATION, INDICATION, POPULATION, SAMPLE_SIZE, STUDY_PHASE, STUDY_DESIGN, PRIMARY_ENDPOINT, SECONDARY_ENDPOINT, SAFETY_ENDPOINT, P_VALUE, CONFIDENCE_INTERVAL, EFFECT_SIZE, HAZARD_RATIO, ADVERSE_EVENT, SERIOUS_ADVERSE_EVENT, NCT_ID, IND_NUMBER, NDA_NUMBER, BLA_NUMBER, PROTOCOL_VERSION, AMENDMENT, SECTION_REFERENCE, SPONSOR, CRO, INVESTIGATOR, SITE, DATE, DURATION, MEASUREMENT]
+- entityValue: The extracted text value
+- normalizedValue: Standardized form if applicable (e.g., UNII for drugs, MedDRA for AEs)
+- confidenceScore: 0.0-1.0 confidence in the extraction
+- numericValue: For numeric entities, the parsed number
+- unit: For measurements, the unit
+- context: Brief context about where/how this entity appears
+
+Also identify relationships between entities:
+- CAUSES, CORRELATES_WITH, MEASURED_IN, PART_OF, VERSION_OF
+
+Output JSON only:
+{
+  "entities": [...],
+  "relationships": [
+    {"sourceEntity": "...", "targetEntity": "...", "relationshipType": "...", "confidence": 0.95}
+  ]
+}`;
+
+export class EntityExtractionWorker {
+  private pool: Pool;
+  private openai: OpenAI;
+
+  constructor(pool: Pool) {
+    this.pool = pool;
+    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+
+  /**
+   * Extract entities from a document atom
+   */
+  async extractEntities(atomId: string, content: string): Promise<ExtractionResult> {
+    const startTime = Date.now();
+
+    // Chunk content if too large
+    const chunks = this.chunkContent(content, 8000);
+    const allEntities: ExtractedEntity[] = [];
+    const allRelationships: any[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      
+      try {
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo',
+          temperature: 0,
+          max_tokens: 4000,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: ENTITY_EXTRACTION_PROMPT },
+            { role: 'user', content: `Extract entities from this text (chunk ${i + 1}/${chunks.length}):\n\n${chunk}` }
+          ]
+        });
+
+        const output = response.choices[0]?.message?.content || '{}';
+        const parsed = JSON.parse(output);
+
+        if (parsed.entities) {
+          allEntities.push(...parsed.entities.map((e: any) => ({
+            ...e,
+            sourceSpan: e.sourceSpan || { start: 0, end: 0, text: e.entityValue }
+          })));
+        }
+
+        if (parsed.relationships) {
+          allRelationships.push(...parsed.relationships);
+        }
+
+      } catch (error) {
+        console.error(`[EntityExtraction] Error processing chunk ${i + 1}:`, error);
+      }
+    }
+
+    // Deduplicate entities
+    const deduped = this.deduplicateEntities(allEntities);
+
+    // Store entities
+    await this.storeEntities(atomId, deduped);
+
+    // Store relationships
+    await this.storeRelationships(atomId, allRelationships);
+
+    const processingTimeMs = Date.now() - startTime;
+
+    return {
+      atomId,
+      entities: deduped,
+      relationships: allRelationships,
+      metadata: {
+        processingTimeMs,
+        modelUsed: 'gpt-4-turbo',
+        entityCount: deduped.length
+      }
+    };
+  }
+
+  /**
+   * Extract entities with regex patterns (for structured data like NCT IDs)
+   */
+  async extractWithPatterns(content: string): Promise<ExtractedEntity[]> {
+    const entities: ExtractedEntity[] = [];
+
+    // NCT ID pattern
+    const nctPattern = /NCT\d{8}/g;
+    let match;
+    while ((match = nctPattern.exec(content)) !== null) {
+      entities.push({
+        entityType: 'NCT_ID',
+        entityValue: match[0],
+        normalizedValue: match[0],
+        confidenceScore: 1.0,
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+      });
+    }
+
+    // P-value pattern
+    const pvaluePattern = /p\s*[=<>≤≥]\s*0?\.\d+/gi;
+    while ((match = pvaluePattern.exec(content)) !== null) {
+      const numericMatch = match[0].match(/0?\.\d+/);
+      entities.push({
+        entityType: 'P_VALUE',
+        entityValue: match[0],
+        numericValue: numericMatch ? parseFloat(numericMatch[0]) : undefined,
+        confidenceScore: 0.95,
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+      });
+    }
+
+    // Confidence interval pattern
+    const ciPattern = /\d+\.?\d*\s*%?\s*CI\s*[\[(]?\s*\d+\.?\d*\s*[-–]\s*\d+\.?\d*\s*[\])]?/gi;
+    while ((match = ciPattern.exec(content)) !== null) {
+      entities.push({
+        entityType: 'CONFIDENCE_INTERVAL',
+        entityValue: match[0],
+        confidenceScore: 0.9,
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+      });
+    }
+
+    // Sample size patterns (n=X, N=X, etc.)
+    const samplePattern = /\b[nN]\s*=\s*\d+/g;
+    while ((match = samplePattern.exec(content)) !== null) {
+      const numericMatch = match[0].match(/\d+/);
+      entities.push({
+        entityType: 'SAMPLE_SIZE',
+        entityValue: match[0],
+        numericValue: numericMatch ? parseInt(numericMatch[0]) : undefined,
+        confidenceScore: 0.95,
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+      });
+    }
+
+    // Dose patterns (Xmg, X mg, etc.)
+    const dosePattern = /\d+\.?\d*\s*(mg|g|mcg|µg|mL|L|IU|units?)\b/gi;
+    while ((match = dosePattern.exec(content)) !== null) {
+      const numericMatch = match[0].match(/\d+\.?\d*/);
+      const unitMatch = match[0].match(/(mg|g|mcg|µg|mL|L|IU|units?)/i);
+      entities.push({
+        entityType: 'DOSE',
+        entityValue: match[0],
+        numericValue: numericMatch ? parseFloat(numericMatch[0]) : undefined,
+        unit: unitMatch ? unitMatch[0] : undefined,
+        confidenceScore: 0.85,
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+      });
+    }
+
+    return entities;
+  }
+
+  /**
+   * Store entities to database
+   */
+  private async storeEntities(atomId: string, entities: ExtractedEntity[]): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      for (const entity of entities) {
+        await client.query(
+          `INSERT INTO lumen.entity_extractions (
+            atom_id, entity_type, entity_value, normalized_value,
+            confidence_score, source_span, numeric_value, unit,
+            extraction_method, model_version
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'LLM', 'gpt-4-turbo')`,
+          [
+            atomId,
+            entity.entityType,
+            entity.entityValue,
+            entity.normalizedValue,
+            entity.confidenceScore,
+            entity.sourceSpan ? JSON.stringify(entity.sourceSpan) : null,
+            entity.numericValue,
+            entity.unit
+          ]
+        );
+      }
+
+      await client.query('COMMIT');
+      console.log(`[EntityExtraction] Stored ${entities.length} entities for atom ${atomId}`);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Store relationships to database
+   */
+  private async storeRelationships(atomId: string, relationships: any[]): Promise<void> {
+    // For now, relationships are stored as part of the entity data
+    // Full graph edge creation requires matching entities to other atoms
+    // This will be expanded in a future iteration
+    console.log(`[EntityExtraction] Found ${relationships.length} relationships for atom ${atomId}`);
+  }
+
+  /**
+   * Chunk content for processing
+   */
+  private chunkContent(content: string, maxChunkSize: number): string[] {
+    if (content.length <= maxChunkSize) return [content];
+
+    const chunks: string[] = [];
+    const paragraphs = content.split(/\n\n+/);
+    let currentChunk = '';
+
+    for (const para of paragraphs) {
+      if (currentChunk.length + para.length + 2 > maxChunkSize) {
+        if (currentChunk) chunks.push(currentChunk.trim());
+        currentChunk = para;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + para;
+      }
+    }
+
+    if (currentChunk) chunks.push(currentChunk.trim());
+    return chunks;
+  }
+
+  /**
+   * Deduplicate entities
+   */
+  private deduplicateEntities(entities: ExtractedEntity[]): ExtractedEntity[] {
+    const seen = new Map<string, ExtractedEntity>();
+
+    for (const entity of entities) {
+      const key = `${entity.entityType}:${entity.entityValue.toLowerCase().trim()}`;
+      const existing = seen.get(key);
+
+      if (!existing || entity.confidenceScore > existing.confidenceScore) {
+        seen.set(key, entity);
+      }
+    }
+
+    return Array.from(seen.values());
+  }
+}
+
+// Export singleton factory
+let workerInstance: EntityExtractionWorker | null = null;
+
+export function getEntityExtractionWorker(pool: Pool): EntityExtractionWorker {
+  if (!workerInstance) {
+    workerInstance = new EntityExtractionWorker(pool);
+  }
+  return workerInstance;
+}
