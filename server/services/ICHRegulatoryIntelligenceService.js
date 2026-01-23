@@ -10,7 +10,7 @@ import { Pool } from 'pg';
 class ICHRegulatoryIntelligenceService {
   constructor() {
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
     });
     this.ichE6R3Database = this.initializeICHE6R3Database();
   }

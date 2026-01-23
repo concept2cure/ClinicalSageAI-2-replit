@@ -48,7 +48,7 @@ export interface Harvest10KOptions {
 
 export class LumenCortexService {
   async verifyNeonConnection() {
-    const connectionString = process.env.DATABASE_URL || '';
+    const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
     const isNeon = /neon\.tech|neondb/i.test(connectionString);
     await db.execute(sql`SELECT 1`);
     return {

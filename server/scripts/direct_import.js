@@ -13,7 +13,7 @@ const { drizzle } = require('drizzle-orm/neon-serverless');
 const { eq } = require('drizzle-orm');
 
 // Connect to the database
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 const schema = require('../../shared/schema');
 const db = drizzle(pool, { schema });
 

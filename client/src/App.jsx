@@ -3,6 +3,8 @@
 import { QueryClientProvider, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Switch, Route, useLocation, Link, Redirect } from 'wouter';
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from './hooks/use-auth';
+import AuthPage from './pages/AuthPage';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -98,6 +100,9 @@ const LoadingPage = () => (
 import ClientPortalLanding from './pages/ClientPortalLanding';
 import HomeLanding from './pages/HomeLanding';
 import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
+
+// Import Enterprise Sign-On page
+import TrialSageSignOn from './pages/TrialSageSignOn';
 
 // Lazy load all other pages grouped by related functionality
 // Stability-related pages - REMOVED: Stability only exists within CMC Blueprint
@@ -217,7 +222,35 @@ const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
 // New Project Wizard for 510(k) submissions
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
-function App() {
+// Protected Route wrapper - redirects to /auth if not authenticated
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      setLocation('/auth');
+    }
+  }, [isAuthenticated, loading, setLocation]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+        <span className="ml-2">Checking authentication...</span>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? children : null;
+};
+
+// Main App Content (protected)
+function AppContent() {
+  return <ProtectedRoute><MainApp /></ProtectedRoute>;
+}
+
+function MainApp() {
   // Default tab for the UnifiedTopNavV3 component
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
   const [isLoading, setIsLoading] = useState(true);
@@ -293,13 +326,6 @@ function App() {
   }
 
   return (
-    <ModuleErrorBoundary>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <TenantProvider>
-            <EvidenceGraphProvider>
-              <LumenAiAssistantProvider>
-                {/* Direct rendering for authentic TrialSage content */}
                 <div>
                 {/* Only show the UnifiedTopNavV3 if we're not on the landing page, regulatory hub, or dashboard */}
                 {shouldShowNav && (
@@ -1803,13 +1829,50 @@ function App() {
                     </Switch>
                   </main>
                 </div>
-                </div>
+              </div>
+  );
+}
 
-              {/* Global AI Assistant that connects to the context */}
-              <LumenAiAssistantContainer />
-            </LumenAiAssistantProvider>
-            </EvidenceGraphProvider>
-          </TenantProvider>
+// Main App wrapper with auth and providers
+function App() {
+  const [location] = useLocation();
+  
+  // Auth page should not require authentication
+  const isAuthPage = location === '/auth' || location === '/sign-in';
+  
+  return (
+    <ModuleErrorBoundary>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TenantProvider>
+              <EvidenceGraphProvider>
+                <LumenAiAssistantProvider>
+                  <Switch>
+                    {/* Enterprise Sign-On route - public */}
+                    <Route path="/sign-in" component={TrialSageSignOn} />
+                    
+                    {/* Legacy auth route - redirect to new sign-in */}
+                    <Route path="/auth">
+                      {() => <Redirect to="/sign-in" />}
+                    </Route>
+                    
+                    {/* Login route - redirect to new sign-in */}
+                    <Route path="/login">
+                      {() => <Redirect to="/sign-in" />}
+                    </Route>
+                    
+                    {/* All other routes - protected */}
+                    <Route>
+                      {() => <AppContent />}
+                    </Route>
+                  </Switch>
+                  {/* Global AI Assistant */}
+                  <LumenAiAssistantContainer />
+                </LumenAiAssistantProvider>
+              </EvidenceGraphProvider>
+            </TenantProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </ModuleErrorBoundary>

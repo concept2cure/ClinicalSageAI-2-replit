@@ -14,13 +14,13 @@ dotenv.config();
 const { Pool } = pg;
 
 // Validate required environment variable
-if (!process.env.DATABASE_URL && !process.env.NEON_DATABASE_URL) {
+if (!process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL && !process.env.NEON_DATABASE_URL) {
   console.error('Missing DATABASE_URL or NEON_DATABASE_URL environment variable');
   throw new Error('Database configuration error: No connection string provided');
 }
 
 // Use NEON_DATABASE_URL if available, otherwise fall back to DATABASE_URL
-const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
 
 // Create connection pool
 const pool = new Pool({

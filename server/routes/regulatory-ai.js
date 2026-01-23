@@ -27,7 +27,7 @@ const openai = new OpenAI({
 
 // Create database connection pool
 const dbPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Helper function to extract clinical search terms from queries

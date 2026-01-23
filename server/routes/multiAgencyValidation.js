@@ -19,7 +19,7 @@ const router = express.Router();
 const validationService = new MultiAgencyValidationService();
 
 const dbPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Custom tenant context extraction for multi-agency validation

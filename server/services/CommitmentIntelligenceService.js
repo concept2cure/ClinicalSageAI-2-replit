@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 class CommitmentIntelligenceService {
   constructor() {
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
     });
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,

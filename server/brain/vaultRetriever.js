@@ -92,7 +92,7 @@ export async function retrieveContext(query, k = 5) {
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 
     try {
       // Generate embedding for query using OpenAI

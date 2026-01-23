@@ -14,7 +14,7 @@ import { getSslConfig } from './ssl';
 dotenv.config();
 
 // Get the database URL from environment variables
-const dbUrl = process.env.DATABASE_URL;
+const dbUrl = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
 
 if (!dbUrl) {
   console.error('DATABASE_URL environment variable is not set!');

@@ -10,7 +10,7 @@ const { Pool } = require('pg');
 const logger = require('./logger');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 /**

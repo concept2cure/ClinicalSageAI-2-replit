@@ -1,0 +1,116 @@
+name: Neon PR Preview DB + Schema Validation
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview_db_test:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Choose Neon branch name (safe + stable)
+        id: names
+        run: echo "branch=preview/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+
+      - name: Create Neon branch for this PR
+        id: neon
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: ${{ steps.names.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          # Optional for schema-only (no sensitive data):
+          # parent_branch: prod-v1-schema
+          # role: neondb_owner
+
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply migrations + verify schema
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          chmod +x scripts/db_migrate.sh
+          ./scripts/db_migrate.sh
+          psql "$DATABASE_URL" -f scripts/db_verify.sql
+
+      - name: Check for destructive migration patterns
+        run: |
+          chmod +x scripts/check_no_destructive_migrations.sh
+          bash scripts/check_no_destructive_migrations.sh
+
+      - name: Run database compliance checks
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          echo "Running compliance checks (immutability triggers, RLS, etc.)..."
+          psql "$DATABASE_URL" -f scripts/db_compliance_check.sql
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install shadow_service deps + run tests
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        working-directory: shadow_service
+        run: |
+          pip install -r requirements.txt
+          pytest -q --tb=short
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node deps + run server tests
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          npm ci
+          npm run test:unit --if-present
+
+      - name: Post PR comment with preview DB info
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = '${{ steps.names.outputs.branch }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Migrations applied successfully\n✅ Schema verification passed\n✅ Tests completed\n\n_This branch will be automatically deleted when the PR is closed._`
+            });
+
+  cleanup_preview_db:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon branch for this PR
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Post cleanup confirmation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🧹 **Neon Preview DB Cleaned Up**\n\nThe preview database branch \`preview/pr-${{ github.event.pull_request.number }}\` has been deleted.`
+            });

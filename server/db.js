@@ -16,7 +16,7 @@ export const dbStatus = {
 
 // Create a new database pool with the connection string from environment variables
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   // Add connection timeout and retry settings
   connectionTimeoutMillis: 5000, // 5 seconds (reduced for faster failure detection)
@@ -181,7 +181,7 @@ async function testConnection() {
 
 // Test connection on startup with better error handling
 // Only test if DATABASE_URL is provided
-if (process.env.DATABASE_URL) {
+if (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
   testConnection().catch(err => {
     console.error('[database] Initial connection test failed:', err.message);
 

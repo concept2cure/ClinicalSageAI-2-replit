@@ -30,15 +30,20 @@ const ENV_MAP: Record<Environment, string> = {
 
 // Centralize access to environment-specific secrets
 const getDatabaseUrl = (): string => {
+  // First priority: DATABASE_NEON_NEW_SECRET (new unified connection)
+  if (process.env.DATABASE_NEON_NEW_SECRET) {
+    return process.env.DATABASE_NEON_NEW_SECRET;
+  }
+  
   const suffix = ENV_MAP[ENV];
   const envVar = `DATABASE_URL_${suffix}`;
   const url = process.env[envVar];
 
   if (!url) {
     // Fallback to the generic DATABASE_URL if environment-specific one is not available
-    if (process.env.DATABASE_URL) {
+    if (process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
       console.warn(`${envVar} not found, using DATABASE_URL as fallback`);
-      return process.env.DATABASE_URL;
+      return process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
     }
     throw new Error(`Missing required environment variable: ${envVar}`);
   }

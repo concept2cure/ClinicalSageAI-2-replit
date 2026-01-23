@@ -117,45 +117,53 @@ const ClientPortalLanding = () => {
     console.log('ClientPortalLanding component mounted');
     console.log('Current workspace settings:', workspaceSettings?.modules);
 
-    // Use mock data instead of fetching from API
-    const mockProjects = [
-      {
-        id: 'proj-001',
-        name: 'Enzymax Forte IND',
-        status: 'active',
-        progress: 65,
-        lastUpdated: '2025-04-20',
-        modules: ['IND Wizard', 'CMC Wizard', 'Vault'],
-      },
-      {
-        id: 'proj-002',
-        name: 'Cardiozen Phase 2 Study',
-        status: 'active',
-        progress: 42,
-        lastUpdated: '2025-04-22',
-        modules: ['Study Architect', 'Protocol Designer'],
-      },
-      {
-        id: 'proj-003',
-        name: 'Neuroclear Medical Device',
-        status: 'pending',
-        progress: 28,
-        lastUpdated: '2025-04-18',
-        modules: ['CER Generator'],
-      },
-      {
-        id: 'proj-004',
-        name: 'Respironix eCTD Submission',
-        status: 'active',
-        progress: 75,
-        lastUpdated: '2025-05-05',
-        modules: ['eCTD Co-Author', 'Vault'],
-      },
-    ];
-
-    // Set mock projects data
-    setProjects(mockProjects);
-    setLoading(false);
+    // Fetch projects from real API
+    const fetchProjects = async () => {
+      try {
+        // Get user token to extract organization_id
+        const token = localStorage.getItem('token');
+        let orgId = 2; // Default to Concept2Cure org
+        
+        if (token) {
+          try {
+            // Decode JWT to get organization_id
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            orgId = payload.organizationId || 2;
+          } catch (e) {
+            console.log('Using default org ID');
+          }
+        }
+        
+        const response = await fetch(`/api/projects?organization_id=${orgId}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Transform to expected format
+          const formattedProjects = data.map(proj => ({
+            id: proj.id,
+            name: proj.name,
+            status: proj.status,
+            progress: proj.progress || 0,
+            lastUpdated: proj.updated_at ? new Date(proj.updated_at).toLocaleDateString() : 'N/A',
+            modules: proj.type ? [proj.type] : [],
+            type: proj.type,
+            code: proj.code,
+            description: proj.description
+          }));
+          setProjects(formattedProjects);
+        } else {
+          console.error('Failed to fetch projects');
+          // Fallback to empty
+          setProjects([]);
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProjects();
 
     // Update console log for tracking
     console.log('All module access links updated to point to /client-portal');

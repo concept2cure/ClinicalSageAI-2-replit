@@ -85,12 +85,12 @@ async function importData(filePath) {
   // We'll use the database directly to import the data
 
   // First we need to set up the database connection
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
   }
 
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
   });
 
   // Import each study

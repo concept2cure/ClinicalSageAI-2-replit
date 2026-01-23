@@ -11,7 +11,7 @@ import { Pool } from 'pg';
 class ECTDAuditService {
   constructor() {
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     });
   }

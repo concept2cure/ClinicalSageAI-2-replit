@@ -31,7 +31,7 @@ try {
 }
 
 const dbPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Regulatory agency configuration with specific validation rules
