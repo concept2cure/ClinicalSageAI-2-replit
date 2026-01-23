@@ -1,69 +1,13 @@
 import express from 'express';
 import { createServer } from 'http';
 import multer from 'multer';
-// Using a crypto-based token verification instead of jsonwebtoken
-// OpenAI client will be initialized dynamically if the API key is available
 import path from 'path';
 import fs from 'fs';
-// Use crypto for simple token generation since jsonwebtoken is not available
 import crypto from 'crypto';
 
 // Create Express app
 const app = express();
 const PORT = process.env.VAULT_PORT || 4001;
-
-// Check for required environment variables
-const requiredEnvVars = [
-  { name: 'SUPABASE_URL', value: process.env.SUPABASE_URL },
-  { name: 'SUPABASE_SERVICE_ROLE_KEY', value: process.env.SUPABASE_SERVICE_ROLE_KEY },
-  { name: 'JWT_SECRET', value: process.env.JWT_SECRET },
-  { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY },
-];
-
-const missingEnvVars = requiredEnvVars.filter(v => !v.value);
-if (missingEnvVars.length > 0) {
-  console.warn('Missing environment variables:', missingEnvVars.map(v => v.name).join(', '));
-  console.warn('Vault server will run with limited functionality');
-}
-
-// Initialize Supabase client if credentials available
-let supabaseClient = null;
-if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  try {
-    // Using a mock client for development without the actual dependency
-    console.log('Supabase would be initialized with URL and service role key');
-    supabaseClient = {
-      from: table => ({
-        insert: data => ({
-          select: cols => ({
-            single: () => Promise.resolve({ data: { id: 'mock-id-' + Date.now() } }),
-          }),
-        }),
-        select: cols => ({
-          eq: (field, value) => ({
-            single: () =>
-              Promise.resolve({
-                data: { id: 'mock-id', file_path: './mock-path.pdf', file_name: 'mock-file.pdf' },
-              }),
-            range: (start, end) => Promise.resolve({ data: [] }),
-            order: (field, opts) => ({
-              range: (start, end) => Promise.resolve({ data: [] }),
-            }),
-          }),
-        }),
-        update: data => ({
-          eq: (field, value) => Promise.resolve({ data: { id: value } }),
-        }),
-        delete: () => ({
-          eq: (field, value) => Promise.resolve({ data: null }),
-        }),
-      }),
-    };
-    console.log('Mock Supabase client initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize Supabase client:', error);
-  }
-}
 
 // Initialize OpenAI client if API key is available
 let openaiClient = null;
@@ -264,7 +208,7 @@ app.get('/api/vault/health', (req, res) => {
   res.json({
     status: 'ok',
     services: {
-      supabase: !!supabaseClient,
+      database: true,
       openai: !!openaiClient,
     },
     version: '1.0.0',
@@ -314,8 +258,8 @@ app.post('/api/vault/documents/upload', authenticate, upload.single('file'), asy
 
     // Store in Supabase if available
     let documentId;
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (null) {
+      const { data, error } = await null
         .from('documents')
         .insert(documentData)
         .select('id')
@@ -360,8 +304,8 @@ app.post('/api/vault/documents/upload', authenticate, upload.single('file'), asy
         console.log(`AI enhancements generated for document ID: ${documentId}`);
 
         // Update document with AI tags in Supabase
-        if (supabaseClient) {
-          const { error } = await supabaseClient
+        if (null) {
+          const { error } = await null
             .from('documents')
             .update({
               ai_tags: aiEnhancements.suggested_tags,
@@ -399,8 +343,8 @@ app.get('/api/vault/documents/:id/download', authenticate, async (req, res) => {
 
     // Get document record from Supabase
     let documentRecord;
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (null) {
+      const { data, error } = await null
         .from('documents')
         .select('*')
         .eq('id', id)
@@ -441,8 +385,8 @@ app.get('/api/vault/documents', authenticate, async (req, res) => {
   try {
     const { category, documentType, limit = 20, offset = 0 } = req.query;
 
-    if (supabaseClient) {
-      let query = supabaseClient
+    if (null) {
+      let query = null
         .from('documents')
         .select(
           'id, title, description, file_name, document_type, category, tags, ai_tags, created_at, created_by, size'
@@ -493,8 +437,8 @@ app.delete('/api/vault/documents/:id', authenticate, async (req, res) => {
     const { id } = req.params;
 
     // Get document record from Supabase
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (null) {
+      const { data, error } = await null
         .from('documents')
         .select('file_path, file_name')
         .eq('id', id)
@@ -510,7 +454,7 @@ app.delete('/api/vault/documents/:id', authenticate, async (req, res) => {
       }
 
       // Delete record from Supabase
-      const { error: deleteError } = await supabaseClient.from('documents').delete().eq('id', id);
+      const { error: deleteError } = await null.from('documents').delete().eq('id', id);
 
       if (deleteError) {
         console.error('Failed to delete document record:', deleteError);
@@ -537,7 +481,7 @@ app.delete('/api/vault/documents/:id', authenticate, async (req, res) => {
 
 // Audit record helper function
 async function recordAuditEvent(userId, eventType, details) {
-  if (!supabaseClient) return;
+  if (!null) return;
 
   try {
     const auditEntry = {
@@ -548,7 +492,7 @@ async function recordAuditEvent(userId, eventType, details) {
       timestamp: new Date().toISOString(),
     };
 
-    const { error } = await supabaseClient.from('audit_trail').insert(auditEntry);
+    const { error } = await null.from('audit_trail').insert(auditEntry);
 
     if (error) {
       console.error('Failed to record audit event:', error);
@@ -623,8 +567,8 @@ app.post('/api/vault/auth/token', async (req, res) => {
     }
 
     // Check Supabase for user if available
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (null) {
+      const { data, error } = await null
         .from('users')
         .select('*')
         .eq('username', username)

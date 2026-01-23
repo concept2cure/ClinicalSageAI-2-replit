@@ -19,9 +19,9 @@ The TrialSage Vault™ module provides enterprise-grade document management for 
 The Vault system is built with a modern, scalable architecture:
 
 - **Backend**: Node.js with Express.js for the API server
-- **Database**: Supabase (PostgreSQL) for document metadata and audit logs
+- **Database**: PostgreSQL via Neon for document metadata and audit logs
+- **Authentication**: JWT-based authentication with refresh tokens
 - **Storage**: Local file system for document storage (can be configured for S3 or other storage)
-- **Authentication**: JWT-based authentication and authorization
 - **AI Services**: OpenAI GPT-4o for document analysis and insights
 - **Frontend**: React.js with Shadcn UI components
 
@@ -29,7 +29,11 @@ The Vault system is built with a modern, scalable architecture:
 
 ### Authentication
 
-- `POST /api/vault/auth/token`: Generate a JWT token for API access
+All Vault API endpoints require JWT authentication. Include the access token in the Authorization header:
+
+```
+Authorization: Bearer <your-access-token>
+```
 
 ### Documents
 
@@ -48,19 +52,21 @@ The Vault system is built with a modern, scalable architecture:
 ### Prerequisites
 
 - Node.js 16+
-- PostgreSQL database (provided by Supabase)
+- PostgreSQL database (provided by Neon)
 - Environment variables:
+  - `NEON_DATABASE_URL`: Neon database connection string
   - `JWT_SECRET`: Secret for JWT token generation and validation
-  - `SUPABASE_URL`: URL of the Supabase project
-  - `SUPABASE_SERVICE_ROLE_KEY`: Service role key for Supabase
+  - `REFRESH_TOKEN_SECRET`: Secret for refresh token generation
   - `OPENAI_API_KEY`: OpenAI API key for document analysis (optional)
 
 ### Database Setup
 
-1. Run the setup script to create the required tables in Supabase:
+1. Run the setup script to create the required tables in Neon:
+   ```bash
+   node scripts/setup_neon_auth.js
    ```
-   node scripts/setup_supabase.js
-   ```
+
+2. For vault-specific tables, run additional migrations as needed
 
 ### Starting the Vault Server
 
@@ -70,13 +76,13 @@ The Vault server runs as a child process of the main TrialSage application:
 2. All Vault API requests are proxied through the main server at `/api/vault/*`
 3. Health checks and diagnostics are available at `/api/vault/health`
 
-## Testing the Vault
+## Authentication
 
-1. Navigate to `/vault-test` in the TrialSage application
-2. Log in with the default credentials:
-   - Username: `admin`
-   - Password: `admin123`
-3. Upload documents and test the features
+The Vault uses the same JWT-based authentication system as the main application:
+
+1. Register or login via `/api/auth/register` or `/api/auth/login`
+2. Use the returned access token in the Authorization header for all Vault requests
+3. Refresh the access token using `/api/auth/refresh` when it expires
 
 ## Security Considerations
 
@@ -85,6 +91,7 @@ The Vault server runs as a child process of the main TrialSage application:
 - Document content integrity is verified using SHA-256 hashing
 - Documents can only be accessed by users with the correct permissions
 - Environment variables are used to store sensitive credentials
+- Passwords are hashed using bcrypt with salt rounds
 
 ## Future Enhancements
 

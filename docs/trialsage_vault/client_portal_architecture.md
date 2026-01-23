@@ -8,12 +8,12 @@ The TrialSage Vault client portal is designed as a modern multi-tier web applica
 
 - **Back-End:** A **Node.js** server (e.g., using Express or NestJS) that serves the REST/GraphQL API and implements the core business logic. The backend is structured into modules/microservices corresponding to major domains: **Auth**, **Project/Study Management**, **Document Management**, **Workflow Engine**, **AI Assistant**, and **Analytics**. This modular design ensures each service is cohesive and can scale independently if needed.
 
-  - **Database:** A **Supabase** (PostgreSQL) database holds structured data (projects, users, documents metadata, audit logs, etc.), enabling relational queries and robust transactions. Supabase's row-level security is used to enforce tenant isolation and role-based data access (each SQL query is automatically scoped to the user's organization/permissions). This multi-tenant approach ensures data for different biotech clients is securely partitioned at the database level.
-  - **File Storage:** Document files (e.g. PDFs, Word, images) are stored in a secure **object storage** (Supabase Storage or an S3-compatible service). Each file is encrypted at rest and tagged with metadata (owner, project, version, etc.). A content delivery mechanism streams documents to users with access, and virus scanning is applied to all uploads.
+  - **Database:** A **Supabase** (PostgreSQL) database holds structured data (projects, users, documents metadata, audit logs, etc.), enabling relational queries and robust transactions. PostgreSQL's row-level security is used to enforce tenant isolation and role-based data access (each SQL query is automatically scoped to the user's organization/permissions). This multi-tenant approach ensures data for different biotech clients is securely partitioned at the database level.
+  - **File Storage:** Document files (e.g. PDFs, Word, images) are stored in a secure **object storage** (S3-compatible object storage or an S3-compatible service). Each file is encrypted at rest and tagged with metadata (owner, project, version, etc.). A content delivery mechanism streams documents to users with access, and virus scanning is applied to all uploads.
   - **AI Integration:** The back-end integrates with **OpenAI (GPT-4)** or similar AI services for the intelligent assistant and document analysis features. For data privacy and compliance, all prompts are filtered to remove sensitive identifiers, and if needed an on-premise or private instance of the model can be used. A **vector database** (either PostgreSQL with pgvector or an external service like Pinecone) is included to enable **Retrieval-Augmented Generation (RAG)**: the system can answer questions using knowledge from your organizational documents.
   - **Third-Party Integrations:** Modules integrate with external systems as needed. For example, a **DocuSign/Adobe Sign API** for electronic signatures (Part 11 compliant signing), **identity providers** for SSO (OAuth2/OIDC with corporate AD), and optionally **DocuShare** or other document repositories for legacy data migration. (The portal can sync or import documents from external systems like Xerox DocuShare, ensuring continuity of document management.)
 
-- **Real-Time & Background Services:** A real-time **notification service** (possibly via web sockets or Supabase's real-time channels) pushes updates to users (e.g., a document status change or a new comment). A background job worker (could be a Node worker thread or serverless function) handles intensive tasks such as generating large reports, performing AI batch analyses (like auto-tagging new documents, or re-indexing content), and sending scheduled email alerts.
+- **Real-Time & Background Services:** A real-time **notification service** (possibly via web sockets or web sockets) pushes updates to users (e.g., a document status change or a new comment). A background job worker (could be a Node worker thread or serverless function) handles intensive tasks such as generating large reports, performing AI batch analyses (like auto-tagging new documents, or re-indexing content), and sending scheduled email alerts.
 
 - **Deployment & Scalability:** The entire system is containerized for Replit deployment. Replit can host the Node backend and static front-end as a unified deployment (or separate Repls for API and front-end if needed). The design is **cloud-agnostic** to allow future migration, but optimized for Replit's always-on container and horizontal scaling if demand grows.
 
@@ -219,8 +219,8 @@ This phased approach allows for feedback and refinement between releases, ensuri
 
 - **Frontend:** React 18+, Vite, Tailwind CSS, ShadcnUI, TanStack Query
 - **Backend:** Node.js, Express/NestJS, JWT authentication
-- **Database:** Supabase (PostgreSQL), pgvector for embeddings
-- **Storage:** Supabase Storage (or S3-compatible alternative)
+- **Database:** Neon (PostgreSQL), pgvector for embeddings
+- **Storage:** S3-compatible object storage (or S3-compatible alternative)
 - **AI Integration:** OpenAI API (GPT-4), potentially with Azure OpenAI for compliance
 - **Search:** PostgreSQL full-text search + vector similarity search
 - **Real-time:** WebSockets/Socket.IO or Supabase Realtime
