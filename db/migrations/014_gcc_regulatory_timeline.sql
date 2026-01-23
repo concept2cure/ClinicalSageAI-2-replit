@@ -394,8 +394,8 @@ CREATE INDEX IF NOT EXISTS timeline_events_submission_idx
 -- View: Upcoming deadlines
 CREATE OR REPLACE VIEW regulatory.v_upcoming_deadlines AS
 SELECT
-  p.program_code,
-  p.program_name,
+  p.code AS program_code,
+  p.name AS program_name,
   s.submission_number,
   s.product_name,
   st.type_code AS submission_type,
@@ -422,7 +422,7 @@ ORDER BY m.target_date ASC;
 -- View: Pending responses
 CREATE OR REPLACE VIEW regulatory.v_pending_responses AS
 SELECT
-  p.program_code,
+  p.code AS program_code,
   s.submission_number,
   c.correspondence_number,
   c.correspondence_type,
@@ -445,8 +445,8 @@ ORDER BY c.response_due_date ASC;
 -- View: Submission status summary
 CREATE OR REPLACE VIEW regulatory.v_submission_summary AS
 SELECT
-  p.program_code,
-  p.program_name,
+  p.code AS program_code,
+  p.name AS program_name,
   st.type_code AS submission_type,
   st.agency_code,
   s.submission_number,
@@ -469,7 +469,7 @@ ORDER BY s.goal_date NULLS LAST, s.target_submission_date;
 -- View: Meeting calendar
 CREATE OR REPLACE VIEW regulatory.v_meeting_calendar AS
 SELECT
-  p.program_code,
+  p.code AS program_code,
   m.meeting_type,
   m.meeting_title,
   m.agency_code,

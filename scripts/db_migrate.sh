@@ -8,9 +8,18 @@
 #   DATABASE_URL="postgresql://..." ./scripts/db_migrate.sh
 #   or
 #   DATABASE_NEON_NEW_SECRET="postgresql://..." ./scripts/db_migrate.sh
+#
+# NOTE: For DDL/migrations, prefer DATABASE_URL_DIRECT over pooled connections.
+#       This script uses psql_safe.sh to prevent pager/terminal issues.
 # ============================================================================
 
 set -e  # Exit on error
+
+# === TERMINAL SAFETY ===
+# Prevent pager from hijacking terminal (alternate screen buffer issues)
+export PAGER="${PAGER:-cat}"
+export LESS="${LESS:--FRSX}"
+export PSQL_PAGER="${PSQL_PAGER:-cat}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -29,8 +38,11 @@ echo -e "${BLUE}Concept2Cure Global Command Center - Database Migration${NC}"
 echo -e "${BLUE}============================================================================${NC}"
 echo ""
 
-# Check for DATABASE_URL (try both env vars)
-if [ -z "$DATABASE_URL" ]; then
+# Check for DATABASE_URL (try both env vars, prefer DIRECT for migrations)
+if [ -n "$DATABASE_URL_DIRECT" ]; then
+    DATABASE_URL="$DATABASE_URL_DIRECT"
+    echo -e "${YELLOW}Using DATABASE_URL_DIRECT (recommended for migrations)${NC}"
+elif [ -z "$DATABASE_URL" ]; then
     if [ -n "$DATABASE_NEON_NEW_SECRET" ]; then
         DATABASE_URL="$DATABASE_NEON_NEW_SECRET"
         echo -e "${YELLOW}Using DATABASE_NEON_NEW_SECRET as connection string${NC}"
@@ -78,8 +90,9 @@ for migration in $MIGRATION_FILES; do
     MIGRATION_NAME=$(basename "$migration")
     echo -e "${YELLOW}Applying: ${NC}$MIGRATION_NAME"
     
-    # Run migration with ON_ERROR_STOP to fail fast
-    if psql "$DATABASE_URL" \
+    # Run migration with safe psql settings (no pager, no .psqlrc, fail fast)
+    # -X: skip .psqlrc, --no-psqlrc: extra safety, ON_ERROR_STOP: fail on errors
+    if PAGER=cat psql -X --no-psqlrc "$DATABASE_URL" \
         -v ON_ERROR_STOP=1 \
         -f "$migration" \
         2>&1; then

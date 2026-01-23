@@ -64,6 +64,10 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "db_required: marks tests as requiring database connection",
+    "integration: marks tests as integration tests requiring database",
+]
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow:DeprecationWarning",
 ]
 
 [tool.mypy]

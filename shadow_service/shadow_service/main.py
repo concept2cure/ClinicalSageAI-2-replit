@@ -78,6 +78,18 @@ from .attribution import (
     SELECT_VERSIONS_IN_RANGE,
 )
 
+# Import modular routers
+from .router_drift import router as drift_router
+from .router_regulatory import router as regulatory_router
+from .router_ectd import router as ectd_router
+from .router_governance import router as governance_router
+
+# Import new compliance routers (Next-Generation Compliance Framework)
+from .router_aiml import router as aiml_router
+from .router_cybersecurity import router as cybersecurity_router
+from .router_transparency import router as transparency_router
+from .router_training import router as training_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -123,6 +135,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =============================================================================
+# Include Modular Routers
+# =============================================================================
+app.include_router(drift_router)
+app.include_router(regulatory_router)
+app.include_router(ectd_router)
+app.include_router(governance_router)
+
+# Next-Generation Compliance Framework Routers
+app.include_router(aiml_router)          # AI/ML Governance (GMLP, PCCP, Model Cards)
+app.include_router(cybersecurity_router)  # Cybersecurity (SBOM, VEX, Section 524B)
+app.include_router(transparency_router)   # Data Transparency (EMA 0070, PDF/A-3, GAMP 5)
+app.include_router(training_router)       # Training Compliance (xAPI, Part 11)
+
 
 # =============================================================================
 # Health Endpoints
@@ -132,6 +158,84 @@ app.add_middleware(
 async def health_check():
     """Check service and database health."""
     return await db.health_check()
+
+
+@app.get("/health/comprehensive", tags=["Health"])
+async def comprehensive_health_check():
+    """
+    Comprehensive health check for enterprise monitoring.
+    
+    Returns detailed information about:
+    - Database pool status (connections, utilization)
+    - Schema presence verification
+    - Migration status
+    - Service configuration
+    - Memory and timing metrics
+    
+    Use this endpoint for:
+    - Kubernetes readiness probes (detailed)
+    - Monitoring dashboards
+    - Operational health reports
+    - Pre-deployment validation
+    """
+    try:
+        health = await db.comprehensive_health_check()
+        
+        # Add service-level information
+        health["service"] = {
+            "name": "Shadow Interrogation Service",
+            "version": settings.api_version,
+            "routers_loaded": [
+                "drift",
+                "regulatory", 
+                "ectd",
+                "governance"
+            ],
+            "cors_enabled": True,
+            "cors_origins": settings.cors_origins[:3] if len(settings.cors_origins) > 3 else settings.cors_origins,
+        }
+        
+        return health
+        
+    except Exception as e:
+        logger.exception("Comprehensive health check failed")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+@app.get("/health/ready", tags=["Health"])
+async def readiness_probe():
+    """
+    Kubernetes readiness probe endpoint.
+    
+    Returns 200 if service is ready to accept traffic,
+    503 if service is not ready (database unavailable).
+    """
+    try:
+        basic_health = await db.health_check()
+        if basic_health.status == "healthy":
+            return {"ready": True, "timestamp": datetime.utcnow().isoformat()}
+        elif basic_health.status == "lite":
+            # Lite mode - service is running but with limited functionality
+            return {"ready": True, "mode": "lite", "timestamp": datetime.utcnow().isoformat()}
+        else:
+            raise HTTPException(status_code=503, detail="Service not ready")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Readiness check failed: {e}")
+
+
+@app.get("/health/live", tags=["Health"])
+async def liveness_probe():
+    """
+    Kubernetes liveness probe endpoint.
+    
+    Returns 200 if service is alive and should not be restarted.
+    This is a lightweight check that doesn't verify database connectivity.
+    """
+    return {"alive": True, "timestamp": datetime.utcnow().isoformat()}
 
 
 @app.get("/", tags=["Health"])

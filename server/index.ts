@@ -518,6 +518,16 @@ try {
 
 console.log('✅ Enterprise API routes mounted successfully');
 
+// Mount GCC Platform routes (eCTD, Vault, Signing, Site Intel, Labeling)
+try {
+  const gccModule = await import('./api/gcc/index.js');
+  const gccRoutes = gccModule.default;
+  app.use('/api/gcc', gccRoutes);
+  console.log('✅ GCC Platform API routes mounted (eCTD, Vault, Signing, Site Intel, Labeling)');
+} catch (error) {
+  console.error('❌ Failed to mount GCC Platform routes:', error);
+}
+
 // Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
 try {
   const supplyChainModule = await import('./routes/supplyChain.routes.js');

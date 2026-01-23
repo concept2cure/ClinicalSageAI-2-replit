@@ -355,7 +355,7 @@ SELECT
   pkg.status,
   pkg.is_validated,
   pkg.program_id,
-  p.program_code,
+  p.code AS program_code,
   
   -- Document counts
   COUNT(doc.id) AS total_documents,
@@ -376,7 +376,7 @@ FROM ectd.submission_packages pkg
 LEFT JOIN core.programs p ON p.id = pkg.program_id
 LEFT JOIN ectd.package_documents doc ON doc.package_id = pkg.id
 LEFT JOIN ectd.validation_results vr ON vr.package_id = pkg.id
-GROUP BY pkg.id, p.program_code;
+GROUP BY pkg.id, p.code;
 
 -- View: Module completion status
 CREATE OR REPLACE VIEW ectd.v_module_completion AS
@@ -412,10 +412,13 @@ SELECT
   dr.confirmation_number,
   dr.acknowledgment_received,
   pkg.program_id,
-  p.program_code
+  p.code AS program_code
 FROM ectd.submission_packages pkg
 LEFT JOIN ectd.delivery_records dr ON dr.package_id = pkg.id
 LEFT JOIN core.programs p ON p.id = pkg.program_id
-WHERE pkg.status IN ('READY', 'DELIVERED', 'ACKNOWLEDGED');
+WHERE pkg.status IN ('READY', 'DELIVERED', 'ACKNOWLEDGED')
+GROUP BY pkg.id, pkg.package_code, pkg.agency_code, pkg.status,
+         dr.delivery_method, dr.status, dr.initiated_at, dr.completed_at,
+         dr.confirmation_number, dr.acknowledgment_received, pkg.program_id, p.code;
 
 COMMIT;

@@ -60,13 +60,14 @@ async def with_attribution(
     try:
         # Set session-local attribution variables
         # These are read by the database triggers in migration 003
-        await conn.execute(f"SET LOCAL app.user = '{_escape_sql_string(user)}'")
+        # Note: "user" is quoted because it's a reserved word in PostgreSQL
+        await conn.execute(f"SET LOCAL \"app.user\" = '{_escape_sql_string(user)}'")
         
         if reason:
-            await conn.execute(f"SET LOCAL app.reason = '{_escape_sql_string(reason)}'")
+            await conn.execute(f"SET LOCAL \"app.reason\" = '{_escape_sql_string(reason)}'")
         
         if request_id:
-            await conn.execute(f"SET LOCAL app.request_id = '{_escape_sql_string(request_id)}'")
+            await conn.execute(f"SET LOCAL \"app.request_id\" = '{_escape_sql_string(request_id)}'")
         
         logger.debug(f"Attribution context set: user={user}, reason={reason}, request_id={request_id}")
         

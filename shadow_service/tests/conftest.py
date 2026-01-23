@@ -24,6 +24,24 @@ def database_url() -> str:
     return url
 
 
+@pytest.fixture(autouse=True)
+async def reset_db_pool():
+    """Reset the database pool before each test to avoid event loop issues."""
+    from shadow_service import db
+    # Reset pool state
+    db._pool = None
+    db._lite_mode = False
+    yield
+    # Cleanup after test
+    if db._pool is not None:
+        try:
+            await db.close_pool()
+        except Exception:
+            pass
+    db._pool = None
+    db._lite_mode = False
+
+
 @pytest.fixture
 def sample_fragment_data() -> dict:
     """Sample fragment creation data."""
