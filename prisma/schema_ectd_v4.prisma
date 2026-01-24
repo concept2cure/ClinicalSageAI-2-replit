@@ -380,6 +380,7 @@ model Organization {
   dataProcessingAgreementDate DateTime?    @map("data_processing_agreement_date") @db.Date
   gdprCompliant           Boolean          @default(false) @map("gdpr_compliant")
   hipaaCompliant          Boolean          @default(false) @map("hipaa_compliant")
+  strictJsonbValidation   Boolean          @default(false) @map("strict_jsonb_validation") // GLSOS: Enforce JSONB structure
   createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
   metadata                Json             @default("{}") @db.JsonB
