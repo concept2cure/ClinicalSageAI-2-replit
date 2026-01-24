@@ -294,12 +294,39 @@ export class CircuitBreakerError extends Error {
 
 // =============================================================================
 // Pre-configured Circuit Breakers for Common Services
+// Priority: Kimi AI (Primary) → OpenAI (Secondary Fallback)
 // =============================================================================
 
+let kimiBreaker: CircuitBreaker | null = null;
 let openAIBreaker: CircuitBreaker | null = null;
 
 /**
- * Get or create the OpenAI circuit breaker
+ * Get or create the Kimi AI circuit breaker (PRIMARY)
+ * Kimi AI (Moonshot) is the primary LLM provider
+ */
+export function getKimiCircuitBreaker(): CircuitBreaker {
+  if (!kimiBreaker) {
+    kimiBreaker = new CircuitBreaker({
+      name: 'Kimi-AI',
+      failureThreshold: 5,
+      resetTimeoutMs: 30000, // 30 seconds
+      successThreshold: 2,
+      requestTimeoutMs: 120000, // 2 minutes (Kimi can be slow on complex queries)
+      onStateChange: (from, to, reason) => {
+        console.log(`[Kimi AI Circuit Breaker] ${from} → ${to}: ${reason}`);
+        // Emit metrics/alerts - Kimi is PRIMARY so this is critical
+        if (to === 'OPEN') {
+          console.warn('[CRITICAL] Primary LLM provider (Kimi AI) circuit is OPEN - falling back to OpenAI');
+        }
+      }
+    });
+  }
+  return kimiBreaker;
+}
+
+/**
+ * Get or create the OpenAI circuit breaker (SECONDARY FALLBACK)
+ * OpenAI is used when Kimi AI is unavailable
  */
 export function getOpenAICircuitBreaker(): CircuitBreaker {
   if (!openAIBreaker) {
@@ -311,7 +338,9 @@ export function getOpenAICircuitBreaker(): CircuitBreaker {
       requestTimeoutMs: 120000, // 2 minutes
       onStateChange: (from, to, reason) => {
         console.log(`[OpenAI Circuit Breaker] ${from} → ${to}: ${reason}`);
-        // Could emit metrics/alerts here
+        if (to === 'OPEN') {
+          console.error('[CRITICAL] Secondary LLM provider (OpenAI) circuit is OPEN - all LLM services may be degraded');
+        }
       }
     });
   }
@@ -319,8 +348,57 @@ export function getOpenAICircuitBreaker(): CircuitBreaker {
 }
 
 /**
+ * Reset the Kimi AI circuit breaker (for testing)
+ */
+export function resetKimiCircuitBreaker(): void {
+  kimiBreaker = null;
+}
+
+/**
  * Reset the OpenAI circuit breaker (for testing)
  */
 export function resetOpenAICircuitBreaker(): void {
   openAIBreaker = null;
+}
+
+/**
+ * Get the best available LLM circuit breaker
+ * Returns Kimi if available, otherwise OpenAI
+ */
+export function getBestAvailableLLMBreaker(): { breaker: CircuitBreaker; provider: 'KIMI' | 'OPENAI' } {
+  const kimi = getKimiCircuitBreaker();
+  const openai = getOpenAICircuitBreaker();
+  
+  // Prefer Kimi if it's allowing requests
+  if (kimi.isAllowingRequests()) {
+    return { breaker: kimi, provider: 'KIMI' };
+  }
+  
+  // Fall back to OpenAI
+  if (openai.isAllowingRequests()) {
+    return { breaker: openai, provider: 'OPENAI' };
+  }
+  
+  // If both are open, return Kimi (it will fail but we need to return something)
+  return { breaker: kimi, provider: 'KIMI' };
+}
+
+/**
+ * Get all LLM circuit breaker metrics
+ */
+export function getAllLLMCircuitMetrics(): {
+  kimi: CircuitBreakerMetrics;
+  openai: CircuitBreakerMetrics;
+  primaryAvailable: boolean;
+  fallbackAvailable: boolean;
+} {
+  const kimi = getKimiCircuitBreaker();
+  const openai = getOpenAICircuitBreaker();
+  
+  return {
+    kimi: kimi.getMetrics(),
+    openai: openai.getMetrics(),
+    primaryAvailable: kimi.isAllowingRequests(),
+    fallbackAvailable: openai.isAllowingRequests()
+  };
 }

@@ -10,22 +10,38 @@
  * - Rate Limiting (DDoS protection)
  * - Graceful Degradation (fault tolerance)
  * - Health Check (observability)
+ * - Multi-Provider LLM (Kimi AI primary, OpenAI secondary)
  * 
  * @module SystemSurvivability
- * @version 1.0.0
+ * @version 1.1.0
  * @compliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R2)
  */
 
 // Circuit Breaker - External service failure protection
+// Kimi AI is PRIMARY, OpenAI is SECONDARY fallback
 export {
   CircuitBreaker,
   CircuitBreakerError,
+  getKimiCircuitBreaker,
   getOpenAICircuitBreaker,
+  getBestAvailableLLMBreaker,
+  getAllLLMCircuitMetrics,
+  resetKimiCircuitBreaker,
   resetOpenAICircuitBreaker,
   type CircuitState,
   type CircuitBreakerOptions,
   type CircuitBreakerMetrics
 } from './circuit-breaker';
+
+// Multi-Provider LLM - Kimi AI primary, OpenAI secondary
+export {
+  MultiProviderLLMService,
+  type LLMProvider,
+  type LLMProviderConfig,
+  type LLMRequest,
+  type LLMResponse,
+  type ProviderHealth
+} from './multi-provider-llm';
 
 // Prompt Injection Protection - LLM security
 export {

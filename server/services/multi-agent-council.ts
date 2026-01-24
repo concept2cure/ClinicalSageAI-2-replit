@@ -16,24 +16,30 @@
  * - Role-based access control hooks
  * 
  * System Survivability Features:
- * - Circuit breaker for OpenAI resilience
+ * - Multi-provider LLM with automatic failover (Kimi AI primary, OpenAI secondary)
+ * - Circuit breaker for LLM resilience
  * - Prompt injection protection
  * - Tamper-proof audit logging
- * - Graceful degradation when OpenAI unavailable
+ * - Graceful degradation when LLM providers unavailable
  * 
  * @module MultiAgentCouncilService
- * @version 3.0.0
+ * @version 3.1.0
  * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
  */
 
 import { Pool, PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash, randomBytes } from 'crypto';
-import OpenAI from 'openai';
 
-// Survivability imports
+// Survivability imports - Multi-provider LLM (Kimi primary, OpenAI secondary)
 import { 
+  MultiProviderLLMService,
+  LLMResponse 
+} from '../lib/multi-provider-llm';
+import { 
+  getKimiCircuitBreaker,
   getOpenAICircuitBreaker, 
+  getBestAvailableLLMBreaker,
   CircuitBreakerError 
 } from '../lib/circuit-breaker';
 import { 
@@ -137,28 +143,26 @@ export class AgentExecutionError extends CouncilError {
 
 export class MultiAgentCouncilService {
   private pool: Pool;
-  private openai: OpenAI;
+  private llmService: MultiProviderLLMService;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
   private readonly DEFAULT_TIMEOUT_MS = 120000;
   
   // Survivability components
-  private readonly circuitBreaker = getOpenAICircuitBreaker();
+  private readonly kimiCircuitBreaker = getKimiCircuitBreaker();
+  private readonly openaiCircuitBreaker = getOpenAICircuitBreaker();
   private readonly promptProtection = getPromptInjectionProtection();
   private readonly degradation = getGracefulDegradationService();
 
   constructor(pool: Pool) {
     this.pool = pool;
     
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
-    }
-    
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY,
-      timeout: this.DEFAULT_TIMEOUT_MS,
-      maxRetries: this.MAX_RETRIES
+    // Initialize multi-provider LLM service (Kimi primary, OpenAI secondary)
+    this.llmService = new MultiProviderLLMService(pool, {
+      providerPriority: ['KIMI', 'OPENAI']  // Kimi AI is PRIMARY
     });
+    
+    console.log('[MultiAgentCouncil] Initialized with multi-provider LLM (Kimi AI primary, OpenAI secondary)');
   }
 
   // ==========================================================================
@@ -166,13 +170,16 @@ export class MultiAgentCouncilService {
   // ==========================================================================
 
   /**
-   * Execute OpenAI call with circuit breaker protection
+   * Execute LLM call with multi-provider failover and circuit breaker protection
+   * Primary: Kimi AI (Moonshot)
+   * Secondary Fallback: OpenAI (GPT-4)
    */
-  private async executeOpenAIWithBreaker<T>(
+  private async executeLLMWithFailover(
     operation: string,
-    fn: () => Promise<T>,
-    correlationId: string
-  ): Promise<T> {
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    correlationId: string,
+    options?: { temperature?: number; maxTokens?: number; responseFormat?: 'text' | 'json' }
+  ): Promise<LLMResponse> {
     // Check if AI features are available
     if (!this.degradation.isFeatureAvailable('COUNCIL_DRAFTING')) {
       throw new CouncilError(
@@ -185,27 +192,57 @@ export class MultiAgentCouncilService {
     }
 
     try {
-      return await this.circuitBreaker.execute(fn);
+      // Use multi-provider service which handles Kimi→OpenAI failover automatically
+      const response = await this.llmService.chatCompletion({
+        messages,
+        temperature: options?.temperature ?? 0.3,
+        maxTokens: options?.maxTokens ?? 4096,
+        responseFormat: options?.responseFormat ?? 'text',
+        provider: 'AUTO'  // Let the service choose (Kimi first, then OpenAI)
+      });
+
+      // Log provider usage for monitoring
+      if (response.fallbackUsed) {
+        console.warn(
+          `[Council:${correlationId}] ${operation}: Used fallback provider ${response.provider}`
+        );
+        
+        const auditLog = getTamperProofAuditLog(this.pool);
+        await auditLog.log(
+          'LLM_FALLBACK_USED',
+          `Operation ${operation} used fallback provider ${response.provider}`,
+          { 
+            operation, 
+            provider: response.provider,
+            fallbackUsed: true,
+            latencyMs: response.latencyMs
+          },
+          { correlationId }
+        );
+      }
+
+      return response;
     } catch (error) {
       if (error instanceof CircuitBreakerError) {
-        console.error(`[Council:${correlationId}] Circuit breaker ${error.code}: ${error.message}`);
+        console.error(`[Council:${correlationId}] All LLM providers unavailable: ${error.message}`);
         
         // Log to tamper-proof audit
         const auditLog = getTamperProofAuditLog(this.pool);
         await auditLog.log(
           'CIRCUIT_BREAKER_OPENED',
-          `OpenAI circuit breaker opened during ${operation}`,
+          `All LLM providers unavailable during ${operation}`,
           { 
             operation, 
             errorCode: error.code,
-            metrics: this.circuitBreaker.getMetrics() 
+            kimiMetrics: this.kimiCircuitBreaker.getMetrics(),
+            openaiMetrics: this.openaiCircuitBreaker.getMetrics()
           },
           { correlationId }
         );
 
         throw new CouncilError(
-          'AI service is temporarily unavailable. The system will automatically retry when the service recovers.',
-          'CIRCUIT_OPEN',
+          'AI service is temporarily unavailable. Both primary (Kimi AI) and secondary (OpenAI) providers are unreachable. The system will automatically retry when services recover.',
+          'ALL_PROVIDERS_UNAVAILABLE',
           undefined,
           correlationId,
           true
@@ -529,22 +566,18 @@ export class MultiAgentCouncilService {
 
     const startTime = Date.now();
     
-    // Execute with circuit breaker protection
-    const response = await this.executeOpenAIWithBreaker(
+    // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
+    const llmResponse = await this.executeLLMWithFailover(
       'DRAFTER',
-      () => this.openai.chat.completions.create({
-        model: agent.modelName,
-        temperature: agent.temperature,
-        max_tokens: agent.maxTokens,
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: `Draft the ${session.section_path} section.` }
-        ]
-      }),
-      correlationId
+      [
+        { role: 'system', content: prompt },
+        { role: 'user', content: `Draft the ${session.section_path} section.` }
+      ],
+      correlationId,
+      { temperature: agent.temperature, maxTokens: agent.maxTokens }
     );
 
-    const draftText = response.choices[0]?.message?.content || '';
+    const draftText = llmResponse.content || '';
     const latencyMs = Date.now() - startTime;
 
     // Log to tamper-proof audit
@@ -555,9 +588,11 @@ export class MultiAgentCouncilService {
       {
         sessionId,
         agentRole: 'DRAFTER',
+        provider: llmResponse.provider,
+        fallbackUsed: llmResponse.fallbackUsed,
         outputLength: draftText.length,
-        tokensUsed: response.usage?.total_tokens,
-        latencyMs
+        tokensUsed: llmResponse.tokensUsed.total,
+        latencyMs: llmResponse.latencyMs
       },
       { correlationId, resourceType: 'council_session', resourceId: sessionId }
     );
@@ -566,9 +601,10 @@ export class MultiAgentCouncilService {
     await this.logExecution(sessionId, agent.agentId, 'DRAFTER', 1, {
       inputText: `Section: ${session.section_path}`,
       outputText: draftText,
-      tokensInput: response.usage?.prompt_tokens,
-      tokensOutput: response.usage?.completion_tokens,
-      latencyMs,
+      llmProvider: llmResponse.provider,
+      tokensInput: llmResponse.tokensUsed.prompt,
+      tokensOutput: llmResponse.tokensUsed.completion,
+      latencyMs: llmResponse.latencyMs,
       status: 'COMPLETED'
     });
 
@@ -601,24 +637,19 @@ export class MultiAgentCouncilService {
 
     const startTime = Date.now();
     
-    // Execute with circuit breaker protection
-    const response = await this.executeOpenAIWithBreaker(
+    // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
+    const llmResponse = await this.executeLLMWithFailover(
       'STATISTICIAN',
-      () => this.openai.chat.completions.create({
-        model: agent.modelName,
-        temperature: 0, // Statistician needs determinism
-        max_tokens: agent.maxTokens,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: 'Extract and verify all numerical claims in the draft.' }
-        ]
-      }),
-      correlationId
+      [
+        { role: 'system', content: prompt },
+        { role: 'user', content: 'Extract and verify all numerical claims in the draft.' }
+      ],
+      correlationId,
+      { temperature: 0, maxTokens: agent.maxTokens, responseFormat: 'json' } // Statistician needs determinism
     );
 
-    const latencyMs = Date.now() - startTime;
-    const outputText = response.choices[0]?.message?.content || '{}';
+    const latencyMs = llmResponse.latencyMs;
+    const outputText = llmResponse.content || '{}';
     
     let result: StatisticianResult;
     try {
@@ -831,24 +862,19 @@ export class MultiAgentCouncilService {
     const correlationId = this.generateCorrelationId();
     const startTime = Date.now();
     
-    // Execute with circuit breaker protection
-    const response = await this.executeOpenAIWithBreaker(
+    // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
+    const llmResponse = await this.executeLLMWithFailover(
       'CRITIC',
-      () => this.openai.chat.completions.create({
-        model: agent.modelName,
-        temperature: agent.temperature,
-        max_tokens: agent.maxTokens,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: 'Perform critical review of the draft.' }
-        ]
-      }),
-      correlationId
+      [
+        { role: 'system', content: prompt },
+        { role: 'user', content: 'Perform critical review of the draft.' }
+      ],
+      correlationId,
+      { temperature: agent.temperature, maxTokens: agent.maxTokens, responseFormat: 'json' }
     );
 
-    const latencyMs = Date.now() - startTime;
-    const outputText = response.choices[0]?.message?.content || '{}';
+    const latencyMs = llmResponse.latencyMs;
+    const outputText = llmResponse.content || '{}';
 
     let result: CriticResult;
     try {
@@ -867,8 +893,9 @@ export class MultiAgentCouncilService {
       outputData: result,
       issuesFound: result.issues,
       overallAssessment: result.overallAssessment,
-      tokensInput: response.usage?.prompt_tokens,
-      tokensOutput: response.usage?.completion_tokens,
+      llmProvider: llmResponse.provider,
+      tokensInput: llmResponse.tokensUsed.prompt,
+      tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
       status: 'COMPLETED'
     });
@@ -911,23 +938,19 @@ export class MultiAgentCouncilService {
 
     const startTime = Date.now();
     
-    // Execute with circuit breaker protection
-    const response = await this.executeOpenAIWithBreaker(
+    // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
+    const llmResponse = await this.executeLLMWithFailover(
       'SYNTHESIZER',
-      () => this.openai.chat.completions.create({
-        model: agent.modelName,
-        temperature: agent.temperature,
-        max_tokens: agent.maxTokens,
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: 'Produce the final polished text incorporating all corrections and feedback.' }
-        ]
-      }),
-      correlationId
+      [
+        { role: 'system', content: prompt },
+        { role: 'user', content: 'Produce the final polished text incorporating all corrections and feedback.' }
+      ],
+      correlationId,
+      { temperature: agent.temperature, maxTokens: agent.maxTokens }
     );
 
-    const latencyMs = Date.now() - startTime;
-    const finalText = response.choices[0]?.message?.content || draftText;
+    const latencyMs = llmResponse.latencyMs;
+    const finalText = llmResponse.content || draftText;
 
     // Log to tamper-proof audit
     const auditLog = getTamperProofAuditLog(this.pool);
@@ -936,6 +959,8 @@ export class MultiAgentCouncilService {
       'Multi-Agent Council session completed successfully',
       {
         sessionId,
+        llmProvider: llmResponse.provider,
+        fallbackUsed: llmResponse.fallbackUsed,
         correctionsApplied: corrections.length,
         issuesAddressed: feedback.length,
         finalTextLength: finalText.length,
@@ -948,8 +973,9 @@ export class MultiAgentCouncilService {
     await this.logExecution(sessionId, agent.agentId, 'SYNTHESIZER', 4, {
       inputText: draftText,
       outputText: finalText,
-      tokensInput: response.usage?.prompt_tokens,
-      tokensOutput: response.usage?.completion_tokens,
+      llmProvider: llmResponse.provider,
+      tokensInput: llmResponse.tokensUsed.prompt,
+      tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
       status: 'COMPLETED'
     });
