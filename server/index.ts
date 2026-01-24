@@ -454,6 +454,16 @@ try {
   console.error('❌ Failed to mount CER routes:', error);
 }
 
+// Mount GRDHE (Global Regulatory Data Harmonization Engine) routes
+try {
+  const grdheModule = await import('./routes/grdheRoutes.js');
+  const grdheRoutes = grdheModule.default;
+  app.use('/api/grdhe', grdheRoutes);
+  console.log('✅ GRDHE (Global Regulatory Data Harmonization Engine) routes mounted successfully (21 CFR Part 11, EU MDR 2017/745)');
+} catch (error) {
+  console.error('❌ Failed to mount GRDHE routes:', error);
+}
+
 // CERV2 Unified Document Routes
 try {
   const cerv2DocumentModule = await import('./routes/cerv2-document-routes.js');
