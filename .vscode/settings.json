@@ -1,6 +1,1 @@
-{
-  "remote.extensionKind": {
-    "github.copilot": ["workspace"],
-    "github.copilot-chat": ["workspace"]
-  }
-}
+{"remote.extensionKind":{"github.copilot":["workspace"],"github.copilot-chat":["workspace"]},"typescript.tsdk":"node_modules/typescript/lib","typescript.enablePromptUseWorkspaceTsdk":true,"javascript.suggest.autoImports":true,"typescript.suggest.autoImports":true,"javascript.updateImportsOnFileMove.enabled":"always","typescript.updateImportsOnFileMove.enabled":"always","eslint.enable":true,"eslint.validate":["javascript","javascriptreact","typescript","typescriptreact"],"editor.codeActionsOnSave":{"source.fixAll.eslint":"explicit"},"editor.formatOnSave":true,"editor.defaultFormatter":"esbenp.prettier-vscode","[typescript]":{"editor.defaultFormatter":"esbenp.prettier-vscode"},"[javascript]":{"editor.defaultFormatter":"esbenp.prettier-vscode"},"files.eol":"\n","files.insertFinalNewline":true,"files.trimTrailingWhitespace":true,"files.exclude":{"**/node_modules":true,"**/dist":true,"**/.cache":true},"search.exclude":{"**/node_modules":true,"**/dist":true,"**/.cache":true,"**/coverage":true},"files.watcherExclude":{"**/node_modules/**":true,"**/dist/**":true,"**/.cache/**":true},"git.enableSmartCommit":true,"git.autofetch":true,"git.confirmSync":false,"terminal.integrated.defaultProfile.linux":"bash","terminal.integrated.env.linux":{"NODE_ENV":"development"}}
