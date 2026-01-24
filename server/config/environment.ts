@@ -100,6 +100,22 @@ export const config = {
       max: 100, // limit each IP to 100 requests per windowMs
     },
   },
+  // DocuShare integration - lazy loaded only when configured
+  // See .env.example for all 22 DocuShare configuration options
+  docushare: process.env.DOCUSHARE_API_URL
+    ? {
+        enabled: true,
+        apiUrl: process.env.DOCUSHARE_API_URL,
+        apiVersion: process.env.DOCUSHARE_API_VERSION || '7.5',
+        apiKey: process.env.DOCUSHARE_API_KEY || '',
+        oemId: process.env.DOCUSHARE_OEM_ID || '',
+        tenantIsolation: process.env.DOCUSHARE_TENANT_ISOLATION === 'true',
+        maxFileSize: parseInt(process.env.DOCUSHARE_MAX_FILE_SIZE || '104857600', 10),
+        connectionTimeout: parseInt(process.env.DOCUSHARE_CONNECTION_TIMEOUT || '30000', 10),
+      }
+    : {
+        enabled: false,
+      },
 };
 
 export default config;

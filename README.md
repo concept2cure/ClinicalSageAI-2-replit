@@ -163,6 +163,34 @@ POST /api/cmc/projects             # CMC project management
 
 ---
 
+## Database Management
+
+### Schema
+
+The database schema is defined in `shared/schema.ts` using Drizzle ORM.
+
+```bash
+# View current schema
+cat shared/schema.ts
+
+# Generate migration from schema changes
+npx drizzle-kit generate:pg
+```
+
+### Migrations
+
+```bash
+# Development: Push schema directly (recommended)
+npx drizzle-kit push:pg
+
+# Production: Run migrations
+npx drizzle-kit migrate
+```
+
+> **Note:** Legacy migrations with numbering conflicts have been archived to `db/migrations/_legacy/`. See `db/migrations/_legacy/README.md` for details.
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

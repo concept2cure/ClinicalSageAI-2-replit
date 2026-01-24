@@ -30,6 +30,17 @@ export interface SafetyConfig {
   };
 }
 
+export interface DocuShareConfig {
+  enabled: boolean;
+  apiUrl?: string;
+  apiVersion?: string;
+  apiKey?: string;
+  oemId?: string;
+  tenantIsolation?: boolean;
+  maxFileSize?: number;
+  connectionTimeout?: number;
+}
+
 export interface AppConfig {
   env: Environment;
   isProduction: boolean;
@@ -40,4 +51,5 @@ export interface AppConfig {
   api: ApiConfig;
   storage: StorageConfig;
   safety: SafetyConfig;
+  docushare: DocuShareConfig;
 }
