@@ -40,6 +40,18 @@ export interface SessionProgress {
   elapsedSeconds: number;
 }
 
+export interface Agent {
+  id: string;
+  agentCode: string;
+  agentName: string;
+  agentRole: 'DRAFTER' | 'STATISTICIAN' | 'CRITIC' | 'SYNTHESIZER';
+  capabilities: string[];
+  modelName: string;
+  temperature: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export class DraftingOrchestratorService {
   private baseUrl = '/api/neuro-symbolic';
 
@@ -48,7 +60,7 @@ export class DraftingOrchestratorService {
    */
   async initializeSession(params: {
     sectionPath: string;
-    requirements?: Record<string, any>;
+    requirements?: Record<string, unknown>;
     contextAtomIds?: string[];
     programId?: string;
   }): Promise<{ sessionId: string }> {
@@ -87,7 +99,7 @@ export class DraftingOrchestratorService {
   /**
    * Get list of registered agents
    */
-  async getAgents(): Promise<{ agents: any[]; count: number }> {
+  async getAgents(): Promise<{ agents: Agent[]; count: number }> {
     const response = await apiRequest('GET', `${this.baseUrl}/agents`);
     return response.json();
   }

@@ -191,8 +191,19 @@ export class KnowledgeGraphClient {
   async extractEntities(atomId: string, content: string): Promise<{
     atomId: string;
     entities: ExtractedEntity[];
-    relationships: any[];
-    metadata: { processingTimeMs: number; modelUsed: string; entityCount: number };
+    relationships: Array<{
+      sourceEntity: string;
+      targetEntity: string;
+      relationshipType: string;
+      confidence: number;
+    }>;
+    metadata: { 
+      processingTimeMs: number; 
+      modelUsed: string; 
+      entityCount: number;
+      correlationId: string;
+      contentHash: string;
+    };
   }> {
     const response = await apiRequest('POST', `${this.baseUrl}/extract/${atomId}`, { content });
     return response.json();
