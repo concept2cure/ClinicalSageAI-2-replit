@@ -1385,6 +1385,8 @@ model RegulatoryKnowledge {
   sourcePdfUrl        String?   @map("source_pdf_url")
   
   fullText            String?   @map("full_text")
+  summary             String?   // GLSOS: Executive summary for display
+  // embedding vector(1536) - handled at SQL level, not in Prisma
   
   isCurrent           Boolean   @default(true) @map("is_current")
   supersededBy        String?   @map("superseded_by")
