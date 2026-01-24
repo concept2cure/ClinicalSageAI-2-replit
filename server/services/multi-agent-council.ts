@@ -15,15 +15,37 @@
  * - Retry logic with exponential backoff
  * - Role-based access control hooks
  * 
+ * System Survivability Features:
+ * - Circuit breaker for OpenAI resilience
+ * - Prompt injection protection
+ * - Tamper-proof audit logging
+ * - Graceful degradation when OpenAI unavailable
+ * 
  * @module MultiAgentCouncilService
- * @version 2.0.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5
+ * @version 3.0.0
+ * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
  */
 
 import { Pool, PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash, randomBytes } from 'crypto';
 import OpenAI from 'openai';
+
+// Survivability imports
+import { 
+  getOpenAICircuitBreaker, 
+  CircuitBreakerError 
+} from '../lib/circuit-breaker';
+import { 
+  getPromptInjectionProtection, 
+  PromptInjectionError 
+} from '../lib/prompt-injection-protection';
+import { 
+  getTamperProofAuditLog 
+} from '../lib/tamper-proof-audit';
+import { 
+  getGracefulDegradationService 
+} from '../lib/graceful-degradation';
 
 // Types
 export type AgentRole = 'DRAFTER' | 'STATISTICIAN' | 'CRITIC' | 'SYNTHESIZER';
@@ -119,6 +141,11 @@ export class MultiAgentCouncilService {
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
   private readonly DEFAULT_TIMEOUT_MS = 120000;
+  
+  // Survivability components
+  private readonly circuitBreaker = getOpenAICircuitBreaker();
+  private readonly promptProtection = getPromptInjectionProtection();
+  private readonly degradation = getGracefulDegradationService();
 
   constructor(pool: Pool) {
     this.pool = pool;
@@ -132,6 +159,97 @@ export class MultiAgentCouncilService {
       timeout: this.DEFAULT_TIMEOUT_MS,
       maxRetries: this.MAX_RETRIES
     });
+  }
+
+  // ==========================================================================
+  // Survivability Methods
+  // ==========================================================================
+
+  /**
+   * Execute OpenAI call with circuit breaker protection
+   */
+  private async executeOpenAIWithBreaker<T>(
+    operation: string,
+    fn: () => Promise<T>,
+    correlationId: string
+  ): Promise<T> {
+    // Check if AI features are available
+    if (!this.degradation.isFeatureAvailable('COUNCIL_DRAFTING')) {
+      throw new CouncilError(
+        'AI drafting features are temporarily unavailable. Please try again later.',
+        'SERVICE_DEGRADED',
+        undefined,
+        correlationId,
+        true
+      );
+    }
+
+    try {
+      return await this.circuitBreaker.execute(fn);
+    } catch (error) {
+      if (error instanceof CircuitBreakerError) {
+        console.error(`[Council:${correlationId}] Circuit breaker ${error.code}: ${error.message}`);
+        
+        // Log to tamper-proof audit
+        const auditLog = getTamperProofAuditLog(this.pool);
+        await auditLog.log(
+          'CIRCUIT_BREAKER_OPENED',
+          `OpenAI circuit breaker opened during ${operation}`,
+          { 
+            operation, 
+            errorCode: error.code,
+            metrics: this.circuitBreaker.getMetrics() 
+          },
+          { correlationId }
+        );
+
+        throw new CouncilError(
+          'AI service is temporarily unavailable. The system will automatically retry when the service recovers.',
+          'CIRCUIT_OPEN',
+          undefined,
+          correlationId,
+          true
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Sanitize user-provided content before including in prompts
+   */
+  private sanitizeForPrompt(content: string, context: string, correlationId: string): string {
+    const result = this.promptProtection.analyze(content);
+    
+    if (result.detected.length > 0) {
+      console.warn(
+        `[Council:${correlationId}] Prompt injection patterns detected in ${context}: ` +
+        `${result.detected.length} patterns, risk score ${result.riskScore}`
+      );
+      
+      // Log security event
+      const auditLog = getTamperProofAuditLog(this.pool);
+      auditLog.log(
+        result.blocked ? 'PROMPT_INJECTION_BLOCKED' : 'PROMPT_INJECTION_BLOCKED',
+        `Potential prompt injection in ${context}`,
+        {
+          detected: result.detected,
+          riskScore: result.riskScore,
+          blocked: result.blocked,
+          context
+        },
+        { correlationId }
+      ).catch(err => console.error('Failed to log security event:', err));
+    }
+
+    if (result.blocked) {
+      throw new ValidationError(
+        `Input contains potentially malicious content that cannot be processed. ` +
+        `Please review your input and remove any instruction-like patterns.`
+      );
+    }
+
+    return result.sanitized;
   }
 
   // ==========================================================================
@@ -386,37 +504,65 @@ export class MultiAgentCouncilService {
   // ==========================================================================
 
   /**
-   * Execute Drafter Agent
+   * Execute Drafter Agent with circuit breaker and prompt injection protection
    */
   private async executeDrafter(sessionId: string): Promise<string> {
+    const correlationId = this.generateCorrelationId();
     const session = await this.getSession(sessionId);
     const agent = await this.getAgentConfig(session.drafter_agent_id);
     
     // Get context documents
     const contextDocs = await this.getContextDocuments(session.context_atom_ids);
 
-    // Build prompt
+    // Sanitize context documents for prompt injection
+    const sanitizedContextDocs = contextDocs.map(d => ({
+      ...d,
+      content: this.sanitizeForPrompt(d.content, 'context_document', correlationId)
+    }));
+
+    // Build prompt with sanitized content
     const prompt = this.renderTemplate(agent.systemPromptTemplate, {
-      context_documents: contextDocs.map(d => `[${d.atomId}] ${d.title}:\n${d.content}`).join('\n\n'),
+      context_documents: sanitizedContextDocs.map(d => `[${d.atomId}] ${d.title}:\n${d.content}`).join('\n\n'),
       requirements: JSON.stringify(session.requirements, null, 2),
       section_path: session.section_path
     });
 
     const startTime = Date.now();
-    const response = await this.openai.chat.completions.create({
-      model: agent.modelName,
-      temperature: agent.temperature,
-      max_tokens: agent.maxTokens,
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: `Draft the ${session.section_path} section.` }
-      ]
-    });
+    
+    // Execute with circuit breaker protection
+    const response = await this.executeOpenAIWithBreaker(
+      'DRAFTER',
+      () => this.openai.chat.completions.create({
+        model: agent.modelName,
+        temperature: agent.temperature,
+        max_tokens: agent.maxTokens,
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: `Draft the ${session.section_path} section.` }
+        ]
+      }),
+      correlationId
+    );
 
     const draftText = response.choices[0]?.message?.content || '';
     const latencyMs = Date.now() - startTime;
 
-    // Log execution
+    // Log to tamper-proof audit
+    const auditLog = getTamperProofAuditLog(this.pool);
+    await auditLog.log(
+      'AGENT_EXECUTION_COMPLETED',
+      'Drafter agent completed execution',
+      {
+        sessionId,
+        agentRole: 'DRAFTER',
+        outputLength: draftText.length,
+        tokensUsed: response.usage?.total_tokens,
+        latencyMs
+      },
+      { correlationId, resourceType: 'council_session', resourceId: sessionId }
+    );
+
+    // Log execution to council table
     await this.logExecution(sessionId, agent.agentId, 'DRAFTER', 1, {
       inputText: `Section: ${session.section_path}`,
       outputText: draftText,
@@ -430,12 +576,13 @@ export class MultiAgentCouncilService {
   }
 
   /**
-   * Execute Statistician Agent (with LIVE DATA BINDING)
+   * Execute Statistician Agent (with LIVE DATA BINDING and circuit breaker)
    */
   private async executeStatistician(
     sessionId: string, 
     draftText: string
   ): Promise<StatisticianResult> {
+    const correlationId = this.generateCorrelationId();
     const session = await this.getSession(sessionId);
     const agent = await this.getAgentConfig(session.statistician_agent_id);
 
@@ -453,16 +600,22 @@ export class MultiAgentCouncilService {
     });
 
     const startTime = Date.now();
-    const response = await this.openai.chat.completions.create({
-      model: agent.modelName,
-      temperature: 0, // Statistician needs determinism
-      max_tokens: agent.maxTokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: 'Extract and verify all numerical claims in the draft.' }
-      ]
-    });
+    
+    // Execute with circuit breaker protection
+    const response = await this.executeOpenAIWithBreaker(
+      'STATISTICIAN',
+      () => this.openai.chat.completions.create({
+        model: agent.modelName,
+        temperature: 0, // Statistician needs determinism
+        max_tokens: agent.maxTokens,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: 'Extract and verify all numerical claims in the draft.' }
+        ]
+      }),
+      correlationId
+    );
 
     const latencyMs = Date.now() - startTime;
     const outputText = response.choices[0]?.message?.content || '{}';
@@ -486,7 +639,22 @@ export class MultiAgentCouncilService {
           if (verification.claimedValue !== actualValue) {
             verification.status = 'DISCREPANCY';
             verification.correction = actualValue;
-            console.log(`[Statistician] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`);
+            
+            // Log data discrepancy to tamper-proof audit
+            const auditLog = getTamperProofAuditLog(this.pool);
+            await auditLog.log(
+              'DATA_DISCREPANCY_DETECTED',
+              `Data discrepancy detected in claim`,
+              {
+                claim: verification.claim,
+                claimedValue: verification.claimedValue,
+                actualValue: actualValue,
+                source: verification.source
+              },
+              { correlationId, resourceType: 'council_session', resourceId: sessionId }
+            );
+            
+            console.log(`[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`);
           } else {
             verification.status = 'VERIFIED';
           }
@@ -660,17 +828,24 @@ export class MultiAgentCouncilService {
       statistician_report: JSON.stringify(statisticianResult, null, 2)
     });
 
+    const correlationId = this.generateCorrelationId();
     const startTime = Date.now();
-    const response = await this.openai.chat.completions.create({
-      model: agent.modelName,
-      temperature: agent.temperature,
-      max_tokens: agent.maxTokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: 'Perform critical review of the draft.' }
-      ]
-    });
+    
+    // Execute with circuit breaker protection
+    const response = await this.executeOpenAIWithBreaker(
+      'CRITIC',
+      () => this.openai.chat.completions.create({
+        model: agent.modelName,
+        temperature: agent.temperature,
+        max_tokens: agent.maxTokens,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: 'Perform critical review of the draft.' }
+        ]
+      }),
+      correlationId
+    );
 
     const latencyMs = Date.now() - startTime;
     const outputText = response.choices[0]?.message?.content || '{}';
@@ -702,7 +877,7 @@ export class MultiAgentCouncilService {
   }
 
   /**
-   * Execute Synthesizer Agent
+   * Execute Synthesizer Agent with circuit breaker protection
    */
   private async executeSynthesizer(
     sessionId: string,
@@ -710,6 +885,7 @@ export class MultiAgentCouncilService {
     statisticianResult: StatisticianResult,
     criticResult: CriticResult
   ): Promise<string> {
+    const correlationId = this.generateCorrelationId();
     const session = await this.getSession(sessionId);
     const agent = await this.getAgentConfig(session.synthesizer_agent_id);
 
@@ -734,18 +910,39 @@ export class MultiAgentCouncilService {
     });
 
     const startTime = Date.now();
-    const response = await this.openai.chat.completions.create({
-      model: agent.modelName,
-      temperature: agent.temperature,
-      max_tokens: agent.maxTokens,
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: 'Produce the final polished text incorporating all corrections and feedback.' }
-      ]
-    });
+    
+    // Execute with circuit breaker protection
+    const response = await this.executeOpenAIWithBreaker(
+      'SYNTHESIZER',
+      () => this.openai.chat.completions.create({
+        model: agent.modelName,
+        temperature: agent.temperature,
+        max_tokens: agent.maxTokens,
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: 'Produce the final polished text incorporating all corrections and feedback.' }
+        ]
+      }),
+      correlationId
+    );
 
     const latencyMs = Date.now() - startTime;
     const finalText = response.choices[0]?.message?.content || draftText;
+
+    // Log to tamper-proof audit
+    const auditLog = getTamperProofAuditLog(this.pool);
+    await auditLog.log(
+      'COUNCIL_SESSION_COMPLETED',
+      'Multi-Agent Council session completed successfully',
+      {
+        sessionId,
+        correctionsApplied: corrections.length,
+        issuesAddressed: feedback.length,
+        finalTextLength: finalText.length,
+        totalLatencyMs: latencyMs
+      },
+      { correlationId, resourceType: 'council_session', resourceId: sessionId }
+    );
 
     // Log execution
     await this.logExecution(sessionId, agent.agentId, 'SYNTHESIZER', 4, {

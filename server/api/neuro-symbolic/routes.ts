@@ -8,13 +8,19 @@
  * Compliance Features:
  * - Input validation and sanitization
  * - Request/response audit logging
- * - Rate limiting hooks
+ * - Rate limiting (standard and heavy endpoint protection)
  * - Correlation ID tracking
  * - Proper error handling (no implementation leaks)
  * 
+ * System Survivability Features:
+ * - Rate limiting middleware
+ * - DDoS protection
+ * - Graceful degradation awareness
+ * - Tamper-proof audit logging
+ * 
  * @module NeuroSymbolicRoutes
- * @version 2.0.0
- * @compliance FDA 21 CFR Part 11, ICH E6(R2)
+ * @version 3.0.0
+ * @compliance FDA 21 CFR Part 11, ICH E6(R2), OWASP LLM Top 10
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -23,6 +29,13 @@ import { randomBytes } from 'crypto';
 import { KnowledgeGraphService, EntityType, RelationshipType } from '../../services/knowledge-graph';
 import { MultiAgentCouncilService, ValidationError, CouncilError } from '../../services/multi-agent-council';
 import { getEntityExtractionWorker } from '../../workers/entity-extraction-worker';
+
+// Survivability imports
+import { rateLimitMiddleware, RateLimitResult } from '../../lib/rate-limiting';
+import { getTamperProofAuditLog } from '../../lib/tamper-proof-audit';
+import { getGracefulDegradationService, FeatureUnavailableError } from '../../lib/graceful-degradation';
+import { CircuitBreakerError } from '../../lib/circuit-breaker';
+import { PromptInjectionError } from '../../lib/prompt-injection-protection';
 
 // =============================================================================
 // Validation Utilities
@@ -74,6 +87,35 @@ function errorHandler(error: Error, req: Request, res: Response, next: NextFunct
     method: req.method
   });
 
+  // Handle survivability-related errors
+  if (error instanceof CircuitBreakerError) {
+    return res.status(503).json({
+      error: 'Service Temporarily Unavailable',
+      code: error.code,
+      message: 'External AI service is temporarily unavailable. Please try again later.',
+      retryAfter: 30,
+      correlationId
+    });
+  }
+
+  if (error instanceof FeatureUnavailableError) {
+    return res.status(503).json({
+      error: 'Feature Unavailable',
+      feature: error.feature,
+      degradationLevel: error.level,
+      message: `The requested feature "${error.feature}" is temporarily unavailable due to system degradation.`,
+      correlationId
+    });
+  }
+
+  if (error instanceof PromptInjectionError) {
+    return res.status(400).json({
+      error: 'Invalid Input',
+      message: 'Your request contains content that cannot be processed. Please review and modify your input.',
+      correlationId
+    });
+  }
+
   if (error instanceof ValidationError) {
     return res.status(400).json({
       error: 'Validation Error',
@@ -111,6 +153,8 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
   const graphService = new KnowledgeGraphService(pool);
   const councilService = new MultiAgentCouncilService(pool);
   const extractionWorker = getEntityExtractionWorker(pool);
+  const degradation = getGracefulDegradationService();
+  const auditLog = getTamperProofAuditLog(pool);
 
   // Add correlation ID to all requests
   router.use((req: Request, res: Response, next: NextFunction) => {
@@ -120,6 +164,17 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
     console.log(`[API:${correlationId}] ${req.method} ${req.path}`);
     next();
   });
+
+  // Apply standard rate limiting to all routes
+  router.use(rateLimitMiddleware({ 
+    limiter: 'standard',
+    keyGenerator: (req) => {
+      // Use user ID if authenticated, otherwise IP
+      const userId = (req as any).user?.id;
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      return userId ? `user:${userId}` : `ip:${ip}`;
+    }
+  }));
 
   // ==========================================================================
   // Knowledge Graph Routes
@@ -469,29 +524,78 @@ export function createNeuroSymbolicRouter(pool: Pool): Router {
   /**
    * POST /api/neuro-symbolic/council/sessions/:sessionId/execute
    * Execute the full council workflow
+   * 
+   * HEAVY ENDPOINT - Extra rate limiting applied (AI-intensive operation)
    */
-  router.post('/council/sessions/:sessionId/execute', asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
-    validateUUID(sessionId, 'sessionId');
-    
-    // Get userId from authenticated session if available
-    const userId = (req as any).user?.id || 'anonymous';
+  router.post(
+    '/council/sessions/:sessionId/execute', 
+    rateLimitMiddleware({ 
+      limiter: 'heavy',
+      keyGenerator: (req) => {
+        const userId = (req as any).user?.id;
+        const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        return userId ? `user:${userId}` : `ip:${ip}`;
+      },
+      onRateLimited: async (req, res, result) => {
+        // Log rate limit event to audit log
+        const correlationId = (req as any).correlationId;
+        await auditLog.log(
+          'RATE_LIMIT_EXCEEDED',
+          'Rate limit exceeded for council execution',
+          {
+            endpoint: '/council/sessions/:sessionId/execute',
+            remaining: result.remaining,
+            resetTime: result.resetTime,
+            penaltyApplied: result.penaltyApplied
+          },
+          { correlationId, ipAddress: req.ip }
+        ).catch(err => console.error('Failed to log rate limit event:', err));
 
-    console.log(`[API:${(req as any).correlationId}] Starting council execution for session ${sessionId}`);
-    const result = await councilService.executeCouncil(sessionId, userId);
+        res.status(429).json({
+          error: 'Rate Limit Exceeded',
+          message: 'Council execution is resource-intensive. Please wait before submitting another request.',
+          retryAfter: result.retryAfter,
+          resetTime: result.resetTime.toISOString(),
+          correlationId
+        });
+      }
+    }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { sessionId } = req.params;
+      validateUUID(sessionId, 'sessionId');
+      
+      // Check if AI features are available
+      if (!degradation.isFeatureAvailable('COUNCIL_DRAFTING')) {
+        throw new FeatureUnavailableError('COUNCIL_DRAFTING', degradation.getLevel());
+      }
+      
+      // Get userId from authenticated session if available
+      const userId = (req as any).user?.id || 'anonymous';
 
-    res.json({
-      ...result,
-      message: `Council workflow completed. ${result.corrections} corrections applied, ${result.issues} issues reviewed.`,
-      log: [
-        '1. Drafter Agent: Initial draft generated',
-        `2. Statistician Agent: ${result.corrections} numerical discrepancies found and corrected`,
-        `3. Critic Agent: ${result.issues} issues identified`,
-        '4. Synthesizer Agent: Final text produced with all feedback incorporated'
-      ],
-      correlationId: (req as any).correlationId
-    });
-  }));
+      // Log council start to audit
+      await auditLog.log(
+        'COUNCIL_SESSION_STARTED',
+        'Council execution initiated',
+        { sessionId, userId },
+        { correlationId: (req as any).correlationId, userId, resourceType: 'council_session', resourceId: sessionId }
+      );
+
+      console.log(`[API:${(req as any).correlationId}] Starting council execution for session ${sessionId}`);
+      const result = await councilService.executeCouncil(sessionId, userId);
+
+      res.json({
+        ...result,
+        message: `Council workflow completed. ${result.corrections} corrections applied, ${result.issues} issues reviewed.`,
+        log: [
+          '1. Drafter Agent: Initial draft generated',
+          `2. Statistician Agent: ${result.corrections} numerical discrepancies found and corrected`,
+          `3. Critic Agent: ${result.issues} issues identified`,
+          '4. Synthesizer Agent: Final text produced with all feedback incorporated'
+        ],
+        correlationId: (req as any).correlationId
+      });
+    })
+  );
 
   /**
    * GET /api/neuro-symbolic/council/sessions/:sessionId
