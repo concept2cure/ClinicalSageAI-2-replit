@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/concept2cure/ClinicalSageAI-2-replit/tree/main/docs
+    about: Check the documentation before opening an issue
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/concept2cure/ClinicalSageAI-2-replit/security/policy
+    about: Report security vulnerabilities privately
+  - name: 💬 Discussions
+    url: https://github.com/concept2cure/ClinicalSageAI-2-replit/discussions
+    about: Ask questions and discuss ideas

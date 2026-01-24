@@ -1,8 +1,28 @@
 {
-  "name": "rest-express",
+  "name": "clinicalsageai",
   "version": "1.0.0",
+  "description": "Enterprise-grade regulatory intelligence platform for life sciences",
   "type": "module",
   "license": "MIT",
+  "author": "Concept2Cure <info@concept2cure.pro>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit.git"
+  },
+  "keywords": [
+    "regulatory",
+    "clinical",
+    "fda",
+    "510k",
+    "cer",
+    "ectd",
+    "life-sciences",
+    "medical-device"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "NODE_OPTIONS=\"--trace-warnings\" tsx --inspect server/index.ts",
     "dev:local": "bash -c 'source scripts/startup.sh && tsx --inspect server/index.ts'",
