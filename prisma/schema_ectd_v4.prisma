@@ -13,7 +13,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  schemas    = ["common_standards", "identity", "ectd_v4", "audit", "product_master", "fhir", "ai"]
+  schemas    = ["common_standards", "identity", "ectd_v4", "audit", "product_master", "fhir", "ai", "agent_runtime", "cognitive_audit", "global_dossier", "manufacturing", "federated_ml"]
   extensions = [pgcrypto, uuid_ossp, vector]
 }
 

@@ -1,0 +1,1259 @@
+// =============================================================================
+// Concept2Cure v3.0 - Cognitive Regulatory Ecosystem Extension
+// =============================================================================
+// Purpose: Prisma models for migrations 063-067 (Agent Runtime, Cognitive Audit,
+//          Global Dossier, Manufacturing/Digital Twins, Federated ML)
+// Compliance: LangGraph patterns, 21 CFR Part 11 cognitive audit, MELLODDY FL
+// =============================================================================
+
+// Add these schemas to your datasource.schemas array:
+// ["common_standards", "identity", "ectd_v4", "audit", "product_master", "fhir", "ai", 
+//  "agent_runtime", "cognitive_audit", "global_dossier", "manufacturing", "federated_ml"]
+
+// =============================================================================
+// AGENT RUNTIME ENUMS
+// =============================================================================
+
+enum AgentType {
+  CMC_AUTHOR
+  CLINICAL_AUTHOR
+  NONCLINICAL_AUTHOR
+  LABELING_AUTHOR
+  COMPLIANCE_REVIEWER
+  ADVERSARIAL_REVIEWER
+  QA_VALIDATOR
+  REGULATORY_STRATEGIST
+  SUBMISSION_ORCHESTRATOR
+  IR_RESPONDER
+  PHARMACOVIGILANCE_AGENT
+  SIGNAL_DETECTOR
+  LABELING_UPDATER
+  BATCH_RELEASE_AGENT
+  DEVIATION_INVESTIGATOR
+  EQUIPMENT_VALIDATOR
+  HORIZON_SCANNER
+  KNOWLEDGE_CURATOR
+
+  @@schema("agent_runtime")
+}
+
+enum AgentStatus {
+  DRAFT
+  VALIDATED
+  ACTIVE
+  SUSPENDED
+  DEPRECATED
+  RETIRED
+
+  @@schema("agent_runtime")
+}
+
+enum ThreadStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+
+  @@schema("agent_runtime")
+}
+
+enum BranchStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  MERGED
+  ABANDONED
+
+  @@schema("agent_runtime")
+}
+
+enum TraceType {
+  TOOL_CALL
+  TOOL_RESULT
+  REASONING_STEP
+  DECISION_POINT
+  CONFIDENCE_CHECK
+  GOVERNANCE_CHECK
+  HUMAN_INTERVENTION
+  ERROR_RECOVERY
+  FINAL_OUTPUT
+
+  @@schema("agent_runtime")
+}
+
+enum ConstraintSeverity {
+  MANDATORY
+  WARNING
+  ADVISORY
+
+  @@schema("agent_runtime")
+}
+
+enum BreakpointReason {
+  CONFIDENCE_BELOW_THRESHOLD
+  MAX_STEPS_EXCEEDED
+  GOVERNANCE_VIOLATION
+  ADVERSARIAL_REVIEW_FAILED
+  USER_REQUESTED
+  ERROR_RECOVERY
+  APPROVAL_REQUIRED
+  SENSITIVE_CONTENT
+
+  @@schema("agent_runtime")
+}
+
+enum BreakpointResolution {
+  APPROVED
+  REJECTED
+  MODIFIED
+  ESCALATED
+  CANCELLED
+
+  @@schema("agent_runtime")
+}
+
+// =============================================================================
+// AGENT RUNTIME MODELS
+// =============================================================================
+
+model AgentDefinition {
+  id                    String       @id @default(uuid()) @db.Uuid
+  agentCode             String       @unique @map("agent_code")
+  agentName             String       @map("agent_name")
+  agentType             AgentType    @map("agent_type")
+  versionNumber         String       @map("version_number")
+  
+  // Model Configuration
+  llmProvider           String       @map("llm_provider")
+  llmModelId            String       @map("llm_model_id")
+  modelVersion          String?      @map("model_version")
+  temperature           Decimal?     @default(0.1) @db.Decimal(3, 2)
+  maxTokens             Int          @default(4096) @map("max_tokens")
+  
+  // System Prompt
+  systemPrompt          String       @map("system_prompt")
+  systemPromptHash      String       @map("system_prompt_hash")
+  governanceConstraints Json         @default("[]") @map("governance_constraints") @db.JsonB
+  
+  // Tools
+  enabledTools          String[]     @map("enabled_tools")
+  toolConfig            Json         @default("{}") @map("tool_config") @db.JsonB
+  
+  // Governance
+  requiresHitlApproval  Boolean      @default(true) @map("requires_hitl_approval")
+  maxAutonomousSteps    Int          @default(10) @map("max_autonomous_steps")
+  confidenceThreshold   Decimal      @default(0.85) @map("confidence_threshold") @db.Decimal(5, 4)
+  
+  // Validation
+  status                AgentStatus  @default(DRAFT)
+  validatedAt           DateTime?    @map("validated_at") @db.Timestamptz
+  validatedBy           String?      @map("validated_by")
+  validationProtocolRef String?      @map("validation_protocol_ref")
+  
+  // Ownership
+  orgId                 String?      @map("org_id") @db.Uuid
+  
+  metadata              Json         @default("{}") @db.JsonB
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy             String       @default("system") @map("created_by")
+
+  threads               AgentThread[]
+  adversarialAuthored   AdversarialReview[] @relation("AuthorAgent")
+  adversarialReviewed   AdversarialReview[] @relation("ReviewerAgent")
+
+  @@index([agentType])
+  @@index([status])
+  @@index([orgId])
+  @@map("agent_definitions")
+  @@schema("agent_runtime")
+}
+
+model AgentThread {
+  id                     String       @id @default(uuid()) @db.Uuid
+  
+  orgId                  String       @map("org_id") @db.Uuid
+  agentDefinitionId      String       @map("agent_definition_id") @db.Uuid
+  agentDefinition        AgentDefinition @relation(fields: [agentDefinitionId], references: [id])
+  
+  // Regulatory Context
+  submissionId           String?      @map("submission_id") @db.Uuid
+  productId              String?      @map("product_id") @db.Uuid
+  regulatoryActivityType String?      @map("regulatory_activity_type")
+  targetAuthority        String?      @map("target_authority")
+  
+  // Status
+  status                 ThreadStatus @default(ACTIVE)
+  currentStep            String?      @map("current_step")
+  stepsExecuted          Int          @default(0) @map("steps_executed")
+  
+  // Timestamps
+  startedAt              DateTime     @default(now()) @map("started_at") @db.Timestamptz
+  lastActivityAt         DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz
+  completedAt            DateTime?    @map("completed_at") @db.Timestamptz
+  
+  initiatedBy            String?      @map("initiated_by") @db.Uuid
+  
+  threadConfig           Json         @default("{}") @map("thread_config") @db.JsonB
+  threadMetadata         Json         @default("{}") @map("thread_metadata") @db.JsonB
+
+  checkpoints            AgentCheckpoint[]
+  branches               ThreadBranch[]
+  reasoningTraces        ReasoningTrace[]
+  hitlBreakpoints        HitlBreakpoint[]
+  adversarialReviews     AdversarialReview[]
+
+  @@index([orgId])
+  @@index([status])
+  @@index([submissionId])
+  @@index([startedAt(sort: Desc)])
+  @@map("agent_threads")
+  @@schema("agent_runtime")
+}
+
+model AgentCheckpoint {
+  threadId            String   @map("thread_id") @db.Uuid
+  thread              AgentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  checkpointNs        String   @default("") @map("checkpoint_ns")
+  checkpointId        String   @map("checkpoint_id")
+  
+  parentCheckpointId  String?  @map("parent_checkpoint_id")
+  
+  channelValues       Json     @map("channel_values") @db.JsonB
+  channelVersions     Json     @default("{}") @map("channel_versions") @db.JsonB
+  pendingSends        Json     @default("[]") @map("pending_sends") @db.JsonB
+  pendingWrites       Json     @default("[]") @map("pending_writes") @db.JsonB
+  
+  metadata            Json     @default("{}") @db.JsonB
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([threadId, checkpointNs, checkpointId])
+  @@index([threadId, checkpointNs])
+  @@index([createdAt(sort: Desc)])
+  @@map("checkpoints")
+  @@schema("agent_runtime")
+}
+
+model ThreadBranch {
+  id                      String       @id @default(uuid()) @db.Uuid
+  
+  threadId                String       @map("thread_id") @db.Uuid
+  thread                  AgentThread  @relation(fields: [threadId], references: [id])
+  parentBranchId          String?      @map("parent_branch_id") @db.Uuid
+  parentBranch            ThreadBranch? @relation("BranchHierarchy", fields: [parentBranchId], references: [id])
+  childBranches           ThreadBranch[] @relation("BranchHierarchy")
+  branchNamespace         String       @map("branch_namespace")
+  
+  branchName              String       @map("branch_name")
+  branchDescription       String?      @map("branch_description")
+  simulationHypothesis    String?      @map("simulation_hypothesis")
+  
+  forkedFromCheckpointId  String       @map("forked_from_checkpoint_id")
+  forkedAt                DateTime     @default(now()) @map("forked_at") @db.Timestamptz
+  
+  status                  BranchStatus @default(ACTIVE)
+  
+  outcomeSummary          Json?        @map("outcome_summary") @db.JsonB
+  riskAssessmentScore     Decimal?     @map("risk_assessment_score") @db.Decimal(5, 4)
+  recommendedForMerge     Boolean      @default(false) @map("recommended_for_merge")
+  
+  mergedToBranchId        String?      @map("merged_to_branch_id") @db.Uuid
+  mergedAt                DateTime?    @map("merged_at") @db.Timestamptz
+  mergedBy                String?      @map("merged_by") @db.Uuid
+  
+  metadata                Json         @default("{}") @db.JsonB
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  createdBy               String?      @map("created_by") @db.Uuid
+
+  @@index([threadId])
+  @@index([status])
+  @@map("thread_branches")
+  @@schema("agent_runtime")
+}
+
+model ReasoningTrace {
+  id                   String     @id @default(uuid()) @db.Uuid
+  
+  threadId             String     @map("thread_id") @db.Uuid
+  thread               AgentThread @relation(fields: [threadId], references: [id])
+  checkpointId         String     @map("checkpoint_id")
+  branchNamespace      String     @default("") @map("branch_namespace")
+  
+  traceType            TraceType  @map("trace_type")
+  stepNumber           Int        @map("step_number")
+  nodeName             String?    @map("node_name")
+  
+  inputData            Json?      @map("input_data") @db.JsonB
+  reasoningText        String?    @map("reasoning_text")
+  outputData           Json?      @map("output_data") @db.JsonB
+  
+  toolName             String?    @map("tool_name")
+  toolArguments        Json?      @map("tool_arguments") @db.JsonB
+  toolResult           Json?      @map("tool_result") @db.JsonB
+  
+  confidenceScore      Decimal?   @map("confidence_score") @db.Decimal(5, 4)
+  governanceRulesChecked String[]  @map("governance_rules_checked")
+  governancePassed     Boolean?   @map("governance_passed")
+  
+  startedAt            DateTime   @default(now()) @map("started_at") @db.Timestamptz
+  completedAt          DateTime?  @map("completed_at") @db.Timestamptz
+  durationMs           Int?       @map("duration_ms")
+  
+  tokensInput          Int?       @map("tokens_input")
+  tokensOutput         Int?       @map("tokens_output")
+  
+  metadata             Json       @default("{}") @db.JsonB
+
+  adversarialReview    AdversarialReview?
+
+  @@index([threadId])
+  @@index([traceType])
+  @@index([toolName])
+  @@map("reasoning_traces")
+  @@schema("agent_runtime")
+}
+
+model GovernanceConstraint {
+  id                   String              @id @default(uuid()) @db.Uuid
+  
+  constraintCode       String              @unique @map("constraint_code")
+  constraintName       String              @map("constraint_name")
+  constraintVersion    String              @map("constraint_version")
+  
+  severity             ConstraintSeverity
+  regulatoryReference  String?             @map("regulatory_reference")
+  
+  ruleDescription      String              @map("rule_description")
+  ruleImplementation   String              @map("rule_implementation")
+  validationLogic      Json?               @map("validation_logic") @db.JsonB
+  
+  applicableAgentTypes AgentType[]         @map("applicable_agent_types")
+  applicableDomains    String[]            @map("applicable_domains")
+  
+  isActive             Boolean             @default(true) @map("is_active")
+  effectiveFrom        DateTime            @map("effective_from") @db.Date
+  effectiveUntil       DateTime?           @map("effective_until") @db.Date
+  
+  metadata             Json                @default("{}") @db.JsonB
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([isActive])
+  @@index([severity])
+  @@map("governance_constraints")
+  @@schema("agent_runtime")
+}
+
+model HitlBreakpoint {
+  id                   String               @id @default(uuid()) @db.Uuid
+  
+  threadId             String               @map("thread_id") @db.Uuid
+  thread               AgentThread          @relation(fields: [threadId], references: [id])
+  checkpointId         String               @map("checkpoint_id")
+  branchNamespace      String               @default("") @map("branch_namespace")
+  
+  reason               BreakpointReason
+  triggerDescription   String               @map("trigger_description")
+  
+  agentOutput          Json                 @map("agent_output") @db.JsonB
+  confidenceScore      Decimal?             @map("confidence_score") @db.Decimal(5, 4)
+  governanceViolations String[]             @map("governance_violations")
+  
+  assignedTo           String?              @map("assigned_to") @db.Uuid
+  assignedAt           DateTime?            @map("assigned_at") @db.Timestamptz
+  
+  resolution           BreakpointResolution?
+  resolutionNotes      String?              @map("resolution_notes")
+  humanEdits           Json?                @map("human_edits") @db.JsonB
+  resolvedBy           String?              @map("resolved_by") @db.Uuid
+  resolvedAt           DateTime?            @map("resolved_at") @db.Timestamptz
+  
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  slaDeadline          DateTime?            @map("sla_deadline") @db.Timestamptz
+  
+  metadata             Json                 @default("{}") @db.JsonB
+
+  adversarialReview    AdversarialReview?
+
+  @@index([threadId])
+  @@index([assignedTo])
+  @@map("hitl_breakpoints")
+  @@schema("agent_runtime")
+}
+
+model AdversarialReview {
+  id                String           @id @default(uuid()) @db.Uuid
+  
+  threadId          String           @map("thread_id") @db.Uuid
+  thread            AgentThread      @relation(fields: [threadId], references: [id])
+  checkpointId      String           @map("checkpoint_id")
+  
+  authorAgentId     String           @map("author_agent_id") @db.Uuid
+  authorAgent       AgentDefinition  @relation("AuthorAgent", fields: [authorAgentId], references: [id])
+  authoredContent   Json             @map("authored_content") @db.JsonB
+  
+  reviewerAgentId   String           @map("reviewer_agent_id") @db.Uuid
+  reviewerAgent     AgentDefinition  @relation("ReviewerAgent", fields: [reviewerAgentId], references: [id])
+  
+  reviewScore       Decimal          @map("review_score") @db.Decimal(5, 4)
+  passedThreshold   Boolean          @map("passed_threshold")
+  
+  issuesFound       Json?            @map("issues_found") @db.JsonB
+  suggestions       Json?            @db.JsonB
+  reasoningTraceId  String?          @unique @map("reasoning_trace_id") @db.Uuid
+  reasoningTrace    ReasoningTrace?  @relation(fields: [reasoningTraceId], references: [id])
+  
+  triggeredHitl     Boolean          @default(false) @map("triggered_hitl")
+  hitlBreakpointId  String?          @unique @map("hitl_breakpoint_id") @db.Uuid
+  hitlBreakpoint    HitlBreakpoint?  @relation(fields: [hitlBreakpointId], references: [id])
+  
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  metadata          Json             @default("{}") @db.JsonB
+
+  @@index([threadId])
+  @@map("adversarial_reviews")
+  @@schema("agent_runtime")
+}
+
+// =============================================================================
+// GLOBAL DOSSIER ENUMS
+// =============================================================================
+
+enum DossierType {
+  NDA
+  BLA
+  ANDA
+  D505B2
+  MAA
+  NDS
+  ANDA_CANADA
+  JNDA
+  DEVICE_510K
+  PMA
+  IND
+  CTA
+  IMPD
+
+  @@schema("global_dossier")
+}
+
+enum DossierLifecycle {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  CONDITIONALLY_APPROVED
+  REJECTED
+  WITHDRAWN
+  SUPERSEDED
+  ARCHIVED
+
+  @@schema("global_dossier")
+}
+
+enum DossierBranchType {
+  MASTER
+  REGIONAL
+  SIMULATION
+  HISTORICAL
+  REMEDIATION
+
+  @@schema("global_dossier")
+}
+
+enum RegionCode {
+  US_FDA
+  EU_EMA
+  EU_DECENTRALIZED
+  EU_MUTUAL_RECOGNITION
+  JP_PMDA
+  CA_HEALTH_CANADA
+  AU_TGA
+  CH_SWISSMEDIC
+  UK_MHRA
+  BR_ANVISA
+  CN_NMPA
+  KR_MFDS
+  SG_HSA
+  IN_CDSCO
+  ZA_SAHPRA
+  WHO_PREQUALIFICATION
+  GCC
+  ASEAN
+  ICH_GLOBAL
+
+  @@schema("global_dossier")
+}
+
+enum CommentType {
+  QUESTION
+  CLARIFICATION
+  DEFICIENCY
+  RECOMMENDATION
+  ACKNOWLEDGMENT
+  APPROVAL_NOTE
+  INTERNAL_NOTE
+
+  @@schema("global_dossier")
+}
+
+enum CommentVisibility {
+  SPONSOR_ONLY
+  AGENCY_ONLY
+  SHARED
+  PUBLIC
+
+  @@schema("global_dossier")
+}
+
+// =============================================================================
+// GLOBAL DOSSIER MODELS
+// =============================================================================
+
+model DossierInstance {
+  id                   String           @id @default(uuid()) @db.Uuid
+  
+  dossierNumber        String           @unique @map("dossier_number")
+  dossierName          String           @map("dossier_name")
+  dossierType          DossierType      @map("dossier_type")
+  
+  productId            String           @map("product_id") @db.Uuid
+  
+  lifecycleStatus      DossierLifecycle @default(DRAFT) @map("lifecycle_status")
+  versionNumber        String           @default("1.0.0") @map("version_number")
+  
+  coreDataSheetFhir    Json             @default("{}") @map("core_data_sheet_fhir") @db.JsonB
+  coreDataHash         String?          @map("core_data_hash")
+  
+  masterBranchId       String?          @map("master_branch_id") @db.Uuid
+  
+  orgId                String           @map("org_id") @db.Uuid
+  sponsorName          String           @map("sponsor_name")
+  
+  initialTargetRegion  String?          @map("initial_target_region")
+  targetApprovalDate   DateTime?        @map("target_approval_date") @db.Date
+  regulatoryStrategyNotes String?       @map("regulatory_strategy_notes")
+  
+  accumulusWorkspaceId String?          @map("accumulus_workspace_id")
+  accumulusLastSync    DateTime?        @map("accumulus_last_sync") @db.Timestamptz
+  
+  metadata             Json             @default("{}") @db.JsonB
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy            String?          @map("created_by") @db.Uuid
+
+  branches             DossierBranch[]
+  syncEvents           DossierSyncEvent[]
+  comments             RegulatoryComment[]
+  contentVersions      ContentVersion[]
+
+  @@index([productId])
+  @@index([dossierType])
+  @@index([lifecycleStatus])
+  @@index([orgId])
+  @@map("dossier_instances")
+  @@schema("global_dossier")
+}
+
+model DossierBranch {
+  id                   String            @id @default(uuid()) @db.Uuid
+  
+  dossierId            String            @map("dossier_id") @db.Uuid
+  dossier              DossierInstance   @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  
+  branchName           String            @map("branch_name")
+  branchType           DossierBranchType @map("branch_type")
+  branchCode           String            @map("branch_code")
+  
+  targetRegion         RegionCode?       @map("target_region")
+  targetAuthorityName  String?           @map("target_authority_name")
+  
+  parentBranchId       String?           @map("parent_branch_id") @db.Uuid
+  parentBranch         DossierBranch?    @relation("BranchHierarchy", fields: [parentBranchId], references: [id])
+  childBranches        DossierBranch[]   @relation("BranchHierarchy")
+  forkedFromVersion    String?           @map("forked_from_version")
+  forkedAt             DateTime?         @map("forked_at") @db.Timestamptz
+  
+  regionalOverrides    Json              @default("{}") @map("regional_overrides") @db.JsonB
+  regionalAdditions    Json              @default("{}") @map("regional_additions") @db.JsonB
+  regionalExclusions   String[]          @default([]) @map("regional_exclusions")
+  
+  submissionId         String?           @map("submission_id") @db.Uuid
+  applicationNumber    String?           @map("application_number")
+  submissionDate       DateTime?         @map("submission_date") @db.Date
+  targetActionDate     DateTime?         @map("target_action_date") @db.Date
+  
+  isActive             Boolean           @default(true) @map("is_active")
+  mergedToMaster       Boolean           @default(false) @map("merged_to_master")
+  mergedAt             DateTime?         @map("merged_at") @db.Timestamptz
+  
+  platformBranchRef    String?           @map("platform_branch_ref")
+  
+  metadata             Json              @default("{}") @db.JsonB
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy            String?           @map("created_by") @db.Uuid
+
+  syncEvents           DossierSyncEvent[]
+  comments             RegulatoryComment[]
+  contentVersions      ContentVersion[]
+
+  @@unique([dossierId, branchCode])
+  @@index([targetRegion])
+  @@index([branchType])
+  @@map("dossier_branches")
+  @@schema("global_dossier")
+}
+
+model DossierSyncEvent {
+  id                    String      @id @default(uuid()) @db.Uuid
+  
+  dossierId             String      @map("dossier_id") @db.Uuid
+  dossier               DossierInstance @relation(fields: [dossierId], references: [id])
+  branchId              String?     @map("branch_id") @db.Uuid
+  branch                DossierBranch? @relation(fields: [branchId], references: [id])
+  
+  syncDirection         String      @map("sync_direction") // SPONSOR_TO_REGULATOR, etc.
+  targetPlatform        String      @map("target_platform")
+  targetRegion          RegionCode? @map("target_region")
+  
+  status                String      @default("PENDING")
+  
+  syncedSections        String[]    @map("synced_sections")
+  syncedResources       Json?       @map("synced_resources") @db.JsonB
+  bytesTransferred      BigInt?     @map("bytes_transferred")
+  
+  initiatedAt           DateTime    @default(now()) @map("initiated_at") @db.Timestamptz
+  completedAt           DateTime?   @map("completed_at") @db.Timestamptz
+  
+  successCount          Int         @default(0) @map("success_count")
+  errorCount            Int         @default(0) @map("error_count")
+  errors                Json        @default("[]") @db.JsonB
+  
+  platformTransactionId String?     @map("platform_transaction_id")
+  platformReceipt       Json?       @map("platform_receipt") @db.JsonB
+  
+  initiatedBy           String?     @map("initiated_by") @db.Uuid
+  metadata              Json        @default("{}") @db.JsonB
+
+  @@index([dossierId])
+  @@index([status])
+  @@map("dossier_sync_events")
+  @@schema("global_dossier")
+}
+
+model RegulatoryComment {
+  id                  String            @id @default(uuid()) @db.Uuid
+  
+  dossierId           String            @map("dossier_id") @db.Uuid
+  dossier             DossierInstance   @relation(fields: [dossierId], references: [id])
+  branchId            String?           @map("branch_id") @db.Uuid
+  branch              DossierBranch?    @relation(fields: [branchId], references: [id])
+  
+  ectdSection         String?           @map("ectd_section")
+  fhirResourceType    String?           @map("fhir_resource_type")
+  fhirResourceId      String?           @map("fhir_resource_id")
+  targetFieldPath     String?           @map("target_field_path")
+  
+  commentType         CommentType       @map("comment_type")
+  visibility          CommentVisibility @default(SPONSOR_ONLY)
+  
+  commentTitle        String            @map("comment_title")
+  commentBody         String            @map("comment_body")
+  supportingReferences Json?            @map("supporting_references") @db.JsonB
+  
+  authorAgency        RegionCode?       @map("author_agency")
+  authorName          String            @map("author_name")
+  authorRole          String?           @map("author_role")
+  authorDivision      String?           @map("author_division")
+  
+  responseRequired    Boolean           @default(false) @map("response_required")
+  responseDeadline    DateTime?         @map("response_deadline") @db.Date
+  
+  isResolved          Boolean           @default(false) @map("is_resolved")
+  resolutionNotes     String?           @map("resolution_notes")
+  resolvedAt          DateTime?         @map("resolved_at") @db.Timestamptz
+  resolvedBy          String?           @map("resolved_by")
+  
+  parentCommentId     String?           @map("parent_comment_id") @db.Uuid
+  parentComment       RegulatoryComment? @relation("CommentThread", fields: [parentCommentId], references: [id])
+  replies             RegulatoryComment[] @relation("CommentThread")
+  
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  metadata            Json              @default("{}") @db.JsonB
+
+  @@index([dossierId])
+  @@index([commentType])
+  @@map("regulatory_comments")
+  @@schema("global_dossier")
+}
+
+model ContentVersion {
+  id                    String           @id @default(uuid()) @db.Uuid
+  
+  dossierId             String           @map("dossier_id") @db.Uuid
+  dossier               DossierInstance  @relation(fields: [dossierId], references: [id])
+  branchId              String?          @map("branch_id") @db.Uuid
+  branch                DossierBranch?   @relation(fields: [branchId], references: [id])
+  
+  ectdSection           String           @map("ectd_section")
+  contentType           String           @map("content_type")
+  
+  versionNumber         String           @map("version_number")
+  previousVersionId     String?          @map("previous_version_id") @db.Uuid
+  
+  contentHash           String           @map("content_hash")
+  contentFhir           Json?            @map("content_fhir") @db.JsonB
+  documentReference     String?          @map("document_reference")
+  
+  changeType            String           @map("change_type")
+  changeReason          String?          @map("change_reason")
+  changeDescription     String?          @map("change_description")
+  
+  aiGenerated           Boolean          @default(false) @map("ai_generated")
+  aiAgentId             String?          @map("ai_agent_id") @db.Uuid
+  aiConfidenceScore     Decimal?         @map("ai_confidence_score") @db.Decimal(5, 4)
+  humanReviewed         Boolean          @default(false) @map("human_reviewed")
+  reviewedBy            String?          @map("reviewed_by") @db.Uuid
+  reviewedAt            DateTime?        @map("reviewed_at") @db.Timestamptz
+  
+  validationStatus      String           @default("PENDING") @map("validation_status")
+  validationErrors      Json             @default("[]") @map("validation_errors") @db.JsonB
+  
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  createdBy             String?          @map("created_by") @db.Uuid
+  metadata              Json             @default("{}") @db.JsonB
+
+  @@index([dossierId])
+  @@index([ectdSection])
+  @@map("content_versions")
+  @@schema("global_dossier")
+}
+
+// =============================================================================
+// MANUFACTURING ENUMS
+// =============================================================================
+
+enum EquipmentStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  CALIBRATION_DUE
+  OUT_OF_SERVICE
+  DECOMMISSIONED
+
+  @@schema("manufacturing")
+}
+
+enum EquipmentClass {
+  BIOREACTOR
+  CHROMATOGRAPHY
+  FILTRATION
+  MIXING
+  FILLING
+  LYOPHILIZATION
+  STERILIZATION
+  INSPECTION
+  PACKAGING
+  ANALYTICAL
+  UTILITY
+  STORAGE
+  TRANSFER
+
+  @@schema("manufacturing")
+}
+
+enum BatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  RELEASED
+  REJECTED
+  QUARANTINE
+
+  @@schema("manufacturing")
+}
+
+enum TwinType {
+  PROCESS
+  EQUIPMENT
+  BATCH
+  FACILITY
+  PRODUCT
+
+  @@schema("manufacturing")
+}
+
+enum TwinStatus {
+  TRAINING
+  VALIDATING
+  VALIDATED
+  ACTIVE
+  DRIFTED
+  SUSPENDED
+  DEPRECATED
+
+  @@schema("manufacturing")
+}
+
+// =============================================================================
+// MANUFACTURING MODELS (Abbreviated - key models only)
+// =============================================================================
+
+model EquipmentRegistry {
+  id                   String          @id @default(uuid()) @db.Uuid
+  
+  equipmentCode        String          @unique @map("equipment_code")
+  equipmentName        String          @map("equipment_name")
+  equipmentClass       EquipmentClass  @map("equipment_class")
+  manufacturer         String
+  modelNumber          String?         @map("model_number")
+  serialNumber         String?         @map("serial_number")
+  
+  status               EquipmentStatus @default(AVAILABLE)
+  
+  mtpManifest          Json?           @map("mtp_manifest") @db.JsonB
+  capabilities         Json            @default("{}") @db.JsonB
+  interfaces           Json            @default("[]") @db.JsonB
+  
+  iqCompleted          Boolean         @default(false) @map("iq_completed")
+  oqCompleted          Boolean         @default(false) @map("oq_completed")
+  pqCompleted          Boolean         @default(false) @map("pq_completed")
+  
+  lastCalibrationDate  DateTime?       @map("last_calibration_date") @db.Date
+  nextCalibrationDue   DateTime?       @map("next_calibration_due") @db.Date
+  
+  fhirDeviceResource   Json?           @map("fhir_device_resource") @db.JsonB
+  
+  orgId                String?         @map("org_id") @db.Uuid
+  
+  metadata             Json            @default("{}") @db.JsonB
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  batchExecutions      BatchExecutionRecord[] @relation("BatchEquipment")
+  qualityTests         QualityTestResult[]
+  digitalTwins         DigitalTwin[]
+
+  @@index([equipmentClass])
+  @@index([status])
+  @@map("equipment_registry")
+  @@schema("manufacturing")
+}
+
+model BatchExecutionRecord {
+  id                   String       @id @default(uuid()) @db.Uuid
+  
+  batchNumber          String       @unique @map("batch_number")
+  productId            String?      @map("product_id") @db.Uuid
+  productName          String       @map("product_name")
+  
+  status               BatchStatus  @default(SCHEDULED)
+  
+  scheduledStart       DateTime?    @map("scheduled_start") @db.Timestamptz
+  actualStart          DateTime?    @map("actual_start") @db.Timestamptz
+  actualEnd            DateTime?    @map("actual_end") @db.Timestamptz
+  
+  plannedQuantity      Decimal?     @map("planned_quantity") @db.Decimal(15, 4)
+  actualQuantity       Decimal?     @map("actual_quantity") @db.Decimal(15, 4)
+  quantityUnit         String?      @map("quantity_unit")
+  yieldPercentage      Decimal?     @map("yield_percentage") @db.Decimal(5, 2)
+  
+  processParameters    Json         @default("{}") @map("process_parameters") @db.JsonB
+  criticalProcessParams Json        @default("{}") @map("critical_process_parameters") @db.JsonB
+  
+  qualityStatus        String       @default("PENDING") @map("quality_status")
+  deviationCount       Int          @default(0) @map("deviation_count")
+  
+  releaseMethod        String?      @map("release_method")
+  releasedAt           DateTime?    @map("released_at") @db.Timestamptz
+  
+  fhirTaskResource     Json?        @map("fhir_task_resource") @db.JsonB
+  
+  orgId                String?      @map("org_id") @db.Uuid
+  
+  metadata             Json         @default("{}") @db.JsonB
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  equipment            EquipmentRegistry[] @relation("BatchEquipment")
+  qualityTests         QualityTestResult[]
+  rtrtPredictions      RtrtPrediction[]
+
+  @@index([productId])
+  @@index([status])
+  @@map("batch_execution_records")
+  @@schema("manufacturing")
+}
+
+model QualityTestResult {
+  id                  String       @id @default(uuid()) @db.Uuid
+  
+  sampleId            String       @map("sample_id")
+  sampleType          String       @map("sample_type")
+  
+  batchId             String?      @map("batch_id") @db.Uuid
+  batch               BatchExecutionRecord? @relation(fields: [batchId], references: [id])
+  
+  testCode            String       @map("test_code")
+  testName            String       @map("test_name")
+  testMethod          String?      @map("test_method")
+  
+  status              String       @default("PENDING")
+  
+  resultValue         Decimal?     @map("result_value")
+  resultString        String?      @map("result_string")
+  resultUnit          String?      @map("result_unit")
+  
+  specLowerLimit      Decimal?     @map("spec_lower_limit")
+  specUpperLimit      Decimal?     @map("spec_upper_limit")
+  
+  disposition         String       @default("PENDING")
+  
+  instrumentId        String?      @map("instrument_id") @db.Uuid
+  instrument          EquipmentRegistry? @relation(fields: [instrumentId], references: [id])
+  
+  fhirObservationResource Json?    @map("fhir_observation_resource") @db.JsonB
+  
+  orgId               String?      @map("org_id") @db.Uuid
+  
+  metadata            Json         @default("{}") @db.JsonB
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  rtrtConfirmation    RtrtPrediction?
+
+  @@index([batchId])
+  @@index([testCode])
+  @@map("quality_test_results")
+  @@schema("manufacturing")
+}
+
+model DigitalTwin {
+  id                    String      @id @default(uuid()) @db.Uuid
+  
+  twinCode              String      @unique @map("twin_code")
+  twinName              String      @map("twin_name")
+  twinType              TwinType    @map("twin_type")
+  versionNumber         String      @default("1.0.0") @map("version_number")
+  
+  status                TwinStatus  @default(TRAINING)
+  
+  targetProductId       String?     @map("target_product_id") @db.Uuid
+  targetEquipmentId     String?     @map("target_equipment_id") @db.Uuid
+  targetEquipment       EquipmentRegistry? @relation(fields: [targetEquipmentId], references: [id])
+  
+  modelFramework        String      @map("model_framework")
+  modelArchitecture     Json?       @map("model_architecture") @db.JsonB
+  modelParameters       Json?       @map("model_parameters") @db.JsonB
+  
+  validationAccuracy    Decimal?    @map("validation_accuracy") @db.Decimal(5, 4)
+  
+  driftDetectionEnabled Boolean     @default(true) @map("drift_detection_enabled")
+  driftThreshold        Decimal     @default(0.05) @map("drift_threshold") @db.Decimal(5, 4)
+  currentDriftScore     Decimal?    @map("current_drift_score") @db.Decimal(5, 4)
+  
+  inputParameters       String[]    @map("input_parameters")
+  outputPredictions     String[]    @map("output_predictions")
+  
+  regulatoryApproved    Boolean     @default(false) @map("regulatory_approved")
+  intendedUse           String?     @map("intended_use")
+  
+  orgId                 String?     @map("org_id") @db.Uuid
+  
+  metadata              Json        @default("{}") @db.JsonB
+  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  rtrtPredictions       RtrtPrediction[]
+
+  @@index([twinType])
+  @@index([status])
+  @@map("digital_twins")
+  @@schema("manufacturing")
+}
+
+model RtrtPrediction {
+  id                    String       @id @default(uuid()) @db.Uuid
+  
+  batchId               String       @map("batch_id") @db.Uuid
+  batch                 BatchExecutionRecord @relation(fields: [batchId], references: [id])
+  batchNumber           String       @map("batch_number")
+  
+  twinId                String       @map("twin_id") @db.Uuid
+  twin                  DigitalTwin  @relation(fields: [twinId], references: [id])
+  twinVersion           String       @map("twin_version")
+  
+  predictedAttribute    String       @map("predicted_attribute")
+  predictedValue        Decimal      @map("predicted_value")
+  predictionUnit        String?      @map("prediction_unit")
+  predictionConfidence  Decimal?     @map("prediction_confidence") @db.Decimal(5, 4)
+  
+  inputParameters       Json         @map("input_parameters") @db.JsonB
+  
+  specLower             Decimal?     @map("spec_lower")
+  specUpper             Decimal?     @map("spec_upper")
+  passesSpecification   Boolean?     @map("passes_specification")
+  
+  status                String       @default("PREDICTED")
+  
+  confirmedByTestId     String?      @unique @map("confirmed_by_test_id") @db.Uuid
+  confirmedByTest       QualityTestResult? @relation(fields: [confirmedByTestId], references: [id])
+  actualValue           Decimal?     @map("actual_value")
+  predictionError       Decimal?     @map("prediction_error")
+  
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  metadata              Json         @default("{}") @db.JsonB
+
+  @@index([batchId])
+  @@index([twinId])
+  @@map("rtrt_predictions")
+  @@schema("manufacturing")
+}
+
+// =============================================================================
+// FEDERATED ML ENUMS
+// =============================================================================
+
+enum FederatedModelType {
+  TOXICITY_PREDICTION
+  SAFETY_SIGNAL_DETECTION
+  ADVERSE_EVENT_PREDICTION
+  DRUG_INTERACTION
+  COUNTERFEIT_DETECTION
+  QUALITY_PREDICTION
+  BIOMARKER_DISCOVERY
+  PATIENT_STRATIFICATION
+
+  @@schema("federated_ml")
+}
+
+enum FederatedModelStatus {
+  INITIALIZING
+  TRAINING
+  VALIDATING
+  DEPLOYED
+  PAUSED
+  DEPRECATED
+
+  @@schema("federated_ml")
+}
+
+enum ParticipantStatus {
+  INVITED
+  ONBOARDING
+  ACTIVE
+  PAUSED
+  WITHDRAWN
+  EXCLUDED
+
+  @@schema("federated_ml")
+}
+
+enum SignalSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@schema("federated_ml")
+}
+
+enum SignalStatus {
+  DETECTED
+  UNDER_REVIEW
+  CONFIRMED
+  REFUTED
+  ACTION_TAKEN
+  CLOSED
+
+  @@schema("federated_ml")
+}
+
+// =============================================================================
+// FEDERATED ML MODELS (Key models)
+// =============================================================================
+
+model FederatedModel {
+  id                       String              @id @default(uuid()) @db.Uuid
+  
+  modelCode                String              @unique @map("model_code")
+  modelName                String              @map("model_name")
+  modelType                FederatedModelType  @map("model_type")
+  versionNumber            String              @default("1.0.0") @map("version_number")
+  
+  status                   FederatedModelStatus @default(INITIALIZING)
+  
+  architectureType         String              @map("architecture_type")
+  architectureConfig       Json                @map("architecture_config") @db.JsonB
+  
+  aggregationMethod        String              @map("aggregation_method")
+  minParticipants          Int                 @default(3) @map("min_participants")
+  
+  differentialPrivacyEnabled Boolean           @default(true) @map("differential_privacy_enabled")
+  epsilonBudget            Decimal             @default(8.0) @map("epsilon_budget") @db.Decimal(6, 4)
+  epsilonConsumed          Decimal             @default(0) @map("epsilon_consumed") @db.Decimal(6, 4)
+  
+  currentRound             Int                 @default(0) @map("current_round")
+  totalRounds              Int?                @map("total_rounds")
+  
+  globalModelMetrics       Json                @default("{}") @map("global_model_metrics") @db.JsonB
+  
+  coordinatorOrgId         String?             @map("coordinator_org_id") @db.Uuid
+  
+  metadata                 Json                @default("{}") @db.JsonB
+  createdAt                DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  participants             FederationParticipant[]
+  gradientUpdates          GradientUpdate[]
+  privacyLedger            PrivacyBudgetLedger[]
+
+  @@index([modelType])
+  @@index([status])
+  @@map("federated_models")
+  @@schema("federated_ml")
+}
+
+model FederationParticipant {
+  id                      String            @id @default(uuid()) @db.Uuid
+  
+  modelId                 String            @map("model_id") @db.Uuid
+  model                   FederatedModel    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  
+  orgId                   String            @map("org_id") @db.Uuid
+  participantAlias        String            @map("participant_alias")
+  
+  status                  ParticipantStatus @default(INVITED)
+  joinedAt                DateTime?         @map("joined_at") @db.Timestamptz
+  
+  localSampleCount        Int?              @map("local_sample_count")
+  dataQualityScore        Decimal?          @map("data_quality_score") @db.Decimal(5, 4)
+  
+  localEpsilonConsumed    Decimal           @default(0) @map("local_epsilon_consumed") @db.Decimal(6, 4)
+  localEpsilonLimit       Decimal?          @map("local_epsilon_limit") @db.Decimal(6, 4)
+  
+  roundsParticipated      Int               @default(0) @map("rounds_participated")
+  lastContributionAt      DateTime?         @map("last_contribution_at") @db.Timestamptz
+  
+  nodeEndpoint            String?           @map("node_endpoint")
+  nodePublicKey           String?           @map("node_public_key")
+  
+  metadata                Json              @default("{}") @db.JsonB
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  gradientUpdates         GradientUpdate[]
+  privacyLedger           PrivacyBudgetLedger[]
+
+  @@unique([modelId, orgId])
+  @@index([status])
+  @@map("federation_participants")
+  @@schema("federated_ml")
+}
+
+model GradientUpdate {
+  id                String             @id @default(uuid()) @db.Uuid
+  
+  modelId           String             @map("model_id") @db.Uuid
+  model             FederatedModel     @relation(fields: [modelId], references: [id])
+  participantId     String             @map("participant_id") @db.Uuid
+  participant       FederationParticipant @relation(fields: [participantId], references: [id])
+  trainingRound     Int                @map("training_round")
+  
+  status            String             @default("SUBMITTED")
+  
+  gradientHash      String             @map("gradient_hash")
+  gradientSizeBytes BigInt?            @map("gradient_size_bytes")
+  gradientStorageRef String?           @map("gradient_storage_ref")
+  
+  epsilonConsumed   Decimal?           @map("epsilon_consumed") @db.Decimal(6, 4)
+  noiseAdded        Boolean            @default(true) @map("noise_added")
+  
+  integrityVerified Boolean?           @map("integrity_verified")
+  gradientNorm      Decimal?           @map("gradient_norm") @db.Decimal(10, 6)
+  
+  submittedAt       DateTime           @default(now()) @map("submitted_at") @db.Timestamptz
+  aggregatedAt      DateTime?          @map("aggregated_at") @db.Timestamptz
+  
+  metadata          Json               @default("{}") @db.JsonB
+
+  @@index([modelId, trainingRound])
+  @@map("gradient_updates")
+  @@schema("federated_ml")
+}
+
+model PrivacyBudgetLedger {
+  id                    String             @id @default(uuid()) @db.Uuid
+  
+  modelId               String             @map("model_id") @db.Uuid
+  model                 FederatedModel     @relation(fields: [modelId], references: [id])
+  participantId         String?            @map("participant_id") @db.Uuid
+  participant           FederationParticipant? @relation(fields: [participantId], references: [id])
+  
+  operation             String
+  roundNumber           Int?               @map("round_number")
+  
+  epsilonConsumed       Decimal            @map("epsilon_consumed") @db.Decimal(6, 4)
+  epsilonBalanceAfter   Decimal            @map("epsilon_balance_after") @db.Decimal(6, 4)
+  
+  justification         String?
+  authorizedBy          String?            @map("authorized_by") @db.Uuid
+  
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([modelId])
+  @@map("privacy_budget_ledger")
+  @@schema("federated_ml")
+}
+
+model SafetySignal {
+  id                        String          @id @default(uuid()) @db.Uuid
+  
+  detectedByModelId         String?         @map("detected_by_model_id") @db.Uuid
+  detectionMethod           String          @map("detection_method")
+  
+  signalCode                String          @map("signal_code")
+  signalName                String          @map("signal_name")
+  signalDescription         String?         @map("signal_description")
+  
+  productId                 String?         @map("product_id") @db.Uuid
+  productName               String?         @map("product_name")
+  activeSubstance           String?         @map("active_substance")
+  
+  meddraPtCode              String?         @map("meddra_pt_code")
+  meddraPtName              String?         @map("meddra_pt_name")
+  meddraSocCode             String?         @map("meddra_soc_code")
+  meddraSocName             String?         @map("meddra_soc_name")
+  
+  severity                  SignalSeverity
+  status                    SignalStatus    @default(DETECTED)
+  
+  proportionalReportingRatio Decimal?       @map("proportional_reporting_ratio") @db.Decimal(8, 4)
+  reportingOddsRatio        Decimal?        @map("reporting_odds_ratio") @db.Decimal(8, 4)
+  caseCount                 Int?            @map("case_count")
+  
+  mlConfidenceScore         Decimal?        @map("ml_confidence_score") @db.Decimal(5, 4)
+  mlFeatureImportance       Json?           @map("ml_feature_importance") @db.JsonB
+  
+  detectedAt                DateTime        @default(now()) @map("detected_at") @db.Timestamptz
+  reviewDeadline            DateTime?       @map("review_deadline") @db.Date
+  
+  assignedTo                String?         @map("assigned_to") @db.Uuid
+  actionTaken               String?         @map("action_taken")
+  regulatoryAuthorityNotified String[]      @map("regulatory_authority_notified")
+  
+  orgId                     String?         @map("org_id") @db.Uuid
+  
+  metadata                  Json            @default("{}") @db.JsonB
+  createdAt                 DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                 DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([productId])
+  @@index([severity])
+  @@index([status])
+  @@map("safety_signals")
+  @@schema("federated_ml")
+}
