@@ -13,8 +13,8 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  schemas    = ["common_standards", "identity", "ectd_v4", "audit"]
-  extensions = [pgcrypto, uuid_ossp]
+  schemas    = ["common_standards", "identity", "ectd_v4", "audit", "product_master", "fhir", "ai"]
+  extensions = [pgcrypto, uuid_ossp, vector]
 }
 
 // =============================================================================
@@ -244,6 +244,9 @@ model Organization {
   ssoTenantId             String?          @map("sso_tenant_id")
   allowedDomains          String[]         @map("allowed_domains")
   dataResidencyRegion     String           @default("aws-us-east-1") @map("data_residency_region")
+  dataResidencyZone       String?          @map("data_residency_zone")
+  neonProjectId           String?          @map("neon_project_id")
+  federatedCoordinator    Boolean          @default(false) @map("federated_coordinator")
   signatureLegalDisclaimer String?         @map("signature_legal_disclaimer")
   part11SignaturesEnabled Boolean          @default(true) @map("part11_signatures_enabled")
   isActive                Boolean          @default(true) @map("is_active")
@@ -257,6 +260,11 @@ model Organization {
   croRelationships        OrgRelationship[] @relation("CroRelationships")
   documents               Document[]
   auditLogs               AuditLog[]
+  products                Product[]
+  fhirResources           FhirResource[]
+  documentEmbeddings      DocumentEmbedding[]
+  searchQueries           SearchQuery[]
+  ragConversations        RagConversation[]
 
   @@map("organizations")
   @@schema("identity")
@@ -282,6 +290,8 @@ model User {
   createdDocuments    Document[]
   auditLogs           AuditLog[]
   signatures          SignatureLog[]
+  searchQueries       SearchQuery[]
+  ragConversations    RagConversation[]
 
   @@index([orgId])
   @@map("users")
@@ -350,6 +360,8 @@ model RegulatorySubmission {
   sponsorContactId      String?                  @map("sponsor_contact_id") @db.Uuid
   ectdVersion           String                   @default("v4.0") @map("ectd_version")
   programId             String?                  @map("program_id") @db.Uuid
+  productId             String?                  @map("product_id") @db.Uuid
+  product               Product?                 @relation(fields: [productId], references: [id])
   lifecycleStatus       LifecycleStatus          @default(PENDING) @map("lifecycle_status")
   initialSubmissionDate DateTime?                @map("initial_submission_date") @db.Date
   approvalDate          DateTime?                @map("approval_date") @db.Date
@@ -366,6 +378,7 @@ model RegulatorySubmission {
   @@index([authorityId])
   @@index([programId])
   @@index([applicationType])
+  @@index([productId])
   @@map("regulatory_submissions")
   @@schema("ectd_v4")
 }
@@ -399,6 +412,7 @@ model SubmissionUnit {
 
   contextElements             ContextOfUseElement[]
   keywordDefinitions          KeywordDefinition[]
+  fhirResources               FhirResource[]
 
   @@unique([submissionId, sequenceNumber])
   @@index([submissionId])
@@ -636,4 +650,675 @@ model SignatureLog {
   @@index([authenticationTimestamp(sort: Desc)])
   @@map("signature_log")
   @@schema("audit")
+}
+
+// =============================================================================
+// 5. PRODUCT MASTER SCHEMA (Migration 057)
+// =============================================================================
+
+enum ProductCategory {
+  PHARMACEUTICAL
+  MEDICAL_DEVICE
+  IVD
+  COMBINATION
+  BIOLOGIC
+  ADVANCED_THERAPY
+  GENERIC
+  BIOSIMILAR
+  OTC
+
+  @@schema("product_master")
+}
+
+enum DevelopmentPhase {
+  DISCOVERY
+  PRECLINICAL
+  IND_ENABLING
+  PHASE_1
+  PHASE_1B_2A
+  PHASE_2
+  PHASE_2B_3
+  PHASE_3
+  NDA_BLA_FILED
+  APPROVED
+  MARKETED
+  POST_MARKET
+  WITHDRAWN
+  DISCONTINUED
+
+  @@schema("product_master")
+}
+
+enum TherapeuticArea {
+  ONCOLOGY
+  CARDIOVASCULAR
+  CNS_NEUROLOGY
+  IMMUNOLOGY
+  INFECTIOUS_DISEASE
+  METABOLIC_ENDOCRINE
+  RESPIRATORY
+  GASTROENTEROLOGY
+  DERMATOLOGY
+  OPHTHALMOLOGY
+  HEMATOLOGY
+  NEPHROLOGY
+  MUSCULOSKELETAL
+  RARE_DISEASE
+  PEDIATRICS
+  WOMENS_HEALTH
+  UROLOGY
+  TRANSPLANT
+  GENE_CELL_THERAPY
+  DIGITAL_THERAPEUTICS
+  DIAGNOSTIC
+  SURGICAL
+  IMPLANTABLE
+  OTHER
+
+  @@schema("product_master")
+}
+
+model Product {
+  id                      String           @id @default(uuid()) @db.Uuid
+  orgId                   String           @map("org_id") @db.Uuid
+  organization            Organization     @relation(fields: [orgId], references: [id])
+  
+  proprietaryName         String           @map("proprietary_name")
+  establishedName         String?          @map("established_name")
+  internalProjectCode     String?          @map("internal_project_code")
+  
+  category                ProductCategory
+  therapeuticArea         TherapeuticArea? @map("therapeutic_area")
+  developmentPhase        DevelopmentPhase? @map("development_phase")
+  
+  primaryIndication       String?          @map("primary_indication")
+  orphanDesignation       Boolean          @default(false) @map("orphan_designation")
+  breakthroughDesignation Boolean          @default(false) @map("breakthrough_designation")
+  fastTrackDesignation    Boolean          @default(false) @map("fast_track_designation")
+  priorityReview          Boolean          @default(false) @map("priority_review")
+  acceleratedApproval     Boolean          @default(false) @map("accelerated_approval")
+  
+  primaryModeOfAction     String?          @map("primary_mode_of_action")
+  leadCenter              String?          @map("lead_center")
+  
+  description             String?
+  isActive                Boolean          @default(true) @map("is_active")
+  metadata                Json             @default("{}") @db.JsonB
+  
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy               String           @default("system") @map("created_by")
+  
+  variants                ProductVariant[]
+  productSubstances       ProductSubstance[]
+  fhirResources           FhirResource[]
+  submissions             RegulatorySubmission[]
+
+  @@unique([orgId, proprietaryName])
+  @@index([orgId])
+  @@index([category])
+  @@index([developmentPhase])
+  @@index([therapeuticArea])
+  @@map("products")
+  @@schema("product_master")
+}
+
+model ProductVariant {
+  id                  String    @id @default(uuid()) @db.Uuid
+  productId           String    @map("product_id") @db.Uuid
+  product             Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  skuNumber           String?   @map("sku_number")
+  ndcCode             String?   @map("ndc_code")
+  gtin                String?
+  
+  targetMarketRegion  String    @map("target_market_region")
+  domainAttributes    Json      @default("{}") @map("domain_attributes") @db.JsonB
+  schemaType          String    @default("GENERIC") @map("schema_type")
+  schemaVersion       String    @default("1.0") @map("schema_version")
+  
+  launchDate          DateTime? @map("launch_date") @db.Date
+  sunsetDate          DateTime? @map("sunset_date") @db.Date
+  isActive            Boolean   @default(true) @map("is_active")
+  
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  udiIdentifiers      UdiIdentifier[]
+  stabilityStudies    StabilityStudy[]
+  batchRecords        BatchRecord[]
+  fhirResources       FhirResource[]
+
+  @@unique([productId, skuNumber, targetMarketRegion])
+  @@index([productId])
+  @@index([targetMarketRegion])
+  @@index([ndcCode])
+  @@index([gtin])
+  @@map("product_variants")
+  @@schema("product_master")
+}
+
+model Substance {
+  id                String    @id @default(uuid()) @db.Uuid
+  
+  substanceId       String    @unique @map("substance_id")
+  substanceName     String    @map("substance_name")
+  substanceType     String    @map("substance_type")
+  
+  casNumber         String?   @map("cas_number")
+  inchiKey          String?   @map("inchi_key")
+  smiles            String?
+  molecularFormula  String?   @map("molecular_formula")
+  molecularWeight   Decimal?  @map("molecular_weight") @db.Decimal(12, 4)
+  
+  uniprotId         String?   @map("uniprot_id")
+  ncbiGeneId        String?   @map("ncbi_gene_id")
+  
+  isControlledSubstance Boolean @default(false) @map("is_controlled_substance")
+  deaSchedule       String?   @map("dea_schedule")
+  
+  sourceAuthority   String    @default("FDA_GSRS") @map("source_authority")
+  metadata          Json      @default("{}") @db.JsonB
+  
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  
+  productSubstances ProductSubstance[]
+
+  @@index([substanceName])
+  @@index([casNumber])
+  @@map("substances")
+  @@schema("product_master")
+}
+
+model ProductSubstance {
+  id                      String    @id @default(uuid()) @db.Uuid
+  productId               String    @map("product_id") @db.Uuid
+  product                 Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  substanceId             String    @map("substance_id") @db.Uuid
+  substance               Substance @relation(fields: [substanceId], references: [id])
+  
+  role                    String    @default("ACTIVE")
+  
+  strengthValue           Decimal?  @map("strength_value") @db.Decimal(12, 6)
+  strengthUnit            String?   @map("strength_unit")
+  strengthBasis           String?   @map("strength_basis")
+  
+  referenceStrengthValue  Decimal?  @map("reference_strength_value") @db.Decimal(12, 6)
+  referenceStrengthUnit   String?   @map("reference_strength_unit")
+  
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([productId, substanceId, role])
+  @@map("product_substances")
+  @@schema("product_master")
+}
+
+model UdiIdentifier {
+  id                      String    @id @default(uuid()) @db.Uuid
+  variantId               String    @map("variant_id") @db.Uuid
+  variant                 ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  
+  udiDi                   String    @map("udi_di")
+  issuingAgency           String    @map("issuing_agency")
+  
+  hasLotBatch             Boolean   @default(false) @map("has_lot_batch")
+  hasSerialNumber         Boolean   @default(false) @map("has_serial_number")
+  hasManufacturingDate    Boolean   @default(false) @map("has_manufacturing_date")
+  hasExpirationDate       Boolean   @default(false) @map("has_expiration_date")
+  
+  brandName               String?   @map("brand_name")
+  versionModelNumber      String?   @map("version_model_number")
+  catalogNumber           String?   @map("catalog_number")
+  companyName             String?   @map("company_name")
+  
+  mriSafety               String?   @map("mri_safety")
+  containsLatex           Boolean?  @map("contains_latex")
+  containsDehp            Boolean?  @map("contains_dehp")
+  
+  isSterile               Boolean   @default(false) @map("is_sterile")
+  sterilizationMethod     String?   @map("sterilization_method")
+  
+  isSingleUse             Boolean?  @map("is_single_use")
+  isImplantable           Boolean   @default(false) @map("is_implantable")
+  
+  hasSoftware             Boolean   @default(false) @map("has_software")
+  softwareVersion         String?   @map("software_version")
+  isSoftwareOnly          Boolean   @default(false) @map("is_software_only")
+  
+  eudamedBasicUdiDi       String?   @map("eudamed_basic_udi_di")
+  gudidPublicStatus       String    @default("DRAFT") @map("gudid_public_status")
+  
+  metadata                Json      @default("{}") @db.JsonB
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([udiDi, issuingAgency])
+  @@index([variantId])
+  @@map("udi_identifiers")
+  @@schema("product_master")
+}
+
+// =============================================================================
+// 6. FHIR SCHEMA (Migration 058)
+// =============================================================================
+
+enum FhirResourceType {
+  MedicinalProductDefinition
+  Ingredient
+  SubstanceDefinition
+  ManufacturedItemDefinition
+  AdministrableProductDefinition
+  PackagedProductDefinition
+  RegulatedAuthorization
+  Organization
+  Practitioner
+  PractitionerRole
+  Location
+  HealthcareService
+  Observation
+  DiagnosticReport
+  Specimen
+  Device
+  DeviceDefinition
+  DocumentReference
+  PlanDefinition
+  ActivityDefinition
+  ResearchStudy
+  ResearchSubject
+  AdverseEvent
+  MedicationRequest
+  MedicationAdministration
+  Bundle
+  Binary
+
+  @@schema("fhir")
+}
+
+enum FhirValidationStatus {
+  DRAFT
+  PENDING_VALIDATION
+  VALID
+  INVALID
+  WARNING
+  SUPERSEDED
+
+  @@schema("fhir")
+}
+
+enum FhirPublicationStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+  UNKNOWN
+
+  @@schema("fhir")
+}
+
+model FhirResource {
+  id                  String               @id @default(uuid()) @db.Uuid
+  
+  resourceType        FhirResourceType     @map("resource_type")
+  resourceId          String               @map("resource_id")
+  versionId           Int                  @default(1) @map("version_id")
+  
+  orgId               String               @map("org_id") @db.Uuid
+  organization        Organization         @relation(fields: [orgId], references: [id])
+  
+  fhirJson            Json                 @map("fhir_json") @db.JsonB
+  
+  profileUrl          String?              @map("profile_url")
+  profileVersion      String?              @map("profile_version")
+  
+  validationStatus    FhirValidationStatus @default(DRAFT) @map("validation_status")
+  validationErrors    Json?                @map("validation_errors") @db.JsonB
+  validatedAt         DateTime?            @map("validated_at") @db.Timestamptz
+  validatedBy         String?              @map("validated_by")
+  
+  publicationStatus   FhirPublicationStatus @default(DRAFT) @map("publication_status")
+  
+  submissionUnitId    String?              @map("submission_unit_id") @db.Uuid
+  submissionUnit      SubmissionUnit?      @relation(fields: [submissionUnitId], references: [id])
+  
+  productId           String?              @map("product_id") @db.Uuid
+  product             Product?             @relation(fields: [productId], references: [id])
+  productVariantId    String?              @map("product_variant_id") @db.Uuid
+  productVariant      ProductVariant?      @relation(fields: [productVariantId], references: [id])
+  
+  lastModified        DateTime             @default(now()) @map("last_modified") @db.Timestamptz
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  createdBy           String               @default("system") @map("created_by")
+  
+  resourceHistory     FhirResourceHistory[]
+  stabilityStudies    StabilityStudy[]
+
+  @@unique([orgId, resourceType, resourceId, versionId])
+  @@index([resourceType])
+  @@index([orgId])
+  @@index([productId])
+  @@index([submissionUnitId])
+  @@index([validationStatus])
+  @@map("resources")
+  @@schema("fhir")
+}
+
+model FhirResourceHistory {
+  id          String    @id @default(uuid()) @db.Uuid
+  resourceId  String    @map("resource_id") @db.Uuid
+  resource    FhirResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  versionId   Int       @map("version_id")
+  fhirJson    Json      @map("fhir_json") @db.JsonB
+  
+  changeType  String    @map("change_type")
+  changedBy   String?   @map("changed_by")
+  changedAt   DateTime  @default(now()) @map("changed_at") @db.Timestamptz
+
+  @@index([resourceId])
+  @@index([resourceId, versionId])
+  @@map("resource_history")
+  @@schema("fhir")
+}
+
+model StabilityStudy {
+  id                  String    @id @default(uuid()) @db.Uuid
+  resourceId          String    @map("resource_id") @db.Uuid
+  resource            FhirResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  studyId             String    @map("study_id")
+  studyName           String    @map("study_name")
+  studyType           String    @map("study_type")
+  
+  storageCondition    String    @map("storage_condition")
+  containerClosure    String?   @map("container_closure")
+  
+  productVariantId    String?   @map("product_variant_id") @db.Uuid
+  productVariant      ProductVariant? @relation(fields: [productVariantId], references: [id])
+  batchNumber         String?   @map("batch_number")
+  
+  studyStartDate      DateTime? @map("study_start_date") @db.Date
+  studyEndDate        DateTime? @map("study_end_date") @db.Date
+  
+  specificationMet    Boolean?  @map("specification_met")
+  shelfLifeMonths     Int?      @map("shelf_life_months")
+  
+  metadata            Json      @default("{}") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  
+  observations        StabilityObservation[]
+
+  @@index([productVariantId])
+  @@index([studyType])
+  @@map("stability_studies")
+  @@schema("fhir")
+}
+
+model StabilityObservation {
+  id                  String    @id @default(uuid()) @db.Uuid
+  studyId             String    @map("study_id") @db.Uuid
+  study               StabilityStudy @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  
+  timePointMonths     Int       @map("time_point_months")
+  timePointDate       DateTime? @map("time_point_date") @db.Date
+  
+  testName            String    @map("test_name")
+  testMethod          String?   @map("test_method")
+  
+  resultValue         Decimal?  @map("result_value") @db.Decimal(12, 6)
+  resultUnit          String?   @map("result_unit")
+  resultText          String?   @map("result_text")
+  
+  specificationLower  Decimal?  @map("specification_lower") @db.Decimal(12, 6)
+  specificationUpper  Decimal?  @map("specification_upper") @db.Decimal(12, 6)
+  specificationUnit   String?   @map("specification_unit")
+  
+  withinSpecification Boolean?  @map("within_specification")
+  outOfTrend          Boolean   @default(false) @map("out_of_trend")
+  
+  metadata            Json      @default("{}") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([studyId])
+  @@index([studyId, timePointMonths])
+  @@map("stability_observations")
+  @@schema("fhir")
+}
+
+model BatchRecord {
+  id                  String    @id @default(uuid()) @db.Uuid
+  
+  batchNumber         String    @map("batch_number")
+  lotNumber           String?   @map("lot_number")
+  
+  productVariantId    String    @map("product_variant_id") @db.Uuid
+  productVariant      ProductVariant @relation(fields: [productVariantId], references: [id])
+  
+  manufacturingDate   DateTime? @map("manufacturing_date") @db.Date
+  expirationDate      DateTime? @map("expiration_date") @db.Date
+  
+  batchSizeValue      Decimal?  @map("batch_size_value") @db.Decimal(12, 4)
+  batchSizeUnit       String?   @map("batch_size_unit")
+  theoreticalYield    Decimal?  @map("theoretical_yield") @db.Decimal(12, 4)
+  actualYield         Decimal?  @map("actual_yield") @db.Decimal(12, 4)
+  yieldPercent        Decimal?  @map("yield_percent") @db.Decimal(5, 2)
+  
+  qaReleaseStatus     String    @default("PENDING") @map("qa_release_status")
+  qaReleaseDate       DateTime? @map("qa_release_date") @db.Date
+  qaReleasedBy        String?   @map("qa_released_by")
+  
+  batchType           String?   @map("batch_type")
+  usedInSubmission    Boolean   @default(false) @map("used_in_submission")
+  
+  metadata            Json      @default("{}") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([productVariantId, batchNumber])
+  @@index([productVariantId])
+  @@index([batchNumber])
+  @@index([qaReleaseStatus])
+  @@map("batch_records")
+  @@schema("fhir")
+}
+
+// =============================================================================
+// 7. AI SCHEMA (Migration 059)
+// =============================================================================
+
+enum EmbeddingModel {
+  OPENAI_ADA_002
+  OPENAI_3_SMALL
+  OPENAI_3_LARGE
+  COHERE_EMBED_V3
+  VOYAGE_2
+  BGE_LARGE
+  E5_LARGE
+  INSTRUCTOR_XL
+  KIMI_EMBEDDING
+  CUSTOM
+
+  @@schema("ai")
+}
+
+model AiEmbeddingModel {
+  id              String         @id
+  modelType       EmbeddingModel @map("model_type")
+  displayName     String         @map("display_name")
+  provider        String
+  dimensions      Int
+  maxTokens       Int?           @map("max_tokens")
+  apiEndpoint     String?        @map("api_endpoint")
+  isActive        Boolean        @default(true) @map("is_active")
+  isDefault       Boolean        @default(false) @map("is_default")
+  costPer1kTokens Decimal?       @map("cost_per_1k_tokens") @db.Decimal(10, 6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  
+  documentEmbeddings DocumentEmbedding[]
+  searchQueries      SearchQuery[]
+
+  @@map("embedding_models")
+  @@schema("ai")
+}
+
+model DocumentEmbedding {
+  id                    String    @id @default(uuid()) @db.Uuid
+  
+  sourceType            String    @map("source_type")
+  sourceId              String?   @map("source_id") @db.Uuid
+  sourceUrl             String?   @map("source_url")
+  
+  orgId                 String?   @map("org_id") @db.Uuid
+  organization          Organization? @relation(fields: [orgId], references: [id])
+  
+  chunkIndex            Int       @default(0) @map("chunk_index")
+  chunkText             String    @map("chunk_text")
+  chunkTokens           Int?      @map("chunk_tokens")
+  
+  modelId               String?   @map("model_id")
+  model                 AiEmbeddingModel? @relation(fields: [modelId], references: [id])
+  
+  // Note: vector columns handled at SQL level, not in Prisma
+  // embedding_1536, embedding_1024, embedding_3072
+  
+  documentType          String?   @map("document_type")
+  ectdModule            String?   @map("ectd_module")
+  regulatoryAuthority   String?   @map("regulatory_authority")
+  therapeuticArea       String?   @map("therapeutic_area")
+  
+  embeddingQualityScore Decimal?  @map("embedding_quality_score") @db.Decimal(5, 4)
+  
+  embeddedAt            DateTime  @default(now()) @map("embedded_at") @db.Timestamptz
+  sourceModifiedAt      DateTime? @map("source_modified_at") @db.Timestamptz
+  
+  contentHash           String    @map("content_hash")
+
+  @@unique([sourceType, sourceId, chunkIndex, modelId])
+  @@index([sourceType, sourceId])
+  @@index([orgId])
+  @@index([ectdModule])
+  @@index([regulatoryAuthority])
+  @@index([contentHash])
+  @@map("document_embeddings")
+  @@schema("ai")
+}
+
+model RegulatoryKnowledge {
+  id                  String    @id @default(uuid()) @db.Uuid
+  
+  documentCode        String    @map("document_code")
+  documentTitle       String    @map("document_title")
+  documentVersion     String?   @map("document_version")
+  publicationDate     DateTime? @map("publication_date") @db.Date
+  
+  issuingAuthority    String    @map("issuing_authority")
+  documentType        String    @map("document_type")
+  
+  applicableDomains   String[]  @map("applicable_domains")
+  applicableModules   String[]  @map("applicable_modules")
+  keywords            String[]
+  
+  sourceUrl           String?   @map("source_url")
+  sourcePdfUrl        String?   @map("source_pdf_url")
+  
+  fullText            String?   @map("full_text")
+  
+  isCurrent           Boolean   @default(true) @map("is_current")
+  supersededBy        String?   @map("superseded_by")
+  
+  metadata            Json      @default("{}") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([documentCode])
+  @@index([issuingAuthority])
+  @@map("regulatory_knowledge")
+  @@schema("ai")
+}
+
+model SearchQuery {
+  id                  String    @id @default(uuid()) @db.Uuid
+  
+  queryText           String    @map("query_text")
+  // queryEmbedding handled at SQL level
+  modelId             String?   @map("model_id")
+  model               AiEmbeddingModel? @relation(fields: [modelId], references: [id])
+  
+  userId              String?   @map("user_id") @db.Uuid
+  user                User?     @relation(fields: [userId], references: [id])
+  orgId               String?   @map("org_id") @db.Uuid
+  organization        Organization? @relation(fields: [orgId], references: [id])
+  sessionId           String?   @map("session_id")
+  
+  searchType          String    @default("SEMANTIC") @map("search_type")
+  topK                Int       @default(10) @map("top_k")
+  similarityThreshold Decimal?  @map("similarity_threshold") @db.Decimal(5, 4)
+  filtersApplied      Json?     @map("filters_applied") @db.JsonB
+  
+  resultCount         Int?      @map("result_count")
+  resultIds           String[]  @map("result_ids") @db.Uuid
+  resultScores        Decimal[] @map("result_scores")
+  
+  executionTimeMs     Int?      @map("execution_time_ms")
+  
+  userRating          Int?      @map("user_rating")
+  userFeedback        String?   @map("user_feedback")
+  
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([createdAt(sort: Desc)])
+  @@map("search_queries")
+  @@schema("ai")
+}
+
+model RagConversation {
+  id            String    @id @default(uuid()) @db.Uuid
+  
+  userId        String?   @map("user_id") @db.Uuid
+  user          User?     @relation(fields: [userId], references: [id])
+  orgId         String?   @map("org_id") @db.Uuid
+  organization  Organization? @relation(fields: [orgId], references: [id])
+  
+  title         String?
+  contextType   String?   @map("context_type")
+  contextId     String?   @map("context_id") @db.Uuid
+  
+  isActive      Boolean   @default(true) @map("is_active")
+  messageCount  Int       @default(0) @map("message_count")
+  
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastMessageAt DateTime  @default(now()) @map("last_message_at") @db.Timestamptz
+  
+  messages      RagMessage[]
+
+  @@index([userId])
+  @@index([orgId])
+  @@map("rag_conversations")
+  @@schema("ai")
+}
+
+model RagMessage {
+  id              String    @id @default(uuid()) @db.Uuid
+  conversationId  String    @map("conversation_id") @db.Uuid
+  conversation    RagConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  role            String
+  content         String
+  
+  retrievedChunks String[]  @map("retrieved_chunks") @db.Uuid
+  retrievalScores Decimal[] @map("retrieval_scores")
+  
+  modelUsed       String?   @map("model_used")
+  promptTokens    Int?      @map("prompt_tokens")
+  completionTokens Int?     @map("completion_tokens")
+  
+  isHelpful       Boolean?  @map("is_helpful")
+  userCorrection  String?   @map("user_correction")
+  
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([conversationId])
+  @@map("rag_messages")
+  @@schema("ai")
 }
