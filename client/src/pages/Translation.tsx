@@ -147,14 +147,15 @@ export default function Translation() {
       setTranslatedText(response.translatedText);
       toast({
         title: "Translation Complete",
-        description: `Translated to ${getLanguageName(response.targetLanguage);
+        description: `Translated to ${getLanguageName(response.targetLanguage)}`,
+      });
     },
     onError: (error) => {
       toast({
         title: "Translation Failed",
         description: error.message || "Failed to translate text",
         variant: "destructive",
-        });
+      });
     },
   });
 

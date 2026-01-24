@@ -221,14 +221,15 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
 
       toast({
         title: "Download Complete",
-        description: `Report data has been downloaded as ${format.toUpperCase();
+        description: `Report data has been downloaded as ${format.toUpperCase()}`,
+      });
     } catch (error) {
       console.error('Error downloading report data:', error);
       toast({
         title: "Download Failed",
         description: "There was an error downloading the report data. Please try again.",
         variant: "destructive"
-        });
+      });
     }
   };
 

@@ -114,7 +114,8 @@ export default function TrialSuccessPredictorV2() {
       
       toast({
         title: "File uploaded",
-        description: `${file.name} (${Math.round(file.size / 1024);
+        description: `${file.name} (${Math.round(file.size / 1024)} KB)`,
+      });
     }
   };
 

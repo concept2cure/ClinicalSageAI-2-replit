@@ -32,6 +32,10 @@ export default function CSRDetail() {
       } catch (error) {
         console.error('Error fetching CSR details:', error);
         toast({
+          title: "Error",
+          description: "Failed to load CSR details",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }

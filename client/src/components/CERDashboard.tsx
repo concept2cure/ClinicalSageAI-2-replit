@@ -243,14 +243,15 @@ function EndpointPanel({ type }: EndpointPanelProps) {
       
       toast({
         title: "Report Generated",
-        description: `Successfully generated the ${type.toUpperCase();
+        description: `Successfully generated the ${type.toUpperCase()} report`,
+      });
     } catch (e: any) {
       setError(e.message);
       toast({
         title: "Error",
         description: e.message || "Failed to generate report",
         variant: "destructive"
-        });
+      });
     } finally {
       setLoading(false);
     }

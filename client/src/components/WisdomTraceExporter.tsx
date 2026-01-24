@@ -40,7 +40,8 @@ export default function WisdomTraceExporter({
       // Show success message
       toast({
         title: "Export Successful",
-        description: `Wisdom trace "${traceName}" has been exported as ${exportFormat.toUpperCase();
+        description: `Wisdom trace "${traceName}" has been exported as ${exportFormat.toUpperCase()}`,
+      });
       
       // For PDF/HTML, this would trigger a download in a real implementation
       if (exportFormat === 'pdf' || exportFormat === 'html') {
@@ -55,7 +56,7 @@ export default function WisdomTraceExporter({
         title: "Export Failed",
         description: "There was an error exporting the wisdom trace. Please try again.",
         variant: "destructive",
-        });
+      });
       console.error("Export error:", error);
     } finally {
       setIsExporting(false);

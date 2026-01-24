@@ -74,14 +74,15 @@ export default function TrialSuccessPredictor() {
       
       toast({
         title: "Prediction Complete",
-        description: `Success probability: ${(data.success_probability * 100);
+        description: `Success probability: ${(data.success_probability * 100).toFixed(1)}%`,
+      });
     },
     onError: (error) => {
       toast({
         title: "Prediction Failed",
         description: "There was an error running the prediction model. Please try again.",
         variant: "destructive",
-        });
+      });
       console.error('Prediction error:', error);
     },
   });

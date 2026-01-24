@@ -125,21 +125,24 @@ const EnhancedCERDashboardPage: React.FC = () => {
       if (selectedNdcCodes.includes(ndcCode)) {
         toast({
           title: "Already Selected",
-          description: `${foundProduct.name} (${ndcCode});
+          description: `${foundProduct.name} (${ndcCode}) is already selected`,
+          variant: "destructive"
+        });
       } else {
         setSelectedNdcCodes(prev => [...prev, ndcCode]);
         setNdcCode('');
         
         toast({
           title: "Product Added",
-          description: `${foundProduct.name} (${ndcCode});
+          description: `${foundProduct.name} (${ndcCode}) added to selection`,
+        });
       }
     } else {
       toast({
         title: "Product Not Found",
         description: "The NDC or device code you entered could not be found.",
         variant: "destructive"
-        });
+      });
     }
   }, [ndcCode, selectedNdcCodes, toast]);
 
