@@ -17,3 +17,20 @@ __pycache__/
 kimi-cli/
 *.pyc
 __pycache__/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Build outputs
+coverage/
+*.log
+npm-debug.log*
+.turbo
+.env.local
+
+# OS
+Thumbs.db
