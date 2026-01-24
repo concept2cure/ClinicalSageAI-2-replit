@@ -142,6 +142,126 @@ enum SignatureMeaning {
 }
 
 // =============================================================================
+// GLSOS ENHANCEMENT ENUMS (Migration 060)
+// =============================================================================
+
+enum ProductTypeGranular {
+  // Small Molecules (CDER)
+  SMALL_MOLECULE_NME
+  SMALL_MOLECULE_GENERIC
+  SMALL_MOLECULE_OTC
+  // Biologics (CBER/CDER)
+  BIOLOGIC_THERAPEUTIC
+  BIOLOGIC_VACCINE
+  BIOLOGIC_BLOOD_PRODUCT
+  BIOLOGIC_GENE_THERAPY
+  BIOLOGIC_CELL_THERAPY
+  BIOSIMILAR
+  // Medical Devices (CDRH)
+  DEVICE_CLASS_I
+  DEVICE_CLASS_II
+  DEVICE_CLASS_III
+  DEVICE_DE_NOVO
+  // In Vitro Diagnostics
+  IVD_CLASS_A
+  IVD_CLASS_B
+  IVD_CLASS_C
+  IVD_CLASS_D
+  IVD_CLIA_WAIVED
+  IVD_CLIA_MODERATE
+  IVD_CLIA_HIGH
+  // Combination Products (OCP)
+  COMBINATION_DRUG_DEVICE
+  COMBINATION_DEVICE_DRUG
+  COMBINATION_BIOLOGIC_DEVICE
+  // Software (CDRH)
+  SAMD_CLASS_I
+  SAMD_CLASS_II
+  SAMD_CLASS_III
+  DIGITAL_THERAPEUTIC
+
+  @@schema("product_master")
+}
+
+enum RegulatoryDomain {
+  // FDA Centers
+  CDER
+  CBER
+  CDRH
+  OCP
+  CVM
+  CFSAN
+  // EMA Committees
+  EMA_CHMP
+  EMA_CVMP
+  EMA_CAT
+  EMA_PRAC
+  // EU Device Bodies
+  EU_NOTIFIED_BODY
+  EU_EUDAMED
+  // Other Regions
+  PMDA_DRUGS
+  PMDA_DEVICES
+  HEALTH_CANADA
+  TGA_AUSTRALIA
+  ANVISA_BRAZIL
+  NMPA_CHINA
+
+  @@schema("product_master")
+}
+
+enum SubmissionFormat {
+  // eCTD
+  ECTD_V3_2_2
+  ECTD_V4_0
+  // Medical Device
+  ESTAR_510K
+  ESTAR_PMA
+  ESTAR_DE_NOVO
+  EUDAMED_XML
+  STED
+  // Structured Data
+  FHIR_PQ_CMC
+  FHIR_SPL
+  HL7_RPS
+  // Legacy
+  NON_ECTD_PDF
+  PAPER
+
+  @@schema("ectd_v4")
+}
+
+enum ProductLifecycleStatus {
+  // Pre-Market
+  CONCEPT
+  DISCOVERY
+  PRECLINICAL
+  IND_FILED
+  CLINICAL_PHASE_1
+  CLINICAL_PHASE_2
+  CLINICAL_PHASE_3
+  CLINICAL_COMPLETE
+  // Regulatory Review
+  NDA_BLA_FILED
+  MAA_FILED
+  FILED_510K
+  PMA_FILED
+  REVIEW_COMPLETE
+  // Post-Market
+  APPROVED
+  MARKETED
+  LIFECYCLE_MANAGEMENT
+  // Withdrawal/End
+  SUSPENDED
+  WITHDRAWN_SAFETY
+  WITHDRAWN_COMMERCIAL
+  DISCONTINUED
+  SUNSET
+
+  @@schema("product_master")
+}
+
+// =============================================================================
 // 1. DOMAIN REGISTRY (common_standards schema)
 // =============================================================================
 
@@ -250,6 +370,16 @@ model Organization {
   signatureLegalDisclaimer String?         @map("signature_legal_disclaimer")
   part11SignaturesEnabled Boolean          @default(true) @map("part11_signatures_enabled")
   isActive                Boolean          @default(true) @map("is_active")
+  // GLSOS Enhancements - Federation Routing
+  homeRegion              String           @default("US") @map("home_region")
+  routingPriority         String[]         @default(["US"]) @map("routing_priority")
+  requiresLocalAgent      Boolean          @default(false) @map("requires_local_agent")
+  localAgentOrgId         String?          @map("local_agent_org_id") @db.Uuid
+  localAgentOrg           Organization?    @relation("LocalAgentRelation", fields: [localAgentOrgId], references: [id])
+  clientOrgsAsAgent       Organization[]   @relation("LocalAgentRelation")
+  dataProcessingAgreementDate DateTime?    @map("data_processing_agreement_date") @db.Date
+  gdprCompliant           Boolean          @default(false) @map("gdpr_compliant")
+  hipaaCompliant          Boolean          @default(false) @map("hipaa_compliant")
   createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
   metadata                Json             @default("{}") @db.JsonB
@@ -363,6 +493,15 @@ model RegulatorySubmission {
   productId             String?                  @map("product_id") @db.Uuid
   product               Product?                 @relation(fields: [productId], references: [id])
   lifecycleStatus       LifecycleStatus          @default(PENDING) @map("lifecycle_status")
+  // GLSOS Enhancements - Submission Format & KASA
+  submissionFormat      SubmissionFormat         @default(ECTD_V4_0) @map("submission_format")
+  isFhirEnabled         Boolean                  @default(false) @map("is_fhir_enabled")
+  kasaEligible          Boolean                  @default(false) @map("kasa_eligible")
+  primaryContactId      String?                  @map("primary_contact_id") @db.Uuid
+  regulatoryAgentId     String?                  @map("regulatory_agent_id") @db.Uuid
+  estimatedReviewMonths Int?                     @map("estimated_review_months")
+  pdufaGoalDate         DateTime?                @map("pdufa_goal_date") @db.Date
+  mdufaGoalDate         DateTime?                @map("mdufa_goal_date") @db.Date
   initialSubmissionDate DateTime?                @map("initial_submission_date") @db.Date
   approvalDate          DateTime?                @map("approval_date") @db.Date
   internalTrackingNumber String?                 @map("internal_tracking_number")
@@ -379,6 +518,8 @@ model RegulatorySubmission {
   @@index([programId])
   @@index([applicationType])
   @@index([productId])
+  @@index([submissionFormat])
+  @@index([kasaEligible])
   @@map("regulatory_submissions")
   @@schema("ectd_v4")
 }
@@ -517,6 +658,7 @@ model ContextOfUseElement {
   // Relationships
   sourceRelationships     CoURelationship[]   @relation("SourceCou")
   targetRelationships     CoURelationship[]   @relation("TargetCou")
+  linkedFhirResources     FhirResource[]      // GLSOS: FHIR resources linked to this CoU
 
   @@index([submissionUnitId])
   @@index([contextGroupCode])
@@ -719,35 +861,45 @@ enum TherapeuticArea {
 }
 
 model Product {
-  id                      String           @id @default(uuid()) @db.Uuid
-  orgId                   String           @map("org_id") @db.Uuid
-  organization            Organization     @relation(fields: [orgId], references: [id])
+  id                      String                   @id @default(uuid()) @db.Uuid
+  orgId                   String                   @map("org_id") @db.Uuid
+  organization            Organization             @relation(fields: [orgId], references: [id])
   
-  proprietaryName         String           @map("proprietary_name")
-  establishedName         String?          @map("established_name")
-  internalProjectCode     String?          @map("internal_project_code")
+  proprietaryName         String                   @map("proprietary_name")
+  establishedName         String?                  @map("established_name")
+  internalProjectCode     String?                  @map("internal_project_code")
   
   category                ProductCategory
-  therapeuticArea         TherapeuticArea? @map("therapeutic_area")
-  developmentPhase        DevelopmentPhase? @map("development_phase")
+  therapeuticArea         TherapeuticArea?         @map("therapeutic_area")
+  developmentPhase        DevelopmentPhase?        @map("development_phase")
   
-  primaryIndication       String?          @map("primary_indication")
-  orphanDesignation       Boolean          @default(false) @map("orphan_designation")
-  breakthroughDesignation Boolean          @default(false) @map("breakthrough_designation")
-  fastTrackDesignation    Boolean          @default(false) @map("fast_track_designation")
-  priorityReview          Boolean          @default(false) @map("priority_review")
-  acceleratedApproval     Boolean          @default(false) @map("accelerated_approval")
+  // GLSOS Enhancements - Granular Product Classification
+  productTypeGranular     ProductTypeGranular?     @map("product_type_granular")
+  regulatoryDomain        RegulatoryDomain?        @map("regulatory_domain")
+  lifecycleStatus         ProductLifecycleStatus   @default(CONCEPT) @map("lifecycle_status")
+  requiresClinicalTrials  Boolean                  @default(true) @map("requires_clinical_trials")
+  estimatedApprovalDate   DateTime?                @map("estimated_approval_date") @db.Date
+  actualApprovalDate      DateTime?                @map("actual_approval_date") @db.Date
+  firstMarketDate         DateTime?                @map("first_market_date") @db.Date
+  patentExpiryDate        DateTime?                @map("patent_expiry_date") @db.Date
   
-  primaryModeOfAction     String?          @map("primary_mode_of_action")
-  leadCenter              String?          @map("lead_center")
+  primaryIndication       String?                  @map("primary_indication")
+  orphanDesignation       Boolean                  @default(false) @map("orphan_designation")
+  breakthroughDesignation Boolean                  @default(false) @map("breakthrough_designation")
+  fastTrackDesignation    Boolean                  @default(false) @map("fast_track_designation")
+  priorityReview          Boolean                  @default(false) @map("priority_review")
+  acceleratedApproval     Boolean                  @default(false) @map("accelerated_approval")
+  
+  primaryModeOfAction     String?                  @map("primary_mode_of_action")
+  leadCenter              String?                  @map("lead_center")
   
   description             String?
-  isActive                Boolean          @default(true) @map("is_active")
-  metadata                Json             @default("{}") @db.JsonB
+  isActive                Boolean                  @default(true) @map("is_active")
+  metadata                Json                     @default("{}") @db.JsonB
   
-  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
-  createdBy               String           @default("system") @map("created_by")
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy               String                   @default("system") @map("created_by")
   
   variants                ProductVariant[]
   productSubstances       ProductSubstance[]
@@ -759,6 +911,9 @@ model Product {
   @@index([category])
   @@index([developmentPhase])
   @@index([therapeuticArea])
+  @@index([lifecycleStatus])
+  @@index([regulatoryDomain])
+  @@index([productTypeGranular])
   @@map("products")
   @@schema("product_master")
 }
@@ -980,6 +1135,13 @@ model FhirResource {
   submissionUnitId    String?              @map("submission_unit_id") @db.Uuid
   submissionUnit      SubmissionUnit?      @relation(fields: [submissionUnitId], references: [id])
   
+  // GLSOS Enhancements - eCTD Node Linking & PDF Generation
+  linkedCouId         String?              @map("linked_cou_id") @db.Uuid
+  linkedCou           ContextOfUseElement? @relation(fields: [linkedCouId], references: [id])
+  isPrimarySource     Boolean              @default(true) @map("is_primary_source")
+  generatesPdf        Boolean              @default(false) @map("generates_pdf")
+  pdfTemplateId       String?              @map("pdf_template_id")
+  
   productId           String?              @map("product_id") @db.Uuid
   product             Product?             @relation(fields: [productId], references: [id])
   productVariantId    String?              @map("product_variant_id") @db.Uuid
@@ -998,6 +1160,7 @@ model FhirResource {
   @@index([productId])
   @@index([submissionUnitId])
   @@index([validationStatus])
+  @@index([linkedCouId])
   @@map("resources")
   @@schema("fhir")
 }
