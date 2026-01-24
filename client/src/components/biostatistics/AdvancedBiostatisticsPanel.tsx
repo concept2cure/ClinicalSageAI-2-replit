@@ -938,28 +938,17 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
     },
     onSuccess: (data) => {
       setAdaptiveTrialResult(data);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Adaptive Trial Simulation Complete",
         description: "Results are now available below.",
-      })
-  console.log('Toast would show:', {
-        title: "Adaptive Trial Simulation Complete",
-        description: "Results are now available below.",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Simulation Failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Simulation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        });
     },
   });
   
@@ -970,28 +959,17 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
     },
     onSuccess: (data) => {
       setBayesianPredictionResult(data);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Bayesian Calculation Complete",
         description: "Results are now available below.",
-      })
-  console.log('Toast would show:', {
-        title: "Bayesian Calculation Complete",
-        description: "Results are now available below.",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Calculation Failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Calculation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        });
     },
   });
   
@@ -1002,28 +980,17 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
     },
     onSuccess: (data) => {
       setNonInferiorityResult(data);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Sample Size Calculation Complete",
         description: "Results are now available below.",
-      })
-  console.log('Toast would show:', {
-        title: "Sample Size Calculation Complete",
-        description: "Results are now available below.",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Calculation Failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Calculation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        });
     },
   });
   
@@ -1034,28 +1001,17 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
     },
     onSuccess: (data) => {
       setSurvivalSimulationResult(data);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Survival Simulation Complete",
         description: "Results are now available below.",
-      })
-  console.log('Toast would show:', {
-        title: "Survival Simulation Complete",
-        description: "Results are now available below.",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Simulation Failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Simulation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        });
     },
   });
   
@@ -1066,28 +1022,17 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
     },
     onSuccess: (data) => {
       setMamsSimulationResult(data);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "MAMS Trial Simulation Complete",
         description: "Results are now available below.",
-      })
-  console.log('Toast would show:', {
-        title: "MAMS Trial Simulation Complete",
-        description: "Results are now available below.",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Simulation Failed",
         description: error.message,
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Simulation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        });
     },
   });
   
@@ -1108,17 +1053,11 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
         throw new Error("Failed to generate report");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Report Generation Failed",
         description: "There was a problem generating the regulatory report.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Report Generation Failed",
-        description: "There was a problem generating the regulatory report.",
-        variant: "destructive",
-      });
+        });
     }
   };
 

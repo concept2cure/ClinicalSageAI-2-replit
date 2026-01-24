@@ -114,17 +114,11 @@ export default function ReportsAnalytics() {
       setReports(data);
     } catch (err) {
       setError("Failed to load reports. Please try again.");
-      // toast call replaced
-  // Original: toast({
+      toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to load reports. Please try again.",
-      })
-  console.log('Toast would show:', {
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load reports. Please try again.",
-      });
+        });
     } finally {
       setIsLoading(false);
     }

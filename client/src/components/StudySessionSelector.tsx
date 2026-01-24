@@ -101,31 +101,20 @@ export default function StudySessionSelector({
       return await res.json();
     },
     onSuccess: (newSession) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Study Session Created',
         description: `"${newSession.name}" has been created successfully.`,
-      })
-  console.log('Toast would show:', {
-        title: 'Study Session Created',
-        description: `"${newSession.name}" has been created successfully.`,
-      });
+        });
       queryClient.invalidateQueries({ queryKey: ['/api/study-sessions'] });
       setIsNewSessionDialogOpen(false);
       onSessionChange(newSession);
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Failed to Create Session',
         description: error.message,
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Failed to Create Session',
-        description: error.message,
-        variant: 'destructive',
-      });
+        });
     }
   });
 
@@ -137,17 +126,11 @@ export default function StudySessionSelector({
   // Handle creating new session
   const handleCreateSession = () => {
     if (!newSession.name.trim()) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Session Name Required',
         description: 'Please provide a name for the study session.',
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Session Name Required',
-        description: 'Please provide a name for the study session.',
-        variant: 'destructive',
-      });
+        });
       return;
     }
 

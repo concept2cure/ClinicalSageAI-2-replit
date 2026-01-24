@@ -25,33 +25,21 @@ export default function ProtocolUploadPage() {
       // Check file type (PDF, .docx or .txt)
       const fileType = selectedFile.name.split('.').pop()?.toLowerCase();
       if (fileType !== 'docx' && fileType !== 'txt' && fileType !== 'pdf') {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Invalid file type",
           description: "Please upload a PDF, .docx, or .txt file.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Invalid file type",
-          description: "Please upload a PDF, .docx, or .txt file.",
-          variant: "destructive"
-        });
+          });
         return;
       }
       
       // Check file size (max 10MB)
       if (selectedFile.size > 10 * 1024 * 1024) {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "File too large",
           description: "Maximum file size is 10MB.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "File too large",
-          description: "Maximum file size is 10MB.",
-          variant: "destructive"
-        });
+          });
         return;
       }
       
@@ -94,17 +82,11 @@ export default function ProtocolUploadPage() {
         setTimeout(() => {
           setExtracting(false);
           
-          // toast call replaced
-  // Original: toast({
+          toast({
             title: "Protocol uploaded successfully",
             description: "Your protocol has been analyzed.",
             variant: "default"
-          })
-  console.log('Toast would show:', {
-            title: "Protocol uploaded successfully",
-            description: "Your protocol has been analyzed.",
-            variant: "default"
-          });
+            });
           
           // Navigate to analysis page with the protocol ID
           navigate(`/protocol/analysis/${data.protocolId}`);
@@ -117,17 +99,11 @@ export default function ProtocolUploadPage() {
       setUploading(false);
       setUploadProgress(0);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Upload failed",
         description: "There was an error uploading your protocol. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Upload failed",
-        description: "There was an error uploading your protocol. Please try again.",
-        variant: "destructive"
-      });
+        });
     }
   };
   

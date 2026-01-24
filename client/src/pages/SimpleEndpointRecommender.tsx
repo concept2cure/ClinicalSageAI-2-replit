@@ -44,17 +44,11 @@ export default function SimpleEndpointRecommender() {
 
   const fetchRecommendations = async () => {
     if (!indication || !phase) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Missing information",
         description: "Please select both indication and phase to search for endpoints.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing information",
-        description: "Please select both indication and phase to search for endpoints.",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -71,17 +65,11 @@ export default function SimpleEndpointRecommender() {
       setActiveTab('recommendations');
     } catch (error) {
       console.error('Error fetching endpoint recommendations:', error);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Error",
         description: "Failed to fetch endpoint recommendations. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: "Failed to fetch endpoint recommendations. Please try again.",
-        variant: "destructive"
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -99,32 +87,21 @@ export default function SimpleEndpointRecommender() {
 
   const sendToProtocolOptimizer = () => {
     if (selectedEndpoints.length === 0) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "No endpoints selected",
         description: "Please select at least one endpoint to continue.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No endpoints selected",
-        description: "Please select at least one endpoint to continue.",
-        variant: "destructive"
-      });
+        });
       return;
     }
 
     // In a real implementation, we would save these selected endpoints to state/storage
     // and navigate to the protocol optimizer with this data
     
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Endpoints Selected",
       description: `${selectedEndpoints.length} endpoints have been selected for the Protocol Optimizer.`,
-    })
-  console.log('Toast would show:', {
-      title: "Endpoints Selected",
-      description: `${selectedEndpoints.length} endpoints have been selected for the Protocol Optimizer.`,
-    });
+      });
 
     // Simulate navigation to protocol optimizer
     // In a real app, you would pass the selected endpoints to the protocol optimizer

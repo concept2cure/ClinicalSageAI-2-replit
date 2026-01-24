@@ -35,31 +35,19 @@ export function ProtocolSuccessPredictor({ protocolData, onPredictionComplete }:
         setPrediction(data.result);
         onPredictionComplete(data.result);
       } else {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Prediction Failed",
           description: data.message || "Failed to predict protocol success",
           variant: "destructive",
-        })
-  console.log('Toast would show:', {
-          title: "Prediction Failed",
-          description: data.message || "Failed to predict protocol success",
-          variant: "destructive",
-        });
+          });
       }
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Prediction Failed",
         description: error.message || "An error occurred during prediction",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Prediction Failed",
-        description: error.message || "An error occurred during prediction",
-        variant: "destructive",
-      });
+        });
     },
   });
   

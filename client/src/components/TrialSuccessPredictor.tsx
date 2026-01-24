@@ -72,27 +72,16 @@ export default function TrialSuccessPredictor() {
       featuresList.sort((a, b) => b.contribution - a.contribution);
       setFeatures(featuresList);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Prediction Complete",
-        description: `Success probability: ${(data.success_probability * 100)
-  console.log('Toast would show:', {
-        title: "Prediction Complete",
-        description: `Success probability: ${(data.success_probability * 100).toFixed(1)}%`,
-      });
+        description: `Success probability: ${(data.success_probability * 100);
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Prediction Failed",
         description: "There was an error running the prediction model. Please try again.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Prediction Failed",
-        description: "There was an error running the prediction model. Please try again.",
-        variant: "destructive",
-      });
+        });
       console.error('Prediction error:', error);
     },
   });
@@ -106,28 +95,17 @@ export default function TrialSuccessPredictor() {
     onSuccess: (data) => {
       setPdfUrl(data.pdfUrl);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export Complete",
         description: "PDF report has been generated successfully.",
-      })
-  console.log('Toast would show:', {
-        title: "Export Complete",
-        description: "PDF report has been generated successfully.",
-      });
+        });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export Failed",
         description: "There was an error generating the PDF report. Please try again.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Export Failed",
-        description: "There was an error generating the PDF report. Please try again.",
-        variant: "destructive",
-      });
+        });
       console.error('Export error:', error);
     },
   });

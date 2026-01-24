@@ -1,5 +1,6 @@
 import React, { useState, useCallback, KeyboardEvent, MouseEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import DOMPurify from 'dompurify';
 import { 
   FileDown, 
   AlertCircle, 
@@ -10,6 +11,16 @@ import {
   FileBarChart,
   CheckCircle
 } from 'lucide-react';
+
+/**
+ * Sanitizes HTML content to prevent XSS attacks.
+ */
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['br', 'p', 'strong', 'em', 'ul', 'ol', 'li', 'span', 'div'],
+    ALLOWED_ATTR: ['class'],
+  });
+}
 
 // Types for API response
 interface CERResponse {
@@ -64,33 +75,21 @@ const CERGenerator: React.FC = () => {
     // Validate input
     if (!ndcCode.trim()) {
       setError('Please enter an NDC code');
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Missing NDC Code",
         description: "Please enter an NDC code to generate a CER.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing NDC Code",
-        description: "Please enter an NDC code to generate a CER.",
-        variant: "destructive"
-      });
+        });
       return;
     }
 
     if (!validateNdcCode(ndcCode)) {
       setError('Please enter a valid NDC code format (e.g., 12345-678-90, 12345-6789-01, or numeric)');
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Invalid Format",
         description: "Please enter a valid NDC code format.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Invalid Format",
-        description: "Please enter a valid NDC code format.",
-        variant: "destructive"
-      });
+        });
       return;
     }
 
@@ -126,33 +125,21 @@ const CERGenerator: React.FC = () => {
         setPdfUrl(data.pdf_url);
       }
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "CER Generated",
         description: `Clinical Evaluation Report for ${data.product_name || ndcCode} created successfully.`,
         variant: "default"
-      })
-  console.log('Toast would show:', {
-        title: "CER Generated",
-        description: `Clinical Evaluation Report for ${data.product_name || ndcCode} created successfully.`,
-        variant: "default"
-      });
+        });
 
     } catch (err: any) {
       console.error('Error generating CER:', err);
       setError(err.message || 'An error occurred while generating the CER');
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Generation Failed",
         description: err.message || "An error occurred while generating the report.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Generation Failed",
-        description: err.message || "An error occurred while generating the report.",
-        variant: "destructive"
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -180,31 +167,19 @@ const CERGenerator: React.FC = () => {
       // Open the PDF in a new tab/window
       window.open(url, '_blank');
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "PDF Ready",
         description: "Your report has been prepared for download.",
         variant: "default"
-      })
-  console.log('Toast would show:', {
-        title: "PDF Ready",
-        description: "Your report has been prepared for download.",
-        variant: "default"
-      });
+        });
     } catch (err: any) {
       console.error('Error downloading PDF:', err);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Failed",
         description: err.message || "Failed to download the PDF report.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Download Failed",
-        description: err.message || "Failed to download the PDF report.",
-        variant: "destructive"
-      });
+        });
     } finally {
       setPdfLoading(false);
     }
@@ -381,7 +356,7 @@ const CERGenerator: React.FC = () => {
               {result.cer_narrative ? (
                 <div 
                   dangerouslySetInnerHTML={{ 
-                    __html: result.cer_narrative.replace(/\n/g, '<br/>') 
+                    __html: sanitizeHtml(result.cer_narrative.replace(/\n/g, '<br/>'))
                   }} 
                   className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed"
                 />

@@ -69,7 +69,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   try {
     // For development, use a simple API key validation
     // In production, you would look up the API key in the database
-    if (apiKey === 'dev-api-key-12345') {
+    const devApiKey = process.env.DEV_API_KEY;
+    if (devApiKey && apiKey === devApiKey) {
       // Set development user information
       req.userId = 1;
       req.userRole = 'admin';
@@ -80,6 +81,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         userId: 1,
         role: 'admin',
       };
+      logger.debug('Authenticated via DEV_API_KEY');
       return next();
     }
 
@@ -122,9 +124,11 @@ export function requireSuperAdminRole(req: Request, res: Response, next: NextFun
 export async function login(email: string, password: string) {
   try {
     // For simplified development authentication
-    if (email === 'dev@example.com' && password === 'password') {
+    const devApiKey = process.env.DEV_API_KEY;
+    if (devApiKey && email === 'dev@example.com' && password === 'password') {
+      logger.debug('Dev login successful');
       return {
-        token: 'dev-api-key-12345',
+        token: devApiKey,
         user: {
           id: 1,
           name: 'Developer',

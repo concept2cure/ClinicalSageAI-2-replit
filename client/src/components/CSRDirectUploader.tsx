@@ -82,17 +82,11 @@ export function CSRDirectUploader() {
   
   const uploadBatch = async () => {
     if (files.length === 0) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "No files selected",
         description: "Please select one or more files to upload",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No files selected",
-        description: "Please select one or more files to upload",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -119,29 +113,17 @@ export function CSRDirectUploader() {
     }
     
     if (errorFiles === 0) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Upload Complete",
         description: `Successfully uploaded ${successFiles} CSR file${successFiles !== 1 ? 's' : ''}`,
         variant: "default"
-      })
-  console.log('Toast would show:', {
-        title: "Upload Complete",
-        description: `Successfully uploaded ${successFiles} CSR file${successFiles !== 1 ? 's' : ''}`,
-        variant: "default"
-      });
+        });
     } else {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Upload Partially Complete",
         description: `Uploaded ${successFiles} file${successFiles !== 1 ? 's' : ''}, with ${errorFiles} error${errorFiles !== 1 ? 's' : ''}`,
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Upload Partially Complete",
-        description: `Uploaded ${successFiles} file${successFiles !== 1 ? 's' : ''}, with ${errorFiles} error${errorFiles !== 1 ? 's' : ''}`,
-        variant: "destructive"
-      });
+        });
     }
     
     setUploading(false);
@@ -150,17 +132,11 @@ export function CSRDirectUploader() {
   // Special case for batch upload of multiple files
   const handleBatchUpload = async () => {
     if (files.length === 0) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "No files selected",
         description: "Please select one or more files to upload",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No files selected",
-        description: "Please select one or more files to upload",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -203,32 +179,20 @@ export function CSRDirectUploader() {
       setSuccessCount(result.successCount || files.length);
       setErrorCount(result.errorCount || 0);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Batch Upload Started",
         description: `Successfully submitted ${files.length} CSR file${files.length !== 1 ? 's' : ''} for processing`,
         variant: "default"
-      })
-  console.log('Toast would show:', {
-        title: "Batch Upload Started",
-        description: `Successfully submitted ${files.length} CSR file${files.length !== 1 ? 's' : ''} for processing`,
-        variant: "default"
-      });
+        });
     } catch (error) {
       console.error('Error in batch upload:', error);
       setErrorCount(files.length);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Batch Upload Failed",
         description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Batch Upload Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive"
-      });
+        });
     }
     
     setUploading(false);

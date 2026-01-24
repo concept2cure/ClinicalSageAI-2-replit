@@ -3965,6 +3965,12 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  // ============================================================================
+  // GLOBAL ERROR HANDLER (MUST BE AFTER ALL ROUTES)
+  // ============================================================================
+  app.use(errorHandler);
+  console.log('✅ Global error handler registered');
+
   const PORT = process.env.PORT || 5000;
   
   // Create HTTP server for proper Vite integration

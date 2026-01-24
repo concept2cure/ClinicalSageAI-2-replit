@@ -88,15 +88,10 @@ const EnhancedCERDashboardPage: React.FC = () => {
     setIsAuthenticated(true);
     setShowAuthDialog(false);
     
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Authentication successful",
       description: "You have been granted access to the CER Dashboard."
-    })
-  console.log('Toast would show:', {
-      title: "Authentication successful",
-      description: "You have been granted access to the CER Dashboard."
-    });
+      });
   }, [toast]);
 
   // Handle logout action
@@ -104,31 +99,20 @@ const EnhancedCERDashboardPage: React.FC = () => {
     localStorage.removeItem('cer_auth');
     setIsAuthenticated(false);
     
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Logged out",
       description: "You have been logged out of the CER Dashboard."
-    })
-  console.log('Toast would show:', {
-      title: "Logged out",
-      description: "You have been logged out of the CER Dashboard."
-    });
+      });
   }, [toast]);
 
   // Handle searching for NDC codes
   const handleSearchNdc = useCallback(() => {
     if (!ndcCode.trim()) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Empty Code",
         description: "Please enter an NDC or device code to search.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Empty Code",
-        description: "Please enter an NDC or device code to search.",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -139,40 +123,23 @@ const EnhancedCERDashboardPage: React.FC = () => {
     
     if (foundProduct) {
       if (selectedNdcCodes.includes(ndcCode)) {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Already Selected",
-          description: `${foundProduct.name} (${ndcCode})
-  console.log('Toast would show:', {
-          title: "Already Selected",
-          description: `${foundProduct.name} (${ndcCode}) is already in your selection.`,
-          variant: "destructive"
-        });
+          description: `${foundProduct.name} (${ndcCode});
       } else {
         setSelectedNdcCodes(prev => [...prev, ndcCode]);
         setNdcCode('');
         
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Product Added",
-          description: `${foundProduct.name} (${ndcCode})
-  console.log('Toast would show:', {
-          title: "Product Added",
-          description: `${foundProduct.name} (${ndcCode}) has been added to your selection.`,
-        });
+          description: `${foundProduct.name} (${ndcCode});
       }
     } else {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Product Not Found",
         description: "The NDC or device code you entered could not be found.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Product Not Found",
-        description: "The NDC or device code you entered could not be found.",
-        variant: "destructive"
-      });
+        });
     }
   }, [ndcCode, selectedNdcCodes, toast]);
 
@@ -180,15 +147,10 @@ const EnhancedCERDashboardPage: React.FC = () => {
   const handleRemoveCode = useCallback((code: string) => {
     setSelectedNdcCodes(prev => prev.filter(c => c !== code));
     
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Product Removed",
       description: `Code ${code} has been removed from your selection.`,
-    })
-  console.log('Toast would show:', {
-      title: "Product Removed",
-      description: `Code ${code} has been removed from your selection.`,
-    });
+      });
   }, [toast]);
 
   // Get product details by code

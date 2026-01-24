@@ -48,17 +48,11 @@ const NLPQuery: React.FC<NLPQueryProps> = ({ onFilterResults }) => {
   
   const submitQuery = useCallback(async () => {
     if (!query.trim()) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Empty Query",
         description: "Please enter a search query.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Empty Query",
-        description: "Please enter a search query.",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -102,15 +96,10 @@ const NLPQuery: React.FC<NLPQueryProps> = ({ onFilterResults }) => {
       // Pass the results to parent component
       onFilterResults(queryResult);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Query Processed",
         description: "Your search query has been processed successfully.",
-      })
-  console.log('Toast would show:', {
-        title: "Query Processed",
-        description: "Your search query has been processed successfully.",
-      });
+        });
       
       // Save this query as an example for future use
       if (!examples.includes(query) && query.length > 10) {
@@ -120,17 +109,11 @@ const NLPQuery: React.FC<NLPQueryProps> = ({ onFilterResults }) => {
     } catch (error: any) {
       console.error('Error processing NLP query:', error);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Query Error",
         description: error.message || "Failed to process your natural language query",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Query Error",
-        description: error.message || "Failed to process your natural language query",
-        variant: "destructive"
-      });
+        });
     } finally {
       setLoading(false);
     }

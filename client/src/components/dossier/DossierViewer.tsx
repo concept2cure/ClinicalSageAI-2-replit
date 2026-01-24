@@ -44,17 +44,11 @@ export default function DossierViewer() {
 
   const fetchDossier = async () => {
     if (!protocolId.trim()) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Protocol ID Required",
         description: "Please enter a Protocol ID to load reports",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Protocol ID Required",
-        description: "Please enter a Protocol ID to load reports",
-        variant: "destructive",
-      });
+        });
       return;
     }
 
@@ -72,31 +66,19 @@ export default function DossierViewer() {
       setDossierData(data);
       
       if (data.reports.length === 0) {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "No Reports Found",
           description: `No reports found for protocol ID "${protocolId}"`,
           variant: "destructive",
-        })
-  console.log('Toast would show:', {
-          title: "No Reports Found",
-          description: `No reports found for protocol ID "${protocolId}"`,
-          variant: "destructive",
-        });
+          });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dossier reports');
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Error Loading Reports",
         description: err instanceof Error ? err.message : 'Failed to load dossier reports',
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Error Loading Reports",
-        description: err instanceof Error ? err.message : 'Failed to load dossier reports',
-        variant: "destructive",
-      });
+        });
     } finally {
       setIsLoading(false);
     }
@@ -120,27 +102,16 @@ export default function DossierViewer() {
       // Open the PDF in a new tab
       window.open(result.download_url, '_blank');
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Report Generated",
         description: "Your PDF report has been generated successfully",
-      })
-  console.log('Toast would show:', {
-        title: "Report Generated",
-        description: "Your PDF report has been generated successfully",
-      });
+        });
     } catch (err) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export Failed",
         description: err instanceof Error ? err.message : 'Failed to generate report',
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Export Failed",
-        description: err instanceof Error ? err.message : 'Failed to generate report',
-        variant: "destructive",
-      });
+        });
     }
   };
 
