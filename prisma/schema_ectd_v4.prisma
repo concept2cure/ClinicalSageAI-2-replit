@@ -1,0 +1,639 @@
+// =============================================================================
+// Concept2Cure v3.0 Enterprise Architecture - Prisma Schema
+// =============================================================================
+// Purpose: eCTD v4.0 / HL7 RPS compliant data model with multi-tenant RLS
+// Compliance: FDA 21 CFR Part 11, ICH eCTD v4.0, ICH E6(R2)
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "multiSchema"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  schemas    = ["common_standards", "identity", "ectd_v4", "audit"]
+  extensions = [pgcrypto, uuid_ossp]
+}
+
+// =============================================================================
+// ENUMS: Lifecycle and Status Types
+// =============================================================================
+
+enum LifecycleStatus {
+  ACTIVE
+  REPLACED
+  SUSPENDED
+  PENDING
+  UNDER_REVIEW
+
+  @@schema("ectd_v4")
+}
+
+enum LifecycleOperation {
+  NEW
+  REPLACE
+  SUSPEND
+  APPEND
+  REINSTATE
+
+  @@schema("ectd_v4")
+}
+
+enum SubmissionUnitType {
+  ORIGINAL_APPLICATION
+  AMENDMENT
+  SUPPLEMENT
+  ANNUAL_REPORT
+  RESPONSE
+  SAFETY_REPORT
+  RESUBMISSION
+  LABELING_SUPPLEMENT
+
+  @@schema("ectd_v4")
+}
+
+enum OrgBusinessModel {
+  BIO_PHARMA_SPONSOR
+  CRO_PARTNER
+  CMO_CDMO
+  REGULATORY_CONSULTANCY
+  DEVICE_MANUFACTURER
+  IVD_DIAGNOSTICS
+  ACADEMIC_INSTITUTION
+  GOVERNMENT_AGENCY
+
+  @@schema("identity")
+}
+
+enum UserRole {
+  ADMIN
+  RA_LEAD
+  RA_SPECIALIST
+  CLINICAL_OPS
+  CMC_SPECIALIST
+  QA_AUDITOR
+  MEDICAL_WRITER
+  STATISTICIAN
+  CRO_MANAGER
+  VIEWER
+  EXTERNAL_AUDITOR
+
+  @@schema("identity")
+}
+
+enum AccessLevel {
+  READ_ONLY
+  CONTRIBUTOR
+  MANAGER
+  ADMIN
+
+  @@schema("identity")
+}
+
+enum EventCategory {
+  CREATE
+  UPDATE
+  DELETE
+  ARCHIVE
+  LIFECYCLE_TRANSITION
+  DOCUMENT_UPLOAD
+  DOCUMENT_REPLACE
+  DOCUMENT_SUSPEND
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGOUT
+  SESSION_TIMEOUT
+  PASSWORD_CHANGE
+  MFA_ENABLED
+  MFA_DISABLED
+  DATA_ACCESS
+  DATA_EXPORT
+  REPORT_GENERATED
+  SIGNATURE_APPLIED
+  SIGNATURE_INVALIDATED
+  ATTESTATION_RECORDED
+  PERMISSION_GRANTED
+  PERMISSION_REVOKED
+  USER_CREATED
+  USER_DEACTIVATED
+  ROLE_ASSIGNED
+  SUBMISSION_CREATED
+  SEQUENCE_CREATED
+  VALIDATION_STARTED
+  VALIDATION_COMPLETED
+  SUBMISSION_PUBLISHED
+  ACKNOWLEDGMENT_RECEIVED
+
+  @@schema("audit")
+}
+
+enum SignatureMeaning {
+  SUBMISSION
+  APPROVAL
+  REVIEW
+  VERIFICATION
+  RESPONSIBILITY
+  AUTHORIZATION
+  ACKNOWLEDGMENT
+
+  @@schema("audit")
+}
+
+// =============================================================================
+// 1. DOMAIN REGISTRY (common_standards schema)
+// =============================================================================
+
+model GlobalRegulatoryAuthority {
+  id                              String    @id // 'US_FDA', 'EU_EMA', 'JP_PMDA'
+  regionName                      String    @map("region_name")
+  regionCode                      String    @map("region_code")
+  currentValidationCriteriaVersion String   @default("v4.0") @map("current_validation_criteria_version")
+  supportedEctdVersions           String[]  @default(["v3.2.2", "v4.0"]) @map("supported_ectd_versions")
+  submissionGatewayUrl            String?   @map("submission_gateway_url")
+  gatewayProtocol                 String?   @map("gateway_protocol")
+  requiresDigitalSignature        Boolean   @default(true) @map("requires_digital_signature")
+  requiresLocalRepresentative     Boolean   @default(false) @map("requires_local_representative")
+  requiresManufacturerRegistration Boolean  @default(false) @map("requires_manufacturer_registration")
+  regionalOid                     String    @map("regional_oid")
+  xmlDtdVersion                   String    @default("1.0") @map("xml_dtd_version")
+  supportsMedicalDevice           Boolean   @default(false) @map("supports_medical_device")
+  medicalDevicePathways           String[]  @map("medical_device_pathways")
+  supportsIvd                     Boolean   @default(false) @map("supports_ivd")
+  ivdPathways                     String[]  @map("ivd_pathways")
+  createdAt                       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  metadata                        Json      @default("{}") @db.JsonB
+
+  controlledVocabularies          ControlledVocabulary[]
+  submissions                     RegulatorySubmission[]
+
+  @@map("global_regulatory_authorities")
+  @@schema("common_standards")
+}
+
+model ControlledVocabulary {
+  id            String   @id @default(uuid()) @db.Uuid
+  authorityId   String?  @map("authority_id")
+  authority     GlobalRegulatoryAuthority? @relation(fields: [authorityId], references: [id])
+  cvOid         String   @map("cv_oid")
+  cvCode        String   @map("cv_code")
+  cvName        String   @map("cv_name")
+  cvDescription String?  @map("cv_description")
+  versionDate   DateTime @map("version_date") @db.Date
+  versionNumber String   @default("1.0") @map("version_number")
+  effectiveDate DateTime @default(now()) @map("effective_date") @db.Date
+  sunsetDate    DateTime? @map("sunset_date") @db.Date
+  isActive      Boolean  @default(true) @map("is_active")
+  isMandatory   Boolean  @default(true) @map("is_mandatory")
+  sourceUrl     String?  @map("source_url")
+  sourceDocument String? @map("source_document")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  terms         CvTerm[]
+
+  @@unique([authorityId, cvCode, versionNumber])
+  @@index([authorityId])
+  @@index([cvCode])
+  @@index([isActive])
+  @@map("controlled_vocabularies")
+  @@schema("common_standards")
+}
+
+model CvTerm {
+  id                  String   @id @default(uuid()) @db.Uuid
+  vocabularyId        String   @map("vocabulary_id") @db.Uuid
+  vocabulary          ControlledVocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  code                String
+  displayName         String   @map("display_name")
+  definition          String?
+  parentTermId        String?  @map("parent_term_id") @db.Uuid
+  parentTerm          CvTerm?  @relation("TermHierarchy", fields: [parentTermId], references: [id])
+  childTerms          CvTerm[] @relation("TermHierarchy")
+  hierarchyLevel      Int      @default(1) @map("hierarchy_level")
+  sortOrder           Int      @default(0) @map("sort_order")
+  contextGroupCode    String?  @map("context_group_code")
+  legacyMappingCode   String?  @map("legacy_mapping_code")
+  legacyFolderPath    String?  @map("legacy_folder_path")
+  isActive            Boolean  @default(true) @map("is_active")
+  isSelectable        Boolean  @default(true) @map("is_selectable")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contextElements     ContextOfUseElement[]
+
+  @@index([vocabularyId, code])
+  @@map("cv_terms")
+  @@schema("common_standards")
+}
+
+// =============================================================================
+// 2. IDENTITY & SECURITY (identity schema)
+// =============================================================================
+
+model Organization {
+  id                      String           @id @default(uuid()) @db.Uuid
+  legalName               String           @map("legal_name")
+  orgShortCode            String?          @unique @map("org_short_code")
+  businessModel           OrgBusinessModel @map("business_model")
+  dunsNumber              String?          @map("duns_number")
+  primaryEmail            String?          @map("primary_email")
+  headquartersCountry     String?          @map("headquarters_country")
+  ssoTenantId             String?          @map("sso_tenant_id")
+  allowedDomains          String[]         @map("allowed_domains")
+  dataResidencyRegion     String           @default("aws-us-east-1") @map("data_residency_region")
+  signatureLegalDisclaimer String?         @map("signature_legal_disclaimer")
+  part11SignaturesEnabled Boolean          @default(true) @map("part11_signatures_enabled")
+  isActive                Boolean          @default(true) @map("is_active")
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  metadata                Json             @default("{}") @db.JsonB
+
+  users                   User[]
+  ownedSubmissions        RegulatorySubmission[]
+  sponsorRelationships    OrgRelationship[] @relation("SponsorRelationships")
+  croRelationships        OrgRelationship[] @relation("CroRelationships")
+  documents               Document[]
+  auditLogs               AuditLog[]
+
+  @@map("organizations")
+  @@schema("identity")
+}
+
+model User {
+  id                  String    @id @default(uuid()) @db.Uuid
+  orgId               String    @map("org_id") @db.Uuid
+  organization        Organization @relation(fields: [orgId], references: [id])
+  email               String    @unique
+  fullName            String    @map("full_name")
+  jobTitle            String?   @map("job_title")
+  userRole            UserRole  @map("user_role")
+  hasSigningAuthority Boolean   @default(false) @map("has_signing_authority")
+  isActive            Boolean   @default(true) @map("is_active")
+  mfaEnabled          Boolean   @default(false) @map("mfa_enabled")
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  metadata            Json      @default("{}") @db.JsonB
+
+  programAccess       UserProgramAccess[]
+  createdDocuments    Document[]
+  auditLogs           AuditLog[]
+  signatures          SignatureLog[]
+
+  @@index([orgId])
+  @@map("users")
+  @@schema("identity")
+}
+
+model OrgRelationship {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sponsorOrgId         String   @map("sponsor_org_id") @db.Uuid
+  sponsorOrg           Organization @relation("SponsorRelationships", fields: [sponsorOrgId], references: [id])
+  croOrgId             String   @map("cro_org_id") @db.Uuid
+  croOrg               Organization @relation("CroRelationships", fields: [croOrgId], references: [id])
+  relationshipType     String   @map("relationship_type")
+  contractStatus       String   @default("ACTIVE") @map("contract_status")
+  effectiveFrom        DateTime @map("effective_from") @db.Date
+  effectiveUntil       DateTime? @map("effective_until") @db.Date
+  canViewSubmissions   Boolean  @default(true) @map("can_view_submissions")
+  canCreateSubmissions Boolean  @default(false) @map("can_create_submissions")
+  canUploadDocuments   Boolean  @default(false) @map("can_upload_documents")
+  canSignSubmissions   Boolean  @default(false) @map("can_sign_submissions")
+  canManageUsers       Boolean  @default(false) @map("can_manage_users")
+  contractReference    String?  @map("contract_reference")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([sponsorOrgId, croOrgId, relationshipType])
+  @@index([sponsorOrgId])
+  @@index([croOrgId])
+  @@map("org_relationships")
+  @@schema("identity")
+}
+
+model UserProgramAccess {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  user        User        @relation(fields: [userId], references: [id])
+  programId   String      @map("program_id") @db.Uuid
+  accessLevel AccessLevel @map("access_level")
+  grantedAt   DateTime    @default(now()) @map("granted_at") @db.Timestamptz
+  grantedBy   String?     @map("granted_by") @db.Uuid
+  expiresAt   DateTime?   @map("expires_at") @db.Timestamptz
+  isActive    Boolean     @default(true) @map("is_active")
+
+  @@unique([userId, programId])
+  @@index([userId])
+  @@index([programId])
+  @@map("user_program_access")
+  @@schema("identity")
+}
+
+// =============================================================================
+// 3. eCTD v4.0 CO-AUTHORING ENGINE (ectd_v4 schema)
+// =============================================================================
+
+model RegulatorySubmission {
+  id                    String                   @id @default(uuid()) @db.Uuid
+  orgId                 String                   @map("org_id") @db.Uuid
+  organization          Organization             @relation(fields: [orgId], references: [id])
+  applicationNumber     String?                  @map("application_number")
+  applicationType       String                   @map("application_type") // IND, NDA, BLA, 510K, PMA
+  proprietaryName       String?                  @map("proprietary_name")
+  establishedName       String?                  @map("established_name")
+  authorityId           String                   @map("authority_id")
+  authority             GlobalRegulatoryAuthority @relation(fields: [authorityId], references: [id])
+  sponsorName           String                   @map("sponsor_name")
+  sponsorContactId      String?                  @map("sponsor_contact_id") @db.Uuid
+  ectdVersion           String                   @default("v4.0") @map("ectd_version")
+  programId             String?                  @map("program_id") @db.Uuid
+  lifecycleStatus       LifecycleStatus          @default(PENDING) @map("lifecycle_status")
+  initialSubmissionDate DateTime?                @map("initial_submission_date") @db.Date
+  approvalDate          DateTime?                @map("approval_date") @db.Date
+  internalTrackingNumber String?                 @map("internal_tracking_number")
+  metadata              Json                     @default("{}") @db.JsonB
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy             String                   @default("system") @map("created_by")
+
+  submissionUnits       SubmissionUnit[]
+
+  @@index([orgId])
+  @@index([applicationNumber])
+  @@index([authorityId])
+  @@index([programId])
+  @@index([applicationType])
+  @@map("regulatory_submissions")
+  @@schema("ectd_v4")
+}
+
+model SubmissionUnit {
+  id                          String               @id @default(uuid()) @db.Uuid
+  submissionId                String               @map("submission_id") @db.Uuid
+  submission                  RegulatorySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  sequenceNumber              String               @map("sequence_number")
+  sequenceDescription         String?              @map("sequence_description")
+  submissionUnitType          SubmissionUnitType   @map("submission_unit_type")
+  regulatoryActivityCode      String?              @map("regulatory_activity_code")
+  regulatoryActivityDescription String?            @map("regulatory_activity_description")
+  relatedUnitId               String?              @map("related_unit_id") @db.Uuid
+  relatedUnit                 SubmissionUnit?      @relation("RelatedUnits", fields: [relatedUnitId], references: [id])
+  childUnits                  SubmissionUnit[]     @relation("RelatedUnits")
+  relatedUnitType             String?              @map("related_unit_type")
+  lifecycleStatus             LifecycleStatus      @default(PENDING) @map("lifecycle_status")
+  isLockedForPublishing       Boolean              @default(false) @map("is_locked_for_publishing")
+  validationStatus            String               @default("NOT_STARTED") @map("validation_status")
+  lastValidationAt            DateTime?            @map("last_validation_at") @db.Timestamptz
+  validationErrors            Json?                @map("validation_errors") @db.JsonB
+  validationBranchId          String?              @map("validation_branch_id")
+  plannedSubmissionDate       DateTime?            @map("planned_submission_date") @db.Date
+  actualSubmissionDate        DateTime?            @map("actual_submission_date") @db.Date
+  acknowledgmentDate          DateTime?            @map("acknowledgment_date") @db.Date
+  metadata                    Json                 @default("{}") @db.JsonB
+  createdAt                   DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                   DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy                   String               @default("system") @map("created_by")
+
+  contextElements             ContextOfUseElement[]
+  keywordDefinitions          KeywordDefinition[]
+
+  @@unique([submissionId, sequenceNumber])
+  @@index([submissionId])
+  @@index([lifecycleStatus])
+  @@index([isLockedForPublishing])
+  @@map("submission_units")
+  @@schema("ectd_v4")
+}
+
+model Document {
+  id                String    @id @default(uuid()) @db.Uuid
+  orgId             String    @map("org_id") @db.Uuid
+  organization      Organization @relation(fields: [orgId], references: [id])
+  title             String
+  documentTypeCode  String?   @map("document_type_code")
+  versionLabel      String    @default("v1.0") @map("version_label")
+  storageProvider   String    @default("S3") @map("storage_provider")
+  storageUrl        String    @map("storage_url")
+  storageRegion     String?   @map("storage_region")
+  originalFilename  String    @map("original_filename")
+  mimeType          String    @default("application/pdf") @map("mime_type")
+  fileSizeBytes     BigInt?   @map("file_size_bytes")
+  pageCount         Int?      @map("page_count")
+  checksumMd5       String    @map("checksum_md5")
+  checksumSha256    String?   @map("checksum_sha256")
+  hasBookmarks      Boolean?  @map("has_bookmarks")
+  hasHyperlinks     Boolean?  @map("has_hyperlinks")
+  isPdfACompliant   Boolean?  @map("is_pdf_a_compliant")
+  pdfVersion        String?   @map("pdf_version")
+  virusScanStatus   String    @default("PENDING") @map("virus_scan_status")
+  virusScanAt       DateTime? @map("virus_scan_at") @db.Timestamptz
+  virusScanEngine   String?   @map("virus_scan_engine")
+  isReusable        Boolean   @default(true) @map("is_reusable")
+  reuseCount        Int       @default(0) @map("reuse_count")
+  languageCode      String    @default("en") @map("language_code")
+  keywords          String[]
+  metadata          Json      @default("{}") @db.JsonB
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy         String    @default("system") @map("created_by")
+  uploadedById      String?   @map("uploaded_by") @db.Uuid
+  uploadedBy        User?     @relation(fields: [uploadedById], references: [id])
+
+  contextElements   ContextOfUseElement[]
+
+  @@index([orgId])
+  @@index([documentTypeCode])
+  @@index([checksumMd5])
+  @@index([isReusable])
+  @@map("documents")
+  @@schema("ectd_v4")
+}
+
+// The Heart of eCTD v4.0: Context of Use Elements
+model ContextOfUseElement {
+  id                      String              @id @default(uuid()) @db.Uuid
+  submissionUnitId        String              @map("submission_unit_id") @db.Uuid
+  submissionUnit          SubmissionUnit      @relation(fields: [submissionUnitId], references: [id], onDelete: Cascade)
+  
+  // THE "WHERE" - Context Group and Keywords
+  contextGroupCode        String              @map("context_group_code")
+  contextGroupCvTermId    String?             @map("context_group_cv_term_id") @db.Uuid
+  contextGroupCvTerm      CvTerm?             @relation(fields: [contextGroupCvTermId], references: [id])
+  keywordCode             String?             @map("keyword_code")
+  keywordDefinitionId     String?             @map("keyword_definition_id") @db.Uuid
+  keywordDefinition       KeywordDefinition?  @relation(fields: [keywordDefinitionId], references: [id])
+  
+  // Priority (Sort Order - v4.0 has no folder hierarchy)
+  priorityNumber          Int                 @default(1) @map("priority_number")
+  
+  // THE "WHAT" - Document Reference
+  documentReferenceId     String?             @map("document_reference_id") @db.Uuid
+  document                Document?           @relation(fields: [documentReferenceId], references: [id])
+  externalReferenceUrl    String?             @map("external_reference_url")
+  externalReferenceType   String?             @map("external_reference_type")
+  
+  // LIFECYCLE
+  lifecycleStatus         LifecycleStatus     @default(ACTIVE) @map("lifecycle_status")
+  lifecycleOperation      LifecycleOperation  @default(NEW) @map("lifecycle_operation")
+  replacesCouIds          String[]            @map("replaces_cou_ids") @db.Uuid
+  replacedByCouId         String?             @map("replaced_by_cou_id") @db.Uuid
+  
+  // HIERARCHY (Adjacency List for Tree Traversal)
+  parentCouId             String?             @map("parent_cou_id") @db.Uuid
+  parentCou               ContextOfUseElement? @relation("CoUHierarchy", fields: [parentCouId], references: [id])
+  childCoUs               ContextOfUseElement[] @relation("CoUHierarchy")
+  treeLevel               Int                 @default(1) @map("tree_level")
+  treePath                String?             @map("tree_path")
+  
+  // METADATA
+  title                   String?
+  description             String?
+  isRegional              Boolean             @default(false) @map("is_regional")
+  applicableRegions       String[]            @map("applicable_regions")
+  isRequired              Boolean             @default(false) @map("is_required")
+  isProvided              Boolean             @default(false) @map("is_provided")
+  metadata                Json                @default("{}") @db.JsonB
+  createdAt               DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  createdBy               String              @default("system") @map("created_by")
+
+  // Relationships
+  sourceRelationships     CoURelationship[]   @relation("SourceCou")
+  targetRelationships     CoURelationship[]   @relation("TargetCou")
+
+  @@index([submissionUnitId])
+  @@index([contextGroupCode])
+  @@index([documentReferenceId])
+  @@index([parentCouId])
+  @@index([lifecycleStatus])
+  @@index([treePath])
+  @@index([keywordCode])
+  @@map("context_of_use_elements")
+  @@schema("ectd_v4")
+}
+
+// Sender-Defined Keywords (v4.0 Flex Factor)
+model KeywordDefinition {
+  id                  String   @id @default(uuid()) @db.Uuid
+  submissionUnitId    String   @map("submission_unit_id") @db.Uuid
+  submissionUnit      SubmissionUnit @relation(fields: [submissionUnitId], references: [id], onDelete: Cascade)
+  keywordCode         String   @map("keyword_code")
+  displayName         String   @map("display_name")
+  previousDisplayName String?  @map("previous_display_name")
+  keywordType         String?  @map("keyword_type")
+  sortOrder           Int      @default(0) @map("sort_order")
+  isActive            Boolean  @default(true) @map("is_active")
+  metadata            Json     @default("{}") @db.JsonB
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contextElements     ContextOfUseElement[]
+
+  @@unique([submissionUnitId, keywordCode])
+  @@index([submissionUnitId])
+  @@index([keywordCode])
+  @@map("keyword_definitions")
+  @@schema("ectd_v4")
+}
+
+// Graph Edges between CoU Elements
+model CoURelationship {
+  id               String   @id @default(uuid()) @db.Uuid
+  sourceCouId      String   @map("source_cou_id") @db.Uuid
+  sourceCou        ContextOfUseElement @relation("SourceCou", fields: [sourceCouId], references: [id], onDelete: Cascade)
+  targetCouId      String   @map("target_cou_id") @db.Uuid
+  targetCou        ContextOfUseElement @relation("TargetCou", fields: [targetCouId], references: [id], onDelete: Cascade)
+  relationshipType String   @map("relationship_type")
+  metadata         Json     @default("{}") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdBy        String   @default("system") @map("created_by")
+
+  @@unique([sourceCouId, targetCouId, relationshipType])
+  @@index([sourceCouId])
+  @@index([targetCouId])
+  @@index([relationshipType])
+  @@map("cou_relationships")
+  @@schema("ectd_v4")
+}
+
+// =============================================================================
+// 4. AUDIT & COMPLIANCE (audit schema)
+// =============================================================================
+
+model AuditLog {
+  id                  BigInt        @id @default(autoincrement())
+  eventId             String        @default(uuid()) @map("event_id") @db.Uuid
+  eventCategory       EventCategory @map("event_category")
+  eventDescription    String?       @map("event_description")
+  eventTimestamp      DateTime      @default(now()) @map("event_timestamp") @db.Timestamptz
+  eventTimestampUtc   DateTime      @default(now()) @map("event_timestamp_utc") @db.Timestamptz
+  serverTimezone      String        @default("UTC") @map("server_timezone")
+  userId              String?       @map("user_id") @db.Uuid
+  user                User?         @relation(fields: [userId], references: [id])
+  userEmail           String?       @map("user_email")
+  userFullName        String?       @map("user_full_name")
+  sessionId           String?       @map("session_id")
+  ipAddress           String?       @map("ip_address")
+  userAgent           String?       @map("user_agent")
+  orgId               String?       @map("org_id") @db.Uuid
+  organization        Organization? @relation(fields: [orgId], references: [id])
+  orgName             String?       @map("org_name")
+  entityType          String        @map("entity_type")
+  entityId            String?       @map("entity_id") @db.Uuid
+  entityName          String?       @map("entity_name")
+  previousValues      Json?         @map("previous_values") @db.JsonB
+  newValues           Json?         @map("new_values") @db.JsonB
+  changedFields       String[]      @map("changed_fields")
+  isSigned            Boolean       @default(false) @map("is_signed")
+  signatureMeaning    SignatureMeaning? @map("signature_meaning")
+  signatureReason     String?       @map("signature_reason")
+  signatureTimestamp  DateTime?     @map("signature_timestamp") @db.Timestamptz
+  relatedSubmissionId String?       @map("related_submission_id") @db.Uuid
+  relatedDocumentId   String?       @map("related_document_id") @db.Uuid
+  metadata            Json          @default("{}") @db.JsonB
+  recordHash          String?       @map("record_hash")
+
+  @@index([eventTimestamp(sort: Desc)])
+  @@index([userId])
+  @@index([orgId])
+  @@index([entityType, entityId])
+  @@index([eventCategory])
+  @@index([relatedSubmissionId])
+  @@index([isSigned])
+  @@map("event_log")
+  @@schema("audit")
+}
+
+model SignatureLog {
+  id                    BigInt           @id @default(autoincrement())
+  signatureId           String           @default(uuid()) @map("signature_id") @db.Uuid
+  entityType            String           @map("entity_type")
+  entityId              String           @map("entity_id") @db.Uuid
+  entityDescription     String?          @map("entity_description")
+  signerId              String           @map("signer_id") @db.Uuid
+  signer                User             @relation(fields: [signerId], references: [id])
+  signerEmail           String           @map("signer_email")
+  signerFullName        String           @map("signer_full_name")
+  signerTitle           String?          @map("signer_title")
+  signerOrgId           String           @map("signer_org_id") @db.Uuid
+  signatureMeaning      SignatureMeaning @map("signature_meaning")
+  signatureReason       String           @map("signature_reason")
+  authenticationMethod  String           @map("authentication_method")
+  authenticationTimestamp DateTime       @default(now()) @map("authentication_timestamp") @db.Timestamptz
+  signatureHash         String           @map("signature_hash")
+  documentHash          String?          @map("document_hash")
+  isValid               Boolean          @default(true) @map("is_valid")
+  invalidatedAt         DateTime?        @map("invalidated_at") @db.Timestamptz
+  invalidatedBy         String?          @map("invalidated_by") @db.Uuid
+  invalidationReason    String?          @map("invalidation_reason")
+  metadata              Json             @default("{}") @db.JsonB
+
+  @@index([entityType, entityId])
+  @@index([signerId])
+  @@index([authenticationTimestamp(sort: Desc)])
+  @@map("signature_log")
+  @@schema("audit")
+}
