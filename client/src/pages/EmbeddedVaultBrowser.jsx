@@ -3,15 +3,15 @@ import {
   Database,
   ArrowLeft,
   X,
-  LayoutSidebar,
-  LayoutSidebarClose,
+  PanelLeftClose,
+  PanelLeftOpen,
   CornerUpLeft,
   PanelLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NavigationBanner from '../components/common/NavigationBanner';
-import VaultDocumentBrowser from '../components/ectd/VaultDocumentBrowser';
-import DocumentViewer from '../components/ectd/DocumentViewer';
+import EmbeddedFileBrowser from '../components/ectd/EmbeddedFileBrowser';
+import DocumentViewer from '../components/document-management/DocumentViewer';
 
 /**
  * Embedded VAULT Document Browser Page
@@ -95,9 +95,9 @@ const EmbeddedVaultBrowser = () => {
             onClick={() => setShowSidebar(!showSidebar)}
           >
             {showSidebar ? (
-              <LayoutSidebarClose className="h-4 w-4 mr-1" />
+              <PanelLeftClose className="h-4 w-4 mr-1" />
             ) : (
-              <LayoutSidebar className="h-4 w-4 mr-1" />
+              <PanelLeftOpen className="h-4 w-4 mr-1" />
             )}
             {showSidebar ? 'Hide Folders' : 'Show Folders'}
           </Button>
@@ -118,7 +118,7 @@ const EmbeddedVaultBrowser = () => {
         {showSidebar && (
           <div className="w-96 border-r relative flex flex-col">
             <div className="flex-1 overflow-auto">
-              <VaultDocumentBrowser
+              <EmbeddedFileBrowser
                 onSelectFile={handleFileSelect}
                 onFileAction={handleFileAction}
               />

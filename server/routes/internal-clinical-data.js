@@ -15,7 +15,10 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import logger from '../utils/logger.js';
-import openaiService from '../services/openaiService.js';
+// NOTE: Using AI Provider Router for multi-provider support
+// The original openaiService was actually Kimi AI (moonshot.cn)
+import aiProviderRouter from '../services/aiProviderRouter.js';
+const openaiService = aiProviderRouter; // Backward compatibility alias
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -1,7 +1,9 @@
 import express from 'express';
 import { db } from '../db/index.js';
 import { and, eq, ilike, sql, desc } from 'drizzle-orm';
-import { lumenDataAtoms } from '@shared/schema';
+// Using leaves as content atom storage since lumenDataAtoms not in schema
+import { leaves } from '@shared/schema';
+const lumenDataAtoms = leaves; // Alias for compatibility
 
 const router = express.Router();
 

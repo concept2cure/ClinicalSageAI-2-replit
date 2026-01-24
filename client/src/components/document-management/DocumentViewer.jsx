@@ -15,10 +15,10 @@ import {
   ChevronDown,
   Menu,
   Save,
-  FilePdf,
+  FileType,
   FileText as FileWordIcon,
   FileSpreadsheet,
-  FilePresentation,
+  Presentation,
   FileJson,
   FileCode,
   Eye,
@@ -58,7 +58,7 @@ const HtmlPreview = ({ htmlContent }) => (
 // Placeholder for PDF preview (in a real app, use a PDF viewer library)
 const PdfPreview = ({ document }) => (
   <div className="w-full h-full border rounded-lg overflow-hidden bg-gray-100 flex flex-col items-center justify-center">
-    <FilePdf size={64} className="text-red-500 mb-4" />
+    <FileType size={64} className="text-red-500 mb-4" />
     <h3 className="text-lg font-medium text-gray-900 mb-2">PDF Preview</h3>
     <p className="text-sm text-gray-600 mb-4 text-center max-w-md">
       {document.displayName}
@@ -378,7 +378,7 @@ export default function DocumentViewer({
     const fileName = document.displayName.toLowerCase();
 
     if (fileName.endsWith('.pdf')) {
-      return <FilePdf size={40} className="text-red-500" />;
+      return <FileType size={40} className="text-red-500" />;
     } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
       return <FileWordIcon size={40} className="text-blue-600" />;
     } else if (
@@ -388,7 +388,7 @@ export default function DocumentViewer({
     ) {
       return <FileSpreadsheet size={40} className="text-green-600" />;
     } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
-      return <FilePresentation size={40} className="text-orange-600" />;
+      return <Presentation size={40} className="text-orange-600" />;
     } else if (fileName.endsWith('.json')) {
       return <FileJson size={40} className="text-amber-600" />;
     } else if (fileName.endsWith('.xml')) {
@@ -517,7 +517,7 @@ export default function DocumentViewer({
                         onClick={() => handleDownload(format.value)}
                       >
                         {format.value === 'pdf' && (
-                          <FilePdf size={14} className="mr-2 text-red-500" />
+                          <FileType size={14} className="mr-2 text-red-500" />
                         )}
                         {format.value === 'docx' && (
                           <FileWordIcon size={14} className="mr-2 text-blue-600" />
@@ -526,7 +526,7 @@ export default function DocumentViewer({
                           <FileSpreadsheet size={14} className="mr-2 text-green-600" />
                         )}
                         {format.value === 'pptx' && (
-                          <FilePresentation size={14} className="mr-2 text-orange-600" />
+                          <Presentation size={14} className="mr-2 text-orange-600" />
                         )}
                         {!['pdf', 'docx', 'xlsx', 'pptx'].includes(format.value) && (
                           <File size={14} className="mr-2 text-gray-500" />

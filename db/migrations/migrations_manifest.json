@@ -1,0 +1,419 @@
+{
+  "$schema": "https://clinicalsageai.com/schemas/migrations-manifest-v1.json",
+  "version": "1.0.0",
+  "generatedAt": "2025-01-14T00:00:00Z",
+  "description": "Migration manifest for ClinicalSageAI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
+  "totalMigrations": 98,
+  "conflicts": {
+    "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
+    "conflictingPrefixes": [
+      {
+        "prefix": "007",
+        "files": ["007_008_gcc_verify.sql", "007_gcc_heatmap_views.sql", "007_gcc_shadow_run_groups.sql"],
+        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
+      },
+      {
+        "prefix": "008",
+        "files": ["008_gcc_snapshot_exports.sql", "008_gcc_submission_snapshots.sql"],
+        "resolution": "Execute exports before snapshots"
+      },
+      {
+        "prefix": "009",
+        "files": ["009_gcc_esign_and_submission_gate.sql", "009_process_core.sql"],
+        "resolution": "Execute gcc_esign first (audit requirement)"
+      },
+      {
+        "prefix": "010",
+        "files": ["010_gcc_program_scoping_rls.sql", "010_process_design_ppq_cpv.sql"],
+        "resolution": "Execute gcc_program_scoping first (RLS policy dependency)"
+      },
+      {
+        "prefix": "011",
+        "files": ["011_gcc_config_bundles.sql", "011_process_fmea_impact_doe.sql"],
+        "resolution": "Execute gcc_config_bundles first"
+      },
+      {
+        "prefix": "012",
+        "files": ["012_gcc_retention_legal_hold.sql", "012_process_playbooks_layout.sql"],
+        "resolution": "Execute gcc_retention first (legal compliance requirement)"
+      },
+      {
+        "prefix": "013",
+        "files": ["013_documents_sections.sql", "013_gcc_drift_monitoring.sql"],
+        "resolution": "Execute documents_sections first (core dependency)"
+      },
+      {
+        "prefix": "014",
+        "files": ["014_gcc_regulatory_timeline.sql", "014_seed_cmc_documents.sql"],
+        "resolution": "Execute gcc_regulatory_timeline first, then seed"
+      },
+      {
+        "prefix": "015",
+        "files": ["015_esign_cpvrules.sql", "015_gcc_submission_package.sql"],
+        "resolution": "Execute esign_cpvrules first (Part 11 compliance)"
+      },
+      {
+        "prefix": "031",
+        "files": ["031_REGULATORY_AUDIT_REPORT.md", "031_gcc_enum_extensions_and_entity_utils.sql", "031_stability_workflow.sql"],
+        "resolution": "Skip .md file, execute gcc_enum first, then stability_workflow"
+      },
+      {
+        "prefix": "032",
+        "files": ["032_gcc_safety_signal_intelligence.sql", "032_stability_assignments.sql"],
+        "resolution": "Execute gcc_safety_signal first"
+      },
+      {
+        "prefix": "033",
+        "files": ["033_gcc_cro_execution_intelligence.sql", "033_stability_tp_assignments.sql"],
+        "resolution": "Execute gcc_cro_execution first"
+      },
+      {
+        "prefix": "034",
+        "files": ["034_gcc_intel_packs.sql", "034_stability_samples.sql"],
+        "resolution": "Execute gcc_intel_packs first"
+      },
+      {
+        "prefix": "035",
+        "files": ["035_gcc_entity_chain_events.sql", "035_stability_sample_link_coc.sql"],
+        "resolution": "Execute gcc_entity_chain first"
+      },
+      {
+        "prefix": "042",
+        "files": ["042_gcc_evidence_vault.sql", "042_quality_base_tables.sql"],
+        "resolution": "Execute gcc_evidence_vault first"
+      },
+      {
+        "prefix": "043",
+        "files": ["043_gcc_ectd_expanded_modules.sql", "043_quality_step2_pro.sql"],
+        "resolution": "Execute gcc_ectd_expanded first"
+      },
+      {
+        "prefix": "044",
+        "files": ["044_gcc_cognitive_fabric_rag.sql", "044_quality_step3.sql", "044b_gcc_lumen_schema_prerequisite.sql"],
+        "resolution": "Execute gcc_cognitive_fabric first, then quality_step3, then lumen"
+      },
+      {
+        "prefix": "045",
+        "files": ["045_gcc_neuro_symbolic_knowledge_graph.sql", "045_quality_step4.sql", "045_quality_templates.sql"],
+        "resolution": "Execute gcc_neuro_symbolic first, then quality_step4, then templates"
+      },
+      {
+        "prefix": "046",
+        "files": ["046_gcc_multi_agent_council.sql", "046_quality_step5.sql"],
+        "resolution": "Execute gcc_multi_agent_council first"
+      },
+      {
+        "prefix": "060",
+        "files": ["060_gcc_glsos_enhancements.sql", "060_regulatory_foundation.sql"],
+        "resolution": "Execute gcc_glsos first"
+      },
+      {
+        "prefix": "061",
+        "files": ["061_gcc_jsonb_indexes_and_constraints.sql", "061_regulatory_m3_builder.sql"],
+        "resolution": "Execute gcc_jsonb_indexes first"
+      },
+      {
+        "prefix": "062",
+        "files": ["062_gcc_schema_fixes.sql", "062_reg_q12_autopilot.sql"],
+        "resolution": "Execute gcc_schema_fixes first"
+      },
+      {
+        "prefix": "063",
+        "files": ["063_gcc_cognitive_agent_runtime.sql", "063_reg_questions_hub.sql"],
+        "resolution": "Execute gcc_cognitive_agent_runtime first"
+      },
+      {
+        "prefix": "071",
+        "files": ["071_gcc_rls_lumen_and_org_enforcement.sql", "071_portfolio.sql"],
+        "resolution": "Execute gcc_rls_lumen first (security requirement)"
+      }
+    ]
+  },
+  "domains": {
+    "core": {
+      "description": "Core database bootstrap and system tables",
+      "migrations": [
+        "000_gcc_bootstrap_core.sql",
+        "001_gcc_core.sql",
+        "002_gcc_audit_immutability.sql",
+        "003_gcc_prose_versioning.sql"
+      ]
+    },
+    "compliance": {
+      "description": "21 CFR Part 11, audit trails, and e-signatures",
+      "migrations": [
+        "002_gcc_audit_immutability.sql",
+        "009_gcc_esign_and_submission_gate.sql",
+        "015_esign_cpvrules.sql",
+        "054_gcc_part11_audit.sql",
+        "080_gcc_21cfr_part11_compliance.sql"
+      ]
+    },
+    "cortex_prime": {
+      "description": "Unified AI brain and cognitive services",
+      "migrations": [
+        "073_cortex_prime_unified_brain.sql",
+        "074_gcc_regulatory_intuition_engine.sql",
+        "075_gcc_epistemic_intelligence.sql",
+        "076_gcc_causal_inference_engine.sql",
+        "077_gcc_self_evolving_intelligence.sql",
+        "078_gcc_cross_domain_transfer.sql",
+        "079_gcc_unified_functions_views.sql"
+      ],
+      "dependencies": ["compliance"]
+    },
+    "cognitive_ecosystem": {
+      "description": "Multi-agent council and cognitive fabric",
+      "migrations": [
+        "044_gcc_cognitive_fabric_rag.sql",
+        "045_gcc_neuro_symbolic_knowledge_graph.sql",
+        "046_gcc_multi_agent_council.sql",
+        "063_gcc_cognitive_agent_runtime.sql",
+        "064_gcc_cognitive_audit_schema.sql"
+      ]
+    },
+    "regulatory": {
+      "description": "Regulatory submissions and eCTD",
+      "migrations": [
+        "014_gcc_regulatory_timeline.sql",
+        "015_gcc_submission_package.sql",
+        "038_gcc_ectd_seeder_service.sql",
+        "043_gcc_ectd_expanded_modules.sql",
+        "050_gcc_ectd_v4_domain_registry.sql",
+        "052_gcc_ectd_v4_cou_graph.sql",
+        "060_regulatory_foundation.sql",
+        "061_regulatory_m3_builder.sql",
+        "062_reg_q12_autopilot.sql",
+        "063_reg_questions_hub.sql",
+        "068_regulatory_schema_alignment.sql"
+      ]
+    },
+    "fhir": {
+      "description": "FHIR R4 resources for FDA KASA compliance",
+      "migrations": [
+        "058_gcc_fhir_resources.sql"
+      ]
+    },
+    "manufacturing": {
+      "description": "ISA-95 digital twins and manufacturing",
+      "migrations": [
+        "066_gcc_manufacturing_digital_twins.sql"
+      ]
+    },
+    "federated_learning": {
+      "description": "MELLODDY-style federated learning",
+      "migrations": [
+        "067_gcc_federated_learning_intelligence.sql"
+      ]
+    },
+    "stability": {
+      "description": "Stability studies and ICH guidelines",
+      "migrations": [
+        "022_stability_v2.sql",
+        "023_stability_step2.sql",
+        "024_stability_step3.sql",
+        "026_stability_step4.sql",
+        "030_stability_results.sql",
+        "031_stability_workflow.sql",
+        "032_stability_assignments.sql",
+        "033_stability_tp_assignments.sql",
+        "034_stability_samples.sql",
+        "035_stability_sample_link_coc.sql"
+      ]
+    },
+    "quality": {
+      "description": "Quality management system tables",
+      "migrations": [
+        "042_quality_base_tables.sql",
+        "043_quality_step2_pro.sql",
+        "044_quality_step3.sql",
+        "045_quality_step4.sql",
+        "045_quality_templates.sql",
+        "046_quality_step5.sql",
+        "047_quality_step6.sql",
+        "048_quality_step7.sql",
+        "049_quality_step8.sql"
+      ]
+    },
+    "process": {
+      "description": "Process design and validation",
+      "migrations": [
+        "009_process_core.sql",
+        "010_process_design_ppq_cpv.sql",
+        "011_process_fmea_impact_doe.sql",
+        "012_process_playbooks_layout.sql",
+        "020_new_process_wizard.sql"
+      ]
+    },
+    "security": {
+      "description": "Row-Level Security and multi-tenancy",
+      "migrations": [
+        "010_gcc_program_scoping_rls.sql",
+        "051_gcc_multi_tenant_identity.sql",
+        "053_gcc_rls_policies.sql",
+        "069_gcc_multitenant_rls_expansion.sql",
+        "070_gcc_rls_extended_ga.sql",
+        "071_gcc_rls_lumen_and_org_enforcement.sql"
+      ]
+    }
+  },
+  "executionOrder": [
+    "000_gcc_bootstrap_core.sql",
+    "001_gcc_core.sql",
+    "002_gcc_audit_immutability.sql",
+    "003_gcc_prose_versioning.sql",
+    "003_gcc_prose_versioning_verify.sql",
+    "004_gcc_enhanced_citations.sql",
+    "005_gcc_database_roles.sql",
+    "006_gcc_dashboard_views.sql",
+    "007_008_gcc_verify.sql",
+    "007_gcc_heatmap_views.sql",
+    "007_gcc_shadow_run_groups.sql",
+    "008_gcc_snapshot_exports.sql",
+    "008_gcc_submission_snapshots.sql",
+    "009_gcc_esign_and_submission_gate.sql",
+    "009_process_core.sql",
+    "010_gcc_program_scoping_rls.sql",
+    "010_process_design_ppq_cpv.sql",
+    "011_gcc_config_bundles.sql",
+    "011_process_fmea_impact_doe.sql",
+    "012_gcc_retention_legal_hold.sql",
+    "012_process_playbooks_layout.sql",
+    "013_documents_sections.sql",
+    "013_gcc_drift_monitoring.sql",
+    "014_gcc_regulatory_timeline.sql",
+    "014_seed_cmc_documents.sql",
+    "015_esign_cpvrules.sql",
+    "015_gcc_submission_package.sql",
+    "016_perf_indexes.sql",
+    "017_gcc_shadow_agent_rbac.sql",
+    "018_gcc_purge_workflow.sql",
+    "019_gcc_idempotency_ratelimit.sql",
+    "020_new_process_wizard.sql",
+    "022_stability_v2.sql",
+    "023_stability_step2.sql",
+    "024_stability_step3.sql",
+    "026_stability_step4.sql",
+    "028_strategy_core.sql",
+    "029_strategy_step2.sql",
+    "030_stability_results.sql",
+    "031_gcc_enum_extensions_and_entity_utils.sql",
+    "031_stability_workflow.sql",
+    "032_gcc_safety_signal_intelligence.sql",
+    "032_stability_assignments.sql",
+    "033_gcc_cro_execution_intelligence.sql",
+    "033_stability_tp_assignments.sql",
+    "034_gcc_intel_packs.sql",
+    "034_stability_samples.sql",
+    "035_gcc_entity_chain_events.sql",
+    "035_stability_sample_link_coc.sql",
+    "036_gcc_discovery_bridge.sql",
+    "037_gcc_registry_trial_ledger.sql",
+    "038_gcc_ectd_seeder_service.sql",
+    "039_gcc_label_impact_simulator.sql",
+    "040_gcc_site_intelligence.sql",
+    "041_gcc_signing_gates.sql",
+    "042_gcc_evidence_vault.sql",
+    "042_quality_base_tables.sql",
+    "043_gcc_ectd_expanded_modules.sql",
+    "043_quality_step2_pro.sql",
+    "044_gcc_cognitive_fabric_rag.sql",
+    "044_quality_step3.sql",
+    "044b_gcc_lumen_schema_prerequisite.sql",
+    "045_gcc_neuro_symbolic_knowledge_graph.sql",
+    "045_quality_step4.sql",
+    "045_quality_templates.sql",
+    "046_gcc_multi_agent_council.sql",
+    "046_quality_step5.sql",
+    "047_quality_step6.sql",
+    "048_quality_step7.sql",
+    "049_quality_step8.sql",
+    "050_gcc_ectd_v4_domain_registry.sql",
+    "051_gcc_multi_tenant_identity.sql",
+    "052_gcc_ectd_v4_cou_graph.sql",
+    "053_gcc_rls_policies.sql",
+    "054_gcc_part11_audit.sql",
+    "055_gcc_test_scenarios.sql",
+    "056_gcc_test_runner.sql",
+    "057_gcc_product_master.sql",
+    "058_gcc_fhir_resources.sql",
+    "059_gcc_vector_embeddings.sql",
+    "060_gcc_glsos_enhancements.sql",
+    "060_regulatory_foundation.sql",
+    "061_gcc_jsonb_indexes_and_constraints.sql",
+    "061_regulatory_m3_builder.sql",
+    "062_gcc_schema_fixes.sql",
+    "062_reg_q12_autopilot.sql",
+    "063_gcc_cognitive_agent_runtime.sql",
+    "063_reg_questions_hub.sql",
+    "064_gcc_cognitive_audit_schema.sql",
+    "065_gcc_global_dossier_schema.sql",
+    "066_gcc_manufacturing_digital_twins.sql",
+    "067_gcc_federated_learning_intelligence.sql",
+    "068_regulatory_schema_alignment.sql",
+    "069_gcc_multitenant_rls_expansion.sql",
+    "070_gcc_rls_extended_ga.sql",
+    "071_gcc_rls_lumen_and_org_enforcement.sql",
+    "071_portfolio.sql",
+    "072_gcc_innovation_platform_core.sql",
+    "073_cortex_prime_unified_brain.sql",
+    "074_gcc_regulatory_intuition_engine.sql",
+    "075_gcc_epistemic_intelligence.sql",
+    "076_gcc_causal_inference_engine.sql",
+    "077_gcc_self_evolving_intelligence.sql",
+    "078_gcc_cross_domain_transfer.sql",
+    "079_gcc_unified_functions_views.sql",
+    "080_gcc_21cfr_part11_compliance.sql",
+    "100_regulatory_templates.sql",
+    "101_complete_template_catalog.sql",
+    "102_load_all_templates.sql",
+    "103_load_complete_templates.sql"
+  ],
+  "skipFiles": [
+    "031_REGULATORY_AUDIT_REPORT.md"
+  ],
+  "criticalMigrations": {
+    "description": "These migrations MUST succeed for GxP compliance",
+    "list": [
+      {
+        "file": "002_gcc_audit_immutability.sql",
+        "reason": "21 CFR Part 11: Immutable audit trails"
+      },
+      {
+        "file": "054_gcc_part11_audit.sql",
+        "reason": "21 CFR Part 11: Comprehensive audit schema"
+      },
+      {
+        "file": "080_gcc_21cfr_part11_compliance.sql",
+        "reason": "21 CFR Part 11: Full compliance layer"
+      },
+      {
+        "file": "053_gcc_rls_policies.sql",
+        "reason": "Data segregation and access control"
+      },
+      {
+        "file": "073_cortex_prime_unified_brain.sql",
+        "reason": "Core AI brain for Cortex Prime"
+      }
+    ]
+  },
+  "migrationGroups": {
+    "core_bootstrap": {
+      "description": "Run first on fresh database",
+      "migrations": ["000_gcc_bootstrap_core.sql", "001_gcc_core.sql"]
+    },
+    "compliance_critical": {
+      "description": "Required for Part 11 compliance",
+      "migrations": ["002_gcc_audit_immutability.sql", "054_gcc_part11_audit.sql", "080_gcc_21cfr_part11_compliance.sql"]
+    },
+    "cortex_prime": {
+      "description": "Unified AI brain (run after compliance)",
+      "migrations": ["073_cortex_prime_unified_brain.sql", "074_gcc_regulatory_intuition_engine.sql", "075_gcc_epistemic_intelligence.sql", "076_gcc_causal_inference_engine.sql", "077_gcc_self_evolving_intelligence.sql", "078_gcc_cross_domain_transfer.sql", "079_gcc_unified_functions_views.sql"]
+    }
+  },
+  "notes": {
+    "numberingStrategy": "Option C (Metadata) - Keep existing filenames, use this manifest for execution order",
+    "renumberingRisk": "HIGH - Renaming files would break existing deployment scripts and audit trails",
+    "recommendation": "Use this manifest for new deployments, existing databases are already migrated"
+  }
+}

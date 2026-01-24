@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
-import { db } from '../db.js';
+import { db } from '../db';
 import { 
   projects, 
   projectWorkflowStages, 
   projectTasks,
   medicalDevices,
   sharepoint_files
-} from '../../shared/schema.js';
+} from '../../shared/schema';
 
 const router = express.Router();
 

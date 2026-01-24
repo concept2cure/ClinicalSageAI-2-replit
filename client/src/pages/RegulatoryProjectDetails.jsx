@@ -55,7 +55,7 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { useNavigate, useParams } from 'wouter';
+import { useLocation, useParams } from 'wouter';
 
 // Import our stability monitoring hooks
 import { useNetworkResilience } from '@/hooks/useNetworkResilience';

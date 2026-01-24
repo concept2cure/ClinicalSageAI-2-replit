@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import openaiService from '../services/openaiService.js';
+// NOTE: Using AI Provider Router for multi-provider support
+// The original openaiService was actually Kimi AI (moonshot.cn)
+import aiProviderRouter from '../services/aiProviderRouter.js';
+const openaiService = aiProviderRouter; // Backward compatibility alias
 import { z } from 'zod';
 
 const router = Router();

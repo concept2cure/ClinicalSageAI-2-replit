@@ -19,8 +19,16 @@ import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
+// Enterprise Security & Performance Middleware
+import { applySecurityMiddleware, securityHeaders, corsMiddleware, auditLog } from './middleware/enterprise-security.js';
+import { applyPerformanceMiddleware, compressionMiddleware, monitorPerformance, cleanup as cleanupPerformance } from './middleware/enterprise-performance.js';
+
 // Import enterprise services
-import openaiService from './services/openaiService.js';
+// NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
+// The service actually uses Kimi AI (moonshot.cn), not OpenAI
+import aiProviderRouter from './services/aiProviderRouter.js';
+// Backward compatibility alias for existing code
+const openaiService = aiProviderRouter;
 import auditService from './services/auditService.js';
 import rbacService from './services/roleBasedAccess.js';
 
@@ -49,8 +57,8 @@ import aiPhase3Routes from './api/ai/phase3-routes.js';
 // Import authoring routes - made optional to prevent startup crashes
 // import authoringRouter from './routes/authoring.router.js';
 
-// Import sections routes for real-time synchronization
-import sectionsRouter from './routes/sections.js';
+// Import sections routes - deprecated, using predictive-sections.ts instead
+// import sectionsRouter from './routes/sections.js';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
@@ -82,6 +90,8 @@ process.on('SIGTERM', async () => {
     console.log('🔄 Shutting down Python backend...');
     pythonProcess.kill('SIGTERM');
   }
+  // Cleanup performance resources (caches, monitors)
+  cleanupPerformance();
   // Graceful DB shutdown
   try {
     await pool.end();
@@ -98,6 +108,8 @@ process.on('SIGINT', async () => {
     console.log('🔄 Shutting down Python backend...');
     pythonProcess.kill('SIGTERM');
   }
+  // Cleanup performance resources (caches, monitors)
+  cleanupPerformance();
   // Graceful DB shutdown
   try {
     await pool.end();
@@ -136,49 +148,29 @@ if (DEBUG) {
   });
 }
 
-// Import security middleware - TEMPORARILY DISABLED
-// import securityMiddleware from './middleware/security.js';
+// ============================================================================
+// ENTERPRISE SECURITY & PERFORMANCE MIDDLEWARE (ENABLED)
+// ============================================================================
+// Apply enterprise security middleware first
+applySecurityMiddleware(app);
 
-// Apply security headers first
-// app.use(securityMiddleware.securityHeaders);
+// Apply enterprise performance middleware (compression, monitoring)
+applyPerformanceMiddleware(app);
 
-// Apply CORS with security configuration
-// import cors from 'cors'; // Removed - using built-in Express CORS handling
-// app.use(cors(securityMiddleware.corsOptions)); // Commented out - CORS not installed
+console.log('✅ Enterprise security and performance middleware enabled');
+// ============================================================================
 
 // Middleware setup
 app.use(httpLogger); // Add structured logging
-// app.use(securityMiddleware.auditLog); // Add audit logging - DISABLED
+// Audit logging now handled by enterprise-security middleware
 
 // Body parsing with size limits
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Add basic CORS headers to allow frontend communication
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-organization-id');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// CORS now handled by enterprise-security middleware (origin whitelist instead of wildcard '*')
 
-// Apply security middleware - COMMENTED OUT DUE TO MISSING IMPORT
-// app.use(securityMiddleware.sanitizeInput); // Sanitize all inputs
-// app.use(securityMiddleware.validateOrganizationHeaders); // Validate headers
-
-// Apply rate limiting to AI routes - COMMENTED OUT DUE TO MISSING IMPORT
-// app.use('/api/ai', securityMiddleware.rateLimits.ai);
-
-// Rate limiting for mutating operations - temporarily disabled
-// const mutateLimiter = rateLimit({
-//   windowMs: 60_000, // 1 min
-//   max: 90,          // 90 writes/min per IP
-//   standardHeaders: true,
-//   legacyHeaders: false
-// });
+// Input sanitization and organization validation now handled by enterprise-security middleware
 
 debugLog('Express middleware configured');
 
@@ -223,16 +215,16 @@ pool
     console.error('❌ Database connection failed:', err.message);
   });
 
-// Initialize VaultDMSService
-import VaultDMSService from './services/VaultDMSService.js';
+// VaultDMSService disabled - service moved to _deprecated
+// import VaultDMSService from './services/VaultDMSService.js';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
   download: async (path: string) => path,
   delete: async (path: string) => true
 };
-app.locals.vaultDmsService = new VaultDMSService(pool, storageClient);
-console.log('✅ VaultDMSService initialized');
+// app.locals.vaultDmsService = new VaultDMSService(pool, storageClient);
+console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
 // Health check endpoints
 app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
@@ -357,9 +349,9 @@ console.log('✅ /api/projects route mounted directly');
 import templateRoutes from './api/templates/routes.js';
 app.use('/api/templates', templateRoutes);
 
-// Mount template usage and catalog routes
-import templatesUsageRoutes from './routes/templates-usage.js';
-app.use('/api', templatesUsageRoutes);
+// Template usage routes deprecated - consolidated into templateRoutes
+// import templatesUsageRoutes from './routes/templates-usage.js';
+// app.use('/api', templatesUsageRoutes);
 
 // Import and mount AI routes
 import aiRoutes from './api/ai/routes.js';
@@ -605,6 +597,17 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Smart Blocks routes:', error);
 }
+
+// Mount Cognitive Ecosystem routes (LangGraph, FHIR, Global Dossier, Manufacturing, Federated Learning)
+try {
+  const cognitiveEcosystemModule = await import('./routes/cognitive-ecosystem.js');
+  const cognitiveEcosystemRoutes = cognitiveEcosystemModule.default;
+  app.use('/api/cognitive', cognitiveEcosystemRoutes);
+  console.log('✅ Cognitive Ecosystem API routes mounted successfully (LangGraph, FHIR, Federated Learning)');
+} catch (error) {
+  console.error('❌ Failed to mount Cognitive Ecosystem routes:', error);
+}
+
 
 // Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
 try {
@@ -3909,13 +3912,13 @@ async function startServer() {
     console.error('Failed to mount leaves routes:', error);
   }
 
-  // Mount Sections routes for real-time synchronization
-  try {
-    app.use('/api/sections', sectionsRouter);
-    console.log('✅ Sections real-time sync routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount sections routes:', error);
-  }
+  // Sections routes deprecated - consolidated into predictive-sections.ts
+  // try {
+  //   app.use('/api/sections', sectionsRouter);
+  //   console.log('✅ Sections real-time sync routes mounted successfully');
+  // } catch (error) {
+  //   console.error('Failed to mount sections routes:', error);
+  // }
 
   // Mount Validation routes
   try {

@@ -3,7 +3,7 @@ import { Database, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import NavigationBanner from '../components/common/NavigationBanner';
-import VaultDocumentBrowser from '../components/ectd/VaultDocumentBrowser';
+import EmbeddedFileBrowser from '../components/ectd/EmbeddedFileBrowser';
 
 /**
  * VAULT Document Browser Page
@@ -51,7 +51,7 @@ const VaultBrowser = () => {
 
       {/* Main content with full-screen document browser */}
       <div className="flex-1 overflow-hidden">
-        <VaultDocumentBrowser
+        <EmbeddedFileBrowser
           onSelectFile={file => {
             // Store this file in localStorage to be available in CoAuthor
             const selectedDocs = JSON.parse(
