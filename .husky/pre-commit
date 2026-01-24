@@ -1,0 +1,62 @@
+#!/usr/bin/env sh
+
+# ============================================
+# PRE-COMMIT HOOK - Tech Debt Prevention
+# Added: 2026-01-24
+# ============================================
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for console.log in staged files (excluding tests, deprecated, and config files)
+CONSOLE_LOGS=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v '_deprecated' | grep -v '\.test\.' | grep -v '__tests__' | grep -v '\.config\.' | grep -v 'eslintrc' | xargs grep -l 'console\.log' 2>/dev/null || true)
+
+if [ -n "$CONSOLE_LOGS" ]; then
+  echo ""
+  echo "⚠️  WARNING: console.log found in staged files:"
+  echo "$CONSOLE_LOGS"
+  echo ""
+  echo "Consider using the logger utility instead:"
+  echo "  import { logger } from '@/server/utils/logger';"
+  echo "  logger.info('message');"
+  echo ""
+  echo "To bypass this check (not recommended): git commit --no-verify"
+  echo ""
+fi
+
+# Check for actual imports from deprecated folders (not just the word "deprecated")
+DEPRECATED_IMPORTS=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v '_deprecated' | grep -v 'eslintrc' | xargs grep -lE "from ['\"].*/_deprecated/" 2>/dev/null || true)
+
+if [ -n "$DEPRECATED_IMPORTS" ]; then
+  echo ""
+  echo "🚫 ERROR: Import from deprecated folder detected!"
+  echo "$DEPRECATED_IMPORTS"
+  echo ""
+  echo "Deprecated folders should not be imported from."
+  echo "See docs/ARCHITECTURE.md for the correct module structure."
+  echo ""
+  exit 1
+fi
+
+# Check file sizes for new/modified files
+echo "📏 Checking file sizes..."
+LARGE_FILES=""
+for file in $(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$'); do
+  if [ -f "$file" ]; then
+    LINES=$(wc -l < "$file")
+    if [ "$LINES" -gt 500 ]; then
+      LARGE_FILES="$LARGE_FILES\n  $file ($LINES lines)"
+    fi
+  fi
+done
+
+if [ -n "$LARGE_FILES" ]; then
+  echo ""
+  echo "⚠️  WARNING: Large files detected (>500 lines):"
+  echo -e "$LARGE_FILES"
+  echo ""
+  echo "Consider splitting into smaller modules."
+  echo "See docs/ARCHITECTURE.md for guidance."
+  echo ""
+fi
+
+echo "✅ Pre-commit checks complete"
