@@ -1,0 +1,19 @@
+{
+  "faers": {
+    "lastSkip": 900,
+    "totalHarvested": 900
+  },
+  "labels": {
+    "lastSkip": 900,
+    "totalHarvested": 900
+  },
+  "devices510k": {
+    "lastSkip": 900,
+    "totalHarvested": 900
+  },
+  "devicesPma": {
+    "lastSkip": 0,
+    "totalHarvested": 0
+  },
+  "lastRun": "2026-01-25T06:33:48.576Z"
+}

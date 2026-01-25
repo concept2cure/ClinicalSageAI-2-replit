@@ -1,0 +1,16 @@
+{
+  "clinicalTrials": {
+    "lastPage": 10,
+    "totalImported": 450
+  },
+  "healthCanada": {
+    "lastBatch": 10,
+    "totalImported": 500
+  },
+  "csrDocs": {
+    "lastProcessed": 0,
+    "totalImported": 40
+  },
+  "lastRun": "2026-01-25T06:30:53.766Z",
+  "totalAtoms": 5278
+}

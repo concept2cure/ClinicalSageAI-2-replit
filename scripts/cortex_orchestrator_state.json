@@ -1,0 +1,27 @@
+{
+  "cycleCount": 8,
+  "totalAtomsHarvested": 4745,
+  "farmerStats": {
+    "ClinicalTrials.gov": {
+      "runs": 8,
+      "successes": 0,
+      "failures": 8,
+      "totalDuration": 413.9
+    },
+    "FDA OpenFDA": {
+      "runs": 8,
+      "successes": 8,
+      "failures": 0,
+      "totalDuration": 1549.4
+    },
+    "PubMed/NCBI": {
+      "runs": 8,
+      "successes": 8,
+      "failures": 0,
+      "totalDuration": 258.5
+    }
+  },
+  "lastCycleStart": "2026-01-25T06:30:00.116Z",
+  "lastCycleEnd": "2026-01-25T06:34:26.563Z",
+  "errors": []
+}
