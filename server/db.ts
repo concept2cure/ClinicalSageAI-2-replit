@@ -18,7 +18,10 @@ const logger = createScopedLogger('database');
 let pool: Pool | null = null;
 
 // Get database URL - prefer DATABASE_NEON_NEW_SECRET, fall back to DATABASE_URL
-const databaseUrl = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
+const databaseUrl =
+  process.env.DATABASE_NEON_NEW_SECRET ||
+  process.env.DATABASE_NEON_NEW_SECRET ||
+  process.env.DATABASE_URL;
 
 // Initialize database connection
 try {
@@ -65,7 +68,9 @@ try {
       logger.error('Unexpected database error', { error: err.message });
     });
   } else {
-    logger.warn('DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable');
+    logger.warn(
+      'DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable'
+    );
   }
 } catch (error: any) {
   logger.error('Failed to initialize database', { error: error.message });
@@ -74,6 +79,17 @@ try {
 
 // Initialize Drizzle ORM
 export const db = pool ? drizzle(pool, { schema }) : null;
+
+/**
+ * Get the database connection, throwing an error if not available.
+ * Use this in routes/services that require database access.
+ */
+export function getDb() {
+  if (!db) {
+    throw new Error('Database connection not available');
+  }
+  return db;
+}
 
 /**
  * Run database migrations
