@@ -14,8 +14,8 @@ export default [
         ecmaVersion: 'latest',
         sourceType: 'module',
         ecmaFeatures: {
-          jsx: true
-        }
+          jsx: true,
+        },
       },
       globals: {
         // Node.js globals
@@ -108,20 +108,20 @@ export default [
         ServiceWorker: 'readonly',
         Worker: 'readonly',
         // Microsoft Office globals
-        Office: 'readonly'
-      }
+        Office: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      'react': reactPlugin,
-      'react-hooks': reactHooksPlugin
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
     },
     rules: {
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn'
-    }
-  }
+      'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
 ];
