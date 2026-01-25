@@ -107,7 +107,7 @@
 
 ## 📁 FILE STRUCTURE
 
-```
+```text
 lumen_cortex/
 └── enterprise/
     ├── __init__.py                 # Package exports
@@ -128,8 +128,7 @@ lumen_cortex/
     ├── integration_tests.py        # Test suite
     └── tests/
         └── test_enterprise.py      # Unit tests
-```
-
+```text
 ---
 
 ## 🚀 SUGGESTED NEXT STEPS
@@ -141,41 +140,41 @@ lumen_cortex/
    - Set up Neo4j instance
    - Configure LLM API keys
 
-2. **Load Production Data**
+1. **Load Production Data**
    - Migrate existing CSR documents
    - Index regulatory guidances
    - Build knowledge graph
 
-3. **API Integration**
+1. **API Integration**
    - Connect TypeScript frontend
    - Implement authentication
    - Enable audit logging
 
 ### Short-Term (Weeks 2-4)
 
-4. **Performance Optimization**
+1. **Performance Optimization**
    - Tune embedding batch sizes
    - Configure connection pools
    - Implement Redis caching
 
-5. **Monitoring Setup**
+1. **Monitoring Setup**
    - Prometheus metrics export
    - Grafana dashboards
    - Alert configuration
 
-6. **Documentation**
+1. **Documentation**
    - API documentation
    - Deployment guide
    - User manual
 
 ### Medium-Term (Months 2-3)
 
-7. **Advanced Features**
+1. **Advanced Features**
    - RAG query optimization
    - Multi-document reasoning
    - Predictive analytics
 
-8. **Compliance Certification**
+1. **Compliance Certification**
    - Part 11 audit preparation
    - GAMP 5 documentation
    - IQ/OQ/PQ protocols

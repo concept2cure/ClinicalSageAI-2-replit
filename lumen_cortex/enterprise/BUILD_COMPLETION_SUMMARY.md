@@ -64,7 +64,7 @@ Successfully built an enterprise-grade regulatory AI platform with **51 producti
 
 ## 🧪 Validation Results
 
-```
+```text
 Overall Status: PARTIAL PASS (core compliance ✅)
 
 Part 11 Compliance Tests: 3/3 PASSED (100%)
@@ -78,8 +78,7 @@ Performance Tests: 1/1 PASSED (100%)
 Core Tests: 1/2 PASSED (minor API mismatch)
   ✅ EventBus
   ⚠️ CircuitBreaker (test param mismatch - not a code issue)
-```
-
+```text
 ---
 
 ## 🏗 Architecture Highlights
@@ -119,7 +118,7 @@ Core Tests: 1/2 PASSED (minor API mismatch)
 
 ## 📁 File Structure
 
-```
+```text
 lumen_cortex/enterprise/
 ├── __init__.py           # Lazy-loading package exports
 ├── core.py               # EventBus, CircuitBreaker
@@ -137,8 +136,7 @@ lumen_cortex/enterprise/
 │   └── 001_enterprise_audit_tables.sql
 └── tests/
     └── test_enterprise.py
-```
-
+```text
 ---
 
 ## 🚀 Suggested Next Steps
@@ -147,44 +145,42 @@ lumen_cortex/enterprise/
 
 1. **Install Dependencies** - Add to requirements.txt:
 
-   ```
+   ```text
    pydantic>=2.0
    cryptography>=41.0
    neo4j>=5.0
    sentence-transformers>=2.0
    fastapi>=0.100
    uvicorn>=0.23
-   ```
+   ```text
+1. **Run Database Migration** - Execute audit tables SQL
 
-2. **Run Database Migration** - Execute audit tables SQL
-
-3. **Configure Environment** - Set required secrets:
-   ```
+1. **Configure Environment** - Set required secrets:
+   ```text
    OPENAI_API_KEY=sk-...
    ANTHROPIC_API_KEY=sk-ant-...
    NEO4J_URI=bolt://localhost:7687
    NEO4J_USER=neo4j
    NEO4J_PASSWORD=...
    JWT_SECRET_KEY=...
-   ```
-
+   ```text
 ### Short-term (Week 2-3)
 
-4. **Neo4j Setup** - Deploy graph database with GDS library
-5. **Integration Testing** - End-to-end workflow tests
-6. **API Documentation** - Generate OpenAPI spec from FastAPI
+1. **Neo4j Setup** - Deploy graph database with GDS library
+1. **Integration Testing** - End-to-end workflow tests
+1. **API Documentation** - Generate OpenAPI spec from FastAPI
 
 ### Medium-term (Month 1)
 
-7. **Production Deployment** - Kubernetes/Docker configuration
-8. **Monitoring** - Prometheus metrics, Grafana dashboards
-9. **Load Testing** - Locust performance benchmarks
+1. **Production Deployment** - Kubernetes/Docker configuration
+1. **Monitoring** - Prometheus metrics, Grafana dashboards
+1. **Load Testing** - Locust performance benchmarks
 
 ### Long-term (Quarter 1)
 
-10. **FDA IQ/OQ/PQ** - Formal validation documentation
-11. **SOC 2 Compliance** - Security audit preparation
-12. **User Training** - Documentation and tutorials
+1. **FDA IQ/OQ/PQ** - Formal validation documentation
+1. **SOC 2 Compliance** - Security audit preparation
+1. **User Training** - Documentation and tutorials
 
 ---
 
@@ -216,4 +212,4 @@ lumen_cortex/enterprise/
 
 ---
 
-_Built with ❤️ for Regulatory Excellence_
+**Built with ❤️ for Regulatory Excellence**
