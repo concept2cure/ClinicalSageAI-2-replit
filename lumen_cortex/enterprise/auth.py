@@ -51,24 +51,24 @@ logger = logging.getLogger("LumenCortex.Auth")
 @dataclass
 class AuthConfig:
     """Authentication configuration"""
-    
+
     # JWT Settings
     jwt_algorithm: str = "RS256"
     jwt_issuer: str = "lumen-cortex"
     jwt_audience: str = "lumen-cortex-api"
     jwt_expiry_minutes: int = 60
     jwt_refresh_expiry_days: int = 30
-    
+
     # API Key Settings
     api_key_prefix: str = "lc_"
     api_key_length: int = 48
     api_key_hash_algorithm: str = "sha256"
-    
+
     # Session Settings
     session_timeout_minutes: int = 480  # 8 hours
     session_max_concurrent: int = 5
     session_extend_on_activity: bool = True
-    
+
     # Security Settings
     password_min_length: int = 12
     password_require_uppercase: bool = True
@@ -76,26 +76,26 @@ class AuthConfig:
     password_require_digit: bool = True
     password_require_special: bool = True
     password_history_count: int = 12
-    
+
     # Lockout Settings
     max_failed_attempts: int = 5
     lockout_duration_minutes: int = 30
     lockout_reset_minutes: int = 60
-    
+
     # MFA Settings
     mfa_enabled: bool = True
     mfa_totp_issuer: str = "Lumen Cortex"
     mfa_totp_digits: int = 6
     mfa_totp_period: int = 30
-    
+
     # Rate Limiting
     rate_limit_per_minute: int = 100
     rate_limit_per_hour: int = 1000
-    
+
     # Redis Settings
     redis_url: str = ""
     redis_prefix: str = "lc:auth:"
-    
+
     @classmethod
     def from_env(cls) -> "AuthConfig":
         """Create config from environment variables"""
@@ -126,22 +126,22 @@ class Permission(Enum):
     DOCUMENT_DELETE = "document:delete"
     DOCUMENT_SIGN = "document:sign"
     DOCUMENT_APPROVE = "document:approve"
-    
+
     # Analysis permissions
     ANALYSIS_RUN = "analysis:run"
     ANALYSIS_EXPORT = "analysis:export"
-    
+
     # Graph permissions
     GRAPH_READ = "graph:read"
     GRAPH_WRITE = "graph:write"
     GRAPH_ADMIN = "graph:admin"
-    
+
     # Admin permissions
     USER_MANAGE = "user:manage"
     ROLE_MANAGE = "role:manage"
     SYSTEM_ADMIN = "system:admin"
     AUDIT_VIEW = "audit:view"
-    
+
     # API permissions
     API_ACCESS = "api:access"
     API_ADMIN = "api:admin"
@@ -260,7 +260,7 @@ class User:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     @property
     def permissions(self) -> Set[Permission]:
         """Get all permissions for user's roles"""
@@ -268,19 +268,19 @@ class User:
         for role in self.roles:
             perms.update(ROLE_PERMISSIONS.get(role, set()))
         return perms
-    
+
     def has_permission(self, permission: Permission) -> bool:
         """Check if user has a specific permission"""
         return permission in self.permissions
-    
+
     def has_any_permission(self, permissions: List[Permission]) -> bool:
         """Check if user has any of the specified permissions"""
         return bool(self.permissions & set(permissions))
-    
+
     def has_all_permissions(self, permissions: List[Permission]) -> bool:
         """Check if user has all specified permissions"""
         return set(permissions).issubset(self.permissions)
-    
+
     def has_role(self, role: Role) -> bool:
         """Check if user has a specific role"""
         return role in self.roles
@@ -298,12 +298,12 @@ class Session:
     user_agent: Optional[str] = None
     device_fingerprint: Optional[str] = None
     is_valid: bool = True
-    
+
     @property
     def is_expired(self) -> bool:
         """Check if session is expired"""
         return datetime.now(timezone.utc) > self.expires_at
-    
+
     def extend(self, minutes: int) -> None:
         """Extend session expiry"""
         self.expires_at = datetime.now(timezone.utc) + timedelta(minutes=minutes)
@@ -357,7 +357,7 @@ class AuthEvent:
 
 class PasswordHasher:
     """Secure password hashing with Argon2"""
-    
+
     def __init__(self):
         try:
             from argon2 import PasswordHasher as Argon2Hasher
@@ -373,7 +373,7 @@ class PasswordHasher:
             self._hasher = None
             self._available = False
             logger.warning("argon2-cffi not available, using fallback hasher")
-    
+
     def hash(self, password: str) -> str:
         """Hash a password"""
         if self._available and self._hasher:
@@ -383,7 +383,7 @@ class PasswordHasher:
             salt = secrets.token_bytes(16)
             key = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
             return f"pbkdf2:{salt.hex()}:{key.hex()}"
-    
+
     def verify(self, password: str, hash_str: str) -> bool:
         """Verify a password against a hash"""
         try:
@@ -399,7 +399,7 @@ class PasswordHasher:
             return False
         except Exception:
             return False
-    
+
     def needs_rehash(self, hash_str: str) -> bool:
         """Check if password needs rehashing"""
         if hash_str.startswith("pbkdf2:"):
@@ -411,31 +411,31 @@ class PasswordHasher:
 
 class PasswordValidator:
     """Password policy validator"""
-    
+
     def __init__(self, config: AuthConfig):
         self.config = config
-    
+
     def validate(self, password: str) -> Tuple[bool, List[str]]:
         """Validate password against policy"""
         errors = []
-        
+
         if len(password) < self.config.password_min_length:
             errors.append(f"Password must be at least {self.config.password_min_length} characters")
-        
+
         if self.config.password_require_uppercase and not any(c.isupper() for c in password):
             errors.append("Password must contain at least one uppercase letter")
-        
+
         if self.config.password_require_lowercase and not any(c.islower() for c in password):
             errors.append("Password must contain at least one lowercase letter")
-        
+
         if self.config.password_require_digit and not any(c.isdigit() for c in password):
             errors.append("Password must contain at least one digit")
-        
+
         if self.config.password_require_special:
             special_chars = "!@#$%^&*()_+-=[]{}|;':\",./<>?"
             if not any(c in special_chars for c in password):
                 errors.append("Password must contain at least one special character")
-        
+
         return len(errors) == 0, errors
 
 
@@ -445,12 +445,12 @@ class PasswordValidator:
 
 class JWTHandler:
     """JWT token handler"""
-    
+
     def __init__(self, config: AuthConfig, private_key: Optional[str] = None, public_key: Optional[str] = None):
         self.config = config
         self._private_key = private_key or os.getenv("JWT_PRIVATE_KEY", "")
         self._public_key = public_key or os.getenv("JWT_PUBLIC_KEY", "")
-        
+
         try:
             import jwt
             self._jwt = jwt
@@ -459,12 +459,12 @@ class JWTHandler:
             self._jwt = None
             self._available = False
             logger.warning("PyJWT not available")
-    
+
     def create_access_token(self, user: User, session_id: str) -> str:
         """Create access token"""
         if not self._available:
             raise RuntimeError("JWT library not available")
-        
+
         now = datetime.now(timezone.utc)
         payload = {
             "sub": user.id,
@@ -480,18 +480,18 @@ class JWTHandler:
             "exp": int((now + timedelta(minutes=self.config.jwt_expiry_minutes)).timestamp()),
             "jti": secrets.token_urlsafe(16),
         }
-        
+
         return self._jwt.encode(
             payload,
             self._private_key,
             algorithm=self.config.jwt_algorithm
         )
-    
+
     def create_refresh_token(self, user_id: str, session_id: str) -> str:
         """Create refresh token"""
         if not self._available:
             raise RuntimeError("JWT library not available")
-        
+
         now = datetime.now(timezone.utc)
         payload = {
             "sub": user_id,
@@ -503,18 +503,18 @@ class JWTHandler:
             "exp": int((now + timedelta(days=self.config.jwt_refresh_expiry_days)).timestamp()),
             "jti": secrets.token_urlsafe(16),
         }
-        
+
         return self._jwt.encode(
             payload,
             self._private_key,
             algorithm=self.config.jwt_algorithm
         )
-    
+
     def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Verify and decode a token"""
         if not self._available:
             return None
-        
+
         try:
             payload = self._jwt.decode(
                 token,
@@ -530,12 +530,12 @@ class JWTHandler:
         except self._jwt.InvalidTokenError as e:
             logger.debug(f"Invalid token: {e}")
             return None
-    
+
     def decode_without_verify(self, token: str) -> Optional[Dict[str, Any]]:
         """Decode token without verification (for inspection)"""
         if not self._available:
             return None
-        
+
         try:
             return self._jwt.decode(
                 token,
@@ -551,25 +551,25 @@ class JWTHandler:
 
 class APIKeyManager:
     """API key generation and validation"""
-    
+
     def __init__(self, config: AuthConfig):
         self.config = config
-    
+
     def generate_key(self) -> Tuple[str, str]:
         """Generate a new API key. Returns (full_key, hash)"""
         key_bytes = secrets.token_bytes(self.config.api_key_length)
         key = self.config.api_key_prefix + key_bytes.hex()
         key_hash = self._hash_key(key)
         return key, key_hash
-    
+
     def _hash_key(self, key: str) -> str:
         """Hash an API key"""
         return hashlib.sha256(key.encode()).hexdigest()
-    
+
     def verify_key(self, key: str, key_hash: str) -> bool:
         """Verify an API key against its hash"""
         return hmac.compare_digest(self._hash_key(key), key_hash)
-    
+
     def get_prefix(self, key: str) -> str:
         """Get the visible prefix of an API key"""
         if key.startswith(self.config.api_key_prefix):
@@ -584,32 +584,32 @@ class APIKeyManager:
 
 class SessionStore(ABC):
     """Abstract session store"""
-    
+
     @abstractmethod
     async def create(self, session: Session) -> None:
         """Create a new session"""
         pass
-    
+
     @abstractmethod
     async def get(self, session_id: str) -> Optional[Session]:
         """Get a session by ID"""
         pass
-    
+
     @abstractmethod
     async def update(self, session: Session) -> None:
         """Update a session"""
         pass
-    
+
     @abstractmethod
     async def delete(self, session_id: str) -> None:
         """Delete a session"""
         pass
-    
+
     @abstractmethod
     async def get_user_sessions(self, user_id: str) -> List[Session]:
         """Get all sessions for a user"""
         pass
-    
+
     @abstractmethod
     async def delete_user_sessions(self, user_id: str) -> int:
         """Delete all sessions for a user"""
@@ -618,33 +618,33 @@ class SessionStore(ABC):
 
 class InMemorySessionStore(SessionStore):
     """In-memory session store (for development)"""
-    
+
     def __init__(self):
         self._sessions: Dict[str, Session] = {}
         self._lock = asyncio.Lock()
-    
+
     async def create(self, session: Session) -> None:
         async with self._lock:
             self._sessions[session.id] = session
-    
+
     async def get(self, session_id: str) -> Optional[Session]:
         session = self._sessions.get(session_id)
         if session and session.is_expired:
             await self.delete(session_id)
             return None
         return session
-    
+
     async def update(self, session: Session) -> None:
         async with self._lock:
             self._sessions[session.id] = session
-    
+
     async def delete(self, session_id: str) -> None:
         async with self._lock:
             self._sessions.pop(session_id, None)
-    
+
     async def get_user_sessions(self, user_id: str) -> List[Session]:
         return [s for s in self._sessions.values() if s.user_id == user_id and not s.is_expired]
-    
+
     async def delete_user_sessions(self, user_id: str) -> int:
         async with self._lock:
             to_delete = [sid for sid, s in self._sessions.items() if s.user_id == user_id]
@@ -655,12 +655,12 @@ class InMemorySessionStore(SessionStore):
 
 class RedisSessionStore(SessionStore):
     """Redis-backed session store"""
-    
+
     def __init__(self, config: AuthConfig):
         self.config = config
         self._redis = None
         self._prefix = config.redis_prefix + "session:"
-    
+
     async def _get_redis(self):
         """Get or create Redis connection"""
         if self._redis is None:
@@ -670,12 +670,12 @@ class RedisSessionStore(SessionStore):
             except ImportError:
                 raise RuntimeError("redis package not installed")
         return self._redis
-    
+
     async def create(self, session: Session) -> None:
         r = await self._get_redis()
         key = self._prefix + session.id
         ttl = int((session.expires_at - datetime.now(timezone.utc)).total_seconds())
-        
+
         data = {
             "id": session.id,
             "user_id": session.user_id,
@@ -687,21 +687,21 @@ class RedisSessionStore(SessionStore):
             "device_fingerprint": session.device_fingerprint,
             "is_valid": session.is_valid,
         }
-        
+
         await r.setex(key, ttl, json.dumps(data))
-        
+
         # Add to user's session list
         user_key = self._prefix + f"user:{session.user_id}"
         await r.sadd(user_key, session.id)
-    
+
     async def get(self, session_id: str) -> Optional[Session]:
         r = await self._get_redis()
         key = self._prefix + session_id
         data = await r.get(key)
-        
+
         if not data:
             return None
-        
+
         d = json.loads(data)
         return Session(
             id=d["id"],
@@ -714,10 +714,10 @@ class RedisSessionStore(SessionStore):
             device_fingerprint=d.get("device_fingerprint"),
             is_valid=d.get("is_valid", True),
         )
-    
+
     async def update(self, session: Session) -> None:
         await self.create(session)  # Same operation with TTL reset
-    
+
     async def delete(self, session_id: str) -> None:
         r = await self._get_redis()
         session = await self.get(session_id)
@@ -725,29 +725,29 @@ class RedisSessionStore(SessionStore):
             await r.delete(self._prefix + session_id)
             user_key = self._prefix + f"user:{session.user_id}"
             await r.srem(user_key, session_id)
-    
+
     async def get_user_sessions(self, user_id: str) -> List[Session]:
         r = await self._get_redis()
         user_key = self._prefix + f"user:{user_id}"
         session_ids = await r.smembers(user_key)
-        
+
         sessions = []
         for sid in session_ids:
             session = await self.get(sid.decode() if isinstance(sid, bytes) else sid)
             if session:
                 sessions.append(session)
         return sessions
-    
+
     async def delete_user_sessions(self, user_id: str) -> int:
         r = await self._get_redis()
         user_key = self._prefix + f"user:{user_id}"
         session_ids = await r.smembers(user_key)
-        
+
         count = 0
         for sid in session_ids:
             await r.delete(self._prefix + (sid.decode() if isinstance(sid, bytes) else sid))
             count += 1
-        
+
         await r.delete(user_key)
         return count
 
@@ -758,12 +758,12 @@ class RedisSessionStore(SessionStore):
 
 class RateLimiter:
     """Token bucket rate limiter"""
-    
+
     def __init__(self, config: AuthConfig):
         self.config = config
         self._buckets: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
-    
+
     async def check(self, identifier: str, cost: int = 1) -> Tuple[bool, Dict[str, Any]]:
         """
         Check if request is allowed.
@@ -771,7 +771,7 @@ class RateLimiter:
         """
         async with self._lock:
             now = time.time()
-            
+
             if identifier not in self._buckets:
                 self._buckets[identifier] = {
                     "tokens": self.config.rate_limit_per_minute,
@@ -781,9 +781,9 @@ class RateLimiter:
                     "hour_count": 0,
                     "hour_start": now,
                 }
-            
+
             bucket = self._buckets[identifier]
-            
+
             # Refill tokens
             elapsed = now - bucket["last_update"]
             refill = elapsed * (self.config.rate_limit_per_minute / 60)
@@ -792,17 +792,17 @@ class RateLimiter:
                 bucket["tokens"] + refill
             )
             bucket["last_update"] = now
-            
+
             # Reset minute counter
             if now - bucket["minute_start"] >= 60:
                 bucket["minute_count"] = 0
                 bucket["minute_start"] = now
-            
+
             # Reset hour counter
             if now - bucket["hour_start"] >= 3600:
                 bucket["hour_count"] = 0
                 bucket["hour_start"] = now
-            
+
             # Check limits
             if bucket["tokens"] < cost:
                 return False, {
@@ -811,7 +811,7 @@ class RateLimiter:
                     "reset_at": bucket["minute_start"] + 60,
                     "retry_after": 60 - (now - bucket["minute_start"]),
                 }
-            
+
             if bucket["minute_count"] >= self.config.rate_limit_per_minute:
                 return False, {
                     "allowed": False,
@@ -819,7 +819,7 @@ class RateLimiter:
                     "reset_at": bucket["minute_start"] + 60,
                     "retry_after": 60 - (now - bucket["minute_start"]),
                 }
-            
+
             if bucket["hour_count"] >= self.config.rate_limit_per_hour:
                 return False, {
                     "allowed": False,
@@ -827,12 +827,12 @@ class RateLimiter:
                     "reset_at": bucket["hour_start"] + 3600,
                     "retry_after": 3600 - (now - bucket["hour_start"]),
                 }
-            
+
             # Consume tokens
             bucket["tokens"] -= cost
             bucket["minute_count"] += 1
             bucket["hour_count"] += 1
-            
+
             return True, {
                 "allowed": True,
                 "remaining": int(bucket["tokens"]),
@@ -847,7 +847,7 @@ class RateLimiter:
 class AuthenticationService:
     """
     Enterprise authentication service.
-    
+
     Provides:
     - User authentication (password, API key, token)
     - Session management
@@ -855,7 +855,7 @@ class AuthenticationService:
     - Rate limiting
     - Audit logging
     """
-    
+
     def __init__(
         self,
         config: Optional[AuthConfig] = None,
@@ -865,24 +865,24 @@ class AuthenticationService:
         self.config = config or AuthConfig.from_env()
         self.session_store = session_store or InMemorySessionStore()
         self.user_repository = user_repository
-        
+
         self.password_hasher = PasswordHasher()
         self.password_validator = PasswordValidator(self.config)
         self.jwt_handler = JWTHandler(self.config)
         self.api_key_manager = APIKeyManager(self.config)
         self.rate_limiter = RateLimiter(self.config)
-        
+
         # Failed login tracking
         self._failed_logins: Dict[str, List[datetime]] = {}
         self._lockouts: Dict[str, datetime] = {}
-        
+
         # Event handlers
         self._event_handlers: List[Callable[[AuthEvent], None]] = []
-    
+
     def add_event_handler(self, handler: Callable[[AuthEvent], None]) -> None:
         """Add auth event handler for audit logging"""
         self._event_handlers.append(handler)
-    
+
     def _emit_event(self, event: AuthEvent) -> None:
         """Emit authentication event"""
         for handler in self._event_handlers:
@@ -890,7 +890,7 @@ class AuthenticationService:
                 handler(event)
             except Exception as e:
                 logger.error(f"Auth event handler error: {e}")
-    
+
     async def authenticate_password(
         self,
         username_or_email: str,
@@ -915,15 +915,15 @@ class AuthenticationService:
                 details={"reason": "account_locked", "identifier": username_or_email}
             ))
             return None, None, "Account is temporarily locked"
-        
+
         # Check rate limit
         allowed, rate_info = await self.rate_limiter.check(f"login:{ip_address or 'unknown'}")
         if not allowed:
             return None, None, f"Rate limit exceeded. Retry after {rate_info['retry_after']:.0f}s"
-        
+
         # Get user (mock - replace with actual repository)
         user = await self._get_user_by_identifier(username_or_email)
-        
+
         if not user:
             self._record_failed_login(username_or_email)
             self._emit_event(AuthEvent(
@@ -937,28 +937,28 @@ class AuthenticationService:
                 details={"reason": "user_not_found", "identifier": username_or_email}
             ))
             return None, None, "Invalid credentials"
-        
+
         if not user.is_active:
             return None, None, "Account is disabled"
-        
+
         # Verify password (mock - replace with actual verification)
         # In production, get stored hash from database
         # if not self.password_hasher.verify(password, stored_hash):
         #     self._record_failed_login(username_or_email)
         #     return None, None, "Invalid credentials"
-        
+
         # Create session
         session = await self._create_session(user, ip_address, user_agent)
-        
+
         # Generate tokens
         tokens = self._generate_tokens(user, session.id)
-        
+
         # Update last login
         user.last_login = datetime.now(timezone.utc)
-        
+
         # Clear failed logins
         self._clear_failed_logins(username_or_email)
-        
+
         self._emit_event(AuthEvent(
             id=secrets.token_urlsafe(8),
             event_type=AuthEventType.LOGIN_SUCCESS,
@@ -969,9 +969,9 @@ class AuthenticationService:
             success=True,
             details={"session_id": session.id}
         ))
-        
+
         return user, tokens, None
-    
+
     async def authenticate_token(
         self,
         token: str,
@@ -982,29 +982,29 @@ class AuthenticationService:
         Returns (user, error_message)
         """
         payload = self.jwt_handler.verify_token(token)
-        
+
         if not payload:
             return None, "Invalid or expired token"
-        
+
         # Check session validity
         session_id = payload.get("session_id")
         if session_id:
             session = await self.session_store.get(session_id)
             if not session or not session.is_valid:
                 return None, "Session expired or invalidated"
-            
+
             # Extend session on activity
             if self.config.session_extend_on_activity:
                 session.extend(self.config.session_timeout_minutes)
                 await self.session_store.update(session)
-        
+
         # Get user
         user = await self._get_user_by_id(payload["sub"])
         if not user or not user.is_active:
             return None, "User not found or disabled"
-        
+
         return user, None
-    
+
     async def authenticate_api_key(
         self,
         api_key: str,
@@ -1017,7 +1017,7 @@ class AuthenticationService:
         # In production, lookup key in database by prefix/hash
         # For now, return mock data
         return None, None, "API key authentication not configured"
-    
+
     async def refresh_tokens(
         self,
         refresh_token: str,
@@ -1028,27 +1028,27 @@ class AuthenticationService:
         Returns (new_tokens, error_message)
         """
         payload = self.jwt_handler.verify_token(refresh_token)
-        
+
         if not payload or payload.get("type") != "refresh":
             return None, "Invalid refresh token"
-        
+
         session_id = payload.get("session_id")
         session = await self.session_store.get(session_id) if session_id else None
-        
+
         if not session or not session.is_valid:
             return None, "Session expired"
-        
+
         user = await self._get_user_by_id(payload["sub"])
         if not user or not user.is_active:
             return None, "User not found or disabled"
-        
+
         # Generate new tokens
         tokens = self._generate_tokens(user, session.id)
-        
+
         # Extend session
         session.extend(self.config.session_timeout_minutes)
         await self.session_store.update(session)
-        
+
         self._emit_event(AuthEvent(
             id=secrets.token_urlsafe(8),
             event_type=AuthEventType.TOKEN_REFRESH,
@@ -1059,9 +1059,9 @@ class AuthenticationService:
             success=True,
             details={"session_id": session.id}
         ))
-        
+
         return tokens, None
-    
+
     async def logout(
         self,
         session_id: str,
@@ -1070,7 +1070,7 @@ class AuthenticationService:
     ) -> None:
         """Logout and invalidate session"""
         await self.session_store.delete(session_id)
-        
+
         self._emit_event(AuthEvent(
             id=secrets.token_urlsafe(8),
             event_type=AuthEventType.LOGOUT,
@@ -1081,11 +1081,11 @@ class AuthenticationService:
             success=True,
             details={"session_id": session_id}
         ))
-    
+
     async def logout_all(self, user_id: str, ip_address: Optional[str] = None) -> int:
         """Logout all sessions for a user"""
         count = await self.session_store.delete_user_sessions(user_id)
-        
+
         self._emit_event(AuthEvent(
             id=secrets.token_urlsafe(8),
             event_type=AuthEventType.LOGOUT,
@@ -1096,9 +1096,9 @@ class AuthenticationService:
             success=True,
             details={"sessions_terminated": count, "all_sessions": True}
         ))
-        
+
         return count
-    
+
     async def _create_session(
         self,
         user: User,
@@ -1112,7 +1112,7 @@ class AuthenticationService:
             # Remove oldest session
             oldest = min(existing, key=lambda s: s.created_at)
             await self.session_store.delete(oldest.id)
-        
+
         now = datetime.now(timezone.utc)
         session = Session(
             id=secrets.token_urlsafe(32),
@@ -1123,55 +1123,55 @@ class AuthenticationService:
             ip_address=ip_address,
             user_agent=user_agent,
         )
-        
+
         await self.session_store.create(session)
         return session
-    
+
     def _generate_tokens(self, user: User, session_id: str) -> TokenPair:
         """Generate JWT token pair"""
         access_token = self.jwt_handler.create_access_token(user, session_id)
         refresh_token = self.jwt_handler.create_refresh_token(user.id, session_id)
-        
+
         return TokenPair(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=self.config.jwt_expiry_minutes * 60,
             refresh_expires_in=self.config.jwt_refresh_expiry_days * 86400,
         )
-    
+
     def _is_locked_out(self, identifier: str) -> bool:
         """Check if user is locked out"""
         lockout_until = self._lockouts.get(identifier)
         if lockout_until and datetime.now(timezone.utc) < lockout_until:
             return True
         return False
-    
+
     def _record_failed_login(self, identifier: str) -> None:
         """Record failed login attempt"""
         now = datetime.now(timezone.utc)
-        
+
         if identifier not in self._failed_logins:
             self._failed_logins[identifier] = []
-        
+
         # Remove old attempts
         cutoff = now - timedelta(minutes=self.config.lockout_reset_minutes)
         self._failed_logins[identifier] = [
             t for t in self._failed_logins[identifier] if t > cutoff
         ]
-        
+
         # Add new attempt
         self._failed_logins[identifier].append(now)
-        
+
         # Check for lockout
         if len(self._failed_logins[identifier]) >= self.config.max_failed_attempts:
             self._lockouts[identifier] = now + timedelta(minutes=self.config.lockout_duration_minutes)
             logger.warning(f"Account locked: {identifier}")
-    
+
     def _clear_failed_logins(self, identifier: str) -> None:
         """Clear failed login attempts"""
         self._failed_logins.pop(identifier, None)
         self._lockouts.pop(identifier, None)
-    
+
     async def _get_user_by_identifier(self, identifier: str) -> Optional[User]:
         """Get user by username or email (mock implementation)"""
         # In production, query database
@@ -1185,7 +1185,7 @@ class AuthenticationService:
                 organization_id="org_001",
             )
         return None
-    
+
     async def _get_user_by_id(self, user_id: str) -> Optional[User]:
         """Get user by ID (mock implementation)"""
         if user_id == "usr_admin_001":

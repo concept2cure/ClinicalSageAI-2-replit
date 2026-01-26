@@ -31,7 +31,7 @@ Enforces mandatory code review requirements for critical system paths, ensuring 
 | Database Schema      | `db/schema/*.ts`, `drizzle.config.ts`, `server/db/*.ts` | @dba-team                |
 | LUMEN CORTEX AI      | `lumen_cortex/**`, `agents/**`                          | @ai-team                 |
 | CI/CD Infrastructure | `.github/**`, `Dockerfile*`, `docker-compose.yml`       | @devops-team             |
-| Client Portal V2     | `client/src/pages/portal-v2/**`                         | @frontend-team, @ux-team |
+| Client Portal V2     | `client/src/portal-v2/**`                               | @frontend-team, @ux-team |
 
 ### Benefits
 
@@ -194,6 +194,74 @@ See `client/src/components/ui/button.stories.tsx` for reference implementation.
 
 ---
 
+## 6. Context Compression (Repomix/Gitingest)
+
+**Docs:** `docs/ai/context-compression.md`
+**Scripts:** `scripts/ai/context-pack.sh`
+**Status:** ✅ IMPLEMENTED
+
+### Purpose
+
+Reduce token usage and hallucination risk by packing only relevant repository sections for AI agents.
+
+### Output
+
+Context packs are stored under:
+
+- `.ai/context/repomix.json`
+- `.ai/context/gitingest.json`
+
+### Scope Profile
+
+Default includes:
+
+- `server/`
+- `client/src/`
+- `shared/`
+- `docs/adr/`
+- `docs/architecture/`
+- `package.json`, `tsconfig.json`, `drizzle.config.ts`
+
+---
+
+## 7. Prompt Templates in Code
+
+**File:** `.ai-instructions.md`
+**Status:** ✅ IMPLEMENTED
+
+### Purpose
+
+Provide consistent, repo-specific guidance to AI agents (architecture patterns, testing requirements, security boundaries) without repeating prompts.
+
+---
+
+## 8. AI-Generated Test Verification
+
+**Docs:** `docs/ai/test-verification.md`
+**Status:** ✅ IMPLEMENTED
+
+### Purpose
+
+Ensure AI-written tests cover edge cases, not only happy paths. Defines a checklist for failure modes, permissions, boundary conditions, and data integrity.
+
+### Enforcement
+
+PR checks run `scripts/ai/verify-tests.sh` and block changes to source files without corresponding test files.
+
+---
+
+## 9. Checkpointing with Git Worktrees
+
+**Docs:** `docs/ai/checkpointing.md`
+**Scripts:** `scripts/ai/worktree-new.sh`, `scripts/ai/worktree-clean.sh`
+**Status:** ✅ IMPLEMENTED
+
+### Purpose
+
+Enable parallel AI experiments without stashing or committing partial work. Each worktree provides an isolated working directory.
+
+---
+
 ## Workflow Integration
 
 ### PR Lifecycle with Enforcement
@@ -245,6 +313,11 @@ Developer Opens PR
 ## Related Documentation
 
 - [docs/adr/README.md](docs/adr/README.md) - ADR Index
+- [docs/ai/README.md](docs/ai/README.md) - AI engineering toolkit
+- [docs/ai/context-compression.md](docs/ai/context-compression.md) - Context packing
+- [docs/ai/test-verification.md](docs/ai/test-verification.md) - Test verification
+- [docs/ai/checkpointing.md](docs/ai/checkpointing.md) - Worktrees
+- [.ai-instructions.md](.ai-instructions.md) - AI agent instructions
 - [SECURITY.md](SECURITY.md) - Security policies
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) - Contribution guidelines
 - [CHANGELOG.md](CHANGELOG.md) - Version history

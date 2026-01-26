@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed**
+**Accepted**
 
 - Date: 2026-01-25
 - Deciders: Frontend Team, Product Team, Platform Architecture
@@ -110,6 +110,7 @@ type ModuleId =
   | 'quality_management'
   | 'document_control'
   | 'training'
+  | 'analytics'
   | 'settings';
 ```
 
@@ -212,10 +213,10 @@ function getExperienceConfig(role: UserRole, agencies: RegulatoryAgency[]): Expe
 
 ### Phase 1: Foundation (Week 1-2)
 
-- [ ] Set up portal-v2 directory structure
-- [ ] Implement core type system
-- [ ] Build policy engine
-- [ ] Create layout components
+- [x] Set up portal-v2 directory structure
+- [x] Implement core type system
+- [x] Build policy engine
+- [x] Create layout components
 
 ### Phase 2: Core Features (Week 3-4)
 

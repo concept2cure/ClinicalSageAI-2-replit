@@ -16,7 +16,7 @@ global:
   scrape_interval: 15s
   scrape_timeout: 10s
   evaluation_interval: 15s
-  
+
   external_labels:
     environment: ${ENVIRONMENT:-development}
     service: lumen_cortex
@@ -36,11 +36,10 @@ rule_files:
 
 # Scrape configurations
 scrape_configs:
-  
   # ═══════════════════════════════════════════════════════════════════════════
   # Lumen Cortex Application
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'lumen-cortex-app'
     metrics_path: /metrics
     static_configs:
@@ -48,7 +47,7 @@ scrape_configs:
           - 'lumen-cortex:9090'
         labels:
           component: 'application'
-    
+
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
@@ -58,7 +57,7 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # PostgreSQL (with pgvector)
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'postgresql'
     static_configs:
       - targets:
@@ -70,7 +69,7 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # Neo4j Graph Database
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'neo4j'
     metrics_path: /metrics
     static_configs:
@@ -83,7 +82,7 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # Redis Cache
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'redis'
     static_configs:
       - targets:
@@ -95,7 +94,7 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # Node Exporter (System Metrics)
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'node'
     static_configs:
       - targets:
@@ -106,14 +105,14 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # cAdvisor (Container Metrics)
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'cadvisor'
     static_configs:
       - targets:
           - 'cadvisor:8080'
         labels:
           component: 'infrastructure'
-    
+
     metric_relabel_configs:
       # Drop high-cardinality labels
       - source_labels: [__name__]
@@ -125,7 +124,7 @@ scrape_configs:
   # ═══════════════════════════════════════════════════════════════════════════
   # Prometheus Self-Monitoring
   # ═══════════════════════════════════════════════════════════════════════════
-  
+
   - job_name: 'prometheus'
     static_configs:
       - targets:

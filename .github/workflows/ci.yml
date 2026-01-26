@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: ['**']
   pull_request:
-    branches: [main, dev]
+    branches: ['**']
 
 jobs:
   lint:
@@ -92,7 +92,24 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true
+
+      - name: Trivy filesystem scan (deps + secrets)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
+
+      - name: Trivy config scan (Dockerfile/IaC)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
 
   sonarcloud:
     name: SonarCloud Analysis

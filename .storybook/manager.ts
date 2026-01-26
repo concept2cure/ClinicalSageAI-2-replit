@@ -7,7 +7,6 @@ const clinicalSageTheme = create({
   // Brand
   brandTitle: 'TrialSage Component Library',
   brandUrl: 'https://trialsage.ai',
-  brandImage: undefined, // Add logo URL when available
   brandTarget: '_self',
 
   // UI

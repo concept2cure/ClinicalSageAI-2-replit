@@ -113,7 +113,6 @@
 
 # Portal V2 Core - Frontend Team Lead Required
 /client/src/portal-v2/                  @concept2cure/frontend-team @concept2cure/platform-leads
-/client/src/components/client-portal/   @concept2cure/frontend-team
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │                        SHARED LIBRARIES & TYPES                              │

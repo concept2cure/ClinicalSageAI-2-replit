@@ -45,7 +45,7 @@ from datetime import datetime, timezone, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import (
-    Any, AsyncGenerator, Callable, Dict, List, Optional, 
+    Any, AsyncGenerator, Callable, Dict, List, Optional,
     Set, Tuple, TypeVar, Union
 )
 from uuid import uuid4
@@ -60,28 +60,28 @@ logger = logging.getLogger("LumenCortex.Audit")
 @dataclass
 class AuditConfig:
     """Audit service configuration"""
-    
+
     # General settings
     service_name: str = "lumen-cortex"
     environment: str = "production"
-    
+
     # Buffer settings
     buffer_size: int = 1000
     flush_interval_seconds: float = 5.0
     max_batch_size: int = 100
-    
+
     # Retention settings
     retention_days: int = 2555  # 7 years for FDA compliance
     archive_after_days: int = 90
-    
+
     # Storage settings
     storage_backend: str = "postgresql"  # postgresql, s3, elasticsearch
     storage_connection: str = ""
-    
+
     # Merkle tree settings
     merkle_checkpoint_interval: int = 1000
     merkle_hash_algorithm: str = "sha256"
-    
+
     # PII settings
     pii_detection_enabled: bool = True
     pii_masking_enabled: bool = True
@@ -89,14 +89,14 @@ class AuditConfig:
         "ssn", "social_security", "date_of_birth", "dob", "phone",
         "email", "address", "credit_card", "bank_account"
     })
-    
+
     # Compression
     compress_archives: bool = True
     compression_level: int = 6
-    
+
     # Async settings
     writer_pool_size: int = 4
-    
+
     @classmethod
     def from_env(cls) -> "AuditConfig":
         """Create config from environment variables"""
@@ -128,7 +128,7 @@ class AuditAction(Enum):
     DOCUMENT_REJECT = "document.reject"
     DOCUMENT_EXPORT = "document.export"
     DOCUMENT_ARCHIVE = "document.archive"
-    
+
     # User actions
     USER_CREATE = "user.create"
     USER_UPDATE = "user.update"
@@ -138,24 +138,24 @@ class AuditAction(Enum):
     USER_PASSWORD_CHANGE = "user.password_change"
     USER_MFA_ENABLE = "user.mfa_enable"
     USER_MFA_DISABLE = "user.mfa_disable"
-    
+
     # Analysis actions
     ANALYSIS_START = "analysis.start"
     ANALYSIS_COMPLETE = "analysis.complete"
     ANALYSIS_FAIL = "analysis.fail"
     ANALYSIS_EXPORT = "analysis.export"
-    
+
     # System actions
     SYSTEM_CONFIG_CHANGE = "system.config_change"
     SYSTEM_BACKUP = "system.backup"
     SYSTEM_RESTORE = "system.restore"
     SYSTEM_MAINTENANCE = "system.maintenance"
-    
+
     # API actions
     API_REQUEST = "api.request"
     API_ERROR = "api.error"
     API_RATE_LIMIT = "api.rate_limit"
-    
+
     # Compliance actions
     COMPLIANCE_CHECK = "compliance.check"
     COMPLIANCE_VIOLATION = "compliance.violation"
@@ -187,7 +187,7 @@ class AuditOutcome(Enum):
 class AuditEntry:
     """
     Immutable audit log entry.
-    
+
     Designed for 21 CFR Part 11 compliance with:
     - Unique identifier
     - Timestamp with timezone
@@ -197,27 +197,27 @@ class AuditEntry:
     - Outcome
     - Digital signature support
     """
-    
+
     # Core fields
     id: str = field(default_factory=lambda: f"aud_{uuid4().hex[:16]}")
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    
+
     # User context
     user_id: Optional[str] = None
     username: Optional[str] = None
     organization_id: Optional[str] = None
     session_id: Optional[str] = None
-    
+
     # Action details
     action: AuditAction = AuditAction.API_REQUEST
     severity: AuditSeverity = AuditSeverity.INFO
     outcome: AuditOutcome = AuditOutcome.SUCCESS
-    
+
     # Resource context
     resource_type: Optional[str] = None
     resource_id: Optional[str] = None
     resource_name: Optional[str] = None
-    
+
     # Request context
     correlation_id: Optional[str] = None
     request_id: Optional[str] = None
@@ -225,22 +225,22 @@ class AuditEntry:
     user_agent: Optional[str] = None
     endpoint: Optional[str] = None
     method: Optional[str] = None
-    
+
     # Additional data
     details: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Compliance fields
     reason: Optional[str] = None
     previous_value: Optional[str] = None
     new_value: Optional[str] = None
-    
+
     # Integrity fields
     sequence_number: Optional[int] = None
     previous_hash: Optional[str] = None
     hash: Optional[str] = None
     signature: Optional[str] = None
-    
+
     def compute_hash(self, algorithm: str = "sha256") -> str:
         """Compute hash of entry for integrity verification"""
         data = {
@@ -255,16 +255,16 @@ class AuditEntry:
             "previous_hash": self.previous_hash,
             "sequence_number": self.sequence_number,
         }
-        
+
         content = json.dumps(data, sort_keys=True)
-        
+
         if algorithm == "sha256":
             return hashlib.sha256(content.encode()).hexdigest()
         elif algorithm == "sha3_256":
             return hashlib.sha3_256(content.encode()).hexdigest()
         else:
             raise ValueError(f"Unsupported hash algorithm: {algorithm}")
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
@@ -296,7 +296,7 @@ class AuditEntry:
             "hash": self.hash,
             "signature": self.signature,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AuditEntry":
         """Create from dictionary"""
@@ -334,7 +334,7 @@ class AuditEntry:
 @dataclass
 class AuditQuery:
     """Query parameters for audit log search"""
-    
+
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     user_id: Optional[str] = None
@@ -356,7 +356,7 @@ class AuditQuery:
 @dataclass
 class AuditStats:
     """Audit statistics"""
-    
+
     total_entries: int = 0
     entries_by_action: Dict[str, int] = field(default_factory=dict)
     entries_by_severity: Dict[str, int] = field(default_factory=dict)
@@ -377,7 +377,7 @@ class PIIDetector:
     """
     Detect and mask personally identifiable information.
     """
-    
+
     # Regex patterns for common PII
     PATTERNS = {
         "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
@@ -387,11 +387,11 @@ class PIIDetector:
         "ip_v4": re.compile(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"),
         "date_of_birth": re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b"),
     }
-    
+
     def __init__(self, config: AuditConfig):
         self.config = config
         self.sensitive_fields = config.pii_fields
-    
+
     def detect(self, data: Dict[str, Any]) -> List[Tuple[str, str, str]]:
         """
         Detect PII in data.
@@ -400,7 +400,7 @@ class PIIDetector:
         findings = []
         self._scan_dict(data, "", findings)
         return findings
-    
+
     def _scan_dict(
         self,
         data: Dict[str, Any],
@@ -410,11 +410,11 @@ class PIIDetector:
         """Recursively scan dictionary for PII"""
         for key, value in data.items():
             current_path = f"{path}.{key}" if path else key
-            
+
             # Check field name
             if key.lower() in self.sensitive_fields:
                 findings.append((current_path, "field_name", str(value)[:50]))
-            
+
             # Check value
             if isinstance(value, str):
                 for pii_type, pattern in self.PATTERNS.items():
@@ -430,24 +430,24 @@ class PIIDetector:
                         for pii_type, pattern in self.PATTERNS.items():
                             if pattern.search(item):
                                 findings.append((f"{current_path}[{i}]", pii_type, item[:50]))
-    
+
     def mask(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Mask PII in data.
         Returns a copy with PII masked.
         """
         return self._mask_dict(data.copy())
-    
+
     def _mask_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Recursively mask PII in dictionary"""
         result = {}
-        
+
         for key, value in data.items():
             # Mask sensitive field names
             if key.lower() in self.sensitive_fields:
                 result[key] = "[REDACTED]"
                 continue
-            
+
             if isinstance(value, str):
                 masked_value = value
                 for pii_type, pattern in self.PATTERNS.items():
@@ -464,9 +464,9 @@ class PIIDetector:
                 ]
             else:
                 result[key] = value
-        
+
         return result
-    
+
     def _mask_value(self, value: str) -> str:
         """Mask PII in a string value"""
         for pii_type, pattern in self.PATTERNS.items():
@@ -480,27 +480,27 @@ class PIIDetector:
 
 class AuditStorage(ABC):
     """Abstract audit storage backend"""
-    
+
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize storage"""
         pass
-    
+
     @abstractmethod
     async def write(self, entries: List[AuditEntry]) -> int:
         """Write entries to storage. Returns count written."""
         pass
-    
+
     @abstractmethod
     async def read(self, query: AuditQuery) -> List[AuditEntry]:
         """Query entries from storage"""
         pass
-    
+
     @abstractmethod
     async def count(self, query: AuditQuery) -> int:
         """Count entries matching query"""
         pass
-    
+
     @abstractmethod
     async def get_stats(
         self,
@@ -509,17 +509,17 @@ class AuditStorage(ABC):
     ) -> AuditStats:
         """Get statistics for time period"""
         pass
-    
+
     @abstractmethod
     async def get_merkle_checkpoint(self) -> Optional[Tuple[int, str]]:
         """Get last Merkle checkpoint (sequence, root)"""
         pass
-    
+
     @abstractmethod
     async def save_merkle_checkpoint(self, sequence: int, root: str) -> None:
         """Save Merkle checkpoint"""
         pass
-    
+
     @abstractmethod
     async def close(self) -> None:
         """Close storage connection"""
@@ -528,41 +528,41 @@ class AuditStorage(ABC):
 
 class InMemoryAuditStorage(AuditStorage):
     """In-memory audit storage for development/testing"""
-    
+
     def __init__(self, max_entries: int = 100000):
         self.max_entries = max_entries
         self._entries: deque = deque(maxlen=max_entries)
         self._merkle_checkpoints: List[Tuple[int, str]] = []
         self._lock = asyncio.Lock()
-    
+
     async def initialize(self) -> None:
         pass
-    
+
     async def write(self, entries: List[AuditEntry]) -> int:
         async with self._lock:
             for entry in entries:
                 self._entries.append(entry)
             return len(entries)
-    
+
     async def read(self, query: AuditQuery) -> List[AuditEntry]:
         results = []
-        
+
         for entry in self._entries:
             if self._matches_query(entry, query):
                 results.append(entry)
-        
+
         # Sort
         results.sort(
             key=lambda e: getattr(e, query.order_by, e.timestamp),
             reverse=query.order_desc
         )
-        
+
         # Paginate
         return results[query.offset:query.offset + query.limit]
-    
+
     async def count(self, query: AuditQuery) -> int:
         return sum(1 for e in self._entries if self._matches_query(e, query))
-    
+
     def _matches_query(self, entry: AuditEntry, query: AuditQuery) -> bool:
         """Check if entry matches query filters"""
         if query.start_date and entry.timestamp < query.start_date:
@@ -596,7 +596,7 @@ class InMemoryAuditStorage(AuditStorage):
             ]):
                 return False
         return True
-    
+
     async def get_stats(
         self,
         start_date: datetime,
@@ -606,46 +606,46 @@ class InMemoryAuditStorage(AuditStorage):
             period_start=start_date,
             period_end=end_date,
         )
-        
+
         for entry in self._entries:
             if start_date <= entry.timestamp <= end_date:
                 stats.total_entries += 1
-                
+
                 action_key = entry.action.value
                 stats.entries_by_action[action_key] = stats.entries_by_action.get(action_key, 0) + 1
-                
+
                 severity_key = entry.severity.value
                 stats.entries_by_severity[severity_key] = stats.entries_by_severity.get(severity_key, 0) + 1
-                
+
                 outcome_key = entry.outcome.value
                 stats.entries_by_outcome[outcome_key] = stats.entries_by_outcome.get(outcome_key, 0) + 1
-                
+
                 if entry.user_id:
                     stats.entries_by_user[entry.user_id] = stats.entries_by_user.get(entry.user_id, 0) + 1
-                
+
                 hour_key = entry.timestamp.strftime("%Y-%m-%d %H:00")
                 stats.entries_per_hour[hour_key] = stats.entries_per_hour.get(hour_key, 0) + 1
-                
+
                 if entry.sequence_number:
                     stats.last_sequence = max(stats.last_sequence, entry.sequence_number)
-        
+
         return stats
-    
+
     async def get_merkle_checkpoint(self) -> Optional[Tuple[int, str]]:
         if self._merkle_checkpoints:
             return self._merkle_checkpoints[-1]
         return None
-    
+
     async def save_merkle_checkpoint(self, sequence: int, root: str) -> None:
         self._merkle_checkpoints.append((sequence, root))
-    
+
     async def close(self) -> None:
         pass
 
 
 class FileAuditStorage(AuditStorage):
     """File-based audit storage with daily rotation"""
-    
+
     def __init__(self, config: AuditConfig, base_path: str = "/var/log/lumen-cortex/audit"):
         self.config = config
         self.base_path = Path(base_path)
@@ -653,10 +653,10 @@ class FileAuditStorage(AuditStorage):
         self._current_date: Optional[str] = None
         self._lock = asyncio.Lock()
         self._sequence = 0
-    
+
     async def initialize(self) -> None:
         self.base_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Find last sequence number
         for file in sorted(self.base_path.glob("*.jsonl"), reverse=True):
             try:
@@ -671,38 +671,38 @@ class FileAuditStorage(AuditStorage):
                 break
             except Exception:
                 pass
-    
+
     def _get_file_path(self, date: datetime) -> Path:
         """Get file path for a given date"""
         date_str = date.strftime("%Y-%m-%d")
         return self.base_path / f"audit_{date_str}.jsonl"
-    
+
     async def write(self, entries: List[AuditEntry]) -> int:
         async with self._lock:
             written = 0
-            
+
             for entry in entries:
                 file_path = self._get_file_path(entry.timestamp)
-                
+
                 with open(file_path, 'a') as f:
                     f.write(json.dumps(entry.to_dict()) + "\n")
                     written += 1
-            
+
             return written
-    
+
     async def read(self, query: AuditQuery) -> List[AuditEntry]:
         results = []
-        
+
         # Determine date range
         start_date = query.start_date or (datetime.now(timezone.utc) - timedelta(days=30))
         end_date = query.end_date or datetime.now(timezone.utc)
-        
+
         current = start_date.date()
         end = end_date.date()
-        
+
         while current <= end:
             file_path = self._get_file_path(datetime.combine(current, datetime.min.time()))
-            
+
             if file_path.exists():
                 with open(file_path, 'r') as f:
                     for line in f:
@@ -714,17 +714,17 @@ class FileAuditStorage(AuditStorage):
                             results.append(entry)
                         except (json.JSONDecodeError, KeyError):
                             pass
-            
+
             current += timedelta(days=1)
-        
+
         # Sort and paginate
         results.sort(
             key=lambda e: getattr(e, query.order_by, e.timestamp),
             reverse=query.order_desc
         )
-        
+
         return results[query.offset:query.offset + query.limit]
-    
+
     async def count(self, query: AuditQuery) -> int:
         # Simplified count - in production, use index
         entries = await self.read(AuditQuery(
@@ -735,7 +735,7 @@ class FileAuditStorage(AuditStorage):
             offset=0,
         ))
         return len(entries)
-    
+
     async def get_stats(
         self,
         start_date: datetime,
@@ -743,19 +743,19 @@ class FileAuditStorage(AuditStorage):
     ) -> AuditStats:
         query = AuditQuery(start_date=start_date, end_date=end_date, limit=100000)
         entries = await self.read(query)
-        
+
         stats = AuditStats(
             total_entries=len(entries),
             period_start=start_date,
             period_end=end_date,
         )
-        
+
         for entry in entries:
             action_key = entry.action.value
             stats.entries_by_action[action_key] = stats.entries_by_action.get(action_key, 0) + 1
-        
+
         return stats
-    
+
     async def get_merkle_checkpoint(self) -> Optional[Tuple[int, str]]:
         checkpoint_file = self.base_path / "merkle_checkpoint.json"
         if checkpoint_file.exists():
@@ -763,12 +763,12 @@ class FileAuditStorage(AuditStorage):
                 data = json.load(f)
                 return (data["sequence"], data["root"])
         return None
-    
+
     async def save_merkle_checkpoint(self, sequence: int, root: str) -> None:
         checkpoint_file = self.base_path / "merkle_checkpoint.json"
         with open(checkpoint_file, 'w') as f:
             json.dump({"sequence": sequence, "root": root, "timestamp": datetime.now(timezone.utc).isoformat()}, f)
-    
+
     async def close(self) -> None:
         pass
 
@@ -780,85 +780,85 @@ class FileAuditStorage(AuditStorage):
 class AuditMerkleTree:
     """
     Merkle tree for audit trail integrity verification.
-    
+
     Provides tamper-evident audit logs per 21 CFR Part 11.
     """
-    
+
     def __init__(self, config: AuditConfig):
         self.config = config
         self._leaves: List[str] = []
         self._root: Optional[str] = None
-    
+
     def add_entry(self, entry: AuditEntry) -> str:
         """Add entry to tree and return its hash"""
         entry_hash = entry.compute_hash(self.config.merkle_hash_algorithm)
         self._leaves.append(entry_hash)
         self._root = None  # Invalidate cached root
         return entry_hash
-    
+
     def compute_root(self) -> str:
         """Compute Merkle root hash"""
         if self._root:
             return self._root
-        
+
         if not self._leaves:
             return hashlib.sha256(b"").hexdigest()
-        
+
         # Build tree
         level = self._leaves.copy()
-        
+
         while len(level) > 1:
             next_level = []
-            
+
             for i in range(0, len(level), 2):
                 if i + 1 < len(level):
                     combined = level[i] + level[i + 1]
                 else:
                     combined = level[i] + level[i]  # Duplicate odd leaf
-                
+
                 next_level.append(
                     hashlib.sha256(combined.encode()).hexdigest()
                 )
-            
+
             level = next_level
-        
+
         self._root = level[0]
         return self._root
-    
+
     def get_proof(self, index: int) -> List[Tuple[str, str]]:
         """Get Merkle proof for entry at index"""
         if index >= len(self._leaves):
             raise IndexError("Index out of range")
-        
+
         proof = []
         level = self._leaves.copy()
         idx = index
-        
+
         while len(level) > 1:
             next_level = []
-            
+
             for i in range(0, len(level), 2):
                 if i + 1 < len(level):
                     combined = level[i] + level[i + 1]
                 else:
                     combined = level[i] + level[i]
-                
+
                 next_level.append(
                     hashlib.sha256(combined.encode()).hexdigest()
                 )
-                
+
                 # Record sibling
                 if i == idx or i + 1 == idx:
                     sibling_idx = i if idx == i + 1 else i + 1
                     if sibling_idx < len(level):
                         side = "left" if idx == i + 1 else "right"
                         proof.append((side, level[sibling_idx] if sibling_idx < len(level) else level[i]))
-            
+
             idx = idx // 2
             level = next_level
-        
+
         return proof
-    
+
     def verify_proof(
         self,
         entry_hash: str,
@@ -867,17 +867,17 @@ class AuditMerkleTree:
     ) -> bool:
         """Verify a Merkle proof"""
         current = entry_hash
-        
+
         for side, sibling in proof:
             if side == "left":
                 combined = sibling + current
             else:
                 combined = current + sibling
-            
+
             current = hashlib.sha256(combined.encode()).hexdigest()
-        
+
         return current == root
-    
+
     def clear(self) -> None:
         """Clear tree for next checkpoint"""
         self._leaves = []
@@ -891,7 +891,7 @@ class AuditMerkleTree:
 class AuditService:
     """
     Enterprise audit logging service.
-    
+
     Features:
     - Async buffered writes
     - Merkle tree integrity
@@ -899,7 +899,7 @@ class AuditService:
     - Multi-storage backend
     - Correlation tracking
     """
-    
+
     def __init__(
         self,
         config: Optional[AuditConfig] = None,
@@ -907,24 +907,24 @@ class AuditService:
     ):
         self.config = config or AuditConfig.from_env()
         self.storage = storage or InMemoryAuditStorage()
-        
+
         # Components
         self.pii_detector = PIIDetector(self.config)
         self.merkle_tree = AuditMerkleTree(self.config)
-        
+
         # Buffer
         self._buffer: deque = deque(maxlen=self.config.buffer_size)
         self._buffer_lock = asyncio.Lock()
-        
+
         # Sequence tracking
         self._sequence = 0
         self._last_hash: Optional[str] = None
         self._sequence_lock = asyncio.Lock()
-        
+
         # Background tasks
         self._flush_task: Optional[asyncio.Task] = None
         self._running = False
-        
+
         # Stats
         self._stats = {
             "entries_logged": 0,
@@ -932,45 +932,45 @@ class AuditService:
             "flush_count": 0,
             "errors": 0,
         }
-    
+
     async def start(self) -> None:
         """Start the audit service"""
         await self.storage.initialize()
-        
+
         # Load last checkpoint
         checkpoint = await self.storage.get_merkle_checkpoint()
         if checkpoint:
             self._sequence = checkpoint[0]
             self._last_hash = checkpoint[1]
-        
+
         self._running = True
         self._flush_task = asyncio.create_task(self._flush_loop())
-        
+
         logger.info(f"Audit service started (sequence: {self._sequence})")
-    
+
     async def stop(self) -> None:
         """Stop the audit service"""
         self._running = False
-        
+
         if self._flush_task:
             self._flush_task.cancel()
             try:
                 await self._flush_task
             except asyncio.CancelledError:
                 pass
-        
+
         # Final flush
         await self._flush()
-        
+
         # Save checkpoint
         if self._sequence > 0:
             root = self.merkle_tree.compute_root()
             await self.storage.save_merkle_checkpoint(self._sequence, root)
-        
+
         await self.storage.close()
-        
+
         logger.info(f"Audit service stopped (sequence: {self._sequence})")
-    
+
     async def log(
         self,
         action: AuditAction,
@@ -1001,12 +1001,12 @@ class AuditService:
         """
         # Process details
         processed_details = details or {}
-        
+
         # PII handling
         if self.config.pii_detection_enabled and processed_details:
             if self.config.pii_masking_enabled:
                 processed_details = self.pii_detector.mask(processed_details)
-        
+
         # Create entry
         async with self._sequence_lock:
             self._sequence += 1
@@ -1035,33 +1035,33 @@ class AuditService:
                 sequence_number=self._sequence,
                 previous_hash=self._last_hash,
             )
-            
+
             # Compute hash
             entry.hash = entry.compute_hash(self.config.merkle_hash_algorithm)
             self._last_hash = entry.hash
-            
+
             # Add to Merkle tree
             self.merkle_tree.add_entry(entry)
-        
+
         # Buffer entry
         async with self._buffer_lock:
             self._buffer.append(entry)
             self._stats["entries_logged"] += 1
-        
+
         # Check if we should checkpoint
         if self._sequence % self.config.merkle_checkpoint_interval == 0:
             asyncio.create_task(self._save_checkpoint())
-        
+
         return entry.id
-    
+
     async def query(self, query: AuditQuery) -> List[AuditEntry]:
         """Query audit entries"""
         return await self.storage.read(query)
-    
+
     async def count(self, query: AuditQuery) -> int:
         """Count audit entries"""
         return await self.storage.count(query)
-    
+
     async def get_stats(
         self,
         start_date: Optional[datetime] = None,
@@ -1070,13 +1070,13 @@ class AuditService:
         """Get audit statistics"""
         start = start_date or (datetime.now(timezone.utc) - timedelta(days=7))
         end = end_date or datetime.now(timezone.utc)
-        
+
         stats = await self.storage.get_stats(start, end)
         stats.merkle_root = self.merkle_tree.compute_root()
         stats.last_sequence = self._sequence
-        
+
         return stats
-    
+
     async def verify_integrity(
         self,
         entry_ids: Optional[List[str]] = None
@@ -1093,26 +1093,26 @@ class AuditService:
         else:
             query = AuditQuery(limit=10000, order_desc=False)
             entries = await self.storage.read(query)
-        
+
         invalid = []
         prev_hash: Optional[str] = None
-        
+
         for entry in entries:
             # Verify hash chain
             if entry.previous_hash != prev_hash:
                 invalid.append(entry.id)
                 continue
-            
+
             # Verify entry hash
             computed = entry.compute_hash(self.config.merkle_hash_algorithm)
             if computed != entry.hash:
                 invalid.append(entry.id)
                 continue
-            
+
             prev_hash = entry.hash
-        
+
         return len(invalid) == 0, invalid
-    
+
     async def export(
         self,
         query: AuditQuery,
@@ -1121,11 +1121,11 @@ class AuditService:
     ) -> Union[str, bytes]:
         """
         Export audit entries.
-        
+
         Formats: json, csv, xml
         """
         entries = await self.storage.read(query)
-        
+
         if format == "json":
             data = json.dumps(
                 [e.to_dict() for e in entries],
@@ -1135,7 +1135,7 @@ class AuditService:
         elif format == "csv":
             import csv
             import io
-            
+
             output = io.StringIO()
             if entries:
                 fieldnames = list(entries[0].to_dict().keys())
@@ -1146,13 +1146,13 @@ class AuditService:
             data = output.getvalue()
         else:
             raise ValueError(f"Unsupported format: {format}")
-        
+
         if output_path:
             with open(output_path, 'w') as f:
                 f.write(data)
-        
+
         return data
-    
+
     async def _flush_loop(self) -> None:
         """Background flush loop"""
         while self._running:
@@ -1164,16 +1164,16 @@ class AuditService:
             except Exception as e:
                 logger.error(f"Flush error: {e}")
                 self._stats["errors"] += 1
-    
+
     async def _flush(self) -> None:
         """Flush buffer to storage"""
         async with self._buffer_lock:
             if not self._buffer:
                 return
-            
+
             entries = list(self._buffer)
             self._buffer.clear()
-        
+
         # Write in batches
         for i in range(0, len(entries), self.config.max_batch_size):
             batch = entries[i:i + self.config.max_batch_size]
@@ -1187,16 +1187,16 @@ class AuditService:
                 async with self._buffer_lock:
                     for entry in batch:
                         self._buffer.appendleft(entry)
-        
+
         self._stats["flush_count"] += 1
-    
+
     async def _save_checkpoint(self) -> None:
         """Save Merkle checkpoint"""
         root = self.merkle_tree.compute_root()
         await self.storage.save_merkle_checkpoint(self._sequence, root)
         self.merkle_tree.clear()
         logger.info(f"Merkle checkpoint saved at sequence {self._sequence}")
-    
+
     def get_service_stats(self) -> Dict[str, Any]:
         """Get service statistics"""
         return {
@@ -1219,9 +1219,9 @@ async def audit_context(
 ) -> AsyncGenerator[Dict[str, Any], None]:
     """
     Context manager for audit logging.
-    
+
     Automatically logs start and completion/failure.
-    
+
     Usage:
         async with audit_context(audit_service, AuditAction.DOCUMENT_UPDATE,
                                 user_id="usr_123", resource_id="doc_456") as ctx:
@@ -1233,9 +1233,9 @@ async def audit_context(
         "outcome": AuditOutcome.SUCCESS,
         "error": None,
     }
-    
+
     start_time = time.time()
-    
+
     try:
         yield ctx
     except Exception as e:
@@ -1246,7 +1246,7 @@ async def audit_context(
     finally:
         duration = time.time() - start_time
         ctx["details"]["duration_ms"] = round(duration * 1000, 2)
-        
+
         await service.log(
             action=action,
             outcome=ctx["outcome"],

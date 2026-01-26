@@ -4,7 +4,7 @@
     "generated": "2025-01-24",
     "description": "Grafana dashboard configurations for Lumen Cortex monitoring"
   },
-  
+
   "datasources": {
     "prometheus": {
       "name": "Prometheus",
@@ -20,7 +20,7 @@
       "access": "proxy"
     }
   },
-  
+
   "dashboards": {
     "overview": {
       "uid": "lumen-cortex-overview",
@@ -178,7 +178,7 @@
         }
       ]
     },
-    
+
     "ai_ml": {
       "uid": "lumen-cortex-ai-ml",
       "title": "Lumen Cortex - AI/ML Performance",
@@ -296,7 +296,7 @@
         }
       ]
     },
-    
+
     "graphrag": {
       "uid": "lumen-cortex-graphrag",
       "title": "Lumen Cortex - GraphRAG Analytics",
@@ -406,7 +406,7 @@
         }
       ]
     },
-    
+
     "compliance": {
       "uid": "lumen-cortex-compliance",
       "title": "Lumen Cortex - Compliance & Audit",
@@ -509,7 +509,7 @@
         }
       ]
     },
-    
+
     "infrastructure": {
       "uid": "lumen-cortex-infra",
       "title": "Lumen Cortex - Infrastructure",
@@ -604,7 +604,7 @@
       ]
     }
   },
-  
+
   "alertRules": {
     "high_error_rate": {
       "name": "High Error Rate",
