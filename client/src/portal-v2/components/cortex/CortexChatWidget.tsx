@@ -174,10 +174,19 @@ export function CortexChatWidget({
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isSending) return;
 
+    // Input validation and sanitization
+    const sanitizedInput = inputValue
+      .trim()
+      .slice(0, 4000) // Limit message length
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+      .replace(/javascript:/gi, ''); // Remove javascript: protocol
+
+    if (!sanitizedInput) return;
+
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       role: 'user',
-      content: inputValue.trim(),
+      content: sanitizedInput,
       timestamp: new Date(),
     };
 
@@ -216,7 +225,7 @@ export function CortexChatWidget({
         threadId,
         traceType: 'query',
         input: {
-          question: userMessage.content,
+          question: sanitizedInput,
           module: moduleContext,
           systemPrompt: systemContext,
         },
@@ -233,7 +242,7 @@ export function CortexChatWidget({
         return [
           ...filtered,
           {
-            id: `assistant-${Date.now()}`,
+            id: `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             role: 'assistant' as const,
             content: responseContent,
             timestamp: new Date(),

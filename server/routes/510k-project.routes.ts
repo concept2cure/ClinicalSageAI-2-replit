@@ -1,15 +1,29 @@
+/**
+ * 510(k) Project Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/projects
+ * Sunset date: 2026-06-30
+ *
+ * @see /api/fda510k-unified/docs for migration guide
+ */
+
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { fda510kProjects, fda510kStageProgress, projects } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 
 const router = Router();
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/projects'));
 
 // Get available project templates
 router.get('/templates', async (req: Request, res: Response) => {
   try {
     const templates = await db.execute(sql`
-      SELECT * FROM fda_510k_project_templates 
+      SELECT * FROM fda_510k_project_templates
       WHERE is_active = true
       ORDER BY device_classification, template_name
     `);
@@ -23,7 +37,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 
 // Create a new project with wizard data
 router.post('/create', async (req: Request, res: Response) => {
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
   const {
     projectName,
     deviceName,
@@ -45,19 +59,19 @@ router.post('/create', async (req: Request, res: Response) => {
     qualityLead,
     teamMembers,
     targetSubmissionDate,
-    estimatedTimelineDays
+    estimatedTimelineDays,
   } = req.body;
 
   // Validate required fields
   if (!projectName || !deviceName) {
-    return res.status(400).json({ 
-      error: 'Project name and device name are required' 
+    return res.status(400).json({
+      error: 'Project name and device name are required',
     });
   }
-  
+
   if (!intendedUse || !indications) {
-    return res.status(400).json({ 
-      error: 'Intended use and indications for use are required' 
+    return res.status(400).json({
+      error: 'Intended use and indications for use are required',
     });
   }
 
@@ -74,10 +88,10 @@ router.post('/create', async (req: Request, res: Response) => {
         status: 'planning',
         priority: 'high',
         startDate: new Date(),
-        targetEndDate: targetSubmissionDate ? new Date(targetSubmissionDate) : null
+        targetEndDate: targetSubmissionDate ? new Date(targetSubmissionDate) : null,
       })
       .returning();
-    
+
     // 2. Create the FDA 510k specific project details
     const [project] = await db
       .insert(fda510kProjects)
@@ -94,9 +108,18 @@ router.post('/create', async (req: Request, res: Response) => {
         hasBiocompatibility: hasBiocompatibility,
         hasClinicalData: hasClinicalData,
         hasAi: hasAI,
-        projectLead: projectLead && projectLead !== '' && !isNaN(parseInt(projectLead)) ? parseInt(projectLead) : null,
-        regulatoryLead: regulatoryLead && regulatoryLead !== '' && !isNaN(parseInt(regulatoryLead)) ? parseInt(regulatoryLead) : null,
-        qualityLead: qualityLead && qualityLead !== '' && !isNaN(parseInt(qualityLead)) ? parseInt(qualityLead) : null,
+        projectLead:
+          projectLead && projectLead !== '' && !isNaN(parseInt(projectLead))
+            ? parseInt(projectLead)
+            : null,
+        regulatoryLead:
+          regulatoryLead && regulatoryLead !== '' && !isNaN(parseInt(regulatoryLead))
+            ? parseInt(regulatoryLead)
+            : null,
+        qualityLead:
+          qualityLead && qualityLead !== '' && !isNaN(parseInt(qualityLead))
+            ? parseInt(qualityLead)
+            : null,
         teamMembers: teamMembers || [],
         targetSubmissionDate: targetSubmissionDate || null,
         currentStage: 'setup',
@@ -106,8 +129,8 @@ router.post('/create', async (req: Request, res: Response) => {
           projectName,
           templateId,
           estimatedTimelineDays,
-          createdViaWizard: true
-        }
+          createdViaWizard: true,
+        },
       })
       .returning();
 
@@ -129,8 +152,8 @@ router.post('/create', async (req: Request, res: Response) => {
             hasSterility,
             hasBiocompatibility,
             hasClinicalData,
-            hasAI
-          }
+            hasAI,
+          },
         })},
         true,
         NOW()
@@ -144,10 +167,10 @@ router.post('/create', async (req: Request, res: Response) => {
         'intended_use',
         ${JSON.stringify({
           intendedUse,
-          indications
+          indications,
         })},
         ${!!intendedUse && !!indications},
-        ${(intendedUse && indications) ? sql`NOW()` : null}
+        ${intendedUse && indications ? sql`NOW()` : null}
       )
     `);
 
@@ -192,28 +215,26 @@ router.post('/create', async (req: Request, res: Response) => {
     }
 
     // 5. Create initial stage progress entry
-    await db
-      .insert(fda510kStageProgress)
-      .values({
-        projectId: project.id,
-        organizationId: organizationId,
-        stageName: 'setup',
-        sectionName: 'project_initialization',
-        collectedData: {
-          projectName,
-          deviceName,
-          templateId,
-          intendedUse,
-          indications,
-          deviceClassification,
-          initializationComplete: true,
-          wizardData: req.body
-        },
-        status: 'completed',
-        progress: 100,
-        isRequired: true,
-        validationStatus: 'validated'
-      });
+    await db.insert(fda510kStageProgress).values({
+      projectId: project.id,
+      organizationId: organizationId,
+      stageName: 'setup',
+      sectionName: 'project_initialization',
+      collectedData: {
+        projectName,
+        deviceName,
+        templateId,
+        intendedUse,
+        indications,
+        deviceClassification,
+        initializationComplete: true,
+        wizardData: req.body,
+      },
+      status: 'completed',
+      progress: 100,
+      isRequired: true,
+      validationStatus: 'validated',
+    });
 
     // 5. If template was selected, populate initial data from template
     if (templateId && templateId !== '' && !isNaN(parseInt(templateId))) {
@@ -224,37 +245,34 @@ router.post('/create', async (req: Request, res: Response) => {
 
       if (templateResult.rows && templateResult.rows.length > 0) {
         const template = templateResult.rows[0] as any;
-        
+
         // Apply template settings
-        await db
-          .insert(fda510kStageProgress)
-          .values({
-            projectId: project.id,
-            organizationId: organizationId,
-            stageName: 'setup',
-            sectionName: 'template_application',
-            collectedData: {
-              templateName: template.template_name,
-              requiredSections: template.required_sections,
-              optionalSections: template.optional_sections,
-              testingRequirements: template.testing_requirements,
-              documentationChecklist: template.documentation_checklist,
-              defaultSettings: template.default_settings
-            },
-            status: 'completed',
-            progress: 100,
-            isRequired: false,
-            validationStatus: 'validated'
-          });
+        await db.insert(fda510kStageProgress).values({
+          projectId: project.id,
+          organizationId: organizationId,
+          stageName: 'setup',
+          sectionName: 'template_application',
+          collectedData: {
+            templateName: template.template_name,
+            requiredSections: template.required_sections,
+            optionalSections: template.optional_sections,
+            testingRequirements: template.testing_requirements,
+            documentationChecklist: template.documentation_checklist,
+            defaultSettings: template.default_settings,
+          },
+          status: 'completed',
+          progress: 100,
+          isRequired: false,
+          validationStatus: 'validated',
+        });
       }
     }
 
     res.json({
       success: true,
       projectId: baseProject.id,
-      message: 'Project created successfully'
+      message: 'Project created successfully',
     });
-
   } catch (error) {
     console.error('Error creating project:', error);
     res.status(500).json({ error: 'Failed to create project' });
@@ -264,12 +282,12 @@ router.post('/create', async (req: Request, res: Response) => {
 // Get project stage data
 router.get('/:projectId/stage', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
 
   try {
     // Get FDA 510k project stage information
     const projectResult = await db.execute(sql`
-      SELECT 
+      SELECT
         p.id,
         p.project_id,
         p.device_name,
@@ -292,24 +310,24 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
     }
 
     const project = projectResult.rows[0] as any;
-    
+
     // Check for eSTAR and RTA status in metadata or settings
     let estarStatus = 'not_started';
     let rtaStatus = 'not_started';
-    
+
     // Check if this is the AeroSpire project (Stage 5)
     if (project.current_stage === 5) {
       estarStatus = 'in_progress';
       rtaStatus = 'ready';
     }
-    
+
     // Check project settings for eSTAR/RTA status
     const settingsResult = await db.execute(sql`
       SELECT settings
       FROM projects
       WHERE id = ${parseInt(projectId)}
     `);
-    
+
     if (settingsResult.rows && settingsResult.rows.length > 0) {
       const settings = (settingsResult.rows[0] as any).settings;
       if (settings && typeof settings === 'object') {
@@ -330,9 +348,8 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
       rta_status: rtaStatus,
       has_software: project.has_software,
       has_biocompatibility: project.has_biocompatibility,
-      has_clinical_data: project.has_clinical_data
+      has_clinical_data: project.has_clinical_data,
     });
-
   } catch (error) {
     console.error('Error fetching project stage:', error);
     res.status(500).json({ error: 'Failed to fetch project stage data' });
@@ -342,7 +359,7 @@ router.get('/:projectId/stage', async (req: Request, res: Response) => {
 // Get project details
 router.get('/:projectId', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
 
   try {
     const [project] = await db
@@ -374,9 +391,8 @@ router.get('/:projectId', async (req: Request, res: Response) => {
     res.json({
       project,
       teamAssignments: teamAssignments.rows,
-      dataForms: dataForms.rows
+      dataForms: dataForms.rows,
     });
-
   } catch (error) {
     console.error('Error fetching project:', error);
     res.status(500).json({ error: 'Failed to fetch project details' });
@@ -412,7 +428,6 @@ router.post('/:projectId/team', async (req: Request, res: Response) => {
     }
 
     res.json({ success: true, message: 'Team assignments updated' });
-
   } catch (error) {
     console.error('Error updating team:', error);
     res.status(500).json({ error: 'Failed to update team assignments' });

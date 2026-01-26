@@ -100,6 +100,7 @@ const LoadingPage = () => (
 import HomeLanding from './pages/HomeLanding';
 import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 const ClientPortalV2 = lazy(() => import('./portal-v2/components/client-portal'));
+const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
 
 // Import Enterprise Sign-On page
 import TrialSageSignOn from './pages/TrialSageSignOn';
@@ -359,6 +360,15 @@ function MainApp() {
         {/* Main Content */}
         <main className="min-h-screen bg-gray-100">
           <Switch>
+            {/* V3 Portal - New Elegant UI */}
+            <Route path="/v3">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV3 />
+                </Suspense>
+              )}
+            </Route>
+            
             {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
             <Route path="/" component={ClientPortalV2} />
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />

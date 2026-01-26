@@ -2,12 +2,12 @@
  * Test Setup & Utilities
  *
  * Common test configuration, mocks, and utilities for all tests.
+ * Enhanced with security testing utilities and comprehensive factories.
  *
  * @module tests/setup
  */
 
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
-import { Pool } from 'pg';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK DATABASE
@@ -15,17 +15,68 @@ import { Pool } from 'pg';
 
 /**
  * Mock database pool for testing
+ * Includes query result simulation and connection tracking
  */
 export const mockPool = {
-  query: vi.fn(),
-  connect: vi.fn(),
-  end: vi.fn(),
+  query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+  connect: vi.fn().mockResolvedValue({
+    query: vi.fn(),
+    release: vi.fn(),
+  }),
+  end: vi.fn().mockResolvedValue(undefined),
   on: vi.fn(),
+  totalCount: 0,
+  idleCount: 0,
+  waitingCount: 0,
 };
 
 vi.mock('pg', () => ({
   Pool: vi.fn(() => mockPool),
 }));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECURITY TESTING UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Common XSS attack vectors for testing input sanitization
+ */
+export const XSS_PAYLOADS = [
+  '<script>alert("xss")</script>',
+  'javascript:alert("xss")',
+  '<img src=x onerror=alert("xss")>',
+  '<svg onload=alert("xss")>',
+  '"><script>alert("xss")</script>',
+  "'; DROP TABLE users; --",
+  '<iframe src="javascript:alert(\'xss\')">',
+];
+
+/**
+ * SQL injection test payloads
+ */
+export const SQL_INJECTION_PAYLOADS = [
+  "'; DROP TABLE users; --",
+  "' OR '1'='1",
+  '1; DELETE FROM users',
+  "' UNION SELECT * FROM users --",
+  "admin'--",
+];
+
+/**
+ * Test that a function properly sanitizes malicious input
+ */
+export function testInputSanitization(
+  sanitizeFunc: (input: string) => string,
+  payloads: string[] = XSS_PAYLOADS
+): void {
+  for (const payload of payloads) {
+    const result = sanitizeFunc(payload);
+    expect(result).not.toContain('<script');
+    expect(result).not.toContain('javascript:');
+    expect(result).not.toContain('onerror=');
+    expect(result).not.toContain('onload=');
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK REQUEST/RESPONSE
@@ -201,6 +252,35 @@ export function createTestCortexAtom(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+/**
+ * Create a test document
+ */
+export function createTestDocument(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'doc-test-123',
+    name: 'Test Document',
+    type: 'protocol',
+    status: 'draft',
+    version: '1.0',
+    projectId: 'proj-test-123',
+    organizationId: 'org-test-123',
+    content: 'Test document content',
+    size: 1024,
+    mimeType: 'application/pdf',
+    checksum: 'abc123',
+    previousVersionId: null,
+    createdBy: 'user-test-123',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+// Alias for backwards compatibility
+export const mockDb = mockPool;
+export const mockRequest = createMockRequest;
+export const mockResponse = createMockResponse;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSERTION HELPERS

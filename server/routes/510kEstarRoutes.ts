@@ -1,13 +1,20 @@
 /**
- * FDA 510(k) eSTAR Integration Routes
+ * FDA 510(k) eSTAR Integration Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/estar
+ * Sunset date: 2026-06-30
  *
  * This module provides routes for validating and building FDA-compliant eSTAR packages
  * for 510(k) submissions, ensuring proper integration with the FDA's eSTAR system.
+ *
+ * @see /api/fda510k-unified/docs for migration guide
  */
 
 import { Router } from 'express';
 import { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger.ts';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
@@ -15,7 +22,12 @@ import { z } from 'zod';
 
 const logger = createScopedLogger('estar-routes');
 export const router = Router();
-const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
+const db = new Pool({
+  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
+});
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/estar'));
 
 // Define validation schemas
 const validateProjectIdSchema = z.object({
@@ -378,8 +390,8 @@ router.post('/build', async (req, res) => {
 
     // Record package generation in database
     await db.query(
-      `INSERT INTO estar_packages 
-       (id, device_id, metadata, status, created_at) 
+      `INSERT INTO estar_packages
+       (id, device_id, metadata, status, created_at)
        VALUES ($1, $2, $3, $4, $5)`,
       [packageId, projectId, JSON.stringify(metadata), 'generated', timestamp]
     );

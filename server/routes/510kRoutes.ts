@@ -1,5 +1,16 @@
+/**
+ * 510(k) Device Profile Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/device
+ * Sunset date: 2026-06-30
+ *
+ * @see /api/fda510k-unified/docs for migration guide
+ */
+
 import { Router, Request, Response } from 'express';
 import { validateSchema } from '../middleware/validateSchema';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 import PredicateFinderService from '../services/PredicateFinderService';
 import LiteratureService from '../services/LiteratureService';
 import PathwayAdvisor from '../services/PathwayAdvisor';
@@ -13,6 +24,9 @@ const generateId = () => {
 };
 
 const router = Router();
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/device'));
 
 // Simple in-memory storage for device profiles during development
 // In production, this would use a database

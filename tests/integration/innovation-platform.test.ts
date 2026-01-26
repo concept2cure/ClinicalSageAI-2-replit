@@ -1,11 +1,11 @@
 /**
  * Innovation Platform Test Suite
- * 
+ *
  * Comprehensive tests for all 8 innovative platform features.
  * Tests cover database operations, service logic, API endpoints, and integration.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,39 +27,55 @@ const testIds = {
   organizationId: uuidv4(),
   programId: uuidv4(),
   userId: uuidv4(),
-  documentId: uuidv4()
+  documentId: uuidv4(),
 };
 
 beforeAll(async () => {
   testPool = new Pool({
-    connectionString: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL
+    connectionString: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL,
   });
-  
+
   // Create test organization, program, and user
-  await testPool.query(`
-    INSERT INTO organizations (id, name, slug) 
+  await testPool.query(
+    `
+    INSERT INTO organizations (id, name, slug)
     VALUES ($1, 'Test Org', 'test-org')
     ON CONFLICT (id) DO NOTHING
-  `, [testIds.organizationId]);
-  
-  await testPool.query(`
+  `,
+    [testIds.organizationId]
+  );
+
+  await testPool.query(
+    `
     INSERT INTO programs (id, organization_id, name, therapeutic_area)
     VALUES ($1, $2, 'Test Program', 'Oncology')
     ON CONFLICT (id) DO NOTHING
-  `, [testIds.programId, testIds.organizationId]);
-  
-  await testPool.query(`
+  `,
+    [testIds.programId, testIds.organizationId]
+  );
+
+  await testPool.query(
+    `
     INSERT INTO users (id, email, name, organization_id)
     VALUES ($1, 'test@test.com', 'Test User', $2)
     ON CONFLICT (id) DO NOTHING
-  `, [testIds.userId, testIds.organizationId]);
+  `,
+    [testIds.userId, testIds.organizationId]
+  );
 });
 
 afterAll(async () => {
   // Cleanup test data
-  await testPool.query('DELETE FROM innovation.delta_findings WHERE scan_id IN (SELECT id FROM innovation.delta_radar_scans WHERE organization_id = $1)', [testIds.organizationId]);
-  await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE organization_id = $1', [testIds.organizationId]);
-  await testPool.query('DELETE FROM innovation.guidance_documents WHERE organization_id = $1', [testIds.organizationId]);
+  await testPool.query(
+    'DELETE FROM innovation.delta_findings WHERE scan_id IN (SELECT id FROM innovation.delta_radar_scans WHERE organization_id = $1)',
+    [testIds.organizationId]
+  );
+  await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE organization_id = $1', [
+    testIds.organizationId,
+  ]);
+  await testPool.query('DELETE FROM innovation.guidance_documents WHERE organization_id = $1', [
+    testIds.organizationId,
+  ]);
   // Add more cleanup as needed
   await testPool.end();
 });
@@ -82,7 +98,7 @@ describe('Regulatory Delta Radar Service', () => {
         documentType: 'guidance',
         content: 'This is a test guidance document about clinical trial endpoints.',
         effectiveDate: new Date().toISOString(),
-        organizationId: testIds.organizationId
+        organizationId: testIds.organizationId,
       });
 
       expect(result).toBeDefined();
@@ -102,7 +118,7 @@ describe('Regulatory Delta Radar Service', () => {
       const docs = await service.getGuidanceDocuments(testIds.organizationId);
       if (docs.length > 0) {
         const result = await service.updateGuidanceDocument(docs[0].id, {
-          status: 'archived'
+          status: 'archived',
         });
         expect(result.status).toBe('archived');
       }
@@ -115,7 +131,7 @@ describe('Regulatory Delta Radar Service', () => {
         organizationId: testIds.organizationId,
         documentId: testIds.documentId,
         scanScope: 'full',
-        includeArchived: false
+        includeArchived: false,
       });
 
       expect(result).toBeDefined();
@@ -126,7 +142,7 @@ describe('Regulatory Delta Radar Service', () => {
 
     it('should retrieve scan history', async () => {
       const result = await service.getScanHistory(testIds.organizationId, {
-        limit: 10
+        limit: 10,
       });
 
       expect(Array.isArray(result)).toBe(true);
@@ -139,7 +155,7 @@ describe('Regulatory Delta Radar Service', () => {
       if (scans.length > 0 && scans[0].findings?.length > 0) {
         const result = await service.updateFinding(scans[0].findings[0].id, {
           status: 'acknowledged',
-          reviewerComment: 'Reviewed and acknowledged'
+          reviewerComment: 'Reviewed and acknowledged',
         });
         expect(result.status).toBe('acknowledged');
       }
@@ -164,12 +180,12 @@ describe('Evidence Confidence Heatmap Service', () => {
         name: 'Test Scoring Config',
         organizationId: testIds.organizationId,
         citationTypeWeights: {
-          'primary': 1.0,
-          'secondary': 0.7,
-          'tertiary': 0.4
+          primary: 1.0,
+          secondary: 0.7,
+          tertiary: 0.4,
         },
         recencyDecayFactor: 0.05,
-        relevanceThreshold: 0.7
+        relevanceThreshold: 0.7,
       });
 
       expect(result).toBeDefined();
@@ -189,7 +205,7 @@ describe('Evidence Confidence Heatmap Service', () => {
       const result = await service.runConfidenceAssessment({
         documentId: testIds.documentId,
         configId,
-        sections: ['efficacy', 'safety', 'methodology']
+        sections: ['efficacy', 'safety', 'methodology'],
       });
 
       expect(result).toBeDefined();
@@ -207,7 +223,7 @@ describe('Evidence Confidence Heatmap Service', () => {
 
     it('should identify evidence gaps', async () => {
       const result = await service.identifyGaps(testIds.documentId, {
-        minConfidence: 70
+        minConfidence: 70,
       });
 
       expect(result).toBeDefined();
@@ -235,7 +251,7 @@ describe('Submission Readiness Twin Service', () => {
         description: 'Complete statistical analysis of primary endpoint',
         weight: 0.15,
         evaluationMethod: 'document_check',
-        requiredDocuments: ['statistical_analysis_plan', 'primary_endpoint_results']
+        requiredDocuments: ['statistical_analysis_plan', 'primary_endpoint_results'],
       });
 
       expect(result).toBeDefined();
@@ -253,7 +269,7 @@ describe('Submission Readiness Twin Service', () => {
       const result = await service.runAssessment({
         programId: testIds.programId,
         submissionType: 'NDA',
-        targetAgency: 'FDA'
+        targetAgency: 'FDA',
       });
 
       expect(result).toBeDefined();
@@ -272,7 +288,7 @@ describe('Submission Readiness Twin Service', () => {
 
     it('should analyze trends', async () => {
       const result = await service.analyzeTrends(testIds.programId, {
-        lookbackDays: 90
+        lookbackDays: 90,
       });
 
       expect(result).toBeDefined();
@@ -296,7 +312,7 @@ describe('Auto-Traceability Service', () => {
       const result = await service.detectLinks({
         documentId: testIds.documentId,
         content: 'Based on the clinical trial protocol section 4.2, the primary endpoint was...',
-        sourceType: 'csr_section'
+        sourceType: 'csr_section',
       });
 
       expect(result).toBeDefined();
@@ -314,7 +330,7 @@ describe('Auto-Traceability Service', () => {
         targetLocation: 'section_4.2',
         linkType: 'derives_from',
         confidence: 0.85,
-        creationMethod: 'auto_detected'
+        creationMethod: 'auto_detected',
       });
 
       expect(result).toBeDefined();
@@ -335,7 +351,7 @@ describe('Auto-Traceability Service', () => {
     it('should generate traceability matrix', async () => {
       const result = await service.generateMatrix({
         programId: testIds.programId,
-        includeTypes: ['protocol', 'csr_section', 'regulatory_requirement']
+        includeTypes: ['protocol', 'csr_section', 'regulatory_requirement'],
       });
 
       expect(result).toBeDefined();
@@ -362,8 +378,8 @@ describe('Adaptive Reviewer Workspace Service', () => {
         permissions: ['edit', 'review', 'approve'],
         defaultLayout: {
           panels: ['document', 'comments', 'references'],
-          splitRatio: [60, 20, 20]
-        }
+          splitRatio: [60, 20, 20],
+        },
       });
 
       expect(result).toBeDefined();
@@ -382,7 +398,7 @@ describe('Adaptive Reviewer Workspace Service', () => {
         theme: 'dark',
         fontSize: 14,
         panelOrder: ['document', 'ai_assistant', 'references'],
-        shortcuts: { 'ctrl+s': 'save', 'ctrl+r': 'review' }
+        shortcuts: { 'ctrl+s': 'save', 'ctrl+r': 'review' },
       });
 
       expect(result).toBeDefined();
@@ -420,7 +436,7 @@ describe('Outcome-Based Template Learning Service', () => {
         category: 'csr',
         documentType: 'clinical_study_report',
         content: '## Efficacy Results\n\n{{primary_endpoint_analysis}}\n\n{{secondary_endpoints}}',
-        metadata: { version: '1.0', author: 'system' }
+        metadata: { version: '1.0', author: 'system' },
       });
 
       expect(result).toBeDefined();
@@ -434,7 +450,7 @@ describe('Outcome-Based Template Learning Service', () => {
         userId: testIds.userId,
         documentId: testIds.documentId,
         customizations: ['added_table', 'modified_language'],
-        completionTime: 3600
+        completionTime: 3600,
       });
 
       expect(result).toBeDefined();
@@ -449,7 +465,7 @@ describe('Outcome-Based Template Learning Service', () => {
         outcome: 'approved',
         agencyQuestions: 2,
         cycleTime: 180,
-        feedbackSummary: 'Minor clarifications requested'
+        feedbackSummary: 'Minor clarifications requested',
       });
 
       expect(result).toBeDefined();
@@ -468,7 +484,7 @@ describe('Outcome-Based Template Learning Service', () => {
       const result = await service.getRecommendations({
         organizationId: testIds.organizationId,
         documentType: 'clinical_study_report',
-        context: { therapeuticArea: 'oncology' }
+        context: { therapeuticArea: 'oncology' },
       });
 
       expect(result).toBeDefined();
@@ -498,7 +514,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
         topic: 'Primary endpoint selection and study design',
         meetingType: 'type_b',
         priority: 'high',
-        sponsorLead: 'Test User'
+        sponsorLead: 'Test User',
       });
 
       expect(result).toBeDefined();
@@ -516,7 +532,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
     it('should update thread status', async () => {
       const result = await service.updateThread(threadId, {
         status: 'active',
-        meetingDate: new Date().toISOString()
+        meetingDate: new Date().toISOString(),
       });
       expect(result.status).toBe('active');
     });
@@ -530,7 +546,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
         title: 'Initial Meeting Request',
         direction: 'outgoing',
         content: 'Request for Type B meeting to discuss primary endpoint...',
-        status: 'submitted'
+        status: 'submitted',
       });
 
       expect(result).toBeDefined();
@@ -550,7 +566,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
         threadId,
         topic: 'Primary Endpoint Selection',
         sponsorPosition: 'ORR as primary endpoint based on precedent',
-        status: 'proposed'
+        status: 'proposed',
       });
 
       expect(result).toBeDefined();
@@ -562,7 +578,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
       if (positions.length > 0) {
         const result = await service.updatePosition(positions[0].id, {
           fdaPosition: 'Prefer PFS but open to discussion',
-          status: 'under_discussion'
+          status: 'under_discussion',
         });
         expect(result.fdaPosition).toBeDefined();
       }
@@ -574,7 +590,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
       const result = await service.search({
         programId: testIds.programId,
         query: 'endpoint',
-        limit: 10
+        limit: 10,
       });
 
       expect(result).toBeDefined();
@@ -609,7 +625,7 @@ describe('Compliance Guardrails SDK Service', () => {
           }
         `,
         agency: 'FDA',
-        documentTypes: ['submission_package']
+        documentTypes: ['submission_package'],
       });
 
       expect(result).toBeDefined();
@@ -625,7 +641,7 @@ describe('Compliance Guardrails SDK Service', () => {
 
     it('should update rule', async () => {
       const result = await service.updateRule(ruleId, {
-        severity: 'warning'
+        severity: 'warning',
       });
       expect(result.severity).toBe('warning');
     });
@@ -639,7 +655,7 @@ describe('Compliance Guardrails SDK Service', () => {
         description: 'Standard validation profile for FDA NDA submissions',
         submissionType: 'NDA',
         agency: 'FDA',
-        ruleIds: [ruleId]
+        ruleIds: [ruleId],
       });
 
       expect(result).toBeDefined();
@@ -660,7 +676,7 @@ describe('Compliance Guardrails SDK Service', () => {
         documentId: testIds.documentId,
         profileId,
         triggeredBy: 'test',
-        executionContext: 'unit_test'
+        executionContext: 'unit_test',
       });
 
       expect(result).toBeDefined();
@@ -683,7 +699,7 @@ describe('Compliance Guardrails SDK Service', () => {
         const findings = await service.getFindings(runs[0].id);
         if (findings.length > 0) {
           const result = await service.updateFinding(findings[0].id, {
-            status: 'acknowledged'
+            status: 'acknowledged',
           });
           expect(result.status).toBe('acknowledged');
         }
@@ -696,7 +712,7 @@ describe('Compliance Guardrails SDK Service', () => {
       const result = await service.generateApiKey({
         organizationId: testIds.organizationId,
         name: 'Test CI/CD Key',
-        scopes: ['validate', 'read_rules', 'read_profiles']
+        scopes: ['validate', 'read_rules', 'read_profiles'],
       });
 
       expect(result).toBeDefined();
@@ -724,7 +740,7 @@ describe('Innovation Platform Integration', () => {
       const scanResult = await deltaService.runDeltaScan({
         organizationId: testIds.organizationId,
         documentId: testIds.documentId,
-        scanScope: 'full'
+        scanScope: 'full',
       });
 
       // Generate heatmap
@@ -742,13 +758,13 @@ describe('Innovation Platform Integration', () => {
       const assessment = await readinessService.runAssessment({
         programId: testIds.programId,
         submissionType: 'NDA',
-        targetAgency: 'FDA'
+        targetAgency: 'FDA',
       });
 
       // Generate traceability matrix
       const matrix = await traceService.generateMatrix({
         programId: testIds.programId,
-        includeTypes: ['protocol', 'csr_section']
+        includeTypes: ['protocol', 'csr_section'],
       });
 
       expect(assessment).toBeDefined();
@@ -762,7 +778,7 @@ describe('Innovation Platform Integration', () => {
       // Get template recommendations
       const recommendations = await templateService.getRecommendations({
         organizationId: testIds.organizationId,
-        documentType: 'clinical_study_report'
+        documentType: 'clinical_study_report',
       });
 
       // Validate against guardrails
@@ -773,7 +789,7 @@ describe('Innovation Platform Integration', () => {
             documentId: testIds.documentId,
             profileId: profiles[0].id,
             triggeredBy: 'integration_test',
-            executionContext: 'test'
+            executionContext: 'test',
           });
           expect(validation).toBeDefined();
         }
@@ -785,11 +801,14 @@ describe('Innovation Platform Integration', () => {
 
   describe('Audit Trail Verification', () => {
     it('should maintain complete audit trail', async () => {
-      const result = await testPool.query(`
+      const result = await testPool.query(
+        `
         SELECT COUNT(*) as count
         FROM innovation.guardrail_api_audit
         WHERE organization_id = $1
-      `, [testIds.organizationId]);
+      `,
+        [testIds.organizationId]
+      );
 
       expect(parseInt(result.rows[0].count)).toBeGreaterThanOrEqual(0);
     });
@@ -802,12 +821,12 @@ describe('Innovation Platform Integration', () => {
 describe('Performance Benchmarks', () => {
   it('should complete delta scan within acceptable time', async () => {
     const service = new RegulatoryDeltaRadarService(testPool);
-    
+
     const start = Date.now();
     await service.runDeltaScan({
       organizationId: testIds.organizationId,
       documentId: testIds.documentId,
-      scanScope: 'incremental'
+      scanScope: 'incremental',
     });
     const duration = Date.now() - start;
 
@@ -816,7 +835,7 @@ describe('Performance Benchmarks', () => {
 
   it('should generate heatmap within acceptable time', async () => {
     const service = new EvidenceConfidenceHeatmapService(testPool);
-    
+
     const start = Date.now();
     await service.generateHeatmap(testIds.documentId);
     const duration = Date.now() - start;
@@ -827,14 +846,14 @@ describe('Performance Benchmarks', () => {
   it('should run validation within acceptable time', async () => {
     const service = new ComplianceGuardrailsSDKService(testPool);
     const profiles = await service.getProfiles(testIds.organizationId);
-    
+
     if (profiles.length > 0) {
       const start = Date.now();
       await service.runValidation({
         documentId: testIds.documentId,
         profileId: profiles[0].id,
         triggeredBy: 'perf_test',
-        executionContext: 'test'
+        executionContext: 'test',
       });
       const duration = Date.now() - start;
 
@@ -852,18 +871,18 @@ describe('Security Validation', () => {
     const service = new RegulatoryDeltaRadarService(testPool);
 
     const result = await service.getGuidanceDocuments(otherOrgId);
-    
+
     // Should return empty for different org
     expect(result.length).toBe(0);
   });
 
   it('should validate API key scopes', async () => {
     const service = new ComplianceGuardrailsSDKService(testPool);
-    
+
     const keyResult = await service.generateApiKey({
       organizationId: testIds.organizationId,
       name: 'Limited Key',
-      scopes: ['read_rules']
+      scopes: ['read_rules'],
     });
 
     expect(keyResult.scopes).toContain('read_rules');
@@ -872,12 +891,15 @@ describe('Security Validation', () => {
 
   it('should hash API keys before storage', async () => {
     // Check that raw keys are not stored
-    const result = await testPool.query(`
+    const result = await testPool.query(
+      `
       SELECT api_key_hash
       FROM innovation.guardrail_api_audit
       WHERE organization_id = $1
       LIMIT 1
-    `, [testIds.organizationId]);
+    `,
+      [testIds.organizationId]
+    );
 
     if (result.rows.length > 0) {
       // Key should be hashed, not plain text
