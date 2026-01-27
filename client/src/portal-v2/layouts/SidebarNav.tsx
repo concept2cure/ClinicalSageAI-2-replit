@@ -8,9 +8,10 @@
  * - Recent modules quick access
  * - Favorites support
  * - Role-based module visibility
+ * - Intent-based command input (Week 4 integration)
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import {
   LayoutGrid,
@@ -43,14 +44,18 @@ import {
   Brain,
   Shield,
   GraduationCap,
+  Command,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePortal, useModuleAccess } from '../core/portalContext';
 import { getNavigationSections, MODULE_REGISTRY, CATEGORY_REGISTRY } from '../core/moduleRegistry';
+import { useIntentEngine } from '../services/intentEngine';
 import type { ModuleId, ModuleCategory } from '../core/portalTypes';
 
 // Icon mapping for modules
@@ -131,6 +136,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setSidebarCollapsed,
   } = usePortal();
   const { hasAccess } = useModuleAccess();
+  const { processIntent, setContext } = useIntentEngine();
+
+  // Command input state
+  const [commandInput, setCommandInput] = useState('');
+  const [commandFeedback, setCommandFeedback] = useState<string | null>(null);
 
   // Use controlled or internal collapse state
   const isCollapsed = controlledCollapsed ?? sidebarCollapsed;
@@ -139,6 +149,46 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   // Expanded section state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['core', 'regulatory'])
+  );
+
+  // Update intent engine context when role changes
+  React.useEffect(() => {
+    setContext({ userRole: experience.role, activeModule });
+  }, [experience.role, activeModule, setContext]);
+
+  // Handle command input submission
+  const handleCommandSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!commandInput.trim()) return;
+
+      const result = processIntent(commandInput);
+
+      if (result.matched && result.match) {
+        const { intent, confidence } = result.match;
+
+        // Navigate to the matched module
+        if (intent.params?.route) {
+          setLocation(intent.params.route);
+          setActiveModule(intent.moduleId as ModuleId);
+          setCommandFeedback(`Navigating to ${intent.description || intent.moduleId}...`);
+        } else {
+          setCommandFeedback(
+            `Intent: ${intent.action} ${intent.moduleId} (${Math.round(confidence * 100)}% confidence)`
+          );
+        }
+
+        setCommandInput('');
+      } else {
+        setCommandFeedback(
+          result.suggestion || 'No matching command found. Try "help" for options.'
+        );
+      }
+
+      // Clear feedback after 3 seconds
+      setTimeout(() => setCommandFeedback(null), 3000);
+    },
+    [commandInput, processIntent, setLocation, setActiveModule]
   );
 
   // Get navigation sections based on user role
@@ -371,6 +421,38 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </Button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Command Input - Intent Engine Integration */}
+      {!isCollapsed && (
+        <div className="border-b px-3 py-2">
+          <form onSubmit={handleCommandSubmit}>
+            <div className="relative">
+              <Command className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Type a command..."
+                value={commandInput}
+                onChange={e => setCommandInput(e.target.value)}
+                className="h-8 pl-8 pr-8 text-xs"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <Search className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {commandFeedback && (
+              <div className="mt-1.5 text-[10px] text-blue-600 animate-pulse">
+                {commandFeedback}
+              </div>
+            )}
+          </form>
+          <div className="mt-1 text-[10px] text-muted-foreground">
+            Try: "open vault", "510k", "analytics"
           </div>
         </div>
       )}

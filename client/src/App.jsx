@@ -225,8 +225,7 @@ const ComparabilityStudiesStubPage = lazy(() => import('./pages/ComparabilityStu
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ReportsDashboard = lazy(() => import('./pages/ReportsDashboard'));
 
-// Tenant Management, Client Management and Settings Pages
-const TenantManagement = lazy(() => import('./pages/TenantManagement'));
+// Client Management and Settings Pages (TenantManagement already declared above)
 const ClientManagement = lazy(() => import('./pages/ClientManagement'));
 const ClientLicenseManagement = lazy(() => import('./pages/ClientLicenseManagement'));
 const Settings = lazy(() => import('./pages/Settings'));
