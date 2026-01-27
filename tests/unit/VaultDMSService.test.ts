@@ -3,14 +3,14 @@
  * Unit tests for VaultDMSService
  */
 
-import { jest } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 const VaultDMSService = require('../server/services/VaultDMSService.js').default;
 
 describe('VaultDMSService', () => {
   describe('createDocument', () => {
     it('should create a document with correct parameters and return the created document', async () => {
       const mockDb = {
-        query: jest.fn().mockResolvedValue({
+        query: vi.fn().mockResolvedValue({
           rows: [
             {
               id: 1,
@@ -82,7 +82,7 @@ describe('VaultDMSService', () => {
         },
       ];
       const mockDb = {
-        query: jest.fn().mockResolvedValue({ rows: sampleDocs }),
+        query: vi.fn().mockResolvedValue({ rows: sampleDocs }),
       };
       const service = new VaultDMSService(mockDb, {});
       const result = await service.listDocuments('tenant1');

@@ -1,12 +1,13 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: number;
   username: string;
   email?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -28,12 +29,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     data: userData,
     error,
     isLoading,
-    refetch
+    refetch,
   } = useQuery({
-    queryKey: ["/api/user"],
+    queryKey: ['/api/user'],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/user");
+        const response = await apiRequest('GET', '/api/user');
         if (response.ok) {
           return await response.json();
         }
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // For other errors, throw to trigger the onError handler
         throw new Error(`Server returned ${response.status}`);
       } catch (e) {
-        console.error("Error fetching user:", e);
+        console.error('Error fetching user:', e);
         // Return null instead of throwing - don't break the UI on auth errors
         return null;
       }
@@ -64,112 +65,79 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      const response = await apiRequest("POST", "/api/login", credentials);
+      const response = await apiRequest('POST', '/api/login', credentials);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(errorData.message || 'Login failed');
       }
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       setUser(data);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
-        title: "Login successful",
-        description: `Welcome back, ${data.username}!`,
-      })
-  console.log('Toast would show:', {
-        title: "Login successful",
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: 'Login successful',
         description: `Welcome back, ${data.username}!`,
       });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again",
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again",
-        variant: "destructive",
+      toast({
+        title: 'Login failed',
+        description: error.message || 'Please check your credentials and try again',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/logout");
+      const response = await apiRequest('POST', '/api/logout');
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Logout failed");
+        throw new Error(errorData.message || 'Logout failed');
       }
     },
     onSuccess: () => {
       setUser(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      })
-  console.log('Toast would show:', {
-        title: "Logged out",
-        description: "You have been successfully logged out",
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out',
       });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
-        title: "Logout failed",
+      toast({
+        title: 'Logout failed',
         description: error.message,
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (userData: { username: string; password: string; email: string }) => {
-      const response = await apiRequest("POST", "/api/register", userData);
+      const response = await apiRequest('POST', '/api/register', userData);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(errorData.message || 'Registration failed');
       }
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       setUser(data);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      // toast call replaced
-  // Original: toast({
-        title: "Registration successful",
-        description: `Welcome to TrialSage, ${data.username}!`,
-      })
-  console.log('Toast would show:', {
-        title: "Registration successful",
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: 'Registration successful',
         description: `Welcome to TrialSage, ${data.username}!`,
       });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
-        title: "Registration failed",
-        description: error.message || "Please try again with different credentials",
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Registration failed",
-        description: error.message || "Please try again with different credentials",
-        variant: "destructive",
+      toast({
+        title: 'Registration failed',
+        description: error.message || 'Please try again with different credentials',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const login = async (username: string, password: string) => {
@@ -192,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: error as Error,
         login,
         logout,
-        register
+        register,
       }}
     >
       {children}
@@ -203,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === null) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

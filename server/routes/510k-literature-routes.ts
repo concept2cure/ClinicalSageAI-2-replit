@@ -1,13 +1,25 @@
 /**
- * 510(k) Literature API Routes
+ * 510(k) Literature API Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/literature
+ * Sunset date: 2026-06-30
  *
  * API endpoints for the 510(k) literature search, aggregation, and citation
  * functionality, supporting the Enhanced Literature Discovery feature.
+ *
+ * @see /api/fda510k-unified/docs for migration guide
  */
 
 import { Router, Request, Response } from 'express';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 import literatureAggregator, { LITERATURE_SOURCES } from '../services/LiteratureAggregatorService';
 import literatureSummarizer from '../services/LiteratureSummarizerService';
+
+const router = Router();
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/literature'));
 
 /**
  * Middleware to extract tenant context information

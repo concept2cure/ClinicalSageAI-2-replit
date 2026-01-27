@@ -75,7 +75,7 @@ export async function evalGatekeeperV2(subId: string): Promise<GK> {
   const p8 = secs.filter((s: any) => s.code.startsWith('3.2.P.8'))[0];
 
   const unvalidated = !!p5 && (p5.up_quality?.unvalidated_methods || 0) > 0;
-  const stabCoverage = !!p8 ? p8.up_stability?.coverage_months || 0 : 0;
+  const stabCoverage = p8 ? p8.up_stability?.coverage_months || 0 : 0;
   const coverageBad = stabCoverage < targetStabMonths;
 
   // IR pressure: due within 7 days or overdue

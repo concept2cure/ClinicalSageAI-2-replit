@@ -12,16 +12,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
+      - name: Run Semgrep (SAST)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
+      - name: Set PR base ref
+        run: echo "BASE_REF=${{ github.base_ref }}" >> $GITHUB_ENV
+
+      - name: Verify tests for changed code
+        run: bash scripts/ai/verify-tests.sh
+
       - name: Check for large files
         run: |
           echo "Checking for files over 500 lines..."
@@ -32,11 +43,11 @@ jobs:
             echo "⚠️ Warning: Large files detected:"
             echo "$LARGE_FILES"
           fi
-      
+
       - name: Check for console.log
         run: |
           echo "Checking for console.log statements..."
-          CONSOLE_LOGS=$(git diff origin/main...HEAD --name-only | \
+          CONSOLE_LOGS=$(git diff "origin/$BASE_REF"...HEAD --name-only | \
             grep -E '\.(ts|tsx|js|jsx)$' | \
             xargs grep -l 'console\.log' 2>/dev/null | \
             grep -v _deprecated || true)
@@ -44,11 +55,11 @@ jobs:
             echo "⚠️ Warning: console.log found in changed files:"
             echo "$CONSOLE_LOGS"
           fi
-      
+
       - name: Check for deprecated imports
         run: |
           echo "Checking for deprecated imports..."
-          DEPRECATED=$(git diff origin/main...HEAD --name-only | \
+          DEPRECATED=$(git diff "origin/$BASE_REF"...HEAD --name-only | \
             grep -E '\.(ts|tsx|js|jsx)$' | \
             xargs grep -lE "from ['\"].*/_deprecated/" 2>/dev/null || true)
           if [ -n "$DEPRECATED" ]; then
@@ -56,10 +67,10 @@ jobs:
             echo "$DEPRECATED"
             exit 1
           fi
-      
+
       - name: Run linter on changed files
         run: |
-          FILES=$(git diff origin/main...HEAD --name-only | grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
+          FILES=$(git diff "origin/$BASE_REF"...HEAD --name-only | grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
           if [ -n "$FILES" ]; then
             npx eslint $FILES --max-warnings 0 || echo "Lint warnings found"
           fi

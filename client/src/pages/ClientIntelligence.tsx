@@ -79,31 +79,20 @@ export default function ClientIntelligence() {
       return response.json();
     },
     onSuccess: () => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Data Collection Started',
         description: 'Client-specific data collection is now in progress.',
-      })
-  console.log('Toast would show:', {
-        title: 'Data Collection Started',
-        description: 'Client-specific data collection is now in progress.',
-      });
+        });
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/clients', selectedClient] });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Data Collection Failed',
         description: `Error: ${error.message}`,
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Data Collection Failed',
-        description: `Error: ${error.message}`,
-        variant: 'destructive',
-      });
+        });
     }
   });
 
@@ -114,31 +103,20 @@ export default function ClientIntelligence() {
       return response.json();
     },
     onSuccess: () => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Report Generated',
         description: 'Client intelligence report has been generated successfully.',
-      })
-  console.log('Toast would show:', {
-        title: 'Report Generated',
-        description: 'Client intelligence report has been generated successfully.',
-      });
+        });
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/clients', selectedClient, 'latest-report'] });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: 'Report Generation Failed',
         description: `Error: ${error.message}`,
         variant: 'destructive',
-      })
-  console.log('Toast would show:', {
-        title: 'Report Generation Failed',
-        description: `Error: ${error.message}`,
-        variant: 'destructive',
-      });
+        });
     }
   });
 

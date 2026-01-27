@@ -527,31 +527,20 @@ const CERAPIDemo: React.FC = () => {
         console.error('Error processing visualization data:', err);
       }
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Success",
         description: "Data fetched successfully. You can now download the PDF.",
-      })
-  console.log('Toast would show:', {
-        title: "Success",
-        description: "Data fetched successfully. You can now download the PDF.",
-      });
+        });
       
     } catch (error: any) {
       console.error('Error fetching data:', error);
       setError(error.message || 'An unknown error occurred');
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Error",
         description: error.message || "Failed to fetch data from API",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Error",
-        description: error.message || "Failed to fetch data from API",
-        variant: "destructive"
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -636,31 +625,20 @@ const CERAPIDemo: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Started",
         description: "Your PDF report is being downloaded.",
-      })
-  console.log('Toast would show:', {
-        title: "Download Started",
-        description: "Your PDF report is being downloaded.",
-      });
+        });
       
     } catch (error: any) {
       console.error('Error downloading PDF:', error);
       setError(error.message || 'An unknown error occurred');
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Error",
         description: error.message || "Failed to download PDF report",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Download Error",
-        description: error.message || "Failed to download PDF report",
-        variant: "destructive"
-      });
+        });
     } finally {
       setLoading(false);
     }

@@ -32,5 +32,9 @@ npm-debug.log*
 .turbo
 .env.local
 
+# AI tooling
+.ai/
+.worktrees/
+
 # OS
 Thumbs.db

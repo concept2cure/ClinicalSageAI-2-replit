@@ -1,6 +1,20 @@
+/**
+ * 510(k) API Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/api
+ * Sunset date: 2026-06-30
+ *
+ * @see /api/fda510k-unified/docs for migration guide
+ */
+
 import express from 'express';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 
 const router = express.Router();
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/api'));
 
 /**
  * Get 510(k) submission requirements by device class

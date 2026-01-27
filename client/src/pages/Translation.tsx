@@ -145,23 +145,13 @@ export default function Translation() {
     },
     onSuccess: (response) => {
       setTranslatedText(response.translatedText);
-      // toast call replaced
-  // Original: toast({
-        title: "Translation Complete",
-        description: `Translated to ${getLanguageName(response.targetLanguage)
-  console.log('Toast would show:', {
+      toast({
         title: "Translation Complete",
         description: `Translated to ${getLanguageName(response.targetLanguage)}`,
       });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
-        title: "Translation Failed",
-        description: error.message || "Failed to translate text",
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
+      toast({
         title: "Translation Failed",
         description: error.message || "Failed to translate text",
         variant: "destructive",
@@ -180,28 +170,17 @@ export default function Translation() {
       setCsrTranslatedDetails(response.details);
       setCsrReport(response.report);
       setCsrTranslationInfo(response.translationInfo);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "CSR Translation Complete",
         description: `Translated to ${response.translationInfo.targetLanguageName}`,
-      })
-  console.log('Toast would show:', {
-        title: "CSR Translation Complete",
-        description: `Translated to ${response.translationInfo.targetLanguageName}`,
-      });
+        });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "CSR Translation Failed",
         description: error.message || "Failed to translate CSR report",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "CSR Translation Failed",
-        description: error.message || "Failed to translate CSR report",
-        variant: "destructive",
-      });
+        });
     },
   });
 
@@ -218,28 +197,17 @@ export default function Translation() {
     },
     onSuccess: (response) => {
       setTranslatedGuidance(response.translatedGuidance);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Regulatory Translation Complete",
         description: `Translated to ${response.targetLanguageName}`,
-      })
-  console.log('Toast would show:', {
-        title: "Regulatory Translation Complete",
-        description: `Translated to ${response.targetLanguageName}`,
-      });
+        });
     },
     onError: (error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Regulatory Translation Failed",
         description: error.message || "Failed to translate regulatory guidance",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Regulatory Translation Failed",
-        description: error.message || "Failed to translate regulatory guidance",
-        variant: "destructive",
-      });
+        });
     },
   });
 
@@ -537,15 +505,10 @@ export default function Translation() {
                     size="sm"
                     onClick={() => {
                       navigator.clipboard.writeText(translatedText);
-                      // toast call replaced
-  // Original: toast({
+                      toast({
                         title: "Copied to clipboard",
                         description: "The translated text has been copied to your clipboard",
-                      })
-  console.log('Toast would show:', {
-                        title: "Copied to clipboard",
-                        description: "The translated text has been copied to your clipboard",
-                      });
+                        });
                     }}
                   >
                     <FileDown className="h-4 w-4 mr-1" /> Copy
@@ -910,15 +873,10 @@ export default function Translation() {
                     size="sm"
                     onClick={() => {
                       navigator.clipboard.writeText(translatedGuidance);
-                      // toast call replaced
-  // Original: toast({
+                      toast({
                         title: "Copied to clipboard",
                         description: "The translated guidance has been copied to your clipboard",
-                      })
-  console.log('Toast would show:', {
-                        title: "Copied to clipboard",
-                        description: "The translated guidance has been copied to your clipboard",
-                      });
+                        });
                     }}
                   >
                     <FileDown className="h-4 w-4 mr-1" /> Copy

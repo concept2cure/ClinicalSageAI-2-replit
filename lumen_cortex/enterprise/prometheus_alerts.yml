@@ -1,0 +1,312 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#                    LUMEN CORTEX - PROMETHEUS ALERT RULES
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Critical alerts for production monitoring of Lumen Cortex system.
+#
+# ALERT SEVERITIES:
+# - critical: Immediate action required, page on-call
+# - warning: Investigate soon, Slack notification
+# - info: Informational, for dashboards
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+groups:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Application Health Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_application
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(lumen_cortex_http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(lumen_cortex_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: 'High HTTP error rate (> 5%)'
+          description: 'Error rate is {{ $value | printf "%.2f" }}% over the last 5 minutes'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/high-error-rate'
+
+      # High Latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(lumen_cortex_http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: 'High P95 latency (> 5s)'
+          description: 'P95 latency is {{ $value | printf "%.2f" }}s'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/high-latency'
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="lumen-cortex-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: 'Lumen Cortex service is down'
+          description: 'The main application service has been unreachable for 1 minute'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/service-down'
+
+      # Too Many In-Flight Requests
+      - alert: TooManyInFlightRequests
+        expr: sum(lumen_cortex_http_requests_in_progress) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: 'Too many in-flight requests'
+          description: '{{ $value }} requests currently in progress'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Database Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_database
+    rules:
+      # PostgreSQL Connection Pool Exhausted
+      - alert: PostgresPoolExhausted
+        expr: lumen_cortex_db_connections_idle{pool="postgres:default"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+          database: postgresql
+        annotations:
+          summary: 'PostgreSQL connection pool exhausted'
+          description: 'No idle connections available for 2 minutes'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/postgres-pool-exhausted'
+
+      # PostgreSQL High Connection Usage
+      - alert: PostgresHighConnectionUsage
+        expr: |
+          lumen_cortex_db_connections_active{pool="postgres:default"}
+          / (lumen_cortex_db_connections_active{pool="postgres:default"} + lumen_cortex_db_connections_idle{pool="postgres:default"})
+          > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+          database: postgresql
+        annotations:
+          summary: 'PostgreSQL connection usage above 90%'
+          description: 'Connection pool is {{ $value | printf "%.0f" }}% utilized'
+
+      # Neo4j Connection Pool Exhausted
+      - alert: Neo4jPoolExhausted
+        expr: lumen_cortex_db_connections_idle{pool="neo4j:default"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+          database: neo4j
+        annotations:
+          summary: 'Neo4j connection pool exhausted'
+          description: 'No idle connections available for 2 minutes'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/neo4j-pool-exhausted'
+
+      # Slow Database Queries
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(lumen_cortex_db_query_duration_seconds_bucket[5m])) by (le, pool)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'Slow database queries detected'
+          description: 'P95 query time is {{ $value | printf "%.2f" }}s for {{ $labels.pool }}'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Cache Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_cache
+    rules:
+      # Low Cache Hit Rate
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(lumen_cortex_cache_hits_total[5m]))
+          / (sum(rate(lumen_cortex_cache_hits_total[5m])) + sum(rate(lumen_cortex_cache_misses_total[5m])))
+          < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: 'Cache hit rate below 70%'
+          description: 'Cache hit rate is {{ $value | printf "%.1f" }}%'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/low-cache-hit-rate'
+
+      # Redis Down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: 'Redis is down'
+          description: 'Redis has been unreachable for 1 minute'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/redis-down'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AI/ML Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_aiml
+    rules:
+      # High LLM Latency
+      - alert: HighLLMLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(lumen_cortex_llm_request_duration_seconds_bucket[5m])) by (le, model)
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: aiml
+        annotations:
+          summary: 'High LLM request latency'
+          description: 'P95 LLM latency for {{ $labels.model }} is {{ $value | printf "%.1f" }}s'
+
+      # High Embedding Latency
+      - alert: HighEmbeddingLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(lumen_cortex_embedding_generation_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: aiml
+        annotations:
+          summary: 'High embedding generation latency'
+          description: 'P95 embedding latency is {{ $value | printf "%.2f" }}s'
+
+      # LLM Token Usage Spike
+      - alert: LLMTokenUsageSpike
+        expr: |
+          sum(rate(lumen_cortex_llm_tokens_used_total[5m]))
+          > 2 * sum(rate(lumen_cortex_llm_tokens_used_total[1h] offset 1d))
+        for: 15m
+        labels:
+          severity: warning
+          component: aiml
+        annotations:
+          summary: 'LLM token usage spike detected'
+          description: 'Current token usage is significantly higher than yesterday'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Compliance Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_compliance
+    rules:
+      # High Compliance Failure Rate
+      - alert: HighComplianceFailureRate
+        expr: |
+          sum(rate(lumen_cortex_compliance_checks_total{result="fail"}[1h]))
+          / sum(rate(lumen_cortex_compliance_checks_total[1h])) > 0.1
+        for: 30m
+        labels:
+          severity: warning
+          component: compliance
+        annotations:
+          summary: 'High compliance check failure rate'
+          description: '{{ $value | printf "%.1f" }}% of compliance checks failing'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/compliance-failures'
+
+      # Authentication Failures Spike
+      - alert: AuthenticationFailuresSpike
+        expr: sum(rate(lumen_cortex_auth_attempts_total{result="failure"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: 'High authentication failure rate'
+          description: '{{ $value | printf "%.0f" }} auth failures per minute'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/auth-failures'
+
+      # Possible Brute Force Attack
+      - alert: PossibleBruteForceAttack
+        expr: |
+          sum(rate(lumen_cortex_auth_attempts_total{result="failure"}[5m]))
+          / sum(rate(lumen_cortex_auth_attempts_total[5m])) > 0.5
+          and sum(rate(lumen_cortex_auth_attempts_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: 'Possible brute force attack detected'
+          description: 'More than 50% of auth attempts are failing'
+          runbook_url: 'https://docs.lumen-cortex.io/runbooks/brute-force'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Infrastructure Alerts
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - name: lumen_cortex_infrastructure
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'High CPU usage on {{ $labels.instance }}'
+          description: 'CPU usage is {{ $value | printf "%.0f" }}%'
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'High memory usage'
+          description: 'Memory usage is {{ $value | printf "%.0f" }}%'
+
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'Disk space low'
+          description: 'Disk usage is {{ $value | printf "%.0f" }}%'
+
+      # Container Restart Loop
+      - alert: ContainerRestartLoop
+        expr: increase(container_restart_count[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'Container restart loop detected'
+          description: 'Container {{ $labels.name }} has restarted {{ $value }} times in the last hour'

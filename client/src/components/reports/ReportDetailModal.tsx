@@ -90,15 +90,10 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
     }
     
     navigator.clipboard.writeText(contentToCopy.trim());
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Copied to clipboard",
       description: `Report ${section === 'all' ? 'data' : section} has been copied to clipboard.`,
-    })
-  console.log('Toast would show:', {
-      title: "Copied to clipboard",
-      description: `Report ${section === 'all' ? 'data' : section} has been copied to clipboard.`,
-    });
+      });
   };
 
   // Function to generate analytics report
@@ -106,15 +101,10 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
     if (!report || !report.id) return;
     
     try {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Generating report",
         description: "Please wait while we generate your analysis...",
-      })
-  console.log('Toast would show:', {
-        title: "Generating report",
-        description: "Please wait while we generate your analysis...",
-      });
+        });
       
       let endpoint = '';
       let description = '';
@@ -137,29 +127,18 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
       // In a real implementation, you'd actually call the endpoint and handle the response
       // For now, just show a success toast after a delay to simulate
       setTimeout(() => {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Analysis Complete",
           description,
-        })
-  console.log('Toast would show:', {
-          title: "Analysis Complete",
-          description,
-        });
+          });
       }, 2000);
     } catch (error) {
       console.error(`Error generating ${type} report:`, error);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Analysis Failed",
         description: `There was an error generating the ${type} report.`,
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Analysis Failed",
-        description: `There was an error generating the ${type} report.`,
-        variant: "destructive"
-      });
+        });
     }
   };
 
@@ -185,27 +164,17 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
             URL.revokeObjectURL(url);
           }, 100);
 
-          // toast call replaced
-  // Original: toast({
+          toast({
             title: "Download Complete",
             description: `Original PDF file "${report.fileName}" has been downloaded.`,
-          })
-  console.log('Toast would show:', {
-            title: "Download Complete",
-            description: `Original PDF file "${report.fileName}" has been downloaded.`,
-          });
+            });
           return;
         } else {
           // If we can't download the original PDF, fallback to exporting the data
-          // toast call replaced
-  // Original: toast({
+          toast({
             title: "Original PDF Not Available",
             description: "Exporting report data in selected format instead.",
-          })
-  console.log('Toast would show:', {
-            title: "Original PDF Not Available",
-            description: "Exporting report data in selected format instead.",
-          });
+            });
         }
       }
 
@@ -250,23 +219,13 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
         }, 100);
       }
 
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Complete",
-        description: `Report data has been downloaded as ${format.toUpperCase()
-  console.log('Toast would show:', {
-        title: "Download Complete",
-        description: `Report data has been downloaded as ${format.toUpperCase()} format.`,
+        description: `Report data has been downloaded as ${format.toUpperCase()}`,
       });
     } catch (error) {
       console.error('Error downloading report data:', error);
-      // toast call replaced
-  // Original: toast({
-        title: "Download Failed",
-        description: "There was an error downloading the report data. Please try again.",
-        variant: "destructive"
-      })
-  console.log('Toast would show:', {
+      toast({
         title: "Download Failed",
         description: "There was an error downloading the report data. Please try again.",
         variant: "destructive"

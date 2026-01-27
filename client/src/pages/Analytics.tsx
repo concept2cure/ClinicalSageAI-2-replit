@@ -443,17 +443,11 @@ function VirtualTrialSimulationCard() {
   
   const handleSimulate = async () => {
     if (!indication) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Missing Information",
         description: "Please select an indication/therapeutic area.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Missing Information",
-        description: "Please select an indication/therapeutic area.",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -485,41 +479,24 @@ function VirtualTrialSimulationCard() {
       const data = await response.json();
       if (data.success) {
         setSimulation(data.simulation);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Simulation Complete",
           description: "Virtual trial simulation results are ready to view.",
-        })
-  console.log('Toast would show:', {
-          title: "Simulation Complete",
-          description: "Virtual trial simulation results are ready to view.",
-        });
+          });
       } else {
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Simulation Error",
           description: data.message || "Failed to run simulation. Please try again.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "Simulation Error",
-          description: data.message || "Failed to run simulation. Please try again.",
-          variant: "destructive"
-        });
+          });
       }
     } catch (error) {
       console.error('Error simulating virtual trial:', error);
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Simulation Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "Simulation Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
+        });
     } finally {
       setIsLoading(false);
     }
@@ -528,17 +505,11 @@ function VirtualTrialSimulationCard() {
   // Function to download simulation results
   const downloadSimulationResults = (format: 'csv' | 'json' | 'pdf') => {
     if (!simulation) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "No Simulation Data",
         description: "Please run a simulation first before downloading results.",
         variant: "destructive"
-      })
-  console.log('Toast would show:', {
-        title: "No Simulation Data",
-        description: "Please run a simulation first before downloading results.",
-        variant: "destructive"
-      });
+        });
       return;
     }
     
@@ -649,17 +620,11 @@ function VirtualTrialSimulationCard() {
         mimeType = 'application/json';
       } else {
         // PDF generation (in real implementation, this would use a PDF library)
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "PDF Generation",
           description: "PDF download is not fully implemented in this version. Please use CSV or JSON format.",
           variant: "destructive"
-        })
-  console.log('Toast would show:', {
-          title: "PDF Generation",
-          description: "PDF download is not fully implemented in this version. Please use CSV or JSON format.",
-          variant: "destructive"
-        });
+          });
         return;
       }
       
@@ -678,23 +643,13 @@ function VirtualTrialSimulationCard() {
         URL.revokeObjectURL(url);
       }, 100);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Complete",
-        description: `Simulation results have been downloaded as ${format.toUpperCase()
-  console.log('Toast would show:', {
-        title: "Download Complete",
-        description: `Simulation results have been downloaded as ${format.toUpperCase()} format.`,
+        description: `Simulation results have been downloaded as ${format.toUpperCase()}`,
       });
     } catch (error) {
       console.error('Error downloading simulation results:', error);
-      // toast call replaced
-  // Original: toast({
-        title: "Download Failed",
-        description: "There was an error downloading the simulation results. Please try again.",
-        variant: "destructive"
-      })
-  console.log('Toast would show:', {
+      toast({
         title: "Download Failed",
         description: "There was an error downloading the simulation results. Please try again.",
         variant: "destructive"
@@ -1439,13 +1394,7 @@ export default function Analytics() {
         }, 100);
       } else {
         // PDF generation (in real implementation, this would use a PDF library)
-        // toast call replaced
-  // Original: toast({
-          title: "PDF Generation",
-          description: "PDF download is not fully implemented in this version. Please use CSV or JSON format.",
-          variant: "destructive"
-        })
-  console.log('Toast would show:', {
+        toast({
           title: "PDF Generation",
           description: "PDF download is not fully implemented in this version. Please use CSV or JSON format.",
           variant: "destructive"
@@ -1453,24 +1402,13 @@ export default function Analytics() {
         return;
       }
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Download Complete",
-        description: `Analytics data has been downloaded as ${format.toUpperCase()
-  console.log('Toast would show:', {
-        title: "Download Complete",
-        description: `Analytics data has been downloaded as ${format.toUpperCase()} format.`,
+        description: `Analytics data has been downloaded as ${format.toUpperCase()}`,
       });
     } catch (error) {
       console.error('Error downloading analytics data:', error);
-      const { toast } = useToast();
-      // toast call replaced
-  // Original: toast({
-        title: "Download Failed",
-        description: "There was an error downloading the analytics data. Please try again.",
-        variant: "destructive"
-      })
-  console.log('Toast would show:', {
+      toast({
         title: "Download Failed",
         description: "There was an error downloading the analytics data. Please try again.",
         variant: "destructive"

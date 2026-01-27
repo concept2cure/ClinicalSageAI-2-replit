@@ -140,7 +140,7 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
         slug: 'acme-medical',
         domain: 'acme-medical.example.com',
         logo: null,
-        apiKey: 'acme-dev-api-key-12345',
+        apiKey: process.env.ACME_DEV_API_KEY || '[REDACTED-USE-ENV-VAR]',
         tier: 'professional',
         maxUsers: 10,
         maxProjects: 20,
@@ -274,7 +274,7 @@ router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (re
       return res.json({
         id: 1,
         ...validatedData,
-        apiKey: 'acme-dev-api-key-12345',
+        apiKey: process.env.ACME_DEV_API_KEY || '[REDACTED-USE-ENV-VAR]',
         status: 'active',
         updatedAt: new Date().toISOString(),
       });

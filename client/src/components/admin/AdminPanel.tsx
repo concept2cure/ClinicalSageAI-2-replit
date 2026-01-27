@@ -31,30 +31,18 @@ export default function AdminPanel() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export Successful",
         description: `Exported ${data.results.exported} new CSR files. Total available: ${data.results.filesInDir}`,
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Export Successful",
-        description: `Exported ${data.results.exported} new CSR files. Total available: ${data.results.filesInDir}`,
-        variant: "default",
-      });
+        });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export Failed",
         description: error.message || "An error occurred during export",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Export Failed",
-        description: error.message || "An error occurred during export",
-        variant: "destructive",
-      });
+        });
     }
   });
   
@@ -65,32 +53,20 @@ export default function AdminPanel() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Counter Reset",
         description: "The CSR export counter has been reset successfully",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Counter Reset",
-        description: "The CSR export counter has been reset successfully",
-        variant: "default",
-      });
+        });
       // Refresh the export data to show updated counter
       exportMutation.mutate();
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Reset Failed",
         description: error.message || "An error occurred while resetting the counter",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Reset Failed",
-        description: error.message || "An error occurred while resetting the counter",
-        variant: "destructive",
-      });
+        });
     }
   });
   
@@ -101,43 +77,26 @@ export default function AdminPanel() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Import Process Started",
         description: data.message || "The CSR import process has been started in the background. This may take several minutes.",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Import Process Started",
-        description: data.message || "The CSR import process has been started in the background. This may take several minutes.",
-        variant: "default",
-      });
+        });
     },
     onError: (error: Error) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Import Failed",
         description: error.message || "An error occurred while starting the CSR import process",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Import Failed",
-        description: error.message || "An error occurred while starting the CSR import process",
-        variant: "destructive",
-      });
+        });
     }
   });
 
   const handleExportToJson = () => {
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Starting Export",
       description: "Exporting database CSRs to JSON files. This may take a few minutes...",
-    })
-  console.log('Toast would show:', {
-      title: "Starting Export",
-      description: "Exporting database CSRs to JSON files. This may take a few minutes...",
-    });
+      });
     exportMutation.mutate();
   };
   
@@ -146,15 +105,10 @@ export default function AdminPanel() {
   };
   
   const handleImportCsrs = () => {
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Starting Import",
       description: "Starting the CSR import process. This will run in the background and may take several minutes...",
-    })
-  console.log('Toast would show:', {
-      title: "Starting Import",
-      description: "Starting the CSR import process. This will run in the background and may take several minutes...",
-    });
+      });
     importCsrMutation.mutate();
   };
 

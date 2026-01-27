@@ -60,30 +60,20 @@ export default function UseCaseLibrary() {
 
   const handleLaunchSimulation = (useCase: UseCase) => {
     // This would normally navigate to the appropriate page with context
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Launching simulation",
       description: `Starting "${useCase.title}" simulation with pre-filled data`,
-    })
-  console.log('Toast would show:', {
-      title: "Launching simulation",
-      description: `Starting "${useCase.title}" simulation with pre-filled data`,
-    });
+      });
     
     // In a real implementation, this might redirect to a specific route
     // navigate('/protocol-generator', { state: { useCaseData: useCase } });
   };
 
   const handleDownloadBundle = (useCase: UseCase) => {
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: "Downloading bundle",
       description: `Preparing download for "${useCase.title}" assets`,
-    })
-  console.log('Toast would show:', {
-      title: "Downloading bundle",
-      description: `Preparing download for "${useCase.title}" assets`,
-    });
+      });
     
     // In a real implementation, this would call an API to generate and download files
   };

@@ -47,17 +47,11 @@ export default function DossierViewer() {
         setDossier(data);
       } catch (error) {
         console.error('Error fetching dossier:', error);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: 'Error',
           description: 'Failed to load dossier data',
           variant: 'destructive'
-        })
-  console.log('Toast would show:', {
-          title: 'Error',
-          description: 'Failed to load dossier data',
-          variant: 'destructive'
-        });
+          });
       } finally {
         setLoading(false);
       }
@@ -78,15 +72,10 @@ export default function DossierViewer() {
   // Copy version content to clipboard
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: 'Copied',
       description: 'Content copied to clipboard'
-    })
-  console.log('Toast would show:', {
-      title: 'Copied',
-      description: 'Content copied to clipboard'
-    });
+      });
   };
 
   // View a specific version
@@ -118,15 +107,10 @@ export default function DossierViewer() {
   const copyShareableLink = () => {
     const link = getDossierShareableLink();
     navigator.clipboard.writeText(link);
-    // toast call replaced
-  // Original: toast({
+    toast({
       title: 'Link Copied',
       description: 'Shareable link copied to clipboard'
-    })
-  console.log('Toast would show:', {
-      title: 'Link Copied',
-      description: 'Shareable link copied to clipboard'
-    });
+      });
   };
 
   if (loading) {

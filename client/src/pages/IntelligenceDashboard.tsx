@@ -76,30 +76,19 @@ const IntelligenceDashboard = () => {
       
       if (data.success) {
         setResults(data);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Intelligence brief generated",
           description: "Weekly brief has been created successfully",
-        })
-  console.log('Toast would show:', {
-          title: "Intelligence brief generated",
-          description: "Weekly brief has been created successfully",
-        });
+          });
       } else {
         throw new Error(data.message || "Failed to generate brief");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Generation failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -116,30 +105,19 @@ const IntelligenceDashboard = () => {
       
       if (data.success) {
         setResults(data);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Comparison complete",
           description: "Protocol comparison has been generated",
-        })
-  console.log('Toast would show:', {
-          title: "Comparison complete",
-          description: "Protocol comparison has been generated",
-        });
+          });
       } else {
         throw new Error(data.message || "Failed to compare protocols");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Comparison failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Comparison failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -153,30 +131,19 @@ const IntelligenceDashboard = () => {
       
       if (data.success) {
         setResults(data);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "IND Module generated",
           description: `Module ${indModuleState.section} has been created`,
-        })
-  console.log('Toast would show:', {
-          title: "IND Module generated",
-          description: `Module ${indModuleState.section} has been created`,
-        });
+          });
       } else {
         throw new Error(data.message || "Failed to generate IND module");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Generation failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+        });
     } finally {
       setLoading(false);
     }
@@ -193,30 +160,19 @@ const IntelligenceDashboard = () => {
       
       if (data.success) {
         setResults(data);
-        // toast call replaced
-  // Original: toast({
+        toast({
           title: "Answer generated",
           description: "Protocol design question has been answered",
-        })
-  console.log('Toast would show:', {
-          title: "Answer generated",
-          description: "Protocol design question has been answered",
-        });
+          });
       } else {
         throw new Error(data.message || "Failed to answer question");
       }
     } catch (error) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Question answering failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Question answering failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+        });
     } finally {
       setLoading(false);
     }

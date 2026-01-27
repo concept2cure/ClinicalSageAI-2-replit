@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useModuleIntegration } from './integration/ModuleIntegrationLayer';
 import TrialVaultModule from './trial-vault/TrialVaultModule';
-import ClientPortal from './client-portal/ClientPortal';
+import ClientPortalV2 from '@/portal-v2/components/client-portal';
 
 const UnifiedPlatform = () => {
   const { addAuditEntry } = useModuleIntegration();
@@ -46,9 +46,9 @@ const UnifiedPlatform = () => {
       case 'vault':
         return <TrialVaultModule />;
       case 'client-portal':
-        return <ClientPortal />;
+        return <ClientPortalV2 />;
       default:
-        return <ClientPortal />;
+        return <ClientPortalV2 />;
     }
   };
 

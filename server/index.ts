@@ -20,8 +20,18 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
 // Enterprise Security & Performance Middleware
-import { applySecurityMiddleware, securityHeaders, corsMiddleware, auditLog } from './middleware/enterprise-security.js';
-import { applyPerformanceMiddleware, compressionMiddleware, monitorPerformance, cleanup as cleanupPerformance } from './middleware/enterprise-performance.js';
+import {
+  applySecurityMiddleware,
+  securityHeaders,
+  corsMiddleware,
+  auditLog,
+} from './middleware/enterprise-security.js';
+import {
+  applyPerformanceMiddleware,
+  compressionMiddleware,
+  monitorPerformance,
+  cleanup as cleanupPerformance,
+} from './middleware/enterprise-performance.js';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
@@ -126,7 +136,7 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - log and continue for client stability
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('🚨 Uncaught Exception:', error);
   // For uncaught exceptions, we should exit gracefully after logging
   setTimeout(() => {
@@ -194,10 +204,12 @@ pool
   .then(async client => {
     console.log('✅ Database connection successful');
     client.release();
-    
+
     // Enterprise: Verify all core tables exist on startup
     try {
-      const result = await ensureCoreTables(process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL);
+      const result = await ensureCoreTables(
+        process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL
+      );
       if (result.success) {
         console.log(`✅ All ${result.existingTables.length} core database tables verified`);
       } else if (result.missingCritical.length > 0) {
@@ -221,7 +233,7 @@ pool
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
   download: async (path: string) => path,
-  delete: async (path: string) => true
+  delete: async (path: string) => true,
 };
 // app.locals.vaultDmsService = new VaultDMSService(pool, storageClient);
 console.log('✅ Storage client initialized (VaultDMS deprecated)');
@@ -258,7 +270,9 @@ try {
   // Express Router is an object with handle method, not strictly a function
   if (authRouter && (typeof authRouter === 'function' || authRouter.handle)) {
     app.use('/api/auth', authRouter);
-    console.log('✅ Authentication API routes mounted successfully (JWT-based with organizationId)');
+    console.log(
+      '✅ Authentication API routes mounted successfully (JWT-based with organizationId)'
+    );
   } else {
     console.warn('⚠️ Auth router not found or invalid - auth routes skipped');
   }
@@ -270,10 +284,15 @@ try {
 try {
   const authEnterpriseModule = await import('./routes/authEnterprise.js');
   const authEnterpriseRouter = authEnterpriseModule.default;
-  if (authEnterpriseRouter && (typeof authEnterpriseRouter === 'function' || authEnterpriseRouter.handle)) {
+  if (
+    authEnterpriseRouter &&
+    (typeof authEnterpriseRouter === 'function' || authEnterpriseRouter.handle)
+  ) {
     app.use('/api/auth/enterprise', authEnterpriseRouter);
     console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
-    console.log('   - Multi-step auth flow: check-email → verify-password → verify-mfa → select-organization');
+    console.log(
+      '   - Multi-step auth flow: check-email → verify-password → verify-mfa → select-organization'
+    );
     console.log('   - Rate limiting, account lockout, MFA support enabled');
   } else {
     console.warn('⚠️ Enterprise auth router not found - enterprise auth routes skipped');
@@ -291,10 +310,11 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context  
-    const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
+    // Check multiple sources for organization/workspace context
+    const client_workspace_id =
+      req.query.client_workspace_id || req.headers['x-client-workspace-id'];
     let organization_id = req.query.organization_id || req.headers['x-organization-id'];
-    
+
     // Try to get organization from JWT token
     if (!organization_id) {
       const authHeader = req.headers.authorization;
@@ -308,35 +328,35 @@ app.get('/api/projects', async (req, res) => {
         }
       }
     }
-    
+
     // Default to org 2 (Concept2Cure) if no org specified
     organization_id = organization_id || '2';
-    
+
     // Import database connection dynamically
     const dbModule = await import('./db.js');
     const { pool } = dbModule;
-    
+
     if (!pool) {
       // Return empty array if database not available
       return res.json([]);
     }
-    
+
     // Query projects from database - fetch all for the organization
     let query = 'SELECT * FROM projects WHERE organization_id = $1';
     const params: any[] = [organization_id];
-    
+
     // Optionally filter by workspace if provided
     if (client_workspace_id) {
       params.push(client_workspace_id);
       query += ` AND client_workspace_id = $${params.length}`;
     }
-    
+
     query += ' ORDER BY created_at DESC';
-    
+
     console.log('Fetching projects with query:', query, 'params:', params);
     const result = await pool.query(query, params);
     console.log('Found projects:', result.rows?.length || 0);
-    
+
     res.json(result.rows || []);
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -394,12 +414,22 @@ try {
   console.error('❌ Failed to mount Biotech RAG routes:', error);
 }
 
-// Mount FDA 510(k) routes
+// Mount FDA 510(k) Unified routes (consolidated)
+try {
+  const fda510kUnifiedModule = await import('./routes/fda510k-unified.js');
+  const fda510kUnifiedRoutes = fda510kUnifiedModule.default;
+  app.use('/api/fda510k-unified', fda510kUnifiedRoutes);
+  console.log('✅ FDA 510(k) Unified API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount FDA 510(k) Unified routes:', error);
+}
+
+// Mount FDA 510(k) routes (legacy - will be deprecated in v3.0.0)
 try {
   const fda510kModule = await import('./routes/fda510k-routes.js');
   const fda510kRoutes = fda510kModule.default;
   app.use('/api/fda510k', fda510kRoutes);
-  console.log('✅ FDA 510(k) API routes mounted successfully');
+  console.log('✅ FDA 510(k) API routes mounted successfully (legacy)');
 } catch (error) {
   console.error('❌ Failed to mount FDA 510(k) routes:', error);
 }
@@ -429,7 +459,9 @@ try {
   const medicalDeviceModule = await import('./routes/medical-device-routes.js');
   const medicalDeviceRoutes = medicalDeviceModule.default;
   app.use('/api/medical-devices', medicalDeviceRoutes);
-  console.log('✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)');
+  console.log(
+    '✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Medical Device routes:', error);
 }
@@ -449,7 +481,9 @@ try {
   const cerModule = await import('./routes/cer-routes.js');
   const cerRoutes = cerModule.default;
   app.use('/api/cer', cerRoutes);
-  console.log('✅ CER (Clinical Evaluation Report) API routes mounted successfully (MDR/IVDR compliant)');
+  console.log(
+    '✅ CER (Clinical Evaluation Report) API routes mounted successfully (MDR/IVDR compliant)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount CER routes:', error);
 }
@@ -459,7 +493,9 @@ try {
   const grdheModule = await import('./routes/grdheRoutes.js');
   const grdheRoutes = grdheModule.default;
   app.use('/api/grdhe', grdheRoutes);
-  console.log('✅ GRDHE (Global Regulatory Data Harmonization Engine) routes mounted successfully (21 CFR Part 11, EU MDR 2017/745)');
+  console.log(
+    '✅ GRDHE (Global Regulatory Data Harmonization Engine) routes mounted successfully (21 CFR Part 11, EU MDR 2017/745)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount GRDHE routes:', error);
 }
@@ -479,7 +515,9 @@ try {
   const pubmedModule = await import('./routes/pubmed.js');
   const pubmedRoutes = pubmedModule.default;
   app.use('/api/pubmed', pubmedRoutes);
-  console.log('✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)');
+  console.log(
+    '✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount PubMed routes:', error);
 }
@@ -533,7 +571,8 @@ try {
 // Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
 try {
   const supplyChainModule = await import('./routes/supplyChain.routes.js');
-  const createSupplyChainRoutes = supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
+  const createSupplyChainRoutes =
+    supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
   app.use('/api/supply-chain', createSupplyChainRoutes());
   console.log('✅ Supply Chain Management API routes mounted successfully');
 } catch (error) {
@@ -575,7 +614,9 @@ try {
   const documentDataCenterModule = await import('./routes/document-data-center.js');
   const documentDataCenterRoutes = documentDataCenterModule.default;
   app.use('/api/device-data-center', documentDataCenterRoutes);
-  console.log('✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)');
+  console.log(
+    '✅ Document Data Center API routes mounted successfully (integrated vault with AI-powered 3-axis tagging)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Document Data Center routes:', error);
 }
@@ -594,7 +635,9 @@ try {
   const contentPlanModule = await import('./routes/content-plan.js');
   const contentPlanRoutes = contentPlanModule.default;
   app.use('/api/content-plan', contentPlanRoutes);
-  console.log('✅ Content Plan API routes mounted successfully (section tracking & evidence linking)');
+  console.log(
+    '✅ Content Plan API routes mounted successfully (section tracking & evidence linking)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Content Plan routes:', error);
 }
@@ -613,18 +656,21 @@ try {
   const cognitiveEcosystemModule = await import('./routes/cognitive-ecosystem.js');
   const cognitiveEcosystemRoutes = cognitiveEcosystemModule.default;
   app.use('/api/cognitive', cognitiveEcosystemRoutes);
-  console.log('✅ Cognitive Ecosystem API routes mounted successfully (LangGraph, FHIR, Federated Learning)');
+  console.log(
+    '✅ Cognitive Ecosystem API routes mounted successfully (LangGraph, FHIR, Federated Learning)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Cognitive Ecosystem routes:', error);
 }
-
 
 // Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
 try {
   const evidenceManagementModule = await import('./routes/evidence-management.routes.js');
   const evidenceManagementRoutes = evidenceManagementModule.default;
   app.use('/api/evidence-management', evidenceManagementRoutes);
-  console.log('✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)');
+  console.log(
+    '✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Evidence Management routes:', error);
 }
@@ -644,7 +690,9 @@ try {
   const collaborationModule = await import('./routes/collaboration.js');
   const collaborationRoutes = collaborationModule.default;
   app.use('/api/collaboration', collaborationRoutes);
-  console.log('✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)');
+  console.log(
+    '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Collaboration Center routes:', error);
 }
@@ -698,6 +746,57 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount AI Drafting routes:', error);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORTEX PRIME AI ROUTES - The Unified Intelligence Brain
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mount Cortex Prime Core routes (atoms, edges, threads, traces)
+try {
+  const cortexRoutesModule = await import('./routes/cortexRoutes.js');
+  const cortexRoutes = cortexRoutesModule.default;
+  app.use('/api/cortex', cortexRoutes);
+  console.log('✅ Cortex Prime Core API routes mounted (atoms, edges, threads, traces)');
+} catch (error) {
+  console.error('❌ Failed to mount Cortex Core routes:', error);
+}
+
+// Mount Cortex Advisory routes (regulatory intuition, predictions, patterns)
+try {
+  const cortexAdvisoryModule = await import('./routes/cortexAdvisoryRoutes.js');
+  const cortexAdvisoryRoutes = cortexAdvisoryModule.default;
+  app.use('/api/cortex/advisory', cortexAdvisoryRoutes);
+  console.log('✅ Cortex Advisory API routes mounted (regulatory intuition, predictions)');
+} catch (error) {
+  console.error('❌ Failed to mount Cortex Advisory routes:', error);
+}
+
+// Mount Cortex Management routes (graph operations, quality, conflicts, versions)
+try {
+  const cortexManagementModule = await import('./routes/cortexManagementRoutes.js');
+  // cortexManagementRoutes uses a factory function pattern
+  const createCortexManagementRoutes = cortexManagementModule.createCortexManagementRoutes;
+  if (createCortexManagementRoutes && pool) {
+    app.use('/api/cortex/management', createCortexManagementRoutes(pool));
+    console.log('✅ Cortex Management API routes mounted (graph ops, quality, versioning)');
+  } else {
+    console.warn('⚠️ Cortex Management routes skipped - factory function or pool not available');
+  }
+} catch (error) {
+  console.error('❌ Failed to mount Cortex Management routes:', error);
+}
+
+// Mount Cortex Query routes (semantic search, embeddings, multi-provider AI)
+try {
+  const cortexQueryModule = await import('./routes/cortexQueryRoutes.js');
+  const cortexQueryRoutes = cortexQueryModule.default;
+  app.use('/api/cortex/query', cortexQueryRoutes);
+  console.log('✅ Cortex Query API routes mounted (semantic search, embeddings)');
+} catch (error) {
+  console.error('❌ Failed to mount Cortex Query routes:', error);
+}
+
+console.log('🧠 Cortex Prime AI Brain fully initialized with 68 API endpoints');
 
 // Mount Unified Document Management System routes
 try {
@@ -1221,14 +1320,14 @@ const getStorage = async () => memStorage;
 app.post('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
   const { organizationId, stage, section, data, completedSteps, validationCheckpoints } = req.body;
-  
+
   if (!organizationId || !stage || !data) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
   }
 
   try {
     const storage = await getStorage();
-    
+
     // Track workflow action for 21 CFR Part 11 compliance - TEMPORARILY DISABLED FOR TESTING
     // TODO: Fix electronic_signature column issue in device_audit_trail table
     /*
@@ -1249,7 +1348,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
     });
     */
     const trackingResult = { success: true }; // Dummy result while audit is disabled
-    
+
     // For now, we'll use the project ID directly as the workflow ID
     // since we're working with project-based workflows
     let workflow = {
@@ -1258,22 +1357,22 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       workflowData: data,
       completedSteps: req.body.completedSteps || [],
       validationCheckpoints: req.body.validationCheckpoints || {},
-      workflowStatus: 'active'
+      workflowStatus: 'active',
     };
     console.log(`Processing workflow for project ${projectId}, stage: ${stage}`);
-    
+
     // Actually save the workflow data to database
     // For demo projects (projectId >= 500), skip fda510kProjects table creation
     // as these don't have corresponding entries in the projects table
     const isDemoProject = parseInt(projectId) >= 500;
-    
+
     if (!isDemoProject) {
       // Check if project exists in fda510kProjects table for real projects
       const existingProjects = await db!
         .select()
         .from(fda510kProjects)
         .where(eq(fda510kProjects.projectId, parseInt(projectId)));
-      
+
       if (existingProjects.length === 0) {
         // Create the project in fda510kProjects if it doesn't exist
         console.log(`Creating FDA 510(k) project entry for project ${projectId}`);
@@ -1285,21 +1384,24 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
             currentStage: stage,
             status: 'draft',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           });
           console.log(`Created FDA 510(k) project entry for project ${projectId}`);
         } catch (err) {
-          console.warn(`[510k-workflow] Could not create fda510kProjects entry for project ${projectId}:`, err);
+          console.warn(
+            `[510k-workflow] Could not create fda510kProjects entry for project ${projectId}:`,
+            err
+          );
           // Continue anyway - we can still save workflow data
         }
       }
     } else {
       console.log(`[510k-workflow] Demo project ${projectId} - skipping fda510kProjects creation`);
     }
-    
+
     // Use section in the WHERE clause to handle section-level data properly
     const effectiveSection = section || 'default';
-    
+
     // For demo projects, save workflow data in memory or skip stage progress table
     if (isDemoProject) {
       console.log(`[510k-workflow] Demo project ${projectId} - saving workflow data in memory`);
@@ -1324,17 +1426,17 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
               eq(fda510kStageProgress.sectionName, effectiveSection)
             )
           );
-        
+
         if (existingWorkflows.length > 0) {
           // Update existing stage-section progress
           await db!
             .update(fda510kStageProgress)
             .set({
               status: 'in_progress',
-              progress: 50,  // Update progress
+              progress: 50, // Update progress
               collectedData: data,
               validationStatus: 'pending',
-              updatedAt: new Date()
+              updatedAt: new Date(),
             })
             .where(
               and(
@@ -1343,7 +1445,9 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
                 eq(fda510kStageProgress.sectionName, effectiveSection)
               )
             );
-          console.log(`Updated stage progress for project ${projectId}, stage: ${stage}, section: ${effectiveSection}`);
+          console.log(
+            `Updated stage progress for project ${projectId}, stage: ${stage}, section: ${effectiveSection}`
+          );
         } else {
           // Create new stage-section progress
           await db!.insert(fda510kStageProgress).values({
@@ -1356,12 +1460,17 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
             collectedData: data,
             validationStatus: 'pending',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           });
-          console.log(`Created stage progress for project ${projectId}, stage: ${stage}, section: ${effectiveSection}`);
+          console.log(
+            `Created stage progress for project ${projectId}, stage: ${stage}, section: ${effectiveSection}`
+          );
         }
       } catch (dbError) {
-        console.warn(`[510k-workflow] Could not save to stage progress table for project ${projectId}:`, dbError);
+        console.warn(
+          `[510k-workflow] Could not save to stage progress table for project ${projectId}:`,
+          dbError
+        );
         // Fall back to memory storage
         memStorage.updateWorkflow(
           parseInt(projectId),
@@ -1372,12 +1481,12 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
         );
       }
     }
-    
+
     // Save section data to stage progress table if provided
     if (section) {
       console.log(`Saved section data for section: ${section}`);
     }
-    
+
     // Track document version for compliance - TEMPORARILY DISABLED FOR TESTING
     // TODO: Fix version_label column issue in document versions table
     /*
@@ -1395,14 +1504,14 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       }
     });
     */
-    
+
     // Trigger automatic document generation via DocumentOrchestrationService
     let autoPopulated = false;
     try {
       const orchestrationService = new DocumentOrchestrationService();
       const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
         projectId,
-        req.headers['x-user-id'] as string || '1',
+        (req.headers['x-user-id'] as string) || '1',
         organizationId
       );
       autoPopulated = true;
@@ -1411,17 +1520,19 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       console.error('[510k-workflow] Document generation error:', docError);
       // Don't fail the workflow save if document generation fails
     }
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       workflowId: workflow.id,
       message: 'Workflow data saved successfully',
       autoPopulated,
-      dataFlow: autoPopulated ? {
-        workflow: 'Enhanced510kIntakeWorkflow',
-        backend: 'fda510kStageProgress.collectedData',
-        documents: 'Auto-populated via DocumentOrchestrationService'
-      } : undefined,
+      dataFlow: autoPopulated
+        ? {
+            workflow: 'Enhanced510kIntakeWorkflow',
+            backend: 'fda510kStageProgress.collectedData',
+            documents: 'Auto-populated via DocumentOrchestrationService',
+          }
+        : undefined,
       compliance: {
         auditId: `AUDIT_${projectId}_${Date.now()}`,
         completeness: 100,
@@ -1430,9 +1541,9 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
           critical: 0,
           major: 0,
           minor: 0,
-          suggestions: 0
-        }
-      }
+          suggestions: 0,
+        },
+      },
     });
   } catch (error) {
     console.error('[510k-workflow] Save error:', error);
@@ -1443,15 +1554,15 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
 // GET all 510k workflows
 app.get('/api/510k-workflow', async (req, res) => {
   const organizationId = req.query.organizationId || req.headers['x-organization-id'] || '1';
-  
+
   try {
     // For now, return empty workflows array to avoid database errors
     // This allows the UI to work while we implement the full project listing
     const workflows: any[] = [];
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
-      workflows: workflows
+      workflows: workflows,
     });
   } catch (error) {
     console.error('[510k-workflow] List error:', error);
@@ -1463,11 +1574,11 @@ app.get('/api/510k-workflow', async (req, res) => {
 app.get('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
   const organizationId = req.query.organizationId || req.headers['x-organization-id'];
-  
+
   if (!organizationId) {
     return res.status(400).json({ success: false, error: 'Organization ID required' });
   }
-  
+
   try {
     const storage = await getStorage();
     // Return workflow data based on project
@@ -1476,16 +1587,16 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
       organizationId: parseInt(organizationId),
       projectId: parseInt(projectId),
       submissionType: '510k',
-      workflowStatus: 'active'
+      workflowStatus: 'active',
     };
-    
+
     // For now, return empty sections array
     const sections = [];
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
       workflow: workflowData,
-      sections: sections
+      sections: sections,
     });
   } catch (error) {
     console.error('[510k-workflow] Get error:', error);
@@ -1497,10 +1608,10 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
 app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => {
   const { projectId } = req.params;
   const organizationId = req.body.organizationId || req.headers['x-organization-id'];
-  
+
   try {
     const storage = await getStorage();
-    
+
     // Create workflow data based on project
     const workflowData = {
       id: parseInt(projectId),
@@ -1508,24 +1619,24 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
       projectId: parseInt(projectId),
       submissionType: '510k',
       workflowStatus: 'active',
-      workflowData: {}
+      workflowData: {},
     };
-    
+
     // Get all sections - for now use empty array
     const sections = [];
-    
+
     // Map workflow data to FDA eSTAR template format
     const templateData = TemplateMapper.mapWorkflowToTemplate(workflowData.workflowData || {});
-    
+
     // Merge section data with template mapping
     const documentSections = sections.map(s => ({
       id: s.id,
       sectionCode: s.sectionCode,
       sectionTitle: s.sectionTitle,
       content: s.content,
-      templateData: templateData.sections[s.sectionCode] || {}
+      templateData: templateData.sections[s.sectionCode] || {},
     }));
-    
+
     // Save the mapped template data
     await storage.createCerv2510kSection({
       organizationId: parseInt(organizationId),
@@ -1536,22 +1647,22 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
       metadata: {
         mappedAt: new Date().toISOString(),
         mappedFields: templateData.metadata.mappedFields,
-        validationStatus: templateData.metadata.validationStatus
-      }
+        validationStatus: templateData.metadata.validationStatus,
+      },
     });
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
       message: '510(k) document generated with intelligent data mapping',
       templateData,
       documentSections,
-      metadata: templateData.metadata
+      metadata: templateData.metadata,
     });
   } catch (error) {
     console.error('[510k-workflow] Document generation error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to generate document' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate document',
     });
   }
 });
@@ -1560,15 +1671,15 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
 app.get('/api/510k-workflow/:projectId/audit-trail', async (req, res) => {
   const { projectId } = req.params;
   const { stage, userId, startDate, endDate } = req.query;
-  
+
   try {
     const auditTrail = await FDA510kComplianceTracker.getAuditTrail(projectId, {
       stage: stage as string,
       userId: userId ? parseInt(userId as string) : undefined,
       startDate: startDate ? new Date(startDate as string) : undefined,
-      endDate: endDate ? new Date(endDate as string) : undefined
+      endDate: endDate ? new Date(endDate as string) : undefined,
     });
-    
+
     res.status(200).json(auditTrail);
   } catch (error) {
     console.error('[510k-workflow] Audit trail error:', error);
@@ -1579,7 +1690,7 @@ app.get('/api/510k-workflow/:projectId/audit-trail', async (req, res) => {
 // GET data lineage for 510(k) workflow
 app.get('/api/510k-workflow/:projectId/data-lineage', async (req, res) => {
   const { projectId } = req.params;
-  
+
   try {
     const lineage = await FDA510kComplianceTracker.getDataLineage(projectId);
     res.status(200).json(lineage);
@@ -1593,11 +1704,11 @@ app.get('/api/510k-workflow/:projectId/data-lineage', async (req, res) => {
 app.get('/api/510k-workflow/:projectId/versions', async (req, res) => {
   const { projectId } = req.params;
   const { documentId } = req.query;
-  
+
   try {
     const versions = await FDA510kComplianceTracker.getVersionHistory(
       projectId,
-      documentId as string || `510K_${projectId}`
+      (documentId as string) || `510K_${projectId}`
     );
     res.status(200).json(versions);
   } catch (error) {
@@ -1609,12 +1720,12 @@ app.get('/api/510k-workflow/:projectId/versions', async (req, res) => {
 // GET compliance report for 510(k) submission
 app.get('/api/510k-workflow/:projectId/compliance-report', async (req, res) => {
   const { projectId } = req.params;
-  
+
   try {
     const report = await FDA510kComplianceTracker.generateComplianceReport(projectId);
     res.status(200).json({
       success: true,
-      report
+      report,
     });
   } catch (error) {
     console.error('[510k-workflow] Compliance report error:', error);
@@ -2670,7 +2781,7 @@ The safety pharmacology studies demonstrate that [TEST_ARTICLE_NAME] has an acce
 
 1.1 Study Objectives
 Primary Objective: To determine the acute toxicity of [TEST_ARTICLE_NAME] following single dose administration
-Secondary Objectives: 
+Secondary Objectives:
 • Determine approximate lethal dose (LD50)
 • Identify target organs of toxicity
 • Characterize dose-response relationship
@@ -3067,9 +3178,9 @@ app.get('/api/ectd/templates', async (req: Request, res: Response) => {
 
     try {
       const result = await pool.query(
-        `SELECT id, template_name as name, template_name as title, 'FDA' as region, version, 
+        `SELECT id, template_name as name, template_name as title, 'FDA' as region, version,
                 template_name as description, content as template_data
-         FROM ectd_templates 
+         FROM ectd_templates
          WHERE organization_id = $1
          ORDER BY id`,
         [organizationId]
@@ -3117,9 +3228,9 @@ app.get('/api/ectd/templates/:id', async (req: Request, res: Response) => {
 
     try {
       const result = await pool.query(
-        `SELECT id, template_name as name, template_name as title, 'FDA' as region, version, 
+        `SELECT id, template_name as name, template_name as title, 'FDA' as region, version,
                 template_name as description, content as template_data
-         FROM ectd_templates 
+         FROM ectd_templates
          WHERE id = $1 AND organization_id = $2`,
         [templateId, organizationId]
       );
@@ -3965,11 +4076,17 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  // ============================================================================
+  // GLOBAL ERROR HANDLER (MUST BE AFTER ALL ROUTES)
+  // ============================================================================
+  app.use(errorHandler);
+  console.log('✅ Global error handler registered');
+
   const PORT = process.env.PORT || 5000;
-  
+
   // Create HTTP server for proper Vite integration
   const httpServer = createServer(app);
-  
+
   // Setup Vite middleware for frontend serving (development mode with HMR)
   // This must be done AFTER all API routes are mounted
   try {
@@ -4017,12 +4134,11 @@ async function startServer() {
   }
 
   // Start the HTTP server
-  httpServer.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🔐 Login: http://localhost:${PORT}/auth`);
   });
-
 }
 // Start the server
 startServer().catch(err => {

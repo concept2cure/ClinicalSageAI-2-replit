@@ -1,0 +1,146 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#                         CODEOWNERS - Concept2Cure Platform
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# This file defines code ownership for automated PR review assignment.
+# Changes to critical paths require explicit approval from designated owners.
+#
+# Format: <pattern> <owner1> <owner2> ...
+# Owners can be @usernames, @org/team-name, or email addresses
+#
+# Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                          GLOBAL OWNERSHIP                                    │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Default owners for all files (fallback)
+* @concept2cure/platform-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                    CRITICAL SECURITY & COMPLIANCE                            │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Authentication & Authorization - REQUIRES SECURITY REVIEW
+/server/auth/                           @concept2cure/security-team @concept2cure/platform-leads
+/server/middleware/auth*                @concept2cure/security-team @concept2cure/platform-leads
+/server/services/auth*                  @concept2cure/security-team @concept2cure/platform-leads
+/shared/auth/                           @concept2cure/security-team @concept2cure/platform-leads
+
+# 21 CFR Part 11 Compliance - REQUIRES COMPLIANCE OFFICER REVIEW
+/server/services/part11*                @concept2cure/compliance-team @concept2cure/platform-leads
+/lumen_cortex/enterprise/compliance.py  @concept2cure/compliance-team @concept2cure/platform-leads
+/lumen_cortex/enterprise/audit*.py      @concept2cure/compliance-team @concept2cure/platform-leads
+/docs/compliance/                       @concept2cure/compliance-team
+
+# Cryptographic Operations - REQUIRES SECURITY REVIEW
+/server/services/*signature*            @concept2cure/security-team
+/server/services/*crypto*               @concept2cure/security-team
+/server/services/*encrypt*              @concept2cure/security-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                         DATABASE & MIGRATIONS                                │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Database Schema Changes - REQUIRES DBA REVIEW
+/shared/schema.ts                       @concept2cure/dba-team @concept2cure/platform-leads
+/db/migrations/                         @concept2cure/dba-team @concept2cure/platform-leads
+/drizzle.config.ts                      @concept2cure/dba-team
+/prisma/                                @concept2cure/dba-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                      REGULATORY SUBMISSION MODULES                           │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# IND Wizard - Regulatory Affairs Review
+/server/routes/ind*                     @concept2cure/regulatory-team @concept2cure/platform-leads
+/server/services/ind*                   @concept2cure/regulatory-team
+/client/src/components/ind-wizard/      @concept2cure/regulatory-team @concept2cure/frontend-team
+/ind_automation/                        @concept2cure/regulatory-team
+
+# CER Generator - Medical Device Compliance
+/server/services/cer*                   @concept2cure/regulatory-team @concept2cure/platform-leads
+/server/routes/cer*                     @concept2cure/regulatory-team
+/client/src/components/cer-generator/   @concept2cure/regulatory-team @concept2cure/frontend-team
+
+# 510(k) & eSTAR Builder
+/server/services/eSTAR*                 @concept2cure/regulatory-team @concept2cure/platform-leads
+/server/routes/510k*                    @concept2cure/regulatory-team
+/client/src/components/510k/            @concept2cure/regulatory-team @concept2cure/frontend-team
+
+# eCTD Module
+/ectd/                                  @concept2cure/regulatory-team @concept2cure/platform-leads
+/server/routes/ectd*                    @concept2cure/regulatory-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                           AI/ML COMPONENTS                                   │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# LUMEN CORTEX Intelligence Engine - AI TEAM REQUIRED
+/lumen_cortex/                          @concept2cure/ai-team @concept2cure/platform-leads
+/server/services/aiProviderRouter.ts    @concept2cure/ai-team
+/server/services/advancedRAGPipeline.ts @concept2cure/ai-team
+/server/services/cognitiveAdvisoryService.ts @concept2cure/ai-team
+/server/services/*embedding*            @concept2cure/ai-team
+
+# OpenAI Agents
+/agents/                                @concept2cure/ai-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                        INFRASTRUCTURE & DEVOPS                               │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# CI/CD Pipelines - REQUIRES DEVOPS REVIEW
+/.github/workflows/                     @concept2cure/devops-team @concept2cure/platform-leads
+/.github/CODEOWNERS                     @concept2cure/platform-leads
+
+# Docker & Deployment
+/Dockerfile*                            @concept2cure/devops-team
+/docker-compose*.yml                    @concept2cure/devops-team
+/charts/                                @concept2cure/devops-team
+/infra/                                 @concept2cure/devops-team
+
+# Environment & Configuration
+/*.config.ts                            @concept2cure/devops-team @concept2cure/platform-leads
+/*.config.js                            @concept2cure/devops-team @concept2cure/platform-leads
+/vercel.json                            @concept2cure/devops-team
+/app.yaml                               @concept2cure/devops-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                          CLIENT PORTAL V2                                    │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Portal V2 Core - Frontend Team Lead Required
+/client/src/portal-v2/                  @concept2cure/frontend-team @concept2cure/platform-leads
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                        SHARED LIBRARIES & TYPES                              │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Shared Code - Multiple Teams Need Awareness
+/shared/                                @concept2cure/platform-team
+/server/types/                          @concept2cure/platform-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                          DOCUMENTATION                                       │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Architecture Decision Records
+/docs/adr/                              @concept2cure/platform-leads @concept2cure/architecture-team
+
+# API Documentation
+/docs/api/                              @concept2cure/platform-team
+
+# Security Documentation
+/docs/security/                         @concept2cure/security-team
+/SECURITY.md                            @concept2cure/security-team @concept2cure/platform-leads
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                           PACKAGE MANAGEMENT                                 │
+# └─────────────────────────────────────────────────────────────────────────────┘
+
+# Dependencies - Security Review for New Packages
+/package.json                           @concept2cure/security-team @concept2cure/platform-leads
+/package-lock.json                      @concept2cure/platform-team
+/requirements.txt                       @concept2cure/security-team @concept2cure/platform-leads

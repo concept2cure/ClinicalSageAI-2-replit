@@ -77,30 +77,18 @@ export default function ProtocolIntelligenceBuilder() {
       );
       setIsOptimized(true);
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Protocol Optimized",
         description: "AI-powered optimizations and recommendations generated.",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Protocol Optimized",
-        description: "AI-powered optimizations and recommendations generated.",
-        variant: "default",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Optimization failed",
         description: error.message || "Failed to optimize protocol.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Optimization failed",
-        description: error.message || "Failed to optimize protocol.",
-        variant: "destructive",
-      });
+        });
     },
   });
 
@@ -126,30 +114,18 @@ export default function ProtocolIntelligenceBuilder() {
         window.open(data.download_url, '_blank');
       }
       
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Report Generated",
         description: "Protocol Intelligence Report has been generated and is ready for download.",
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Report Generated",
-        description: "Protocol Intelligence Report has been generated and is ready for download.",
-        variant: "default",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Export failed",
         description: error.message || "Failed to generate report.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Export failed",
-        description: error.message || "Failed to generate report.",
-        variant: "destructive",
-      });
+        });
     },
   });
 
@@ -171,30 +147,18 @@ export default function ProtocolIntelligenceBuilder() {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Saved to Dossier",
         description: `Protocol saved as version ${data.version}`,
         variant: "default",
-      })
-  console.log('Toast would show:', {
-        title: "Saved to Dossier",
-        description: `Protocol saved as version ${data.version}`,
-        variant: "default",
-      });
+        });
     },
     onError: (error: any) => {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "Save failed",
         description: error.message || "Failed to save to dossier.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "Save failed",
-        description: error.message || "Failed to save to dossier.",
-        variant: "destructive",
-      });
+        });
     },
   });
 
@@ -221,17 +185,11 @@ export default function ProtocolIntelligenceBuilder() {
   // Run optimization
   const handleOptimize = () => {
     if (!parsedProtocol) {
-      // toast call replaced
-  // Original: toast({
+      toast({
         title: "No protocol data",
         description: "Please upload and parse a protocol first.",
         variant: "destructive",
-      })
-  console.log('Toast would show:', {
-        title: "No protocol data",
-        description: "Please upload and parse a protocol first.",
-        variant: "destructive",
-      });
+        });
       return;
     }
     

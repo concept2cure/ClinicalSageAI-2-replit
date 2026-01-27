@@ -1,20 +1,30 @@
 /**
- * FDA 510(k) Compliance Check Routes
+ * FDA 510(k) Compliance Check Routes (DEPRECATED)
+ *
+ * @deprecated This route file is deprecated as of 2026-01-26.
+ * Please migrate to /api/fda510k-unified/compliance
+ * Sunset date: 2026-06-30
  *
  * This file implements the backend API endpoints to support automated compliance
  * checks for 510(k) submissions. These endpoints allow for checking submission
  * completeness, regulatory compliance, and validating against FDA guidelines.
+ *
+ * @see /api/fda510k-unified/docs for migration guide
  */
 
 import express, { Request, Response } from 'express';
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
+import { create510kDeprecationNotice } from '../middleware/deprecation';
 
 // Load environment variables
 dotenv.config();
 
 // Create router
 const router = express.Router();
+
+// Apply deprecation notice to all routes in this file
+router.use(create510kDeprecationNotice('/compliance'));
 
 // Database connection
 const pool = new Pool({
