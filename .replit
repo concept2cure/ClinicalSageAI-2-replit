@@ -180,7 +180,7 @@ args = "echo \"🚀 Starting TrialSage with optimizations...\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node cleanup-toastify.js"
+args = "node scripts/automation/cleanup-toastify.js"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -197,7 +197,7 @@ args = "echo \"🔧 Starting TrialSage with enhanced debugging...\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node cleanup-toastify.js"
+args = "node scripts/automation/cleanup-toastify.js"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
