@@ -7,8 +7,34 @@ import postgres from 'postgres';
 
 const router = Router();
 
+/**
+ * Clean a database URL by removing common wrapper artifacts
+ * like `psql '...'` that can be accidentally copied from terminal commands
+ */
+function cleanDatabaseUrl(url: string | undefined): string {
+  if (!url) return '';
+  let cleaned = url;
+
+  // Remove psql command wrapper if present: psql 'postgresql://...' or psql "postgresql://..."
+  if (cleaned.startsWith('psql ')) {
+    cleaned = cleaned.substring(5); // Remove 'psql '
+  }
+
+  // Remove surrounding quotes (single or double)
+  if (
+    (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
+    (cleaned.startsWith('"') && cleaned.endsWith('"'))
+  ) {
+    cleaned = cleaned.slice(1, -1);
+  }
+
+  // Remove any leading/trailing whitespace
+  return cleaned.trim();
+}
+
 // Use the same connection method as the main db
-const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
+const rawConnectionString = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || '';
+const connectionString = cleanDatabaseUrl(rawConnectionString);
 const sql = postgres(connectionString, {
   ssl:
     connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'
@@ -63,10 +89,10 @@ const updateTenantSchema = z.object({
 router.get('/', async (req, res) => {
   try {
     const result = await sql`
-      SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers", 
-             max_projects as "maxProjects", max_storage as "maxStorage", 
+      SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
+             max_projects as "maxProjects", max_storage as "maxStorage",
              status, created_at as "createdAt", updated_at as "updatedAt"
-      FROM organizations 
+      FROM organizations
       ORDER BY created_at DESC
     `;
 
@@ -107,8 +133,8 @@ router.post('/', async (req, res) => {
         'active',
         ${apiKey}
       )
-      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers", 
-               max_projects as "maxProjects", max_storage as "maxStorage", 
+      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
+               max_projects as "maxProjects", max_storage as "maxStorage",
                status, created_at as "createdAt", updated_at as "updatedAt"
     `;
 
@@ -137,8 +163,8 @@ router.patch('/:id', async (req, res) => {
 
     // Use postgres for update
     const result = await sql`
-      UPDATE organizations 
-      SET 
+      UPDATE organizations
+      SET
         name = ${validatedData.name || sql`name`},
         slug = ${validatedData.slug || sql`slug`},
         domain = ${validatedData.domain || sql`domain`},
@@ -148,8 +174,8 @@ router.patch('/:id', async (req, res) => {
         max_storage = ${validatedData.maxStorage || sql`max_storage`},
         updated_at = NOW()
       WHERE id = ${tenantId}
-      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers", 
-               max_projects as "maxProjects", max_storage as "maxStorage", 
+      RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
+               max_projects as "maxProjects", max_storage as "maxStorage",
                status, created_at as "createdAt", updated_at as "updatedAt"
     `;
 
@@ -192,7 +218,7 @@ router.get('/:tenantId/users', async (req, res) => {
 
     // Get users for this organization with their roles
     const result = await sql`
-      SELECT 
+      SELECT
         u.id,
         u.email,
         u.name,
@@ -299,7 +325,7 @@ router.post('/:id/api-key', async (req, res) => {
 
     // Update the organization with the new API key
     const result = await sql`
-      UPDATE organizations 
+      UPDATE organizations
       SET api_key = ${newApiKey}, updated_at = NOW()
       WHERE id = ${tenantId}
       RETURNING id, name, api_key as "apiKey"

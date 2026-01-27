@@ -7,10 +7,12 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import { getSslConfig } from './ssl';
+import { getDatabaseUrl } from './getDatabaseUrl';
 
+const connectionString = getDatabaseUrl();
 const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-  ssl: getSslConfig(process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || ''),
+  connectionString,
+  ssl: getSslConfig(connectionString || ''),
 });
 
 export async function initializeLumenCortexDatabase() {

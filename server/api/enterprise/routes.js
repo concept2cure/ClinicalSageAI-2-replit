@@ -1,21 +1,23 @@
 import express from 'express';
 // NOTE: Using AI Provider Router for multi-provider support
 // The original openaiService was actually Kimi AI (moonshot.cn)
-import aiProviderRouter from '../../services/aiProviderRouter.js';
+import { AIProviderRouter } from '../../services/aiProviderRouter.ts';
+const aiProviderRouter = new AIProviderRouter();
 const openaiService = aiProviderRouter; // Backward compatibility alias
 
 // Stub audit service (real service deprecated)
 const auditService = {
-  logAction: async (data) => console.log('[AUDIT]', data.action, data.resourceType),
+  logAction: async data => console.log('[AUDIT]', data.action, data.resourceType),
   constructor: {
     ACTIONS: { REGULATORY_ANALYSIS: 'regulatory_analysis', GENERATE_DOCUMENT: 'generate_document' },
-    RESOURCE_TYPES: { ANALYSIS: 'analysis', DOCUMENT: 'document' }
-  }
+    RESOURCE_TYPES: { ANALYSIS: 'analysis', DOCUMENT: 'document' },
+  },
 };
 
 // Stub RBAC service (real service deprecated)
 const rbacService = {
-  checkPermission: async () => true
+  checkPermission: async () => true,
+  requirePermission: (resource, action) => (req, res, next) => next(),
 };
 
 const router = express.Router();

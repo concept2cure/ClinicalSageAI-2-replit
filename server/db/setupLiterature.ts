@@ -8,10 +8,11 @@
 import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
+import { getDatabaseUrl } from './getDatabaseUrl';
 
-// Connect to the PostgreSQL database
+// Connect to the PostgreSQL database with cleaned URL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
+  connectionString: getDatabaseUrl(),
 });
 
 /**
@@ -56,7 +57,7 @@ export async function initializeLiteratureDatabase() {
       // Create basic sources data if not exists
       const sourcesSql = `
         INSERT INTO literature_sources (id, name, description, enabled, priority)
-        VALUES 
+        VALUES
           ('pubmed', 'PubMed', 'Medical and biomedical literature from MEDLINE', true, 1),
           ('fda', 'FDA', 'FDA regulatory documents and guidance', true, 2),
           ('clinicaltrials', 'ClinicalTrials.gov', 'Clinical trials registry', true, 3),
@@ -68,7 +69,7 @@ export async function initializeLiteratureDatabase() {
         // Check if the table exists before executing the insert
         const tableExists = await client.query(`
           SELECT EXISTS (
-            SELECT FROM information_schema.tables 
+            SELECT FROM information_schema.tables
             WHERE table_name = 'literature_sources'
           );
         `);

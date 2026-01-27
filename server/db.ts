@@ -11,17 +11,15 @@ import { createScopedLogger } from './utils/logger';
 import * as schema from '../shared/schema';
 import path from 'path';
 import { getSslConfig } from './db/ssl';
+import { getDatabaseUrl } from './db/getDatabaseUrl';
 
 const logger = createScopedLogger('database');
 
 // Database connection pool
 let pool: Pool | null = null;
 
-// Get database URL - prefer DATABASE_NEON_NEW_SECRET, fall back to DATABASE_URL
-const databaseUrl =
-  process.env.DATABASE_NEON_NEW_SECRET ||
-  process.env.DATABASE_NEON_NEW_SECRET ||
-  process.env.DATABASE_URL;
+// Get cleaned database URL
+const databaseUrl = getDatabaseUrl();
 
 // Initialize database connection
 try {

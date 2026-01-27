@@ -133,6 +133,25 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  // Refresh user data (call this after manually storing a token)
+  const refreshUser = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const response = await api.get('/user');
+        setUser(response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+        localStorage.removeItem('token');
+        setUser(null);
+        return null;
+      }
+    }
+    return null;
+  };
+
   // Create the auth context value
   const contextValue = {
     user,
@@ -140,6 +159,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
     isAuthenticated: !!user,
   };
 

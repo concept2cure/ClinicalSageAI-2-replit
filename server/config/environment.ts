@@ -28,13 +28,40 @@ const ENV_MAP: Record<Environment, string> = {
   production: 'PROD',
 };
 
+/**
+ * Clean a database URL by removing common wrapper artifacts
+ * like `psql '...'` that can be accidentally copied from terminal commands
+ */
+function cleanDatabaseUrl(url: string | undefined): string | undefined {
+  if (!url) return url;
+  let cleaned = url;
+
+  // Remove psql command wrapper if present: psql 'postgresql://...' or psql "postgresql://..."
+  if (cleaned.startsWith('psql ')) {
+    cleaned = cleaned.substring(5); // Remove 'psql '
+  }
+
+  // Remove surrounding quotes (single or double)
+  if (
+    (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
+    (cleaned.startsWith('"') && cleaned.endsWith('"'))
+  ) {
+    cleaned = cleaned.slice(1, -1);
+  }
+
+  // Remove any leading/trailing whitespace
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
 // Centralize access to environment-specific secrets
 const getDatabaseUrl = (): string => {
   // First priority: DATABASE_NEON_NEW_SECRET (new unified connection)
   if (process.env.DATABASE_NEON_NEW_SECRET) {
-    return process.env.DATABASE_NEON_NEW_SECRET;
+    return cleanDatabaseUrl(process.env.DATABASE_NEON_NEW_SECRET) || '';
   }
-  
+
   const suffix = ENV_MAP[ENV];
   const envVar = `DATABASE_URL_${suffix}`;
   const url = process.env[envVar];

@@ -14,9 +14,10 @@ import { eq, and, SQL, gte, or } from 'drizzle-orm';
 import { type PgTable } from 'drizzle-orm/pg-core';
 import postgres from 'postgres';
 import { TenantContext } from '../middleware/tenantContext';
+import { getDatabaseUrl } from './getDatabaseUrl';
 
-// Database connection
-const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL as string;
+// Database connection with cleaned URL
+const connectionString = getDatabaseUrl() as string;
 const client = postgres(connectionString);
 export const db = drizzle(client);
 
@@ -178,7 +179,7 @@ export class TenantDb {
     // Add tenant context parameters to the query
     const tenantSql = `
       WITH tenant_context AS (
-        SELECT 
+        SELECT
           ${this.orgId ? `$${params.length + 1}::integer` : 'NULL'} as organization_id,
           ${this.clientId ? `$${params.length + 2}::integer` : 'NULL'} as client_workspace_id
       )

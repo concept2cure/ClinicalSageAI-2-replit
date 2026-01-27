@@ -1,9 +1,9 @@
 /**
  * Enterprise Performance Optimization Module
  * ============================================================================
- * 
+ *
  * Comprehensive performance enhancements for high-throughput platform operations.
- * 
+ *
  * Features:
  * - HTTP compression (gzip/brotli)
  * - LRU caching with TTL
@@ -11,14 +11,13 @@
  * - Connection pool optimization
  * - Response time monitoring
  * - Memory leak prevention
- * 
+ *
  * Version: 1.0.0
  * Last Updated: 2026-01-24
  */
 
 import { Request, Response, NextFunction } from 'express';
-// @ts-ignore - compression module type handling
-const compressionLib = require('compression');
+import compressionLib from 'compression';
 
 // ============================================================================
 // CONFIGURATION
@@ -26,13 +25,13 @@ const compressionLib = require('compression');
 
 const config = {
   cache: {
-    maxSize: 1000,           // Maximum cache entries
-    defaultTtl: 5 * 60_000,  // 5 minutes default
-    checkPeriod: 60_000,     // Cleanup every minute
+    maxSize: 1000, // Maximum cache entries
+    defaultTtl: 5 * 60_000, // 5 minutes default
+    checkPeriod: 60_000, // Cleanup every minute
   },
   compression: {
-    threshold: 1024,         // Compress responses > 1KB
-    level: 6,                // Compression level (1-9)
+    threshold: 1024, // Compress responses > 1KB
+    level: 6, // Compression level (1-9)
   },
   monitoring: {
     slowRequestThreshold: 5000, // 5 seconds
@@ -60,27 +59,27 @@ export class LRUCache<T = any> {
     this.cache = new Map();
     this.maxSize = options.maxSize || config.cache.maxSize;
     this.defaultTtl = options.defaultTtl || config.cache.defaultTtl;
-    
+
     // Start periodic cleanup
     this.startCleanup();
   }
 
   get(key: string): T | undefined {
     const entry = this.cache.get(key);
-    
+
     if (!entry) return undefined;
-    
+
     // Check expiration
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     // Update access (LRU behavior)
     entry.hits++;
     this.cache.delete(key);
     this.cache.set(key, entry);
-    
+
     return entry.value;
   }
 
@@ -90,7 +89,7 @@ export class LRUCache<T = any> {
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) this.cache.delete(oldestKey);
     }
-    
+
     this.cache.set(key, {
       value,
       expiresAt: Date.now() + (ttl || this.defaultTtl),
@@ -143,7 +142,7 @@ export class LRUCache<T = any> {
         }
       }
     }, config.cache.checkPeriod);
-    
+
     // Don't prevent process exit
     this.cleanupInterval.unref();
   }
@@ -191,29 +190,29 @@ interface CacheOptions {
 
 export function cacheResponse(options: CacheOptions = {}) {
   const ttl = options.ttl || 60_000; // 1 minute default
-  
+
   return (req: Request, res: Response, next: NextFunction) => {
     // Only cache GET requests
     if (req.method !== 'GET') return next();
-    
+
     // Check condition
     if (options.condition && !options.condition(req)) return next();
-    
+
     // Generate cache key
-    const key = options.keyGenerator 
+    const key = options.keyGenerator
       ? options.keyGenerator(req)
       : `${req.path}?${JSON.stringify(req.query)}`;
-    
+
     // Check cache
     const cached = apiCache.get(key);
     if (cached) {
       res.setHeader('X-Cache', 'HIT');
       return res.json(cached);
     }
-    
+
     // Store original json method
     const originalJson = res.json.bind(res);
-    
+
     // Override json to cache the response
     res.json = (body: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -222,7 +221,7 @@ export function cacheResponse(options: CacheOptions = {}) {
       }
       return originalJson(body);
     };
-    
+
     next();
   };
 }
@@ -264,7 +263,7 @@ export class QueryBatcher {
         reject,
         timestamp: Date.now(),
       });
-      
+
       // Execute immediately if batch is full
       if (this.queue.length >= this.batchSize) {
         this.flush();
@@ -280,16 +279,14 @@ export class QueryBatcher {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
-    
+
     if (this.queue.length === 0) return;
-    
+
     const batch = this.queue.splice(0, this.batchSize);
-    
+
     try {
-      const results = await this.executor(
-        batch.map(q => ({ sql: q.sql, params: q.params }))
-      );
-      
+      const results = await this.executor(batch.map(q => ({ sql: q.sql, params: q.params })));
+
       batch.forEach((query, index) => {
         query.resolve(results[index]);
       });
@@ -330,13 +327,15 @@ class PerformanceMonitor {
 
   record(metrics: RequestMetrics): void {
     this.metrics.push(metrics);
-    
+
     // Track slow requests
     if (metrics.duration > config.monitoring.slowRequestThreshold) {
       this.slowRequests.push(metrics);
-      console.warn(`[PERF] Slow request: ${metrics.method} ${metrics.path} took ${metrics.duration}ms`);
+      console.warn(
+        `[PERF] Slow request: ${metrics.method} ${metrics.path} took ${metrics.duration}ms`
+      );
     }
-    
+
     // Trim old metrics
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
@@ -364,10 +363,10 @@ class PerformanceMonitor {
         errorRate: 0,
       };
     }
-    
+
     const durations = this.metrics.map(m => m.duration).sort((a, b) => a - b);
     const errors = this.metrics.filter(m => m.statusCode >= 400).length;
-    
+
     return {
       avgResponseTime: durations.reduce((a, b) => a + b, 0) / durations.length,
       p95ResponseTime: durations[Math.floor(durations.length * 0.95)] || 0,
@@ -393,7 +392,7 @@ export const performanceMonitor = new PerformanceMonitor();
 // Performance monitoring middleware
 export function monitorPerformance(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     performanceMonitor.record({
@@ -404,7 +403,7 @@ export function monitorPerformance(req: Request, res: Response, next: NextFuncti
       timestamp: startTime,
     });
   });
-  
+
   next();
 }
 
@@ -420,24 +419,26 @@ export function checkMemoryUsage(): {
 } {
   const usage = process.memoryUsage();
   const usagePercent = usage.heapUsed / usage.heapTotal;
-  
+
   const result = {
     heapUsed: Math.round(usage.heapUsed / 1024 / 1024),
     heapTotal: Math.round(usage.heapTotal / 1024 / 1024),
     usagePercent: Math.round(usagePercent * 100),
     warning: usagePercent > config.monitoring.memoryWarningThreshold,
   };
-  
+
   if (result.warning) {
-    console.warn(`[MEMORY] High memory usage: ${result.usagePercent}% (${result.heapUsed}MB / ${result.heapTotal}MB)`);
-    
+    console.warn(
+      `[MEMORY] High memory usage: ${result.usagePercent}% (${result.heapUsed}MB / ${result.heapTotal}MB)`
+    );
+
     // Force garbage collection if available
     if (global.gc) {
       console.log('[MEMORY] Forcing garbage collection...');
       global.gc();
     }
   }
-  
+
   return result;
 }
 
@@ -446,11 +447,11 @@ let memoryCheckInterval: NodeJS.Timeout | null = null;
 
 export function startMemoryMonitoring(intervalMs = 60000): void {
   if (memoryCheckInterval) return;
-  
+
   memoryCheckInterval = setInterval(() => {
     checkMemoryUsage();
   }, intervalMs);
-  
+
   memoryCheckInterval.unref();
 }
 
@@ -475,23 +476,27 @@ export async function parallelLimit<T, R>(
 ): Promise<R[]> {
   const results: R[] = [];
   const executing: Promise<void>[] = [];
-  
+
   for (let i = 0; i < items.length; i++) {
     const promise = Promise.resolve()
       .then(() => fn(items[i], i))
       .then(result => {
         results[i] = result;
       });
-    
+
     executing.push(promise as any);
-    
+
     if (executing.length >= limit) {
       await Promise.race(executing);
       // Remove completed promises
       const completed = executing.filter(p => {
         // Check if promise is settled
         let settled = false;
-        p.then(() => { settled = true; }).catch(() => { settled = true; });
+        p.then(() => {
+          settled = true;
+        }).catch(() => {
+          settled = true;
+        });
         return settled;
       });
       completed.forEach(p => {
@@ -500,7 +505,7 @@ export async function parallelLimit<T, R>(
       });
     }
   }
-  
+
   await Promise.all(executing);
   return results;
 }
@@ -524,7 +529,7 @@ export function debounce<T extends (...args: any[]) => any>(
   delay: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null;
-  
+
   return (...args: Parameters<T>) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -544,7 +549,7 @@ export function throttle<T extends (...args: any[]) => any>(
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle = false;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       fn(...args);
@@ -563,13 +568,13 @@ export function throttle<T extends (...args: any[]) => any>(
 export function applyPerformanceMiddleware(app: any) {
   // HTTP compression
   app.use(compressionMiddleware);
-  
+
   // Performance monitoring
   app.use(monitorPerformance);
-  
+
   // Start memory monitoring
   startMemoryMonitoring();
-  
+
   // Add performance stats endpoint
   app.get('/api/perf/stats', (req: Request, res: Response) => {
     res.json({
@@ -582,11 +587,11 @@ export function applyPerformanceMiddleware(app: any) {
       },
     });
   });
-  
+
   app.get('/api/perf/slow-requests', (req: Request, res: Response) => {
     res.json(performanceMonitor.getSlowRequests());
   });
-  
+
   console.log('✅ Enterprise performance middleware applied');
 }
 

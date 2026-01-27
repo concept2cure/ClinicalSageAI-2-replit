@@ -9,12 +9,13 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import dotenv from 'dotenv';
 import { getSslConfig } from './ssl';
+import { getDatabaseUrl } from './getDatabaseUrl';
 
 // Load environment variables
 dotenv.config();
 
-// Get the database URL from environment variables
-const dbUrl = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
+// Get the cleaned database URL
+const dbUrl = getDatabaseUrl();
 
 if (!dbUrl) {
   console.error('DATABASE_URL environment variable is not set!');
