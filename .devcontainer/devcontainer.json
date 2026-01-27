@@ -1,0 +1,31 @@
+{
+  "name": "ClinicalSageAI Development",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ],
+      "settings": {
+        "remote.extensionKind": {
+          "GitHub.copilot": ["ui"],
+          "GitHub.copilot-chat": ["ui"]
+        },
+        "github.copilot.enable": {
+          "*": true
+        },
+        "chat.agent.enabled": true
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "forwardPorts": [3000, 5000, 5173],
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}
