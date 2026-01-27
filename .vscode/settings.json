@@ -1,1 +1,51 @@
-{\n  "remote.extensionKind": {\n    "github.copilot": ["ui"],\n    "github.copilot-chat": ["ui"]\n  },\n  "typescript.tsdk": "node_modules/typescript/lib",\n  "typescript.enablePromptUseWorkspaceTsdk": true,\n  "javascript.suggest.autoImports": true,\n  "typescript.suggest.autoImports": true,\n  "javascript.updateImportsOnFileMove.enabled": "always",\n  "typescript.updateImportsOnFileMove.enabled": "always",\n  "eslint.enable": true,\n  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],\n  "editor.codeActionsOnSave": {\n    "source.fixAll.eslint": "explicit"\n  },\n  "editor.formatOnSave": true,\n  "editor.defaultFormatter": "esbenp.prettier-vscode",\n  "[typescript]": {\n    "editor.defaultFormatter": "esbenp.prettier-vscode"\n  },\n  "[javascript]": {\n    "editor.defaultFormatter": "esbenp.prettier-vscode"\n  },\n  "files.eol": "\n",\n  "files.insertFinalNewline": true,\n  "files.trimTrailingWhitespace": true,\n  "files.exclude": {\n    "**/node_modules": true,\n    "**/dist": true,\n    "**/.cache": true\n  },\n  "search.exclude": {\n    "**/node_modules": true,\n    "**/dist": true,\n    "**/.cache": true,\n    "**/coverage": true\n  },\n  "files.watcherExclude": {\n    "**/node_modules/**": true,\n    "**/dist/**": true,\n    "**/.cache/**": true\n  },\n  "git.enableSmartCommit": true,\n  "git.autofetch": true,\n  "git.confirmSync": false,\n  "terminal.integrated.defaultProfile.linux": "bash",\n  "terminal.integrated.env.linux": {\n    "NODE_ENV": "development"\n  }\n}
+{
+  "remote.extensionKind": {
+    "GitHub.copilot": ["ui"],
+    "GitHub.copilot-chat": ["ui"]
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.cache": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.cache": true,
+    "**/coverage": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.cache/**": true
+  },
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.env.linux": {
+    "NODE_ENV": "development"
+  }
+}
