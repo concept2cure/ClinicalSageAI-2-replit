@@ -7,6 +7,18 @@
 [![ISO 14971](https://img.shields.io/badge/risk%20analysis-ISO%2014971-green)](docs/compliance/)
 
 ---
+## 🔒 **IMPORTANT: SINGLE BRANCH DEVELOPMENT**
+
+**All work MUST be done on:** `concept2cure-v2`
+
+- ❌ Do NOT create feature branches
+- ❌ Do NOT work on `main` directly  
+- ❌ Do NOT recreate auth, portal, or Cortex components
+- ✅ See `.github/COPILOT_INSTRUCTIONS.md` for full rules
+
+**Agents & Developers**: Read `.github/BRANCH_LOCK.md` before starting work.
+
+---
 
 ## Overview
 

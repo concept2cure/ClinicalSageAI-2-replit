@@ -105,6 +105,17 @@ const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
 // Import Enterprise Sign-On page
 import TrialSageSignOn from './pages/TrialSageSignOn';
 
+// Import Lumen Cortex AI Assistant
+const LumenCortex = lazy(() => import('./pages/LumenCortex'));
+
+// Admin & Management Pages
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AdminProfile = lazy(() => import('./pages/AdminProfile'));
+const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
+const RoleManagementPage = lazy(() => import('./pages/admin/RoleManagementPage'));
+const TenantManagement = lazy(() => import('./pages/TenantManagement'));
+const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
+
 // Lazy load all other pages grouped by related functionality
 // Stability-related pages - REMOVED: Stability only exists within CMC Blueprint
 
@@ -368,11 +379,25 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            
             {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
             <Route path="/" component={ClientPortalV2} />
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             <Route path="/client-portal" component={ClientPortalV2} />
+            {/* Lumen Cortex AI Assistant - Full Page */}
+            <Route path="/lumen-cortex">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <LumenCortex />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/lumen-cortex">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <LumenCortex />
+                </Suspense>
+              )}
+            </Route>
             <Route path="/module-settings">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -1815,6 +1840,42 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <TenantManagement />
+                </Suspense>
+              )}
+            </Route>
+            {/* Admin Panel Routes */}
+            <Route path="/admin">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <AdminPage />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/users">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <UserManagementPage />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/roles">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <RoleManagementPage />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/audit-dashboard">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <AuditTrailDashboard />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/profile">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <AdminProfile />
                 </Suspense>
               )}
             </Route>
