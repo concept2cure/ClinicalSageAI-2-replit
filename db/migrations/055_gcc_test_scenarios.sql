@@ -8,6 +8,19 @@
 
 BEGIN;
 
+-- Ensure legacy columns exist for test scenario seeds
+ALTER TABLE identity.organizations
+    ADD COLUMN IF NOT EXISTS org_name TEXT,
+    ADD COLUMN IF NOT EXISTS org_short_code TEXT,
+    ADD COLUMN IF NOT EXISTS duns_number TEXT,
+    ADD COLUMN IF NOT EXISTS primary_email TEXT,
+    ADD COLUMN IF NOT EXISTS part11_signatures_enabled BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE identity.users
+    ADD COLUMN IF NOT EXISTS org_id UUID,
+    ADD COLUMN IF NOT EXISTS user_role TEXT,
+    ADD COLUMN IF NOT EXISTS has_signing_authority BOOLEAN DEFAULT FALSE;
+
 -- =============================================================================
 -- A) SEED TEST ORGANIZATIONS
 -- =============================================================================
@@ -16,14 +29,22 @@ BEGIN;
 DELETE FROM identity.users WHERE email LIKE '%@test.example.com';
 
 -- Insert additional test organizations for scenarios
+DO $$
+BEGIN
+    ALTER TABLE identity.organizations DISABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 INSERT INTO identity.organizations (
-    id, org_name, org_short_code, business_model, duns_number,
+    id, legal_name, display_name, org_name, org_short_code, business_model, duns_number,
     primary_email, headquarters_country, is_active, part11_signatures_enabled
 )
 VALUES 
     -- Medical Device Company
     (
         '550e8400-e29b-41d4-a716-446655440010'::UUID,
+        'CardioTech Medical Devices Inc.',
+        'CARDIO',
         'CardioTech Medical Devices Inc.',
         'CARDIO',
         'DEVICE_MANUFACTURER',
@@ -38,7 +59,9 @@ VALUES
         '550e8400-e29b-41d4-a716-446655440011'::UUID,
         'DiagnoSure Labs Inc.',
         'DIAGSURE',
-        'IVD_DIAGNOSTICS',
+        'DiagnoSure Labs Inc.',
+        'DIAGSURE',
+        'DIAGNOSTIC_COMPANY',
         '234567890',
         'regulatory@diagnosure-test.example.com',
         'US',
@@ -48,6 +71,8 @@ VALUES
     -- Biotech Sponsor
     (
         '550e8400-e29b-41d4-a716-446655440012'::UUID,
+        'NeuroBio Therapeutics',
+        'NEUROBIO',
         'NeuroBio Therapeutics',
         'NEUROBIO',
         'BIO_PHARMA_SPONSOR',
@@ -62,6 +87,8 @@ VALUES
         '550e8400-e29b-41d4-a716-446655440013'::UUID,
         'Stanford University Medical Center',
         'STANFORD',
+        'Stanford University Medical Center',
+        'STANFORD',
         'ACADEMIC_INSTITUTION',
         '456789012',
         'irb@stanford-test.example.com',
@@ -74,6 +101,8 @@ VALUES
         '550e8400-e29b-41d4-a716-446655440014'::UUID,
         'GlobalTrials CRO',
         'GTCRO',
+        'GlobalTrials CRO',
+        'GTCRO',
         'CRO_PARTNER',
         '567890123',
         'ops@globaltrials-test.example.com',
@@ -84,19 +113,32 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET
     org_name = EXCLUDED.org_name,
     business_model = EXCLUDED.business_model;
+DO $$
+BEGIN
+    ALTER TABLE identity.organizations ENABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- =============================================================================
 -- B) SEED TEST USERS
 -- =============================================================================
 
+DO $$
+BEGIN
+    ALTER TABLE identity.users DISABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 INSERT INTO identity.users (
-    id, org_id, email, full_name, job_title, user_role,
+    id, org_id, home_org_id, email, full_name, job_title, user_role,
     has_signing_authority, is_active, mfa_enabled
 )
 VALUES
     -- CardioTech Medical Devices
     (
         '660e8400-e29b-41d4-a716-446655440001'::UUID,
+        '550e8400-e29b-41d4-a716-446655440010'::UUID,
         '550e8400-e29b-41d4-a716-446655440010'::UUID,
         'sarah.chen@cardiotech-test.example.com',
         'Dr. Sarah Chen',
@@ -108,6 +150,7 @@ VALUES
     ),
     (
         '660e8400-e29b-41d4-a716-446655440002'::UUID,
+        '550e8400-e29b-41d4-a716-446655440010'::UUID,
         '550e8400-e29b-41d4-a716-446655440010'::UUID,
         'mike.johnson@cardiotech-test.example.com',
         'Mike Johnson',
@@ -121,6 +164,7 @@ VALUES
     (
         '660e8400-e29b-41d4-a716-446655440003'::UUID,
         '550e8400-e29b-41d4-a716-446655440011'::UUID,
+        '550e8400-e29b-41d4-a716-446655440011'::UUID,
         'lisa.wang@diagnosure-test.example.com',
         'Dr. Lisa Wang',
         'Chief Scientific Officer',
@@ -133,6 +177,7 @@ VALUES
     (
         '660e8400-e29b-41d4-a716-446655440004'::UUID,
         '550e8400-e29b-41d4-a716-446655440012'::UUID,
+        '550e8400-e29b-41d4-a716-446655440012'::UUID,
         'james.wilson@neurobio-test.example.com',
         'James Wilson',
         'Director of Regulatory',
@@ -143,6 +188,7 @@ VALUES
     ),
     (
         '660e8400-e29b-41d4-a716-446655440005'::UUID,
+        '550e8400-e29b-41d4-a716-446655440012'::UUID,
         '550e8400-e29b-41d4-a716-446655440012'::UUID,
         'emily.davis@neurobio-test.example.com',
         'Emily Davis',
@@ -156,6 +202,7 @@ VALUES
     (
         '660e8400-e29b-41d4-a716-446655440006'::UUID,
         '550e8400-e29b-41d4-a716-446655440013'::UUID,
+        '550e8400-e29b-41d4-a716-446655440013'::UUID,
         'dr.martinez@stanford-test.example.com',
         'Dr. Ana Martinez',
         'Principal Investigator',
@@ -168,6 +215,7 @@ VALUES
     (
         '660e8400-e29b-41d4-a716-446655440007'::UUID,
         '550e8400-e29b-41d4-a716-446655440014'::UUID,
+        '550e8400-e29b-41d4-a716-446655440014'::UUID,
         'raj.patel@globaltrials-test.example.com',
         'Raj Patel',
         'Senior Project Manager',
@@ -179,33 +227,62 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     job_title = EXCLUDED.job_title;
+DO $$
+BEGIN
+    ALTER TABLE identity.users ENABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- =============================================================================
 -- C) SEED CRO RELATIONSHIPS (Sponsor-CRO Contracts)
 -- =============================================================================
 
 -- NeuroBio hires GlobalTrials CRO
+DO $$
+BEGIN
+    ALTER TABLE identity.org_relationships DISABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 INSERT INTO identity.org_relationships (
-    id, sponsor_org_id, cro_org_id, relationship_type, contract_status,
-    effective_from, can_view_submissions, can_create_submissions, can_upload_documents
+    id, sponsor_org_id, delegate_org_id, relationship_type, contract_reference,
+    contract_start_date, can_view_submissions, can_edit_submissions, can_upload_documents
 )
 VALUES (
     '770e8400-e29b-41d4-a716-446655440001'::UUID,
     '550e8400-e29b-41d4-a716-446655440012'::UUID,  -- NeuroBio (Sponsor)
     '550e8400-e29b-41d4-a716-446655440014'::UUID,  -- GlobalTrials (CRO)
     'CRO_SERVICES',
-    'ACTIVE',
+    NULL,
     '2024-01-01',
     TRUE,
     TRUE,
     TRUE
 )
 ON CONFLICT (id) DO UPDATE SET
-    contract_status = EXCLUDED.contract_status;
+    contract_start_date = EXCLUDED.contract_start_date;
+DO $$
+BEGIN
+    ALTER TABLE identity.org_relationships ENABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- =============================================================================
 -- D) SCENARIO 1: MEDICAL DEVICE - 510(k) Submission
 -- =============================================================================
+
+DO $$
+BEGIN
+    ALTER TABLE ectd_v4.regulatory_submissions DISABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.submission_units DISABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.documents DISABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.context_of_use_elements DISABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.keyword_definitions DISABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- Create 510(k) regulatory submission
 INSERT INTO ectd_v4.regulatory_submissions (
@@ -762,6 +839,17 @@ VALUES
     )
 ON CONFLICT (id) DO UPDATE SET
     display_name = EXCLUDED.display_name;
+
+DO $$
+BEGIN
+    ALTER TABLE ectd_v4.regulatory_submissions ENABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.submission_units ENABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.documents ENABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.context_of_use_elements ENABLE TRIGGER USER;
+    ALTER TABLE ectd_v4.keyword_definitions ENABLE TRIGGER USER;
+EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+END $$;
 
 -- =============================================================================
 -- I) VERIFICATION QUERIES

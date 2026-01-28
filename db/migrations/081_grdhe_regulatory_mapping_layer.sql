@@ -251,9 +251,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.tenant_data_residency (
   UNIQUE(tenant_id)
 );
 
-CREATE INDEX idx_tenant_residency_region ON regulatory_harmonization.tenant_data_residency(primary_region);
-CREATE INDEX idx_tenant_residency_gdpr ON regulatory_harmonization.tenant_data_residency(gdpr_subject) WHERE gdpr_subject = TRUE;
-CREATE INDEX idx_tenant_residency_active ON regulatory_harmonization.tenant_data_residency(tenant_id) WHERE is_deleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_tenant_residency_region ON regulatory_harmonization.tenant_data_residency(primary_region);
+CREATE INDEX IF NOT EXISTS idx_tenant_residency_gdpr ON regulatory_harmonization.tenant_data_residency(gdpr_subject) WHERE gdpr_subject = TRUE;
+CREATE INDEX IF NOT EXISTS idx_tenant_residency_active ON regulatory_harmonization.tenant_data_residency(tenant_id) WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.tenant_data_residency IS 
   'Tenant-level data residency configuration for GDPR Article 9 and FDA 21 CFR Part 11 compliance';
@@ -320,9 +320,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.terminology_versions (
   UNIQUE(terminology_system, version_code)
 );
 
-CREATE INDEX idx_terminology_system_current ON regulatory_harmonization.terminology_versions(terminology_system, is_current) 
+CREATE INDEX IF NOT EXISTS idx_terminology_system_current ON regulatory_harmonization.terminology_versions(terminology_system, is_current) 
   WHERE is_current = TRUE AND is_deleted = FALSE;
-CREATE INDEX idx_terminology_effective ON regulatory_harmonization.terminology_versions(terminology_system, effective_from, effective_until)
+CREATE INDEX IF NOT EXISTS idx_terminology_effective ON regulatory_harmonization.terminology_versions(terminology_system, effective_from, effective_until)
   WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.terminology_versions IS 
@@ -387,11 +387,11 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.terminology_mappings (
   UNIQUE(source_system, source_version_id, source_code, target_system, target_version_id) 
 );
 
-CREATE INDEX idx_terminology_mapping_source ON regulatory_harmonization.terminology_mappings(source_system, source_code)
+CREATE INDEX IF NOT EXISTS idx_terminology_mapping_source ON regulatory_harmonization.terminology_mappings(source_system, source_code)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_terminology_mapping_target ON regulatory_harmonization.terminology_mappings(target_system, target_code)
+CREATE INDEX IF NOT EXISTS idx_terminology_mapping_target ON regulatory_harmonization.terminology_mappings(target_system, target_code)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_terminology_mapping_review ON regulatory_harmonization.terminology_mappings(requires_review)
+CREATE INDEX IF NOT EXISTS idx_terminology_mapping_review ON regulatory_harmonization.terminology_mappings(requires_review)
   WHERE requires_review = TRUE AND is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.terminology_mappings IS 
@@ -445,9 +445,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.submission_terminology_usage
   UNIQUE(submission_id, terminology_version_id)
 );
 
-CREATE INDEX idx_submission_terminology_submission ON regulatory_harmonization.submission_terminology_usage(submission_id)
+CREATE INDEX IF NOT EXISTS idx_submission_terminology_submission ON regulatory_harmonization.submission_terminology_usage(submission_id)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_submission_terminology_jurisdiction ON regulatory_harmonization.submission_terminology_usage(target_jurisdiction)
+CREATE INDEX IF NOT EXISTS idx_submission_terminology_jurisdiction ON regulatory_harmonization.submission_terminology_usage(target_jurisdiction)
   WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.submission_terminology_usage IS 
@@ -529,11 +529,11 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.mapping_rules (
   updated_by TEXT
 );
 
-CREATE INDEX idx_mapping_rules_format ON regulatory_harmonization.mapping_rules(target_format) 
+CREATE INDEX IF NOT EXISTS idx_mapping_rules_format ON regulatory_harmonization.mapping_rules(target_format) 
   WHERE is_active = TRUE AND is_deleted = FALSE;
-CREATE INDEX idx_mapping_rules_source ON regulatory_harmonization.mapping_rules(source_entity_type) 
+CREATE INDEX IF NOT EXISTS idx_mapping_rules_source ON regulatory_harmonization.mapping_rules(source_entity_type) 
   WHERE is_active = TRUE AND is_deleted = FALSE;
-CREATE INDEX idx_mapping_rules_jurisdiction ON regulatory_harmonization.mapping_rules(target_jurisdiction)
+CREATE INDEX IF NOT EXISTS idx_mapping_rules_jurisdiction ON regulatory_harmonization.mapping_rules(target_jurisdiction)
   WHERE is_active = TRUE AND is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.mapping_rules IS 
@@ -574,8 +574,8 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.mapping_rule_history (
   signature_hash TEXT
 );
 
-CREATE INDEX idx_mapping_rule_history_rule ON regulatory_harmonization.mapping_rule_history(rule_id, version_number DESC);
-CREATE INDEX idx_mapping_rule_history_date ON regulatory_harmonization.mapping_rule_history(changed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mapping_rule_history_rule ON regulatory_harmonization.mapping_rule_history(rule_id, version_number DESC);
+CREATE INDEX IF NOT EXISTS idx_mapping_rule_history_date ON regulatory_harmonization.mapping_rule_history(changed_at DESC);
 
 COMMENT ON TABLE regulatory_harmonization.mapping_rule_history IS 
   '21 CFR Part 11 compliant audit trail for mapping rule changes with electronic signatures';
@@ -684,13 +684,13 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.export_jobs (
   completion_signature_hash TEXT
 );
 
-CREATE INDEX idx_export_jobs_tenant ON regulatory_harmonization.export_jobs(tenant_id)
+CREATE INDEX IF NOT EXISTS idx_export_jobs_tenant ON regulatory_harmonization.export_jobs(tenant_id)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_export_jobs_status ON regulatory_harmonization.export_jobs(status) 
+CREATE INDEX IF NOT EXISTS idx_export_jobs_status ON regulatory_harmonization.export_jobs(status) 
   WHERE status IN ('pending', 'validating', 'transforming', 'generating', 'review_required') AND is_deleted = FALSE;
-CREATE INDEX idx_export_jobs_format ON regulatory_harmonization.export_jobs(target_format)
+CREATE INDEX IF NOT EXISTS idx_export_jobs_format ON regulatory_harmonization.export_jobs(target_format)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_export_jobs_created ON regulatory_harmonization.export_jobs(created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_export_jobs_created ON regulatory_harmonization.export_jobs(created_at DESC)
   WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.export_jobs IS 
@@ -729,9 +729,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.export_job_audit_log (
   entry_hash TEXT NOT NULL
 );
 
-CREATE INDEX idx_export_job_audit_job ON regulatory_harmonization.export_job_audit_log(job_id, occurred_at DESC);
-CREATE INDEX idx_export_job_audit_user ON regulatory_harmonization.export_job_audit_log(user_id, occurred_at DESC);
-CREATE INDEX idx_export_job_audit_action ON regulatory_harmonization.export_job_audit_log(action_category, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_export_job_audit_job ON regulatory_harmonization.export_job_audit_log(job_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_export_job_audit_user ON regulatory_harmonization.export_job_audit_log(user_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_export_job_audit_action ON regulatory_harmonization.export_job_audit_log(action_category, occurred_at DESC);
 
 COMMENT ON TABLE regulatory_harmonization.export_job_audit_log IS 
   'Detailed audit log for export jobs - immutable, tamper-evident per 21 CFR Part 11';
@@ -797,9 +797,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.electronic_signatures (
   user_agent TEXT
 );
 
-CREATE INDEX idx_esignatures_object ON regulatory_harmonization.electronic_signatures(signed_object_type, signed_object_id);
-CREATE INDEX idx_esignatures_signer ON regulatory_harmonization.electronic_signatures(signer_user_id);
-CREATE INDEX idx_esignatures_valid ON regulatory_harmonization.electronic_signatures(is_valid) WHERE is_valid = TRUE;
+CREATE INDEX IF NOT EXISTS idx_esignatures_object ON regulatory_harmonization.electronic_signatures(signed_object_type, signed_object_id);
+CREATE INDEX IF NOT EXISTS idx_esignatures_signer ON regulatory_harmonization.electronic_signatures(signer_user_id);
+CREATE INDEX IF NOT EXISTS idx_esignatures_valid ON regulatory_harmonization.electronic_signatures(is_valid) WHERE is_valid = TRUE;
 
 COMMENT ON TABLE regulatory_harmonization.electronic_signatures IS 
   '21 CFR Part 11 compliant electronic signatures with dual authentication and cryptographic binding';
@@ -914,15 +914,15 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.canonical_adverse_events (
   UNIQUE(tenant_id, case_number, case_version)
 );
 
-CREATE INDEX idx_canonical_ae_tenant ON regulatory_harmonization.canonical_adverse_events(tenant_id)
+CREATE INDEX IF NOT EXISTS idx_canonical_ae_tenant ON regulatory_harmonization.canonical_adverse_events(tenant_id)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_canonical_ae_case ON regulatory_harmonization.canonical_adverse_events(case_number)
+CREATE INDEX IF NOT EXISTS idx_canonical_ae_case ON regulatory_harmonization.canonical_adverse_events(case_number)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_canonical_ae_current ON regulatory_harmonization.canonical_adverse_events(tenant_id, case_number) 
+CREATE INDEX IF NOT EXISTS idx_canonical_ae_current ON regulatory_harmonization.canonical_adverse_events(tenant_id, case_number) 
   WHERE is_current_version = TRUE AND is_deleted = FALSE;
-CREATE INDEX idx_canonical_ae_serious ON regulatory_harmonization.canonical_adverse_events(is_serious, created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_canonical_ae_serious ON regulatory_harmonization.canonical_adverse_events(is_serious, created_at DESC)
   WHERE is_serious = TRUE AND is_deleted = FALSE;
-CREATE INDEX idx_canonical_ae_status ON regulatory_harmonization.canonical_adverse_events(status)
+CREATE INDEX IF NOT EXISTS idx_canonical_ae_status ON regulatory_harmonization.canonical_adverse_events(status)
   WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.canonical_adverse_events IS 
@@ -987,9 +987,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.canonical_products (
   UNIQUE(tenant_id, product_code, product_version)
 );
 
-CREATE INDEX idx_canonical_products_tenant ON regulatory_harmonization.canonical_products(tenant_id)
+CREATE INDEX IF NOT EXISTS idx_canonical_products_tenant ON regulatory_harmonization.canonical_products(tenant_id)
   WHERE is_deleted = FALSE;
-CREATE INDEX idx_canonical_products_type ON regulatory_harmonization.canonical_products(product_type)
+CREATE INDEX IF NOT EXISTS idx_canonical_products_type ON regulatory_harmonization.canonical_products(product_type)
   WHERE is_deleted = FALSE;
 
 COMMENT ON TABLE regulatory_harmonization.canonical_products IS 
@@ -1108,7 +1108,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.gdpr_processing_records (
   UNIQUE(tenant_id, activity_id)
 );
 
-CREATE INDEX idx_gdpr_processing_tenant ON regulatory_harmonization.gdpr_processing_records(tenant_id)
+CREATE INDEX IF NOT EXISTS idx_gdpr_processing_tenant ON regulatory_harmonization.gdpr_processing_records(tenant_id)
   WHERE is_deleted = FALSE AND is_active = TRUE;
 
 COMMENT ON TABLE regulatory_harmonization.gdpr_processing_records IS 
@@ -1119,7 +1119,7 @@ COMMENT ON TABLE regulatory_harmonization.gdpr_processing_records IS
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
   
   -- What was affected
   schema_name TEXT NOT NULL DEFAULT 'regulatory_harmonization',
@@ -1157,7 +1157,8 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log (
   entry_hash TEXT NOT NULL,
   
   -- Partition key (for performance)
-  partition_date DATE NOT NULL DEFAULT CURRENT_DATE
+  partition_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  PRIMARY KEY (id, partition_date)
 ) PARTITION BY RANGE (partition_date);
 
 -- Create partitions for current and next month
@@ -1168,9 +1169,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log_y2026m02 PARTITION
 CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log_y2026m03 PARTITION OF regulatory_harmonization.audit_log
   FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
 
-CREATE INDEX idx_audit_log_record ON regulatory_harmonization.audit_log(table_name, record_id, occurred_at DESC);
-CREATE INDEX idx_audit_log_user ON regulatory_harmonization.audit_log(user_id, occurred_at DESC);
-CREATE INDEX idx_audit_log_date ON regulatory_harmonization.audit_log(partition_date, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_record ON regulatory_harmonization.audit_log(table_name, record_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user ON regulatory_harmonization.audit_log(user_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_date ON regulatory_harmonization.audit_log(partition_date, occurred_at DESC);
 
 COMMENT ON TABLE regulatory_harmonization.audit_log IS 
   'Immutable, tamper-evident audit log for 21 CFR Part 11 compliance - partitioned for performance';
@@ -1263,6 +1264,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_canonical_ae_hash ON regulatory_harmonization.canonical_adverse_events;
 CREATE TRIGGER trg_canonical_ae_hash
   BEFORE INSERT OR UPDATE ON regulatory_harmonization.canonical_adverse_events
   FOR EACH ROW EXECUTE FUNCTION regulatory_harmonization.compute_ae_hash();
@@ -1285,6 +1287,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_canonical_product_hash ON regulatory_harmonization.canonical_products;
 CREATE TRIGGER trg_canonical_product_hash
   BEFORE INSERT OR UPDATE ON regulatory_harmonization.canonical_products
   FOR EACH ROW EXECUTE FUNCTION regulatory_harmonization.compute_product_hash();
@@ -1319,6 +1322,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_audit_log_hash ON regulatory_harmonization.audit_log;
 CREATE TRIGGER trg_audit_log_hash
   BEFORE INSERT ON regulatory_harmonization.audit_log
   FOR EACH ROW EXECUTE FUNCTION regulatory_harmonization.compute_audit_hash();
@@ -1341,6 +1345,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_export_job_audit_hash ON regulatory_harmonization.export_job_audit_log;
 CREATE TRIGGER trg_export_job_audit_hash
   BEFORE INSERT ON regulatory_harmonization.export_job_audit_log
   FOR EACH ROW EXECUTE FUNCTION regulatory_harmonization.compute_export_audit_hash();

@@ -14,30 +14,48 @@ CREATE SCHEMA IF NOT EXISTS signing;
 -- SIGNATURE TYPES AND REASONS
 -- =============================================================================
 
-CREATE TYPE signing.signature_meaning AS ENUM (
-    'AUTHOR',           -- I am the author of this document
-    'REVIEW',           -- I have reviewed this document
-    'APPROVAL',         -- I approve this document
-    'VERIFICATION',     -- I verify the accuracy of this data
-    'RESPONSIBILITY',   -- I accept responsibility for this content
-    'REJECTION',        -- I reject this document
-    'ACKNOWLEDGMENT'    -- I acknowledge receipt/awareness
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'signing' AND t.typname = 'signature_meaning'
+    ) THEN
+        CREATE TYPE signing.signature_meaning AS ENUM (
+            'AUTHOR',           -- I am the author of this document
+            'REVIEW',           -- I have reviewed this document
+            'APPROVAL',         -- I approve this document
+            'VERIFICATION',     -- I verify the accuracy of this data
+            'RESPONSIBILITY',   -- I accept responsibility for this content
+            'REJECTION',        -- I reject this document
+            'ACKNOWLEDGMENT'    -- I acknowledge receipt/awareness
+        );
+    END IF;
+END $$;
 
-CREATE TYPE signing.signature_status AS ENUM (
-    'PENDING',          -- Signature requested but not yet signed
-    'SIGNED',           -- Successfully signed
-    'DECLINED',         -- Signer declined to sign
-    'EXPIRED',          -- Signature request expired
-    'REVOKED',          -- Signature was revoked
-    'SUPERSEDED'        -- Document was superseded before signing
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'signing' AND t.typname = 'signature_status'
+    ) THEN
+        CREATE TYPE signing.signature_status AS ENUM (
+            'PENDING',          -- Signature requested but not yet signed
+            'SIGNED',           -- Successfully signed
+            'DECLINED',         -- Signer declined to sign
+            'EXPIRED',          -- Signature request expired
+            'REVOKED',          -- Signature was revoked
+            'SUPERSEDED'        -- Document was superseded before signing
+        );
+    END IF;
+END $$;
 
 -- =============================================================================
 -- SIGNING WORKFLOW DEFINITIONS
 -- =============================================================================
 
-CREATE TABLE signing.workflow_definitions (
+CREATE TABLE IF NOT EXISTS signing.workflow_definitions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Workflow identification
@@ -87,8 +105,8 @@ CREATE TABLE signing.workflow_definitions (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_workflow_defs_code ON signing.workflow_definitions(workflow_code);
-CREATE INDEX idx_workflow_defs_active ON signing.workflow_definitions(is_active);
+CREATE INDEX IF NOT EXISTS idx_workflow_defs_code ON signing.workflow_definitions(workflow_code);
+CREATE INDEX IF NOT EXISTS idx_workflow_defs_active ON signing.workflow_definitions(is_active);
 
 COMMENT ON TABLE signing.workflow_definitions IS 
 'Signing workflow templates defining multi-step signature requirements.';
@@ -147,21 +165,26 @@ VALUES
         {"step_order": 2, "step_name": "Regulatory Affairs Approval", "signature_meaning": "APPROVAL", "required_roles": ["REGULATORY_AFFAIRS"], "parallel": false, "timeout_hours": 48},
         {"step_order": 3, "step_name": "Sponsor Authorization", "signature_meaning": "APPROVAL", "required_roles": ["SPONSOR_SIGNATORY", "AUTHORIZED_REPRESENTATIVE"], "parallel": false, "timeout_hours": 72}
     ]'::jsonb
-);
+)
+ON CONFLICT (workflow_code) DO NOTHING;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'signing' AND t.typname = 'request_status'
+    ) THEN
+        CREATE TYPE signing.request_status AS ENUM (
+            'DRAFT',            -- Not yet initiated
+            'IN_PROGRESS',      -- Actively collecting signatures
+            'COMPLETED',        -- All signatures collected
+            'CANCELLED',        -- Cancelled before completion
+            'EXPIRED'           -- Timed out
+        );
+    END IF;
+END $$;
 
--- =============================================================================
--- SIGNING REQUESTS (Individual document signing instances)
--- =============================================================================
-
-CREATE TYPE signing.request_status AS ENUM (
-    'DRAFT',            -- Not yet initiated
-    'IN_PROGRESS',      -- Actively collecting signatures
-    'COMPLETED',        -- All signatures collected
-    'CANCELLED',        -- Cancelled before completion
-    'EXPIRED'           -- Timed out
-);
-
-CREATE TABLE signing.signing_requests (
+CREATE TABLE IF NOT EXISTS signing.signing_requests (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id          UUID NOT NULL REFERENCES core.programs(id) ON DELETE RESTRICT,
     
@@ -191,10 +214,10 @@ CREATE TABLE signing.signing_requests (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_signing_requests_program ON signing.signing_requests(program_id);
-CREATE INDEX idx_signing_requests_status ON signing.signing_requests(status);
-CREATE INDEX idx_signing_requests_document ON signing.signing_requests(document_type, document_id);
-CREATE INDEX idx_signing_requests_workflow ON signing.signing_requests(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_signing_requests_program ON signing.signing_requests(program_id);
+CREATE INDEX IF NOT EXISTS idx_signing_requests_status ON signing.signing_requests(status);
+CREATE INDEX IF NOT EXISTS idx_signing_requests_document ON signing.signing_requests(document_type, document_id);
+CREATE INDEX IF NOT EXISTS idx_signing_requests_workflow ON signing.signing_requests(workflow_id);
 
 COMMENT ON TABLE signing.signing_requests IS 
 'Individual signing request instances linking documents to signing workflows.';
@@ -203,7 +226,7 @@ COMMENT ON TABLE signing.signing_requests IS
 -- SIGNATURES (Individual signature records - 21 CFR Part 11 compliant)
 -- =============================================================================
 
-CREATE TABLE signing.signatures (
+CREATE TABLE IF NOT EXISTS signing.signatures (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id          UUID NOT NULL REFERENCES signing.signing_requests(id) ON DELETE RESTRICT,
     
@@ -245,10 +268,10 @@ CREATE TABLE signing.signatures (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_signatures_request ON signing.signatures(request_id);
-CREATE INDEX idx_signatures_signer ON signing.signatures(signer_id);
-CREATE INDEX idx_signatures_status ON signing.signatures(status);
-CREATE INDEX idx_signatures_meaning ON signing.signatures(signature_meaning);
+CREATE INDEX IF NOT EXISTS idx_signatures_request ON signing.signatures(request_id);
+CREATE INDEX IF NOT EXISTS idx_signatures_signer ON signing.signatures(signer_id);
+CREATE INDEX IF NOT EXISTS idx_signatures_status ON signing.signatures(status);
+CREATE INDEX IF NOT EXISTS idx_signatures_meaning ON signing.signatures(signature_meaning);
 
 COMMENT ON TABLE signing.signatures IS 
 '21 CFR Part 11 compliant electronic signatures with full audit trail.';
@@ -257,7 +280,7 @@ COMMENT ON TABLE signing.signatures IS
 -- SIGNATURE MANIFEST (Immutable record of completed signing)
 -- =============================================================================
 
-CREATE TABLE signing.signature_manifests (
+CREATE TABLE IF NOT EXISTS signing.signature_manifests (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id          UUID NOT NULL REFERENCES signing.signing_requests(id) ON DELETE RESTRICT,
     
@@ -279,12 +302,11 @@ CREATE TABLE signing.signature_manifests (
     UNIQUE(request_id)
 );
 
-CREATE INDEX idx_signature_manifests_document ON signing.signature_manifests(document_type, document_id);
+CREATE INDEX IF NOT EXISTS idx_signature_manifests_document ON signing.signature_manifests(document_type, document_id);
 
 COMMENT ON TABLE signing.signature_manifests IS 
 'Immutable signature manifests created upon workflow completion.';
 
--- Prevent modification of signature manifests
 CREATE OR REPLACE FUNCTION signing.prevent_manifest_modification()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -294,10 +316,10 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_immutable_signature_manifests ON signing.signature_manifests;
 CREATE TRIGGER trg_immutable_signature_manifests
     BEFORE UPDATE OR DELETE ON signing.signature_manifests
-    FOR EACH ROW
-    EXECUTE FUNCTION signing.prevent_manifest_modification();
+    FOR EACH ROW EXECUTE FUNCTION signing.prevent_manifest_modification();
 
 -- =============================================================================
 -- SIGNING FUNCTIONS

@@ -29,13 +29,8 @@ const AdminEmbeddingPanel = () => {
     refetchInterval: pollingEnabled ? 5000 : false, // Poll every 5 seconds when enabled
     onError: (err) => {
       console.error('Failed to fetch embedding status:', err);
-      // toast call replaced
-  // Original: toast({
-        title: "Error fetching status",
-        description: "Could not retrieve document embedding status.",
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
+      // Toast notification disabled - using console log instead
+      console.log('Toast would show:', {
         title: "Error fetching status",
         description: "Could not retrieve document embedding status.",
         variant: "destructive",
@@ -73,13 +68,8 @@ const AdminEmbeddingPanel = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      // toast call replaced
-  // Original: toast({
-        title: "Processing started",
-        description: `Document embedding process has been started in the background for ${data.documentsToProcess || 'pending'} documents.`,
-        variant: "default",
-      })
-  console.log('Toast would show:', {
+      // Toast notification disabled - using console log instead
+      console.log('Toast would show:', {
         title: "Processing started",
         description: `Document embedding process has been started in the background for ${data.documentsToProcess || 'pending'} documents.`,
         variant: "default",
@@ -93,13 +83,8 @@ const AdminEmbeddingPanel = () => {
     },
     onError: (err) => {
       console.error('Failed to process documents:', err);
-      // toast call replaced
-  // Original: toast({
-        title: "Processing failed",
-        description: err.message || "Failed to start document embedding process.",
-        variant: "destructive",
-      })
-  console.log('Toast would show:', {
+      // Toast notification disabled - using console log instead
+      console.log('Toast would show:', {
         title: "Processing failed",
         description: err.message || "Failed to start document embedding process.",
         variant: "destructive",

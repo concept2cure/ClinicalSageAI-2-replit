@@ -108,6 +108,10 @@ import TrialSageSignOn from './pages/TrialSageSignOn';
 // Import Lumen Cortex AI Assistant
 const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 
+// Import Concept2Cure - Claude.ai-style regulatory interface with ZenRouter
+const Concept2CureApp = lazy(() => import('./concept2cure'));
+const ZenRouter = lazy(() => import('./concept2cure/router/ZenRouter'));
+
 // Admin & Management Pages
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const AdminProfile = lazy(() => import('./pages/AdminProfile'));
@@ -298,10 +302,13 @@ function MainApp() {
   const isDashboardPage = location === '/dashboard';
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
+  
+  // Concept2Cure pages have their own layout, no top nav needed
+  const isConcept2CurePage = location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   // Always show navigation for CERV2 pages
   const shouldShowNav =
-    isCERV2Page || (!isLandingPage && !isRegulatoryHub && !isCoAuthorPage && !isDashboardPage);
+    isCERV2Page || (!isLandingPage && !isRegulatoryHub && !isCoAuthorPage && !isDashboardPage && !isConcept2CurePage);
 
   // Define CSR navigation items as per specifications
   const csrNavItems = [
@@ -356,20 +363,66 @@ function MainApp() {
       )}
       <div
         className={
-          isLandingPage
-            ? 'p-4'
-            : isRegulatoryHub
-              ? 'p-0'
-              : isCoAuthorPage
-                ? 'p-0' // No padding for CoAuthor pages
-                : isDashboardPage
-                  ? 'p-0' // No padding for Dashboard page
-                  : 'p-4 mt-24'
+          isConcept2CurePage
+            ? '' // No padding/margins for Concept2Cure - full-screen Claude.ai-style layout
+            : isLandingPage
+              ? 'p-4'
+              : isRegulatoryHub
+                ? 'p-0'
+                : isCoAuthorPage
+                  ? 'p-0' // No padding for CoAuthor pages
+                  : isDashboardPage
+                    ? 'p-0' // No padding for Dashboard page
+                    : 'p-4 mt-24'
         }
       >
         {/* Main Content */}
         <main className="min-h-screen bg-gray-100">
           <Switch>
+            {/* Concept2Cure - Claude.ai-style regulatory interface with auth */}
+            <Route path="/concept2cure/login">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/concept2cure/signup">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/concept2cure">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/concept2cure/:rest*">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
+            {/* Login/Signup redirects */}
+            <Route path="/login">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/signup">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
             {/* V3 Portal - New Elegant UI */}
             <Route path="/v3">
               {() => (

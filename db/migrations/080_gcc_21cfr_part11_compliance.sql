@@ -39,6 +39,12 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 
 -- Grant restricted access
 REVOKE ALL ON SCHEMA compliance FROM PUBLIC;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
+        CREATE ROLE app_service NOLOGIN;
+    END IF;
+END $$;
 GRANT USAGE ON SCHEMA compliance TO app_service;
 
 -- ============================================================================
@@ -47,7 +53,7 @@ GRANT USAGE ON SCHEMA compliance TO app_service;
 -- Computer-generated, time-stamped audit trails to independently record
 -- the date and time of operator entries and actions
 
-CREATE TABLE compliance.audit_trail (
+CREATE TABLE IF NOT EXISTS compliance.audit_trail (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Event identification
@@ -122,16 +128,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS enforce_audit_immutability ON compliance.audit_trail;
 CREATE TRIGGER enforce_audit_immutability
     BEFORE UPDATE OR DELETE ON compliance.audit_trail
     FOR EACH ROW EXECUTE FUNCTION compliance.audit_trail_immutable();
 
 -- Indexes for audit trail queries
-CREATE INDEX idx_audit_timestamp ON compliance.audit_trail(event_timestamp DESC);
-CREATE INDEX idx_audit_user ON compliance.audit_trail(user_id, event_timestamp DESC);
-CREATE INDEX idx_audit_record ON compliance.audit_trail(record_schema, record_table, record_id);
-CREATE INDEX idx_audit_type ON compliance.audit_trail(event_type, event_timestamp DESC);
-CREATE INDEX idx_audit_org ON compliance.audit_trail(organization_id, event_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON compliance.audit_trail(event_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON compliance.audit_trail(user_id, event_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_record ON compliance.audit_trail(record_schema, record_table, record_id);
+CREATE INDEX IF NOT EXISTS idx_audit_type ON compliance.audit_trail(event_type, event_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_org ON compliance.audit_trail(organization_id, event_timestamp DESC);
 
 COMMENT ON TABLE compliance.audit_trail IS
 '21 CFR Part 11 compliant audit trail. Immutable, computer-generated, time-stamped records.
@@ -141,7 +148,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 3: ELECTRONIC SIGNATURES (21 CFR 11.50, 11.70, 11.100)
 -- ============================================================================
 
-CREATE TABLE compliance.electronic_signatures (
+CREATE TABLE IF NOT EXISTS compliance.electronic_signatures (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Signature identification
@@ -231,15 +238,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS enforce_signature_immutability ON compliance.electronic_signatures;
 CREATE TRIGGER enforce_signature_immutability
     BEFORE UPDATE OR DELETE ON compliance.electronic_signatures
     FOR EACH ROW EXECUTE FUNCTION compliance.signature_immutable();
 
 -- Indexes
-CREATE INDEX idx_esig_signer ON compliance.electronic_signatures(signer_id, signature_timestamp DESC);
-CREATE INDEX idx_esig_record ON compliance.electronic_signatures(record_schema, record_table, record_id);
-CREATE INDEX idx_esig_meaning ON compliance.electronic_signatures(signature_meaning);
-CREATE INDEX idx_esig_valid ON compliance.electronic_signatures(is_valid) WHERE is_valid = TRUE;
+CREATE INDEX IF NOT EXISTS idx_esig_signer ON compliance.electronic_signatures(signer_id, signature_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_esig_record ON compliance.electronic_signatures(record_schema, record_table, record_id);
+CREATE INDEX IF NOT EXISTS idx_esig_meaning ON compliance.electronic_signatures(signature_meaning);
+CREATE INDEX IF NOT EXISTS idx_esig_valid ON compliance.electronic_signatures(is_valid) WHERE is_valid = TRUE;
 
 COMMENT ON TABLE compliance.electronic_signatures IS
 '21 CFR Part 11 compliant electronic signatures with full traceability.
@@ -249,7 +257,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 4: ACCESS CONTROLS (21 CFR 11.10(d), 11.10(g))
 -- ============================================================================
 
-CREATE TABLE compliance.access_controls (
+CREATE TABLE IF NOT EXISTS compliance.access_controls (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Control identification
@@ -288,8 +296,8 @@ CREATE TABLE compliance.access_controls (
     CONSTRAINT valid_date_range CHECK (expiration_date IS NULL OR expiration_date > effective_date)
 );
 
-CREATE INDEX idx_acl_resource ON compliance.access_controls(resource_type, resource_identifier);
-CREATE INDEX idx_acl_active ON compliance.access_controls(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_acl_resource ON compliance.access_controls(resource_type, resource_identifier);
+CREATE INDEX IF NOT EXISTS idx_acl_active ON compliance.access_controls(is_active) WHERE is_active = TRUE;
 
 COMMENT ON TABLE compliance.access_controls IS
 'Access control matrix for 21 CFR Part 11 compliance.
@@ -299,7 +307,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 5: SYSTEM VALIDATION STATUS (21 CFR 11.10(a))
 -- ============================================================================
 
-CREATE TABLE compliance.validation_records (
+CREATE TABLE IF NOT EXISTS compliance.validation_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Validation identification
@@ -352,8 +360,8 @@ CREATE TABLE compliance.validation_records (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_val_component ON compliance.validation_records(component_type, component_name);
-CREATE INDEX idx_val_status ON compliance.validation_records(status);
+CREATE INDEX IF NOT EXISTS idx_val_component ON compliance.validation_records(component_type, component_name);
+CREATE INDEX IF NOT EXISTS idx_val_status ON compliance.validation_records(status);
 
 COMMENT ON TABLE compliance.validation_records IS
 'System validation records per 21 CFR Part 11 and GAMP 5.
@@ -363,7 +371,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 6: CHANGE CONTROL (21 CFR 11.10(k))
 -- ============================================================================
 
-CREATE TABLE compliance.change_control (
+CREATE TABLE IF NOT EXISTS compliance.change_control (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Change identification
@@ -444,9 +452,9 @@ CREATE TABLE compliance.change_control (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_cc_status ON compliance.change_control(status);
-CREATE INDEX idx_cc_type ON compliance.change_control(change_type, change_category);
-CREATE INDEX idx_cc_risk ON compliance.change_control(risk_level);
+CREATE INDEX IF NOT EXISTS idx_cc_status ON compliance.change_control(status);
+CREATE INDEX IF NOT EXISTS idx_cc_type ON compliance.change_control(change_type, change_category);
+CREATE INDEX IF NOT EXISTS idx_cc_risk ON compliance.change_control(risk_level);
 
 COMMENT ON TABLE compliance.change_control IS
 'Change control records per 21 CFR Part 11 requirements.
@@ -456,7 +464,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 7: DATA INTEGRITY VERIFICATION (21 CFR 11.10(c))
 -- ============================================================================
 
-CREATE TABLE compliance.data_integrity_checks (
+CREATE TABLE IF NOT EXISTS compliance.data_integrity_checks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Check identification
@@ -493,9 +501,9 @@ CREATE TABLE compliance.data_integrity_checks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_dic_type ON compliance.data_integrity_checks(check_type, check_timestamp DESC);
-CREATE INDEX idx_dic_result ON compliance.data_integrity_checks(check_result) WHERE check_result = 'FAIL';
-CREATE INDEX idx_dic_target ON compliance.data_integrity_checks(target_schema, target_table, target_record_id);
+CREATE INDEX IF NOT EXISTS idx_dic_type ON compliance.data_integrity_checks(check_type, check_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_dic_result ON compliance.data_integrity_checks(check_result) WHERE check_result = 'FAIL';
+CREATE INDEX IF NOT EXISTS idx_dic_target ON compliance.data_integrity_checks(target_schema, target_table, target_record_id);
 
 COMMENT ON TABLE compliance.data_integrity_checks IS
 'Data integrity verification records per 21 CFR Part 11.
@@ -804,7 +812,7 @@ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE';
 -- SECTION 11: DATA RESIDENCY CONTROLS
 -- ============================================================================
 
-CREATE TABLE compliance.data_residency (
+CREATE TABLE IF NOT EXISTS compliance.data_residency (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Organization
@@ -859,11 +867,13 @@ ALTER TABLE compliance.data_integrity_checks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE compliance.data_residency ENABLE ROW LEVEL SECURITY;
 
 -- Audit trail: Read-only for same org, no writes through RLS
+DROP POLICY IF EXISTS audit_trail_read ON compliance.audit_trail;
 CREATE POLICY audit_trail_read ON compliance.audit_trail
     FOR SELECT
     USING (organization_id = current_setting('app.current_org_id', true)::UUID);
 
 -- Electronic signatures: Read for same org
+DROP POLICY IF EXISTS esig_read ON compliance.electronic_signatures;
 CREATE POLICY esig_read ON compliance.electronic_signatures
     FOR SELECT
     USING (organization_id = current_setting('app.current_org_id', true)::UUID);

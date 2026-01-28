@@ -8,6 +8,23 @@
 
 BEGIN;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'core' AND p.proname = 'update_timestamp'
+    ) THEN
+        CREATE OR REPLACE FUNCTION core.update_timestamp()
+        RETURNS TRIGGER AS $func$
+        BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+        END;
+        $func$ LANGUAGE plpgsql;
+    END IF;
+END $$;
+
 -- ============================================================================
 -- SECTION 1: CAUSAL GRAPHS
 -- ============================================================================
@@ -441,26 +458,32 @@ ALTER TABLE cortex.causal_discovery_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.mechanism_library ENABLE ROW LEVEL SECURITY;
 
 -- Causal graphs: org-scoped + global readable
+DROP POLICY IF EXISTS causal_graphs_isolation ON cortex.causal_graphs;
 CREATE POLICY causal_graphs_isolation ON cortex.causal_graphs
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
 -- Causal effects: org-scoped + global readable
+DROP POLICY IF EXISTS causal_effects_isolation ON cortex.causal_effects;
 CREATE POLICY causal_effects_isolation ON cortex.causal_effects
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
 -- Counterfactual scenarios: strict org isolation
+DROP POLICY IF EXISTS counterfactual_isolation ON cortex.counterfactual_scenarios;
 CREATE POLICY counterfactual_isolation ON cortex.counterfactual_scenarios
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
 -- Interventions: strict org isolation
+DROP POLICY IF EXISTS interventions_isolation ON cortex.interventions;
 CREATE POLICY interventions_isolation ON cortex.interventions
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
 -- Discovery runs: org-scoped + global readable
+DROP POLICY IF EXISTS discovery_runs_isolation ON cortex.causal_discovery_runs;
 CREATE POLICY discovery_runs_isolation ON cortex.causal_discovery_runs
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
 -- Mechanism library: global read
+DROP POLICY IF EXISTS mechanism_library_read ON cortex.mechanism_library;
 CREATE POLICY mechanism_library_read ON cortex.mechanism_library
     FOR SELECT USING (TRUE);
 
@@ -707,14 +730,17 @@ ON CONFLICT DO NOTHING;
 -- SECTION 11: TRIGGERS
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS causal_graphs_updated_at ON cortex.causal_graphs;
 CREATE TRIGGER causal_graphs_updated_at
     BEFORE UPDATE ON cortex.causal_graphs
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS counterfactual_updated_at ON cortex.counterfactual_scenarios;
 CREATE TRIGGER counterfactual_updated_at
     BEFORE UPDATE ON cortex.counterfactual_scenarios
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS interventions_updated_at ON cortex.interventions;
 CREATE TRIGGER interventions_updated_at
     BEFORE UPDATE ON cortex.interventions
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();

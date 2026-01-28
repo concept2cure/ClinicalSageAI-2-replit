@@ -31,20 +31,29 @@ COMMENT ON SCHEMA ai IS
 -- 3. EMBEDDING MODEL REGISTRY
 -- =============================================================================
 
-CREATE TYPE ai.embedding_model AS ENUM (
-    'OPENAI_ADA_002',           -- OpenAI text-embedding-ada-002 (1536 dim)
-    'OPENAI_3_SMALL',           -- OpenAI text-embedding-3-small (1536 dim)
-    'OPENAI_3_LARGE',           -- OpenAI text-embedding-3-large (3072 dim)
-    'COHERE_EMBED_V3',          -- Cohere embed-english-v3.0 (1024 dim)
-    'VOYAGE_2',                 -- Voyage AI voyage-2 (1024 dim)
-    'BGE_LARGE',                -- BAAI/bge-large-en-v1.5 (1024 dim)
-    'E5_LARGE',                 -- intfloat/e5-large-v2 (1024 dim)
-    'INSTRUCTOR_XL',            -- hkunlp/instructor-xl (768 dim)
-    'KIMI_EMBEDDING',           -- Moonshot AI embedding (custom dim)
-    'CUSTOM'                    -- Custom/fine-tuned model
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'ai' AND t.typname = 'embedding_model'
+    ) THEN
+        CREATE TYPE ai.embedding_model AS ENUM (
+            'OPENAI_ADA_002',           -- OpenAI text-embedding-ada-002 (1536 dim)
+            'OPENAI_3_SMALL',           -- OpenAI text-embedding-3-small (1536 dim)
+            'OPENAI_3_LARGE',           -- OpenAI text-embedding-3-large (3072 dim)
+            'COHERE_EMBED_V3',          -- Cohere embed-english-v3.0 (1024 dim)
+            'VOYAGE_2',                 -- Voyage AI voyage-2 (1024 dim)
+            'BGE_LARGE',                -- BAAI/bge-large-en-v1.5 (1024 dim)
+            'E5_LARGE',                 -- intfloat/e5-large-v2 (1024 dim)
+            'INSTRUCTOR_XL',            -- hkunlp/instructor-xl (768 dim)
+            'KIMI_EMBEDDING',           -- Moonshot AI embedding (custom dim)
+            'CUSTOM'                    -- Custom/fine-tuned model
+        );
+    END IF;
+END $$;
 
-CREATE TABLE ai.embedding_models (
+CREATE TABLE IF NOT EXISTS ai.embedding_models (
     id TEXT PRIMARY KEY,
     model_type ai.embedding_model NOT NULL,
     display_name TEXT NOT NULL,
@@ -73,7 +82,7 @@ ON CONFLICT (id) DO NOTHING;
 -- 4. DOCUMENT EMBEDDINGS (Core Vector Store)
 -- =============================================================================
 
-CREATE TABLE ai.document_embeddings (
+CREATE TABLE IF NOT EXISTS ai.document_embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Source Reference (polymorphic)
@@ -119,7 +128,7 @@ CREATE TABLE ai.document_embeddings (
 -- =============================================================================
 -- Pre-embedded FDA/EMA/ICH guidelines for RAG
 
-CREATE TABLE ai.regulatory_knowledge (
+CREATE TABLE IF NOT EXISTS ai.regulatory_knowledge (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Document Identity
@@ -157,7 +166,7 @@ CREATE TABLE ai.regulatory_knowledge (
 -- 6. SEARCH QUERIES LOG (For Analytics & Fine-tuning)
 -- =============================================================================
 
-CREATE TABLE ai.search_queries (
+CREATE TABLE IF NOT EXISTS ai.search_queries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Query
@@ -195,7 +204,7 @@ CREATE TABLE ai.search_queries (
 -- 7. RAG CONVERSATIONS (Chat History for Context)
 -- =============================================================================
 
-CREATE TABLE ai.rag_conversations (
+CREATE TABLE IF NOT EXISTS ai.rag_conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Ownership
@@ -216,7 +225,7 @@ CREATE TABLE ai.rag_conversations (
     last_message_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE ai.rag_messages (
+CREATE TABLE IF NOT EXISTS ai.rag_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES ai.rag_conversations(id) ON DELETE CASCADE,
     
@@ -247,43 +256,40 @@ CREATE TABLE ai.rag_messages (
 -- HNSW indexes for fast approximate nearest neighbor search
 -- Using cosine distance (most common for text embeddings)
 
-CREATE INDEX idx_embeddings_1536_hnsw ON ai.document_embeddings 
+CREATE INDEX IF NOT EXISTS idx_embeddings_1536_hnsw ON ai.document_embeddings 
     USING hnsw (embedding_1536 vector_cosine_ops)
     WITH (m = 16, ef_construction = 64)
     WHERE embedding_1536 IS NOT NULL;
 
-CREATE INDEX idx_embeddings_1024_hnsw ON ai.document_embeddings 
+CREATE INDEX IF NOT EXISTS idx_embeddings_1024_hnsw ON ai.document_embeddings 
     USING hnsw (embedding_1024 vector_cosine_ops)
     WITH (m = 16, ef_construction = 64)
     WHERE embedding_1024 IS NOT NULL;
 
-CREATE INDEX idx_embeddings_3072_hnsw ON ai.document_embeddings 
-    USING hnsw (embedding_3072 vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64)
-    WHERE embedding_3072 IS NOT NULL;
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 
 -- Filtering indexes
-CREATE INDEX idx_embeddings_source ON ai.document_embeddings(source_type, source_id);
-CREATE INDEX idx_embeddings_org ON ai.document_embeddings(org_id) WHERE org_id IS NOT NULL;
-CREATE INDEX idx_embeddings_module ON ai.document_embeddings(ectd_module) WHERE ectd_module IS NOT NULL;
-CREATE INDEX idx_embeddings_authority ON ai.document_embeddings(regulatory_authority) WHERE regulatory_authority IS NOT NULL;
-CREATE INDEX idx_embeddings_content_hash ON ai.document_embeddings(content_hash);
+CREATE INDEX IF NOT EXISTS idx_embeddings_source ON ai.document_embeddings(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_org ON ai.document_embeddings(org_id) WHERE org_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_embeddings_module ON ai.document_embeddings(ectd_module) WHERE ectd_module IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_embeddings_authority ON ai.document_embeddings(regulatory_authority) WHERE regulatory_authority IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_embeddings_content_hash ON ai.document_embeddings(content_hash);
 
 -- Knowledge base indexes
-CREATE INDEX idx_knowledge_code ON ai.regulatory_knowledge(document_code);
-CREATE INDEX idx_knowledge_authority ON ai.regulatory_knowledge(issuing_authority);
-CREATE INDEX idx_knowledge_domains ON ai.regulatory_knowledge USING GIN(applicable_domains);
-CREATE INDEX idx_knowledge_keywords ON ai.regulatory_knowledge USING GIN(keywords);
+CREATE INDEX IF NOT EXISTS idx_knowledge_code ON ai.regulatory_knowledge(document_code);
+CREATE INDEX IF NOT EXISTS idx_knowledge_authority ON ai.regulatory_knowledge(issuing_authority);
+CREATE INDEX IF NOT EXISTS idx_knowledge_domains ON ai.regulatory_knowledge USING GIN(applicable_domains);
+CREATE INDEX IF NOT EXISTS idx_knowledge_keywords ON ai.regulatory_knowledge USING GIN(keywords);
 
 -- Query log indexes
-CREATE INDEX idx_queries_user ON ai.search_queries(user_id);
-CREATE INDEX idx_queries_org ON ai.search_queries(org_id);
-CREATE INDEX idx_queries_created ON ai.search_queries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_queries_user ON ai.search_queries(user_id);
+CREATE INDEX IF NOT EXISTS idx_queries_org ON ai.search_queries(org_id);
+CREATE INDEX IF NOT EXISTS idx_queries_created ON ai.search_queries(created_at DESC);
 
 -- Conversation indexes
-CREATE INDEX idx_conversations_user ON ai.rag_conversations(user_id);
-CREATE INDEX idx_conversations_org ON ai.rag_conversations(org_id);
-CREATE INDEX idx_messages_conversation ON ai.rag_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_user ON ai.rag_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_org ON ai.rag_conversations(org_id);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation ON ai.rag_messages(conversation_id);
 
 -- =============================================================================
 -- 9. RLS POLICIES
@@ -295,6 +301,7 @@ ALTER TABLE ai.rag_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai.rag_messages ENABLE ROW LEVEL SECURITY;
 
 -- Document Embeddings: Org-scoped OR public (org_id IS NULL)
+DROP POLICY IF EXISTS embeddings_access ON ai.document_embeddings;
 CREATE POLICY embeddings_access ON ai.document_embeddings
     FOR SELECT
     USING (
@@ -302,6 +309,7 @@ CREATE POLICY embeddings_access ON ai.document_embeddings
         OR identity.can_access_org(org_id)
     );
 
+DROP POLICY IF EXISTS embeddings_write ON ai.document_embeddings;
 CREATE POLICY embeddings_write ON ai.document_embeddings
     FOR INSERT
     WITH CHECK (
@@ -310,6 +318,7 @@ CREATE POLICY embeddings_write ON ai.document_embeddings
     );
 
 -- Search Queries: User's own queries or org admin
+DROP POLICY IF EXISTS queries_access ON ai.search_queries;
 CREATE POLICY queries_access ON ai.search_queries
     FOR SELECT
     USING (
@@ -317,11 +326,13 @@ CREATE POLICY queries_access ON ai.search_queries
         OR identity.can_access_org(org_id)
     );
 
+DROP POLICY IF EXISTS queries_write ON ai.search_queries;
 CREATE POLICY queries_write ON ai.search_queries
     FOR INSERT
     WITH CHECK (TRUE);  -- Anyone can log queries
 
 -- Conversations: User's own or org-shared
+DROP POLICY IF EXISTS conversations_access ON ai.rag_conversations;
 CREATE POLICY conversations_access ON ai.rag_conversations
     FOR ALL
     USING (
@@ -330,6 +341,7 @@ CREATE POLICY conversations_access ON ai.rag_conversations
     );
 
 -- Messages: Inherit from conversation
+DROP POLICY IF EXISTS messages_access ON ai.rag_messages;
 CREATE POLICY messages_access ON ai.rag_messages
     FOR ALL
     USING (

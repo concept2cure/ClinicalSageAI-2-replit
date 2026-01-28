@@ -42,12 +42,20 @@ const cerJobErrors = new client.Counter({
   labelNames: ['error_type'],
 });
 
+// Concept2Cure error metrics
+const concept2cureErrors = new client.Counter({
+  name: 'concept2cure_errors_total',
+  help: 'Number of errors encountered during Concept2Cure operations',
+  labelNames: ['operation', 'error_type'],
+});
+
 // Register the metrics
 register.registerMetric(cerJobsTotal);
 register.registerMetric(cerJobDuration);
 register.registerMetric(cerJobsActive);
 register.registerMetric(cerJobsQueued);
 register.registerMetric(cerJobErrors);
+register.registerMetric(concept2cureErrors);
 
 // Export metrics for Prometheus scraping
 function setupMetricsEndpoint() {
@@ -74,5 +82,6 @@ module.exports = {
     cerJobsActive,
     cerJobsQueued,
     cerJobErrors,
+    concept2cureErrors,
   },
 };

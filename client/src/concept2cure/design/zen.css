@@ -1,0 +1,799 @@
+/**
+ * @fileoverview Zen CSS Variables
+ * @module concept2cure/design/zen.css
+ * @version 3.0.0
+ *
+ * Claude.ai / ChatGPT inspired minimalist theme.
+ * Apply this to create a calm, professional, focused experience.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN ROOT VARIABLES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Canvas - Background colors */
+  --zen-canvas: #FAFAF9;
+  --zen-canvas-muted: #F5F5F4;
+  --zen-canvas-elevated: #FFFFFF;
+  --zen-canvas-inverse: #18181B;
+
+  /* Ink - Text colors */
+  --zen-ink: #18181B;
+  --zen-ink-muted: #71717A;
+  --zen-ink-subtle: #A1A1AA;
+  --zen-ink-disabled: #D4D4D8;
+  --zen-ink-inverse: #FAFAFA;
+
+  /* Accent - Primary action color */
+  --zen-accent: #2563EB;
+  --zen-accent-hover: #1D4ED8;
+  --zen-accent-muted: #DBEAFE;
+  --zen-accent-subtle: #EFF6FF;
+
+  /* AI - Lumen persona color */
+  --zen-ai: #8B5CF6;
+  --zen-ai-hover: #7C3AED;
+  --zen-ai-muted: #EDE9FE;
+  --zen-ai-glow: rgba(139, 92, 246, 0.1);
+
+  /* Status colors */
+  --zen-success: #059669;
+  --zen-success-muted: #D1FAE5;
+  --zen-warning: #D97706;
+  --zen-warning-muted: #FEF3C7;
+  --zen-error: #DC2626;
+  --zen-error-muted: #FEE2E2;
+  --zen-info: #0284C7;
+  --zen-info-muted: #E0F2FE;
+
+  /* Borders */
+  --zen-border: #E4E4E7;
+  --zen-border-subtle: #F4F4F5;
+  --zen-border-focus: #2563EB;
+
+  /* Shadows - Subtle, layered */
+  --zen-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --zen-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --zen-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --zen-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --zen-shadow-glow: 0 0 20px rgb(37 99 235 / 0.1);
+
+  /* Border radius */
+  --zen-radius-sm: 0.375rem;
+  --zen-radius-md: 0.5rem;
+  --zen-radius-lg: 0.75rem;
+  --zen-radius-xl: 1rem;
+  --zen-radius-2xl: 1.5rem;
+  --zen-radius-full: 9999px;
+
+  /* Transitions */
+  --zen-transition-fast: 100ms;
+  --zen-transition-normal: 200ms;
+  --zen-transition-slow: 300ms;
+  --zen-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --zen-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Layout */
+  --zen-sidebar-collapsed: 60px;
+  --zen-sidebar-expanded: 260px;
+  --zen-content-max: 768px;
+  --zen-content-wide: 1024px;
+  --zen-header-height: 48px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--zen-canvas);
+  color: var(--zen-ink);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-container {
+  max-width: var(--zen-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .zen-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.zen-container-wide {
+  max-width: var(--zen-content-wide);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--zen-canvas);
+}
+
+.zen-sidebar {
+  flex-shrink: 0;
+  width: var(--zen-sidebar-expanded);
+  height: 100%;
+  background-color: var(--zen-canvas-muted);
+  border-right: 1px solid var(--zen-border-subtle);
+  transition: width var(--zen-transition-normal) var(--zen-ease);
+  overflow: hidden;
+}
+
+.zen-sidebar[data-collapsed="true"] {
+  width: var(--zen-sidebar-collapsed);
+}
+
+.zen-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.zen-header {
+  flex-shrink: 0;
+  height: var(--zen-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--zen-border-subtle);
+  background-color: var(--zen-canvas-elevated);
+}
+
+.zen-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN CHAT (Claude.ai style)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--zen-canvas);
+}
+
+.zen-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+}
+
+.zen-chat-message {
+  padding: 1rem 0;
+}
+
+.zen-chat-message-inner {
+  max-width: var(--zen-content-max);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .zen-chat-message-inner {
+    padding: 0 1.5rem;
+  }
+}
+
+.zen-chat-message[data-role="assistant"] {
+  background-color: var(--zen-canvas-muted);
+}
+
+.zen-chat-input-area {
+  flex-shrink: 0;
+  padding: 1rem;
+  border-top: 1px solid var(--zen-border-subtle);
+  background-color: var(--zen-canvas-elevated);
+}
+
+.zen-chat-input-container {
+  max-width: var(--zen-content-max);
+  margin: 0 auto;
+}
+
+.zen-chat-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--zen-canvas-elevated);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-xl);
+  transition: border-color var(--zen-transition-fast) var(--zen-ease),
+              box-shadow var(--zen-transition-fast) var(--zen-ease);
+}
+
+.zen-chat-input:focus-within {
+  border-color: var(--zen-border-focus);
+  box-shadow: var(--zen-shadow-glow);
+}
+
+.zen-chat-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--zen-ink);
+  outline: none;
+  min-height: 24px;
+  max-height: 200px;
+}
+
+.zen-chat-textarea::placeholder {
+  color: var(--zen-ink-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--zen-radius-md);
+  transition: all var(--zen-transition-fast) var(--zen-ease);
+  cursor: pointer;
+  outline: none;
+  border: none;
+}
+
+.zen-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--zen-canvas-elevated), 0 0 0 4px var(--zen-accent);
+}
+
+.zen-btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Primary */
+.zen-btn-primary {
+  background-color: var(--zen-accent);
+  color: var(--zen-ink-inverse);
+}
+
+.zen-btn-primary:hover {
+  background-color: var(--zen-accent-hover);
+}
+
+/* Secondary */
+.zen-btn-secondary {
+  background-color: var(--zen-canvas-elevated);
+  color: var(--zen-ink);
+  border: 1px solid var(--zen-border);
+}
+
+.zen-btn-secondary:hover {
+  background-color: var(--zen-canvas-muted);
+}
+
+/* Ghost */
+.zen-btn-ghost {
+  background-color: transparent;
+  color: var(--zen-ink-muted);
+}
+
+.zen-btn-ghost:hover {
+  background-color: var(--zen-canvas-muted);
+  color: var(--zen-ink);
+}
+
+/* Icon button */
+.zen-btn-icon {
+  padding: 0.5rem;
+  border-radius: var(--zen-radius-md);
+}
+
+.zen-btn-icon-sm {
+  padding: 0.375rem;
+}
+
+.zen-btn-icon-lg {
+  padding: 0.75rem;
+}
+
+/* Send button */
+.zen-btn-send {
+  padding: 0.625rem;
+  background-color: var(--zen-accent);
+  color: var(--zen-ink-inverse);
+  border-radius: var(--zen-radius-full);
+  transition: background-color var(--zen-transition-fast) var(--zen-ease),
+              transform var(--zen-transition-fast) var(--zen-ease);
+}
+
+.zen-btn-send:hover:not(:disabled) {
+  background-color: var(--zen-accent-hover);
+  transform: scale(1.05);
+}
+
+.zen-btn-send:disabled {
+  background-color: var(--zen-ink-disabled);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN CARDS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-card {
+  background-color: var(--zen-canvas-elevated);
+  border: 1px solid var(--zen-border-subtle);
+  border-radius: var(--zen-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--zen-shadow-xs);
+}
+
+.zen-card-hover {
+  transition: all var(--zen-transition-normal) var(--zen-ease);
+  cursor: pointer;
+}
+
+.zen-card-hover:hover {
+  border-color: var(--zen-border);
+  box-shadow: var(--zen-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.zen-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.zen-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--zen-ink);
+}
+
+.zen-card-description {
+  font-size: 0.875rem;
+  color: var(--zen-ink-muted);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN INPUTS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  background-color: var(--zen-canvas-elevated);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-md);
+  color: var(--zen-ink);
+  transition: border-color var(--zen-transition-fast) var(--zen-ease),
+              box-shadow var(--zen-transition-fast) var(--zen-ease);
+  outline: none;
+}
+
+.zen-input::placeholder {
+  color: var(--zen-ink-subtle);
+}
+
+.zen-input:focus {
+  border-color: var(--zen-border-focus);
+  box-shadow: 0 0 0 3px var(--zen-accent-subtle);
+}
+
+.zen-input:disabled {
+  background-color: var(--zen-canvas-muted);
+  color: var(--zen-ink-disabled);
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN SIDEBAR ITEMS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  margin: 0.125rem 0.5rem;
+  border-radius: var(--zen-radius-md);
+  color: var(--zen-ink-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--zen-transition-fast) var(--zen-ease);
+}
+
+.zen-sidebar-item:hover {
+  background-color: var(--zen-canvas-elevated);
+  color: var(--zen-ink);
+}
+
+.zen-sidebar-item[data-active="true"] {
+  background-color: var(--zen-accent-subtle);
+  color: var(--zen-accent);
+}
+
+.zen-sidebar-item-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  opacity: 0.7;
+}
+
+.zen-sidebar-item[data-active="true"] .zen-sidebar-item-icon {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN AVATAR
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--zen-radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.zen-avatar-user {
+  background-color: var(--zen-accent);
+  color: var(--zen-ink-inverse);
+}
+
+.zen-avatar-ai {
+  background-color: var(--zen-ai);
+  color: var(--zen-ink-inverse);
+}
+
+.zen-avatar-sm {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+}
+
+.zen-avatar-lg {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN BADGE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--zen-radius-full);
+}
+
+.zen-badge-default {
+  background-color: var(--zen-canvas-muted);
+  color: var(--zen-ink-muted);
+}
+
+.zen-badge-primary {
+  background-color: var(--zen-accent-subtle);
+  color: var(--zen-accent);
+}
+
+.zen-badge-success {
+  background-color: var(--zen-success-muted);
+  color: var(--zen-success);
+}
+
+.zen-badge-warning {
+  background-color: var(--zen-warning-muted);
+  color: var(--zen-warning);
+}
+
+.zen-badge-error {
+  background-color: var(--zen-error-muted);
+  color: var(--zen-error);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@keyframes zen-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zen-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zen-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zen-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.zen-animate-fade-in {
+  animation: zen-fade-in var(--zen-transition-normal) var(--zen-ease);
+}
+
+.zen-animate-slide-up {
+  animation: zen-slide-up var(--zen-transition-slow) var(--zen-ease);
+}
+
+.zen-animate-scale-in {
+  animation: zen-scale-in var(--zen-transition-normal) var(--zen-ease);
+}
+
+.zen-animate-pulse {
+  animation: zen-pulse 2s infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN SCROLLBAR (Minimal, Claude.ai style)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.zen-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.zen-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--zen-border);
+  border-radius: var(--zen-radius-full);
+}
+
+.zen-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--zen-ink-disabled);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN COMMAND PALETTE (ChatGPT / Spotlight style)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-command-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+
+.zen-command-dialog {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  background-color: var(--zen-canvas-elevated);
+  border-radius: var(--zen-radius-xl);
+  box-shadow: var(--zen-shadow-lg);
+  overflow: hidden;
+  z-index: 51;
+}
+
+.zen-command-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--zen-border-subtle);
+}
+
+.zen-command-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--zen-ink);
+  outline: none;
+}
+
+.zen-command-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.zen-command-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--zen-radius-md);
+  cursor: pointer;
+  transition: background-color var(--zen-transition-fast);
+}
+
+.zen-command-item:hover,
+.zen-command-item[data-selected="true"] {
+  background-color: var(--zen-canvas-muted);
+}
+
+.zen-command-item-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--zen-ink-muted);
+}
+
+.zen-command-item-title {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--zen-ink);
+}
+
+.zen-command-item-shortcut {
+  font-size: 0.75rem;
+  color: var(--zen-ink-subtle);
+  font-family: ui-monospace, monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN TYPING INDICATOR
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.5rem 0;
+}
+
+.zen-typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--zen-radius-full);
+  background-color: var(--zen-ai);
+  animation: zen-pulse 1.5s infinite;
+}
+
+.zen-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.zen-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.zen-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--zen-ink-disabled);
+  margin-bottom: 1rem;
+}
+
+.zen-empty-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--zen-ink);
+  margin-bottom: 0.5rem;
+}
+
+.zen-empty-description {
+  font-size: 0.875rem;
+  color: var(--zen-ink-muted);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN DIVIDER
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-divider {
+  height: 1px;
+  background-color: var(--zen-border-subtle);
+  margin: 1rem 0;
+}
+
+.zen-divider-vertical {
+  width: 1px;
+  height: auto;
+  background-color: var(--zen-border-subtle);
+  margin: 0 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ZEN UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.zen-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zen-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -60,25 +60,53 @@ CREATE TABLE IF NOT EXISTS method_links (
 );
 
 -- Add indexes for performance
-CREATE INDEX IF NOT EXISTS idx_stab_results_study_id ON stab_results(study_id);
-CREATE INDEX IF NOT EXISTS idx_stab_results_test_condition ON stab_results(test_name, condition);
-CREATE INDEX IF NOT EXISTS idx_stab_exports_study_id ON stab_exports(study_id);
-CREATE INDEX IF NOT EXISTS idx_capa_study_id ON capa(study_id);
-CREATE INDEX IF NOT EXISTS idx_capa_process_id ON capa(process_id);
-CREATE INDEX IF NOT EXISTS idx_strategy_p34_exports_process_id ON strategy_p34_exports(process_id);
-CREATE INDEX IF NOT EXISTS idx_method_links_entity ON method_links(entity_type, entity_id);
+DO $$
+BEGIN
+  IF to_regclass('public.stab_results') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_stab_results_study_id ON stab_results(study_id);
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'stab_results' AND column_name = 'test_name'
+    ) THEN
+      CREATE INDEX IF NOT EXISTS idx_stab_results_test_condition ON stab_results(test_name, condition);
+    END IF;
+  END IF;
+  IF to_regclass('public.stab_exports') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_stab_exports_study_id ON stab_exports(study_id);
+  END IF;
+  IF to_regclass('public.capa') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_capa_study_id ON capa(study_id);
+    CREATE INDEX IF NOT EXISTS idx_capa_process_id ON capa(process_id);
+  END IF;
+  IF to_regclass('public.strategy_p34_exports') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_strategy_p34_exports_process_id ON strategy_p34_exports(process_id);
+  END IF;
+  IF to_regclass('public.method_links') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_method_links_entity ON method_links(entity_type, entity_id);
+  END IF;
+END $$;
 
 -- Insert sample data for Results Grid demonstration
-INSERT INTO stab_results (study_id, test_name, condition, timepoint, value, unit, pass) VALUES
-('STAB-001', 'Assay', 'LT', '0M', 100.2, '%', true),
-('STAB-001', 'Assay', 'LT', '3M', 99.8, '%', true),
-('STAB-001', 'Assay', 'LT', '6M', 99.1, '%', true),
-('STAB-001', 'Dissolution', 'ACC', '0M', 95.5, '%', true),
-('STAB-001', 'Dissolution', 'ACC', '3M', 93.2, '%', false),
-('STAB-001', 'Related Substances', 'LT', '6M', 0.15, '%', true),
-('STAB-002', 'Assay', 'LT', '0M', 99.9, '%', true),
-('STAB-002', 'Assay', 'LT', '3M', 99.5, '%', true),
-('STAB-002', 'Water Content', 'INT', '0M', 2.1, '%', true);
+DO $$
+BEGIN
+  IF to_regclass('public.stab_results') IS NOT NULL
+     AND EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'stab_results' AND column_name = 'test_name'
+     ) THEN
+    INSERT INTO stab_results (study_id, test_name, condition, timepoint, value, unit, pass) VALUES
+    ('STAB-001', 'Assay', 'LT', '0M', 100.2, '%', true),
+    ('STAB-001', 'Assay', 'LT', '3M', 99.8, '%', true),
+    ('STAB-001', 'Assay', 'LT', '6M', 99.1, '%', true),
+    ('STAB-001', 'Dissolution', 'ACC', '0M', 95.5, '%', true),
+    ('STAB-001', 'Dissolution', 'ACC', '3M', 93.2, '%', false),
+    ('STAB-001', 'Related Substances', 'LT', '6M', 0.15, '%', true),
+    ('STAB-002', 'Assay', 'LT', '0M', 99.9, '%', true),
+    ('STAB-002', 'Assay', 'LT', '3M', 99.5, '%', true),
+    ('STAB-002', 'Water Content', 'INT', '0M', 2.1, '%', true)
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
 
 -- Insert sample CAPA records
 INSERT INTO capa (study_id, title, why, owner, due_date, status) VALUES

@@ -160,14 +160,19 @@ GRANT DELETE ON prose.submission_snapshot_fragments TO gcc_app_writer;
 -- Grant sequence usage for tables with serial/identity columns
 DO $$
 DECLARE
+    seq_schema TEXT;
     seq_name TEXT;
 BEGIN
     -- Find and grant sequences in each schema
-    FOR seq_name IN 
-        SELECT sequence_name FROM information_schema.sequences 
+    FOR seq_schema, seq_name IN 
+        SELECT sequence_schema, sequence_name FROM information_schema.sequences 
         WHERE sequence_schema IN ('truth', 'prose', 'adversarial', 'audit')
     LOOP
-        EXECUTE format('GRANT USAGE ON SEQUENCE %I TO gcc_app_writer, gcc_shadow_agent', seq_name);
+        EXECUTE format(
+          'GRANT USAGE ON SEQUENCE %I.%I TO gcc_app_writer, gcc_shadow_agent',
+          seq_schema,
+          seq_name
+        );
     END LOOP;
 END $$;
 

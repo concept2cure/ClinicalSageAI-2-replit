@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Concept2Cure foundation migration (tables, indexes, RLS, immutability).
+- Concept2Cure signatures migration and API endpoint.
+- Concept2Cure route tests for projects, conversations, artifacts, and signatures.
+- Roadmap-aligned schema entry points for organizations and client engagements.
+- Roadmap-aligned schema entry points for projects, WBS, and assignments.
+- Roadmap-aligned PM settings schema and default seed entry point.
+- Roadmap-aligned risk factor, detection, and prediction schema entry points.
+- Roadmap-aligned communication channels, messages, and FDA communications schema entry points.
+- Roadmap-aligned audit log and electronic signatures schema entry points.
+- Roadmap-aligned documents and document versions schema entry points.
+- Roadmap-aligned RLS policies entry point.
+- Roadmap-aligned knowledge base and response cache schema entry points.
+
+### Changed
+- Redis rate limiter now initializes and shuts down with server lifecycle.
+- Concept2Cure queries now batch message/version lookups to reduce N+1 load.
+- Concept2Cure debug logging redacts request bodies in DEBUG mode.
+- Concept2Cure error logs include structured operation fields.
+- Concept2Cure error metrics counter added for observability.
+- Concept2Cure migration run now completes successfully (64 succeeded, 0 failed).
+- Fixed Concept2Cure migration policy checks (pg_policies.policyname) to allow successful reruns.
+
+### Changed
+- Concept2Cure migration runner path now targets root db/migrations.
+- Migration manifest updated to include Concept2Cure foundation migration.
+- Unified Concept2Cure roadmap cleaned and schedule authority clarified.
+
+### Added
 - Tech debt prevention system with ESLint rules and pre-commit hooks
 - Comprehensive architecture documentation
 - GRDHE (Global Regulatory Data Harmonization Engine) module

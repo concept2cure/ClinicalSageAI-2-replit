@@ -14,24 +14,42 @@ CREATE SCHEMA IF NOT EXISTS labeling;
 -- SPL (Structured Product Labeling) DOCUMENT MANAGEMENT
 -- =============================================================================
 
-CREATE TYPE labeling.spl_document_type AS ENUM (
-    'PI',           -- Prescribing Information (Package Insert)
-    'PPI',          -- Patient Package Insert
-    'MG',           -- Medication Guide
-    'IFU',          -- Instructions for Use
-    'REMS',         -- Risk Evaluation and Mitigation Strategy
-    'SUPPLEMENT'    -- Supplemental labeling
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'labeling' AND t.typname = 'spl_document_type'
+    ) THEN
+        CREATE TYPE labeling.spl_document_type AS ENUM (
+            'PI',           -- Prescribing Information (Package Insert)
+            'PPI',          -- Patient Package Insert
+            'MG',           -- Medication Guide
+            'IFU',          -- Instructions for Use
+            'REMS',         -- Risk Evaluation and Mitigation Strategy
+            'SUPPLEMENT'    -- Supplemental labeling
+        );
+    END IF;
+END $$;
 
-CREATE TYPE labeling.spl_status AS ENUM (
-    'DRAFT',
-    'UNDER_REVIEW',
-    'APPROVED',
-    'SUPERSEDED',
-    'WITHDRAWN'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'labeling' AND t.typname = 'spl_status'
+    ) THEN
+        CREATE TYPE labeling.spl_status AS ENUM (
+            'DRAFT',
+            'UNDER_REVIEW',
+            'APPROVED',
+            'SUPERSEDED',
+            'WITHDRAWN'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE labeling.spl_documents (
+CREATE TABLE IF NOT EXISTS labeling.spl_documents (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id          UUID NOT NULL REFERENCES core.programs(id) ON DELETE RESTRICT,
     
@@ -62,9 +80,9 @@ CREATE TABLE labeling.spl_documents (
     UNIQUE(spl_set_id, spl_version)
 );
 
-CREATE INDEX idx_spl_documents_program ON labeling.spl_documents(program_id);
-CREATE INDEX idx_spl_documents_set ON labeling.spl_documents(spl_set_id);
-CREATE INDEX idx_spl_documents_status ON labeling.spl_documents(status);
+CREATE INDEX IF NOT EXISTS idx_spl_documents_program ON labeling.spl_documents(program_id);
+CREATE INDEX IF NOT EXISTS idx_spl_documents_set ON labeling.spl_documents(spl_set_id);
+CREATE INDEX IF NOT EXISTS idx_spl_documents_status ON labeling.spl_documents(status);
 
 COMMENT ON TABLE labeling.spl_documents IS 
 'Structured Product Labeling documents per FDA SPL format. Versioned with full content tracking.';
@@ -73,7 +91,7 @@ COMMENT ON TABLE labeling.spl_documents IS
 -- LABEL SECTIONS (Granular section tracking for impact analysis)
 -- =============================================================================
 
-CREATE TABLE labeling.spl_sections (
+CREATE TABLE IF NOT EXISTS labeling.spl_sections (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     spl_document_id     UUID NOT NULL REFERENCES labeling.spl_documents(id) ON DELETE CASCADE,
     
@@ -96,9 +114,9 @@ CREATE TABLE labeling.spl_sections (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_spl_sections_document ON labeling.spl_sections(spl_document_id);
-CREATE INDEX idx_spl_sections_loinc ON labeling.spl_sections(loinc_code);
-CREATE INDEX idx_spl_sections_parent ON labeling.spl_sections(parent_section_id);
+CREATE INDEX IF NOT EXISTS idx_spl_sections_document ON labeling.spl_sections(spl_document_id);
+CREATE INDEX IF NOT EXISTS idx_spl_sections_loinc ON labeling.spl_sections(loinc_code);
+CREATE INDEX IF NOT EXISTS idx_spl_sections_parent ON labeling.spl_sections(parent_section_id);
 
 COMMENT ON TABLE labeling.spl_sections IS 
 'Individual sections within SPL documents. Tracked by LOINC code for impact analysis.';
@@ -135,22 +153,40 @@ ON CONFLICT DO NOTHING;
 -- LABEL CHANGE TRACKING
 -- =============================================================================
 
-CREATE TYPE labeling.change_type AS ENUM (
-    'ADDITION',
-    'MODIFICATION',
-    'DELETION',
-    'REFORMATTING'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'labeling' AND t.typname = 'change_type'
+    ) THEN
+        CREATE TYPE labeling.change_type AS ENUM (
+            'ADDITION',
+            'MODIFICATION',
+            'DELETION',
+            'REFORMATTING'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE labeling.change_impact AS ENUM (
-    'CRITICAL',     -- Safety-related, requires immediate notification
-    'HIGH',         -- Significant clinical impact
-    'MEDIUM',       -- Moderate clinical relevance
-    'LOW',          -- Minor clarification
-    'MINIMAL'       -- Editorial/formatting only
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'labeling' AND t.typname = 'change_impact'
+    ) THEN
+        CREATE TYPE labeling.change_impact AS ENUM (
+            'CRITICAL',     -- Safety-related, requires immediate notification
+            'HIGH',         -- Significant clinical impact
+            'MEDIUM',       -- Moderate clinical relevance
+            'LOW',          -- Minor clarification
+            'MINIMAL'       -- Editorial/formatting only
+        );
+    END IF;
+END $$;
 
-CREATE TABLE labeling.label_changes (
+CREATE TABLE IF NOT EXISTS labeling.label_changes (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Version comparison
@@ -183,9 +219,9 @@ CREATE TABLE labeling.label_changes (
     created_by          UUID
 );
 
-CREATE INDEX idx_label_changes_documents ON labeling.label_changes(from_document_id, to_document_id);
-CREATE INDEX idx_label_changes_impact ON labeling.label_changes(change_impact);
-CREATE INDEX idx_label_changes_score ON labeling.label_changes(impact_score DESC);
+CREATE INDEX IF NOT EXISTS idx_label_changes_documents ON labeling.label_changes(from_document_id, to_document_id);
+CREATE INDEX IF NOT EXISTS idx_label_changes_impact ON labeling.label_changes(change_impact);
+CREATE INDEX IF NOT EXISTS idx_label_changes_score ON labeling.label_changes(impact_score DESC);
 
 COMMENT ON TABLE labeling.label_changes IS 
 'Tracked changes between SPL document versions with impact scoring.';
@@ -194,14 +230,23 @@ COMMENT ON TABLE labeling.label_changes IS
 -- IMPACT SIMULATION RUNS
 -- =============================================================================
 
-CREATE TYPE labeling.simulation_status AS ENUM (
-    'PENDING',
-    'RUNNING',
-    'COMPLETED',
-    'FAILED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'labeling' AND t.typname = 'simulation_status'
+    ) THEN
+        CREATE TYPE labeling.simulation_status AS ENUM (
+            'PENDING',
+            'RUNNING',
+            'COMPLETED',
+            'FAILED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE labeling.impact_simulations (
+CREATE TABLE IF NOT EXISTS labeling.impact_simulations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id          UUID NOT NULL REFERENCES core.programs(id) ON DELETE RESTRICT,
     
@@ -231,8 +276,8 @@ CREATE TABLE labeling.impact_simulations (
     created_by          UUID
 );
 
-CREATE INDEX idx_impact_simulations_program ON labeling.impact_simulations(program_id);
-CREATE INDEX idx_impact_simulations_status ON labeling.impact_simulations(status);
+CREATE INDEX IF NOT EXISTS idx_impact_simulations_program ON labeling.impact_simulations(program_id);
+CREATE INDEX IF NOT EXISTS idx_impact_simulations_status ON labeling.impact_simulations(status);
 
 COMMENT ON TABLE labeling.impact_simulations IS 
 'Label impact simulation runs for proposed changes analysis.';
@@ -241,7 +286,7 @@ COMMENT ON TABLE labeling.impact_simulations IS
 -- REGULATORY CROSS-REFERENCES
 -- =============================================================================
 
-CREATE TABLE labeling.regulatory_references (
+CREATE TABLE IF NOT EXISTS labeling.regulatory_references (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     section_id          UUID NOT NULL REFERENCES labeling.spl_sections(id) ON DELETE CASCADE,
     
@@ -259,8 +304,8 @@ CREATE TABLE labeling.regulatory_references (
     created_by          UUID
 );
 
-CREATE INDEX idx_regulatory_refs_section ON labeling.regulatory_references(section_id);
-CREATE INDEX idx_regulatory_refs_type ON labeling.regulatory_references(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_regulatory_refs_section ON labeling.regulatory_references(section_id);
+CREATE INDEX IF NOT EXISTS idx_regulatory_refs_type ON labeling.regulatory_references(reference_type, reference_id);
 
 COMMENT ON TABLE labeling.regulatory_references IS 
 'Cross-references from label sections to clinical studies, adverse events, and safety signals.';

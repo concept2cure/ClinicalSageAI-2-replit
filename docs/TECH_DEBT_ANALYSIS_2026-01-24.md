@@ -198,6 +198,73 @@ When I touch any file, I will:
 |--------|---------|---------|---------|
 | Max file size | 25,425 | 2,000 | 500 |
 | console.log count | 6,891 | 1,000 | 0 |
+
+---
+
+# Roadmap QC Review Addendum (Jan 28, 2026)
+**Prepared by:** GitHub Copilot (QC Review)  
+**Scope:** Concept2Cure unified roadmap parts 1–5 and unified roadmap doc  
+**Status:** Actionable, prioritized fix list
+
+## ✅ On-Track Items
+1. **Concept2Cure data persistence**: Conversations/messages/artifacts now persisted in Postgres with versioning and integrity hashes.
+2. **Production sanitization**: DOMPurify (isomorphic) added for server-side XSS mitigation.
+3. **Distributed rate limiting**: Redis-based limiter implemented with fallback behavior.
+4. **Portal v2 foundation**: Portal context, intent engine, and shell scaffolding present under `client/src/portal-v2/`.
+
+## ❗ Objective Misses vs Roadmap
+1. **Roadmap doc integrity drift**
+   - Duplicate headings and incomplete sections in the unified roadmap reduce it as a “single source of truth.”
+   - Timeline mismatch: Part 2 (10-week plan) conflicts with Part 4 (12-week plan).
+
+2. **Database foundation incomplete (Phase 1 requirement)**
+   - New Concept2Cure tables added, but **migrations/RLS/audit triggers** for those tables are not present.
+   - Roadmap requires RLS for tenant isolation and immutable audit trail enforcement.
+
+3. **Compliance gaps**
+   - Hashing exists but **no tamper-evident chain** across versions.
+   - **Electronic signature** workflow not wired for “approval/lock” transitions.
+
+4. **Testing coverage gap**
+   - No unit/integration/E2E coverage for Concept2Cure endpoints despite Part 5 requirements.
+
+5. **Operational wiring**
+   - Redis rate limiter requires server bootstrap initialization and graceful shutdown hooks.
+
+## 🎯 Prioritized Fix List (Aligned to Roadmap Phases)
+**P0 — Foundation (Week 1)**
+1. Add DB migrations for Concept2Cure tables.
+2. Add RLS policies for tenant isolation on Concept2Cure tables.
+3. Add audit trigger or append-only strategy for immutable change history.
+4. Reconcile roadmap schedules (10-week vs 12-week) and fix unified doc duplication.
+
+**P1 — Compliance & Integrity**
+1. Implement tamper-evident hash chain for message and artifact versions.
+2. Add electronic signature flow for “approve/lock” operations.
+
+**P2 — Testing & Observability**
+1. Add integration tests for Concept2Cure routes.
+2. Add security tests for tenant isolation + audit logging.
+3. Add performance tests for AI routes (latency budgets).
+
+**P3 — Operational Hardening**
+1. Wire Redis rate limiter into server bootstrap (init/shutdown).
+2. Add background cleanup and monitoring metrics for Redis limiter.
+
+## 📌 Documentation Record Actions
+- Updated: **TECH_DEBT_ANALYSIS_2026-01-24.md** with this QC addendum.
+- Next: Produce a consolidated “Roadmap Compliance Matrix” if requested.
+
+## ✅ Implementation Record (Audit Mode)
+- **2026‑01‑28:** Concept2Cure DB foundation migration created (tables, indexes, RLS, immutability).
+- **2026‑01‑28:** Concept2Cure signatures migration and API endpoint added (append‑only signatures).
+- **2026‑01‑28:** Concept2Cure route tests added (projects, conversations, artifacts, signatures).
+- **2026‑01‑28:** Redis rate limiter lifecycle wired (init + shutdown).
+- **2026‑01‑28:** Red team remediation: batched queries, debug log redaction, structured error logs.
+- **2026‑01‑28:** Concept2Cure error metrics counter added.
+- **2026‑01‑28:** Migration runner path corrected for Concept2Cure scripts.
+- **2026‑01‑28:** Migration manifest updated to include Concept2Cure foundation.
+- **2026‑01‑28:** Unified roadmap duplication cleaned; authoritative schedule declared.
 | Test coverage | ~1% | 20% | 50% |
 | TypeScript % | 46% | 70% | 95% |
 | Deprecated folders | 5.3MB | 0 | 0 |

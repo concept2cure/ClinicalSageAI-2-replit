@@ -21,54 +21,85 @@ This document is the **SINGLE SOURCE OF TRUTH** for the Concept2Cure platform de
 
 ### Vision Statement
 > "Be the defacto go-to intelligence center outside of the actual FDA."
-> "Be the defacto go-to intelligence center outside of the actual FDA."
+
 ---
----
-## Table of Contents
+
 ## Table of Contents
 1. [Architecture Overview](#1-architecture-overview)
 2. [Lumen Cortex AI System](#2-lumen-cortex-ai-system)
 3. [Lumen PM v2.0 Predictive Intelligence](#3-lumen-pm-v20-predictive-intelligence)
-4. [Convergent Portal UI](#4-convergent-portal-ui)n-pm-v20-predictive-intelligence)
+4. [Convergent Portal UI](#4-convergent-portal-ui)
 5. [Project Cortex Data Harvesting](#5-project-cortex-data-harvesting)
-6. [Database Schema](#6-database-schema)roject-cortex-data-harvesting)
+6. [Database Schema](#6-database-schema)
 7. [21 CFR Part 11 Compliance](#7-21-cfr-part-11-compliance)
-8. [10-Week Implementation Plan](#8-10-week-implementation-plan)
-9. [File Structure Reference](#9-file-structure-reference)-plan)
-10. [API Reference](#10-api-reference)structure-reference)
+8. [Implementation Plan (Authoritative)](#8-implementation-plan-authoritative)
+9. [File Structure Reference](#9-file-structure-reference)
 10. [API Reference](#10-api-reference)
+
 ---
----
-## 1. Architecture Overview
+
 ## 1. Architecture Overview
 ### Core Principles
 
 1. **Polymorphic Layouts** - UI morphs based on user role and context
-2. **Cache-First AI Integration** - Local context caching for instant responses│
+2. **Cache-First AI Integration** - Local context caching for instant responses
 3. **Intent Engine Routing** - Natural language navigation
-4. **Multi-Tenant Isolation** - Complete data separation per organization│
+4. **Multi-Tenant Isolation** - Complete data separation per organization
 5. **Warm Luxe Brand Palette** - Premium visual experience
-││
 ---
 
+For full implementation detail, see the authoritative parts:
+- Part 1: Lumen Cortex + Portal Architecture
+- Part 2: 10‑Week Plan (superseded by Part 4)
+- Part 3: UI/UX + DB + Compliance
+- Part 4: 12‑Week Implementation Plan (authoritative)
+- Part 5: Testing + Deployment + KPIs
+
 ## 2. Lumen Cortex AI System
+**Summary:** Cognitive advisory services, risk analysis, suggestion generation, and multi‑source regulatory intelligence.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART1.md](docs/CONCEPT2CURE_ROADMAP_PART1.md)
 
+## 3. Lumen PM v2.0 Predictive Intelligence
+**Summary:** Risk detectors, prediction engine, proactive monitoring, and mitigation recommendations.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART4.md](docs/CONCEPT2CURE_ROADMAP_PART4.md)
 
+## 4. Convergent Portal UI
+**Summary:** Polymorphic layouts, ambient context bar, AI panel, and role‑based navigation.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART3.md](docs/CONCEPT2CURE_ROADMAP_PART3.md)
 
+## 5. Project Cortex Data Harvesting
+**Summary:** Orchestration layer and data harvesting services for regulatory intelligence.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART1.md](docs/CONCEPT2CURE_ROADMAP_PART1.md)
 
+## 6. Database Schema
+**Summary:** Domain‑specific tables, audit fields, and tenant isolation requirements.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART3.md](docs/CONCEPT2CURE_ROADMAP_PART3.md)
 
+## 7. 21 CFR Part 11 Compliance
+**Summary:** Immutable audit trail, electronic signatures, integrity hashing, and access control.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART3.md](docs/CONCEPT2CURE_ROADMAP_PART3.md) and [docs/CONCEPT2CURE_ROADMAP_PART5.md](docs/CONCEPT2CURE_ROADMAP_PART5.md)
 
+## 8. Implementation Plan (Authoritative)
+**Authoritative schedule:** 12‑week plan in Part 4. The 10‑week plan in Part 2 is superseded.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART4.md](docs/CONCEPT2CURE_ROADMAP_PART4.md)
 
+## 9. File Structure Reference
+**Summary:** Repository structure by domain; module boundaries should align to portal‑v2 and service layers.  
+**Source of truth:** [docs/CONCEPT2CURE_ROADMAP_PART2.md](docs/CONCEPT2CURE_ROADMAP_PART2.md)
 
+## 10. API Reference
+**Summary:** See server route modules for authoritative API endpoints.  
+**Primary Concept2Cure API:** [server/routes/concept2cure.ts](server/routes/concept2cure.ts)
 
+---
 
+## Change Log
+- **2026‑01‑28:** Cleaned duplicated headings/TOC and reconciled schedule authority (12‑week plan in Part 4).
 
+---
 
-
-
-
-
-
+## Notes
+- This document is a concise index that points to authoritative parts. Avoid duplicating full content here.
 
 
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "generatedAt": "2025-01-14T00:00:00Z",
   "description": "Migration manifest for ClinicalSageAI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 98,
+  "totalMigrations": 99,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -367,7 +367,10 @@
     "100_regulatory_templates.sql",
     "101_complete_template_catalog.sql",
     "102_load_all_templates.sql",
-    "103_load_complete_templates.sql"
+    "103_load_complete_templates.sql",
+    "20260128_concept2cure_foundation.sql",
+    "20260128_concept2cure_signatures.sql",
+    "20260128_concept2cure_wbs_assignments.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"
@@ -386,6 +389,18 @@
       {
         "file": "080_gcc_21cfr_part11_compliance.sql",
         "reason": "21 CFR Part 11: Full compliance layer"
+      },
+      {
+        "file": "20260128_concept2cure_foundation.sql",
+        "reason": "Concept2Cure: tenant isolation + append-only audit foundations"
+      },
+      {
+        "file": "20260128_concept2cure_signatures.sql",
+        "reason": "Concept2Cure: electronic signatures + append-only compliance"
+      },
+      {
+        "file": "20260128_concept2cure_wbs_assignments.sql",
+        "reason": "Concept2Cure: WBS + assignments tables for Step 1.2"
       },
       {
         "file": "053_gcc_rls_policies.sql",

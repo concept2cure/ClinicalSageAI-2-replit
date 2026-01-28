@@ -15,39 +15,68 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS cognitive_audit;
 
+-- Ensure agent_runtime schema exists for FK references
+CREATE SCHEMA IF NOT EXISTS agent_runtime;
+CREATE TABLE IF NOT EXISTS agent_runtime.agent_definitions (
+    id UUID PRIMARY KEY
+);
+ALTER TABLE IF EXISTS agent_runtime.agent_definitions
+    ADD COLUMN IF NOT EXISTS agent_code TEXT,
+    ADD COLUMN IF NOT EXISTS agent_type TEXT;
+CREATE TABLE IF NOT EXISTS agent_runtime.agent_threads (
+    thread_id UUID PRIMARY KEY
+);
+CREATE TABLE IF NOT EXISTS agent_runtime.reasoning_traces (
+    id UUID PRIMARY KEY
+);
+
 COMMENT ON SCHEMA cognitive_audit IS 
 'Semantic audit trails capturing WHY decisions were made, not just WHAT changed';
 
--- =============================================================================
--- 2. SEMANTIC AUDIT LOG (Enhanced Audit Trail)
--- =============================================================================
--- Table 1 from the roadmap: Traditional → Cognitive audit trail evolution
 
-CREATE TYPE cognitive_audit.actor_type AS ENUM (
-    'HUMAN_USER',
-    'AUTONOMOUS_AGENT',
-    'SYSTEM_PROCESS',
-    'EXTERNAL_INTEGRATION',
-    'FEDERATED_NODE'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'cognitive_audit' AND t.typname = 'actor_type'
+    ) THEN
+        CREATE TYPE cognitive_audit.actor_type AS ENUM (
+            'HUMAN_USER',
+            'AUTONOMOUS_AGENT',
+            'SYSTEM_PROCESS',
+            'EXTERNAL_INTEGRATION',
+            'FEDERATED_NODE'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE cognitive_audit.action_category AS ENUM (
-    'CREATE',
-    'READ',
-    'UPDATE',
-    'DELETE',
-    'APPROVE',
-    'REJECT',
-    'SUBMIT',
-    'SIGN',
-    'DELEGATE',
-    'ESCALATE',
-    'INFERENCE',                   -- AI-generated content
-    'VALIDATION',                  -- Automated validation
-    'INTEGRATION'                  -- External system sync
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'cognitive_audit' AND t.typname = 'action_category'
+    ) THEN
+        CREATE TYPE cognitive_audit.action_category AS ENUM (
+            'CREATE',
+            'READ',
+            'UPDATE',
+            'DELETE',
+            'APPROVE',
+            'REJECT',
+            'SUBMIT',
+            'SIGN',
+            'DELEGATE',
+            'ESCALATE',
+            'INFERENCE',                   -- AI-generated content
+            'VALIDATION',                  -- Automated validation
+            'INTEGRATION'                  -- External system sync
+        );
+    END IF;
+END $$;
 
-CREATE TABLE cognitive_audit.semantic_audit_log (
+CREATE TABLE IF NOT EXISTS cognitive_audit.semantic_audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- =========================================================================
@@ -117,7 +146,7 @@ CREATE TABLE cognitive_audit.semantic_audit_log (
     -- Traditional: Date/Time of commit
     -- Cognitive: Date/Time of inference + Processing Duration
     
-    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    event_timestamp TIMESTAMPTZ DEFAULT NOW(),
     inference_started_at TIMESTAMPTZ,
     inference_completed_at TIMESTAMPTZ,
     processing_duration_ms INT,
@@ -148,35 +177,44 @@ CREATE TABLE cognitive_audit.semantic_audit_log (
 );
 
 -- Performance Indexes
-CREATE INDEX idx_semantic_audit_timestamp ON cognitive_audit.semantic_audit_log(timestamp DESC);
-CREATE INDEX idx_semantic_audit_actor ON cognitive_audit.semantic_audit_log(actor_type, user_id);
-CREATE INDEX idx_semantic_audit_agent ON cognitive_audit.semantic_audit_log(agent_definition_id) 
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_timestamp ON cognitive_audit.semantic_audit_log(event_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_actor ON cognitive_audit.semantic_audit_log(actor_type, user_id);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_agent ON cognitive_audit.semantic_audit_log(agent_definition_id) 
     WHERE agent_definition_id IS NOT NULL;
-CREATE INDEX idx_semantic_audit_target ON cognitive_audit.semantic_audit_log(target_schema, target_table, target_id);
-CREATE INDEX idx_semantic_audit_action ON cognitive_audit.semantic_audit_log(action_category);
-CREATE INDEX idx_semantic_audit_session ON cognitive_audit.semantic_audit_log(session_id);
-CREATE INDEX idx_semantic_audit_thread ON cognitive_audit.semantic_audit_log(thread_id);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_target ON cognitive_audit.semantic_audit_log(target_schema, target_table, target_id);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_action ON cognitive_audit.semantic_audit_log(action_category);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_session ON cognitive_audit.semantic_audit_log(session_id);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_thread ON cognitive_audit.semantic_audit_log(thread_id);
 
 -- Full-text search on reasoning
-CREATE INDEX idx_semantic_audit_reasoning_fts ON cognitive_audit.semantic_audit_log 
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_reasoning_fts ON cognitive_audit.semantic_audit_log 
     USING GIN (to_tsvector('english', COALESCE(reasoning_summary, '') || ' ' || COALESCE(action_description, '')));
 
 -- Integrity verification index
-CREATE INDEX idx_semantic_audit_hash_chain ON cognitive_audit.semantic_audit_log(previous_record_hash);
+CREATE INDEX IF NOT EXISTS idx_semantic_audit_hash_chain ON cognitive_audit.semantic_audit_log(previous_record_hash);
 
 -- =============================================================================
 -- 3. AUDIT REPLAY SESSIONS ("Instant Replay" for Auditors)
 -- =============================================================================
 
-CREATE TYPE cognitive_audit.replay_status AS ENUM (
-    'PREPARING',
-    'READY',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'FAILED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'cognitive_audit' AND t.typname = 'replay_status'
+    ) THEN
+        CREATE TYPE cognitive_audit.replay_status AS ENUM (
+            'PREPARING',
+            'READY',
+            'IN_PROGRESS',
+            'COMPLETED',
+            'FAILED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE cognitive_audit.audit_replay_sessions (
+CREATE TABLE IF NOT EXISTS cognitive_audit.audit_replay_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Scope
@@ -208,30 +246,48 @@ CREATE TABLE cognitive_audit.audit_replay_sessions (
     completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_audit_replay_thread ON cognitive_audit.audit_replay_sessions(thread_id);
-CREATE INDEX idx_audit_replay_status ON cognitive_audit.audit_replay_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_audit_replay_thread ON cognitive_audit.audit_replay_sessions(thread_id);
+CREATE INDEX IF NOT EXISTS idx_audit_replay_status ON cognitive_audit.audit_replay_sessions(status);
 
 -- =============================================================================
 -- 4. ELECTRONIC SIGNATURES (21 CFR Part 11 Compliant)
 -- =============================================================================
 
-CREATE TYPE cognitive_audit.signature_type AS ENUM (
-    'AUTHOR',                      -- Created the content
-    'REVIEWER',                    -- Reviewed the content
-    'APPROVER',                    -- Approved the content
-    'WITNESS',                     -- Witnessed the action
-    'SUBMITTER'                    -- Submitted to authority
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'cognitive_audit' AND t.typname = 'signature_type'
+    ) THEN
+        CREATE TYPE cognitive_audit.signature_type AS ENUM (
+            'AUTHOR',                      -- Created the content
+            'REVIEWER',                    -- Reviewed the content
+            'APPROVER',                    -- Approved the content
+            'WITNESS',                     -- Witnessed the action
+            'SUBMITTER'                    -- Submitted to authority
+        );
+    END IF;
+END $$;
 
-CREATE TYPE cognitive_audit.signature_method AS ENUM (
-    'PASSWORD',                    -- Username + password
-    'MFA',                         -- Multi-factor authentication
-    'BIOMETRIC',                   -- Fingerprint, etc.
-    'PKI',                         -- Digital certificate
-    'SSO_TOKEN'                    -- Enterprise SSO
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'cognitive_audit' AND t.typname = 'signature_method'
+    ) THEN
+        CREATE TYPE cognitive_audit.signature_method AS ENUM (
+            'PASSWORD',                    -- Username + password
+            'MFA',                         -- Multi-factor authentication
+            'BIOMETRIC',                   -- Fingerprint, etc.
+            'PKI',                         -- Digital certificate
+            'SSO_TOKEN'                    -- Enterprise SSO
+        );
+    END IF;
+END $$;
 
-CREATE TABLE cognitive_audit.electronic_signatures (
+CREATE TABLE IF NOT EXISTS cognitive_audit.electronic_signatures (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- What is being signed
@@ -264,15 +320,15 @@ CREATE TABLE cognitive_audit.electronic_signatures (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_esignatures_audit ON cognitive_audit.electronic_signatures(audit_record_id);
-CREATE INDEX idx_esignatures_signer ON cognitive_audit.electronic_signatures(signer_id);
-CREATE INDEX idx_esignatures_type ON cognitive_audit.electronic_signatures(signature_type);
+CREATE INDEX IF NOT EXISTS idx_esignatures_audit ON cognitive_audit.electronic_signatures(audit_record_id);
+CREATE INDEX IF NOT EXISTS idx_esignatures_signer ON cognitive_audit.electronic_signatures(signer_id);
+CREATE INDEX IF NOT EXISTS idx_esignatures_type ON cognitive_audit.electronic_signatures(signature_type);
 
 -- =============================================================================
 -- 5. COMPLIANCE ATTESTATIONS
 -- =============================================================================
 
-CREATE TABLE cognitive_audit.compliance_attestations (
+CREATE TABLE IF NOT EXISTS cognitive_audit.compliance_attestations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Scope
@@ -304,8 +360,8 @@ CREATE TABLE cognitive_audit.compliance_attestations (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_compliance_attestations_type ON cognitive_audit.compliance_attestations(attestation_type);
-CREATE INDEX idx_compliance_attestations_target ON cognitive_audit.compliance_attestations(target_entity_type, target_entity_id);
+CREATE INDEX IF NOT EXISTS idx_compliance_attestations_type ON cognitive_audit.compliance_attestations(attestation_type);
+CREATE INDEX IF NOT EXISTS idx_compliance_attestations_target ON cognitive_audit.compliance_attestations(target_entity_type, target_entity_id);
 
 -- =============================================================================
 -- 6. AUDIT HASH CHAIN FUNCTIONS
@@ -382,7 +438,7 @@ BEGIN
     -- Get previous record hash for chain
     SELECT record_hash INTO v_previous_hash
     FROM cognitive_audit.semantic_audit_log
-    ORDER BY timestamp DESC
+    ORDER BY event_timestamp DESC
     LIMIT 1;
     
     -- Get user details if human actor
@@ -439,7 +495,7 @@ CREATE OR REPLACE FUNCTION cognitive_audit.verify_hash_chain(
 )
 RETURNS TABLE (
     record_id UUID,
-    timestamp TIMESTAMPTZ,
+    event_timestamp TIMESTAMPTZ,
     expected_hash TEXT,
     actual_hash TEXT,
     chain_valid BOOLEAN
@@ -453,7 +509,7 @@ BEGIN
     WITH ordered_records AS (
         SELECT 
             l.id,
-            l.timestamp,
+            l.event_timestamp,
             l.actor_type,
             l.action_category,
             l.action_description,
@@ -464,27 +520,27 @@ BEGIN
             l.new_value,
             l.record_hash,
             l.previous_record_hash,
-            LAG(l.record_hash) OVER (ORDER BY l.timestamp) AS actual_previous_hash
+            LAG(l.record_hash) OVER (ORDER BY l.event_timestamp) AS actual_previous_hash
         FROM cognitive_audit.semantic_audit_log l
-        WHERE (p_start_time IS NULL OR l.timestamp >= p_start_time)
-          AND (p_end_time IS NULL OR l.timestamp <= p_end_time)
+        WHERE (p_start_time IS NULL OR l.event_timestamp >= p_start_time)
+          AND (p_end_time IS NULL OR l.event_timestamp <= p_end_time)
     )
     SELECT 
         o.id AS record_id,
-        o.timestamp,
+        o.event_timestamp,
         cognitive_audit.generate_record_hash(
             o.actor_type, o.action_category, o.action_description,
             o.target_schema, o.target_table, o.target_id,
-            o.old_value, o.new_value, o.timestamp, o.actual_previous_hash
+            o.old_value, o.new_value, o.event_timestamp, o.actual_previous_hash
         ) AS expected_hash,
         o.record_hash AS actual_hash,
         (o.record_hash = cognitive_audit.generate_record_hash(
             o.actor_type, o.action_category, o.action_description,
             o.target_schema, o.target_table, o.target_id,
-            o.old_value, o.new_value, o.timestamp, o.actual_previous_hash
+            o.old_value, o.new_value, o.event_timestamp, o.actual_previous_hash
         )) AS chain_valid
     FROM ordered_records o
-    ORDER BY o.timestamp;
+    ORDER BY o.event_timestamp;
 END;
 $$;
 
@@ -496,7 +552,7 @@ $$;
 CREATE OR REPLACE VIEW cognitive_audit.audit_trail_readable AS
 SELECT 
     sal.id,
-    sal.timestamp,
+    sal.event_timestamp,
     sal.actor_type,
     CASE 
         WHEN sal.actor_type = 'HUMAN_USER' THEN sal.user_name
@@ -514,7 +570,7 @@ SELECT
     sal.processing_duration_ms,
     sal.record_hash
 FROM cognitive_audit.semantic_audit_log sal
-ORDER BY sal.timestamp DESC;
+ORDER BY sal.event_timestamp DESC;
 
 -- Agent activity summary
 CREATE OR REPLACE VIEW cognitive_audit.agent_activity_summary AS
@@ -526,7 +582,7 @@ SELECT
     COUNT(*) FILTER (WHERE sal.governance_check_passed = FALSE) AS violation_actions,
     AVG(sal.confidence_score) AS avg_confidence,
     AVG(sal.processing_duration_ms) AS avg_processing_ms,
-    MAX(sal.timestamp) AS last_activity
+    MAX(sal.event_timestamp) AS last_activity
 FROM cognitive_audit.semantic_audit_log sal
 JOIN agent_runtime.agent_definitions ad ON sal.agent_definition_id = ad.id
 GROUP BY ad.agent_code, ad.agent_type;

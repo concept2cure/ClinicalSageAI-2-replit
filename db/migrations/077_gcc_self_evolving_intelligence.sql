@@ -277,12 +277,7 @@ CREATE TABLE IF NOT EXISTS cortex.evolution_ledger (
     
     -- Immutability
     event_hash TEXT NOT NULL, -- Hash of event data for integrity
-    previous_event_hash TEXT, -- Links to previous event (blockchain-like)
-    
-    CONSTRAINT valid_event_chain CHECK (
-        id = (SELECT id FROM cortex.evolution_ledger ORDER BY created_at DESC LIMIT 1)
-        OR previous_event_hash IS NOT NULL
-    )
+    previous_event_hash TEXT -- Links to previous event (blockchain-like)
 );
 
 COMMENT ON TABLE cortex.evolution_ledger IS
@@ -476,22 +471,35 @@ COMMENT ON TABLE cortex.federated_learning_state IS
 'State management for privacy-preserving federated learning across organizations.
 Enables learning from collective data without exposing individual client data.';
 
--- ============================================================================
--- SECTION 8: INDEXES
--- ============================================================================
 
--- Learning experiences
 CREATE INDEX IF NOT EXISTS idx_learning_exp_type ON cortex.learning_experiences(experience_type, processed_for_learning);
 CREATE INDEX IF NOT EXISTS idx_learning_exp_feedback ON cortex.learning_experiences(feedback_type, feedback_value);
-CREATE INDEX IF NOT EXISTS idx_learning_exp_domain ON cortex.learning_experiences(therapeutic_area, task_type);
-CREATE INDEX IF NOT EXISTS idx_learning_exp_hash ON cortex.learning_experiences(input_hash);
+DO $$
+BEGIN
+    IF to_regclass('cortex.distilled_insights') IS NOT NULL
+       AND EXISTS (
+            SELECT 1
+            FROM pg_attribute a
+            WHERE a.attrelid = 'cortex.distilled_insights'::regclass
+              AND a.attname = 'insight_embedding'
+              AND a.atttypmod > 4
+              AND (a.atttypmod - 4) <= 2000
+       )
+       AND NOT EXISTS (
+            SELECT 1
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'cortex' AND c.relname = 'idx_insights_embedding'
+       ) THEN
+        CREATE INDEX idx_insights_embedding ON cortex.distilled_insights
+            USING hnsw (insight_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+    END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_learning_exp_org ON cortex.learning_experiences(org_id, created_at DESC);
 
 -- Distilled insights
 CREATE INDEX IF NOT EXISTS idx_insights_type ON cortex.distilled_insights(insight_type, is_active);
 CREATE INDEX IF NOT EXISTS idx_insights_scope ON cortex.distilled_insights USING GIN (therapeutic_areas);
-CREATE INDEX IF NOT EXISTS idx_insights_embedding ON cortex.distilled_insights 
-    USING hnsw (insight_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 CREATE INDEX IF NOT EXISTS idx_insights_impact ON cortex.distilled_insights(net_impact_score DESC);
 
 -- Expertise scores
@@ -530,33 +538,41 @@ ALTER TABLE cortex.drift_detection ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.federated_learning_state ENABLE ROW LEVEL SECURITY;
 
 -- Learning experiences: org-isolated write, sanitized global read for distillation
+DROP POLICY IF EXISTS learning_exp_write ON cortex.learning_experiences;
 CREATE POLICY learning_exp_write ON cortex.learning_experiences
     FOR INSERT WITH CHECK (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
+DROP POLICY IF EXISTS learning_exp_read ON cortex.learning_experiences;
 CREATE POLICY learning_exp_read ON cortex.learning_experiences
     FOR SELECT USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
 -- Distilled insights: global read (these are privacy-safe)
+DROP POLICY IF EXISTS insights_read ON cortex.distilled_insights;
 CREATE POLICY insights_read ON cortex.distilled_insights
     FOR SELECT USING (TRUE);
 
 -- Expertise scores: global read
+DROP POLICY IF EXISTS expertise_read ON cortex.expertise_scores;
 CREATE POLICY expertise_read ON cortex.expertise_scores
     FOR SELECT USING (TRUE);
 
 -- Evolution ledger: global read (audit trail)
+DROP POLICY IF EXISTS evolution_read ON cortex.evolution_ledger;
 CREATE POLICY evolution_read ON cortex.evolution_ledger
     FOR SELECT USING (TRUE);
 
 -- Prompt evolution: global read
+DROP POLICY IF EXISTS prompts_read ON cortex.prompt_evolution;
 CREATE POLICY prompts_read ON cortex.prompt_evolution
     FOR SELECT USING (TRUE);
 
 -- Drift detection: global read (operational)
+DROP POLICY IF EXISTS drift_read ON cortex.drift_detection;
 CREATE POLICY drift_read ON cortex.drift_detection
     FOR SELECT USING (TRUE);
 
 -- Federated learning: restricted
+DROP POLICY IF EXISTS federated_admin ON cortex.federated_learning_state;
 CREATE POLICY federated_admin ON cortex.federated_learning_state
     FOR ALL USING (current_setting('app.is_admin', true)::BOOLEAN = TRUE);
 
@@ -892,21 +908,37 @@ for drift. Should be called daily via cron.';
 -- SECTION 11: UNIQUE CONSTRAINT FOR EXPERTISE SCORES
 -- ============================================================================
 
-ALTER TABLE cortex.expertise_scores 
-    ADD CONSTRAINT unique_domain UNIQUE (domain_type, domain_value);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE n.nspname = 'cortex'
+          AND t.relname = 'expertise_scores'
+          AND c.conname = 'unique_domain'
+    ) THEN
+        ALTER TABLE cortex.expertise_scores
+            ADD CONSTRAINT unique_domain UNIQUE (domain_type, domain_value);
+    END IF;
+END $$;
 
 -- ============================================================================
 -- SECTION 12: TRIGGERS
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS expertise_updated_at ON cortex.expertise_scores;
 CREATE TRIGGER expertise_updated_at
     BEFORE UPDATE ON cortex.expertise_scores
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS prompts_updated_at ON cortex.prompt_evolution;
 CREATE TRIGGER prompts_updated_at
     BEFORE UPDATE ON cortex.prompt_evolution
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS insights_updated_at ON cortex.distilled_insights;
 CREATE TRIGGER insights_updated_at
     BEFORE UPDATE ON cortex.distilled_insights
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();

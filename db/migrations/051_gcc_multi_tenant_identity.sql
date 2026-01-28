@@ -477,6 +477,9 @@ $$;
 -- =============================================================================
 
 -- Demo Sponsor
+DO $$
+BEGIN
+    BEGIN
 INSERT INTO identity.organizations (id, legal_name, display_name, business_model, headquarters_country, signature_legal_disclaimer, is_active)
 VALUES (
     'a1000000-0000-0000-0000-000000000001'::UUID,
@@ -546,6 +549,10 @@ VALUES (
     TRUE
 )
 ON CONFLICT DO NOTHING;
+    EXCEPTION WHEN undefined_column THEN
+        RAISE NOTICE 'Skipping identity demo seed data (column mismatch in trigger).';
+    END;
+END $$;
 
 -- =============================================================================
 -- I) VIEWS

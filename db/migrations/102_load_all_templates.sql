@@ -697,6 +697,7 @@ CREATE INDEX IF NOT EXISTS idx_templates_org ON ectd_templates(organization_id);
 CREATE INDEX IF NOT EXISTS idx_templates_active ON ectd_templates(is_active);
 
 -- Update template counts for organization
+ALTER TABLE IF EXISTS organizations ADD COLUMN IF NOT EXISTS template_count INT DEFAULT 0;
 UPDATE organizations 
 SET template_count = (
     SELECT COUNT(*) FROM ectd_templates 

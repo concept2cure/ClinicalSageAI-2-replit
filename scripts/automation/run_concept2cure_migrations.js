@@ -5,12 +5,17 @@
  * Usage: node run_concept2cure_migrations.js
  */
 
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment
-require('dotenv').config();
+dotenv.config();
 
 // Get database URL
 function getDatabaseUrl() {
@@ -35,7 +40,7 @@ function getDatabaseUrl() {
 
 // Migrations to run (in order)
 // Default: run ALL SQL migrations in db/migrations (sorted), excluding test runner
-const migrationsDir = path.join(__dirname, 'db', 'migrations');
+const migrationsDir = path.resolve(__dirname, '..', '..', 'db', 'migrations');
 const MIGRATIONS = fs
   .readdirSync(migrationsDir)
   .filter((file) => file.endsWith('.sql'))

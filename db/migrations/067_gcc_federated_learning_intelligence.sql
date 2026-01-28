@@ -22,31 +22,48 @@ COMMENT ON SCHEMA federated_ml IS
 -- 2. FEDERATED MODEL DEFINITIONS
 -- =============================================================================
 
-CREATE TYPE federated_ml.model_type AS ENUM (
-    'TOXICITY_PREDICTION',         -- MELLODDY-style QSAR
-    'SAFETY_SIGNAL_DETECTION',     -- Pharmacovigilance
-    'ADVERSE_EVENT_PREDICTION',    -- AE prediction
-    'DRUG_INTERACTION',            -- DDI prediction
-    'COUNTERFEIT_DETECTION',       -- Supply chain
-    'QUALITY_PREDICTION',          -- Manufacturing quality
-    'BIOMARKER_DISCOVERY',         -- Clinical biomarkers
-    'PATIENT_STRATIFICATION'       -- Clinical trial enrollment
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'model_type'
+    ) THEN
+        CREATE TYPE federated_ml.model_type AS ENUM (
+            'TOXICITY_PREDICTION',         -- MELLODDY-style QSAR
+            'SAFETY_SIGNAL_DETECTION',     -- Pharmacovigilance
+            'ADVERSE_EVENT_PREDICTION',    -- AE prediction
+            'DRUG_INTERACTION',            -- DDI prediction
+            'COUNTERFEIT_DETECTION',       -- Supply chain
+            'QUALITY_PREDICTION',          -- Manufacturing quality
+            'BIOMARKER_DISCOVERY',         -- Clinical biomarkers
+            'PATIENT_STRATIFICATION'       -- Clinical trial enrollment
+        );
+    END IF;
+END $$;
 
-CREATE TYPE federated_ml.model_status AS ENUM (
-    'INITIALIZING',                -- Setting up federation
-    'TRAINING',                    -- Active training rounds
-    'VALIDATING',                  -- Cross-validation
-    'DEPLOYED',                    -- In production
-    'PAUSED',                      -- Temporarily stopped
-    'DEPRECATED'                   -- Replaced
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'model_status'
+    ) THEN
+        CREATE TYPE federated_ml.model_status AS ENUM (
+            'INITIALIZING',
+            'TRAINING',
+            'AGGREGATING',
+            'ACTIVE',
+            'PAUSED',
+            'FAILED',
+            'ARCHIVED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE federated_ml.federated_models (
+CREATE TABLE IF NOT EXISTS federated_ml.federated_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    
-    -- Identity
-    model_code TEXT NOT NULL UNIQUE,           -- 'FED_TOX_PRED_V2'
+    model_code TEXT NOT NULL UNIQUE,
     model_name TEXT NOT NULL,
     model_type federated_ml.model_type NOT NULL,
     version_number TEXT NOT NULL DEFAULT '1.0.0',
@@ -102,23 +119,32 @@ CREATE TABLE federated_ml.federated_models (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_federated_models_type ON federated_ml.federated_models(model_type);
-CREATE INDEX idx_federated_models_status ON federated_ml.federated_models(status);
+CREATE INDEX IF NOT EXISTS idx_federated_models_type ON federated_ml.federated_models(model_type);
+CREATE INDEX IF NOT EXISTS idx_federated_models_status ON federated_ml.federated_models(status);
 
 -- =============================================================================
 -- 3. FEDERATION PARTICIPANTS (Local Nodes)
 -- =============================================================================
 
-CREATE TYPE federated_ml.participant_status AS ENUM (
-    'INVITED',
-    'ONBOARDING',
-    'ACTIVE',
-    'PAUSED',
-    'WITHDRAWN',
-    'EXCLUDED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'participant_status'
+    ) THEN
+        CREATE TYPE federated_ml.participant_status AS ENUM (
+            'INVITED',
+            'ONBOARDING',
+            'ACTIVE',
+            'PAUSED',
+            'WITHDRAWN',
+            'EXCLUDED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE federated_ml.federation_participants (
+CREATE TABLE IF NOT EXISTS federated_ml.federation_participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Model Membership
@@ -162,23 +188,32 @@ CREATE TABLE federated_ml.federation_participants (
     CONSTRAINT unique_participant_per_model UNIQUE (model_id, org_id)
 );
 
-CREATE INDEX idx_federation_participants_model ON federated_ml.federation_participants(model_id);
-CREATE INDEX idx_federation_participants_org ON federated_ml.federation_participants(org_id);
-CREATE INDEX idx_federation_participants_status ON federated_ml.federation_participants(status);
+CREATE INDEX IF NOT EXISTS idx_federation_participants_model ON federated_ml.federation_participants(model_id);
+CREATE INDEX IF NOT EXISTS idx_federation_participants_org ON federated_ml.federation_participants(org_id);
+CREATE INDEX IF NOT EXISTS idx_federation_participants_status ON federated_ml.federation_participants(status);
 
 -- =============================================================================
 -- 4. GRADIENT UPDATES (Secure Aggregation Records)
 -- =============================================================================
 
-CREATE TYPE federated_ml.gradient_status AS ENUM (
-    'SUBMITTED',                   -- Received from node
-    'VALIDATED',                   -- Passed integrity checks
-    'AGGREGATED',                  -- Included in global update
-    'REJECTED',                    -- Failed validation
-    'EXPIRED'                      -- Timed out
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'gradient_status'
+    ) THEN
+        CREATE TYPE federated_ml.gradient_status AS ENUM (
+            'SUBMITTED',                   -- Received from node
+            'VALIDATED',                   -- Passed integrity checks
+            'AGGREGATED',                  -- Included in global update
+            'REJECTED',                    -- Failed validation
+            'EXPIRED'                      -- Timed out
+        );
+    END IF;
+END $$;
 
-CREATE TABLE federated_ml.gradient_updates (
+CREATE TABLE IF NOT EXISTS federated_ml.gradient_updates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Context
@@ -211,16 +246,16 @@ CREATE TABLE federated_ml.gradient_updates (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_gradient_updates_model ON federated_ml.gradient_updates(model_id, training_round);
-CREATE INDEX idx_gradient_updates_participant ON federated_ml.gradient_updates(participant_id);
-CREATE INDEX idx_gradient_updates_status ON federated_ml.gradient_updates(status);
+CREATE INDEX IF NOT EXISTS idx_gradient_updates_model ON federated_ml.gradient_updates(model_id, training_round);
+CREATE INDEX IF NOT EXISTS idx_gradient_updates_participant ON federated_ml.gradient_updates(participant_id);
+CREATE INDEX IF NOT EXISTS idx_gradient_updates_status ON federated_ml.gradient_updates(status);
 
 -- =============================================================================
 -- 5. PRIVACY BUDGET LEDGER
 -- =============================================================================
 -- Tracks differential privacy budget consumption
 
-CREATE TABLE federated_ml.privacy_budget_ledger (
+CREATE TABLE IF NOT EXISTS federated_ml.privacy_budget_ledger (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Scope
@@ -246,31 +281,49 @@ CREATE TABLE federated_ml.privacy_budget_ledger (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_privacy_budget_model ON federated_ml.privacy_budget_ledger(model_id);
-CREATE INDEX idx_privacy_budget_participant ON federated_ml.privacy_budget_ledger(participant_id);
-CREATE INDEX idx_privacy_budget_time ON federated_ml.privacy_budget_ledger(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_privacy_budget_model ON federated_ml.privacy_budget_ledger(model_id);
+CREATE INDEX IF NOT EXISTS idx_privacy_budget_participant ON federated_ml.privacy_budget_ledger(participant_id);
+CREATE INDEX IF NOT EXISTS idx_privacy_budget_time ON federated_ml.privacy_budget_ledger(created_at DESC);
 
 -- =============================================================================
 -- 6. SAFETY SIGNALS (Pharmacovigilance)
 -- =============================================================================
 
-CREATE TYPE federated_ml.signal_severity AS ENUM (
-    'LOW',
-    'MEDIUM',
-    'HIGH',
-    'CRITICAL'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'signal_severity'
+    ) THEN
+        CREATE TYPE federated_ml.signal_severity AS ENUM (
+            'LOW',
+            'MEDIUM',
+            'HIGH',
+            'CRITICAL'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE federated_ml.signal_status AS ENUM (
-    'DETECTED',
-    'UNDER_REVIEW',
-    'CONFIRMED',
-    'REFUTED',
-    'ACTION_TAKEN',
-    'CLOSED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'federated_ml' AND t.typname = 'signal_status'
+    ) THEN
+        CREATE TYPE federated_ml.signal_status AS ENUM (
+            'DETECTED',
+            'UNDER_REVIEW',
+            'CONFIRMED',
+            'REFUTED',
+            'ACTION_TAKEN',
+            'CLOSED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE federated_ml.safety_signals (
+CREATE TABLE IF NOT EXISTS federated_ml.safety_signals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Detection Source
@@ -331,15 +384,15 @@ CREATE TABLE federated_ml.safety_signals (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_safety_signals_product ON federated_ml.safety_signals(product_id);
-CREATE INDEX idx_safety_signals_status ON federated_ml.safety_signals(status);
-CREATE INDEX idx_safety_signals_severity ON federated_ml.safety_signals(severity);
-CREATE INDEX idx_safety_signals_meddra ON federated_ml.safety_signals(meddra_pt_code);
-CREATE INDEX idx_safety_signals_pending ON federated_ml.safety_signals(status, review_deadline)
+CREATE INDEX IF NOT EXISTS idx_safety_signals_product ON federated_ml.safety_signals(product_id);
+CREATE INDEX IF NOT EXISTS idx_safety_signals_status ON federated_ml.safety_signals(status);
+CREATE INDEX IF NOT EXISTS idx_safety_signals_severity ON federated_ml.safety_signals(severity);
+CREATE INDEX IF NOT EXISTS idx_safety_signals_meddra ON federated_ml.safety_signals(meddra_pt_code);
+CREATE INDEX IF NOT EXISTS idx_safety_signals_pending ON federated_ml.safety_signals(status, review_deadline)
     WHERE status IN ('DETECTED', 'UNDER_REVIEW');
 
 -- Full-text search on signal descriptions
-CREATE INDEX idx_safety_signals_fts ON federated_ml.safety_signals 
+CREATE INDEX IF NOT EXISTS idx_safety_signals_fts ON federated_ml.safety_signals 
     USING GIN (to_tsvector('english', signal_name || ' ' || COALESCE(signal_description, '')));
 
 -- =============================================================================
@@ -347,7 +400,7 @@ CREATE INDEX idx_safety_signals_fts ON federated_ml.safety_signals
 -- =============================================================================
 
 -- Horizon Scanning (PMDA-style)
-CREATE TABLE ai.horizon_scans (
+CREATE TABLE IF NOT EXISTS ai.horizon_scans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Scan Identity
@@ -392,12 +445,12 @@ CREATE TABLE ai.horizon_scans (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_horizon_scans_area ON ai.horizon_scans(technology_area);
-CREATE INDEX idx_horizon_scans_date ON ai.horizon_scans(scan_date DESC);
-CREATE INDEX idx_horizon_scans_embedding ON ai.horizon_scans USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_horizon_scans_area ON ai.horizon_scans(technology_area);
+CREATE INDEX IF NOT EXISTS idx_horizon_scans_date ON ai.horizon_scans(scan_date DESC);
+CREATE INDEX IF NOT EXISTS idx_horizon_scans_embedding ON ai.horizon_scans USING hnsw (embedding vector_cosine_ops);
 
 -- Predictive Risk Models (KASA 5.0 style)
-CREATE TABLE ai.predictive_risk_models (
+CREATE TABLE IF NOT EXISTS ai.predictive_risk_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Model Identity
@@ -443,11 +496,11 @@ CREATE TABLE ai.predictive_risk_models (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_predictive_risk_models_purpose ON ai.predictive_risk_models(model_purpose);
-CREATE INDEX idx_predictive_risk_models_active ON ai.predictive_risk_models(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_predictive_risk_models_purpose ON ai.predictive_risk_models(model_purpose);
+CREATE INDEX IF NOT EXISTS idx_predictive_risk_models_active ON ai.predictive_risk_models(is_active) WHERE is_active = TRUE;
 
 -- Risk Assessment Results
-CREATE TABLE ai.risk_assessments (
+CREATE TABLE IF NOT EXISTS ai.risk_assessments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Model Used
@@ -490,13 +543,13 @@ CREATE TABLE ai.risk_assessments (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_risk_assessments_model ON ai.risk_assessments(model_id);
-CREATE INDEX idx_risk_assessments_submission ON ai.risk_assessments(submission_id);
-CREATE INDEX idx_risk_assessments_product ON ai.risk_assessments(product_id);
-CREATE INDEX idx_risk_assessments_category ON ai.risk_assessments(risk_category);
+CREATE INDEX IF NOT EXISTS idx_risk_assessments_model ON ai.risk_assessments(model_id);
+CREATE INDEX IF NOT EXISTS idx_risk_assessments_submission ON ai.risk_assessments(submission_id);
+CREATE INDEX IF NOT EXISTS idx_risk_assessments_product ON ai.risk_assessments(product_id);
+CREATE INDEX IF NOT EXISTS idx_risk_assessments_category ON ai.risk_assessments(risk_category);
 
 -- FHIR Validation Rules
-CREATE TABLE ai.fhir_validation_rules (
+CREATE TABLE IF NOT EXISTS ai.fhir_validation_rules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Rule Identity
@@ -532,9 +585,9 @@ CREATE TABLE ai.fhir_validation_rules (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_fhir_validation_rules_resource ON ai.fhir_validation_rules(fhir_resource_type);
-CREATE INDEX idx_fhir_validation_rules_ig ON ai.fhir_validation_rules(implementation_guide);
-CREATE INDEX idx_fhir_validation_rules_active ON ai.fhir_validation_rules(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_fhir_validation_rules_resource ON ai.fhir_validation_rules(fhir_resource_type);
+CREATE INDEX IF NOT EXISTS idx_fhir_validation_rules_ig ON ai.fhir_validation_rules(implementation_guide);
+CREATE INDEX IF NOT EXISTS idx_fhir_validation_rules_active ON ai.fhir_validation_rules(is_active) WHERE is_active = TRUE;
 
 -- =============================================================================
 -- 8. HELPER FUNCTIONS

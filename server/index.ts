@@ -32,6 +32,7 @@ import {
   monitorPerformance,
   cleanup as cleanupPerformance,
 } from './middleware/enterprise-performance.js';
+import { initializeRedisRateLimiter, closeRedisRateLimiter } from './middleware/redisRateLimiter';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
@@ -102,6 +103,12 @@ process.on('SIGTERM', async () => {
     console.log('🔄 Shutting down Python backend...');
     pythonProcess.kill('SIGTERM');
   }
+  try {
+    await closeRedisRateLimiter();
+    console.log('✅ Redis rate limiter closed');
+  } catch (error: any) {
+    console.error('❌ Error closing Redis rate limiter:', error.message);
+  }
   // Cleanup performance resources (caches, monitors)
   cleanupPerformance();
   // Graceful DB shutdown
@@ -119,6 +126,12 @@ process.on('SIGINT', async () => {
   if (pythonProcess) {
     console.log('🔄 Shutting down Python backend...');
     pythonProcess.kill('SIGTERM');
+  }
+  try {
+    await closeRedisRateLimiter();
+    console.log('✅ Redis rate limiter closed');
+  } catch (error: any) {
+    console.error('❌ Error closing Redis rate limiter:', error.message);
   }
   // Cleanup performance resources (caches, monitors)
   cleanupPerformance();
@@ -151,10 +164,12 @@ process.on('uncaughtException', error => {
 // Request logging middleware for debug mode
 if (DEBUG) {
   app.use((req: Request, res: Response, next) => {
+    const isConcept2cureRoute = req.url.startsWith('/api/concept2cure');
     debugLog(`${req.method} ${req.url}`, {
       headers: req.headers,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined,
+      body: req.method !== 'GET' && !isConcept2cureRoute ? req.body : undefined,
+      bodyRedacted: isConcept2cureRoute ? true : undefined,
     });
     next();
   });
@@ -1357,6 +1372,11 @@ debugLog('Debug mode enabled - enhanced logging active');
 import chatRoutes from './routes/chat.ts';
 app.use('/api/chat', chatRoutes);
 console.log('✅ Lumen Cortex Chat API routes mounted successfully');
+
+// Mount Concept2Cure routes (Claude.ai-style regulatory interface)
+import concept2cureRoutes from './routes/concept2cure';
+app.use('/api/concept2cure', concept2cureRoutes);
+console.log('✅ Concept2Cure API routes mounted successfully');
 
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
@@ -4040,6 +4060,17 @@ app.post('/api/workflow/progression/create', async (req: Request, res: Response)
 // Basic starter server function
 async function startServer() {
   debugLog('Starting server initialization...');
+
+  try {
+    const redisReady = await initializeRedisRateLimiter();
+    if (redisReady) {
+      console.log('✅ Redis rate limiter initialized');
+    } else {
+      console.log('⚠️ Redis rate limiter unavailable, using in-memory fallback');
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to initialize Redis rate limiter:', error.message);
+  }
 
   // Start Python backend first
   debugLog('Initializing Python backend...');

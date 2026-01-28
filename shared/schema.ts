@@ -1021,6 +1021,350 @@ export type ClientSecuritySettings = InferSelectModel<typeof clientSecuritySetti
 export type InsertClientSecuritySettings = z.infer<typeof insertClientSecuritySettingsSchema>;
 
 /**
+ * PM Settings Table
+ *
+ * Stores organization-specific project management AI settings, workflows,
+ * notifications, compliance, and therapeutic area defaults.
+ */
+export const pmSettings = pgTable(
+  'pm_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    aiSettings: json('ai_settings'),
+    workflowSettings: json('workflow_settings'),
+    notificationSettings: json('notification_settings'),
+    complianceSettings: json('compliance_settings'),
+    therapeuticAreaSettings: json('therapeutic_area_settings'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedBy: integer('updated_by'),
+  },
+  table => {
+    return {
+      uniqueOrgSettings: unique('unique_pm_settings_org').on(table.organizationId),
+    };
+  }
+);
+
+// PM Settings Insert Schema
+export const insertPmSettingsSchema = createInsertSchemaOmit(pmSettings, {
+  id: true,
+  updatedAt: true,
+});
+
+// PM Settings Types
+export type PmSettings = InferSelectModel<typeof pmSettings>;
+export type InsertPmSettings = z.infer<typeof insertPmSettingsSchema>;
+
+/**
+ * Risk Factors Table
+ *
+ * Catalog of standardized risk factors referenced by detections and predictions.
+ */
+export const riskFactors = pgTable(
+  'risk_factors',
+  {
+    id: serial('id').primaryKey(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    category: text('category'),
+    description: text('description'),
+    defaultSeverity: decimal('default_severity', { precision: 3, scale: 2 }),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    codeIdx: uniqueIndex('risk_factor_code_idx').on(table.code),
+    categoryIdx: index('risk_factor_category_idx').on(table.category),
+  })
+);
+
+// Risk Factors Insert Schema
+export const insertRiskFactorSchema = createInsertSchemaOmit(riskFactors, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Risk Factors Types
+export type RiskFactor = InferSelectModel<typeof riskFactors>;
+export type InsertRiskFactor = z.infer<typeof insertRiskFactorSchema>;
+
+/**
+ * Risk Detections Table
+ *
+ * Stores detected risks for projects, linked to standardized risk factors.
+ */
+export const riskDetections = pgTable(
+  'risk_detections',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id').references(() => projects.id),
+    riskFactorId: integer('risk_factor_id').references(() => riskFactors.id),
+    severity: decimal('severity', { precision: 3, scale: 2 }),
+    detectedAt: timestamp('detected_at').defaultNow().notNull(),
+    status: text('status').default('OPEN').notNull(),
+    mitigationApplied: text('mitigation_applied'),
+    resolvedAt: timestamp('resolved_at'),
+    details: json('details'),
+  },
+  table => ({
+    projectIdx: index('risk_detections_project_idx').on(table.projectId),
+    statusIdx: index('risk_detections_status_idx').on(table.status),
+    factorIdx: index('risk_detections_factor_idx').on(table.riskFactorId),
+  })
+);
+
+// Risk Detections Insert Schema
+export const insertRiskDetectionSchema = createInsertSchemaOmit(riskDetections, {
+  id: true,
+  detectedAt: true,
+});
+
+// Risk Detections Types
+export type RiskDetection = InferSelectModel<typeof riskDetections>;
+export type InsertRiskDetection = z.infer<typeof insertRiskDetectionSchema>;
+
+/**
+ * Project Predictions Table
+ *
+ * Stores generated project risk predictions and recommendations.
+ */
+export const projectPredictions = pgTable(
+  'project_predictions',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id').references(() => projects.id),
+    successProbability: decimal('success_probability', { precision: 3, scale: 2 }),
+    confidenceLevel: decimal('confidence_level', { precision: 3, scale: 2 }),
+    riskLevel: text('risk_level'),
+    detectedRisks: json('detected_risks'),
+    recommendations: json('recommendations'),
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  },
+  table => ({
+    projectIdx: index('project_predictions_project_idx').on(table.projectId),
+    generatedIdx: index('project_predictions_generated_idx').on(table.generatedAt),
+  })
+);
+
+// Project Predictions Insert Schema
+export const insertProjectPredictionSchema = createInsertSchemaOmit(projectPredictions, {
+  id: true,
+  generatedAt: true,
+});
+
+// Project Predictions Types
+export type ProjectPrediction = InferSelectModel<typeof projectPredictions>;
+export type InsertProjectPrediction = z.infer<typeof insertProjectPredictionSchema>;
+
+/**
+ * Communication Channels Table
+ *
+ * Project-linked channels for threaded communications.
+ */
+export const communicationChannels = pgTable(
+  'communication_channels',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id),
+    name: text('name').notNull(),
+    channelType: text('channel_type').default('internal').notNull(), // internal, fda, partner
+    description: text('description'),
+    status: text('status').default('active').notNull(), // active, archived
+    metadata: json('metadata'),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('communication_channels_org_idx').on(table.organizationId),
+    projectIdx: index('communication_channels_project_idx').on(table.projectId),
+    statusIdx: index('communication_channels_status_idx').on(table.status),
+  })
+);
+
+// Communication Channels Insert Schema
+export const insertCommunicationChannelSchema = createInsertSchemaOmit(communicationChannels, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Communication Channels Types
+export type CommunicationChannel = InferSelectModel<typeof communicationChannels>;
+export type InsertCommunicationChannel = z.infer<typeof insertCommunicationChannelSchema>;
+
+/**
+ * Communication Messages Table
+ *
+ * Messages posted to communication channels.
+ */
+export const communicationMessages = pgTable(
+  'communication_messages',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    channelId: integer('channel_id')
+      .notNull()
+      .references(() => communicationChannels.id),
+    projectId: integer('project_id').references(() => projects.id),
+    senderId: integer('sender_id').references(() => users.id),
+    senderType: text('sender_type').default('internal').notNull(), // internal, agency, partner
+    subject: text('subject'),
+    body: text('body').notNull(),
+    attachments: json('attachments'),
+    metadata: json('metadata'),
+    sentAt: timestamp('sent_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    channelIdx: index('communication_messages_channel_idx').on(table.channelId),
+    projectIdx: index('communication_messages_project_idx').on(table.projectId),
+    senderIdx: index('communication_messages_sender_idx').on(table.senderId),
+  })
+);
+
+// Communication Messages Insert Schema
+export const insertCommunicationMessageSchema = createInsertSchemaOmit(communicationMessages, {
+  id: true,
+  sentAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Communication Messages Types
+export type CommunicationMessage = InferSelectModel<typeof communicationMessages>;
+export type InsertCommunicationMessage = z.infer<typeof insertCommunicationMessageSchema>;
+
+/**
+ * FDA Communications Table
+ *
+ * Tracks FDA-facing communications tied to projects and channels.
+ */
+export const fdaCommunications = pgTable(
+  'fda_communications',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id),
+    channelId: integer('channel_id').references(() => communicationChannels.id),
+    direction: text('direction').default('outbound').notNull(), // inbound, outbound
+    communicationType: text('communication_type').default('email').notNull(), // meeting, email, letter, phone
+    subject: text('subject').notNull(),
+    summary: text('summary'),
+    sentAt: timestamp('sent_at'),
+    receivedAt: timestamp('received_at'),
+    status: text('status').default('open').notNull(), // open, responded, closed
+    attachments: json('attachments'),
+    metadata: json('metadata'),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('fda_communications_org_idx').on(table.organizationId),
+    projectIdx: index('fda_communications_project_idx').on(table.projectId),
+    channelIdx: index('fda_communications_channel_idx').on(table.channelId),
+    statusIdx: index('fda_communications_status_idx').on(table.status),
+  })
+);
+
+// FDA Communications Insert Schema
+export const insertFdaCommunicationSchema = createInsertSchemaOmit(fdaCommunications, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// FDA Communications Types
+export type FdaCommunication = InferSelectModel<typeof fdaCommunications>;
+export type InsertFdaCommunication = z.infer<typeof insertFdaCommunicationSchema>;
+
+/**
+ * Knowledge Base Entries Table
+ *
+ * Stores reference content for Lumen Cortex semantic retrieval.
+ */
+export const knowledgeEntries = pgTable(
+  'knowledge_entries',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').references(() => organizations.id),
+    entryType: text('entry_type').notNull(), // GUIDELINE, CSR, STUDY, REGULATION, FAQ, TEMPLATE
+    source: text('source'),
+    title: text('title').notNull(),
+    content: text('content'),
+    embedding: vector('embedding', { dimensions: 1536 }),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    entryTypeIdx: index('knowledge_entries_type_idx').on(table.entryType),
+    sourceIdx: index('knowledge_entries_source_idx').on(table.source),
+  })
+);
+
+// Knowledge Entries Insert Schema
+export const insertKnowledgeEntrySchema = createInsertSchemaOmit(knowledgeEntries, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Knowledge Entries Types
+export type KnowledgeEntry = InferSelectModel<typeof knowledgeEntries>;
+export type InsertKnowledgeEntry = z.infer<typeof insertKnowledgeEntrySchema>;
+
+/**
+ * Response Cache Table
+ *
+ * Caches generated responses for reuse and analytics.
+ */
+export const responseCache = pgTable(
+  'response_cache',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').references(() => organizations.id),
+    queryHash: varchar('query_hash', { length: 64 }).notNull(),
+    queryText: text('query_text').notNull(),
+    responseText: text('response_text').notNull(),
+    confidence: decimal('confidence', { precision: 3, scale: 2 }),
+    metadata: json('metadata'),
+    hitCount: integer('hit_count').default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    lastAccessed: timestamp('last_accessed').defaultNow().notNull(),
+  },
+  table => ({
+    queryHashIdx: uniqueIndex('response_cache_query_hash_idx').on(table.queryHash),
+    lastAccessedIdx: index('response_cache_last_accessed_idx').on(table.lastAccessed),
+  })
+);
+
+// Response Cache Insert Schema
+export const insertResponseCacheSchema = createInsertSchemaOmit(responseCache, {
+  id: true,
+  createdAt: true,
+  lastAccessed: true,
+});
+
+// Response Cache Types
+export type ResponseCacheEntry = InferSelectModel<typeof responseCache>;
+export type InsertResponseCacheEntry = z.infer<typeof insertResponseCacheSchema>;
+
+/**
  * ======================================================================================
  * DOCUMENT AUTHORING WITH 21 CFR PART 11 COMPLIANCE
  * ======================================================================================
@@ -3970,6 +4314,251 @@ export const insertProjectSchema = createInsertSchemaOmit(projects, {
 // Project Types
 export type Project = InferSelectModel<typeof projects>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+// ============================================================================
+// CONCEPT2CURE AI ASSISTANT - CONVERSATIONS & ARTIFACTS
+// FDA 21 CFR Part 11 Compliant Chat System
+// ============================================================================
+
+/**
+ * Concept2Cure Conversations Table
+ *
+ * Stores AI assistant conversations for regulatory document generation.
+ * Supports conversation forking/branching for exploring alternatives.
+ */
+export const concept2cureConversations = pgTable(
+  'concept2cure_conversations',
+  {
+    id: serial('id').primaryKey(),
+    conversationId: text('conversation_id').notNull().unique(), // External ID (conv_xxx)
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    summary: text('summary'), // AI-generated summary
+    parentConversationId: integer('parent_conversation_id'), // For forked conversations
+    forkMessageIndex: integer('fork_message_index'), // Index where fork occurred
+    threadId: text('thread_id'), // OpenAI thread ID if using assistants API
+    messageCount: integer('message_count').default(0),
+    status: text('status').default('active').notNull(), // active, archived
+    createdById: integer('created_by_id').references(() => users.id),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    projectIdx: index('c2c_conv_project_idx').on(table.projectId),
+    orgIdx: index('c2c_conv_org_idx').on(table.organizationId),
+    conversationIdIdx: index('c2c_conv_id_idx').on(table.conversationId),
+  })
+);
+
+/**
+ * Concept2Cure Messages Table
+ *
+ * Individual messages within conversations.
+ * Immutable for 21 CFR Part 11 compliance - edits create new versions.
+ */
+export const concept2cureMessages = pgTable(
+  'concept2cure_messages',
+  {
+    id: serial('id').primaryKey(),
+    messageId: text('message_id').notNull().unique(), // External ID (msg_xxx)
+    conversationId: integer('conversation_id')
+      .notNull()
+      .references(() => concept2cureConversations.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    role: text('role').notNull(), // user, assistant, system
+    content: text('content').notNull(),
+    contentHash: text('content_hash'), // SHA-256 for integrity verification
+    attachments: json('attachments'), // Array of {id, name, type, size}
+    artifactId: text('artifact_id'), // Reference to generated artifact
+    citations: json('citations'), // Array of document citations
+    tokenCount: integer('token_count'), // For usage tracking
+    modelUsed: text('model_used'), // claude-3, gpt-4, etc.
+    latencyMs: integer('latency_ms'), // Response time
+    edited: boolean('edited').default(false),
+    editedAt: timestamp('edited_at'),
+    originalContent: text('original_content'), // For edit tracking
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    conversationIdx: index('c2c_msg_conv_idx').on(table.conversationId),
+    messageIdIdx: index('c2c_msg_id_idx').on(table.messageId),
+    roleIdx: index('c2c_msg_role_idx').on(table.role),
+  })
+);
+
+/**
+ * Concept2Cure Artifacts Table
+ *
+ * Generated documents and interactive components.
+ * Version-controlled for regulatory compliance.
+ */
+export const concept2cureArtifacts = pgTable(
+  'concept2cure_artifacts',
+  {
+    id: serial('id').primaryKey(),
+    artifactId: text('artifact_id').notNull().unique(), // External ID (artifact_xxx)
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    conversationId: integer('conversation_id')
+      .references(() => concept2cureConversations.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    type: text('type').notNull(), // markdown, code, table, chart, form
+    category: text('category').notNull(), // document, interactive, visualization
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    contentHash: text('content_hash'), // SHA-256 for integrity
+    version: integer('version').default(1).notNull(),
+    ctdSection: text('ctd_section'), // eCTD section reference
+    templateId: text('template_id'), // Reference to source template
+    status: text('status').default('draft').notNull(), // draft, review, approved, locked
+    lockedAt: timestamp('locked_at'), // When content was locked for submission
+    lockedById: integer('locked_by_id').references(() => users.id),
+    createdById: integer('created_by_id').references(() => users.id),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    projectIdx: index('c2c_artifact_project_idx').on(table.projectId),
+    artifactIdIdx: index('c2c_artifact_id_idx').on(table.artifactId),
+    typeIdx: index('c2c_artifact_type_idx').on(table.type),
+    statusIdx: index('c2c_artifact_status_idx').on(table.status),
+  })
+);
+
+/**
+ * Concept2Cure Artifact Versions Table
+ *
+ * Complete version history for regulatory audit trail.
+ * Immutable - versions are never modified or deleted.
+ */
+export const concept2cureArtifactVersions = pgTable(
+  'concept2cure_artifact_versions',
+  {
+    id: serial('id').primaryKey(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    version: integer('version').notNull(),
+    content: text('content').notNull(),
+    contentHash: text('content_hash').notNull(), // SHA-256
+    changeDescription: text('change_description'), // What changed
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    artifactVersionIdx: index('c2c_artifact_ver_idx').on(table.artifactId, table.version),
+    uniqueVersion: unique('c2c_artifact_unique_version').on(table.artifactId, table.version),
+  })
+);
+
+/**
+ * Concept2Cure Signatures Table
+ *
+ * Electronic signatures for artifacts (21 CFR Part 11).
+ * Append-only and immutable by policy.
+ */
+export const concept2cureSignatures = pgTable(
+  'concept2cure_signatures',
+  {
+    id: serial('id').primaryKey(),
+    signatureId: text('signature_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    artifactVersionId: integer('artifact_version_id')
+      .notNull()
+      .references(() => concept2cureArtifactVersions.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    signatureType: text('signature_type').notNull(),
+    signaturePurpose: text('signature_purpose').notNull(),
+    signatureMeaning: text('signature_meaning'),
+    signerId: integer('signer_id')
+      .notNull()
+      .references(() => users.id),
+    signerName: text('signer_name').notNull(),
+    signerEmail: text('signer_email').notNull(),
+    signerRole: text('signer_role'),
+    authenticationMethod: text('authentication_method').notNull(),
+    authenticationTimestamp: timestamp('authentication_timestamp').notNull(),
+    secondFactorVerified: boolean('second_factor_verified').default(false),
+    signatureHash: varchar('signature_hash', { length: 256 }).notNull(),
+    signatureManifest: json('signature_manifest'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    deviceInfo: json('device_info'),
+    status: text('status').default('active').notNull(),
+    signedAt: timestamp('signed_at').defaultNow().notNull(),
+  },
+  table => ({
+    signatureIdIdx: index('c2c_sig_id_idx').on(table.signatureId),
+    artifactIdx: index('c2c_sig_artifact_idx').on(table.artifactId),
+    artifactVersionIdx: index('c2c_sig_artifact_version_idx').on(table.artifactVersionId),
+    orgIdx: index('c2c_sig_org_idx').on(table.organizationId),
+    signerIdx: index('c2c_sig_signer_idx').on(table.signerId),
+    signedAtIdx: index('c2c_sig_signed_at_idx').on(table.signedAt),
+  })
+);
+
+// Insert Schemas
+export const insertConcept2cureConversationSchema = createInsertSchemaOmit(concept2cureConversations, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertConcept2cureMessageSchema = createInsertSchemaOmit(concept2cureMessages, {
+  id: true,
+  createdAt: true,
+});
+
+export const insertConcept2cureArtifactSchema = createInsertSchemaOmit(concept2cureArtifacts, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertConcept2cureArtifactVersionSchema = createInsertSchemaOmit(concept2cureArtifactVersions, {
+  id: true,
+  createdAt: true,
+});
+
+export const insertConcept2cureSignatureSchema = createInsertSchemaOmit(concept2cureSignatures, {
+  id: true,
+  signedAt: true,
+});
+
+// Types
+export type Concept2cureConversation = InferSelectModel<typeof concept2cureConversations>;
+export type InsertConcept2cureConversation = z.infer<typeof insertConcept2cureConversationSchema>;
+
+export type Concept2cureMessage = InferSelectModel<typeof concept2cureMessages>;
+export type InsertConcept2cureMessage = z.infer<typeof insertConcept2cureMessageSchema>;
+
+export type Concept2cureArtifact = InferSelectModel<typeof concept2cureArtifacts>;
+export type InsertConcept2cureArtifact = z.infer<typeof insertConcept2cureArtifactSchema>;
+
+export type Concept2cureArtifactVersion = InferSelectModel<typeof concept2cureArtifactVersions>;
+export type InsertConcept2cureArtifactVersion = z.infer<typeof insertConcept2cureArtifactVersionSchema>;
+
+export type Concept2cureSignature = InferSelectModel<typeof concept2cureSignatures>;
+export type InsertConcept2cureSignature = z.infer<typeof insertConcept2cureSignatureSchema>;
 
 /**
  * Project Modules Table

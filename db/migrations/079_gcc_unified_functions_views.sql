@@ -54,14 +54,13 @@ BEGIN
             a.content,
             1 - (a.embedding_3072 <=> p_query_embedding) AS vec_sim,
             a.source_type,
-            a.source_id,
-            a.metadata
+            a.source_document_id,
+            a.structured_data
         FROM cortex.atoms a
-        WHERE a.is_active = TRUE
-          AND (v_org_filter IS NULL OR a.org_id = v_org_filter OR a.org_id IS NULL)
+                WHERE (v_org_filter IS NULL OR a.org_id = v_org_filter OR a.org_id IS NULL)
           AND (p_atom_types IS NULL OR a.atom_type = ANY(p_atom_types))
-          AND (p_therapeutic_area IS NULL OR a.metadata->>'therapeutic_area' = p_therapeutic_area)
-          AND (p_submission_type IS NULL OR a.metadata->>'submission_type' = p_submission_type)
+          AND (p_therapeutic_area IS NULL OR a.structured_data->>'therapeutic_area' = p_therapeutic_area)
+          AND (p_submission_type IS NULL OR a.structured_data->>'submission_type' = p_submission_type)
           AND a.embedding_3072 IS NOT NULL
         ORDER BY a.embedding_3072 <=> p_query_embedding
         LIMIT p_limit * 2
@@ -74,7 +73,6 @@ BEGIN
         WHERE p_query_text IS NOT NULL
           AND p_query_text != ''
           AND to_tsvector('english', a.content) @@ plainto_tsquery('english', p_query_text)
-          AND a.is_active = TRUE
     ),
     combined AS (
         SELECT 
@@ -86,9 +84,9 @@ BEGIN
             COALESCE(vs.vec_sim * 0.7 + COALESCE(fs.fts_rank, 0) * 0.3, vs.vec_sim) AS relevance_score,
             jsonb_build_object(
                 'source_type', vs.source_type,
-                'source_id', vs.source_id
+                'source_document_id', vs.source_document_id
             ) AS source_info,
-            vs.metadata
+            vs.structured_data
         FROM vector_search vs
         LEFT JOIN fts_search fs ON vs.id = fs.id
         WHERE vs.vec_sim >= p_similarity_threshold
@@ -129,8 +127,7 @@ BEGIN
         a.content,
         (1 - (a.embedding_1536 <=> p_query_embedding))::NUMERIC AS similarity_score
     FROM cortex.atoms a
-    WHERE a.is_active = TRUE
-      AND (p_org_id IS NULL OR a.org_id = p_org_id OR a.org_id IS NULL)
+        WHERE (p_org_id IS NULL OR a.org_id = p_org_id OR a.org_id IS NULL)
       AND (p_atom_types IS NULL OR a.atom_type = ANY(p_atom_types))
       AND a.embedding_1536 IS NOT NULL
     ORDER BY a.embedding_1536 <=> p_query_embedding
@@ -189,7 +186,6 @@ BEGIN
         FROM traversal t
         JOIN cortex.edges e ON e.source_atom_id = t.current_id
         WHERE t.depth < p_max_depth
-          AND e.is_active = TRUE
           AND e.strength >= p_min_strength
           AND NOT (e.target_atom_id = ANY(t.path)) -- Prevent cycles
           AND (p_edge_types IS NULL OR e.edge_type = ANY(p_edge_types))
@@ -283,7 +279,6 @@ BEGIN
     FOR v_atom IN
         SELECT a.* FROM cortex.atoms a
         WHERE a.id = ANY(v_thread.context_atom_ids)
-          AND a.is_active = TRUE
         LIMIT 20
     LOOP
         v_total_tokens := v_total_tokens + COALESCE(length(v_atom.content) / 4, 0);
@@ -402,34 +397,49 @@ search, pattern matching, and prediction retrieval.';
 -- Allow legacy code to continue working during transition
 
 -- View: lumen.data_atoms -> cortex.atoms
-CREATE OR REPLACE VIEW lumen.data_atoms AS
-SELECT 
-    a.id,
-    a.org_id,
-    a.content,
-    a.embedding_3072 AS embedding,
-    a.metadata,
-    a.source_id AS document_id,
-    a.created_at,
-    a.updated_at
-FROM cortex.atoms a
-WHERE a.atom_type IN ('chunk', 'document', 'section');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'lumen' AND c.relname = 'data_atoms'
+          AND c.relkind IN ('r', 'p', 'f')
+    ) THEN
+        EXECUTE $view$
+        CREATE OR REPLACE VIEW lumen.data_atoms AS
+        SELECT 
+            a.id,
+            a.org_id,
+            a.content,
+            a.embedding_3072 AS embedding,
+            a.structured_data,
+            a.source_document_id AS document_id,
+            a.created_at,
+            a.created_at AS updated_at
+        FROM cortex.atoms a
+        WHERE a.atom_type IN ('chunk', 'document', 'section');
+        $view$;
 
-COMMENT ON VIEW lumen.data_atoms IS
-'Backward-compatible view mapping to cortex.atoms. Use cortex.atoms directly for new code.';
+        EXECUTE $comment$
+        COMMENT ON VIEW lumen.data_atoms IS
+        'Backward-compatible view mapping to cortex.atoms. Use cortex.atoms directly for new code.';
+        $comment$;
+    END IF;
+END $$;
 
 -- View: vault.document_chunks -> cortex.atoms
 CREATE OR REPLACE VIEW vault.document_chunks_v2 AS
 SELECT 
     a.id,
     a.org_id AS organization_id,
-    a.source_id AS document_id,
+    a.source_document_id AS document_id,
     a.content AS chunk_text,
     a.embedding_3072 AS embedding,
-    (a.metadata->>'chunk_index')::INTEGER AS chunk_index,
-    (a.metadata->>'start_page')::INTEGER AS start_page,
-    (a.metadata->>'end_page')::INTEGER AS end_page,
-    a.metadata AS chunk_metadata,
+    (a.structured_data->>'chunk_index')::INTEGER AS chunk_index,
+    (a.structured_data->>'start_page')::INTEGER AS start_page,
+    (a.structured_data->>'end_page')::INTEGER AS end_page,
+    a.structured_data AS chunk_metadata,
     a.created_at
 FROM cortex.atoms a
 WHERE a.atom_type = 'chunk';
@@ -442,7 +452,7 @@ CREATE OR REPLACE VIEW vault.extracted_entities_v2 AS
 SELECT 
     a.id,
     a.org_id AS organization_id,
-    a.source_id AS document_id,
+    a.source_document_id AS document_id,
     a.structured_data->>'entity_type' AS entity_type,
     a.content AS entity_value,
     a.structured_data->>'normalized_value' AS normalized_value,
@@ -460,13 +470,13 @@ COMMENT ON VIEW vault.extracted_entities_v2 IS
 CREATE OR REPLACE VIEW ai.document_embeddings_v2 AS
 SELECT 
     a.id,
-    a.source_id AS document_id,
+    a.source_document_id AS document_id,
     a.org_id,
     a.embedding_3072 AS embedding,
     a.embedding_1536 AS embedding_small,
     'text-embedding-3-large' AS model_name,
     a.created_at,
-    a.metadata AS embedding_metadata
+    a.structured_data AS embedding_metadata
 FROM cortex.atoms a
 WHERE a.embedding_3072 IS NOT NULL;
 
@@ -477,14 +487,14 @@ COMMENT ON VIEW ai.document_embeddings_v2 IS
 CREATE OR REPLACE VIEW lumen.agent_registry_v2 AS
 SELECT 
     a.id,
-    a.agent_name AS name,
+    a.agent_code AS name,
     a.agent_type AS type,
-    a.description,
+    a.system_prompt AS description,
     a.capabilities,
     a.model_config AS config,
     a.is_active AS enabled,
     a.created_at,
-    a.updated_at
+    a.created_at AS updated_at
 FROM cortex.agents a;
 
 COMMENT ON VIEW lumen.agent_registry_v2 IS
@@ -496,13 +506,13 @@ SELECT
     t.id,
     t.agent_id,
     t.thread_id AS session_id,
-    t.input,
-    t.output,
-    t.status,
-    t.started_at,
-    t.completed_at,
-    t.duration_ms,
-    t.token_usage,
+    t.input_data AS input,
+    t.output_data AS output,
+    NULL::TEXT AS status,
+    t.created_at AS started_at,
+    t.created_at AS completed_at,
+    t.execution_ms AS duration_ms,
+    t.token_count AS token_usage,
     t.created_at
 FROM cortex.traces t
 WHERE t.trace_type = 'agent_execution';
@@ -570,7 +580,7 @@ BEGIN
         FROM lumen.data_atoms lda
         WHERE NOT EXISTS (
             SELECT 1 FROM cortex.atoms ca 
-            WHERE ca.source_id = lda.id 
+                        WHERE ca.source_document_id = lda.id 
               AND ca.source_type = 'lumen.data_atoms'
         );
         
@@ -583,7 +593,7 @@ BEGIN
     -- Actual migration
     INSERT INTO cortex.atoms (
         org_id, atom_type, content, embedding_3072,
-        source_type, source_id, metadata, created_at
+        source_type, source_document_id, structured_data, created_at
     )
     SELECT 
         lda.org_id,
@@ -592,12 +602,12 @@ BEGIN
         lda.embedding,
         'lumen.data_atoms',
         lda.id,
-        lda.metadata,
+        lda.structured_data,
         lda.created_at
     FROM lumen.data_atoms lda
     WHERE NOT EXISTS (
         SELECT 1 FROM cortex.atoms ca 
-        WHERE ca.source_id = lda.id 
+        WHERE ca.source_document_id = lda.id 
           AND ca.source_type = 'lumen.data_atoms'
     )
     LIMIT p_batch_size;
@@ -678,7 +688,7 @@ CREATE OR REPLACE VIEW cortex.statistics AS
 SELECT 
     'atoms' AS table_name,
     COUNT(*) AS total_rows,
-    COUNT(*) FILTER (WHERE is_active) AS active_rows,
+    COUNT(*) AS active_rows,
     COUNT(DISTINCT org_id) AS org_count,
     COUNT(DISTINCT atom_type) AS type_count,
     MIN(created_at) AS earliest,
@@ -688,8 +698,8 @@ UNION ALL
 SELECT 
     'edges',
     COUNT(*),
-    COUNT(*) FILTER (WHERE is_active),
-    COUNT(DISTINCT org_id),
+    COUNT(*),
+    NULL::BIGINT AS org_count,
     COUNT(DISTINCT edge_type),
     MIN(created_at),
     MAX(created_at)
@@ -739,11 +749,21 @@ GRANT EXECUTE ON FUNCTION cortex.traverse_reasoning TO app_service;
 GRANT EXECUTE ON FUNCTION cortex.assemble_context TO app_service;
 GRANT EXECUTE ON FUNCTION cortex.query TO app_service;
 GRANT EXECUTE ON FUNCTION cortex.health_check TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.health_check TO app_readonly;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
+        GRANT EXECUTE ON FUNCTION cortex.health_check TO app_readonly;
+    END IF;
+END $$;
 
 -- Grant select on views
 GRANT SELECT ON cortex.statistics TO app_service;
-GRANT SELECT ON cortex.statistics TO app_readonly;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
+        GRANT SELECT ON cortex.statistics TO app_readonly;
+    END IF;
+END $$;
 
 -- Legacy view access
 GRANT SELECT ON lumen.data_atoms TO app_service;

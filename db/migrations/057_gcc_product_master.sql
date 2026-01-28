@@ -22,67 +22,94 @@ COMMENT ON SCHEMA product_master IS
 -- 2. PRODUCT CATEGORY ENUM
 -- =============================================================================
 
-CREATE TYPE product_master.product_category AS ENUM (
-    'PHARMACEUTICAL',       -- Drugs, Biologics (eCTD Module 3)
-    'MEDICAL_DEVICE',       -- Class I/II/III Devices (510(k), PMA)
-    'IVD',                  -- In Vitro Diagnostics (De Novo, EUA)
-    'COMBINATION',          -- Drug-Device Combos (e.g., drug-eluting stent)
-    'BIOLOGIC',             -- Blood products, vaccines, gene therapy
-    'ADVANCED_THERAPY',     -- ATMPs (EU), CGT (US)
-    'GENERIC',              -- ANDA pathway
-    'BIOSIMILAR',           -- 351(k) pathway
-    'OTC'                   -- Over-the-counter
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'product_master' AND t.typname = 'product_category'
+    ) THEN
+        CREATE TYPE product_master.product_category AS ENUM (
+            'PHARMACEUTICAL',       -- Drugs, Biologics (eCTD Module 3)
+            'MEDICAL_DEVICE',       -- Class I/II/III Devices (510(k), PMA)
+            'IVD',                  -- In Vitro Diagnostics (De Novo, EUA)
+            'COMBINATION',          -- Drug-Device Combos (e.g., drug-eluting stent)
+            'BIOLOGIC',             -- Blood products, vaccines, gene therapy
+            'ADVANCED_THERAPY',     -- ATMPs (EU), CGT (US)
+            'GENERIC',              -- ANDA pathway
+            'BIOSIMILAR',           -- 351(k) pathway
+            'OTC'                   -- Over-the-counter
+        );
+    END IF;
+END $$;
 
-CREATE TYPE product_master.development_phase AS ENUM (
-    'DISCOVERY',            -- Target identification
-    'PRECLINICAL',          -- Animal studies, toxicology
-    'IND_ENABLING',         -- Preparing IND/IMPD
-    'PHASE_1',              -- First-in-human
-    'PHASE_1B_2A',          -- Dose escalation
-    'PHASE_2',              -- Proof of concept
-    'PHASE_2B_3',           -- Pivotal planning
-    'PHASE_3',              -- Pivotal trials
-    'NDA_BLA_FILED',        -- Under FDA review
-    'APPROVED',             -- Market authorization granted
-    'MARKETED',             -- Commercially available
-    'POST_MARKET',          -- Phase 4, REMS
-    'WITHDRAWN',            -- Removed from market
-    'DISCONTINUED'          -- Development halted
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'product_master' AND t.typname = 'development_phase'
+    ) THEN
+        CREATE TYPE product_master.development_phase AS ENUM (
+            'DISCOVERY',            -- Target identification
+            'PRECLINICAL',          -- Animal studies, toxicology
+            'IND_ENABLING',         -- Preparing IND/IMPD
+            'PHASE_1',              -- First-in-human
+            'PHASE_1B_2A',          -- Dose escalation
+            'PHASE_2',              -- Proof of concept
+            'PHASE_2B_3',           -- Pivotal planning
+            'PHASE_3',              -- Pivotal trials
+            'NDA_BLA_FILED',        -- Under FDA review
+            'APPROVED',             -- Market authorization granted
+            'MARKETED',             -- Commercially available
+            'POST_MARKET',          -- Phase 4, REMS
+            'WITHDRAWN',            -- Removed from market
+            'DISCONTINUED'          -- Development halted
+        );
+    END IF;
+END $$;
 
-CREATE TYPE product_master.therapeutic_area AS ENUM (
-    'ONCOLOGY',
-    'CARDIOVASCULAR',
-    'CNS_NEUROLOGY',
-    'IMMUNOLOGY',
-    'INFECTIOUS_DISEASE',
-    'METABOLIC_ENDOCRINE',
-    'RESPIRATORY',
-    'GASTROENTEROLOGY',
-    'DERMATOLOGY',
-    'OPHTHALMOLOGY',
-    'HEMATOLOGY',
-    'NEPHROLOGY',
-    'MUSCULOSKELETAL',
-    'RARE_DISEASE',
-    'PEDIATRICS',
-    'WOMENS_HEALTH',
-    'UROLOGY',
-    'TRANSPLANT',
-    'GENE_CELL_THERAPY',
-    'DIGITAL_THERAPEUTICS',
-    'DIAGNOSTIC',
-    'SURGICAL',
-    'IMPLANTABLE',
-    'OTHER'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'product_master' AND t.typname = 'therapeutic_area'
+    ) THEN
+        CREATE TYPE product_master.therapeutic_area AS ENUM (
+            'ONCOLOGY',
+            'CARDIOVASCULAR',
+            'CNS_NEUROLOGY',
+            'IMMUNOLOGY',
+            'INFECTIOUS_DISEASE',
+            'METABOLIC_ENDOCRINE',
+            'RESPIRATORY',
+            'GASTROENTEROLOGY',
+            'DERMATOLOGY',
+            'OPHTHALMOLOGY',
+            'HEMATOLOGY',
+            'NEPHROLOGY',
+            'MUSCULOSKELETAL',
+            'RARE_DISEASE',
+            'PEDIATRICS',
+            'WOMENS_HEALTH',
+            'UROLOGY',
+            'TRANSPLANT',
+            'GENE_CELL_THERAPY',
+            'DIGITAL_THERAPEUTICS',
+            'DIAGNOSTIC',
+            'SURGICAL',
+            'IMPLANTABLE',
+            'OTHER'
+        );
+    END IF;
+END $$;
 
 -- =============================================================================
 -- 3. PRODUCTS TABLE (Super-Type)
 -- =============================================================================
 
-CREATE TABLE product_master.products (
+CREATE TABLE IF NOT EXISTS product_master.products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES identity.organizations(id) ON DELETE RESTRICT,
     
@@ -128,7 +155,7 @@ CREATE TABLE product_master.products (
 -- =============================================================================
 -- Handles regional variations (US Pack vs EU Pack) and strength/form combos
 
-CREATE TABLE product_master.product_variants (
+CREATE TABLE IF NOT EXISTS product_master.product_variants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES product_master.products(id) ON DELETE CASCADE,
     
@@ -174,7 +201,7 @@ CREATE TABLE product_master.product_variants (
 -- =============================================================================
 -- ISO 11238 Substance Identification
 
-CREATE TABLE product_master.substances (
+CREATE TABLE IF NOT EXISTS product_master.substances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Substance Identification (ISO 11238)
@@ -210,7 +237,7 @@ CREATE TABLE product_master.substances (
 -- =============================================================================
 -- A product can have multiple substances (combination drugs)
 
-CREATE TABLE product_master.product_substances (
+CREATE TABLE IF NOT EXISTS product_master.product_substances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES product_master.products(id) ON DELETE CASCADE,
     substance_id UUID NOT NULL REFERENCES product_master.substances(id) ON DELETE RESTRICT,
@@ -232,12 +259,9 @@ CREATE TABLE product_master.product_substances (
     CONSTRAINT product_substances_unique UNIQUE (product_id, substance_id, role)
 );
 
--- =============================================================================
--- 7. DEVICE CLASSIFICATION REGISTRY
--- =============================================================================
 -- FDA Product Code Database / EU MDR Classification
 
-CREATE TABLE product_master.device_classifications (
+CREATE TABLE IF NOT EXISTS product_master.device_classifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- FDA Classification
@@ -277,7 +301,7 @@ CREATE TABLE product_master.device_classifications (
 -- =============================================================================
 -- FDA GUDID / EU EUDAMED Basic UDI-DI
 
-CREATE TABLE product_master.udi_identifiers (
+CREATE TABLE IF NOT EXISTS product_master.udi_identifiers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     variant_id UUID NOT NULL REFERENCES product_master.product_variants(id) ON DELETE CASCADE,
     
@@ -341,29 +365,29 @@ CREATE TABLE product_master.udi_identifiers (
 -- =============================================================================
 
 -- Products
-CREATE INDEX idx_products_org ON product_master.products(org_id);
-CREATE INDEX idx_products_category ON product_master.products(category);
-CREATE INDEX idx_products_phase ON product_master.products(development_phase);
-CREATE INDEX idx_products_therapeutic_area ON product_master.products(therapeutic_area);
-CREATE INDEX idx_products_active ON product_master.products(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_products_org ON product_master.products(org_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON product_master.products(category);
+CREATE INDEX IF NOT EXISTS idx_products_phase ON product_master.products(development_phase);
+CREATE INDEX IF NOT EXISTS idx_products_therapeutic_area ON product_master.products(therapeutic_area);
+CREATE INDEX IF NOT EXISTS idx_products_active ON product_master.products(is_active) WHERE is_active = TRUE;
 
 -- Product Variants
-CREATE INDEX idx_variants_product ON product_master.product_variants(product_id);
-CREATE INDEX idx_variants_region ON product_master.product_variants(target_market_region);
-CREATE INDEX idx_variants_ndc ON product_master.product_variants(ndc_code) WHERE ndc_code IS NOT NULL;
-CREATE INDEX idx_variants_gtin ON product_master.product_variants(gtin) WHERE gtin IS NOT NULL;
-CREATE INDEX idx_variants_search ON product_master.product_variants USING GIN(search_vector);
-CREATE INDEX idx_variants_domain_attrs ON product_master.product_variants USING GIN(domain_attributes jsonb_path_ops);
+CREATE INDEX IF NOT EXISTS idx_variants_product ON product_master.product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_variants_region ON product_master.product_variants(target_market_region);
+CREATE INDEX IF NOT EXISTS idx_variants_ndc ON product_master.product_variants(ndc_code) WHERE ndc_code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_variants_gtin ON product_master.product_variants(gtin) WHERE gtin IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_variants_search ON product_master.product_variants USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_variants_domain_attrs ON product_master.product_variants USING GIN(domain_attributes jsonb_path_ops);
 
 -- Substances
-CREATE INDEX idx_substances_name ON product_master.substances(substance_name);
-CREATE INDEX idx_substances_cas ON product_master.substances(cas_number) WHERE cas_number IS NOT NULL;
-CREATE INDEX idx_substances_unii ON product_master.substances(substance_id);
+CREATE INDEX IF NOT EXISTS idx_substances_name ON product_master.substances(substance_name);
+CREATE INDEX IF NOT EXISTS idx_substances_cas ON product_master.substances(cas_number) WHERE cas_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_substances_unii ON product_master.substances(substance_id);
 
 -- UDI
-CREATE INDEX idx_udi_variant ON product_master.udi_identifiers(variant_id);
-CREATE INDEX idx_udi_di ON product_master.udi_identifiers(udi_di);
-CREATE INDEX idx_udi_eudamed ON product_master.udi_identifiers(eudamed_basic_udi_di) WHERE eudamed_basic_udi_di IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_udi_variant ON product_master.udi_identifiers(variant_id);
+CREATE INDEX IF NOT EXISTS idx_udi_di ON product_master.udi_identifiers(udi_di);
+CREATE INDEX IF NOT EXISTS idx_udi_eudamed ON product_master.udi_identifiers(eudamed_basic_udi_di) WHERE eudamed_basic_udi_di IS NOT NULL;
 
 -- =============================================================================
 -- 10. RLS POLICIES (Inherit from identity schema)
@@ -375,12 +399,14 @@ ALTER TABLE product_master.product_substances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_master.udi_identifiers ENABLE ROW LEVEL SECURITY;
 
 -- Products: Org-scoped access
+DROP POLICY IF EXISTS products_org_isolation ON product_master.products;
 CREATE POLICY products_org_isolation ON product_master.products
     FOR ALL
     USING (identity.can_access_org(org_id))
     WITH CHECK (identity.can_write_org(org_id));
 
 -- Variants: Inherit from product
+DROP POLICY IF EXISTS variants_org_isolation ON product_master.product_variants;
 CREATE POLICY variants_org_isolation ON product_master.product_variants
     FOR ALL
     USING (
@@ -397,6 +423,7 @@ CREATE POLICY variants_org_isolation ON product_master.product_variants
     );
 
 -- Product Substances: Inherit from product
+DROP POLICY IF EXISTS product_substances_org_isolation ON product_master.product_substances;
 CREATE POLICY product_substances_org_isolation ON product_master.product_substances
     FOR ALL
     USING (
@@ -413,6 +440,7 @@ CREATE POLICY product_substances_org_isolation ON product_master.product_substan
     );
 
 -- UDI Identifiers: Inherit through variant → product
+DROP POLICY IF EXISTS udi_org_isolation ON product_master.udi_identifiers;
 CREATE POLICY udi_org_isolation ON product_master.udi_identifiers
     FOR ALL
     USING (
@@ -567,6 +595,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_product_audit ON product_master.products;
 CREATE TRIGGER trg_product_audit
     AFTER INSERT OR UPDATE OR DELETE ON product_master.products
     FOR EACH ROW EXECUTE FUNCTION product_master.audit_product_changes();
@@ -619,7 +648,7 @@ INSERT INTO common_standards.controlled_vocabularies (
      'Medical device classification codes', CURRENT_DATE, TRUE),
     ('1.3.160', 'GS1_GTIN', 'GS1 Global Trade Item Number', 
      'Product identification for supply chain', CURRENT_DATE, TRUE)
-ON CONFLICT (cv_oid) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 COMMIT;
 

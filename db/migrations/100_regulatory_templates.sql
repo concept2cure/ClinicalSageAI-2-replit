@@ -4205,22 +4205,22 @@ Supply Chain: {{supply_management}}',
 DROP FUNCTION IF EXISTS insert_regulatory_template;
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_ectd_templates_agency ON ectd_templates USING btree (tags) WHERE tags @> ARRAY[''fda''];
+CREATE INDEX IF NOT EXISTS idx_ectd_templates_agency ON ectd_templates USING btree (tags) WHERE tags @> ARRAY['fda'];
 CREATE INDEX IF NOT EXISTS idx_ectd_templates_module ON ectd_templates USING btree (module_number);
-CREATE INDEX IF NOT EXISTS idx_ectd_templates_search ON ectd_templates USING gin(to_tsvector(''english'', template_name || '' '' || COALESCE(ich_guidance, '''')));
+CREATE INDEX IF NOT EXISTS idx_ectd_templates_search ON ectd_templates USING gin(to_tsvector('english', template_name || ' ' || COALESCE(ich_guidance, '')));
 
 -- Verify template count
 DO $$
 DECLARE
     template_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO template_count FROM ectd_templates WHERE created_by = 1 AND version = ''2.0'';
-    RAISE NOTICE ''Total regulatory templates inserted: %'', template_count;
+    SELECT COUNT(*) INTO template_count FROM ectd_templates WHERE created_by = 1 AND version = '2.0';
+    RAISE NOTICE 'Total regulatory templates inserted: %', template_count;
     
     -- Ensure we have at least 200 templates
     IF template_count < 200 THEN
-        RAISE WARNING ''Only % templates inserted. Target was 200.'', template_count;
+        RAISE WARNING 'Only % templates inserted. Target was 200.', template_count;
     ELSE
-        RAISE NOTICE ''Successfully inserted % regulatory templates!'', template_count;
+        RAISE NOTICE 'Successfully inserted % regulatory templates!', template_count;
     END IF;
 END $$;

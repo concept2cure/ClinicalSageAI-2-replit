@@ -22,18 +22,23 @@ create table if not exists cmc_process_drafts (
 create index if not exists idx_drafts_product_status on cmc_process_drafts(product_id, status);
 
 -- ASSIGNMENTS: drafts or processes
-create table if not exists cmc_assignments (
-  assignment_id uuid primary key default gen_random_uuid(),
-  process_id uuid references cmc_processes(process_id) on delete cascade,
-  draft_id uuid references cmc_process_drafts(draft_id) on delete cascade,
-  user_id text not null,
-  role text not null check (role in ('Owner','ProcessEng','Analyst','QA','RegCMC','Reviewer')),
-  due_date date,
-  status text not null default 'OPEN' check (status in ('OPEN','DONE','CANCELLED')),
-  created_at timestamptz default now()
-);
-create index if not exists idx_assign_draft on cmc_assignments(draft_id);
-create index if not exists idx_assign_proc on cmc_assignments(process_id);
+DO $$
+BEGIN
+  IF to_regclass('public.cmc_processes') IS NOT NULL THEN
+    CREATE TABLE IF NOT EXISTS cmc_assignments (
+      assignment_id uuid primary key default gen_random_uuid(),
+      process_id uuid references cmc_processes(process_id) on delete cascade,
+      draft_id uuid references cmc_process_drafts(draft_id) on delete cascade,
+      user_id text not null,
+      role text not null check (role in ('Owner','ProcessEng','Analyst','QA','RegCMC','Reviewer')),
+      due_date date,
+      status text not null default 'OPEN' check (status in ('OPEN','DONE','CANCELLED')),
+      created_at timestamptz default now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_assign_draft ON cmc_assignments(draft_id);
+    CREATE INDEX IF NOT EXISTS idx_assign_proc ON cmc_assignments(process_id);
+  END IF;
+END $$;
 
 -- DATA LINEAGE: immutable edges for transparency
 create table if not exists cmc_lineage (

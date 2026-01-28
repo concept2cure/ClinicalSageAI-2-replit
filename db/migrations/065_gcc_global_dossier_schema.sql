@@ -22,34 +22,52 @@ COMMENT ON SCHEMA global_dossier IS
 -- 2. DOSSIER INSTANCE (The Living Document)
 -- =============================================================================
 
-CREATE TYPE global_dossier.dossier_type AS ENUM (
-    'NDA',                         -- New Drug Application
-    'BLA',                         -- Biologics License Application
-    'ANDA',                        -- Abbreviated NDA (Generic)
-    '505B2',                       -- 505(b)(2) Pathway
-    'MAA',                         -- Marketing Authorization Application (EU)
-    'NDS',                         -- New Drug Submission (Canada)
-    'ANDA_CANADA',                 -- Abbreviated NDS (Canada)
-    'JNDA',                        -- Japan NDA
-    'DEVICE_510K',                 -- 510(k) Premarket Notification
-    'PMA',                         -- Premarket Approval (Devices)
-    'IND',                         -- Investigational New Drug
-    'CTA',                         -- Clinical Trial Application
-    'IMPD'                         -- Investigational Medicinal Product Dossier
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'dossier_type'
+    ) THEN
+        CREATE TYPE global_dossier.dossier_type AS ENUM (
+            'NDA',                         -- New Drug Application
+            'BLA',                         -- Biologics License Application
+            'ANDA',                        -- Abbreviated NDA (Generic)
+            '505B2',                       -- 505(b)(2) Pathway
+            'MAA',                         -- Marketing Authorization Application (EU)
+            'NDS',                         -- New Drug Submission (Canada)
+            'ANDA_CANADA',                 -- Abbreviated NDS (Canada)
+            'JNDA',                        -- Japan NDA
+            'DEVICE_510K',                 -- 510(k) Premarket Notification
+            'PMA',                         -- Premarket Approval (Devices)
+            'IND',                         -- Investigational New Drug
+            'CTA',                         -- Clinical Trial Application
+            'IMPD'                         -- Investigational Medicinal Product Dossier
+        );
+    END IF;
+END $$;
 
-CREATE TYPE global_dossier.dossier_lifecycle AS ENUM (
-    'DRAFT',
-    'UNDER_REVIEW',
-    'APPROVED',
-    'CONDITIONALLY_APPROVED',
-    'REJECTED',
-    'WITHDRAWN',
-    'SUPERSEDED',
-    'ARCHIVED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'dossier_lifecycle'
+    ) THEN
+        CREATE TYPE global_dossier.dossier_lifecycle AS ENUM (
+            'DRAFT',
+            'UNDER_REVIEW',
+            'APPROVED',
+            'CONDITIONALLY_APPROVED',
+            'REJECTED',
+            'WITHDRAWN',
+            'SUPERSEDED',
+            'ARCHIVED'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE global_dossier.dossier_instances (
+CREATE TABLE IF NOT EXISTS global_dossier.dossier_instances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Identity
@@ -90,14 +108,14 @@ CREATE TABLE global_dossier.dossier_instances (
     created_by UUID REFERENCES identity.users(id)
 );
 
-CREATE INDEX idx_dossier_instances_product ON global_dossier.dossier_instances(product_id);
-CREATE INDEX idx_dossier_instances_type ON global_dossier.dossier_instances(dossier_type);
-CREATE INDEX idx_dossier_instances_status ON global_dossier.dossier_instances(lifecycle_status);
-CREATE INDEX idx_dossier_instances_org ON global_dossier.dossier_instances(org_id);
-CREATE INDEX idx_dossier_instances_accumulus ON global_dossier.dossier_instances(accumulus_workspace_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_product ON global_dossier.dossier_instances(product_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_type ON global_dossier.dossier_instances(dossier_type);
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_status ON global_dossier.dossier_instances(lifecycle_status);
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_org ON global_dossier.dossier_instances(org_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_accumulus ON global_dossier.dossier_instances(accumulus_workspace_id);
 
 -- GIN index on FHIR bundle for queries
-CREATE INDEX idx_dossier_instances_fhir_gin ON global_dossier.dossier_instances 
+CREATE INDEX IF NOT EXISTS idx_dossier_instances_fhir_gin ON global_dossier.dossier_instances 
     USING GIN (core_data_sheet_fhir jsonb_path_ops);
 
 -- =============================================================================
@@ -105,37 +123,55 @@ CREATE INDEX idx_dossier_instances_fhir_gin ON global_dossier.dossier_instances
 -- =============================================================================
 -- Like git branches - regional divergences are metadata layers, not copies
 
-CREATE TYPE global_dossier.branch_type AS ENUM (
-    'MASTER',                      -- The canonical timeline
-    'REGIONAL',                    -- Region-specific variation
-    'SIMULATION',                  -- What-if scenario
-    'HISTORICAL',                  -- Point-in-time snapshot
-    'REMEDIATION'                  -- Fix branch
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'branch_type'
+    ) THEN
+        CREATE TYPE global_dossier.branch_type AS ENUM (
+            'MASTER',                      -- The canonical timeline
+            'REGIONAL',                    -- Region-specific variation
+            'SIMULATION',                  -- What-if scenario
+            'HISTORICAL',                  -- Point-in-time snapshot
+            'REMEDIATION'                  -- Fix branch
+        );
+    END IF;
+END $$;
 
-CREATE TYPE global_dossier.region_code AS ENUM (
-    'US_FDA',
-    'EU_EMA',
-    'EU_DECENTRALIZED',            -- DCP submissions
-    'EU_MUTUAL_RECOGNITION',       -- MRP submissions
-    'JP_PMDA',
-    'CA_HEALTH_CANADA',
-    'AU_TGA',
-    'CH_SWISSMEDIC',
-    'UK_MHRA',
-    'BR_ANVISA',
-    'CN_NMPA',
-    'KR_MFDS',
-    'SG_HSA',
-    'IN_CDSCO',
-    'ZA_SAHPRA',
-    'WHO_PREQUALIFICATION',
-    'GCC',                         -- Gulf Cooperation Council
-    'ASEAN',                       -- ASEAN common submission
-    'ICH_GLOBAL'                   -- Hypothetical future global
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'region_code'
+    ) THEN
+        CREATE TYPE global_dossier.region_code AS ENUM (
+            'US_FDA',
+            'EU_EMA',
+            'EU_DECENTRALIZED',            -- DCP submissions
+            'EU_MUTUAL_RECOGNITION',       -- MRP submissions
+            'JP_PMDA',
+            'CA_HEALTH_CANADA',
+            'AU_TGA',
+            'CH_SWISSMEDIC',
+            'UK_MHRA',
+            'BR_ANVISA',
+            'CN_NMPA',
+            'KR_MFDS',
+            'SG_HSA',
+            'IN_CDSCO',
+            'ZA_SAHPRA',
+            'WHO_PREQUALIFICATION',
+            'GCC',                         -- Gulf Cooperation Council
+            'ASEAN',                       -- ASEAN common submission
+            'ICH_GLOBAL'                   -- Hypothetical future global
+        );
+    END IF;
+END $$;
 
-CREATE TABLE global_dossier.dossier_branches (
+CREATE TABLE IF NOT EXISTS global_dossier.dossier_branches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Parent Dossier
@@ -182,35 +218,53 @@ CREATE TABLE global_dossier.dossier_branches (
     CONSTRAINT unique_branch_per_dossier UNIQUE (dossier_id, branch_code)
 );
 
-CREATE INDEX idx_dossier_branches_dossier ON global_dossier.dossier_branches(dossier_id);
-CREATE INDEX idx_dossier_branches_region ON global_dossier.dossier_branches(target_region);
-CREATE INDEX idx_dossier_branches_type ON global_dossier.dossier_branches(branch_type);
-CREATE INDEX idx_dossier_branches_parent ON global_dossier.dossier_branches(parent_branch_id);
-CREATE INDEX idx_dossier_branches_submission ON global_dossier.dossier_branches(submission_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_dossier ON global_dossier.dossier_branches(dossier_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_region ON global_dossier.dossier_branches(target_region);
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_type ON global_dossier.dossier_branches(branch_type);
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_parent ON global_dossier.dossier_branches(parent_branch_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_submission ON global_dossier.dossier_branches(submission_id);
 
 -- GIN indexes on override/addition JSON
-CREATE INDEX idx_dossier_branches_overrides_gin ON global_dossier.dossier_branches 
+CREATE INDEX IF NOT EXISTS idx_dossier_branches_overrides_gin ON global_dossier.dossier_branches 
     USING GIN (regional_overrides jsonb_path_ops);
 
 -- =============================================================================
 -- 4. DOSSIER SYNC EVENTS (Real-Time Regulator Sync)
 -- =============================================================================
 
-CREATE TYPE global_dossier.sync_direction AS ENUM (
-    'SPONSOR_TO_REGULATOR',        -- Pushing updates
-    'REGULATOR_TO_SPONSOR',        -- Receiving feedback
-    'BIDIRECTIONAL'                -- Two-way sync
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'sync_direction'
+    ) THEN
+        CREATE TYPE global_dossier.sync_direction AS ENUM (
+            'SPONSOR_TO_REGULATOR',        -- Pushing updates
+            'REGULATOR_TO_SPONSOR',        -- Receiving feedback
+            'BIDIRECTIONAL'                -- Two-way sync
+        );
+    END IF;
+END $$;
 
-CREATE TYPE global_dossier.sync_status AS ENUM (
-    'PENDING',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'FAILED',
-    'PARTIAL'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'sync_status'
+    ) THEN
+        CREATE TYPE global_dossier.sync_status AS ENUM (
+            'PENDING',
+            'IN_PROGRESS',
+            'COMPLETED',
+            'FAILED',
+            'PARTIAL'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE global_dossier.dossier_sync_events (
+CREATE TABLE IF NOT EXISTS global_dossier.dossier_sync_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Target
@@ -247,33 +301,51 @@ CREATE TABLE global_dossier.dossier_sync_events (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_dossier_sync_dossier ON global_dossier.dossier_sync_events(dossier_id);
-CREATE INDEX idx_dossier_sync_status ON global_dossier.dossier_sync_events(status);
-CREATE INDEX idx_dossier_sync_platform ON global_dossier.dossier_sync_events(target_platform);
+CREATE INDEX IF NOT EXISTS idx_dossier_sync_dossier ON global_dossier.dossier_sync_events(dossier_id);
+CREATE INDEX IF NOT EXISTS idx_dossier_sync_status ON global_dossier.dossier_sync_events(status);
+CREATE INDEX IF NOT EXISTS idx_dossier_sync_platform ON global_dossier.dossier_sync_events(target_platform);
 
 -- =============================================================================
 -- 5. REGULATORY COMMENTS (Cross-Agency Annotations)
 -- =============================================================================
 -- Future: Regulators annotate directly, visible to other agencies (Project Orbis++)
 
-CREATE TYPE global_dossier.comment_visibility AS ENUM (
-    'SPONSOR_ONLY',                -- Only sponsor sees
-    'AGENCY_ONLY',                 -- Only reviewing agencies
-    'SHARED',                      -- All parties in collaboration
-    'PUBLIC'                       -- Public disclosure
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'comment_visibility'
+    ) THEN
+        CREATE TYPE global_dossier.comment_visibility AS ENUM (
+            'SPONSOR_ONLY',                -- Only sponsor sees
+            'AGENCY_ONLY',                 -- Only reviewing agencies
+            'SHARED',                      -- All parties in collaboration
+            'PUBLIC'                       -- Public disclosure
+        );
+    END IF;
+END $$;
 
-CREATE TYPE global_dossier.comment_type AS ENUM (
-    'QUESTION',                    -- Information request
-    'CLARIFICATION',               -- Request for clarification
-    'DEFICIENCY',                  -- Identified deficiency
-    'RECOMMENDATION',              -- Suggested change
-    'ACKNOWLEDGMENT',              -- Received/understood
-    'APPROVAL_NOTE',               -- Approval-related
-    'INTERNAL_NOTE'                -- Internal agency note
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'global_dossier' AND t.typname = 'comment_type'
+    ) THEN
+        CREATE TYPE global_dossier.comment_type AS ENUM (
+            'QUESTION',                    -- Information request
+            'CLARIFICATION',               -- Request for clarification
+            'DEFICIENCY',                  -- Identified deficiency
+            'RECOMMENDATION',              -- Suggested change
+            'ACKNOWLEDGMENT',              -- Received/understood
+            'APPROVAL_NOTE',               -- Approval-related
+            'INTERNAL_NOTE'                -- Internal agency note
+        );
+    END IF;
+END $$;
 
-CREATE TABLE global_dossier.regulatory_comments (
+CREATE TABLE IF NOT EXISTS global_dossier.regulatory_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Target
@@ -319,22 +391,22 @@ CREATE TABLE global_dossier.regulatory_comments (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_regulatory_comments_dossier ON global_dossier.regulatory_comments(dossier_id);
-CREATE INDEX idx_regulatory_comments_branch ON global_dossier.regulatory_comments(branch_id);
-CREATE INDEX idx_regulatory_comments_section ON global_dossier.regulatory_comments(ectd_section);
-CREATE INDEX idx_regulatory_comments_type ON global_dossier.regulatory_comments(comment_type);
-CREATE INDEX idx_regulatory_comments_unresolved ON global_dossier.regulatory_comments(dossier_id) 
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_dossier ON global_dossier.regulatory_comments(dossier_id);
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_branch ON global_dossier.regulatory_comments(branch_id);
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_section ON global_dossier.regulatory_comments(ectd_section);
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_type ON global_dossier.regulatory_comments(comment_type);
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_unresolved ON global_dossier.regulatory_comments(dossier_id) 
     WHERE is_resolved = FALSE AND response_required = TRUE;
 
 -- Full-text search on comments
-CREATE INDEX idx_regulatory_comments_fts ON global_dossier.regulatory_comments 
+CREATE INDEX IF NOT EXISTS idx_regulatory_comments_fts ON global_dossier.regulatory_comments 
     USING GIN (to_tsvector('english', comment_title || ' ' || comment_body));
 
 -- =============================================================================
 -- 6. DOSSIER CONTENT TRACKING (Granular Change Tracking)
 -- =============================================================================
 
-CREATE TABLE global_dossier.content_versions (
+CREATE TABLE IF NOT EXISTS global_dossier.content_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Target
@@ -376,10 +448,10 @@ CREATE TABLE global_dossier.content_versions (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_content_versions_dossier ON global_dossier.content_versions(dossier_id);
-CREATE INDEX idx_content_versions_section ON global_dossier.content_versions(ectd_section);
-CREATE INDEX idx_content_versions_hash ON global_dossier.content_versions(content_hash);
-CREATE INDEX idx_content_versions_ai ON global_dossier.content_versions(ai_generated, human_reviewed);
+CREATE INDEX IF NOT EXISTS idx_content_versions_dossier ON global_dossier.content_versions(dossier_id);
+CREATE INDEX IF NOT EXISTS idx_content_versions_section ON global_dossier.content_versions(ectd_section);
+CREATE INDEX IF NOT EXISTS idx_content_versions_hash ON global_dossier.content_versions(content_hash);
+CREATE INDEX IF NOT EXISTS idx_content_versions_ai ON global_dossier.content_versions(ai_generated, human_reviewed);
 
 -- =============================================================================
 -- 7. HELPER FUNCTIONS
@@ -543,7 +615,7 @@ SELECT
     di.dossier_type,
     di.lifecycle_status,
     di.sponsor_name,
-    p.product_name,
+    COALESCE(p.proprietary_name, p.established_name) AS product_name,
     COUNT(DISTINCT db.id) FILTER (WHERE db.branch_type = 'REGIONAL') AS regional_branch_count,
     ARRAY_AGG(DISTINCT db.target_region) FILTER (WHERE db.target_region IS NOT NULL) AS target_regions,
     di.accumulus_workspace_id IS NOT NULL AS accumulus_linked,
@@ -551,7 +623,7 @@ SELECT
 FROM global_dossier.dossier_instances di
 LEFT JOIN global_dossier.dossier_branches db ON di.id = db.dossier_id AND db.is_active = TRUE
 LEFT JOIN product_master.products p ON di.product_id = p.id
-GROUP BY di.id, p.product_name;
+GROUP BY di.id, COALESCE(p.proprietary_name, p.established_name);
 
 -- Pending regulatory comments
 CREATE OR REPLACE VIEW global_dossier.pending_comments AS

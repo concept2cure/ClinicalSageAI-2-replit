@@ -12,26 +12,31 @@ create table if not exists strategy_cqas (
 create unique index if not exists uq_cqa_name_product on strategy_cqas(product_id, lower(name));
 
 -- Controls (map CPPs to CQAs via control types)
-create table if not exists strategy_controls (
-  ctrl_id uuid primary key default gen_random_uuid(),
-  process_id uuid not null,
-  param_id uuid not null references cmc_parameters(param_id) on delete cascade,
-  cqa_id uuid references strategy_cqas(cqa_id) on delete set null,
-  control_type text not null check (control_type in ('IPC','Release','Alarm','PAT')),
-  test_name text,
-  method_id uuid,
-  spec_low text,
-  spec_high text,
-  frequency text,              -- e.g., "per batch", "every 30 min"
-  sampling_plan text,          -- e.g., "n=10 locations"
-  action_on_fail text,
-  status text not null default 'ACTIVE' check (status in ('ACTIVE','RETIRED')),
-  rationale text,
-  owner text,
-  created_at timestamptz default now()
-);
-create index if not exists idx_ctrl_process_param on strategy_controls(process_id, param_id);
-create index if not exists idx_ctrl_cqa on strategy_controls(cqa_id);
+DO $$
+BEGIN
+  IF to_regclass('public.cmc_parameters') IS NOT NULL THEN
+    CREATE TABLE IF NOT EXISTS strategy_controls (
+      ctrl_id uuid primary key default gen_random_uuid(),
+      process_id uuid not null,
+      param_id uuid not null references cmc_parameters(param_id) on delete cascade,
+      cqa_id uuid references strategy_cqas(cqa_id) on delete set null,
+      control_type text not null check (control_type in ('IPC','Release','Alarm','PAT')),
+      test_name text,
+      method_id uuid,
+      spec_low text,
+      spec_high text,
+      frequency text,              -- e.g., "per batch", "every 30 min"
+      sampling_plan text,          -- e.g., "n=10 locations"
+      action_on_fail text,
+      status text not null default 'ACTIVE' check (status in ('ACTIVE','RETIRED')),
+      rationale text,
+      owner text,
+      created_at timestamptz default now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_ctrl_process_param ON strategy_controls(process_id, param_id);
+    CREATE INDEX IF NOT EXISTS idx_ctrl_cqa ON strategy_controls(cqa_id);
+  END IF;
+END $$;
 
 -- Audit
 create table if not exists strategy_audit (

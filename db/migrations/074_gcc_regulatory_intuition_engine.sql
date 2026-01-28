@@ -8,6 +8,23 @@
 
 BEGIN;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'core' AND p.proname = 'update_timestamp'
+    ) THEN
+        CREATE OR REPLACE FUNCTION core.update_timestamp()
+        RETURNS TRIGGER AS $func$
+        BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+        END;
+        $func$ LANGUAGE plpgsql;
+    END IF;
+END $$;
+
 -- ============================================================================
 -- SECTION 1: REGULATORY SIGNAL EXTRACTION
 -- ============================================================================
@@ -374,8 +391,7 @@ CREATE INDEX IF NOT EXISTS idx_reg_signals_org_type ON cortex.regulatory_signals
 CREATE INDEX IF NOT EXISTS idx_reg_signals_therapeutic ON cortex.regulatory_signals(therapeutic_area, indication);
 CREATE INDEX IF NOT EXISTS idx_reg_signals_source ON cortex.regulatory_signals(source_atom_id);
 CREATE INDEX IF NOT EXISTS idx_reg_signals_severity ON cortex.regulatory_signals(severity, preceded_rejection_rate DESC);
-CREATE INDEX IF NOT EXISTS idx_reg_signals_embedding ON cortex.regulatory_signals 
-    USING hnsw (signal_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 CREATE INDEX IF NOT EXISTS idx_reg_signals_embedding_1536 ON cortex.regulatory_signals 
     USING hnsw (signal_embedding_1536 vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
@@ -383,8 +399,7 @@ CREATE INDEX IF NOT EXISTS idx_reg_signals_embedding_1536 ON cortex.regulatory_s
 CREATE INDEX IF NOT EXISTS idx_rej_patterns_outcome ON cortex.rejection_patterns(predicted_outcome, outcome_probability DESC);
 CREATE INDEX IF NOT EXISTS idx_rej_patterns_therapeutic ON cortex.rejection_patterns USING GIN (therapeutic_areas);
 CREATE INDEX IF NOT EXISTS idx_rej_patterns_signals ON cortex.rejection_patterns USING GIN (signal_sequence);
-CREATE INDEX IF NOT EXISTS idx_rej_patterns_embedding ON cortex.rejection_patterns 
-    USING hnsw (pattern_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 CREATE INDEX IF NOT EXISTS idx_rej_patterns_validated ON cortex.rejection_patterns(is_validated, f1_score DESC);
 
 -- Intuition predictions indexes
@@ -397,8 +412,7 @@ CREATE INDEX IF NOT EXISTS idx_intuition_outcome_tracking ON cortex.intuition_pr
 
 -- Soft signals indexes
 CREATE INDEX IF NOT EXISTS idx_soft_signals_category ON cortex.soft_signals(signal_category, is_active);
-CREATE INDEX IF NOT EXISTS idx_soft_signals_embedding ON cortex.soft_signals 
-    USING hnsw (signal_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 
 -- Timeline predictions indexes
 CREATE INDEX IF NOT EXISTS idx_timeline_submission ON cortex.timeline_predictions(submission_id, milestone_type);
@@ -417,6 +431,7 @@ ALTER TABLE cortex.soft_signals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.timeline_predictions ENABLE ROW LEVEL SECURITY;
 
 -- Regulatory signals: org-scoped + global readable
+DROP POLICY IF EXISTS regulatory_signals_org_isolation ON cortex.regulatory_signals;
 CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
     FOR ALL USING (
         org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
@@ -424,6 +439,7 @@ CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
     );
 
 -- Rejection patterns: org-scoped + global readable
+DROP POLICY IF EXISTS rejection_patterns_org_isolation ON cortex.rejection_patterns;
 CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
     FOR ALL USING (
         org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
@@ -431,12 +447,14 @@ CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
     );
 
 -- Intuition predictions: strict org isolation
+DROP POLICY IF EXISTS intuition_predictions_org_isolation ON cortex.intuition_predictions;
 CREATE POLICY intuition_predictions_org_isolation ON cortex.intuition_predictions
     FOR ALL USING (
         org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
     );
 
 -- Soft signals: org-scoped + global readable
+DROP POLICY IF EXISTS soft_signals_org_isolation ON cortex.soft_signals;
 CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
     FOR ALL USING (
         org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
@@ -444,6 +462,7 @@ CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
     );
 
 -- Timeline predictions: strict org isolation
+DROP POLICY IF EXISTS timeline_predictions_org_isolation ON cortex.timeline_predictions;
 CREATE POLICY timeline_predictions_org_isolation ON cortex.timeline_predictions
     FOR ALL USING (
         org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id)
@@ -718,14 +737,17 @@ Updates pattern statistics and calculates prediction error.';
 -- SECTION 9: AUDIT TRIGGERS
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS regulatory_signals_updated_at ON cortex.regulatory_signals;
 CREATE TRIGGER regulatory_signals_updated_at
     BEFORE UPDATE ON cortex.regulatory_signals
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS rejection_patterns_updated_at ON cortex.rejection_patterns;
 CREATE TRIGGER rejection_patterns_updated_at
     BEFORE UPDATE ON cortex.rejection_patterns
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS soft_signals_updated_at ON cortex.soft_signals;
 CREATE TRIGGER soft_signals_updated_at
     BEFORE UPDATE ON cortex.soft_signals
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();

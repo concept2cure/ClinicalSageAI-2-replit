@@ -66,11 +66,11 @@ CREATE TABLE IF NOT EXISTS innovation.guidance_documents (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_guidance_docs_agency ON innovation.guidance_documents(agency);
-CREATE INDEX idx_guidance_docs_type ON innovation.guidance_documents(document_type);
-CREATE INDEX idx_guidance_docs_therapeutic ON innovation.guidance_documents USING GIN(therapeutic_area);
-CREATE INDEX idx_guidance_docs_submission ON innovation.guidance_documents USING GIN(submission_types);
-CREATE INDEX idx_guidance_docs_embedding ON innovation.guidance_documents USING ivfflat (content_embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_guidance_docs_agency ON innovation.guidance_documents(agency);
+CREATE INDEX IF NOT EXISTS idx_guidance_docs_type ON innovation.guidance_documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_guidance_docs_therapeutic ON innovation.guidance_documents USING GIN(therapeutic_area);
+CREATE INDEX IF NOT EXISTS idx_guidance_docs_submission ON innovation.guidance_documents USING GIN(submission_types);
+CREATE INDEX IF NOT EXISTS idx_guidance_docs_embedding ON innovation.guidance_documents USING ivfflat (content_embedding vector_cosine_ops) WITH (lists = 100);
 
 -- Delta radar scans
 CREATE TABLE IF NOT EXISTS innovation.delta_radar_scans (
@@ -102,9 +102,9 @@ CREATE TABLE IF NOT EXISTS innovation.delta_radar_scans (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_delta_scans_program ON innovation.delta_radar_scans(program_id);
-CREATE INDEX idx_delta_scans_org ON innovation.delta_radar_scans(org_id);
-CREATE INDEX idx_delta_scans_status ON innovation.delta_radar_scans(status);
+CREATE INDEX IF NOT EXISTS idx_delta_scans_program ON innovation.delta_radar_scans(program_id);
+CREATE INDEX IF NOT EXISTS idx_delta_scans_org ON innovation.delta_radar_scans(org_id);
+CREATE INDEX IF NOT EXISTS idx_delta_scans_status ON innovation.delta_radar_scans(status);
 
 -- Individual delta findings
 CREATE TABLE IF NOT EXISTS innovation.delta_findings (
@@ -144,11 +144,11 @@ CREATE TABLE IF NOT EXISTS innovation.delta_findings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_delta_findings_scan ON innovation.delta_findings(scan_id);
-CREATE INDEX idx_delta_findings_program ON innovation.delta_findings(program_id);
-CREATE INDEX idx_delta_findings_severity ON innovation.delta_findings(severity);
-CREATE INDEX idx_delta_findings_status ON innovation.delta_findings(status);
-CREATE INDEX idx_delta_findings_guidance ON innovation.delta_findings(guidance_document_id);
+CREATE INDEX IF NOT EXISTS idx_delta_findings_scan ON innovation.delta_findings(scan_id);
+CREATE INDEX IF NOT EXISTS idx_delta_findings_program ON innovation.delta_findings(program_id);
+CREATE INDEX IF NOT EXISTS idx_delta_findings_severity ON innovation.delta_findings(severity);
+CREATE INDEX IF NOT EXISTS idx_delta_findings_status ON innovation.delta_findings(status);
+CREATE INDEX IF NOT EXISTS idx_delta_findings_guidance ON innovation.delta_findings(guidance_document_id);
 
 -- =============================================================================
 -- FEATURE 2: Evidence Confidence Heatmap
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS innovation.evidence_scoring_configs (
   )
 );
 
-CREATE INDEX idx_evidence_config_org ON innovation.evidence_scoring_configs(org_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_config_org ON innovation.evidence_scoring_configs(org_id);
 
 -- Evidence confidence assessments
 CREATE TABLE IF NOT EXISTS innovation.evidence_confidence_assessments (
@@ -237,9 +237,9 @@ CREATE TABLE IF NOT EXISTS innovation.evidence_confidence_assessments (
   assessed_by TEXT NOT NULL DEFAULT 'system'
 );
 
-CREATE INDEX idx_evidence_assess_program ON innovation.evidence_confidence_assessments(program_id);
-CREATE INDEX idx_evidence_assess_type ON innovation.evidence_confidence_assessments(assessment_type);
-CREATE INDEX idx_evidence_assess_score ON innovation.evidence_confidence_assessments(overall_score);
+CREATE INDEX IF NOT EXISTS idx_evidence_assess_program ON innovation.evidence_confidence_assessments(program_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_assess_type ON innovation.evidence_confidence_assessments(assessment_type);
+CREATE INDEX IF NOT EXISTS idx_evidence_assess_score ON innovation.evidence_confidence_assessments(overall_score);
 
 -- Detailed evidence gaps (heatmap data points)
 CREATE TABLE IF NOT EXISTS innovation.evidence_gaps (
@@ -277,11 +277,11 @@ CREATE TABLE IF NOT EXISTS innovation.evidence_gaps (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_evidence_gaps_assessment ON innovation.evidence_gaps(assessment_id);
-CREATE INDEX idx_evidence_gaps_program ON innovation.evidence_gaps(program_id);
-CREATE INDEX idx_evidence_gaps_severity ON innovation.evidence_gaps(severity);
-CREATE INDEX idx_evidence_gaps_status ON innovation.evidence_gaps(status);
-CREATE INDEX idx_evidence_gaps_section ON innovation.evidence_gaps(section_path);
+CREATE INDEX IF NOT EXISTS idx_evidence_gaps_assessment ON innovation.evidence_gaps(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_gaps_program ON innovation.evidence_gaps(program_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_gaps_severity ON innovation.evidence_gaps(severity);
+CREATE INDEX IF NOT EXISTS idx_evidence_gaps_status ON innovation.evidence_gaps(status);
+CREATE INDEX IF NOT EXISTS idx_evidence_gaps_section ON innovation.evidence_gaps(section_path);
 
 -- =============================================================================
 -- FEATURE 3: Submission Readiness Twin (Digital Twin)
@@ -323,10 +323,10 @@ CREATE TABLE IF NOT EXISTS innovation.readiness_criteria (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_readiness_criteria_type ON innovation.readiness_criteria(submission_type);
-CREATE INDEX idx_readiness_criteria_agency ON innovation.readiness_criteria(agency);
-CREATE INDEX idx_readiness_criteria_module ON innovation.readiness_criteria(module_path);
-CREATE UNIQUE INDEX idx_readiness_criteria_code ON innovation.readiness_criteria(submission_type, agency, criterion_code);
+CREATE INDEX IF NOT EXISTS idx_readiness_criteria_type ON innovation.readiness_criteria(submission_type);
+CREATE INDEX IF NOT EXISTS idx_readiness_criteria_agency ON innovation.readiness_criteria(agency);
+CREATE INDEX IF NOT EXISTS idx_readiness_criteria_module ON innovation.readiness_criteria(module_path);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_readiness_criteria_code ON innovation.readiness_criteria(submission_type, agency, criterion_code);
 
 -- Readiness twin assessments (point-in-time snapshots)
 CREATE TABLE IF NOT EXISTS innovation.readiness_twin_assessments (
@@ -367,9 +367,9 @@ CREATE TABLE IF NOT EXISTS innovation.readiness_twin_assessments (
   assessed_by TEXT NOT NULL DEFAULT 'system'
 );
 
-CREATE INDEX idx_readiness_twin_program ON innovation.readiness_twin_assessments(program_id);
-CREATE INDEX idx_readiness_twin_score ON innovation.readiness_twin_assessments(overall_readiness_score);
-CREATE INDEX idx_readiness_twin_date ON innovation.readiness_twin_assessments(assessed_at);
+CREATE INDEX IF NOT EXISTS idx_readiness_twin_program ON innovation.readiness_twin_assessments(program_id);
+CREATE INDEX IF NOT EXISTS idx_readiness_twin_score ON innovation.readiness_twin_assessments(overall_readiness_score);
+CREATE INDEX IF NOT EXISTS idx_readiness_twin_date ON innovation.readiness_twin_assessments(assessed_at);
 
 -- Individual criterion evaluations
 CREATE TABLE IF NOT EXISTS innovation.readiness_criterion_evaluations (
@@ -396,9 +396,9 @@ CREATE TABLE IF NOT EXISTS innovation.readiness_criterion_evaluations (
   evaluated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_criterion_eval_assessment ON innovation.readiness_criterion_evaluations(assessment_id);
-CREATE INDEX idx_criterion_eval_criterion ON innovation.readiness_criterion_evaluations(criterion_id);
-CREATE INDEX idx_criterion_eval_status ON innovation.readiness_criterion_evaluations(status);
+CREATE INDEX IF NOT EXISTS idx_criterion_eval_assessment ON innovation.readiness_criterion_evaluations(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_criterion_eval_criterion ON innovation.readiness_criterion_evaluations(criterion_id);
+CREATE INDEX IF NOT EXISTS idx_criterion_eval_status ON innovation.readiness_criterion_evaluations(status);
 
 -- Readiness trends over time
 CREATE TABLE IF NOT EXISTS innovation.readiness_trends (
@@ -421,9 +421,9 @@ CREATE TABLE IF NOT EXISTS innovation.readiness_trends (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_readiness_trends_program ON innovation.readiness_trends(program_id);
-CREATE INDEX idx_readiness_trends_date ON innovation.readiness_trends(trend_date);
-CREATE UNIQUE INDEX idx_readiness_trends_unique ON innovation.readiness_trends(program_id, trend_date);
+CREATE INDEX IF NOT EXISTS idx_readiness_trends_program ON innovation.readiness_trends(program_id);
+CREATE INDEX IF NOT EXISTS idx_readiness_trends_date ON innovation.readiness_trends(trend_date);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_readiness_trends_unique ON innovation.readiness_trends(program_id, trend_date);
 
 -- =============================================================================
 -- FEATURE 4: Auto-traceability from Drafts
@@ -431,16 +431,25 @@ CREATE UNIQUE INDEX idx_readiness_trends_unique ON innovation.readiness_trends(p
 -- =============================================================================
 
 -- Traceability link types
-CREATE TYPE innovation.trace_link_type AS ENUM (
-  'SUPPORTS',              -- Source supports target claim
-  'DERIVES_FROM',          -- Target is derived from source
-  'REFERENCES',            -- Simple reference
-  'CONTRADICTS',           -- Source contradicts target
-  'SUPERSEDES',            -- Source supersedes target
-  'DEFINES',               -- Source defines term used in target
-  'VALIDATES',             -- Source validates target data
-  'IMPLEMENTS'             -- Target implements source requirement
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE n.nspname = 'innovation' AND t.typname = 'trace_link_type'
+  ) THEN
+    CREATE TYPE innovation.trace_link_type AS ENUM (
+      'SUPPORTS',              -- Source supports target claim
+      'DERIVES_FROM',          -- Target is derived from source
+      'REFERENCES',            -- Simple reference
+      'CONTRADICTS',           -- Source contradicts target
+      'SUPERSEDES',            -- Source supersedes target
+      'DEFINES',               -- Source defines term used in target
+      'VALIDATES',             -- Source validates target data
+      'IMPLEMENTS'             -- Target implements source requirement
+    );
+  END IF;
+END $$;
 
 -- Auto-detected traceability links
 CREATE TABLE IF NOT EXISTS innovation.auto_trace_links (
@@ -483,13 +492,13 @@ CREATE TABLE IF NOT EXISTS innovation.auto_trace_links (
   created_by TEXT NOT NULL DEFAULT 'system'
 );
 
-CREATE INDEX idx_auto_trace_program ON innovation.auto_trace_links(program_id);
-CREATE INDEX idx_auto_trace_session ON innovation.auto_trace_links(session_id);
-CREATE INDEX idx_auto_trace_source ON innovation.auto_trace_links(source_document_id);
-CREATE INDEX idx_auto_trace_target ON innovation.auto_trace_links(target_document_id);
-CREATE INDEX idx_auto_trace_type ON innovation.auto_trace_links(link_type);
-CREATE INDEX idx_auto_trace_confidence ON innovation.auto_trace_links(confidence_score);
-CREATE INDEX idx_auto_trace_validated ON innovation.auto_trace_links(is_validated);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_program ON innovation.auto_trace_links(program_id);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_session ON innovation.auto_trace_links(session_id);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_source ON innovation.auto_trace_links(source_document_id);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_target ON innovation.auto_trace_links(target_document_id);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_type ON innovation.auto_trace_links(link_type);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_confidence ON innovation.auto_trace_links(confidence_score);
+CREATE INDEX IF NOT EXISTS idx_auto_trace_validated ON innovation.auto_trace_links(is_validated);
 
 -- Traceability matrix snapshots
 CREATE TABLE IF NOT EXISTS innovation.traceability_matrix_snapshots (
@@ -521,9 +530,9 @@ CREATE TABLE IF NOT EXISTS innovation.traceability_matrix_snapshots (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_trace_matrix_program ON innovation.traceability_matrix_snapshots(program_id);
-CREATE INDEX idx_trace_matrix_type ON innovation.traceability_matrix_snapshots(snapshot_type);
-CREATE INDEX idx_trace_matrix_status ON innovation.traceability_matrix_snapshots(status);
+CREATE INDEX IF NOT EXISTS idx_trace_matrix_program ON innovation.traceability_matrix_snapshots(program_id);
+CREATE INDEX IF NOT EXISTS idx_trace_matrix_type ON innovation.traceability_matrix_snapshots(snapshot_type);
+CREATE INDEX IF NOT EXISTS idx_trace_matrix_status ON innovation.traceability_matrix_snapshots(status);
 
 -- =============================================================================
 -- FEATURE 5: Adaptive Reviewer Workspace
@@ -558,8 +567,8 @@ CREATE TABLE IF NOT EXISTS innovation.workspace_roles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_workspace_roles_org ON innovation.workspace_roles(org_id);
-CREATE INDEX idx_workspace_roles_key ON innovation.workspace_roles(role_key);
+CREATE INDEX IF NOT EXISTS idx_workspace_roles_org ON innovation.workspace_roles(org_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_roles_key ON innovation.workspace_roles(role_key);
 
 -- Workspace presets (templates for workspace configurations)
 CREATE TABLE IF NOT EXISTS innovation.workspace_presets (
@@ -598,8 +607,8 @@ CREATE TABLE IF NOT EXISTS innovation.workspace_presets (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_workspace_presets_role ON innovation.workspace_presets(role_id);
-CREATE INDEX idx_workspace_presets_org ON innovation.workspace_presets(org_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_presets_role ON innovation.workspace_presets(role_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_presets_org ON innovation.workspace_presets(org_id);
 
 -- User workspace preferences (personalized overrides)
 CREATE TABLE IF NOT EXISTS innovation.user_workspace_preferences (
@@ -633,7 +642,7 @@ CREATE TABLE IF NOT EXISTS innovation.user_workspace_preferences (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_user_workspace_user ON innovation.user_workspace_preferences(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_workspace_user ON innovation.user_workspace_preferences(user_id);
 
 -- Workspace usage analytics
 CREATE TABLE IF NOT EXISTS innovation.workspace_analytics (
@@ -666,9 +675,9 @@ CREATE TABLE IF NOT EXISTS innovation.workspace_analytics (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_workspace_analytics_user ON innovation.workspace_analytics(user_id);
-CREATE INDEX idx_workspace_analytics_role ON innovation.workspace_analytics(role_id);
-CREATE INDEX idx_workspace_analytics_session ON innovation.workspace_analytics(session_start);
+CREATE INDEX IF NOT EXISTS idx_workspace_analytics_user ON innovation.workspace_analytics(user_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_analytics_role ON innovation.workspace_analytics(role_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_analytics_session ON innovation.workspace_analytics(session_start);
 
 -- =============================================================================
 -- FEATURE 6: Outcome-based Template Learning
@@ -725,11 +734,11 @@ CREATE TABLE IF NOT EXISTS innovation.learning_templates (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_learning_templates_org ON innovation.learning_templates(org_id);
-CREATE INDEX idx_learning_templates_type ON innovation.learning_templates(template_type);
-CREATE INDEX idx_learning_templates_submission ON innovation.learning_templates(submission_type);
-CREATE INDEX idx_learning_templates_effectiveness ON innovation.learning_templates(effectiveness_score DESC);
-CREATE INDEX idx_learning_templates_usage ON innovation.learning_templates(usage_count DESC);
+CREATE INDEX IF NOT EXISTS idx_learning_templates_org ON innovation.learning_templates(org_id);
+CREATE INDEX IF NOT EXISTS idx_learning_templates_type ON innovation.learning_templates(template_type);
+CREATE INDEX IF NOT EXISTS idx_learning_templates_submission ON innovation.learning_templates(submission_type);
+CREATE INDEX IF NOT EXISTS idx_learning_templates_effectiveness ON innovation.learning_templates(effectiveness_score DESC);
+CREATE INDEX IF NOT EXISTS idx_learning_templates_usage ON innovation.learning_templates(usage_count DESC);
 
 -- Template usage tracking
 CREATE TABLE IF NOT EXISTS innovation.template_usage (
@@ -757,9 +766,9 @@ CREATE TABLE IF NOT EXISTS innovation.template_usage (
   used_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_template_usage_template ON innovation.template_usage(template_id);
-CREATE INDEX idx_template_usage_program ON innovation.template_usage(program_id);
-CREATE INDEX idx_template_usage_date ON innovation.template_usage(used_at);
+CREATE INDEX IF NOT EXISTS idx_template_usage_template ON innovation.template_usage(template_id);
+CREATE INDEX IF NOT EXISTS idx_template_usage_program ON innovation.template_usage(program_id);
+CREATE INDEX IF NOT EXISTS idx_template_usage_date ON innovation.template_usage(used_at);
 
 -- Submission outcomes (for learning)
 CREATE TABLE IF NOT EXISTS innovation.submission_outcomes (
@@ -798,10 +807,10 @@ CREATE TABLE IF NOT EXISTS innovation.submission_outcomes (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_submission_outcomes_program ON innovation.submission_outcomes(program_id);
-CREATE INDEX idx_submission_outcomes_type ON innovation.submission_outcomes(submission_type);
-CREATE INDEX idx_submission_outcomes_status ON innovation.submission_outcomes(outcome_status);
-CREATE INDEX idx_submission_outcomes_date ON innovation.submission_outcomes(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_submission_outcomes_program ON innovation.submission_outcomes(program_id);
+CREATE INDEX IF NOT EXISTS idx_submission_outcomes_type ON innovation.submission_outcomes(submission_type);
+CREATE INDEX IF NOT EXISTS idx_submission_outcomes_status ON innovation.submission_outcomes(outcome_status);
+CREATE INDEX IF NOT EXISTS idx_submission_outcomes_date ON innovation.submission_outcomes(submitted_at);
 
 -- =============================================================================
 -- FEATURE 7: Regulatory Negotiation Logbook
@@ -848,11 +857,11 @@ CREATE TABLE IF NOT EXISTS innovation.negotiation_threads (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_negotiation_threads_program ON innovation.negotiation_threads(program_id);
-CREATE INDEX idx_negotiation_threads_org ON innovation.negotiation_threads(org_id);
-CREATE INDEX idx_negotiation_threads_status ON innovation.negotiation_threads(status);
-CREATE INDEX idx_negotiation_threads_agency ON innovation.negotiation_threads(agency);
-CREATE INDEX idx_negotiation_threads_type ON innovation.negotiation_threads(thread_type);
+CREATE INDEX IF NOT EXISTS idx_negotiation_threads_program ON innovation.negotiation_threads(program_id);
+CREATE INDEX IF NOT EXISTS idx_negotiation_threads_org ON innovation.negotiation_threads(org_id);
+CREATE INDEX IF NOT EXISTS idx_negotiation_threads_status ON innovation.negotiation_threads(status);
+CREATE INDEX IF NOT EXISTS idx_negotiation_threads_agency ON innovation.negotiation_threads(agency);
+CREATE INDEX IF NOT EXISTS idx_negotiation_threads_type ON innovation.negotiation_threads(thread_type);
 
 -- Individual correspondence entries
 CREATE TABLE IF NOT EXISTS innovation.negotiation_entries (
@@ -896,10 +905,10 @@ CREATE TABLE IF NOT EXISTS innovation.negotiation_entries (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_negotiation_entries_thread ON innovation.negotiation_entries(thread_id);
-CREATE INDEX idx_negotiation_entries_type ON innovation.negotiation_entries(entry_type);
-CREATE INDEX idx_negotiation_entries_date ON innovation.negotiation_entries(entry_date);
-CREATE INDEX idx_negotiation_entries_deadline ON innovation.negotiation_entries(response_deadline) WHERE requires_response = TRUE;
+CREATE INDEX IF NOT EXISTS idx_negotiation_entries_thread ON innovation.negotiation_entries(thread_id);
+CREATE INDEX IF NOT EXISTS idx_negotiation_entries_type ON innovation.negotiation_entries(entry_type);
+CREATE INDEX IF NOT EXISTS idx_negotiation_entries_date ON innovation.negotiation_entries(entry_date);
+CREATE INDEX IF NOT EXISTS idx_negotiation_entries_deadline ON innovation.negotiation_entries(response_deadline) WHERE requires_response = TRUE;
 
 -- Strategy positions (record of positions taken)
 CREATE TABLE IF NOT EXISTS innovation.negotiation_positions (
@@ -935,7 +944,7 @@ CREATE TABLE IF NOT EXISTS innovation.negotiation_positions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_negotiation_positions_thread ON innovation.negotiation_positions(thread_id);
+CREATE INDEX IF NOT EXISTS idx_negotiation_positions_thread ON innovation.negotiation_positions(thread_id);
 
 -- =============================================================================
 -- FEATURE 8: Compliance Guardrails SDK
@@ -979,10 +988,10 @@ CREATE TABLE IF NOT EXISTS innovation.guardrail_rules (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_guardrail_rules_category ON innovation.guardrail_rules(rule_category);
-CREATE INDEX idx_guardrail_rules_severity ON innovation.guardrail_rules(severity);
-CREATE INDEX idx_guardrail_rules_types ON innovation.guardrail_rules USING GIN(submission_types);
-CREATE INDEX idx_guardrail_rules_active ON innovation.guardrail_rules(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_guardrail_rules_category ON innovation.guardrail_rules(rule_category);
+CREATE INDEX IF NOT EXISTS idx_guardrail_rules_severity ON innovation.guardrail_rules(severity);
+CREATE INDEX IF NOT EXISTS idx_guardrail_rules_types ON innovation.guardrail_rules USING GIN(submission_types);
+CREATE INDEX IF NOT EXISTS idx_guardrail_rules_active ON innovation.guardrail_rules(is_active) WHERE is_active = TRUE;
 
 -- Guardrail profiles (collections of rules)
 CREATE TABLE IF NOT EXISTS innovation.guardrail_profiles (
@@ -1016,8 +1025,8 @@ CREATE TABLE IF NOT EXISTS innovation.guardrail_profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_guardrail_profiles_org ON innovation.guardrail_profiles(org_id);
-CREATE INDEX idx_guardrail_profiles_type ON innovation.guardrail_profiles(submission_type);
+CREATE INDEX IF NOT EXISTS idx_guardrail_profiles_org ON innovation.guardrail_profiles(org_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_profiles_type ON innovation.guardrail_profiles(submission_type);
 
 -- Validation runs
 CREATE TABLE IF NOT EXISTS innovation.guardrail_validation_runs (
@@ -1056,11 +1065,11 @@ CREATE TABLE IF NOT EXISTS innovation.guardrail_validation_runs (
   created_by TEXT NOT NULL DEFAULT CURRENT_USER
 );
 
-CREATE INDEX idx_guardrail_runs_program ON innovation.guardrail_validation_runs(program_id);
-CREATE INDEX idx_guardrail_runs_org ON innovation.guardrail_validation_runs(org_id);
-CREATE INDEX idx_guardrail_runs_status ON innovation.guardrail_validation_runs(status);
-CREATE INDEX idx_guardrail_runs_passed ON innovation.guardrail_validation_runs(passed);
-CREATE INDEX idx_guardrail_runs_date ON innovation.guardrail_validation_runs(created_at);
+CREATE INDEX IF NOT EXISTS idx_guardrail_runs_program ON innovation.guardrail_validation_runs(program_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_runs_org ON innovation.guardrail_validation_runs(org_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_runs_status ON innovation.guardrail_validation_runs(status);
+CREATE INDEX IF NOT EXISTS idx_guardrail_runs_passed ON innovation.guardrail_validation_runs(passed);
+CREATE INDEX IF NOT EXISTS idx_guardrail_runs_date ON innovation.guardrail_validation_runs(created_at);
 
 -- Individual validation findings
 CREATE TABLE IF NOT EXISTS innovation.guardrail_findings (
@@ -1097,10 +1106,10 @@ CREATE TABLE IF NOT EXISTS innovation.guardrail_findings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_guardrail_findings_run ON innovation.guardrail_findings(run_id);
-CREATE INDEX idx_guardrail_findings_rule ON innovation.guardrail_findings(rule_id);
-CREATE INDEX idx_guardrail_findings_severity ON innovation.guardrail_findings(severity);
-CREATE INDEX idx_guardrail_findings_status ON innovation.guardrail_findings(status);
+CREATE INDEX IF NOT EXISTS idx_guardrail_findings_run ON innovation.guardrail_findings(run_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_findings_rule ON innovation.guardrail_findings(rule_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_findings_severity ON innovation.guardrail_findings(severity);
+CREATE INDEX IF NOT EXISTS idx_guardrail_findings_status ON innovation.guardrail_findings(status);
 
 -- API rate limiting and audit
 CREATE TABLE IF NOT EXISTS innovation.guardrail_api_audit (
@@ -1132,9 +1141,9 @@ CREATE TABLE IF NOT EXISTS innovation.guardrail_api_audit (
   user_agent TEXT
 );
 
-CREATE INDEX idx_guardrail_api_audit_org ON innovation.guardrail_api_audit(org_id);
-CREATE INDEX idx_guardrail_api_audit_endpoint ON innovation.guardrail_api_audit(endpoint);
-CREATE INDEX idx_guardrail_api_audit_date ON innovation.guardrail_api_audit(requested_at);
+CREATE INDEX IF NOT EXISTS idx_guardrail_api_audit_org ON innovation.guardrail_api_audit(org_id);
+CREATE INDEX IF NOT EXISTS idx_guardrail_api_audit_endpoint ON innovation.guardrail_api_audit(endpoint);
+CREATE INDEX IF NOT EXISTS idx_guardrail_api_audit_date ON innovation.guardrail_api_audit(requested_at);
 
 -- =============================================================================
 -- ROW LEVEL SECURITY FOR ALL TABLES
@@ -1170,16 +1179,20 @@ ALTER TABLE innovation.guardrail_findings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE innovation.guardrail_api_audit ENABLE ROW LEVEL SECURITY;
 
 -- Guidance documents are public read
+DROP POLICY IF EXISTS guidance_docs_select ON innovation.guidance_documents;
 CREATE POLICY guidance_docs_select ON innovation.guidance_documents
   FOR SELECT USING (TRUE);
 
+DROP POLICY IF EXISTS guidance_docs_admin ON innovation.guidance_documents;
 CREATE POLICY guidance_docs_admin ON innovation.guidance_documents
   FOR ALL USING (current_setting('app.is_admin', true) = 'true');
 
 -- Program-scoped tables RLS
+DROP POLICY IF EXISTS delta_scans_policy ON innovation.delta_radar_scans;
 CREATE POLICY delta_scans_policy ON innovation.delta_radar_scans
   FOR ALL USING (identity.can_access_org(org_id));
 
+DROP POLICY IF EXISTS delta_findings_policy ON innovation.delta_findings;
 CREATE POLICY delta_findings_policy ON innovation.delta_findings
   FOR ALL USING (
     EXISTS (
@@ -1189,9 +1202,11 @@ CREATE POLICY delta_findings_policy ON innovation.delta_findings
     )
   );
 
+DROP POLICY IF EXISTS evidence_config_policy ON innovation.evidence_scoring_configs;
 CREATE POLICY evidence_config_policy ON innovation.evidence_scoring_configs
   FOR ALL USING (identity.can_access_org(org_id));
 
+DROP POLICY IF EXISTS evidence_assess_policy ON innovation.evidence_confidence_assessments;
 CREATE POLICY evidence_assess_policy ON innovation.evidence_confidence_assessments
   FOR ALL USING (
     EXISTS (
@@ -1201,6 +1216,7 @@ CREATE POLICY evidence_assess_policy ON innovation.evidence_confidence_assessmen
     )
   );
 
+DROP POLICY IF EXISTS evidence_gaps_policy ON innovation.evidence_gaps;
 CREATE POLICY evidence_gaps_policy ON innovation.evidence_gaps
   FOR ALL USING (
     EXISTS (
@@ -1211,9 +1227,11 @@ CREATE POLICY evidence_gaps_policy ON innovation.evidence_gaps
   );
 
 -- Readiness twin policies
+DROP POLICY IF EXISTS readiness_criteria_select ON innovation.readiness_criteria;
 CREATE POLICY readiness_criteria_select ON innovation.readiness_criteria
   FOR SELECT USING (TRUE);
 
+DROP POLICY IF EXISTS readiness_twin_policy ON innovation.readiness_twin_assessments;
 CREATE POLICY readiness_twin_policy ON innovation.readiness_twin_assessments
   FOR ALL USING (
     EXISTS (
@@ -1223,6 +1241,7 @@ CREATE POLICY readiness_twin_policy ON innovation.readiness_twin_assessments
     )
   );
 
+DROP POLICY IF EXISTS criterion_eval_policy ON innovation.readiness_criterion_evaluations;
 CREATE POLICY criterion_eval_policy ON innovation.readiness_criterion_evaluations
   FOR ALL USING (
     EXISTS (
@@ -1233,6 +1252,7 @@ CREATE POLICY criterion_eval_policy ON innovation.readiness_criterion_evaluation
     )
   );
 
+DROP POLICY IF EXISTS readiness_trends_policy ON innovation.readiness_trends;
 CREATE POLICY readiness_trends_policy ON innovation.readiness_trends
   FOR ALL USING (
     EXISTS (
@@ -1243,6 +1263,7 @@ CREATE POLICY readiness_trends_policy ON innovation.readiness_trends
   );
 
 -- Traceability policies
+DROP POLICY IF EXISTS auto_trace_policy ON innovation.auto_trace_links;
 CREATE POLICY auto_trace_policy ON innovation.auto_trace_links
   FOR ALL USING (
     EXISTS (
@@ -1252,6 +1273,7 @@ CREATE POLICY auto_trace_policy ON innovation.auto_trace_links
     )
   );
 
+DROP POLICY IF EXISTS trace_matrix_policy ON innovation.traceability_matrix_snapshots;
 CREATE POLICY trace_matrix_policy ON innovation.traceability_matrix_snapshots
   FOR ALL USING (
     EXISTS (
@@ -1262,21 +1284,25 @@ CREATE POLICY trace_matrix_policy ON innovation.traceability_matrix_snapshots
   );
 
 -- Workspace policies
+DROP POLICY IF EXISTS workspace_roles_policy ON innovation.workspace_roles;
 CREATE POLICY workspace_roles_policy ON innovation.workspace_roles
   FOR SELECT USING (
     org_id IS NULL OR identity.can_access_org(org_id)
   );
 
+DROP POLICY IF EXISTS workspace_presets_policy ON innovation.workspace_presets;
 CREATE POLICY workspace_presets_policy ON innovation.workspace_presets
   FOR ALL USING (
     org_id IS NULL OR identity.can_access_org(org_id)
   );
 
+DROP POLICY IF EXISTS user_prefs_policy ON innovation.user_workspace_preferences;
 CREATE POLICY user_prefs_policy ON innovation.user_workspace_preferences
   FOR ALL USING (
     user_id::text = current_setting('app.current_user_id', true)
   );
 
+DROP POLICY IF EXISTS workspace_analytics_policy ON innovation.workspace_analytics;
 CREATE POLICY workspace_analytics_policy ON innovation.workspace_analytics
   FOR SELECT USING (
     user_id::text = current_setting('app.current_user_id', true)
@@ -1284,16 +1310,19 @@ CREATE POLICY workspace_analytics_policy ON innovation.workspace_analytics
   );
 
 -- Template learning policies
+DROP POLICY IF EXISTS learning_templates_select ON innovation.learning_templates;
 CREATE POLICY learning_templates_select ON innovation.learning_templates
   FOR SELECT USING (
     org_id IS NULL OR identity.can_access_org(org_id)
   );
 
+DROP POLICY IF EXISTS learning_templates_write ON innovation.learning_templates;
 CREATE POLICY learning_templates_write ON innovation.learning_templates
   FOR INSERT WITH CHECK (
     org_id IS NULL OR identity.can_write_org(org_id)
   );
 
+DROP POLICY IF EXISTS template_usage_policy ON innovation.template_usage;
 CREATE POLICY template_usage_policy ON innovation.template_usage
   FOR ALL USING (
     EXISTS (
@@ -1303,6 +1332,7 @@ CREATE POLICY template_usage_policy ON innovation.template_usage
     )
   );
 
+DROP POLICY IF EXISTS submission_outcomes_policy ON innovation.submission_outcomes;
 CREATE POLICY submission_outcomes_policy ON innovation.submission_outcomes
   FOR ALL USING (
     EXISTS (
@@ -1313,9 +1343,11 @@ CREATE POLICY submission_outcomes_policy ON innovation.submission_outcomes
   );
 
 -- Negotiation policies
+DROP POLICY IF EXISTS negotiation_threads_policy ON innovation.negotiation_threads;
 CREATE POLICY negotiation_threads_policy ON innovation.negotiation_threads
   FOR ALL USING (identity.can_access_org(org_id));
 
+DROP POLICY IF EXISTS negotiation_entries_policy ON innovation.negotiation_entries;
 CREATE POLICY negotiation_entries_policy ON innovation.negotiation_entries
   FOR ALL USING (
     EXISTS (
@@ -1325,6 +1357,7 @@ CREATE POLICY negotiation_entries_policy ON innovation.negotiation_entries
     )
   );
 
+DROP POLICY IF EXISTS negotiation_positions_policy ON innovation.negotiation_positions;
 CREATE POLICY negotiation_positions_policy ON innovation.negotiation_positions
   FOR ALL USING (
     EXISTS (
@@ -1335,17 +1368,21 @@ CREATE POLICY negotiation_positions_policy ON innovation.negotiation_positions
   );
 
 -- Guardrail policies
+DROP POLICY IF EXISTS guardrail_rules_select ON innovation.guardrail_rules;
 CREATE POLICY guardrail_rules_select ON innovation.guardrail_rules
   FOR SELECT USING (TRUE);
 
+DROP POLICY IF EXISTS guardrail_profiles_policy ON innovation.guardrail_profiles;
 CREATE POLICY guardrail_profiles_policy ON innovation.guardrail_profiles
   FOR ALL USING (
     org_id IS NULL OR identity.can_access_org(org_id)
   );
 
+DROP POLICY IF EXISTS guardrail_runs_policy ON innovation.guardrail_validation_runs;
 CREATE POLICY guardrail_runs_policy ON innovation.guardrail_validation_runs
   FOR ALL USING (identity.can_access_org(org_id));
 
+DROP POLICY IF EXISTS guardrail_findings_policy ON innovation.guardrail_findings;
 CREATE POLICY guardrail_findings_policy ON innovation.guardrail_findings
   FOR ALL USING (
     EXISTS (
@@ -1355,6 +1392,7 @@ CREATE POLICY guardrail_findings_policy ON innovation.guardrail_findings
     )
   );
 
+DROP POLICY IF EXISTS guardrail_api_audit_policy ON innovation.guardrail_api_audit;
 CREATE POLICY guardrail_api_audit_policy ON innovation.guardrail_api_audit
   FOR SELECT USING (identity.can_access_org(org_id));
 

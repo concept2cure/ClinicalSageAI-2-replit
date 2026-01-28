@@ -7,10 +7,12 @@
 
 BEGIN;
 
+CREATE SCHEMA IF NOT EXISTS cortex;
+
 -- -----------------------------------------------------------------------------
 -- 1. ATOMS: Universal Knowledge Nodes
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.atoms (
+CREATE TABLE IF NOT EXISTS cortex.atoms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     atom_type TEXT NOT NULL,  -- e.g. 'chunk', 'entity', 'prediction', 'pattern', 'biomarker', 'regulation', ...
     content TEXT NOT NULL,
@@ -27,14 +29,14 @@ CREATE TABLE cortex.atoms (
     version INT DEFAULT 1,
     content_hash TEXT
 );
-CREATE INDEX idx_cortex_atoms_type_org ON cortex.atoms(atom_type, org_id);
-CREATE INDEX idx_cortex_atoms_embedding1536 ON cortex.atoms USING hnsw (embedding_1536 vector_cosine_ops);
-CREATE INDEX idx_cortex_atoms_embedding3072 ON cortex.atoms USING hnsw (embedding_3072 vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_cortex_atoms_type_org ON cortex.atoms(atom_type, org_id);
+CREATE INDEX IF NOT EXISTS idx_cortex_atoms_embedding1536 ON cortex.atoms USING hnsw (embedding_1536 vector_cosine_ops);
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 
 -- -----------------------------------------------------------------------------
 -- 2. EDGES: Universal Reasoning Relationships
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.edges (
+CREATE TABLE IF NOT EXISTS cortex.edges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source_atom_id UUID NOT NULL REFERENCES cortex.atoms(id),
     target_atom_id UUID NOT NULL REFERENCES cortex.atoms(id),
@@ -45,13 +47,13 @@ CREATE TABLE cortex.edges (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     created_by TEXT DEFAULT 'system'
 );
-CREATE INDEX idx_cortex_edges_type ON cortex.edges(edge_type);
-CREATE INDEX idx_cortex_edges_source_target ON cortex.edges(source_atom_id, target_atom_id);
+CREATE INDEX IF NOT EXISTS idx_cortex_edges_type ON cortex.edges(edge_type);
+CREATE INDEX IF NOT EXISTS idx_cortex_edges_source_target ON cortex.edges(source_atom_id, target_atom_id);
 
 -- -----------------------------------------------------------------------------
 -- 3. AGENTS: Unified Agent Registry
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.agents (
+CREATE TABLE IF NOT EXISTS cortex.agents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_code TEXT NOT NULL UNIQUE,
     agent_type TEXT NOT NULL,  -- e.g. 'drafter', 'reviewer', 'statistician', 'predictor', ...
@@ -70,7 +72,7 @@ CREATE TABLE cortex.agents (
 -- -----------------------------------------------------------------------------
 -- 4. TRACES: Unified Execution/Memory Log
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.traces (
+CREATE TABLE IF NOT EXISTS cortex.traces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     thread_id UUID,
     agent_id UUID REFERENCES cortex.agents(id),
@@ -87,12 +89,12 @@ CREATE TABLE cortex.traces (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     checkpoint_data JSONB
 );
-CREATE INDEX idx_cortex_traces_thread ON cortex.traces(thread_id);
+CREATE INDEX IF NOT EXISTS idx_cortex_traces_thread ON cortex.traces(thread_id);
 
 -- -----------------------------------------------------------------------------
 -- 5. THREADS: Conversation/Workflow Context
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.threads (
+CREATE TABLE IF NOT EXISTS cortex.threads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     thread_type TEXT NOT NULL,  -- e.g. 'conversation', 'council_session', 'workflow'
     org_id UUID NOT NULL,
@@ -110,7 +112,7 @@ CREATE TABLE cortex.threads (
 -- -----------------------------------------------------------------------------
 -- 6. ATOM TYPES CONFIG: Extensible Typing
 -- -----------------------------------------------------------------------------
-CREATE TABLE cortex.atom_types (
+CREATE TABLE IF NOT EXISTS cortex.atom_types (
     atom_type TEXT PRIMARY KEY,
     description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -124,6 +126,7 @@ INSERT INTO cortex.atom_types (atom_type, description) VALUES
   ('biomarker', 'Biomarker-endpoint relationship'),
   ('regulation', 'Regulatory knowledge or rule'),
   ('agent_output', 'Output from an agent'),
-  ('outcome', 'Clinical or regulatory outcome');
+    ('outcome', 'Clinical or regulatory outcome')
+ON CONFLICT (atom_type) DO NOTHING;
 
 COMMIT;

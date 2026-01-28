@@ -9,45 +9,56 @@
 
 BEGIN;
 
--- =============================================================================
--- 1. CREATE MANUFACTURING SCHEMA
--- =============================================================================
-
 CREATE SCHEMA IF NOT EXISTS manufacturing;
 
 COMMENT ON SCHEMA manufacturing IS 
 'ISA-95/FHIR integrated manufacturing operations with Digital Twin support';
 
 -- =============================================================================
--- 2. ISA-95 RESOURCE MAPPING
--- =============================================================================
--- Maps ISA-95 manufacturing concepts to FHIR resources
 
-CREATE TYPE manufacturing.isa95_resource_type AS ENUM (
-    'MATERIAL',                    -- Raw materials, intermediates
-    'EQUIPMENT',                   -- Production equipment
-    'PERSONNEL',                   -- Human resources
-    'PHYSICAL_ASSET',              -- Facility, clean rooms
-    'PROCESS_SEGMENT',             -- Process steps
-    'PRODUCT_SEGMENT',             -- Product configurations
-    'PRODUCTION_SCHEDULE',         -- Planned production
-    'PRODUCTION_PERFORMANCE',      -- Actual execution
-    'QUALITY_TEST'                 -- Quality control
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'isa95_resource_type'
+    ) THEN
+        CREATE TYPE manufacturing.isa95_resource_type AS ENUM (
+            'MATERIAL',                    -- Raw materials, intermediates
+            'EQUIPMENT',                   -- Production equipment
+            'PERSONNEL',                   -- Human resources
+            'PHYSICAL_ASSET',              -- Facility, clean rooms
+            'PROCESS_SEGMENT',             -- Process steps
+            'PRODUCT_SEGMENT',             -- Product configurations
+            'PRODUCTION_SCHEDULE',         -- Planned production
+            'PRODUCTION_PERFORMANCE',      -- Actual execution
+            'QUALITY_TEST'                 -- Quality control
+        );
+    END IF;
+END $$;
 
-CREATE TYPE manufacturing.fhir_resource_mapping AS ENUM (
-    'SubstanceDefinition',         -- Material → FHIR
-    'Device',                      -- Equipment → FHIR
-    'Practitioner',                -- Personnel → FHIR
-    'Location',                    -- Physical Asset → FHIR
-    'PlanDefinition',              -- Process Segment → FHIR
-    'MedicinalProductDefinition',  -- Product Segment → FHIR
-    'Task',                        -- Production Performance → FHIR
-    'Observation',                 -- Quality Test → FHIR
-    'Provenance'                   -- Traceability → FHIR
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'fhir_resource_mapping'
+    ) THEN
+        CREATE TYPE manufacturing.fhir_resource_mapping AS ENUM (
+            'SubstanceDefinition',         -- Material → FHIR
+            'Device',                      -- Equipment → FHIR
+            'Practitioner',                -- Personnel → FHIR
+            'Location',                    -- Physical Asset → FHIR
+            'PlanDefinition',              -- Process Segment → FHIR
+            'MedicinalProductDefinition',  -- Product Segment → FHIR
+            'Task',                        -- Production Performance → FHIR
+            'Observation',                 -- Quality Test → FHIR
+            'Provenance'                   -- Traceability → FHIR
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.isa95_fhir_mappings (
+CREATE TABLE IF NOT EXISTS manufacturing.isa95_fhir_mappings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- ISA-95 Source
@@ -79,41 +90,59 @@ CREATE TABLE manufacturing.isa95_fhir_mappings (
     CONSTRAINT unique_isa95_mapping UNIQUE (isa95_system_name, isa95_type, isa95_id)
 );
 
-CREATE INDEX idx_isa95_mapping_type ON manufacturing.isa95_fhir_mappings(isa95_type);
-CREATE INDEX idx_isa95_mapping_fhir ON manufacturing.isa95_fhir_mappings(fhir_resource_type);
-CREATE INDEX idx_isa95_mapping_sync ON manufacturing.isa95_fhir_mappings(sync_status);
+CREATE INDEX IF NOT EXISTS idx_isa95_mapping_type ON manufacturing.isa95_fhir_mappings(isa95_type);
+CREATE INDEX IF NOT EXISTS idx_isa95_mapping_fhir ON manufacturing.isa95_fhir_mappings(fhir_resource_type);
+CREATE INDEX IF NOT EXISTS idx_isa95_mapping_sync ON manufacturing.isa95_fhir_mappings(sync_status);
 
 -- =============================================================================
 -- 3. EQUIPMENT REGISTRY (Plug & Produce)
 -- =============================================================================
 -- BioPhorum P&P standard for self-configuring GMP equipment
 
-CREATE TYPE manufacturing.equipment_status AS ENUM (
-    'AVAILABLE',                   -- Ready for use
-    'IN_USE',                      -- Currently in production
-    'MAINTENANCE',                 -- Under maintenance
-    'CALIBRATION_DUE',             -- Needs calibration
-    'OUT_OF_SERVICE',              -- Not available
-    'DECOMMISSIONED'               -- Permanently retired
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'equipment_status'
+    ) THEN
+        CREATE TYPE manufacturing.equipment_status AS ENUM (
+            'AVAILABLE',                   -- Ready for use
+            'IN_USE',                      -- Currently in production
+            'MAINTENANCE',                 -- Under maintenance
+            'CALIBRATION_DUE',             -- Needs calibration
+            'OUT_OF_SERVICE',              -- Not available
+            'DECOMMISSIONED'               -- Permanently retired
+        );
+    END IF;
+END $$;
 
-CREATE TYPE manufacturing.equipment_class AS ENUM (
-    'BIOREACTOR',
-    'CHROMATOGRAPHY',
-    'FILTRATION',
-    'MIXING',
-    'FILLING',
-    'LYOPHILIZATION',
-    'STERILIZATION',
-    'INSPECTION',
-    'PACKAGING',
-    'ANALYTICAL',
-    'UTILITY',
-    'STORAGE',
-    'TRANSFER'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'equipment_class'
+    ) THEN
+        CREATE TYPE manufacturing.equipment_class AS ENUM (
+            'BIOREACTOR',
+            'CHROMATOGRAPHY',
+            'FILTRATION',
+            'MIXING',
+            'FILLING',
+            'LYOPHILIZATION',
+            'STERILIZATION',
+            'INSPECTION',
+            'PACKAGING',
+            'ANALYTICAL',
+            'UTILITY',
+            'STORAGE',
+            'TRANSFER'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.equipment_registry (
+CREATE TABLE IF NOT EXISTS manufacturing.equipment_registry (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Identity
@@ -171,14 +200,14 @@ CREATE TABLE manufacturing.equipment_registry (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_equipment_registry_class ON manufacturing.equipment_registry(equipment_class);
-CREATE INDEX idx_equipment_registry_status ON manufacturing.equipment_registry(status);
-CREATE INDEX idx_equipment_registry_calibration ON manufacturing.equipment_registry(next_calibration_due) 
+CREATE INDEX IF NOT EXISTS idx_equipment_registry_class ON manufacturing.equipment_registry(equipment_class);
+CREATE INDEX IF NOT EXISTS idx_equipment_registry_status ON manufacturing.equipment_registry(status);
+CREATE INDEX IF NOT EXISTS idx_equipment_registry_calibration ON manufacturing.equipment_registry(next_calibration_due) 
     WHERE status != 'DECOMMISSIONED';
-CREATE INDEX idx_equipment_registry_org ON manufacturing.equipment_registry(org_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_registry_org ON manufacturing.equipment_registry(org_id);
 
 -- GIN index on capabilities for queries
-CREATE INDEX idx_equipment_registry_capabilities ON manufacturing.equipment_registry 
+CREATE INDEX IF NOT EXISTS idx_equipment_registry_capabilities ON manufacturing.equipment_registry 
     USING GIN (capabilities jsonb_path_ops);
 
 -- =============================================================================
@@ -186,17 +215,27 @@ CREATE INDEX idx_equipment_registry_capabilities ON manufacturing.equipment_regi
 -- =============================================================================
 -- Production performance from MES, mapped to FHIR Task/Provenance
 
-CREATE TYPE manufacturing.batch_status AS ENUM (
-    'SCHEDULED',
-    'IN_PROGRESS',
-    'PAUSED',
-    'COMPLETED',
-    'RELEASED',
-    'REJECTED',
-    'QUARANTINE'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'batch_status'
+    ) THEN
+        CREATE TYPE manufacturing.batch_status AS ENUM (
+            'SCHEDULED',
+            'IN_PROGRESS',
+            'PAUSED',
+            'COMPLETED',
+            'RELEASED',
+            'REJECTED',
+            'QUARANTINE'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.batch_execution_records (
+
+CREATE TABLE IF NOT EXISTS manufacturing.batch_execution_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Batch Identity
@@ -257,14 +296,14 @@ CREATE TABLE manufacturing.batch_execution_records (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_batch_execution_product ON manufacturing.batch_execution_records(product_id);
-CREATE INDEX idx_batch_execution_status ON manufacturing.batch_execution_records(status);
-CREATE INDEX idx_batch_execution_dates ON manufacturing.batch_execution_records(actual_start, actual_end);
-CREATE INDEX idx_batch_execution_quality ON manufacturing.batch_execution_records(quality_status);
-CREATE INDEX idx_batch_execution_org ON manufacturing.batch_execution_records(org_id);
+CREATE INDEX IF NOT EXISTS idx_batch_execution_product ON manufacturing.batch_execution_records(product_id);
+CREATE INDEX IF NOT EXISTS idx_batch_execution_status ON manufacturing.batch_execution_records(status);
+CREATE INDEX IF NOT EXISTS idx_batch_execution_dates ON manufacturing.batch_execution_records(actual_start, actual_end);
+CREATE INDEX IF NOT EXISTS idx_batch_execution_quality ON manufacturing.batch_execution_records(quality_status);
+CREATE INDEX IF NOT EXISTS idx_batch_execution_org ON manufacturing.batch_execution_records(org_id);
 
 -- GIN index on process parameters
-CREATE INDEX idx_batch_execution_params ON manufacturing.batch_execution_records 
+CREATE INDEX IF NOT EXISTS idx_batch_execution_params ON manufacturing.batch_execution_records 
     USING GIN (process_parameters jsonb_path_ops);
 
 -- =============================================================================
@@ -272,26 +311,44 @@ CREATE INDEX idx_batch_execution_params ON manufacturing.batch_execution_records
 -- =============================================================================
 -- Maps to FHIR Observation with ObservationDefinition specs
 
-CREATE TYPE manufacturing.test_status AS ENUM (
-    'PENDING',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'REVIEWED',
-    'APPROVED',
-    'REJECTED',
-    'INVALIDATED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'test_status'
+    ) THEN
+        CREATE TYPE manufacturing.test_status AS ENUM (
+            'PENDING',
+            'IN_PROGRESS',
+            'COMPLETED',
+            'REVIEWED',
+            'APPROVED',
+            'REJECTED',
+            'INVALIDATED'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE manufacturing.result_disposition AS ENUM (
-    'PASS',
-    'FAIL',
-    'OOS',                         -- Out of Specification
-    'OOT',                         -- Out of Trend
-    'ATYPICAL',
-    'PENDING'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'result_disposition'
+    ) THEN
+        CREATE TYPE manufacturing.result_disposition AS ENUM (
+            'PASS',
+            'FAIL',
+            'OOS',                         -- Out of Specification
+            'OOT',                         -- Out of Trend
+            'ATYPICAL',
+            'PENDING'
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.quality_test_results (
+CREATE TABLE IF NOT EXISTS manufacturing.quality_test_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Sample Identity
@@ -351,11 +408,11 @@ CREATE TABLE manufacturing.quality_test_results (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_quality_tests_batch ON manufacturing.quality_test_results(batch_id);
-CREATE INDEX idx_quality_tests_test ON manufacturing.quality_test_results(test_code);
-CREATE INDEX idx_quality_tests_status ON manufacturing.quality_test_results(status);
-CREATE INDEX idx_quality_tests_disposition ON manufacturing.quality_test_results(disposition);
-CREATE INDEX idx_quality_tests_oos ON manufacturing.quality_test_results(batch_id) 
+CREATE INDEX IF NOT EXISTS idx_quality_tests_batch ON manufacturing.quality_test_results(batch_id);
+CREATE INDEX IF NOT EXISTS idx_quality_tests_test ON manufacturing.quality_test_results(test_code);
+CREATE INDEX IF NOT EXISTS idx_quality_tests_status ON manufacturing.quality_test_results(status);
+CREATE INDEX IF NOT EXISTS idx_quality_tests_disposition ON manufacturing.quality_test_results(disposition);
+CREATE INDEX IF NOT EXISTS idx_quality_tests_oos ON manufacturing.quality_test_results(batch_id) 
     WHERE disposition = 'OOS';
 
 -- =============================================================================
@@ -363,25 +420,43 @@ CREATE INDEX idx_quality_tests_oos ON manufacturing.quality_test_results(batch_i
 -- =============================================================================
 -- Models for predictive/simulation-based manufacturing
 
-CREATE TYPE manufacturing.twin_type AS ENUM (
-    'PROCESS',                     -- Process simulation
-    'EQUIPMENT',                   -- Equipment model
-    'BATCH',                       -- Batch-specific twin
-    'FACILITY',                    -- Entire facility
-    'PRODUCT'                      -- Product-level twin
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'twin_type'
+    ) THEN
+        CREATE TYPE manufacturing.twin_type AS ENUM (
+            'PROCESS',                     -- Process simulation
+            'EQUIPMENT',                   -- Equipment model
+            'BATCH',                       -- Batch-specific twin
+            'FACILITY',                    -- Entire facility
+            'PRODUCT'                      -- Product-level twin
+        );
+    END IF;
+END $$;
 
-CREATE TYPE manufacturing.twin_status AS ENUM (
-    'TRAINING',                    -- Model being trained
-    'VALIDATING',                  -- Under validation
-    'VALIDATED',                   -- Approved for use
-    'ACTIVE',                      -- In production use
-    'DRIFTED',                     -- Needs retraining
-    'SUSPENDED',                   -- Temporarily disabled
-    'DEPRECATED'                   -- Replaced
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'twin_status'
+    ) THEN
+        CREATE TYPE manufacturing.twin_status AS ENUM (
+            'TRAINING',                    -- Model being trained
+            'VALIDATING',                  -- Under validation
+            'VALIDATED',                   -- Approved for use
+            'ACTIVE',                      -- In production use
+            'DRIFTED',                     -- Needs retraining
+            'SUSPENDED',                   -- Temporarily disabled
+            'DEPRECATED'                   -- Replaced
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.digital_twins (
+CREATE TABLE IF NOT EXISTS manufacturing.digital_twins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Identity
@@ -441,10 +516,10 @@ CREATE TABLE manufacturing.digital_twins (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_digital_twins_type ON manufacturing.digital_twins(twin_type);
-CREATE INDEX idx_digital_twins_status ON manufacturing.digital_twins(status);
-CREATE INDEX idx_digital_twins_product ON manufacturing.digital_twins(target_product_id);
-CREATE INDEX idx_digital_twins_drifted ON manufacturing.digital_twins(status) 
+CREATE INDEX IF NOT EXISTS idx_digital_twins_type ON manufacturing.digital_twins(twin_type);
+CREATE INDEX IF NOT EXISTS idx_digital_twins_status ON manufacturing.digital_twins(status);
+CREATE INDEX IF NOT EXISTS idx_digital_twins_product ON manufacturing.digital_twins(target_product_id);
+CREATE INDEX IF NOT EXISTS idx_digital_twins_drifted ON manufacturing.digital_twins(status) 
     WHERE status = 'DRIFTED';
 
 -- =============================================================================
@@ -452,16 +527,25 @@ CREATE INDEX idx_digital_twins_drifted ON manufacturing.digital_twins(status)
 -- =============================================================================
 -- Digital Twin predictions used for batch release
 
-CREATE TYPE manufacturing.rtrt_status AS ENUM (
-    'PREDICTED',                   -- Model made prediction
-    'PENDING_REVIEW',              -- Awaiting human review
-    'APPROVED',                    -- Accepted for release
-    'REJECTED',                    -- Rejected, use traditional
-    'CONFIRMED',                   -- Confirmed by lab test
-    'INVALIDATED'                  -- Prediction was wrong
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'manufacturing' AND t.typname = 'rtrt_status'
+    ) THEN
+        CREATE TYPE manufacturing.rtrt_status AS ENUM (
+            'PREDICTED',                   -- Model made prediction
+            'PENDING_REVIEW',              -- Awaiting human review
+            'APPROVED',                    -- Accepted for release
+            'REJECTED',                    -- Rejected, use traditional
+            'CONFIRMED',                   -- Confirmed by lab test
+            'INVALIDATED'                  -- Prediction was wrong
+        );
+    END IF;
+END $$;
 
-CREATE TABLE manufacturing.rtrt_predictions (
+CREATE TABLE IF NOT EXISTS manufacturing.rtrt_predictions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Batch
@@ -508,10 +592,10 @@ CREATE TABLE manufacturing.rtrt_predictions (
     metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX idx_rtrt_predictions_batch ON manufacturing.rtrt_predictions(batch_id);
-CREATE INDEX idx_rtrt_predictions_twin ON manufacturing.rtrt_predictions(twin_id);
-CREATE INDEX idx_rtrt_predictions_status ON manufacturing.rtrt_predictions(status);
-CREATE INDEX idx_rtrt_predictions_pending ON manufacturing.rtrt_predictions(batch_id) 
+CREATE INDEX IF NOT EXISTS idx_rtrt_predictions_batch ON manufacturing.rtrt_predictions(batch_id);
+CREATE INDEX IF NOT EXISTS idx_rtrt_predictions_twin ON manufacturing.rtrt_predictions(twin_id);
+CREATE INDEX IF NOT EXISTS idx_rtrt_predictions_status ON manufacturing.rtrt_predictions(status);
+CREATE INDEX IF NOT EXISTS idx_rtrt_predictions_pending ON manufacturing.rtrt_predictions(batch_id) 
     WHERE status = 'PENDING_REVIEW';
 
 -- =============================================================================

@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS cortex.uncertainty_estimates (
 );
 
 COMMENT ON TABLE cortex.uncertainty_estimates IS
-'Decomposed uncertainty for every AI output. Enables the AI to say "I don\'t know"
-with specificity about WHY it doesn\'t know and what would help it know better.';
+'Decomposed uncertainty for every AI output. Enables the AI to say "I don''t know"
+with specificity about WHY it doesn''t know and what would help it know better.';
 
 -- ============================================================================
 -- SECTION 2: KNOWLEDGE GAPS
@@ -369,8 +369,27 @@ CREATE INDEX IF NOT EXISTS idx_uncertainty_high ON cortex.uncertainty_estimates(
 CREATE INDEX IF NOT EXISTS idx_gaps_type_status ON cortex.knowledge_gaps(gap_type, status);
 CREATE INDEX IF NOT EXISTS idx_gaps_priority ON cortex.knowledge_gaps(priority_score DESC) 
     WHERE status = 'open';
-CREATE INDEX IF NOT EXISTS idx_gaps_embedding ON cortex.knowledge_gaps 
-    USING hnsw (gap_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+DO $$
+BEGIN
+    IF to_regclass('cortex.knowledge_gaps') IS NOT NULL
+       AND EXISTS (
+            SELECT 1
+            FROM pg_attribute a
+            WHERE a.attrelid = 'cortex.knowledge_gaps'::regclass
+              AND a.attname = 'gap_embedding'
+              AND a.atttypmod > 4
+              AND (a.atttypmod - 4) <= 2000
+       )
+       AND NOT EXISTS (
+            SELECT 1
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'cortex' AND c.relname = 'idx_gaps_embedding'
+       ) THEN
+        CREATE INDEX idx_gaps_embedding ON cortex.knowledge_gaps
+            USING hnsw (gap_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+    END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_gaps_impact ON cortex.knowledge_gaps(impact_on_predictions DESC);
 
 -- Active learning queue
@@ -403,21 +422,27 @@ ALTER TABLE cortex.calibration_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.confidence_history ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS uncertainty_org_isolation ON cortex.uncertainty_estimates;
 CREATE POLICY uncertainty_org_isolation ON cortex.uncertainty_estimates
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
+DROP POLICY IF EXISTS gaps_org_isolation ON cortex.knowledge_gaps;
 CREATE POLICY gaps_org_isolation ON cortex.knowledge_gaps
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
+DROP POLICY IF EXISTS learning_org_isolation ON cortex.active_learning_queue;
 CREATE POLICY learning_org_isolation ON cortex.active_learning_queue
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
+DROP POLICY IF EXISTS triggers_org_isolation ON cortex.confidence_triggers;
 CREATE POLICY triggers_org_isolation ON cortex.confidence_triggers
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
+DROP POLICY IF EXISTS calibration_org_isolation ON cortex.calibration_log;
 CREATE POLICY calibration_org_isolation ON cortex.calibration_log
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
 
+DROP POLICY IF EXISTS confidence_history_isolation ON cortex.confidence_history;
 CREATE POLICY confidence_history_isolation ON cortex.confidence_history
     FOR ALL USING (TRUE); -- Read based on prediction access
 
@@ -792,10 +817,12 @@ ON CONFLICT DO NOTHING;
 -- SECTION 11: TRIGGERS
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS active_learning_updated_at ON cortex.active_learning_queue;
 CREATE TRIGGER active_learning_updated_at
     BEFORE UPDATE ON cortex.active_learning_queue
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS confidence_triggers_updated_at ON cortex.confidence_triggers;
 CREATE TRIGGER confidence_triggers_updated_at
     BEFORE UPDATE ON cortex.confidence_triggers
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();

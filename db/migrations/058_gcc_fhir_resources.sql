@@ -23,68 +23,95 @@ COMMENT ON SCHEMA fhir IS
 -- =============================================================================
 -- Core FHIR resources used in regulatory submissions
 
-CREATE TYPE fhir.resource_type AS ENUM (
-    -- Pharmaceutical Quality (PQ/CMC)
-    'MedicinalProductDefinition',
-    'Ingredient',
-    'SubstanceDefinition',
-    'ManufacturedItemDefinition',
-    'AdministrableProductDefinition',
-    'PackagedProductDefinition',
-    'RegulatedAuthorization',
-    
-    -- Clinical
-    'Organization',
-    'Practitioner',
-    'PractitionerRole',
-    'Location',
-    'HealthcareService',
-    
-    -- Observations & Diagnostics (Stability Data, etc.)
-    'Observation',
-    'DiagnosticReport',
-    'Specimen',
-    'Device',
-    'DeviceDefinition',
-    
-    -- Documents & Plans
-    'DocumentReference',
-    'PlanDefinition',
-    'ActivityDefinition',
-    'ResearchStudy',
-    'ResearchSubject',
-    
-    -- Clinical Safety
-    'AdverseEvent',
-    'MedicationRequest',
-    'MedicationAdministration',
-    
-    -- Bundle Types
-    'Bundle',
-    'Binary'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'fhir' AND t.typname = 'resource_type'
+    ) THEN
+        CREATE TYPE fhir.resource_type AS ENUM (
+            -- Pharmaceutical Quality (PQ/CMC)
+            'MedicinalProductDefinition',
+            'Ingredient',
+            'SubstanceDefinition',
+            'ManufacturedItemDefinition',
+            'AdministrableProductDefinition',
+            'PackagedProductDefinition',
+            'RegulatedAuthorization',
+            
+            -- Clinical
+            'Organization',
+            'Practitioner',
+            'PractitionerRole',
+            'Location',
+            'HealthcareService',
+            
+            -- Observations & Diagnostics (Stability Data, etc.)
+            'Observation',
+            'DiagnosticReport',
+            'Specimen',
+            'Device',
+            'DeviceDefinition',
+            
+            -- Documents & Plans
+            'DocumentReference',
+            'PlanDefinition',
+            'ActivityDefinition',
+            'ResearchStudy',
+            'ResearchSubject',
+            
+            -- Clinical Safety
+            'AdverseEvent',
+            'MedicationRequest',
+            'MedicationAdministration',
+            
+            -- Bundle Types
+            'Bundle',
+            'Binary'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE fhir.validation_status AS ENUM (
-    'DRAFT',
-    'PENDING_VALIDATION',
-    'VALID',
-    'INVALID',
-    'WARNING',
-    'SUPERSEDED'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'fhir' AND t.typname = 'validation_status'
+    ) THEN
+        CREATE TYPE fhir.validation_status AS ENUM (
+            'DRAFT',
+            'PENDING_VALIDATION',
+            'VALID',
+            'INVALID',
+            'WARNING',
+            'SUPERSEDED'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE fhir.publication_status AS ENUM (
-    'DRAFT',
-    'ACTIVE',
-    'RETIRED',
-    'UNKNOWN'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'fhir' AND t.typname = 'publication_status'
+    ) THEN
+        CREATE TYPE fhir.publication_status AS ENUM (
+            'DRAFT',
+            'ACTIVE',
+            'RETIRED',
+            'UNKNOWN'
+        );
+    END IF;
+END $$;
 
 -- =============================================================================
 -- 3. FHIR RESOURCE STORE (Core Table)
 -- =============================================================================
 
-CREATE TABLE fhir.resources (
+CREATE TABLE IF NOT EXISTS fhir.resources (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Resource Identity (FHIR canonical)
@@ -132,7 +159,7 @@ CREATE TABLE fhir.resources (
 -- 4. FHIR RESOURCE HISTORY (Immutable Versions)
 -- =============================================================================
 
-CREATE TABLE fhir.resource_history (
+CREATE TABLE IF NOT EXISTS fhir.resource_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     resource_id UUID NOT NULL REFERENCES fhir.resources(id) ON DELETE CASCADE,
     
@@ -154,7 +181,7 @@ CREATE TABLE fhir.resource_history (
 -- =============================================================================
 
 -- Stability Studies (FHIR Observation-based)
-CREATE TABLE fhir.stability_studies (
+CREATE TABLE IF NOT EXISTS fhir.stability_studies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     resource_id UUID NOT NULL REFERENCES fhir.resources(id) ON DELETE CASCADE,
     
@@ -184,7 +211,7 @@ CREATE TABLE fhir.stability_studies (
 );
 
 -- Stability Data Points
-CREATE TABLE fhir.stability_observations (
+CREATE TABLE IF NOT EXISTS fhir.stability_observations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     study_id UUID NOT NULL REFERENCES fhir.stability_studies(id) ON DELETE CASCADE,
     
@@ -221,7 +248,7 @@ CREATE TABLE fhir.stability_observations (
 -- 6. BATCH/LOT RECORDS (Manufacturing)
 -- =============================================================================
 
-CREATE TABLE fhir.batch_records (
+CREATE TABLE IF NOT EXISTS fhir.batch_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Batch Identity
@@ -266,7 +293,7 @@ CREATE TABLE fhir.batch_records (
 -- 7. CMC SECTION STRUCTURED DATA
 -- =============================================================================
 
-CREATE TABLE fhir.cmc_sections (
+CREATE TABLE IF NOT EXISTS fhir.cmc_sections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Link to eCTD
@@ -302,31 +329,45 @@ CREATE TABLE fhir.cmc_sections (
 -- =============================================================================
 
 -- Resources
-CREATE INDEX idx_fhir_resources_type ON fhir.resources(resource_type);
-CREATE INDEX idx_fhir_resources_org ON fhir.resources(org_id);
-CREATE INDEX idx_fhir_resources_product ON fhir.resources(product_id) WHERE product_id IS NOT NULL;
-CREATE INDEX idx_fhir_resources_submission ON fhir.resources(submission_unit_id) WHERE submission_unit_id IS NOT NULL;
-CREATE INDEX idx_fhir_resources_validation ON fhir.resources(validation_status);
-CREATE INDEX idx_fhir_resources_json ON fhir.resources USING GIN(fhir_json jsonb_path_ops);
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_type ON fhir.resources(resource_type);
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_org ON fhir.resources(org_id);
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_product ON fhir.resources(product_id) WHERE product_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_submission ON fhir.resources(submission_unit_id) WHERE submission_unit_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_validation ON fhir.resources(validation_status);
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_json ON fhir.resources USING GIN(fhir_json jsonb_path_ops);
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'fhir'
+          AND table_name = 'resource_history'
+          AND column_name = 'resource_id'
+          AND data_type IN ('text', 'character varying')
+    ) THEN
+        ALTER TABLE fhir.resource_history
+            ALTER COLUMN resource_id TYPE UUID USING resource_id::UUID;
+    END IF;
+END $$;
 
 -- History
-CREATE INDEX idx_fhir_history_resource ON fhir.resource_history(resource_id);
-CREATE INDEX idx_fhir_history_version ON fhir.resource_history(resource_id, version_id);
+CREATE INDEX IF NOT EXISTS idx_fhir_history_resource ON fhir.resource_history(resource_id);
+CREATE INDEX IF NOT EXISTS idx_fhir_history_version ON fhir.resource_history(resource_id, version_id);
 
 -- Stability
-CREATE INDEX idx_stability_studies_product ON fhir.stability_studies(product_variant_id);
-CREATE INDEX idx_stability_studies_type ON fhir.stability_studies(study_type);
-CREATE INDEX idx_stability_obs_study ON fhir.stability_observations(study_id);
-CREATE INDEX idx_stability_obs_timepoint ON fhir.stability_observations(study_id, time_point_months);
+CREATE INDEX IF NOT EXISTS idx_stability_studies_product ON fhir.stability_studies(product_variant_id);
+CREATE INDEX IF NOT EXISTS idx_stability_studies_type ON fhir.stability_studies(study_type);
+CREATE INDEX IF NOT EXISTS idx_stability_obs_study ON fhir.stability_observations(study_id);
+CREATE INDEX IF NOT EXISTS idx_stability_obs_timepoint ON fhir.stability_observations(study_id, time_point_months);
 
 -- Batch Records
-CREATE INDEX idx_batch_product ON fhir.batch_records(product_variant_id);
-CREATE INDEX idx_batch_number ON fhir.batch_records(batch_number);
-CREATE INDEX idx_batch_release ON fhir.batch_records(qa_release_status);
+CREATE INDEX IF NOT EXISTS idx_batch_product ON fhir.batch_records(product_variant_id);
+CREATE INDEX IF NOT EXISTS idx_batch_number ON fhir.batch_records(batch_number);
+CREATE INDEX IF NOT EXISTS idx_batch_release ON fhir.batch_records(qa_release_status);
 
 -- CMC Sections
-CREATE INDEX idx_cmc_submission ON fhir.cmc_sections(submission_unit_id);
-CREATE INDEX idx_cmc_section_code ON fhir.cmc_sections(section_code);
+CREATE INDEX IF NOT EXISTS idx_cmc_submission ON fhir.cmc_sections(submission_unit_id);
+CREATE INDEX IF NOT EXISTS idx_cmc_section_code ON fhir.cmc_sections(section_code);
 
 -- =============================================================================
 -- 9. RLS POLICIES
@@ -340,61 +381,67 @@ ALTER TABLE fhir.batch_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fhir.cmc_sections ENABLE ROW LEVEL SECURITY;
 
 -- Resources: Org-scoped
+DROP POLICY IF EXISTS fhir_resources_org_isolation ON fhir.resources;
 CREATE POLICY fhir_resources_org_isolation ON fhir.resources
     FOR ALL
     USING (identity.can_access_org(org_id))
     WITH CHECK (identity.can_write_org(org_id));
 
 -- History: Inherit from resources
+DROP POLICY IF EXISTS fhir_history_org_isolation ON fhir.resource_history;
 CREATE POLICY fhir_history_org_isolation ON fhir.resource_history
     FOR ALL
     USING (
         EXISTS (
             SELECT 1 FROM fhir.resources r 
-            WHERE r.id = resource_id AND identity.can_access_org(r.org_id)
+            WHERE r.id::TEXT = resource_id::TEXT AND identity.can_access_org(r.org_id)
         )
     );
 
 -- Stability Studies: Inherit through resources
+DROP POLICY IF EXISTS stability_studies_org_isolation ON fhir.stability_studies;
 CREATE POLICY stability_studies_org_isolation ON fhir.stability_studies
     FOR ALL
     USING (
         EXISTS (
             SELECT 1 FROM fhir.resources r 
-            WHERE r.id = resource_id AND identity.can_access_org(r.org_id)
+            WHERE r.id::TEXT = resource_id::TEXT AND identity.can_access_org(r.org_id)
         )
     );
 
 -- Stability Observations: Inherit through studies
+DROP POLICY IF EXISTS stability_obs_org_isolation ON fhir.stability_observations;
 CREATE POLICY stability_obs_org_isolation ON fhir.stability_observations
     FOR ALL
     USING (
         EXISTS (
             SELECT 1 FROM fhir.stability_studies s
-            JOIN fhir.resources r ON r.id = s.resource_id
-            WHERE s.id = study_id AND identity.can_access_org(r.org_id)
+            JOIN fhir.resources r ON r.id::TEXT = s.resource_id::TEXT
+            WHERE s.id::TEXT = study_id::TEXT AND identity.can_access_org(r.org_id)
         )
     );
 
 -- Batch Records: Inherit through product variant
+DROP POLICY IF EXISTS batch_records_org_isolation ON fhir.batch_records;
 CREATE POLICY batch_records_org_isolation ON fhir.batch_records
     FOR ALL
     USING (
         EXISTS (
             SELECT 1 FROM product_master.product_variants v
             JOIN product_master.products p ON p.id = v.product_id
-            WHERE v.id = product_variant_id AND identity.can_access_org(p.org_id)
+            WHERE v.id::TEXT = product_variant_id::TEXT AND identity.can_access_org(p.org_id)
         )
     );
 
 -- CMC Sections: Inherit through submission unit
+DROP POLICY IF EXISTS cmc_sections_org_isolation ON fhir.cmc_sections;
 CREATE POLICY cmc_sections_org_isolation ON fhir.cmc_sections
     FOR ALL
     USING (
         EXISTS (
             SELECT 1 FROM ectd_v4.submission_units su
             JOIN ectd_v4.regulatory_submissions rs ON rs.id = su.submission_id
-            WHERE su.id = submission_unit_id AND identity.can_access_org(rs.org_id)
+            WHERE su.id::TEXT = submission_unit_id::TEXT AND identity.can_access_org(rs.org_id)
         )
     );
 
@@ -530,7 +577,7 @@ BEGIN
     FROM fhir.resources
     WHERE org_id = p_org_id 
       AND resource_type = p_resource_type 
-      AND resource_id = v_resource_id
+            AND resource_id::TEXT = v_resource_id
     ORDER BY version_id DESC
     LIMIT 1;
     
@@ -696,6 +743,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_fhir_resource_audit ON fhir.resources;
 CREATE TRIGGER trg_fhir_resource_audit
     AFTER INSERT OR UPDATE ON fhir.resources
     FOR EACH ROW EXECUTE FUNCTION fhir.audit_resource_changes();
@@ -713,7 +761,7 @@ INSERT INTO common_standards.controlled_vocabularies (
      'EU IDMP FHIR Implementation Guide', CURRENT_DATE, TRUE),
     ('2.16.840.1.113883.4.642.40.3', 'FHIR_SPL', 'HL7 FHIR SPL Profile', 
      'FDA Structured Product Labeling FHIR IG', CURRENT_DATE, TRUE)
-ON CONFLICT (cv_oid) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 COMMIT;
 

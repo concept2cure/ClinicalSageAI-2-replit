@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS cortex.domain_knowledge (
         'patient_population',
         'endpoint_type',
         'study_design',
+        'submission_type',
         'regulatory_pathway',
         'safety_category',
         'manufacturing_type',
@@ -338,8 +339,7 @@ common transfer scenarios.';
 
 -- Domain knowledge
 CREATE INDEX IF NOT EXISTS idx_domain_type_value ON cortex.domain_knowledge(domain_type, domain_value);
-CREATE INDEX IF NOT EXISTS idx_domain_embedding ON cortex.domain_knowledge 
-    USING hnsw (domain_embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
 CREATE INDEX IF NOT EXISTS idx_domain_maturity ON cortex.domain_knowledge(maturity_level);
 CREATE INDEX IF NOT EXISTS idx_domain_hierarchy ON cortex.domain_knowledge USING GIN (domain_hierarchy);
 
@@ -377,26 +377,32 @@ ALTER TABLE cortex.domain_similarity_cache ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.transfer_templates ENABLE ROW LEVEL SECURITY;
 
 -- Domain knowledge: global read
+DROP POLICY IF EXISTS domain_knowledge_read ON cortex.domain_knowledge;
 CREATE POLICY domain_knowledge_read ON cortex.domain_knowledge
     FOR SELECT USING (TRUE);
 
 -- Transfer mappings: global read
+DROP POLICY IF EXISTS transfer_mappings_read ON cortex.transfer_mappings;
 CREATE POLICY transfer_mappings_read ON cortex.transfer_mappings
     FOR SELECT USING (TRUE);
 
 -- Transfer episodes: org-isolated
+DROP POLICY IF EXISTS transfer_episodes_isolation ON cortex.transfer_episodes;
 CREATE POLICY transfer_episodes_isolation ON cortex.transfer_episodes
     FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
 
 -- Meta-transfer model: global read
+DROP POLICY IF EXISTS meta_transfer_read ON cortex.meta_transfer_model;
 CREATE POLICY meta_transfer_read ON cortex.meta_transfer_model
     FOR SELECT USING (TRUE);
 
 -- Similarity cache: global read
+DROP POLICY IF EXISTS similarity_cache_read ON cortex.domain_similarity_cache;
 CREATE POLICY similarity_cache_read ON cortex.domain_similarity_cache
     FOR SELECT USING (TRUE);
 
 -- Templates: global read
+DROP POLICY IF EXISTS templates_read ON cortex.transfer_templates;
 CREATE POLICY templates_read ON cortex.transfer_templates
     FOR SELECT USING (TRUE);
 
@@ -828,18 +834,22 @@ ON CONFLICT DO NOTHING;
 -- SECTION 12: TRIGGERS
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS domain_knowledge_updated_at ON cortex.domain_knowledge;
 CREATE TRIGGER domain_knowledge_updated_at
     BEFORE UPDATE ON cortex.domain_knowledge
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS transfer_mappings_updated_at ON cortex.transfer_mappings;
 CREATE TRIGGER transfer_mappings_updated_at
     BEFORE UPDATE ON cortex.transfer_mappings
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS meta_transfer_updated_at ON cortex.meta_transfer_model;
 CREATE TRIGGER meta_transfer_updated_at
     BEFORE UPDATE ON cortex.meta_transfer_model
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();
 
+DROP TRIGGER IF EXISTS templates_updated_at ON cortex.transfer_templates;
 CREATE TRIGGER templates_updated_at
     BEFORE UPDATE ON cortex.transfer_templates
     FOR EACH ROW EXECUTE FUNCTION core.update_timestamp();

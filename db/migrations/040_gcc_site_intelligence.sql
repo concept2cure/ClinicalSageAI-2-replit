@@ -14,17 +14,26 @@ CREATE SCHEMA IF NOT EXISTS site_intel;
 -- INVESTIGATOR SITES
 -- =============================================================================
 
-CREATE TYPE site_intel.site_status AS ENUM (
-    'PROSPECTIVE',      -- Under evaluation
-    'SELECTED',         -- Selected for study
-    'ACTIVATED',        -- Ready to enroll
-    'ENROLLING',        -- Actively enrolling
-    'CLOSED_COMPLETE',  -- Completed enrollment
-    'CLOSED_EARLY',     -- Terminated early
-    'SUSPENDED'         -- Temporarily suspended
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'site_intel' AND t.typname = 'site_status'
+    ) THEN
+        CREATE TYPE site_intel.site_status AS ENUM (
+            'PROSPECTIVE',      -- Under evaluation
+            'SELECTED',         -- Selected for study
+            'ACTIVATED',        -- Ready to enroll
+            'ENROLLING',        -- Actively enrolling
+            'CLOSED_COMPLETE',  -- Completed enrollment
+            'CLOSED_EARLY',     -- Terminated early
+            'SUSPENDED'         -- Temporarily suspended
+        );
+    END IF;
+END $$;
 
-CREATE TABLE site_intel.sites (
+CREATE TABLE IF NOT EXISTS site_intel.sites (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id          UUID NOT NULL REFERENCES core.programs(id) ON DELETE RESTRICT,
     
@@ -70,10 +79,10 @@ CREATE TABLE site_intel.sites (
     UNIQUE(program_id, site_number)
 );
 
-CREATE INDEX idx_sites_program ON site_intel.sites(program_id);
-CREATE INDEX idx_sites_status ON site_intel.sites(status);
-CREATE INDEX idx_sites_country ON site_intel.sites(country_code);
-CREATE INDEX idx_sites_score ON site_intel.sites(overall_score DESC);
+CREATE INDEX IF NOT EXISTS idx_sites_program ON site_intel.sites(program_id);
+CREATE INDEX IF NOT EXISTS idx_sites_status ON site_intel.sites(status);
+CREATE INDEX IF NOT EXISTS idx_sites_country ON site_intel.sites(country_code);
+CREATE INDEX IF NOT EXISTS idx_sites_score ON site_intel.sites(overall_score DESC);
 
 COMMENT ON TABLE site_intel.sites IS 
 'Clinical trial sites with performance scoring and enrollment tracking.';
@@ -82,7 +91,7 @@ COMMENT ON TABLE site_intel.sites IS
 -- SITE METRICS (Time-series KPIs)
 -- =============================================================================
 
-CREATE TABLE site_intel.site_metrics (
+CREATE TABLE IF NOT EXISTS site_intel.site_metrics (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     site_id             UUID NOT NULL REFERENCES site_intel.sites(id) ON DELETE CASCADE,
     
@@ -118,8 +127,8 @@ CREATE TABLE site_intel.site_metrics (
     UNIQUE(site_id, metric_date, metric_period)
 );
 
-CREATE INDEX idx_site_metrics_site ON site_intel.site_metrics(site_id);
-CREATE INDEX idx_site_metrics_date ON site_intel.site_metrics(metric_date DESC);
+CREATE INDEX IF NOT EXISTS idx_site_metrics_site ON site_intel.site_metrics(site_id);
+CREATE INDEX IF NOT EXISTS idx_site_metrics_date ON site_intel.site_metrics(metric_date DESC);
 
 COMMENT ON TABLE site_intel.site_metrics IS 
 'Time-series performance metrics for clinical trial sites.';
@@ -128,22 +137,40 @@ COMMENT ON TABLE site_intel.site_metrics IS
 -- SITE RISK FACTORS
 -- =============================================================================
 
-CREATE TYPE site_intel.risk_level AS ENUM (
-    'LOW',
-    'MEDIUM',
-    'HIGH',
-    'CRITICAL'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'site_intel' AND t.typname = 'risk_level'
+    ) THEN
+        CREATE TYPE site_intel.risk_level AS ENUM (
+            'LOW',
+            'MEDIUM',
+            'HIGH',
+            'CRITICAL'
+        );
+    END IF;
+END $$;
 
-CREATE TYPE site_intel.risk_category AS ENUM (
-    'ENROLLMENT',       -- Enrollment performance issues
-    'QUALITY',          -- Data quality concerns
-    'COMPLIANCE',       -- Protocol/regulatory compliance
-    'SAFETY',           -- Safety reporting issues
-    'OPERATIONAL'       -- General operational risks
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = 'site_intel' AND t.typname = 'risk_category'
+    ) THEN
+        CREATE TYPE site_intel.risk_category AS ENUM (
+            'ENROLLMENT',       -- Enrollment performance issues
+            'QUALITY',          -- Data quality concerns
+            'COMPLIANCE',       -- Protocol/regulatory compliance
+            'SAFETY',           -- Safety reporting issues
+            'OPERATIONAL'       -- General operational risks
+        );
+    END IF;
+END $$;
 
-CREATE TABLE site_intel.site_risks (
+CREATE TABLE IF NOT EXISTS site_intel.site_risks (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     site_id             UUID NOT NULL REFERENCES site_intel.sites(id) ON DELETE CASCADE,
     
@@ -174,10 +201,10 @@ CREATE TABLE site_intel.site_risks (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_site_risks_site ON site_intel.site_risks(site_id);
-CREATE INDEX idx_site_risks_level ON site_intel.site_risks(risk_level);
-CREATE INDEX idx_site_risks_category ON site_intel.site_risks(risk_category);
-CREATE INDEX idx_site_risks_status ON site_intel.site_risks(status);
+CREATE INDEX IF NOT EXISTS idx_site_risks_site ON site_intel.site_risks(site_id);
+CREATE INDEX IF NOT EXISTS idx_site_risks_level ON site_intel.site_risks(risk_level);
+CREATE INDEX IF NOT EXISTS idx_site_risks_category ON site_intel.site_risks(risk_category);
+CREATE INDEX IF NOT EXISTS idx_site_risks_status ON site_intel.site_risks(status);
 
 COMMENT ON TABLE site_intel.site_risks IS 
 'Identified risks for clinical trial sites with impact assessment and mitigation tracking.';
@@ -186,7 +213,7 @@ COMMENT ON TABLE site_intel.site_risks IS
 -- ENROLLMENT PREDICTIONS
 -- =============================================================================
 
-CREATE TABLE site_intel.enrollment_predictions (
+CREATE TABLE IF NOT EXISTS site_intel.enrollment_predictions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     site_id             UUID NOT NULL REFERENCES site_intel.sites(id) ON DELETE CASCADE,
     
@@ -213,8 +240,8 @@ CREATE TABLE site_intel.enrollment_predictions (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_enrollment_pred_site ON site_intel.enrollment_predictions(site_id);
-CREATE INDEX idx_enrollment_pred_date ON site_intel.enrollment_predictions(prediction_date);
+CREATE INDEX IF NOT EXISTS idx_enrollment_pred_site ON site_intel.enrollment_predictions(site_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_pred_date ON site_intel.enrollment_predictions(prediction_date);
 
 COMMENT ON TABLE site_intel.enrollment_predictions IS 
 'Enrollment predictions for clinical trial sites with confidence intervals.';

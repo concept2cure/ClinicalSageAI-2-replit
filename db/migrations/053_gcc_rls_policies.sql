@@ -51,13 +51,13 @@ BEGIN
     END IF;
     
     -- Check delegated access via org_relationships
-    RETURN EXISTS (
-        SELECT 1 FROM identity.org_relationships
-        WHERE sponsor_org_id = target_org_id
-          AND cro_org_id = v_current_org_id
-          AND contract_status = 'ACTIVE'
-          AND NOW() BETWEEN effective_from AND COALESCE(effective_until, NOW() + INTERVAL '1 day')
-    );
+        RETURN EXISTS (
+                SELECT 1 FROM identity.org_relationships
+                WHERE sponsor_org_id = target_org_id
+                    AND delegate_org_id = v_current_org_id
+                    AND is_active = TRUE
+                    AND NOW() BETWEEN contract_start_date AND COALESCE(contract_end_date, NOW() + INTERVAL '1 day')
+        );
 END;
 $$;
 
@@ -88,14 +88,14 @@ BEGIN
     END IF;
     
     -- Check delegated write access
-    RETURN EXISTS (
-        SELECT 1 FROM identity.org_relationships
-        WHERE sponsor_org_id = target_org_id
-          AND cro_org_id = v_current_org_id
-          AND contract_status = 'ACTIVE'
-          AND can_create_submissions = TRUE
-          AND NOW() BETWEEN effective_from AND COALESCE(effective_until, NOW() + INTERVAL '1 day')
-    );
+        RETURN EXISTS (
+                SELECT 1 FROM identity.org_relationships
+                WHERE sponsor_org_id = target_org_id
+                    AND delegate_org_id = v_current_org_id
+                    AND is_active = TRUE
+                    AND can_edit_submissions = TRUE
+                    AND NOW() BETWEEN contract_start_date AND COALESCE(contract_end_date, NOW() + INTERVAL '1 day')
+        );
 END;
 $$;
 
@@ -297,7 +297,7 @@ CREATE POLICY rls_users_select
     ON identity.users
     FOR SELECT
     USING (
-        identity.can_access_org(org_id)
+        identity.can_access_org(home_org_id)
         OR id::TEXT = current_setting('app.current_user_id', TRUE)
     );
 
