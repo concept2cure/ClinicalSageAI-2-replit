@@ -3,8 +3,8 @@ run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-25_05"
-packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "gitFull", "glibcLocales", "gobject-introspection", "gtk3", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libiconv", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "libyaml", "mupdf", "openjpeg", "openssl", "pgadmin4", "pkg-config", "playwright-driver", "postgresql", "qhull", "rustc", "swig", "tcl", "tesseract", "tk", "xcbuild", "xcodebuild", "xsimd", "zlib"]
+channel = "stable-24_05"
+packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "gitFull", "glibcLocales", "gobject-introspection", "gtk3", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libiconv", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "libyaml", "mupdf", "openjpeg", "openssl", "pkg-config", "postgresql", "qhull", "rustc", "swig", "tcl", "tesseract", "tk", "xsimd", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -79,15 +79,6 @@ externalPort = 9000
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Run App"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
 name = "Project"
 mode = "parallel"
 author = "agent"
@@ -109,99 +100,13 @@ args = "npm run dev"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Run TrialSage"
-author = 41101236
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Run Focused Test Server"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd server && node --inspect index.ts"
-
-[[workflows.workflow]]
-name = "Test Server"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node scripts/pre-test-stability-check.js"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Restart Application"
+name = "Run App"
 author = 41101236
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Controlled Development"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🔒 STRICT CONTROL MODE ACTIVE\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"📋 Check replit.md for constraints\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🚀 Server ready for controlled development\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Run TrialSage Optimized"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🚀 Starting TrialSage with optimizations...\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node cleanup-toastify.js"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "NODE_OPTIONS=\"--max-old-space-size=512\" tsx server/index.ts"
-
-[[workflows.workflow]]
-name = "Debug Start"
-author = 41101236
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🔧 Starting TrialSage with enhanced debugging...\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node cleanup-toastify.js"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "NODE_ENV=development NODE_OPTIONS=\"--trace-warnings --unhandled-rejections=strict\" tsx server/index.ts"
 
 [[workflows.workflow]]
 name = "Restart Server"

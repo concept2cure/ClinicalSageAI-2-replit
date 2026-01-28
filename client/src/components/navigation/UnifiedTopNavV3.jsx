@@ -4,7 +4,7 @@ import React from 'react';
 import { useLocation, Link } from 'wouter';
 import { OrganizationSwitcher } from '../tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../tenant/ClientWorkspaceSwitcher';
-import { Settings, Users, Building2, SwitchCamera, Sparkles } from 'lucide-react';
+import { Settings, Users, Building2, SwitchCamera, Sparkles, Rocket } from 'lucide-react';
 import { useLumenAiAssistant } from '../../contexts/LumenAiAssistantContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import HelpButton from '../common/HelpButton';
@@ -248,6 +248,13 @@ export default function UnifiedTopNavV3({
 
       {/* Functional Tabs Row */}
       <div className="flex justify-center overflow-x-auto whitespace-nowrap gap-4 sm:gap-8 border-b border-gray-100 bg-white py-2 px-1">
+        {/* Concept2Cure - Featured Link */}
+        <Link href="/concept2cure">
+          <span className="text-sm font-semibold px-3 py-1 rounded bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-purple-300 active:scale-95 flex items-center cursor-pointer shadow-sm">
+            <Rocket className="w-4 h-4 mr-1" /> Concept2Cure
+          </span>
+        </Link>
+        
         {['Risk Heatmap', 'Timeline Simulator', 'Ask Lumen AI'].map(tabKey => (
           <button
             key={tabKey}

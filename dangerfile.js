@@ -54,11 +54,11 @@ const getDeletedFiles = () => danger.git.deleted_files;
 
 const getAllChangedFiles = () => [...getModifiedFiles(), ...getDeletedFiles()];
 
-const matchesPath = (file: string, patterns: string[]): boolean => {
+const matchesPath = (file, patterns) => {
   return patterns.some(pattern => file.includes(pattern));
 };
 
-const getLinesChanged = (): number => {
+const getLinesChanged = () => {
   const pr = danger.github.pr;
   return (pr.additions || 0) + (pr.deletions || 0);
 };
@@ -211,7 +211,7 @@ const checkConsoleLogs = async () => {
       !f.includes('.spec.')
   );
 
-  const filesWithConsoleLogs: string[] = [];
+  const filesWithConsoleLogs = [];
 
   for (const file of modifiedFiles) {
     const content = await danger.git.diffForFile(file);

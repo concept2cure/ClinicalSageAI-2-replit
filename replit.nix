@@ -2,10 +2,8 @@
   deps = [
     pkgs.nodePackages.prettier
     pkgs.python3
-    pkgs.try
     pkgs.zip
     pkgs.tesseract
-    pkgs.run
     pkgs.pinentry-all
     pkgs.gnupg
     pkgs.openssh
@@ -26,7 +24,6 @@
     pkgs.wget
     pkgs.libxcrypt
     pkgs.glibcLocales
-    pkgs.xcbuild
     pkgs.swig
     pkgs.openjpeg
     pkgs.mupdf

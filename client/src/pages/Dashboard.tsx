@@ -13,6 +13,9 @@ import {
   BarChart,
   FileCheck,
   ChevronRight,
+  Rocket,
+  Sparkles,
+  FileStack,
 } from 'lucide-react';
 
 // Dashboard cards data
@@ -48,6 +51,31 @@ const usageCards = [
 ];
 
 const featureCards = [
+  {
+    title: 'Concept2Cure',
+    icon: <Rocket className="h-8 w-8 text-purple-500" />,
+    description:
+      'AI-powered regulatory submission assistant. Draft 510(k)s, INDs, NDAs with Claude-style conversational interface',
+    actions: [
+      {
+        label: 'New Submission',
+        icon: <Sparkles className="mr-2 h-4 w-4" />,
+        path: '/concept2cure',
+      },
+      {
+        label: 'My Projects',
+        icon: <FileStack className="mr-2 h-4 w-4" />,
+        path: '/concept2cure',
+      },
+      {
+        label: 'Templates',
+        icon: <FileText className="mr-2 h-4 w-4" />,
+        path: '/concept2cure',
+      },
+    ],
+    launchPath: '/concept2cure',
+    featured: true,
+  },
   {
     title: 'CSR Intelligence',
     icon: <FileText className="h-8 w-8 text-blue-500" />,
@@ -101,16 +129,46 @@ const featureCards = [
 export default function Dashboard() {
   return (
     <div className="space-y-6">
+      {/* Concept2Cure Hero Banner */}
+      <Card className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30 border-purple-100 dark:border-purple-900 overflow-hidden">
+        <CardContent className="p-6 relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-200/20 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Rocket className="h-6 w-6 text-purple-600" />
+                <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-semibold rounded-full">NEW</span>
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+                Concept2Cure™ AI Assistant
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 max-w-lg">
+                Experience our Claude-style conversational interface for regulatory submissions. 
+                Draft 510(k)s, INDs, NDAs, and more with AI-powered assistance.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/concept2cure">
+                <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 dark:shadow-purple-900/50">
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Launch Concept2Cure
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Welcome banner */}
       <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-100 dark:border-emerald-900">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
-                Welcome to Concepts2Cures
+                Welcome to TrialSage
               </h2>
               <p className="text-slate-600 dark:text-slate-400">
-                Concept2Cure™ - Your advanced clinical intelligence platform
+                Your advanced clinical intelligence platform
               </p>
             </div>
             <div className="flex items-center gap-3">
