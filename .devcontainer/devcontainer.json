@@ -18,13 +18,10 @@
         "GitHub.copilot-chat",
         "bradlc.vscode-tailwindcss",
         "ms-azuretools.vscode-docker"
-      ],
-      "settings": {
-        "remote.extensionKind": {
-          "github.copilot": ["ui"],
-          "github.copilot-chat": ["ui"]
-        }
-      }
+      ]
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
     }
   },
   
@@ -40,7 +37,7 @@
     }
   },
   
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm install --ignore-scripts",
   
   "remoteEnv": {
     "NODE_ENV": "development"
