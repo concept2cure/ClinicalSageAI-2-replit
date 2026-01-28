@@ -12,6 +12,9 @@ import { execSync } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Get project root (two directories up from scripts/automation/)
+const projectRoot = path.resolve(__dirname, '..', '..');
+
 // Function to delete a directory and all its contents recursively
 function deleteFolderRecursive(directoryPath) {
   if (fs.existsSync(directoryPath)) {
@@ -29,7 +32,7 @@ function deleteFolderRecursive(directoryPath) {
 }
 
 // Clean up react-toastify module if it exists
-const toastifyPath = path.join(__dirname, 'node_modules', 'react-toastify');
+const toastifyPath = path.join(projectRoot, 'node_modules', 'react-toastify');
 if (fs.existsSync(toastifyPath)) {
   console.log('Found react-toastify in node_modules, removing...');
   deleteFolderRecursive(toastifyPath);
@@ -38,7 +41,7 @@ if (fs.existsSync(toastifyPath)) {
 }
 
 // Clean Vite cache to prevent optimization errors
-const viteCachePath = path.join(__dirname, 'node_modules', '.vite');
+const viteCachePath = path.join(projectRoot, 'node_modules', '.vite');
 if (fs.existsSync(viteCachePath)) {
   console.log('Clearing Vite cache...');
   deleteFolderRecursive(viteCachePath);
@@ -72,7 +75,7 @@ const criticalPackages = [
 function checkMissingPackages() {
   const missing = [];
   for (const pkg of criticalPackages) {
-    const pkgPath = path.join(__dirname, 'node_modules', pkg.replace('/', path.sep));
+    const pkgPath = path.join(projectRoot, 'node_modules', pkg.replace('/', path.sep));
     if (!fs.existsSync(pkgPath)) {
       missing.push(pkg);
     }
@@ -94,7 +97,7 @@ while (missingPackages.length > 0 && attempts < maxAttempts) {
     // Install ALL missing packages at once
     execSync(`npm install ${missingPackages.join(' ')} --no-audit --no-fund --save`, { 
       stdio: 'inherit', 
-      cwd: __dirname 
+      cwd: projectRoot 
     });
     console.log('✅ Installation complete, verifying...');
     
@@ -130,7 +133,7 @@ console.log('Starting build size optimization...');
 const filesToRemove = ['node_modules/.cache', '.vite', 'dist/cache', 'tmp', 'node_modules/.pnpm'];
 
 filesToRemove.forEach(file => {
-  const fullPath = path.join(__dirname, file);
+  const fullPath = path.join(projectRoot, file);
   if (fs.existsSync(fullPath)) {
     try {
       deleteFolderRecursive(fullPath);
