@@ -260,7 +260,7 @@ const AdaptiveLearning = () => {
                     <span className="text-3xl font-bold">{recentActivities}</span>
                     <span className="text-gray-500 ml-1">activities</span>
                   </div>
-                  <CalendarDays className="h-6 w-6 text-blue-500" />
+                  <CalendarDays className="h-6 w-6 text-slate-500" />
                 </div>
                 <div className="mt-2">
                   <Progress value={Math.min(recentActivities * 10, 100)} className="h-1" />

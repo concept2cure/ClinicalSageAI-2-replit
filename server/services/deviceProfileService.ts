@@ -34,7 +34,7 @@ export interface DeviceProfile {
 
 // In-memory store for device profiles
 // In production, this would be replaced with a database implementation
-const store = new Map<string, DeviceProfile>();
+export const store = new Map<string, DeviceProfile>();
 
 /**
  * Generate a unique ID for a device profile

@@ -150,7 +150,7 @@ export function terminateSession(reason) {
   };
 
   // Redirect to login page
-  window.location.href = '/auth?reason=session_terminated';
+  window.location.href = '/concept2cure/login?reason=session_terminated';
 }
 
 /**

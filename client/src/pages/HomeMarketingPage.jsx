@@ -50,10 +50,10 @@ const HomeMarketingPage = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-3">
-            <Link href="/auth">
+            <Link href="/concept2cure/login">
               <Button variant="outline">Log In</Button>
             </Link>
-            <Link href="/auth?signup=true">
+            <Link href="/concept2cure/signup">
               <Button>Sign Up</Button>
             </Link>
           </div>
@@ -112,7 +112,7 @@ const HomeMarketingPage = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <Link href="/auth?signup=true">
+                <Link href="/concept2cure/signup">
                   <Button size="lg" className="w-full sm:w-auto">
                     Start Free Trial
                   </Button>
@@ -359,7 +359,7 @@ const HomeMarketingPage = () => {
             AI-powered platform.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link href="/auth?signup=true">
+            <Link href="/concept2cure/signup">
               <Button size="lg" variant="secondary">
                 Start Free Trial
               </Button>

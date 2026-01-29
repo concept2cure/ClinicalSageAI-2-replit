@@ -203,18 +203,46 @@ export const zenBorderRadius = {
 export const zenTransitions = {
   duration: {
     instant: '0ms',
-    fast: '100ms',
-    normal: '200ms',
-    slow: '300ms',
-    slower: '500ms',
+    fast: '120ms',
+    normal: '180ms',
+    slow: '240ms',
+    slower: '360ms',
   },
   timing: {
     linear: 'linear',
-    ease: 'cubic-bezier(0.4, 0, 0.2, 1)',        // Natural ease
+    ease: 'cubic-bezier(0.2, 0, 0, 1)',        // Subtle, calm default
     easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
-    easeOut: 'cubic-bezier(0, 0, 0.2, 1)',
-    easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    spring: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Playful bounce
+    easeOut: 'cubic-bezier(0.2, 0, 0, 1)',
+    easeInOut: 'cubic-bezier(0.2, 0, 0, 1)',
+    spring: 'cubic-bezier(0.16, 1, 0.3, 1)', // Expressive but controlled
+  },
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GLOBAL MOTION PROFILE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Single motion profile applied across all modules/shells.
+ * - Subtle by default
+ * - Expressive only for onboarding/first-run moments
+ * - Client-specific variation: density/scale only (not timing/easing)
+ */
+export const zenMotionProfile = {
+  durationMs: {
+    fast: 120,
+    normal: 180,
+    slow: 240,
+    slower: 360,
+  },
+  easing: {
+    standard: 'cubic-bezier(0.2, 0, 0, 1)',
+    emphasize: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  },
+  distance: {
+    xs: '4px',
+    sm: '8px',
+    md: '12px',
   },
 } as const;
 

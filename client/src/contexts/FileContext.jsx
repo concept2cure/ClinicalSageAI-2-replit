@@ -34,6 +34,7 @@ export const FileProvider = ({ children }) => {
 
   const value = {
     selectedFiles,
+    setSelectedFiles,
     validationResult,
     setValidationResult,
     selectFile,

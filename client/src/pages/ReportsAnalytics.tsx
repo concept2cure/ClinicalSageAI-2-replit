@@ -34,7 +34,7 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
 
 // Import any additional components you need for analytics
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/portal-v2/services/authService";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -182,9 +182,9 @@ export default function ReportsAnalytics() {
     if (filteredReports.length === 0) {
       return (
         <div className="text-center py-10">
-          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900">No reports found</h3>
-          <p className="text-gray-500 mt-1">Try adjusting your filters or search criteria</p>
+          <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-slate-900">No reports found</h3>
+          <p className="text-slate-500 mt-1">Try adjusting your filters or search criteria</p>
         </div>
       );
     }
@@ -192,7 +192,7 @@ export default function ReportsAnalytics() {
     return (
       <div className="space-y-4 p-4">
         {filteredReports.map((report) => (
-          <Card key={report.id} className="overflow-hidden border border-slate-200 hover:border-primary/50 transition-colors">
+          <Card key={report.id} className="overflow-hidden border border-slate-200/70 bg-white/80 shadow-sm hover:border-slate-300 transition-colors">
             <div className="flex flex-col md:flex-row">
               <div className="p-4 md:p-6 flex-1">
                 <div className="flex justify-between">
@@ -216,7 +216,7 @@ export default function ReportsAnalytics() {
                   <p className="text-sm text-slate-600 mt-2 line-clamp-2">{report.summary}</p>
                 )}
               </div>
-              <div className="bg-slate-50 p-4 md:p-6 flex flex-row md:flex-col justify-between items-center md:w-48">
+              <div className="bg-slate-50/80 p-4 md:p-6 flex flex-row md:flex-col justify-between items-center md:w-48">
                 <div className="text-center mb-auto">
                   <div className="text-xs text-slate-500 mb-1">Uploaded</div>
                   <div className="text-sm font-medium">
@@ -243,7 +243,7 @@ export default function ReportsAnalytics() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {reportTypes.map((type) => (
-          <Card key={type.id} className="overflow-hidden hover:shadow-md transition-shadow">
+          <Card key={type.id} className="overflow-hidden bg-white/80 border-slate-200/70 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2">
               <div className="p-2 rounded-full bg-slate-100">
                 {type.icon}
@@ -274,7 +274,7 @@ export default function ReportsAnalytics() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Reports & Analytics</h1>
@@ -284,12 +284,12 @@ export default function ReportsAnalytics() {
         </div>
         <div className="mt-4 md:mt-0 flex gap-2">
           <Link href="/upload">
-            <Button variant="outline" className="gap-1">
+            <Button variant="outline" className="gap-1 border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50">
               <FolderUp className="h-4 w-4 mr-1" />
               Upload CSR
             </Button>
           </Link>
-          <Button className="gap-1">
+          <Button className="gap-1 bg-slate-900 text-white hover:bg-slate-800">
             <Download className="h-4 w-4 mr-1" />
             Export Data
           </Button>
@@ -298,7 +298,7 @@ export default function ReportsAnalytics() {
 
       {/* Analytics Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
+        <Card className="bg-white/80 border-slate-200/60 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Total Reports</CardTitle>
           </CardHeader>
@@ -308,7 +308,7 @@ export default function ReportsAnalytics() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white/80 border-slate-200/60 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Therapeutic Areas</CardTitle>
           </CardHeader>
@@ -318,7 +318,7 @@ export default function ReportsAnalytics() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white/80 border-slate-200/60 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Average Trial Duration</CardTitle>
           </CardHeader>
@@ -336,12 +336,12 @@ export default function ReportsAnalytics() {
             placeholder="Search reports by title, indication, or sponsor..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full"
+            className="w-full bg-white/80 border-slate-200/70"
           />
         </div>
         <div>
           <Select value={selectedPhase} onValueChange={setSelectedPhase}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/80 border-slate-200/70">
               <SelectValue placeholder="Select a phase" />
             </SelectTrigger>
             <SelectContent>
@@ -355,7 +355,7 @@ export default function ReportsAnalytics() {
         </div>
         <div>
           <Select value={selectedIndication} onValueChange={setSelectedIndication}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/80 border-slate-200/70">
               <SelectValue placeholder="Select an indication" />
             </SelectTrigger>
             <SelectContent>
@@ -371,16 +371,16 @@ export default function ReportsAnalytics() {
       </div>
 
       {/* Available Reports Section */}
-      <div className="bg-white border rounded-lg">
-        <div className="p-4 border-b">
+      <div className="bg-white/80 border border-slate-200/70 rounded-2xl shadow-sm">
+        <div className="p-4 border-b border-slate-200/60">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Available Reports</h2>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="h-8">
+              <Button variant="ghost" size="sm" className="h-8 text-slate-600 hover:text-slate-900">
                 <ArrowUpDown className="h-3.5 w-3.5 mr-1" />
                 Sort
               </Button>
-              <Button variant="ghost" size="sm" className="h-8">
+              <Button variant="ghost" size="sm" className="h-8 text-slate-600 hover:text-slate-900">
                 <Filter className="h-3.5 w-3.5 mr-1" />
                 Filter
               </Button>
@@ -400,14 +400,14 @@ export default function ReportsAnalytics() {
       </div>
 
       {/* Analytics Insights */}
-      <div className="mt-10 border-t pt-8">
+      <div className="mt-10 border-t border-slate-200/60 pt-8">
         <div className="flex items-center mb-4">
           <BarChart3 className="h-5 w-5 text-primary mr-2" />
           <h2 className="text-xl font-semibold">Analytics & Insights</h2>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="col-span-1">
+          <Card className="col-span-1 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Reports by Phase</CardTitle>
               <CardDescription>Distribution of reports across trial phases</CardDescription>
@@ -446,7 +446,7 @@ export default function ReportsAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-1">
+          <Card className="col-span-1 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Top Therapeutic Areas</CardTitle>
               <CardDescription>Most common disease areas in the database</CardDescription>
@@ -495,7 +495,7 @@ export default function ReportsAnalytics() {
         
         {/* Additional Analytics Section (Trial Success Rate) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          <Card className="col-span-1">
+          <Card className="col-span-1 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <div className="flex items-center">
                 <PieChart className="h-5 w-5 text-primary mr-2" />
@@ -528,7 +528,7 @@ export default function ReportsAnalytics() {
             </CardContent>
           </Card>
           
-          <Card className="col-span-1">
+          <Card className="col-span-1 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <div className="flex items-center">
                 <LineChart className="h-5 w-5 text-primary mr-2" />
@@ -568,7 +568,7 @@ export default function ReportsAnalytics() {
             </CardContent>
           </Card>
           
-          <Card className="col-span-1">
+          <Card className="col-span-1 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <div className="flex items-center">
                 <Microscope className="h-5 w-5 text-primary mr-2" />

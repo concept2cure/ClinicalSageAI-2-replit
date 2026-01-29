@@ -19,7 +19,7 @@ const withAuthGuard = Component => {
 
       if (!token) {
         // Redirect to login page if no token found
-        setLocation('/auth');
+        setLocation('/concept2cure/login');
       } else {
         // Token exists, user is authenticated
         setIsAuthorized(true);

@@ -7,24 +7,24 @@ export default function MinimalLanding() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Hero section */}
-      <header className="w-full bg-gradient-to-br from-white to-blue-50 border-b border-gray-100">
+      <header className="w-full bg-gradient-to-br from-white to-slate-50 border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
             <div className="flex flex-col justify-center">
               <div className="flex gap-3 mb-6">
-                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700">
+                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-slate-50 text-slate-700">
                   <span>ICH Wiz</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-blue-100 text-blue-800">
+                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-slate-100 text-slate-800">
                   <span>IND Wizard</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700">
+                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-emerald-50 text-emerald-700">
                   <span>CMDR</span>
                 </div>
               </div>
 
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-                <span className="text-blue-600">TrialSage</span>™ Platform
+                <span className="text-slate-700">TrialSage</span>™ Platform
               </h1>
               <p className="mt-4 text-xl text-gray-500 max-w-lg">
                 Revolutionizing clinical and pharmaceutical document workflows with AI-powered
@@ -56,25 +56,25 @@ export default function MinimalLanding() {
 
             <div className="relative rounded-xl bg-white p-6 shadow-lg border border-gray-100">
               <div className="space-y-4">
-                <div className="rounded-lg bg-blue-50 p-4">
-                  <h3 className="font-medium text-blue-800 mb-1">CSR Intelligence™</h3>
-                  <p className="text-sm text-blue-700">
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <h3 className="font-medium text-slate-800 mb-1">CSR Intelligence™</h3>
+                  <p className="text-sm text-slate-700">
                     Our AI has analyzed 3,217 clinical study reports to optimize your protocol
                     designs.
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-green-50 p-4">
-                  <h3 className="font-medium text-green-800 mb-1">IND Wizard™</h3>
-                  <p className="text-sm text-green-700">
+                <div className="rounded-lg bg-emerald-50 p-4">
+                  <h3 className="font-medium text-emerald-800 mb-1">IND Wizard™</h3>
+                  <p className="text-sm text-emerald-700">
                     Expedite submission preparation with guided workflows and AI-assisted document
                     generation.
                   </p>
                 </div>
 
-                <div className="rounded-lg bg-purple-50 p-4">
-                  <h3 className="font-medium text-purple-800 mb-1">ICH Wiz™</h3>
-                  <p className="text-sm text-purple-700">
+                <div className="rounded-lg bg-slate-50/70 p-4">
+                  <h3 className="font-medium text-slate-800 mb-1">ICH Wiz™</h3>
+                  <p className="text-sm text-slate-700">
                     Digital compliance coach for regulatory requirements in pharmaceutical
                     development.
                   </p>

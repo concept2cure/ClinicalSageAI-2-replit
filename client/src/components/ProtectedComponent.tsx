@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Redirect, useLocation } from 'wouter';
+import { useAuth } from '@/portal-v2/services/authService';
+import { Redirect } from 'wouter';
 
 interface ProtectedComponentProps {
   children: ReactNode;
@@ -14,11 +14,10 @@ interface ProtectedComponentProps {
  */
 export function ProtectedComponent({
   children,
-  redirectTo = '/auth',
+  redirectTo = '/concept2cure/login',
   fallback = null,
 }: ProtectedComponentProps) {
-  const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // If still loading authentication state, show nothing
   if (isLoading) {
@@ -30,12 +29,12 @@ export function ProtectedComponent({
   }
 
   // If not authenticated and a redirect path is provided, redirect
-  if (!user && redirectTo) {
+  if (!isAuthenticated && redirectTo) {
     return <Redirect to={redirectTo} />;
   }
 
   // If not authenticated and a fallback is provided, show fallback
-  if (!user && fallback) {
+  if (!isAuthenticated && fallback) {
     return <>{fallback}</>;
   }
 
@@ -66,9 +65,9 @@ export function AuthOnly({
   children,
   fallback = <p className="text-center p-4">🔒 Please login to access this content</p>,
 }: Omit<ProtectedComponentProps, 'redirectTo'>) {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  if (!user) return <>{fallback}</>;
+  if (!isAuthenticated) return <>{fallback}</>;
 
   return <>{children}</>;
 }

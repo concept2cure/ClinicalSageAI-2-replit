@@ -39,12 +39,12 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="flex h-full gap-4">
+    <div className="flex h-full gap-4 bg-zinc-50">
       {/* sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 p-4 flex flex-col">
+      <aside className="w-64 bg-white border-r border-zinc-200/50 p-4 flex flex-col">
         <button
           onClick={createDoc}
-          className="mb-3 bg-emerald-600 text-white text-xs px-3 py-2 rounded hover:bg-emerald-700"
+          className="mb-3 bg-zinc-900 text-white text-xs px-3 py-2 rounded-full hover:bg-zinc-800"
         >
           + New Doc
         </button>
@@ -55,8 +55,8 @@ export default function DocumentsPage() {
                 onClick={() => loadDocument(d.id)}
                 className={`flex gap-2 items-center w-full px-2 py-1 rounded ${
                   activeId === d.id
-                    ? 'bg-emerald-100 dark:bg-emerald-700/30'
-                    : 'hover:bg-gray-100 dark:hover:bg-slate-700'
+                    ? 'bg-zinc-100'
+                    : 'hover:bg-zinc-100'
                 }`}
               >
                 <File size={16} /> {d.title || `Untitled ${d.id}`}
@@ -69,13 +69,13 @@ export default function DocumentsPage() {
       {/* editor & panels */}
       <div className="flex-1 flex flex-col">
         {/* toolbar */}
-        <div className="flex items-center gap-4 border-b border-gray-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur px-4 py-2">
+        <div className="flex items-center gap-4 border-b border-zinc-200/60 bg-white/80 backdrop-blur px-4 py-2">
           <span className="text-sm font-medium">
             {docs.find(d => d.id === activeId)?.title || 'Select a document'}
           </span>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="ml-auto text-gray-500 hover:text-emerald-600"
+            className="ml-auto text-zinc-500 hover:text-zinc-900"
             title="Toggle comments"
           >
             <MessageCircle size={18} />
@@ -86,14 +86,14 @@ export default function DocumentsPage() {
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
-            className="flex-1 p-6 overflow-y-auto resize-none bg-white dark:bg-slate-900 text-black dark:text-white"
+            className="flex-1 p-6 overflow-y-auto resize-none bg-white text-zinc-900"
             placeholder="Select a document from the sidebar..."
             readOnly={!session?.user?.canEdit}
           />
 
           {/* comments / version drawer */}
           {showComments && (
-            <aside className="w-80 border-l border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-4 overflow-y-auto">
+            <aside className="w-80 border-l border-zinc-200/60 bg-zinc-50 p-4 overflow-y-auto">
               <h3 className="font-semibold text-sm mb-2 flex items-center gap-1">
                 <Clock size={14} /> Versions
               </h3>
@@ -103,7 +103,7 @@ export default function DocumentsPage() {
                     <span>{new Date(v.created_at).toLocaleString()}</span>
                     <button
                       onClick={() => setContent(v.content)}
-                      className="text-emerald-600 hover:underline"
+                      className="text-zinc-700 hover:underline"
                     >
                       Load
                     </button>

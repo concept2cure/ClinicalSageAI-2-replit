@@ -12,14 +12,13 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import type { Project, Artifact, SubmissionType } from '../../types';
+import type { SubmissionType } from '../../types';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { NextActionsPanel, StepCard } from '@/concept2cure/components/workflow';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -29,16 +28,13 @@ import {
 } from '@/components/ui/select';
 import {
   FileText,
-  Clock,
   CheckCircle2,
   AlertTriangle,
   TrendingUp,
-  Calendar,
   Users,
   Target,
+  GitBranch,
   Sparkles,
-  ArrowRight,
-  Bell,
   BarChart3,
   Shield,
   Beaker,
@@ -236,15 +232,6 @@ interface DashboardMetric {
   change?: number;
   trend?: 'up' | 'down' | 'stable';
   target?: number;
-}
-
-interface DashboardAlert {
-  id: string;
-  type: 'warning' | 'info' | 'success' | 'error';
-  title: string;
-  message: string;
-  timestamp: Date;
-  actionLabel?: string;
 }
 
 const generateMockTasks = (role: UserRole): DashboardTask[] => {
@@ -624,11 +611,78 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   className,
 }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>(initialRole);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   const roleConfig = ROLE_CONFIGS[currentRole];
   const tasks = useMemo(() => generateMockTasks(currentRole), [currentRole]);
   const metrics = useMemo(() => generateMockMetrics(currentRole), [currentRole]);
+  const activeWorkflowRunId = useMemo(
+    () => `demo-${currentRole}-workflow-run`,
+    [currentRole]
+  );
+  const activeWorkflowSteps = useMemo(
+    () => [
+      {
+        id: 'step-compile-section',
+        name: 'Compile submission section',
+        description: 'Draft and finalize required section content for review.',
+        status: 'IN_PROGRESS' as const,
+        stepType: 'TASK' as const,
+        order: 1,
+        phaseName: 'Authoring',
+        assigneeRole: roleConfig.shortTitle,
+        slaDueAt: new Date(Date.now() + 6 * 60 * 60 * 1000),
+        isRequired: true,
+        startedAt: new Date(Date.now() - 60 * 60 * 1000),
+      },
+      {
+        id: 'step-review-approval',
+        name: 'Regulatory review',
+        description: 'Regulatory review and approval of compiled section.',
+        status: 'READY' as const,
+        stepType: 'APPROVAL' as const,
+        order: 2,
+        phaseName: 'Review',
+        assigneeRole: 'QA Manager',
+        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        isRequired: true,
+      },
+    ],
+    [roleConfig.shortTitle]
+  );
+  const nextActions = useMemo(
+    () => [
+      {
+        id: 'action-compile-section',
+        name: 'Finalize compliance section',
+        description: 'Complete the compliance summary and attach evidence.',
+        stepType: 'TASK' as const,
+        status: 'READY' as const,
+        workflowName: 'Regulatory Submission Prep',
+        workflowId: 'workflow-reg-prep-01',
+        workflowRunId: activeWorkflowRunId,
+        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        assigneeRole: roleConfig.shortTitle,
+        order: 1,
+        priority: 'HIGH' as const,
+      },
+      {
+        id: 'action-review-section',
+        name: 'Review draft evidence pack',
+        description: 'Approve the evidence package for submission.',
+        stepType: 'APPROVAL' as const,
+        status: 'AWAITING_APPROVAL' as const,
+        workflowName: 'Regulatory Submission Prep',
+        workflowId: 'workflow-reg-prep-01',
+        workflowRunId: activeWorkflowRunId,
+        slaDueAt: new Date(Date.now() + 20 * 60 * 60 * 1000),
+        assigneeRole: 'QA Manager',
+        order: 2,
+        priority: 'MEDIUM' as const,
+      },
+    ],
+    [activeWorkflowRunId, roleConfig.shortTitle]
+  );
 
   const handleRoleChange = (role: UserRole) => {
     setCurrentRole(role);
@@ -708,6 +762,37 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                 onAskLumen={onAskLumen || (() => {})}
               />
             </div>
+          </div>
+
+          {/* Workflow Snapshot */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Active Workflow Steps
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Proof-backed execution trail for the current workflow run
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {activeWorkflowSteps.map((step) => (
+                <StepCard
+                  key={step.id}
+                  step={step}
+                  workflowRunId={activeWorkflowRunId}
+                  isExpanded={expandedStepId === step.id}
+                  onToggleExpand={() =>
+                    setExpandedStepId(prev => (prev === step.id ? null : step.id))
+                  }
+                />
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Next Actions */}
+          <div>
+            <NextActionsPanel actions={nextActions} maxItems={3} />
           </div>
 
           {/* Relevant Submissions */}

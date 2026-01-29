@@ -83,23 +83,23 @@ const Module32Form = () => {
   return (
     <Layout>
       <Module32Tour />
-      <div className="module32-form-container py-12 px-6 max-w-5xl mx-auto">
+      <div className="module32-form-container py-12 px-6 max-w-5xl mx-auto bg-white/70 border border-slate-200/70 rounded-2xl shadow-sm">
         <div className="form-header">
-          <h1 className="text-3xl font-bold text-blue-800 mb-4">
+          <h1 className="text-3xl font-bold text-slate-900 mb-4">
             Generate Module 3.2 Documentation
           </h1>
-          <p className="text-gray-600 mb-8">
+          <p className="text-slate-600 mb-8">
             Enter the drug substance and product details to generate a CMC document draft.
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-            <p className="text-red-700">{error}</p>
+          <div className="bg-rose-50/70 border-l-4 border-rose-200/70 p-4 mb-6">
+            <p className="text-rose-700">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 mb-8">
+        <form onSubmit={handleSubmit} className="bg-white/80 border border-slate-200/70 shadow-sm rounded-lg p-6 mb-8">
           <div className="mb-4">
             <label htmlFor="drug_name" className="block text-sm font-medium text-gray-700 mb-1">
               Drug Name
@@ -112,7 +112,7 @@ const Module32Form = () => {
               onChange={handleChange}
               required
               placeholder="Enter drug name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-200/70 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
             />
           </div>
 
@@ -131,7 +131,7 @@ const Module32Form = () => {
               onChange={handleChange}
               required
               placeholder="E.g., C21H23NO5"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-200/70 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
             />
           </div>
 

@@ -28,8 +28,17 @@ interface ProjectState {
   activeConversationId: string | null;
   activeArtifactId: string | null;
   ui: UIState;
+  userProfile: UserProfile | null;
   isLoading: boolean;
   error: string | null;
+}
+
+interface UserProfile {
+  role?: string;
+  objectives?: string[];
+  criteria?: string[];
+  preferences?: Record<string, string | number | boolean>;
+  updatedAt?: string;
 }
 
 type ProjectAction =
@@ -53,7 +62,9 @@ type ProjectAction =
   | { type: 'TOGGLE_SIDEBAR'; payload?: boolean }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_THEME'; payload: 'light' | 'dark' | 'system' };
+  | { type: 'SET_THEME'; payload: 'light' | 'dark' | 'system' }
+  | { type: 'SET_USER_PROFILE'; payload: UserProfile | null }
+  | { type: 'UPDATE_USER_PROFILE'; payload: Partial<UserProfile> };
 
 const initialUIState: UIState = {
   sidebarCollapsed: false,
@@ -75,6 +86,7 @@ const initialState: ProjectState = {
   activeConversationId: null,
   activeArtifactId: null,
   ui: initialUIState,
+  userProfile: null,
   isLoading: false,
   error: null,
 };
@@ -231,6 +243,19 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
     case 'SET_THEME':
       return { ...state, ui: { ...state.ui, theme: action.payload } };
 
+    case 'SET_USER_PROFILE':
+      return { ...state, userProfile: action.payload };
+
+    case 'UPDATE_USER_PROFILE':
+      return {
+        ...state,
+        userProfile: {
+          ...state.userProfile,
+          ...action.payload,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+
     default:
       return state;
   }
@@ -269,6 +294,8 @@ interface ProjectContextValue {
   toggleArtifactPanel: (visible?: boolean) => void;
   setArtifactPanelWidth: (width: number) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setUserProfile: (profile: UserProfile | null) => void;
+  updateUserProfile: (profile: Partial<UserProfile>) => void;
   
   // Computed values
   activeProject: Project | null;
@@ -327,7 +354,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
 
       return project;
     },
-    []
+    [createConversation]
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
@@ -649,6 +676,14 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     dispatch({ type: 'SET_THEME', payload: theme });
   }, []);
 
+  const setUserProfile = useCallback((profile: UserProfile | null) => {
+    dispatch({ type: 'SET_USER_PROFILE', payload: profile });
+  }, []);
+
+  const updateUserProfile = useCallback((profile: Partial<UserProfile>) => {
+    dispatch({ type: 'UPDATE_USER_PROFILE', payload: profile });
+  }, []);
+
   // ─────────────────────────────────────────────────────────────────────────
   // COMPUTED VALUES
   // ─────────────────────────────────────────────────────────────────────────
@@ -669,6 +704,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   useEffect(() => {
     // Load from localStorage on mount
     const savedState = localStorage.getItem('concept2cure_state');
+    const savedProfile = localStorage.getItem('concept2cure_user_profile');
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
@@ -680,6 +716,29 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         console.error('Failed to load saved state:', e);
       }
     }
+    if (savedProfile) {
+      try {
+        dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(savedProfile) });
+      } catch (e) {
+        console.error('Failed to load saved user profile:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = (event: Event) => {
+      const storageEvent = event as { key?: string; newValue?: string | null };
+      if (storageEvent.key === 'concept2cure_user_profile' && storageEvent.newValue) {
+        try {
+          dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(storageEvent.newValue) });
+        } catch (e) {
+          console.error('Failed to sync user profile:', e);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   useEffect(() => {
@@ -690,7 +749,10 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
       artifacts: state.artifacts,
     };
     localStorage.setItem('concept2cure_state', JSON.stringify(toSave));
-  }, [state.projects, state.conversations, state.artifacts]);
+    if (state.userProfile) {
+      localStorage.setItem('concept2cure_user_profile', JSON.stringify(state.userProfile));
+    }
+  }, [state.projects, state.conversations, state.artifacts, state.userProfile]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // CONTEXT VALUE
@@ -717,6 +779,8 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     toggleArtifactPanel,
     setArtifactPanelWidth,
     setTheme,
+    setUserProfile,
+    updateUserProfile,
     activeProject,
     activeConversation,
     activeArtifact,

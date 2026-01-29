@@ -3,8 +3,7 @@
 import { QueryClientProvider, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Switch, Route, useLocation, Link, Redirect } from 'wouter';
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { AuthProvider, useAuth } from './hooks/use-auth';
-import AuthPage from './pages/AuthPage';
+import { AuthProvider, useAuth } from './portal-v2/services/authService';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -102,8 +101,6 @@ import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 const ClientPortalV2 = lazy(() => import('./portal-v2/components/client-portal'));
 const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
 
-// Import Enterprise Sign-On page
-import TrialSageSignOn from './pages/TrialSageSignOn';
 
 // Import Lumen Cortex AI Assistant
 const LumenCortex = lazy(() => import('./pages/LumenCortex'));
@@ -245,16 +242,16 @@ const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
 // New Project Wizard for 510(k) submissions
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
-// Protected Route wrapper - redirects to /auth if not authenticated
+// Protected Route wrapper - redirects to Concept2Cure login if not authenticated
 const ProtectedRoute = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      setLocation('/auth');
+    if (!isLoading && !isAuthenticated) {
+      setLocation('/concept2cure/login');
     }
-  }, [user, isLoading, setLocation]);
+  }, [isAuthenticated, isLoading, setLocation]);
 
   if (isLoading) {
     return (
@@ -265,7 +262,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return user ? children : null;
+  return isAuthenticated ? children : null;
 };
 
 // Main App Content (protected)
@@ -2093,11 +2090,6 @@ function MainApp() {
 
 // Main App wrapper with auth and providers
 function App() {
-  const [location] = useLocation();
-
-  // Auth page should not require authentication
-  const isAuthPage = location === '/auth' || location === '/sign-in';
-
   return (
     <ModuleErrorBoundary>
       <ErrorBoundary>
@@ -2107,14 +2099,10 @@ function App() {
               <EvidenceGraphProvider>
                 <LumenAiAssistantProvider>
                   <Switch>
-                    {/* Enterprise Sign-On route - public */}
-                    <Route path="/sign-in" component={TrialSageSignOn} />
-
-                    {/* Legacy auth route - redirect to new sign-in */}
-                    <Route path="/auth">{() => <Redirect to="/sign-in" />}</Route>
-
-                    {/* Login route - redirect to new sign-in */}
-                    <Route path="/login">{() => <Redirect to="/sign-in" />}</Route>
+                    {/* Unified auth routes - redirect to Concept2Cure login */}
+                    <Route path="/sign-in">{() => <Redirect to="/concept2cure/login" />}</Route>
+                    <Route path="/auth">{() => <Redirect to="/concept2cure/login" />}</Route>
+                    <Route path="/login">{() => <Redirect to="/concept2cure/login" />}</Route>
 
                     {/* All other routes - protected */}
                     <Route>{() => <AppContent />}</Route>

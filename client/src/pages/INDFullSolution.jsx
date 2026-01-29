@@ -329,7 +329,7 @@ export default function INDFullSolution() {
     return modules.map((module, index) => (
       <span
         key={index}
-        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2 mb-2"
+        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 mr-2 mb-2"
       >
         {module}
       </span>
@@ -338,29 +338,29 @@ export default function INDFullSolution() {
 
   // Function to render a template card
   const TemplateCard = ({ template }) => (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-      <div className="border-b border-gray-100 p-5">
+    <div className="bg-white/80 border border-slate-200/70 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <div className="border-b border-slate-200/60 p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4">
+            <div className="h-10 w-10 rounded-md bg-slate-900/5 text-slate-700 flex items-center justify-center mr-4">
               <Package size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-gray-900">{template.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-lg font-medium text-slate-900">{template.title}</h3>
+              <p className="text-sm text-slate-500 mt-1">
                 Specialization: {template.specialization}
               </p>
             </div>
           </div>
-          <div className="text-xs text-gray-500">Updated: {template.lastUpdated}</div>
+          <div className="text-xs text-slate-500">Updated: {template.lastUpdated}</div>
         </div>
       </div>
       <div className="px-5 py-4">
-        <p className="text-sm text-gray-600 mb-4">{template.description}</p>
+        <p className="text-sm text-slate-600 mb-4">{template.description}</p>
         <div className="mb-4">{renderModuleTags(template.modules)}</div>
         <div className="flex justify-between items-center">
           <Link to={`/ind-full-solution/template/${template.id}`}>
-            <button className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
+            <button className="inline-flex items-center text-sm font-medium text-slate-700 hover:text-slate-900">
               View Package Details
               <ChevronRight size={16} className="ml-1" />
             </button>
@@ -368,7 +368,7 @@ export default function INDFullSolution() {
           <button
             onClick={() => handleDownloadTemplate(template.id)}
             disabled={isLoading}
-            className="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded text-sm disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
             Download Package
@@ -380,27 +380,27 @@ export default function INDFullSolution() {
 
   // Function to render a module card
   const ModuleCard = ({ module }) => (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-      <div className="border-b border-gray-100 p-5">
+    <div className="bg-white/80 border border-slate-200/70 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <div className="border-b border-slate-200/60 p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
+            <div className="h-10 w-10 rounded-md bg-slate-900/5 text-slate-700 flex items-center justify-center mr-4">
               <FileText size={20} />
             </div>
-            <h3 className="text-lg font-medium text-gray-900">{module.name}</h3>
+            <h3 className="text-lg font-medium text-slate-900">{module.name}</h3>
           </div>
-          <div className="text-xs text-gray-500">Updated: {module.lastUpdated}</div>
+          <div className="text-xs text-slate-500">Updated: {module.lastUpdated}</div>
         </div>
       </div>
       <div className="px-5 py-4">
-        <p className="text-sm text-gray-600 mb-4">{module.description}</p>
-        <div className="flex justify-between text-sm text-gray-500 mb-4">
+        <p className="text-sm text-slate-600 mb-4">{module.description}</p>
+        <div className="flex justify-between text-sm text-slate-500 mb-4">
           <div>Components: {module.components}</div>
           <div>Pages: {module.pageCount}</div>
         </div>
         <div className="flex justify-between items-center">
           <Link to={`/ind-full-solution/module/${module.id}`}>
-            <button className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+            <button className="inline-flex items-center text-sm font-medium text-slate-700 hover:text-slate-900">
               View Module Details
               <ChevronRight size={16} className="ml-1" />
             </button>
@@ -408,7 +408,7 @@ export default function INDFullSolution() {
           <button
             onClick={() => handleDownloadModule(module.id)}
             disabled={isLoading}
-            className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded text-sm disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
             Download Module
@@ -419,16 +419,16 @@ export default function INDFullSolution() {
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="bg-gradient-to-r from-indigo-800 to-indigo-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-50 min-h-screen">
+      <div className="bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center mb-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-700 text-white mr-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-slate-800 text-white mr-4">
               <FileSymlink size={24} />
             </div>
             <h1 className="text-3xl font-bold text-white">IND Full Solution Package</h1>
           </div>
-          <p className="text-indigo-100 max-w-3xl">
+          <p className="text-slate-300 max-w-3xl">
             Comprehensive IND templates, modules, and checklists designed to streamline your
             regulatory submissions with industry-standard formatting and content structured for FDA
             compliance.
@@ -438,89 +438,89 @@ export default function INDFullSolution() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* What It Does Section */}
-        <div className="mb-12 bg-white rounded-xl p-8 border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Rocket className="mr-2 text-indigo-600" size={24} />
+        <div className="mb-12 bg-white/80 rounded-2xl p-8 border border-slate-200/70 shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <Rocket className="mr-2 text-slate-700" size={24} />
             What the IND Automation Module Does
           </h2>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-indigo-50">
+            <table className="min-w-full bg-white/80 rounded-lg overflow-hidden">
+              <thead className="bg-slate-100/70">
                 <tr>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Pillar
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     New Clinical Reality We Enable
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Traditional Pain
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-200/60">
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     End-to-End eCTD Builder
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Draft ➜ QC ➜ Sequence ➜ XML ➜ FDA/EMA/PMDA gateway in one click
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     6–8 tools, manual PDF fixes, IT hand-offs
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">AI-Assisted QA</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">AI-Assisted QA</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Ghostscript/PDF-A, auto-bookmarks, dead-link checks, eValidator & EU/JP rules
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     TR letters for font, size, checksum errors
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Smart Lifecycle Engine
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Auto-detect "replace / new / append", diff viewer
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     Spreadsheet trackers get out of sync
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Real-Time ACK Telemetry
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Live ACK1/2/3 badges, Slack / Teams / email notifications
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     Waiting days to learn of TR failures
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Multi-Region Profiles
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     FDA IND, EMA CTA, PMDA JP-M1—all share the same doc vault
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     Parallel folder trees, duplicate uploads
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Embedded Cost-ROI Cards
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     See PDF QC cost saved, hours saved, and CO₂ reduction
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                  <td className="py-3 px-4 text-sm text-slate-500">
                     No visibility on hidden submission labor
                   </td>
                 </tr>
@@ -531,73 +531,73 @@ export default function INDFullSolution() {
 
         {/* Key Use-Cases Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <BookOpen className="mr-2 text-indigo-600" size={24} />
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <BookOpen className="mr-2 text-slate-700" size={24} />
             Key Use-Cases (beyond "initial IND")
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">1</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-slate-900">
                   CMC "Drug-Product ANDA Supplements"
                 </h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Upload stability update, map to m3.2.P.5., generate sequence 00xx.*
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">2</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Safety 7-Day / 15-Day Reports</h3>
+                <h3 className="text-lg font-medium text-slate-900">Safety 7-Day / 15-Day Reports</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Wizard auto-creates 3500A narrative + cover letter. Sequence flagged "Amendment –
                 Safety".
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">3</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Annual Report (21 CFR 312.33)</h3>
+                <h3 className="text-lg font-medium text-slate-900">Annual Report (21 CFR 312.33)</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Auto-roll prior year's protocol list + safety summary into template; QC; file to
                 m5.3.7.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">4</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">EU Substantial Amendment</h3>
+                <h3 className="text-lg font-medium text-slate-900">EU Substantial Amendment</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Switch region = EMA, drag Protocol v3.1 → m1.2 Annex II; system builds
                 eu-regional.xml and validates with EU profile.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">5</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Japan CTN Re-Submission</h3>
+                <h3 className="text-lg font-medium text-slate-900">Japan CTN Re-Submission</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Select PMDA profile, auto-generates jp-regional.xml, JP-annex folder, and JP
                 index.dat.
               </p>
@@ -606,54 +606,54 @@ export default function INDFullSolution() {
         </div>
 
         {/* Why Clients Use It Section */}
-        <div className="mb-12 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Zap className="mr-2 text-indigo-600" size={24} />
+        <div className="mb-12 bg-slate-50/80 rounded-2xl p-8 border border-slate-200/60">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <Zap className="mr-2 text-slate-700" size={24} />
             Why Clients Use It
           </h2>
 
           <ul className="space-y-4">
             <li className="flex items-start">
-              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5 mr-3">
+              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mt-0.5 mr-3">
                 <Check size={14} />
               </div>
-              <span className="text-gray-700">
+              <span className="text-slate-700">
                 <span className="font-semibold">Cut 80% submission prep time</span> – drag-drop + AI
                 QC replaces 4–6 FTE weeks.
               </span>
             </li>
             <li className="flex items-start">
-              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5 mr-3">
+              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mt-0.5 mr-3">
                 <Check size={14} />
               </div>
-              <span className="text-gray-700">
+              <span className="text-slate-700">
                 <span className="font-semibold">Zero Technical Rejections</span> – every doc passes
                 DTD and Lorenz/PMDA rules.
               </span>
             </li>
             <li className="flex items-start">
-              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5 mr-3">
+              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mt-0.5 mr-3">
                 <Check size={14} />
               </div>
-              <span className="text-gray-700">
+              <span className="text-slate-700">
                 <span className="font-semibold">Audit-Ready Traceability</span> – QC JSON, diff
                 snapshots, ACK files all version-controlled.
               </span>
             </li>
             <li className="flex items-start">
-              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5 mr-3">
+              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mt-0.5 mr-3">
                 <Check size={14} />
               </div>
-              <span className="text-gray-700">
+              <span className="text-slate-700">
                 <span className="font-semibold">Adaptive Cost Model</span> – pay-per-sequence or
                 per-region; no hidden validator fees.
               </span>
             </li>
             <li className="flex items-start">
-              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5 mr-3">
+              <div className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mt-0.5 mr-3">
                 <Check size={14} />
               </div>
-              <span className="text-gray-700">
+              <span className="text-slate-700">
                 <span className="font-semibold">Regulatory Confidence</span> – visual badges +
                 Slack/Teams alerts prove delivery.
               </span>
@@ -663,53 +663,53 @@ export default function INDFullSolution() {
 
         {/* How Teams Work With It Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Users className="mr-2 text-indigo-600" size={24} />
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <Users className="mr-2 text-slate-700" size={24} />
             How Teams Work With It
           </h2>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-              <thead className="bg-indigo-50">
+            <table className="min-w-full bg-white/80 rounded-lg overflow-hidden border border-slate-200/70">
+              <thead className="bg-slate-100/70">
                 <tr>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Role
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Daily Workflow
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-200/60">
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">Med-Writer</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">Med-Writer</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Upload draft → click "Run QC" → get font/link feedback in 60 s.
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">Reg Lead</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">Reg Lead</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Drag QC-passed docs into module folders, choose region, click "Finalize
                     Sequence".
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">Head of QA</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">Head of QA</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Review automated PDF QC JSON + Lorenz report; e-sign Form 1571 w/in the
                     platform.
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">CTO / IT</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">CTO / IT</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Zero infra; optional on-prem Docker script with Traefik + TLS.
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">C-Suite</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">C-Suite</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">
                     Dashboard shows sequence velocity vs. CRO baseline, cost savings, and ESG ACK
                     SLA.
                   </td>
@@ -720,92 +720,92 @@ export default function INDFullSolution() {
         </div>
 
         {/* Step-By-Step Flow Section */}
-        <div className="mb-12 bg-white rounded-xl p-8 border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Workflow className="mr-2 text-indigo-600" size={24} />
+        <div className="mb-12 bg-white/80 rounded-2xl p-8 border border-slate-200/70 shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <Workflow className="mr-2 text-slate-700" size={24} />
             Step-By-Step Flow
           </h2>
 
           <div className="space-y-6">
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 1
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">
                 Create Project → Select Region
               </h3>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 FDA (default), EMA, or PMDA profile chooses correct Module 1 schema.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 2
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Upload or Sync Docs</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Upload or Sync Docs</h3>
+              <p className="text-slate-600">
                 Benchling, SharePoint, Box integration. AI auto-extracts metadata & suggests module
                 slot.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 3
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">AI PDF QC</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">AI PDF QC</h3>
+              <p className="text-slate-600">
                 AI ticks ✅ if PDF/A-1b, searchable, ≤10 MB; ❌ if not.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 4
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Drag-Drop Builder</h3>
-              <p className="text-gray-600">Arrange modules, bulk-approve any remaining docs.</p>
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Drag-Drop Builder</h3>
+              <p className="text-slate-600">Arrange modules, bulk-approve any remaining docs.</p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 5
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Finalize Sequence</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Finalize Sequence</h3>
+              <p className="text-slate-600">
                 System assigns next eCTD number, builds index.xml + regional XML, computes MD5s.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 6
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Validate</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Validate</h3>
+              <p className="text-slate-600">
                 2-hover DTD + Lorenz profile; errors highlighted with jump-links.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 7
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Submit</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Submit</h3>
+              <p className="text-slate-600">
                 ESG envelope + ZIP; live ACK1/2/3 badges; Slack / email pushed.
               </p>
             </div>
 
-            <div className="relative pl-8 border-l-2 border-indigo-200">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+            <div className="relative pl-8 border-l-2 border-slate-200/70">
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
                 8
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">
                 Monitor Annual / Safety Timers
               </h3>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Scheduler warns when DSUR or Annual Report window opens.
               </p>
             </div>
@@ -813,133 +813,133 @@ export default function INDFullSolution() {
         </div>
 
         {/* ROI Snapshot Section */}
-        <div className="mb-12 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <BarChart className="mr-2 text-indigo-600" size={24} />
+        <div className="mb-12 bg-slate-50/80 rounded-2xl p-8 border border-slate-200/60">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <BarChart className="mr-2 text-slate-700" size={24} />
             ROI Snapshot{' '}
-            <span className="text-sm font-normal text-gray-500 ml-2">
+            <span className="text-sm font-normal text-slate-500 ml-2">
               (average mid-size biotech, 8 sequences/yr)
             </span>
           </h2>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
-              <thead className="bg-indigo-50">
+            <table className="min-w-full bg-white/80 rounded-lg overflow-hidden border border-slate-200/70">
+              <thead className="bg-slate-100/70">
                 <tr>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Metric
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     CRO Baseline
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     TrialSage Automated
                   </th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-indigo-800 border-b">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Δ
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-200/60">
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Prep labor / sequence
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">120 hrs</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">18 hrs</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">120 hrs</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">18 hrs</td>
                   <td className="py-3 px-4 text-sm font-medium text-green-600">–85%</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Tech Rejection rate
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">12%</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">0%</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">12%</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">0%</td>
                   <td className="py-3 px-4 text-sm font-medium text-green-600">–12 pp</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Vendor validator cost
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">$5k</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">$0</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">$5k</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">$0</td>
                   <td className="py-3 px-4 text-sm font-medium text-green-600">–$5k</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-700">
+                  <td className="py-3 px-4 text-sm font-medium text-slate-700">
                     Time to IND clearance
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-700">30 days</td>
-                  <td className="py-3 px-4 text-sm text-gray-700">&lt;14 days</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">30 days</td>
+                  <td className="py-3 px-4 text-sm text-slate-700">&lt;14 days</td>
                   <td className="py-3 px-4 text-sm font-medium text-green-600">–53%</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p className="text-sm text-gray-500 mt-3 italic">
+          <p className="text-sm text-slate-500 mt-3 italic">
             Data based on customers running more than 60 sequences.
           </p>
         </div>
 
         {/* Getting Started Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Rocket className="mr-2 text-indigo-600" size={24} />
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+            <Rocket className="mr-2 text-slate-700" size={24} />
             Getting Started
           </h2>
 
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="bg-white/80 rounded-2xl p-6 border border-slate-200/70 shadow-sm">
             <ol className="space-y-4">
               <li className="flex">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   1
                 </div>
                 <div className="pt-1">
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-slate-700 font-medium">
                     Sign Up ➜ free sandbox (no ESG submit).
                   </p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   2
                 </div>
                 <div className="pt-1">
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-slate-700 font-medium">
                     Connect Doc Source (one-click Benchling OAuth).
                   </p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   3
                 </div>
                 <div className="pt-1">
-                  <p className="text-gray-700 font-medium">Run First QC – see live badges.</p>
+                  <p className="text-slate-700 font-medium">Run First QC – see live badges.</p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   4
                 </div>
                 <div className="pt-1">
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-slate-700 font-medium">
                     Book 30-min Concierge – our regulatory AI team walks through first sequence.
                   </p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   5
                 </div>
                 <div className="pt-1">
-                  <p className="text-gray-700 font-medium">Add ESG Keys – go live to FDA.</p>
+                  <p className="text-slate-700 font-medium">Add ESG Keys – go live to FDA.</p>
                 </div>
               </li>
             </ol>
 
             <div className="mt-8 flex justify-center">
-              <button className="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition-colors">
+              <button className="inline-flex items-center px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg shadow transition-colors">
                 Start IND Automation Free Trial
                 <ArrowRight size={16} className="ml-2" />
               </button>
@@ -949,42 +949,42 @@ export default function INDFullSolution() {
 
         {/* Key features section */}
         <div className="mb-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Key Features</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                  <Check className="h-5 w-5 text-indigo-600" />
+                <div className="w-8 h-8 rounded-full bg-slate-900/5 flex items-center justify-center mr-3">
+                  <Check className="h-5 w-5 text-slate-700" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">FDA-Compliant Structure</h3>
+                <h3 className="text-lg font-medium text-slate-900">FDA-Compliant Structure</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Pre-formatted templates following current FDA IND guidelines and expectations for
                 seamless submission.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                  <Globe className="h-5 w-5 text-indigo-600" />
+                <div className="w-8 h-8 rounded-full bg-slate-900/5 flex items-center justify-center mr-3">
+                  <Globe className="h-5 w-5 text-slate-700" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Multi-Region Compliance</h3>
+                <h3 className="text-lg font-medium text-slate-900">Multi-Region Compliance</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Specialized packages for FDA, EMA, and PMDA with region-specific validation and
                 formatting requirements.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                  <Share2 className="h-5 w-5 text-indigo-600" />
+                <div className="w-8 h-8 rounded-full bg-slate-900/5 flex items-center justify-center mr-3">
+                  <Share2 className="h-5 w-5 text-slate-700" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">Real-Time Validation</h3>
+                <h3 className="text-lg font-medium text-slate-900">Real-Time Validation</h3>
               </div>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Live technical validation with instant feedback on document compliance and sequence
                 readiness.
               </p>
@@ -993,14 +993,14 @@ export default function INDFullSolution() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-8">
+        <div className="border-b border-slate-200/60 mb-8">
           <nav className="-mb-px flex">
             <button
               onClick={() => setActiveTab('ind-templates')}
               className={`inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'ind-templates'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-slate-900 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               } mr-8`}
             >
               <Package size={16} className="mr-2" />
@@ -1010,8 +1010,8 @@ export default function INDFullSolution() {
               onClick={() => setActiveTab('ind-modules')}
               className={`inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'ind-modules'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-slate-900 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               } mr-8`}
             >
               <FileText size={16} className="mr-2" />
@@ -1021,8 +1021,8 @@ export default function INDFullSolution() {
               onClick={() => setActiveTab('ind-checklist')}
               className={`inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'ind-checklist'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-slate-900 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
               <AlertCircle size={16} className="mr-2" />
@@ -1074,60 +1074,60 @@ export default function INDFullSolution() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="bg-white/80 rounded-lg border border-slate-200/70 overflow-hidden shadow-sm">
+                <table className="min-w-full divide-y divide-slate-200/60">
+                  <thead className="bg-slate-100/60">
                     <tr>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                       >
                         Status
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                       >
                         Requirement
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                       >
                         Category
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                       >
                         Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white/80 divide-y divide-slate-200/60">
                     {indRequirements.map(requirement => (
                       <tr key={requirement.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div
                             className={`flex items-center justify-center h-6 w-6 rounded-full ${
-                              requirement.completed ? 'bg-green-100' : 'bg-amber-100'
+                              requirement.completed ? 'bg-emerald-100/70' : 'bg-amber-100/70'
                             }`}
                           >
                             {requirement.completed ? (
-                              <Check className="h-4 w-4 text-green-600" />
+                              <Check className="h-4 w-4 text-emerald-600" />
                             ) : (
                               <AlertCircle className="h-4 w-4 text-amber-600" />
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                           {requirement.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                           {requirement.category}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <button className="text-indigo-600 hover:text-indigo-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                          <button className="text-slate-700 hover:text-slate-900">
                             View Template
                           </button>
                         </td>
@@ -1141,64 +1141,64 @@ export default function INDFullSolution() {
         </div>
 
         {/* Example Reports Section */}
-        <div className="mb-16 bg-gray-50 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-            <FileText className="mr-2 text-indigo-600" size={24} />
+        <div className="mb-16 bg-slate-50/80 rounded-2xl p-8 border border-slate-200/60">
+          <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center">
+            <FileText className="mr-2 text-slate-700" size={24} />
             Example IND Submission Reports
           </h2>
 
           {/* Live Stats Banner */}
           <div className="mb-12 grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm text-center">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm text-center">
               <div className="flex items-center justify-center mb-2">
                 {isLoading ? (
-                  <Loader2 className="h-8 w-8 text-indigo-400 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-slate-400 animate-spin" />
                 ) : (
-                  <FileText className="h-8 w-8 text-indigo-500" />
+                  <FileText className="h-8 w-8 text-slate-600" />
                 )}
               </div>
-              <div className="text-2xl font-bold text-gray-900">{indStats.totalSubmissions}</div>
-              <div className="text-sm text-gray-500">Total IND Submissions</div>
+              <div className="text-2xl font-bold text-slate-900">{indStats.totalSubmissions}</div>
+              <div className="text-sm text-slate-500">Total IND Submissions</div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm text-center">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm text-center">
               <div className="flex items-center justify-center mb-2">
                 {isLoading ? (
-                  <Loader2 className="h-8 w-8 text-green-400 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-slate-400 animate-spin" />
                 ) : (
-                  <CheckSquare className="h-8 w-8 text-green-500" />
+                  <CheckSquare className="h-8 w-8 text-emerald-600" />
                 )}
               </div>
-              <div className="text-2xl font-bold text-gray-900">{indStats.successRate}%</div>
-              <div className="text-sm text-gray-500">First-Time Success Rate</div>
+              <div className="text-2xl font-bold text-slate-900">{indStats.successRate}%</div>
+              <div className="text-sm text-slate-500">First-Time Success Rate</div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm text-center">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm text-center">
               <div className="flex items-center justify-center mb-2">
                 {isLoading ? (
-                  <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-slate-400 animate-spin" />
                 ) : (
-                  <Clock className="h-8 w-8 text-blue-500" />
+                  <Clock className="h-8 w-8 text-slate-600" />
                 )}
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-slate-900">
                 {indStats.averagePreparationTime} days
               </div>
-              <div className="text-sm text-gray-500">Avg. Preparation Time</div>
+              <div className="text-sm text-slate-500">Avg. Preparation Time</div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm text-center">
+            <div className="bg-white/80 p-6 rounded-lg border border-slate-200/70 shadow-sm text-center">
               <div className="flex items-center justify-center mb-2">
                 {isLoading ? (
-                  <Loader2 className="h-8 w-8 text-amber-400 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-slate-400 animate-spin" />
                 ) : (
-                  <BarChart className="h-8 w-8 text-amber-500" />
+                  <BarChart className="h-8 w-8 text-slate-600" />
                 )}
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-slate-900">
                 ${indStats.avgCostSavings.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Avg. Cost Savings</div>
+              <div className="text-sm text-slate-500">Avg. Cost Savings</div>
             </div>
           </div>
 
@@ -1206,19 +1206,19 @@ export default function INDFullSolution() {
         </div>
 
         {/* Action Banner */}
-        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-6 border border-indigo-100">
+        <div className="bg-slate-50/80 rounded-lg p-6 border border-slate-200/60">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="mb-4 md:mb-0">
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
+              <h3 className="text-lg font-medium text-slate-900 mb-1">
                 Need Customized IND Support?
               </h3>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Our regulatory experts can help tailor an IND package specific to your indication
                 and development program
               </p>
             </div>
             <Link to="/contact">
-              <button className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center">
+              <button className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center">
                 Request Consultation
                 <ChevronRight size={16} className="ml-1" />
               </button>

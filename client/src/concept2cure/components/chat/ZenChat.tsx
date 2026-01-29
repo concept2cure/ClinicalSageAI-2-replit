@@ -19,10 +19,10 @@
  * - FDA 21 CFR Part 11: All messages logged with timestamps
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import {
-  Send,
   Paperclip,
   Sparkles,
   Copy,
@@ -32,16 +32,15 @@ import {
   MoreHorizontal,
   Check,
   FileText,
-  Image as ImageIcon,
   ChevronDown,
   ArrowUp,
   StopCircle,
   AlertCircle,
-  Wifi,
   WifiOff,
+  ExternalLink,
 } from 'lucide-react';
 import { useCortexChat, useCortexHealth } from '../../hooks/useCortex';
-import type { CortexMessage, CortexArtifact } from '../../services/cortexService';
+import type { CortexArtifact } from '../../services/cortexService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -95,6 +94,7 @@ interface MessageBubbleProps {
   onCopy: () => void;
   onRegenerate?: () => void;
   onFeedback?: (positive: boolean) => void;
+  onNavigate?: (href: string) => void;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -102,10 +102,42 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onCopy,
   onRegenerate,
   onFeedback,
+  onNavigate,
 }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   const [showActions, setShowActions] = useState(false);
+
+  const actionLinks = useMemo(() => {
+    const links: Array<{ href: string; label: string }> = [];
+    const markdownRegex = /\[([^\]]+)\]\(((https?:\/\/[^\s)]+)|(\/[^\s)]+))\)/g;
+    let match;
+    while ((match = markdownRegex.exec(message.content)) !== null) {
+      links.push({ href: match[2], label: match[1] });
+    }
+
+    const urlRegex = /(https?:\/\/[^\s)]+)/g;
+    const urls = message.content.match(urlRegex) || [];
+    urls.forEach((href) => {
+      if (!links.some((l) => l.href === href)) {
+        const label = href.replace(/^https?:\/\//, '').split('/')[0];
+        links.push({ href, label });
+      }
+    });
+
+    const internalRegex = /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
+    const internalMatches = message.content.match(internalRegex) || [];
+    internalMatches
+      .map((raw) => raw.trim())
+      .forEach((raw) => {
+        const href = raw.startsWith('/') ? raw : raw.slice(1);
+        if (!links.some((l) => l.href === href)) {
+          links.push({ href, label: `Open ${href}` });
+        }
+      });
+
+    return links;
+  }, [message.content]);
 
   const handleCopy = () => {
     onCopy();
@@ -116,8 +148,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div
       className={cn(
-        'group py-6 px-4 sm:px-6',
-        !isUser && 'bg-zinc-50/50'
+        'group px-4 sm:px-6 py-7 border-b border-zinc-100 last:border-b-0',
+        'transition-all duration-200 animate-in fade-in slide-in-from-bottom-2',
+        !isUser && 'bg-white'
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -127,9 +160,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Avatar */}
           <div
             className={cn(
-              'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+              'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm',
               isUser
-                ? 'bg-gradient-to-br from-blue-500 to-blue-600'
+                ? 'bg-zinc-900'
                 : 'bg-gradient-to-br from-violet-500 to-violet-600'
             )}
           >
@@ -178,6 +211,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
 
             {/* Actions - appear on hover */}
+            {!message.isStreaming && actionLinks.length > 0 && !isUser && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {actionLinks.map((link) => (
+                  <button
+                    key={link.href}
+                    onClick={() => onNavigate?.(link.href)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {!message.isStreaming && (
               <div
                 className={cn(
@@ -269,30 +317,33 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-4 py-12">
       {/* Logo & greeting */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-lg shadow-violet-500/20">
-          <Sparkles className="w-8 h-8 text-white" />
+      <div className="mb-6 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-md shadow-violet-500/20">
+          <Sparkles className="w-7 h-7 text-white" />
         </div>
         <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
           How can I help today?
         </h1>
-        <p className="text-zinc-500 max-w-md">
-          I'm Lumen, your regulatory intelligence assistant. Ask me anything about FDA submissions, clinical trials, or compliance.
+        <p className="text-sm text-zinc-500 max-w-md">
+          I'm Lumen, your regulatory intelligence assistant.
         </p>
       </div>
 
       {/* Suggestions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl w-full">
+      <div className="flex flex-col gap-2 max-w-2xl w-full">
         {suggestions.map((suggestion, index) => (
           <button
             key={index}
             onClick={() => onSuggestionClick(suggestion.title)}
-            className="group p-4 text-left bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 hover:shadow-sm transition-all"
+            className={cn(
+              'group p-4 text-left rounded-xl border border-zinc-200 bg-white',
+              'hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-150'
+            )}
           >
-            <h3 className="text-sm font-medium text-zinc-900 mb-1 group-hover:text-blue-600 transition-colors">
+            <div className="text-sm font-medium text-zinc-900 group-hover:text-zinc-950">
               {suggestion.title}
-            </h3>
-            <p className="text-xs text-zinc-500">{suggestion.description}</p>
+            </div>
+            <div className="text-xs text-zinc-500 mt-1">{suggestion.description}</div>
           </button>
         ))}
       </div>
@@ -441,12 +492,13 @@ const ScrollToBottomButton: React.FC<ScrollButtonProps> = ({ visible, onClick })
 
 export const ZenChat: React.FC<ZenChatProps> = ({
   projectId,
-  projectName,
+  projectName: _projectName,
   submissionType,
   threadId: initialThreadId,
   onNewArtifact,
   onThreadChange,
 }) => {
+  const [, setLocation] = useLocation();
   // Cortex integration
   const {
     messages: cortexMessages,
@@ -454,11 +506,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     isLoading,
     isStreaming,
     error: chatError,
-    sendMessage,
     streamMessage,
     cancelStream,
-    clearMessages,
-    setMessages: setCortexMessages,
   } = useCortexChat({
     projectId,
     submissionType,
@@ -547,6 +596,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     navigator.clipboard.writeText(content);
   };
 
+  const handleNavigate = (href: string) => {
+    if (href.startsWith('http')) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setLocation(href);
+  };
+
   // Handle suggestion click
   const handleSuggestionClick = (text: string) => {
     setInput(text);
@@ -556,7 +613,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   const showWelcome = displayMessages.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#FAFAF9]">
       {/* Connection status indicator */}
       {!isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
@@ -592,6 +649,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 onFeedback={(positive) =>
                   console.log('Feedback:', positive ? 'positive' : 'negative')
                 }
+                onNavigate={handleNavigate}
               />
             ))}
             <div ref={messagesEndRef} />

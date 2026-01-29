@@ -1,6 +1,11 @@
 // server/routes/__tests__/deviceProfileRoutes.test.ts
 import request from 'supertest';
-import app from '../../index'; // adjust if your Express app is exported from a different file
+import express from 'express';
+import deviceProfileRoutes from '../deviceProfileRoutes';
+
+const app = express();
+app.use(express.json());
+app.use('/api/device-profiles', deviceProfileRoutes);
 
 describe('DeviceProfileRoutes (integration)', () => {
   let createdId: string;
@@ -10,7 +15,7 @@ describe('DeviceProfileRoutes (integration)', () => {
       .post('/api/device-profiles')
       .send({ name: 'TestDevice', classification: 'Class II' });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body.id).toBeDefined();
     expect(res.body.name).toBe('TestDevice');
     createdId = res.body.id;

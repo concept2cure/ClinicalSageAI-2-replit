@@ -12,7 +12,7 @@ export default function RegulatoryDashboard() {
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       <UnifiedTopNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Top Metrics Section - Always visible */}
@@ -23,20 +23,20 @@ export default function RegulatoryDashboard() {
       {/* Conditional Tab Display */}
       <div className="p-8">
         {activeTab === 'RiskHeatmap' && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-6">CTD Critical Gap Risk Analysis</h2>
+          <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-6 text-zinc-900">CTD Critical Gap Risk Analysis</h2>
             <AdvisorRiskHeatmapV2 />
           </div>
         )}
 
         {activeTab === 'TimelineSimulator' && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
             <AdvisorTimelineSimulator />
           </div>
         )}
 
         {activeTab === 'AskLumenAI' && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-6">
             <AskLumenAI />
           </div>
         )}

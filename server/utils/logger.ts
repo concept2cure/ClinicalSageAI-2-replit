@@ -11,6 +11,47 @@ interface Logger {
   debug(message: string, context?: LogContext): void;
 }
 
+const SENSITIVE_KEYS = [
+  'password',
+  'passwordhash',
+  'secret',
+  'token',
+  'apikey',
+  'api_key',
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'ssn',
+  'dob',
+];
+
+const redactValue = (value: any) => {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return '[REDACTED]';
+  if (typeof value === 'object') return '[REDACTED]';
+  return '[REDACTED]';
+};
+
+const redactContext = (context: LogContext, depth = 0): LogContext => {
+  if (!context || typeof context !== 'object') return context;
+  if (depth > 6) return context;
+
+  const output: LogContext = Array.isArray(context) ? [] : {};
+  for (const [key, value] of Object.entries(context)) {
+    const lowerKey = key.toLowerCase();
+    const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
+
+    if (shouldRedact) {
+      (output as any)[key] = redactValue(value);
+    } else if (value && typeof value === 'object') {
+      (output as any)[key] = redactContext(value as LogContext, depth + 1);
+    } else {
+      (output as any)[key] = value;
+    }
+  }
+  return output as LogContext;
+};
+
 // Create a simple logger that outputs to console
 const baseLogger: Logger = {
   info: (message: string, context: LogContext = {}) => {
@@ -20,7 +61,7 @@ const baseLogger: Logger = {
           timestamp: new Date().toISOString(),
           level: 'info',
           message,
-          context,
+          context: redactContext(context),
         },
         null,
         2
@@ -35,7 +76,7 @@ const baseLogger: Logger = {
           timestamp: new Date().toISOString(),
           level: 'error',
           message,
-          context,
+          context: redactContext(context),
         },
         null,
         2
@@ -50,7 +91,7 @@ const baseLogger: Logger = {
           timestamp: new Date().toISOString(),
           level: 'warn',
           message,
-          context,
+          context: redactContext(context),
         },
         null,
         2
@@ -66,7 +107,7 @@ const baseLogger: Logger = {
             timestamp: new Date().toISOString(),
             level: 'debug',
             message,
-            context,
+            context: redactContext(context),
           },
           null,
           2

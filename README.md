@@ -77,6 +77,13 @@ npm run dev
 
 ---
 
+## Testing
+
+- `npm test` runs Jest + Vitest.
+- Integration tests are gated behind `RUN_INTEGRATION_TESTS=true` and require a Postgres database via `TEST_DATABASE_URL` (or `DATABASE_URL`) with the GCC migrations applied (including the innovation platform schema). CI provisions a test database and runs these with the flag enabled.
+
+---
+
 ## Documentation
 
 | Category | Description |

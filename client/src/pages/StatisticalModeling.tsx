@@ -65,7 +65,7 @@ export default function StatisticalModeling() {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-xl p-8 shadow-md border border-purple-200">
+      <div className="bg-white/80 rounded-2xl p-8 shadow-sm border border-slate-200/70">
         <div className="flex flex-col lg:flex-row justify-between gap-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 mb-3">Statistical Modeling Engine</h1>
@@ -74,11 +74,11 @@ export default function StatisticalModeling() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50">
               <Download className="h-4 w-4" />
               Export Models
             </Button>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 bg-slate-900 text-white hover:bg-slate-800">
               <BrainCircuit className="h-4 w-4" />
               New Analysis
             </Button>
@@ -89,10 +89,10 @@ export default function StatisticalModeling() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left sidebar - Model selection */}
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <LayoutGrid className="h-5 w-5 text-purple-600 mr-2" />
+                <LayoutGrid className="h-5 w-5 text-slate-700 mr-2" />
                 Model Library
               </CardTitle>
               <CardDescription>
@@ -101,12 +101,12 @@ export default function StatisticalModeling() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div 
-                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "logistic" ? "bg-purple-100 border border-purple-200" : "hover:bg-slate-100"}`}
+                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "logistic" ? "bg-slate-100 border border-slate-200/70" : "hover:bg-slate-100"}`}
                 onClick={() => setActiveModel("logistic")}
               >
                 <div className="flex justify-between">
                   <h3 className="font-medium">Logistic Regression</h3>
-                  {activeModel === "logistic" && <Check className="h-5 w-5 text-purple-500" />}
+                  {activeModel === "logistic" && <Check className="h-5 w-5 text-slate-700" />}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
                   Binary outcome prediction (success/failure)
@@ -114,12 +114,12 @@ export default function StatisticalModeling() {
               </div>
               
               <div 
-                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "survival" ? "bg-purple-100 border border-purple-200" : "hover:bg-slate-100"}`}
+                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "survival" ? "bg-slate-100 border border-slate-200/70" : "hover:bg-slate-100"}`}
                 onClick={() => setActiveModel("survival")}
               >
                 <div className="flex justify-between">
                   <h3 className="font-medium">Survival Analysis</h3>
-                  {activeModel === "survival" && <Check className="h-5 w-5 text-purple-500" />}
+                  {activeModel === "survival" && <Check className="h-5 w-5 text-slate-700" />}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
                   Time-to-event analysis with Cox regression
@@ -127,12 +127,12 @@ export default function StatisticalModeling() {
               </div>
               
               <div 
-                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "bayesian" ? "bg-purple-100 border border-purple-200" : "hover:bg-slate-100"}`}
+                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "bayesian" ? "bg-slate-100 border border-slate-200/70" : "hover:bg-slate-100"}`}
                 onClick={() => setActiveModel("bayesian")}
               >
                 <div className="flex justify-between">
                   <h3 className="font-medium">Bayesian Inference</h3>
-                  {activeModel === "bayesian" && <Check className="h-5 w-5 text-purple-500" />}
+                  {activeModel === "bayesian" && <Check className="h-5 w-5 text-slate-700" />}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
                   Probabilistic modeling with prior knowledge
@@ -140,12 +140,12 @@ export default function StatisticalModeling() {
               </div>
               
               <div 
-                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "subgroup" ? "bg-purple-100 border border-purple-200" : "hover:bg-slate-100"}`}
+                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "subgroup" ? "bg-slate-100 border border-slate-200/70" : "hover:bg-slate-100"}`}
                 onClick={() => setActiveModel("subgroup")}
               >
                 <div className="flex justify-between">
                   <h3 className="font-medium">Subgroup Analysis</h3>
-                  {activeModel === "subgroup" && <Check className="h-5 w-5 text-purple-500" />}
+                  {activeModel === "subgroup" && <Check className="h-5 w-5 text-slate-700" />}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
                   Identify responsive patient segments
@@ -153,12 +153,12 @@ export default function StatisticalModeling() {
               </div>
               
               <div 
-                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "mixed" ? "bg-purple-100 border border-purple-200" : "hover:bg-slate-100"}`}
+                className={`p-3 rounded-md cursor-pointer transition-colors ${activeModel === "mixed" ? "bg-slate-100 border border-slate-200/70" : "hover:bg-slate-100"}`}
                 onClick={() => setActiveModel("mixed")}
               >
                 <div className="flex justify-between">
                   <h3 className="font-medium">Mixed Effects Model</h3>
-                  {activeModel === "mixed" && <Check className="h-5 w-5 text-purple-500" />}
+                  {activeModel === "mixed" && <Check className="h-5 w-5 text-slate-700" />}
                 </div>
                 <p className="text-sm text-slate-500 mt-1">
                   For longitudinal and hierarchical data
@@ -167,10 +167,10 @@ export default function StatisticalModeling() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <Activity className="h-5 w-5 text-purple-600 mr-2" />
+                <Activity className="h-5 w-5 text-slate-700 mr-2" />
                 Recent Models
               </CardTitle>
             </CardHeader>
@@ -204,7 +204,7 @@ export default function StatisticalModeling() {
         
         {/* Main content - Model configuration */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
+          <Card className="bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
@@ -226,6 +226,7 @@ export default function StatisticalModeling() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50"
                           onClick={() => setShowCode(!showCode)}
                         >
                           <Code className="h-4 w-4 mr-1" />
@@ -265,7 +266,7 @@ export default function StatisticalModeling() {
                   <label className="block text-sm font-medium text-slate-700">
                     Model Configuration
                   </label>
-                  <Button variant="ghost" size="sm" className="text-xs flex items-center">
+                  <Button variant="ghost" size="sm" className="text-xs flex items-center text-slate-600 hover:text-slate-900">
                     Reset to defaults <CornerUpRight className="ml-1 h-3 w-3" />
                   </Button>
                 </div>
@@ -318,7 +319,7 @@ export default function StatisticalModeling() {
                             <Badge className="bg-slate-200 text-slate-800 hover:bg-slate-300">
                               Gender <span className="ml-1 text-slate-500">×</span>
                             </Badge>
-                            <Button variant="ghost" size="sm" className="h-6 text-xs text-primary">
+                            <Button variant="ghost" size="sm" className="h-6 text-xs text-slate-700">
                               + Add more
                             </Button>
                           </div>
@@ -670,10 +671,10 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
           </Card>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+            <Card className="bg-white/80 border-slate-200/60 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
-                  <GitMerge className="h-5 w-5 text-purple-600 mr-2" />
+                  <GitMerge className="h-5 w-5 text-slate-700 mr-2" />
                   Model Integration
                 </CardTitle>
               </CardHeader>
@@ -682,15 +683,15 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
                   Integrate this model with other TrialSage components
                 </p>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between border p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <div className="flex items-center justify-between border border-slate-200/70 p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
                     <span className="text-sm font-medium">Protocol Generator</span>
                     <ChevronRight className="h-4 w-4 text-slate-400" />
                   </div>
-                  <div className="flex items-center justify-between border p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <div className="flex items-center justify-between border border-slate-200/70 p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
                     <span className="text-sm font-medium">Study Design Agent</span>
                     <ChevronRight className="h-4 w-4 text-slate-400" />
                   </div>
-                  <div className="flex items-center justify-between border p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <div className="flex items-center justify-between border border-slate-200/70 p-3 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
                     <span className="text-sm font-medium">Virtual Trial Simulator</span>
                     <ChevronRight className="h-4 w-4 text-slate-400" />
                   </div>
@@ -698,10 +699,10 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="bg-white/80 border-slate-200/60 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
-                  <Calculator className="h-5 w-5 text-purple-600 mr-2" />
+                  <Calculator className="h-5 w-5 text-slate-700 mr-2" />
                   Sample Size Calculator
                 </CardTitle>
               </CardHeader>
@@ -716,7 +717,7 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-blue-500 cursor-help">?</span>
+                            <span className="text-slate-500 cursor-help">?</span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="w-60">The expected difference between treatment groups. Smaller effect sizes require larger sample sizes.</p>
@@ -743,7 +744,7 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
                     <Input type="number" placeholder="0.8" className="text-sm" min="0.7" max="0.99" step="0.01" />
                     <div className="mt-1 flex">
                       <span className="flex-1 text-center text-xs text-slate-500 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-l">70%</span>
-                      <span className="flex-1 text-center text-xs bg-purple-100 text-purple-700 px-2 py-1 font-medium">80%</span>
+                      <span className="flex-1 text-center text-xs bg-slate-200/60 text-slate-700 px-2 py-1 font-medium">80%</span>
                       <span className="flex-1 text-center text-xs text-slate-500 px-2 py-1 hover:bg-slate-100 cursor-pointer">90%</span>
                       <span className="flex-1 text-center text-xs text-slate-500 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-r">95%</span>
                     </div>
@@ -754,7 +755,7 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-blue-500 cursor-help">?</span>
+                            <span className="text-slate-500 cursor-help">?</span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="w-60">Threshold for statistical significance. Standard is 0.05 (5%).</p>
@@ -798,42 +799,42 @@ plt.title('Fixed Effects with 95% Confidence Intervals')`}</pre>
             </Card>
           </div>
 
-          <Card className="mt-4">
+          <Card className="mt-4 bg-white/80 border-slate-200/60 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg">
-                <BarChart3 className="h-5 w-5 text-purple-600 mr-2" />
+                <BarChart3 className="h-5 w-5 text-slate-700 mr-2" />
                 Visualization Options
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="border rounded-lg p-3 hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-colors">
+                <div className="border border-slate-200/70 rounded-lg p-3 hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                   <div className="flex justify-center mb-2">
-                    <BarChart2 className="h-8 w-8 text-purple-600" />
+                    <BarChart2 className="h-8 w-8 text-slate-700" />
                   </div>
                   <h4 className="text-sm font-medium text-center">Bar Charts</h4>
                   <p className="text-xs text-slate-500 text-center mt-1">Compare values across categories</p>
                 </div>
                 
-                <div className="border rounded-lg p-3 hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-colors">
+                <div className="border border-slate-200/70 rounded-lg p-3 hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                   <div className="flex justify-center mb-2">
-                    <LineChart className="h-8 w-8 text-purple-600" />
+                    <LineChart className="h-8 w-8 text-slate-700" />
                   </div>
                   <h4 className="text-sm font-medium text-center">Line Charts</h4>
                   <p className="text-xs text-slate-500 text-center mt-1">Show trends over time</p>
                 </div>
                 
-                <div className="border rounded-lg p-3 hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-colors">
+                <div className="border border-slate-200/70 rounded-lg p-3 hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                   <div className="flex justify-center mb-2">
-                    <PieChartIcon className="h-8 w-8 text-purple-600" />
+                    <PieChartIcon className="h-8 w-8 text-slate-700" />
                   </div>
                   <h4 className="text-sm font-medium text-center">Pie Charts</h4>
                   <p className="text-xs text-slate-500 text-center mt-1">Display proportion of categories</p>
                 </div>
                 
-                <div className="border rounded-lg p-3 hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-colors">
+                <div className="border border-slate-200/70 rounded-lg p-3 hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                   <div className="flex justify-center mb-2">
-                    <Activity className="h-8 w-8 text-purple-600" />
+                    <Activity className="h-8 w-8 text-slate-700" />
                   </div>
                   <h4 className="text-sm font-medium text-center">Scatter Plots</h4>
                   <p className="text-xs text-slate-500 text-center mt-1">Visualize correlations</p>

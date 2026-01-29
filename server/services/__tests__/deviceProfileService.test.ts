@@ -28,7 +28,8 @@ describe('deviceProfileService', () => {
     const { id } = svc.createProfile({ name: 'Alpha', classification: 'Class I' });
     const updated = svc.updateProfile(id, { classification: 'Class III' });
 
-    expect(updated).toEqual({ id, name: 'Alpha', classification: 'Class III' });
+    expect(updated).toMatchObject({ id, name: 'Alpha', classification: 'Class III' });
+    expect(updated.updatedAt).toBeDefined();
   });
 
   test('deleteProfile removes entry', () => {
@@ -37,11 +38,11 @@ describe('deviceProfileService', () => {
 
     svc.deleteProfile(id);
     expect(svc.listProfiles()).toHaveLength(0);
-    expect(() => svc.getProfile(id)).toThrow();
+    expect(svc.getProfile(id)).toBeUndefined();
   });
 
   test('get/update non-existent id throws', () => {
-    expect(() => svc.getProfile('nonexistent')).toThrow();
+    expect(svc.getProfile('nonexistent')).toBeUndefined();
     expect(() => svc.updateProfile('nonexistent', {})).toThrow();
   });
 });

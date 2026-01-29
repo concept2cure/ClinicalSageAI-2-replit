@@ -24,11 +24,11 @@ const OptimizedCollaborationLayout = ({ children }) => {
   const moduleName = 'cer'; // or '510k', 'ind', etc.
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full bg-zinc-50">
       <div className="flex-1 overflow-auto">{children}</div>
       <Suspense
         fallback={
-          <div className="w-12 border-l h-full">{/* Minimal placeholder while loading */}</div>
+          <div className="w-12 border-l border-zinc-200/60 h-full bg-white/80" />
         }
       >
         <LazyCollaborationHub

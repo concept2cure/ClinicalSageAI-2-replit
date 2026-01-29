@@ -17,17 +17,20 @@
  * - WCAG 2.1 AA: Accessible routing with focus management
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';
-import { useAuth } from '@/contexts/AuthContext';
+import ProofCertificatePage from '../pages/ProofCertificatePage';
+import {
+  AuthProvider as PortalAuthProvider,
+  useAuth as usePortalAuth,
+} from '@/portal-v2/services/authService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
   <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
     <motion.div
@@ -37,10 +40,10 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
     >
       {/* Animated logo */}
       <motion.div
-        animate={{ 
+        animate={{
           rotate: [0, 360],
         }}
-        transition={{ 
+        transition={{
           duration: 2,
           repeat: Infinity,
           ease: 'linear',
@@ -65,9 +68,9 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
           />
         </svg>
       </motion.div>
-      
+
       <p className="text-sm text-zinc-500">{message}</p>
-      
+
       {/* Progress bar */}
       <div className="w-48 h-1 bg-zinc-200 rounded-full overflow-hidden">
         <motion.div
@@ -94,7 +97,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -124,7 +127,7 @@ interface AuthRouteProps {
 }
 
 const AuthRoute: React.FC<AuthRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -155,10 +158,10 @@ interface PageTransitionProps {
 
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
   <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.2 }}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
   >
     {children}
   </motion.div>
@@ -172,74 +175,87 @@ export const ZenRouter: React.FC = () => {
   const [location] = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Switch location={location} key={location}>
-        {/* Login page */}
-        <Route path="/concept2cure/login">
-          {() => (
-            <PageTransition>
-              <AuthRoute>
-                <ZenLogin />
-              </AuthRoute>
-            </PageTransition>
-          )}
-        </Route>
+    <PortalAuthProvider>
+      <AnimatePresence mode="wait">
+        <Switch location={location} key={location}>
+          {/* Login page */}
+          <Route path="/concept2cure/login">
+            {() => (
+              <PageTransition>
+                <AuthRoute>
+                  <ZenLogin />
+                </AuthRoute>
+              </PageTransition>
+            )}
+          </Route>
 
-        {/* Signup / Request Access page */}
-        <Route path="/concept2cure/signup">
-          {() => (
-            <PageTransition>
-              <AuthRoute>
-                <ZenSignup />
-              </AuthRoute>
-            </PageTransition>
-          )}
-        </Route>
+          {/* Signup / Request Access page */}
+          <Route path="/concept2cure/signup">
+            {() => (
+              <PageTransition>
+                <AuthRoute>
+                  <ZenSignup />
+                </AuthRoute>
+              </PageTransition>
+            )}
+          </Route>
 
-        {/* Alias: /login redirects to /concept2cure/login */}
-        <Route path="/login">
-          {() => <Redirect to="/concept2cure/login" />}
-        </Route>
+          {/* Alias: /login redirects to /concept2cure/login */}
+          <Route path="/login">
+            {() => <Redirect to="/concept2cure/login" />}
+          </Route>
 
-        {/* Alias: /signup redirects to /concept2cure/signup */}
-        <Route path="/signup">
-          {() => <Redirect to="/concept2cure/signup" />}
-        </Route>
+          {/* Alias: /signup redirects to /concept2cure/signup */}
+          <Route path="/signup">
+            {() => <Redirect to="/concept2cure/signup" />}
+          </Route>
 
-        {/* Onboarding - protected, for first-time users */}
-        <Route path="/concept2cure/onboarding">
-          {() => (
-            <PageTransition>
-              <ProtectedRoute>
-                <ZenOnboarding />
-              </ProtectedRoute>
-            </PageTransition>
-          )}
-        </Route>
+          {/* Onboarding - protected, for first-time users */}
+          <Route path="/concept2cure/onboarding">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenOnboarding />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
 
-        {/* Main app - protected */}
-        <Route path="/concept2cure">
-          {() => (
-            <PageTransition>
-              <ProtectedRoute>
-                <ZenApp />
-              </ProtectedRoute>
-            </PageTransition>
-          )}
-        </Route>
+          {/* Proof Certificate Explorer */}
+          <Route path="/concept2cure/proofs/:workflowRunId">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ProofCertificatePage />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
 
-        {/* Catch-all for /concept2cure/* routes */}
-        <Route path="/concept2cure/:rest*">
-          {() => (
-            <PageTransition>
-              <ProtectedRoute>
-                <ZenApp />
-              </ProtectedRoute>
-            </PageTransition>
-          )}
-        </Route>
-      </Switch>
-    </AnimatePresence>
+          {/* Main app - protected */}
+          <Route path="/concept2cure">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Catch-all for /concept2cure/* routes */}
+          <Route path="/concept2cure/:rest*">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+        </Switch>
+      </AnimatePresence>
+    </PortalAuthProvider>
   );
 };
 

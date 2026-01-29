@@ -70,13 +70,13 @@ export default function ModuleDashboard() {
         <div className="space-x-4">
           <Button
             onClick={() => (window.location.href = '/')}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+            className="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 rounded-full"
           >
             Home
           </Button>
           <Button
             onClick={() => (window.location.href = '/client-portal')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+            className="bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 px-4 py-2 rounded-full"
           >
             Go to Client Portal
           </Button>
@@ -84,7 +84,7 @@ export default function ModuleDashboard() {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">CTD Module Navigator</h2>
+        <h2 className="text-lg font-semibold mb-4 text-zinc-900">CTD Module Navigator</h2>
         <div className="dashboard-grid">
           {modules.map(mod => (
             <ModuleCard
@@ -99,7 +99,7 @@ export default function ModuleDashboard() {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">TrialSage™ Modules</h2>
+        <h2 className="text-lg font-semibold mb-4 text-zinc-900">TrialSage™ Modules</h2>
         <div className="dashboard-grid">
           {trialsageModules.map(mod => (
             <ModuleCard
@@ -116,7 +116,7 @@ export default function ModuleDashboard() {
       <div className="mt-6 text-center">
         <Button
           onClick={() => (window.location.href = '/cerv2')}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+          className="bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-3 rounded-full text-base font-semibold"
         >
           Go to CER Generator
         </Button>

@@ -1,0 +1,835 @@
+/**
+ * @fileoverview Medical Device Regulatory Pathfinder Dashboard
+ * @module concept2cure/components/medtech/MedicalDeviceDashboard
+ * @version 1.0.0
+ *
+ * @description
+ * Dashboard designed for how MEDICAL DEVICE companies actually operate:
+ * 
+ * MEDTECH REALITY:
+ * - 510(k) is the most common pathway (Substantial Equivalence)
+ * - Predicate device selection is CRITICAL (wrong choice = death)
+ * - CER (Clinical Evaluation Reports) for EU MDR compliance
+ * - PMA for Class III high-risk devices
+ * - eSTAR is now required for 510(k) submissions
+ * - MAUDE database monitoring for competitor recalls
+ * - Design History File (DHF) is audit gold
+ *
+ * THE SHERPA METAPHOR:
+ * "CERV2 is the Scout who finds the footprints of those who climbed before."
+ * - Scouting the Trail: Scan MAUDE for safe predicates
+ * - Marking Hazards: Flag Class I Recalls in competitors
+ * - The Benefit: Climb the proven path, avoid traps
+ *
+ * KEY USE CASES:
+ * 1. "Find a predicate device for my cardiac monitor"
+ * 2. "What recalls have occurred in this device category?"
+ * 3. "Track my 510(k) submission timeline"
+ * 4. "Generate CER for EU MDR compliance"
+ * 5. "What's the status of my eSTAR submission?"
+ */
+
+import React, { useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  FileText,
+  Search,
+  Shield,
+  Target,
+  TrendingUp,
+  ChevronRight,
+  ChevronDown,
+  Filter,
+  AlertOctagon,
+  Zap,
+  Mountain,
+  Map,
+  Flag,
+  Compass,
+  Eye,
+  FileCheck,
+  Database,
+  Globe,
+  Calendar,
+} from 'lucide-react';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES - Medical Device Regulatory Pathways
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type RegulatoryPathway = '510k' | 'pma' | 'de_novo' | 'hde' | 'exempt';
+
+export type DeviceClass = 'I' | 'II' | 'III';
+
+export type SubmissionStatus = 
+  | 'planning'
+  | 'predicate_search'
+  | 'testing'
+  | 'drafting'
+  | 'internal_review'
+  | 'estar_prep'
+  | 'submitted'
+  | 'fda_review'
+  | 'additional_info'
+  | 'cleared'
+  | 'approved'
+  | 'rejected';
+
+export type RecallClass = 'I' | 'II' | 'III';
+
+export interface PredicateDevice {
+  id: string;
+  kNumber: string;           // K123456
+  deviceName: string;
+  manufacturer: string;
+  decisionDate: string;
+  productCode: string;
+  regulationNumber: string;
+  
+  // Risk Assessment
+  hasRecalls: boolean;
+  recallCount: number;
+  recallClasses: RecallClass[];
+  lastRecallDate?: string;
+  
+  // Similarity Score
+  similarityScore: number;   // 0-100
+  matchingIndications: string[];
+  technologicalDifferences: string[];
+  
+  // Recommendation
+  recommendation: 'strong' | 'acceptable' | 'caution' | 'avoid';
+  reasonCodes: string[];
+}
+
+export interface MAUDEAlert {
+  id: string;
+  reportNumber: string;
+  eventDate: string;
+  eventType: 'malfunction' | 'injury' | 'death';
+  deviceName: string;
+  manufacturer: string;
+  productCode: string;
+  brandName: string;
+  narrative: string;
+  relevanceScore: number;
+  isCompetitor: boolean;
+}
+
+export interface DeviceSubmission {
+  id: string;
+  projectName: string;
+  deviceName: string;
+  productCode: string;
+  deviceClass: DeviceClass;
+  pathway: RegulatoryPathway;
+  status: SubmissionStatus;
+  
+  // Predicate Info (for 510k)
+  predicateDevice?: PredicateDevice;
+  predicateCandidates?: PredicateDevice[];
+  
+  // Key Dates
+  projectStartDate: string;
+  targetSubmissionDate?: string;
+  submittedDate?: string;
+  clearanceDate?: string;
+  
+  // eSTAR
+  estarProgress: number;      // 0-100
+  estarSections: ESTARSection[];
+  
+  // Testing
+  testingStatus: 'not_started' | 'in_progress' | 'complete';
+  requiredTests: string[];
+  completedTests: string[];
+  
+  // Documents
+  cerRequired: boolean;
+  cerStatus?: 'not_started' | 'drafting' | 'review' | 'complete';
+  
+  // Team
+  projectLead: string;
+  raSpecialist: string;
+}
+
+export interface ESTARSection {
+  id: string;
+  sectionNumber: string;
+  title: string;
+  status: 'not_started' | 'in_progress' | 'complete' | 'na';
+  completionPct: number;
+  requiredAttachments: number;
+  uploadedAttachments: number;
+}
+
+export interface CERDocument {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  version: string;
+  status: 'drafting' | 'literature_review' | 'clinical_data' | 'risk_benefit' | 'final_review' | 'approved';
+  lastUpdated: string;
+  
+  // EU MDR Compliance
+  mdrCompliant: boolean;
+  gspr: number;              // General Safety & Performance Requirements covered
+  totalGspr: number;
+  
+  // Literature
+  articlesReviewed: number;
+  clinicalStudies: number;
+  pmsData: boolean;          // Post-Market Surveillance
+}
+
+interface MedicalDeviceDashboardProps {
+  submissions: DeviceSubmission[];
+  maudeAlerts: MAUDEAlert[];
+  cerDocuments: CERDocument[];
+  onSubmissionClick?: (submission: DeviceSubmission) => void;
+  onPredicateSearch?: (submission: DeviceSubmission) => void;
+  onAlertClick?: (alert: MAUDEAlert) => void;
+  className?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PATHWAY_CONFIG: Record<RegulatoryPathway, {
+  label: string;
+  description: string;
+  color: string;
+  bgColor: string;
+}> = {
+  '510k': { label: '510(k)', description: 'Substantial Equivalence', color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  pma: { label: 'PMA', description: 'Premarket Approval', color: 'text-violet-600', bgColor: 'bg-violet-100' },
+  de_novo: { label: 'De Novo', description: 'Novel Low-Moderate Risk', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  hde: { label: 'HDE', description: 'Humanitarian Device Exemption', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  exempt: { label: 'Exempt', description: 'Class I Exempt', color: 'text-zinc-600', bgColor: 'bg-zinc-100' },
+};
+
+const STATUS_CONFIG: Record<SubmissionStatus, {
+  label: string;
+  color: string;
+  bgColor: string;
+  step: number;
+}> = {
+  planning: { label: 'Planning', color: 'text-zinc-600', bgColor: 'bg-zinc-100', step: 1 },
+  predicate_search: { label: 'Predicate Search', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 2 },
+  testing: { label: 'Testing', color: 'text-amber-600', bgColor: 'bg-amber-100', step: 3 },
+  drafting: { label: 'Drafting', color: 'text-violet-600', bgColor: 'bg-violet-100', step: 4 },
+  internal_review: { label: 'Internal Review', color: 'text-purple-600', bgColor: 'bg-purple-100', step: 5 },
+  estar_prep: { label: 'eSTAR Prep', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
+  submitted: { label: 'Submitted', color: 'text-indigo-600', bgColor: 'bg-indigo-100', step: 7 },
+  fda_review: { label: 'FDA Review', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 8 },
+  additional_info: { label: 'Additional Info Requested', color: 'text-red-600', bgColor: 'bg-red-100', step: 8 },
+  cleared: { label: 'Cleared', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
+  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
+  rejected: { label: 'Rejected', color: 'text-red-600', bgColor: 'bg-red-100', step: 9 },
+};
+
+const RECOMMENDATION_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  strong: { label: 'Strong Match', color: 'text-green-600 bg-green-50 border-green-200', icon: <CheckCircle className="w-4 h-4" /> },
+  acceptable: { label: 'Acceptable', color: 'text-blue-600 bg-blue-50 border-blue-200', icon: <Target className="w-4 h-4" /> },
+  caution: { label: 'Use Caution', color: 'text-amber-600 bg-amber-50 border-amber-200', icon: <AlertTriangle className="w-4 h-4" /> },
+  avoid: { label: 'Avoid', color: 'text-red-600 bg-red-50 border-red-200', icon: <AlertOctagon className="w-4 h-4" /> },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const getDaysUntil = (date: string): number => {
+  return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+};
+
+const formatDate = (date: string): string => {
+  return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PREDICATE PATHFINDER - "THE SCOUT"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PredicatePathfinder: React.FC<{
+  submission: DeviceSubmission;
+  onPredicateSearch?: () => void;
+}> = ({ submission, onPredicateSearch }) => {
+  const candidates = submission.predicateCandidates || [];
+  const selected = submission.predicateDevice;
+  
+  return (
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Compass className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-900">Predicate Pathfinder</h3>
+              <p className="text-xs text-zinc-500">The Scout finds safe paths others have climbed</p>
+            </div>
+          </div>
+          <button
+            onClick={onPredicateSearch}
+            className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Search Predicates
+          </button>
+        </div>
+      </div>
+      
+      {/* Selected Predicate */}
+      {selected && (
+        <div className="p-4 border-b border-zinc-200 bg-green-50">
+          <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
+            SELECTED PREDICATE
+          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-bold text-zinc-900">{selected.kNumber}</p>
+              <p className="text-sm text-zinc-700">{selected.deviceName}</p>
+              <p className="text-xs text-zinc-500">{selected.manufacturer}</p>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-bold text-green-600">{selected.similarityScore}</span>
+                <span className="text-xs text-green-600">% Match</span>
+              </div>
+              <span className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
+                RECOMMENDATION_CONFIG[selected.recommendation].color
+              )}>
+                {RECOMMENDATION_CONFIG[selected.recommendation].icon}
+                {RECOMMENDATION_CONFIG[selected.recommendation].label}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Candidate List */}
+      <div className="max-h-[300px] overflow-y-auto">
+        {candidates.length > 0 ? (
+          candidates.map(candidate => {
+            const recConfig = RECOMMENDATION_CONFIG[candidate.recommendation];
+            const isSelected = selected?.id === candidate.id;
+            
+            return (
+              <div
+                key={candidate.id}
+                className={cn(
+                  'p-3 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer',
+                  isSelected && 'bg-blue-50'
+                )}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-bold text-blue-600">{candidate.kNumber}</span>
+                      {candidate.hasRecalls && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
+                          <AlertTriangle className="w-3 h-3" />
+                          {candidate.recallCount} RECALL{candidate.recallCount > 1 ? 'S' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-zinc-700">{candidate.deviceName}</p>
+                    <p className="text-xs text-zinc-500">{candidate.manufacturer} • {formatDate(candidate.decisionDate)}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-zinc-900">{candidate.similarityScore}%</div>
+                    <span className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border',
+                      recConfig.color
+                    )}>
+                      {recConfig.icon}
+                      {recConfig.label}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Matching Indications */}
+                {candidate.matchingIndications.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {candidate.matchingIndications.slice(0, 3).map(ind => (
+                      <span key={ind} className="px-2 py-0.5 text-[10px] bg-zinc-100 text-zinc-600 rounded">
+                        {ind}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="p-8 text-center">
+            <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <p className="text-sm text-zinc-500">No predicate candidates yet</p>
+            <p className="text-xs text-zinc-400">Click "Search Predicates" to find your path</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAUDE HAZARD MONITOR - "MARKING THE CREVASSES"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MAUDEHazardMonitor: React.FC<{
+  alerts: MAUDEAlert[];
+  onAlertClick?: (alert: MAUDEAlert) => void;
+}> = ({ alerts, onAlertClick }) => {
+  const deaths = alerts.filter(a => a.eventType === 'death');
+  const injuries = alerts.filter(a => a.eventType === 'injury');
+  const malfunctions = alerts.filter(a => a.eventType === 'malfunction');
+  
+  return (
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-red-50 to-orange-50">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-100 rounded-lg">
+            <AlertOctagon className="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">MAUDE Hazard Monitor</h3>
+            <p className="text-xs text-zinc-500">Marking crevasses in competitor trails</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-50 border-b border-zinc-200">
+        <div className={cn('p-2 rounded-lg text-center', deaths.length > 0 ? 'bg-red-100' : 'bg-zinc-100')}>
+          <p className={cn('text-lg font-bold', deaths.length > 0 ? 'text-red-700' : 'text-zinc-400')}>{deaths.length}</p>
+          <p className="text-[10px] text-zinc-500">Deaths</p>
+        </div>
+        <div className={cn('p-2 rounded-lg text-center', injuries.length > 0 ? 'bg-amber-100' : 'bg-zinc-100')}>
+          <p className={cn('text-lg font-bold', injuries.length > 0 ? 'text-amber-700' : 'text-zinc-400')}>{injuries.length}</p>
+          <p className="text-[10px] text-zinc-500">Injuries</p>
+        </div>
+        <div className="p-2 rounded-lg text-center bg-zinc-100">
+          <p className="text-lg font-bold text-zinc-600">{malfunctions.length}</p>
+          <p className="text-[10px] text-zinc-500">Malfunctions</p>
+        </div>
+      </div>
+      
+      {/* Alert List */}
+      <div className="max-h-[300px] overflow-y-auto">
+        {alerts.slice(0, 10).map(alert => (
+          <button
+            key={alert.id}
+            onClick={() => onAlertClick?.(alert)}
+            className={cn(
+              'w-full p-3 text-left border-b border-zinc-100 hover:bg-zinc-50 transition-colors',
+              alert.eventType === 'death' && 'border-l-4 border-l-red-500',
+              alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
+              alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
+            )}
+          >
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                  alert.eventType === 'death' && 'bg-red-100 text-red-700',
+                  alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
+                  alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
+                )}>
+                  {alert.eventType}
+                </span>
+                {alert.isCompetitor && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 text-violet-700 rounded">
+                    COMPETITOR
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-zinc-400 font-mono">{formatDate(alert.eventDate)}</span>
+            </div>
+            <p className="text-sm font-medium text-zinc-900">{alert.deviceName}</p>
+            <p className="text-xs text-zinc-500">{alert.manufacturer} • {alert.brandName}</p>
+            <p className="text-xs text-zinc-600 mt-1 line-clamp-2">{alert.narrative}</p>
+          </button>
+        ))}
+        
+        {alerts.length === 0 && (
+          <div className="p-8 text-center">
+            <Shield className="w-12 h-12 text-green-300 mx-auto mb-3" />
+            <p className="text-sm text-zinc-500">No hazards detected</p>
+            <p className="text-xs text-zinc-400">The path looks clear</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// eSTAR PROGRESS TRACKER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ESTARProgressTracker: React.FC<{
+  submission: DeviceSubmission;
+}> = ({ submission }) => {
+  const sections = submission.estarSections || [];
+  const completed = sections.filter(s => s.status === 'complete').length;
+  const total = sections.filter(s => s.status !== 'na').length;
+  
+  return (
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+      <div className="p-4 border-b border-zinc-200">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <FileCheck className="w-5 h-5 text-cyan-600" />
+            <h3 className="text-sm font-semibold text-zinc-900">eSTAR Submission</h3>
+          </div>
+          <span className="text-sm font-bold text-cyan-600">{submission.estarProgress}%</span>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="h-3 bg-zinc-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
+            style={{ width: `${submission.estarProgress}%` }}
+          />
+        </div>
+        <p className="text-xs text-zinc-500 mt-2">{completed} of {total} sections complete</p>
+      </div>
+      
+      {/* Section List */}
+      <div className="max-h-[250px] overflow-y-auto">
+        {sections.map(section => (
+          <div
+            key={section.id}
+            className={cn(
+              'px-4 py-2 border-b border-zinc-100 flex items-center justify-between',
+              section.status === 'complete' && 'bg-green-50',
+              section.status === 'in_progress' && 'bg-blue-50'
+            )}
+          >
+            <div className="flex items-center gap-2">
+              {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-green-500" />}
+              {section.status === 'in_progress' && <Clock className="w-4 h-4 text-blue-500" />}
+              {section.status === 'not_started' && <div className="w-4 h-4 rounded-full border-2 border-zinc-300" />}
+              {section.status === 'na' && <span className="w-4 h-4 text-center text-xs text-zinc-400">—</span>}
+              <div>
+                <span className="text-xs font-mono text-zinc-500">{section.sectionNumber}</span>
+                <p className="text-sm text-zinc-700">{section.title}</p>
+              </div>
+            </div>
+            {section.status !== 'na' && (
+              <div className="text-right">
+                <span className={cn(
+                  'text-xs font-medium',
+                  section.completionPct === 100 ? 'text-green-600' : 'text-zinc-500'
+                )}>
+                  {section.completionPct}%
+                </span>
+                {section.requiredAttachments > 0 && (
+                  <p className="text-[10px] text-zinc-400">
+                    {section.uploadedAttachments}/{section.requiredAttachments} files
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUBMISSION CARD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SubmissionCard: React.FC<{
+  submission: DeviceSubmission;
+  onClick?: () => void;
+}> = ({ submission, onClick }) => {
+  const pathwayConfig = PATHWAY_CONFIG[submission.pathway];
+  const statusConfig = STATUS_CONFIG[submission.status];
+  const daysToTarget = submission.targetSubmissionDate ? getDaysUntil(submission.targetSubmissionDate) : null;
+  
+  return (
+    <button
+      onClick={onClick}
+      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-lg hover:border-blue-300 transition-all"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className={cn('px-2 py-1 text-xs font-bold rounded', pathwayConfig.bgColor, pathwayConfig.color)}>
+            {pathwayConfig.label}
+          </span>
+          <span className="px-2 py-0.5 text-xs font-medium text-zinc-500 bg-zinc-100 rounded">
+            Class {submission.deviceClass}
+          </span>
+        </div>
+        <span className={cn('px-2 py-1 text-xs font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
+          {statusConfig.label}
+        </span>
+      </div>
+      
+      {/* Device Info */}
+      <h3 className="font-semibold text-zinc-900 mb-1">{submission.projectName}</h3>
+      <p className="text-sm text-zinc-600 mb-3">{submission.deviceName}</p>
+      
+      {/* Predicate (if 510k) */}
+      {submission.pathway === '510k' && submission.predicateDevice && (
+        <div className="p-2 bg-blue-50 rounded-lg mb-3">
+          <p className="text-[10px] font-medium text-blue-600 mb-1">PREDICATE</p>
+          <p className="text-xs font-medium text-zinc-900">{submission.predicateDevice.kNumber}</p>
+          <p className="text-xs text-zinc-500">{submission.predicateDevice.deviceName}</p>
+        </div>
+      )}
+      
+      {/* Progress */}
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="text-zinc-400">eSTAR</p>
+            <p className="font-bold text-zinc-900">{submission.estarProgress}%</p>
+          </div>
+          <div>
+            <p className="text-zinc-400">Tests</p>
+            <p className="font-bold text-zinc-900">{submission.completedTests.length}/{submission.requiredTests.length}</p>
+          </div>
+        </div>
+        
+        {daysToTarget !== null && (
+          <div className={cn(
+            'px-3 py-1.5 rounded-lg text-right',
+            daysToTarget <= 14 && 'bg-red-50',
+            daysToTarget > 14 && daysToTarget <= 30 && 'bg-amber-50',
+            daysToTarget > 30 && 'bg-zinc-50'
+          )}>
+            <p className={cn(
+              'text-lg font-bold',
+              daysToTarget <= 14 && 'text-red-600',
+              daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
+              daysToTarget > 30 && 'text-zinc-600'
+            )}>
+              {daysToTarget}d
+            </p>
+            <p className="text-[10px] text-zinc-500">to submit</p>
+          </div>
+        )}
+      </div>
+    </button>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CER TRACKER (EU MDR)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CERTracker: React.FC<{
+  documents: CERDocument[];
+}> = ({ documents }) => {
+  return (
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+      <div className="p-4 border-b border-zinc-200">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-violet-100 rounded-lg">
+            <Globe className="w-5 h-5 text-violet-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">Clinical Evaluation Reports</h3>
+            <p className="text-xs text-zinc-500">EU MDR Compliance</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-h-[250px] overflow-y-auto">
+        {documents.map(doc => (
+          <div key={doc.id} className="p-3 border-b border-zinc-100 hover:bg-zinc-50">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">{doc.deviceName}</p>
+                <p className="text-xs text-zinc-500">v{doc.version} • {formatDate(doc.lastUpdated)}</p>
+              </div>
+              {doc.mdrCompliant ? (
+                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  MDR
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                  In Progress
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-4 text-xs text-zinc-500">
+              <span>GSPR: {doc.gspr}/{doc.totalGspr}</span>
+              <span>•</span>
+              <span>{doc.articlesReviewed} articles</span>
+              <span>•</span>
+              <span>{doc.clinicalStudies} studies</span>
+            </div>
+          </div>
+        ))}
+        
+        {documents.length === 0 && (
+          <div className="p-8 text-center">
+            <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <p className="text-sm text-zinc-500">No CER documents</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
+  submissions,
+  maudeAlerts,
+  cerDocuments,
+  onSubmissionClick,
+  onPredicateSearch,
+  onAlertClick,
+  className,
+}) => {
+  const [selectedSubmission, setSelectedSubmission] = useState<DeviceSubmission | null>(
+    submissions[0] || null
+  );
+  
+  // Metrics
+  const metrics = useMemo(() => {
+    const in510k = submissions.filter(s => s.pathway === '510k');
+    const inPMA = submissions.filter(s => s.pathway === 'pma');
+    const submitted = submissions.filter(s => s.status === 'submitted' || s.status === 'fda_review');
+    const needsAction = submissions.filter(s => s.status === 'additional_info');
+    const criticalAlerts = maudeAlerts.filter(a => a.eventType === 'death' || a.eventType === 'injury');
+    
+    return {
+      total510k: in510k.length,
+      totalPMA: inPMA.length,
+      submitted: submitted.length,
+      needsAction: needsAction.length,
+      criticalAlerts: criticalAlerts.length,
+    };
+  }, [submissions, maudeAlerts]);
+  
+  return (
+    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
+      {/* Header - THE SHERPA BANNER */}
+      <div className="flex-shrink-0 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
+              <Mountain className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Medical Device Regulatory Pathfinder</h1>
+              <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur transition-colors flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              MAUDE Search
+            </button>
+            <button className="px-4 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2">
+              <Flag className="w-4 h-4" />
+              New Submission
+            </button>
+          </div>
+        </div>
+        
+        {/* Metrics */}
+        <div className="grid grid-cols-5 gap-4">
+          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+            <p className="text-xs text-blue-200">510(k) Active</p>
+            <p className="text-2xl font-bold">{metrics.total510k}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+            <p className="text-xs text-blue-200">PMA Active</p>
+            <p className="text-2xl font-bold">{metrics.totalPMA}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+            <p className="text-xs text-blue-200">Submitted</p>
+            <p className="text-2xl font-bold">{metrics.submitted}</p>
+          </div>
+          <div className={cn('p-3 rounded-lg', metrics.needsAction > 0 ? 'bg-amber-500/30' : 'bg-white/10')}>
+            <p className="text-xs text-amber-200">Needs Action</p>
+            <p className="text-2xl font-bold">{metrics.needsAction}</p>
+          </div>
+          <div className={cn('p-3 rounded-lg', metrics.criticalAlerts > 0 ? 'bg-red-500/30' : 'bg-white/10')}>
+            <p className="text-xs text-red-200">MAUDE Alerts</p>
+            <p className="text-2xl font-bold">{metrics.criticalAlerts}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="flex-1 p-6 overflow-auto">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Left: Submissions */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Active Submissions
+            </h2>
+            {submissions.map(sub => (
+              <SubmissionCard
+                key={sub.id}
+                submission={sub}
+                onClick={() => {
+                  setSelectedSubmission(sub);
+                  onSubmissionClick?.(sub);
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Center: Selected Submission Detail */}
+          <div className="space-y-6">
+            {selectedSubmission ? (
+              <>
+                {selectedSubmission.pathway === '510k' && (
+                  <PredicatePathfinder
+                    submission={selectedSubmission}
+                    onPredicateSearch={() => onPredicateSearch?.(selectedSubmission)}
+                  />
+                )}
+                <ESTARProgressTracker submission={selectedSubmission} />
+              </>
+            ) : (
+              <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
+                <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <p className="text-zinc-500">Select a submission to view details</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Right: Monitoring */}
+          <div className="space-y-6">
+            <MAUDEHazardMonitor
+              alerts={maudeAlerts}
+              onAlertClick={onAlertClick}
+            />
+            <CERTracker documents={cerDocuments} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MedicalDeviceDashboard;

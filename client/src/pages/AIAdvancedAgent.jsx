@@ -216,20 +216,20 @@ const AIAdvancedAgent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white/80 border-b border-slate-200/60 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/">
                 <div className="flex items-center">
-                  <div className="h-10 w-10 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xl">
+                  <div className="h-10 w-10 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-xl">
                     TS
                   </div>
                   <div className="ml-3 hidden md:block">
-                    <span className="text-gray-900 font-bold text-xl">TrialSage</span>
-                    <span className="text-gray-500 ml-2 text-sm">AI Co-pilot</span>
+                    <span className="text-slate-900 font-bold text-xl">TrialSage</span>
+                    <span className="text-slate-500 ml-2 text-sm">AI Co-pilot</span>
                   </div>
                 </div>
               </Link>
@@ -237,15 +237,15 @@ const AIAdvancedAgent = () => {
 
             <div className="flex items-center space-x-4">
               <Link to="/client-portal">
-                <button className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900">
+                <button className="inline-flex items-center text-sm text-slate-700 hover:text-slate-900">
                   <ArrowLeft size={16} className="mr-1" />
                   Back to Portal
                 </button>
               </Link>
-              <div className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-medium">
+              <div className="bg-slate-900/5 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">
                 AI-Enhanced
               </div>
-              <button className="p-1 rounded-full text-gray-500 hover:text-gray-700 focus:outline-none">
+              <button className="p-1 rounded-full text-slate-500 hover:text-slate-700 focus:outline-none">
                 <Settings size={20} />
               </button>
             </div>
@@ -255,20 +255,20 @@ const AIAdvancedAgent = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0 hidden md:block">
+        <div className="w-64 bg-white/70 border-r border-slate-200/60 flex-shrink-0 hidden md:block">
           <div className="h-full flex flex-col">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-slate-200/60">
               <button
                 onClick={startNewChat}
-                className="inline-flex items-center w-full px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                className="inline-flex items-center w-full px-3 py-2 border border-slate-200/70 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white/80 hover:bg-slate-50 focus:outline-none"
               >
                 <PlusCircle size={16} className="mr-2" />
                 New Conversation
               </button>
             </div>
 
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            <div className="p-4 border-b border-slate-200/60">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
                 AI PROFILES
               </h3>
               <div className="space-y-2">
@@ -278,14 +278,14 @@ const AIAdvancedAgent = () => {
                     onClick={() => setActiveProfile(profile.id)}
                     className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${
                       activeProfile === profile.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-slate-900/5 text-slate-900'
+                        : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     <div className="mr-3">{profile.icon}</div>
                     <div className="text-left">
                       <div className="font-medium">{profile.name}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-[160px]">
+                      <div className="text-xs text-slate-500 truncate max-w-[160px]">
                         {profile.description}
                       </div>
                     </div>
@@ -294,8 +294,8 @@ const AIAdvancedAgent = () => {
               </div>
             </div>
 
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            <div className="p-4 border-b border-slate-200/60">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
                 CONTEXT TYPE
               </h3>
               <div className="space-y-1">
@@ -305,8 +305,8 @@ const AIAdvancedAgent = () => {
                     onClick={() => setSelectedContext(context.id)}
                     className={`flex items-center w-full px-3 py-1.5 text-sm font-medium rounded-md ${
                       selectedContext === context.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-slate-900/5 text-slate-900'
+                        : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {context.name}
@@ -316,37 +316,37 @@ const AIAdvancedAgent = () => {
             </div>
 
             <div className="p-4 flex-1 overflow-y-auto">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
                 KNOWLEDGE BASE
               </h3>
               <div className="space-y-2">
-                <div className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer">
-                  <FileText size={16} className="text-blue-500 mr-2" />
+                <div className="flex items-center p-2 hover:bg-slate-50 rounded-md cursor-pointer">
+                  <FileText size={16} className="text-slate-500 mr-2" />
                   <span className="text-sm">FDA Guidelines</span>
                 </div>
-                <div className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer">
-                  <FileText size={16} className="text-blue-500 mr-2" />
+                <div className="flex items-center p-2 hover:bg-slate-50 rounded-md cursor-pointer">
+                  <FileText size={16} className="text-slate-500 mr-2" />
                   <span className="text-sm">EMA Requirements</span>
                 </div>
-                <div className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer">
-                  <FileText size={16} className="text-blue-500 mr-2" />
+                <div className="flex items-center p-2 hover:bg-slate-50 rounded-md cursor-pointer">
+                  <FileText size={16} className="text-slate-500 mr-2" />
                   <span className="text-sm">ICH E6(R3)</span>
                 </div>
-                <div className="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer">
-                  <FileText size={16} className="text-blue-500 mr-2" />
+                <div className="flex items-center p-2 hover:bg-slate-50 rounded-md cursor-pointer">
+                  <FileText size={16} className="text-slate-500 mr-2" />
                   <span className="text-sm">CSR Templates</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-slate-200/60">
               <div className="flex items-center mb-2">
-                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <Sparkles size={16} className="text-indigo-600" />
+                <div className="h-8 w-8 rounded-full bg-slate-900/5 flex items-center justify-center">
+                  <Sparkles size={16} className="text-slate-700" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">TrialSage AI</p>
-                  <p className="text-xs text-gray-500">GPT-4o Enhanced</p>
+                  <p className="text-sm font-medium text-slate-900">TrialSage AI</p>
+                  <p className="text-xs text-slate-500">GPT-4o Enhanced</p>
                 </div>
               </div>
             </div>
@@ -354,7 +354,7 @@ const AIAdvancedAgent = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-white/70">
           <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
               <div className="space-y-6">
@@ -366,15 +366,15 @@ const AIAdvancedAgent = () => {
                     <div
                       className={`max-w-[75%] rounded-lg px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white'
                           : message.role === 'system'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-slate-100 text-slate-800'
+                            : 'bg-white/90 text-slate-800 border border-slate-200/60'
                       }`}
                     >
                       <div className="flex items-center mb-2">
                         {message.role !== 'user' && (
-                          <div className="mr-2 h-6 w-6 rounded-full bg-indigo-500 text-white flex items-center justify-center">
+                          <div className="mr-2 h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center">
                             <Bot size={14} />
                           </div>
                         )}
@@ -394,8 +394,8 @@ const AIAdvancedAgent = () => {
                           message.role === 'user'
                             ? 'text-white'
                             : message.role === 'system'
-                              ? 'text-indigo-800'
-                              : 'text-gray-800'
+                              ? 'text-slate-800'
+                              : 'text-slate-800'
                         }`}
                       >
                         {message.content}
@@ -405,17 +405,17 @@ const AIAdvancedAgent = () => {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="max-w-[75%] rounded-lg px-4 py-3 bg-gray-100">
+                    <div className="max-w-[75%] rounded-lg px-4 py-3 bg-white/90 border border-slate-200/60">
                       <div className="flex items-center mb-2">
-                        <div className="mr-2 h-6 w-6 rounded-full bg-indigo-500 text-white flex items-center justify-center">
+                        <div className="mr-2 h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center">
                           <Bot size={14} />
                         </div>
                         <span className="font-medium text-sm">AI Assistant</span>
                         <div className="ml-2 flex items-center">
-                          <RefreshCw size={14} className="animate-spin text-gray-500" />
+                          <RefreshCw size={14} className="animate-spin text-slate-500" />
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">Generating response...</div>
+                      <div className="text-sm text-slate-500">Generating response...</div>
                     </div>
                   </div>
                 )}
@@ -424,18 +424,18 @@ const AIAdvancedAgent = () => {
             </div>
           </div>
 
-          <div className="p-4 sm:px-6 lg:px-8 border-t border-gray-200">
+          <div className="p-4 sm:px-6 lg:px-8 border-t border-slate-200/60">
             <div className="max-w-3xl mx-auto">
               {/* Example queries */}
               {messages.length <= 2 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-2">Suggested prompts:</h3>
+                  <h3 className="text-sm font-semibold text-slate-500 mb-2">Suggested prompts:</h3>
                   <div className="flex flex-wrap gap-2">
                     {exampleQueries[selectedContext].map((query, index) => (
                       <button
                         key={index}
                         onClick={() => setInputValue(query)}
-                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-full"
+                        className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full"
                       >
                         {query}
                       </button>
@@ -450,7 +450,7 @@ const AIAdvancedAgent = () => {
                   onChange={e => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Ask me about regulatory requirements, document preparation, or compliance questions..."
-                  className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                  className="w-full rounded-lg border-slate-200/70 bg-white/80 focus:ring-slate-400 focus:border-slate-400 resize-none overflow-hidden"
                   rows={3}
                   disabled={isLoading}
                 />
@@ -459,7 +459,7 @@ const AIAdvancedAgent = () => {
                     <button
                       type="button"
                       onClick={() => setInputValue('')}
-                      className="p-2 text-gray-400 hover:text-gray-600 rounded-full"
+                      className="p-2 text-slate-400 hover:text-slate-600 rounded-full"
                     >
                       <XCircle size={18} />
                     </button>
@@ -469,15 +469,15 @@ const AIAdvancedAgent = () => {
                     disabled={!inputValue.trim() || isLoading}
                     className={`p-2 rounded-full ${
                       !inputValue.trim() || isLoading
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-900 text-white hover:bg-slate-800'
                     }`}
                   >
                     <Send size={18} />
                   </button>
                 </div>
               </form>
-              <div className="mt-2 text-xs text-gray-500 flex items-center justify-between">
+              <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
                 <div>
                   Active Profile:{' '}
                   <span className="font-medium">

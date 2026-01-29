@@ -4,9 +4,9 @@ import { useUser } from '../contexts/UserContext';
 
 function KpiCard({ label, value }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 text-center">
-      <p className="text-2xl font-bold text-blue-700">{value}</p>
-      <p className="text-gray-600 text-sm mt-1">{label}</p>
+    <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm p-4 text-center">
+      <p className="text-2xl font-semibold text-zinc-900">{value}</p>
+      <p className="text-zinc-500 text-sm mt-1">{label}</p>
     </div>
   );
 }
@@ -64,18 +64,18 @@ export default function RoleDashboard() {
   if (!kpis) return <div className="p-8">No dashboard data available.</div>;
 
   const roleColors = {
-    Regulatory: 'bg-blue-100',
-    ClinicalOps: 'bg-green-100',
-    CMC: 'bg-purple-100',
-    QA: 'bg-orange-100',
-    Executive: 'bg-pink-100',
+    Regulatory: 'bg-blue-50',
+    ClinicalOps: 'bg-emerald-50',
+    CMC: 'bg-purple-50',
+    QA: 'bg-amber-50',
+    Executive: 'bg-rose-50',
   };
 
   return (
     <div className="p-8 space-y-6 max-w-6xl mx-auto">
-      <div className={`p-4 rounded-lg ${roleColors[user?.role] || 'bg-gray-100'}`}>
-        <h1 className="text-2xl font-bold">Welcome, {user?.role || 'User'}</h1>
-        <p className="text-gray-600">Your personalized dashboard</p>
+      <div className={`p-4 rounded-2xl border border-zinc-200/60 bg-white ${roleColors[user?.role] || 'bg-zinc-100'}`}>
+        <h1 className="text-2xl font-semibold text-zinc-900">Welcome, {user?.role || 'User'}</h1>
+        <p className="text-zinc-500">Your personalized dashboard</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

@@ -491,6 +491,8 @@ export function applySecurityMiddleware(app: any) {
   app.use('/api/ai', rateLimiters.ai);
   app.use('/api/export', rateLimiters.export);
   app.use('/api/upload', rateLimiters.upload);
+  app.use('/api/workflow', rateLimiters.write);
+  app.use('/api/documents', rateLimiters.write);
 
   console.log('✅ Enterprise security middleware applied');
 }

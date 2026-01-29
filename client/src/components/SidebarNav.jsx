@@ -13,8 +13,14 @@ import {
 
 export default function SidebarNav() {
   return (
-    <aside className="bg-white border-r border-gray-200 min-h-screen w-64 p-4 flex flex-col gap-2 text-sm text-gray-700">
-      <div className="text-xl font-bold text-blue-600 mb-4">C2C</div>
+    <aside className="bg-zinc-50/80 backdrop-blur border-r border-zinc-200/50 min-h-screen w-64 p-4 flex flex-col gap-3 text-sm text-zinc-600">
+      <div className="flex items-center gap-2 px-2">
+        <div className="h-8 w-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center text-xs font-semibold">
+          C2C
+        </div>
+        <span className="text-sm font-semibold text-zinc-900">Concept2Cure</span>
+      </div>
+      <div className="px-2 text-[11px] uppercase tracking-wider text-zinc-400">Access</div>
       <nav className="space-y-1">
         <NavItem icon={BrainCircuit} href="/study" label="Intelligence" />
         <NavItem icon={BarChart3} href="/analytics" label="Analytics" />
@@ -38,9 +44,9 @@ function NavItem({ icon: Icon, label, href, className }) {
   return (
     <Link
       to={href}
-      className={`flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-50 transition ${className || ''}`}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-200/50 transition ${className || ''}`}
     >
-      <Icon size={16} />
+      <Icon size={16} className="text-zinc-500" />
       <span>{label}</span>
     </Link>
   );

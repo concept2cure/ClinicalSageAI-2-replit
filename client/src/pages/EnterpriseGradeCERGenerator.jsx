@@ -530,10 +530,10 @@ const SectionEditor = ({ reportId, sectionId, onSave, onCancel, readOnly = false
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+      <div className="p-4 border-b border-zinc-200/60 flex justify-between items-center bg-white/80 backdrop-blur">
         <div>
           <h2 className="text-xl font-semibold">{section.title}</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-500">
             Section Status: <StatusBadge status={section.status} />
           </p>
         </div>
@@ -686,7 +686,7 @@ const SectionEditor = ({ reportId, sectionId, onSave, onCancel, readOnly = false
 
           <div className="text-sm text-blue-900 mb-3">{analysisResults.summary}</div>
 
-          <Accordion type="single" collapsible className="bg-white rounded-md">
+          <Accordion type="single" collapsible className="bg-white rounded-xl border border-zinc-200/60">
             <AccordionItem value="strengths">
               <AccordionTrigger className="text-sm font-medium text-green-700 px-3">
                 Strengths
@@ -756,22 +756,22 @@ const SectionEditor = ({ reportId, sectionId, onSave, onCancel, readOnly = false
  */
 const SectionsList = ({ reportId, sections, onSelectSection }) => {
   return (
-    <div className="border rounded-md overflow-hidden">
-      <div className="bg-gray-50 p-3 border-b">
+    <div className="border border-zinc-200/60 rounded-xl overflow-hidden bg-white">
+      <div className="bg-zinc-50 p-3 border-b border-zinc-200/60">
         <h3 className="font-medium">Report Sections</h3>
       </div>
       <div className="divide-y">
         {sections.map(section => (
           <div
             key={section.id}
-            className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+            className="p-3 hover:bg-zinc-50 cursor-pointer transition-colors"
             onClick={() => onSelectSection(section)}
           >
             <div className="flex justify-between items-center">
               <h4 className="font-medium">{section.title}</h4>
               <StatusBadge status={section.status} />
             </div>
-            <p className="text-xs text-gray-500 mt-1 truncate">
+            <p className="text-xs text-zinc-500 mt-1 truncate">
               {section.content
                 ? section.content.substring(0, 100) + (section.content.length > 100 ? '...' : '')
                 : 'No content yet'}

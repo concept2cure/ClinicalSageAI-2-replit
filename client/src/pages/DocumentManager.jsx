@@ -149,26 +149,26 @@ function DocumentManager() {
   const getStatusIcon = status => {
     switch (status) {
       case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-emerald-600" />;
       case 'PROCESSING':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+        return <Clock className="h-4 w-4 text-slate-600" />;
       case 'FAILED':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-4 w-4 text-rose-600" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-slate-500" />;
     }
   };
 
   const getStatusColor = status => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100/70 text-emerald-800';
       case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-slate-100/70 text-slate-700';
       case 'FAILED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-rose-100/70 text-rose-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-100/70 text-slate-700';
     }
   };
 
@@ -188,13 +188,13 @@ function DocumentManager() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         <NavigationBanner />
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your documents...</p>
+              <div className="animate-spin h-12 w-12 border-4 border-slate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading your documents...</p>
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ function DocumentManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <NavigationBanner />
 
       <div className="container mx-auto px-6 py-8">
@@ -211,17 +211,17 @@ function DocumentManager() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <FolderOpen className="h-8 w-8 mr-3 text-blue-600" />
+              <FolderOpen className="h-8 w-8 mr-3 text-slate-700" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Document Manager</h1>
-                <p className="text-gray-600 mt-1">Manage and access your regulatory documents</p>
+                <h1 className="text-3xl font-bold text-slate-900">Document Manager</h1>
+                <p className="text-slate-600 mt-1">Manage and access your regulatory documents</p>
               </div>
             </div>
 
             <Button
               onClick={() => (window.location.href = '/coauthor')}
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              className="bg-slate-900 hover:bg-slate-800 text-white"
             >
               <FileText className="h-5 w-5 mr-2" />
               Create New Document
@@ -232,18 +232,18 @@ function DocumentManager() {
         {/* Search and Filter Controls */}
         <div className="mb-6 flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search documents, products, indications..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-white/80 border-slate-200/70"
             />
           </div>
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md bg-white"
+            className="px-4 py-2 border border-slate-200/70 rounded-md bg-white/80"
           >
             <option value="all">All Status</option>
             <option value="completed">Completed</option>
@@ -254,25 +254,25 @@ function DocumentManager() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-white/80 border-slate-200/70 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <FileText className="h-8 w-8 text-blue-600" />
+                <FileText className="h-8 w-8 text-slate-700" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Documents</p>
-                  <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Total Documents</p>
+                  <p className="text-2xl font-bold text-slate-900">{projects.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 border-slate-200/70 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-8 w-8 text-emerald-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-600">Completed</p>
+                  <p className="text-2xl font-bold text-slate-900">
                     {projects.filter(p => p.status === 'COMPLETED').length}
                   </p>
                 </div>
@@ -280,13 +280,13 @@ function DocumentManager() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 border-slate-200/70 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Clock className="h-8 w-8 text-blue-600" />
+                <Clock className="h-8 w-8 text-slate-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-600">In Progress</p>
+                  <p className="text-2xl font-bold text-slate-900">
                     {projects.filter(p => p.status === 'PROCESSING').length}
                   </p>
                 </div>
@@ -294,13 +294,13 @@ function DocumentManager() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 border-slate-200/70 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <AlertCircle className="h-8 w-8 text-orange-600" />
+                <AlertCircle className="h-8 w-8 text-amber-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Needs Attention</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm font-medium text-slate-600">Needs Attention</p>
+                  <p className="text-2xl font-bold text-slate-900">0</p>
                 </div>
               </div>
             </CardContent>
@@ -308,7 +308,7 @@ function DocumentManager() {
         </div>
 
         {/* Documents List */}
-        <Card>
+        <Card className="bg-white/80 border-slate-200/70 shadow-sm">
           <CardHeader>
             <CardTitle>Your Regulatory Documents</CardTitle>
             <CardDescription>
@@ -320,17 +320,17 @@ function DocumentManager() {
               {filteredProjects.map(project => (
                 <div
                   key={project.taskId}
-                  className="border rounded-lg p-6 hover:bg-gray-50 transition-colors"
+                  className="border border-slate-200/70 rounded-lg p-6 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         {getStatusIcon(project.status)}
-                        <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900">{project.title}</h3>
                         <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-slate-600">
                         <div>
                           <p className="font-medium">Product</p>
                           <p>{project.productName}</p>
@@ -349,7 +349,7 @@ function DocumentManager() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-slate-600">
                         <div>
                           <p className="font-medium">eCTD Section</p>
                           <p>{project.ectdSection}</p>
@@ -368,7 +368,7 @@ function DocumentManager() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-slate-500">
                         <span>Created: {formatDate(project.created)}</span>
                         <span>Last Modified: {formatDate(project.lastModified)}</span>
                         <span>Task ID: {project.taskId}</span>
@@ -378,16 +378,16 @@ function DocumentManager() {
                     <div className="flex flex-col gap-2 ml-6">
                       <Button
                         onClick={() => handleOpenEditor(project.taskId)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-slate-900 hover:bg-slate-800 text-white"
                       >
                         <Edit3 className="h-4 w-4 mr-2" />
                         Open in Editor
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="border-slate-200/70 bg-white/80">
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="border-slate-200/70 bg-white/80">
                         <Download className="h-4 w-4 mr-2" />
                         Export
                       </Button>
@@ -396,7 +396,7 @@ function DocumentManager() {
 
                   {project.progress < 100 && (
                     <div className="mt-4">
-                      <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                      <div className="flex items-center justify-between text-sm text-slate-600 mb-1">
                         <span>Progress</span>
                         <span>{project.progress}%</span>
                       </div>
@@ -408,14 +408,14 @@ function DocumentManager() {
 
               {filteredProjects.length === 0 && (
                 <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">No documents found</h3>
+                  <p className="text-slate-600 mb-4">
                     {searchTerm || filterStatus !== 'all'
                       ? 'Try adjusting your search or filter criteria'
                       : 'Get started by creating your first regulatory document'}
                   </p>
-                  <Button onClick={() => (window.location.href = '/coauthor')}>
+                  <Button onClick={() => (window.location.href = '/coauthor')} className="bg-slate-900 hover:bg-slate-800 text-white">
                     <FileText className="h-4 w-4 mr-2" />
                     Create New Document
                   </Button>

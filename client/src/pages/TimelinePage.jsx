@@ -271,10 +271,10 @@ const TimelinePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white/80 rounded-lg shadow-sm border border-slate-200/70 p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Submission Timeline</h1>
@@ -283,8 +283,8 @@ const TimelinePage = () => {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">IND Initial</span>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded">IND Initial</span>
                 <span className="text-gray-500">ID: TSG-IND-2025-0042</span>
               </div>
             </div>
@@ -292,7 +292,7 @@ const TimelinePage = () => {
         </div>
 
         {/* Phase Filter Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border p-4">
+        <div className="bg-white/80 rounded-lg shadow-sm border border-slate-200/70 p-4">
           <div className="flex flex-wrap gap-2">
             {phases.map(phase => (
               <button
@@ -300,8 +300,8 @@ const TimelinePage = () => {
                 onClick={() => setActivePhase(phase.id)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activePhase === phase.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 {phase.name}
@@ -314,7 +314,7 @@ const TimelinePage = () => {
         </div>
 
         {/* Timeline Content */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white/80 rounded-lg shadow-sm border border-slate-200/70">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Loading timeline data...</div>
           ) : (
@@ -330,29 +330,29 @@ const TimelinePage = () => {
                       <div
                         className={`flex-shrink-0 w-12 h-12 rounded-full border-4 flex items-center justify-center z-10 ${
                           item.status === 'complete'
-                            ? 'bg-green-100 border-green-500'
+                            ? 'bg-emerald-100 border-emerald-500'
                             : item.status === 'in-progress'
-                              ? 'bg-blue-100 border-blue-500'
+                              ? 'bg-slate-100 border-slate-500'
                               : item.status === 'at-risk'
-                                ? 'bg-red-100 border-red-500'
-                                : 'bg-gray-100 border-gray-300'
+                                ? 'bg-rose-100 border-rose-500'
+                                : 'bg-slate-100 border-slate-300'
                         }`}
                       >
                         {getStatusIcon(item.status)}
                       </div>
 
                       {/* Timeline card */}
-                      <div className="ml-6 flex-1 bg-gray-50 rounded-lg p-4">
+                      <div className="ml-6 flex-1 bg-slate-50/70 rounded-lg p-4">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                          <span className="text-sm text-gray-600 px-2 py-1 bg-white rounded">
+                          <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                          <span className="text-sm text-slate-600 px-2 py-1 bg-white/80 rounded">
                             {new Date(item.date).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-gray-700 mb-3">{item.details}</p>
+                        <p className="text-slate-700 mb-3">{item.details}</p>
 
                         {item.subtasks && item.subtasks.length > 0 && (
-                          <div className="bg-white rounded p-3">
+                          <div className="bg-white/80 rounded p-3">
                             <h4 className="font-medium text-gray-900 mb-2">Subtasks</h4>
                             <div className="space-y-2">
                               {item.subtasks.map(subtask => (

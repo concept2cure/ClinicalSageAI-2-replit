@@ -55,7 +55,7 @@ import {
   Download,
   RefreshCw,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/portal-v2/services/authService';
 import { useTenant } from '@/contexts/TenantContext';
 
 // Types

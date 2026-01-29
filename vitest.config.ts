@@ -11,8 +11,10 @@ export default defineConfig({
       'tests/**/*.spec.ts',
       'tests/**/*.test.tsx',
       'tests/**/*.spec.tsx',
+      'server/**/__tests__/**/*.test.ts',
+      'server/**/__tests__/**/*.spec.ts',
     ],
-    exclude: ['node_modules', 'dist', '_archive', '_deprecated'],
+    exclude: ['node_modules', 'dist', '_archive', '_deprecated', 'tests/e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

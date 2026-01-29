@@ -1,13 +1,13 @@
 import ExportLogDashboard from '@/components/ExportLogDashboard';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/portal-v2/services/authService';
 import { Redirect } from 'wouter';
 
 export default function ExportLogPage() {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Admin-only route (in a real app, we would check for admin role)
-  if (!isLoading && !user) {
-    return <Redirect to="/login" />;
+  if (!isLoading && !isAuthenticated) {
+    return <Redirect to="/concept2cure/login" />;
   }
 
   return (

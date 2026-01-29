@@ -1,12 +1,16 @@
 .dashboard-page {
-  padding: var(--space-lg);
+  padding: 2.5rem 2.5rem 3rem;
+  background: #fafafa;
+  min-height: 100vh;
 }
 .dashboard-title {
-  font-size: var(--text-xl);
-  margin: var(--space-md) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #18181b;
+  margin: 1.5rem 0;
 }
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-lg);
+  gap: 1.5rem;
 }

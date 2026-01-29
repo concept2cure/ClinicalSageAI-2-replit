@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 
 // These will be loaded dynamically when the component is used
 let ReactQuill = null;
@@ -712,7 +713,12 @@ export function DocumentPreview({ component, isOpen, onClose, onUpdate }) {
                   ) : (
                     <div 
                       className="prose prose-slate dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: editedContent || '<p>No content available</p>' }}
+                      dangerouslySetInnerHTML={{ 
+                        __html: DOMPurify.sanitize(
+                          editedContent || '<p>No content available</p>',
+                          { USE_PROFILES: { html: true } }
+                        ),
+                      }}
                       data-testid="preview-content"
                     />
                   )}

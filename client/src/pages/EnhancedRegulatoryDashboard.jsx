@@ -244,19 +244,19 @@ export default function EnhancedRegulatoryDashboard() {
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex flex-col md:flex-row justify-between items-start mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-indigo-900 mb-2">Regulatory Intelligence Hub</h1>
-          <p className="text-gray-600 max-w-3xl">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Regulatory Intelligence Hub</h1>
+          <p className="text-slate-600 max-w-3xl">
             Comprehensive strategic regulatory platform with intelligent risk prediction, dynamic
             timeline simulation, and AI-powered guidance.
           </p>
         </div>
 
         <div className="mt-4 md:mt-0 w-full md:w-64">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-600 mb-1">
             Regulatory Strategy:
           </label>
           <select
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="w-full px-3 py-2 bg-white/80 border border-slate-200/70 rounded-md shadow-sm focus:outline-none focus:ring-slate-400 focus:border-slate-400 sm:text-sm"
             value={selectedPlaybook}
             onChange={handlePlaybookChange}
           >
@@ -274,20 +274,20 @@ export default function EnhancedRegulatoryDashboard() {
         <div
           className={`p-4 rounded-lg flex items-center ${
             displayData.readinessScore >= 70
-              ? 'bg-green-50 text-green-800 border border-green-200'
+              ? 'bg-emerald-50/60 text-emerald-900 border border-emerald-200/70'
               : displayData.readinessScore >= 50
-                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-amber-50/60 text-amber-900 border border-amber-200/70'
+                : 'bg-rose-50/60 text-rose-900 border border-rose-200/70'
           }`}
         >
-          <div className="rounded-full p-2 mr-3 bg-white">
+          <div className="rounded-full p-2 mr-3 bg-white/80 border border-slate-200/60">
             <BarChart2
               className={
                 displayData.readinessScore >= 70
-                  ? 'text-green-500'
+                  ? 'text-emerald-500'
                   : displayData.readinessScore >= 50
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
+                    ? 'text-amber-500'
+                    : 'text-rose-500'
               }
               size={20}
             />
@@ -301,20 +301,20 @@ export default function EnhancedRegulatoryDashboard() {
         <div
           className={`p-4 rounded-lg flex items-center ${
             displayData.riskLevel === 'Low'
-              ? 'bg-green-50 text-green-800 border border-green-200'
+              ? 'bg-emerald-50/60 text-emerald-900 border border-emerald-200/70'
               : displayData.riskLevel === 'Medium'
-                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-amber-50/60 text-amber-900 border border-amber-200/70'
+                : 'bg-rose-50/60 text-rose-900 border border-rose-200/70'
           }`}
         >
-          <div className="rounded-full p-2 mr-3 bg-white">
+          <div className="rounded-full p-2 mr-3 bg-white/80 border border-slate-200/60">
             <AlertTriangle
               className={
                 displayData.riskLevel === 'Low'
-                  ? 'text-green-500'
+                  ? 'text-emerald-500'
                   : displayData.riskLevel === 'Medium'
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
+                    ? 'text-amber-500'
+                    : 'text-rose-500'
               }
               size={20}
             />
@@ -328,20 +328,20 @@ export default function EnhancedRegulatoryDashboard() {
         <div
           className={`p-4 rounded-lg flex items-center ${
             displayData.estimatedDelayDays <= 14
-              ? 'bg-green-50 text-green-800 border border-green-200'
+              ? 'bg-emerald-50/60 text-emerald-900 border border-emerald-200/70'
               : displayData.estimatedDelayDays <= 30
-                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-amber-50/60 text-amber-900 border border-amber-200/70'
+                : 'bg-rose-50/60 text-rose-900 border border-rose-200/70'
           }`}
         >
-          <div className="rounded-full p-2 mr-3 bg-white">
+          <div className="rounded-full p-2 mr-3 bg-white/80 border border-slate-200/60">
             <Clock
               className={
                 displayData.estimatedDelayDays <= 14
-                  ? 'text-green-500'
+                  ? 'text-emerald-500'
                   : displayData.estimatedDelayDays <= 30
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
+                    ? 'text-amber-500'
+                    : 'text-rose-500'
               }
               size={20}
             />
@@ -355,20 +355,20 @@ export default function EnhancedRegulatoryDashboard() {
         <div
           className={`p-4 rounded-lg flex items-center ${
             displayData.estimatedDelayDays * 50000 <= 500000
-              ? 'bg-green-50 text-green-800 border border-green-200'
+              ? 'bg-emerald-50/60 text-emerald-900 border border-emerald-200/70'
               : displayData.estimatedDelayDays * 50000 <= 1000000
-                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-amber-50/60 text-amber-900 border border-amber-200/70'
+                : 'bg-rose-50/60 text-rose-900 border border-rose-200/70'
           }`}
         >
-          <div className="rounded-full p-2 mr-3 bg-white">
+          <div className="rounded-full p-2 mr-3 bg-white/80 border border-slate-200/60">
             <DollarSign
               className={
                 displayData.estimatedDelayDays * 50000 <= 500000
-                  ? 'text-green-500'
+                  ? 'text-emerald-500'
                   : displayData.estimatedDelayDays * 50000 <= 1000000
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
+                    ? 'text-amber-500'
+                    : 'text-rose-500'
               }
               size={20}
             />
@@ -383,14 +383,14 @@ export default function EnhancedRegulatoryDashboard() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-slate-200/60 mb-6">
         <nav className="flex -mb-px space-x-6">
           <button
             onClick={() => setActiveTab('riskMap')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'riskMap'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Risk Heatmap
@@ -399,8 +399,8 @@ export default function EnhancedRegulatoryDashboard() {
             onClick={() => setActiveTab('timeline')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'timeline'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Timeline Simulator
@@ -409,8 +409,8 @@ export default function EnhancedRegulatoryDashboard() {
             onClick={() => setActiveTab('copilot')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'copilot'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Ask Lumen AI
@@ -419,19 +419,19 @@ export default function EnhancedRegulatoryDashboard() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white/80 rounded-2xl border border-slate-200/60 shadow-sm p-6 mb-6">
         {activeTab === 'riskMap' && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">CTD Critical Gap Risk Analysis</h2>
+              <h2 className="text-xl font-bold text-slate-900">CTD Critical Gap Risk Analysis</h2>
               {simulationData.modifiedSection && (
-                <div className="text-sm text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                <div className="text-sm text-slate-700 bg-slate-900/5 px-3 py-1 rounded-full">
                   Simulated View
                 </div>
               )}
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-slate-600 mb-6">
               Interactive visualization of CTD gaps with dynamic risk assessment. Click any risk
               tile for detailed analysis and remediation options.
             </p>
@@ -439,16 +439,16 @@ export default function EnhancedRegulatoryDashboard() {
             <AdvisorRiskHeatmapV2 missingSections={displayData.missingSections || []} />
 
             {simulationData.modifiedSection && (
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <h3 className="text-sm font-medium text-blue-800 mb-2">Simulation Active</h3>
-                <p className="text-sm text-blue-700">
+              <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200/60">
+                <h3 className="text-sm font-medium text-slate-800 mb-2">Simulation Active</h3>
+                <p className="text-sm text-slate-700">
                   This simulation shows the impact of completing{' '}
                   <strong>{simulationData.modifiedSection}</strong> by{' '}
                   {new Date(simulationData.modifiedDate).toLocaleDateString()}.
                 </p>
                 <button
                   onClick={resetSimulation}
-                  className="mt-2 text-sm bg-white text-blue-700 border border-blue-300 px-3 py-1 rounded hover:bg-blue-50"
+                  className="mt-2 text-sm bg-white text-slate-700 border border-slate-200/70 px-3 py-1 rounded hover:bg-slate-50"
                 >
                   Reset Simulation
                 </button>
@@ -472,33 +472,33 @@ export default function EnhancedRegulatoryDashboard() {
       </div>
 
       {/* Estimated Submission Path */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Estimated Submission Path</h2>
+      <div className="bg-white/80 rounded-2xl border border-slate-200/60 shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Estimated Submission Path</h2>
 
         <div className="flex items-center mb-6">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className="w-full bg-slate-200/70 rounded-full h-2.5">
             <div
               className={`h-2.5 rounded-full ${
                 displayData.readinessScore >= 70
-                  ? 'bg-green-500'
+                  ? 'bg-emerald-500'
                   : displayData.readinessScore >= 50
-                    ? 'bg-yellow-500'
-                    : 'bg-red-500'
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
               }`}
               style={{ width: `${displayData.readinessScore}%` }}
             ></div>
           </div>
-          <span className="ml-4 text-sm font-medium text-gray-700">
+          <span className="ml-4 text-sm font-medium text-slate-700">
             Target Date: {displayData.estimatedSubmissionDate}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Critical Path Items</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-2">Critical Path Items</h3>
             <ul className="space-y-2">
               {(displayData.criticalPath || []).map((item, idx) => (
-                <li key={idx} className="flex justify-between p-2 bg-gray-50 rounded text-sm">
+                <li key={idx} className="flex justify-between p-2 bg-slate-50/70 rounded text-sm">
                   <span>{item.task}</span>
                   <span className="font-medium">{item.dueDate}</span>
                 </li>
@@ -507,25 +507,25 @@ export default function EnhancedRegulatoryDashboard() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Top Regulatory Risks</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-2">Top Regulatory Risks</h3>
             <ul className="space-y-2">
               {(displayData.regulatoryRisks || []).map((risk, idx) => (
-                <li key={idx} className="p-2 bg-gray-50 rounded text-sm">
+                <li key={idx} className="p-2 bg-slate-50/70 rounded text-sm">
                   <div className="flex justify-between">
                     <span>{risk.risk}</span>
                     <span
                       className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         risk.probability === 'High'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-rose-100/70 text-rose-800'
                           : risk.probability === 'Medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-amber-100/70 text-amber-800'
+                            : 'bg-emerald-100/70 text-emerald-800'
                       }`}
                     >
                       {risk.probability}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Mitigation: {risk.mitigation}</p>
+                  <p className="text-xs text-slate-500 mt-1">Mitigation: {risk.mitigation}</p>
                 </li>
               ))}
             </ul>
@@ -534,9 +534,9 @@ export default function EnhancedRegulatoryDashboard() {
       </div>
 
       {/* Disclaimer */}
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-700 mb-1">Strategic Intelligence</h3>
-        <p className="text-xs text-blue-600">
+      <div className="bg-slate-50 border border-slate-200/60 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-slate-800 mb-1">Strategic Intelligence</h3>
+        <p className="text-xs text-slate-600">
           This intelligent regulatory dashboard combines AI prediction, strategic simulation, and
           real-time risk analysis to provide a comprehensive view of your submission readiness. Use
           the Timeline Simulator to model different completion scenarios and Ask Lumen AI for

@@ -86,8 +86,8 @@ const CRODashboard = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading CRO Dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-slate-600">Loading CRO Dashboard...</p>
         </div>
       </div>
     );
@@ -95,13 +95,13 @@ const CRODashboard = () => {
 
   const getStatusColor = status => {
     const colors = {
-      active: 'bg-green-100 text-green-800',
-      planning: 'bg-blue-100 text-blue-800',
-      recruiting: 'bg-yellow-100 text-yellow-800',
+      active: 'bg-emerald-100 text-emerald-800',
+      planning: 'bg-slate-100 text-slate-800',
+      recruiting: 'bg-amber-100 text-amber-800',
       completed: 'bg-gray-100 text-gray-800',
       delayed: 'bg-red-100 text-red-800',
-      submitted: 'bg-purple-100 text-purple-800',
-      approved: 'bg-green-100 text-green-800',
+      submitted: 'bg-slate-100 text-slate-800',
+      approved: 'bg-emerald-100 text-emerald-800',
       under_review: 'bg-orange-100 text-orange-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';

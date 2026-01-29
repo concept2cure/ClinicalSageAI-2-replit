@@ -1,5 +1,10 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+// import React, { createContext, useState, useEffect, useContext } from 'react';
 
+/**
+ * @deprecated Legacy auth context. Use portal-v2 authService provider instead.
+ */
+export {};
+/*
 export const AuthContext = createContext({ role: 'viewer' });
 
 // Custom hook for using auth context
@@ -66,3 +71,5 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+*/

@@ -1,5 +1,5 @@
 // Test setup file for Jest
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 // Mock window.fetch globally
 global.fetch = jest.fn(() =>
@@ -14,11 +14,18 @@ global.fetch = jest.fn(() =>
 // Mock file-saver
 jest.mock('file-saver', () => ({ saveAs: jest.fn() }));
 
-// Mock window.URL
-window.URL = {
-  createObjectURL: jest.fn(() => 'mock-url'),
-  revokeObjectURL: jest.fn(),
-};
+// Mock window.URL helpers without replacing the URL constructor
+if (!window.URL) {
+  window.URL = URL;
+}
+
+if (!window.URL.createObjectURL) {
+  window.URL.createObjectURL = jest.fn(() => 'mock-url');
+}
+
+if (!window.URL.revokeObjectURL) {
+  window.URL.revokeObjectURL = jest.fn();
+}
 
 // Setup for global user role
 global.setUserRole = jest.fn();

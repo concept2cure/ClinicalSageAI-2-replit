@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SelectedDocumentsPanel from '../components/ectd/SelectedDocumentsPanel';
-import { AuthProvider } from '../contexts/AuthContext';
 
 // Mock the utils/apiClient module
 jest.mock('../utils/apiClient', () => ({
@@ -14,25 +13,25 @@ jest.mock('../utils/apiClient', () => ({
 }));
 
 // Mock window.URL.createObjectURL and related methods
-Object.defineProperty(window, 'URL', {
-  value: {
-    createObjectURL: jest.fn(() => 'mock-url'),
-    revokeObjectURL: jest.fn(),
-  },
+if (!window.URL.createObjectURL) {
+  window.URL.createObjectURL = jest.fn(() => 'mock-url');
+}
+if (!window.URL.revokeObjectURL) {
+  window.URL.revokeObjectURL = jest.fn();
+}
+
+// Mock document functions for anchor elements only
+const originalCreateElement = document.createElement.bind(document);
+
+jest.spyOn(document, 'createElement').mockImplementation((tagName, options) => {
+  const element = originalCreateElement(tagName, options);
+
+  if (tagName === 'a') {
+    element.click = jest.fn();
+  }
+
+  return element;
 });
-
-// Mock document functions
-document.createElement = jest.fn(() => ({
-  style: {},
-  href: '',
-  download: '',
-  click: jest.fn(),
-  appendChild: jest.fn(),
-  removeChild: jest.fn(),
-}));
-
-document.body.appendChild = jest.fn();
-document.body.removeChild = jest.fn();
 
 // Mock hook
 jest.mock(
@@ -47,118 +46,71 @@ jest.mock(
 
 describe('SelectedDocumentsPanel', () => {
   // Sample documents for testing
-  const mockDocuments = [
-    { id: 'doc1', name: 'Document 1.pdf', type: 'pdf' },
-    { id: 'doc2', name: 'Document 2.docx', type: 'docx' },
-  ];
+  const mockSelectedFiles = ['file-m1-1', 'file-m2-1'];
 
-  const mockOnRemove = jest.fn();
+  const mockOnRemoveFile = jest.fn();
+  const mockOnCompile = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders nothing when no documents provided', () => {
-    const { container } = render(
-      <AuthProvider>
-        <SelectedDocumentsPanel documents={[]} onRemove={mockOnRemove} />
-      </AuthProvider>
-    );
+    render(<SelectedDocumentsPanel selectedFiles={[]} />);
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText('No documents selected')).toBeInTheDocument();
+    expect(screen.getByText('0 selected')).toBeInTheDocument();
   });
 
   test('renders documents with correct file type styling', () => {
     render(
-      <AuthProvider>
-        <SelectedDocumentsPanel documents={mockDocuments} onRemove={mockOnRemove} />
-      </AuthProvider>
+      <SelectedDocumentsPanel
+        selectedFiles={mockSelectedFiles}
+        onRemoveFile={mockOnRemoveFile}
+        onCompile={mockOnCompile}
+      />
     );
 
     // Check if both documents are rendered
-    expect(screen.getByText('Document 1.pdf')).toBeInTheDocument();
-    expect(screen.getByText('Document 2.docx')).toBeInTheDocument();
+    expect(screen.getByText('Cover Letter')).toBeInTheDocument();
+    expect(screen.getByText('CTD Table of Contents')).toBeInTheDocument();
 
     // Check if document count is displayed correctly
-    expect(screen.getByText(/Selected Documents for eCTD Submission \(2\)/)).toBeInTheDocument();
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
   });
 
   test('calls onRemove when remove button is clicked', () => {
-    // Set role to editor to ensure buttons are enabled
-    window.setUserRole = jest.fn();
-
     render(
-      <AuthProvider>
-        <SelectedDocumentsPanel documents={mockDocuments} onRemove={mockOnRemove} />
-      </AuthProvider>
+      <SelectedDocumentsPanel
+        selectedFiles={mockSelectedFiles}
+        onRemoveFile={mockOnRemoveFile}
+        onCompile={mockOnCompile}
+      />
     );
-
-    // Simulate changing role to editor for permission
-    if (window.setUserRole) {
-      window.setUserRole('editor');
-    }
-
     // Find all remove buttons (should be one per document)
-    const removeButtons = screen.getAllByTitle(/Remove from selection/i);
+    const removeButtons = screen.getAllByLabelText('Remove document');
     expect(removeButtons.length).toBe(2);
 
     // Click the first remove button
     fireEvent.click(removeButtons[0]);
 
-    // Check if onRemove was called with the correct document ID
-    expect(mockOnRemove).toHaveBeenCalled();
+    // Check if onRemoveFile was called with the correct document ID
+    expect(mockOnRemoveFile).toHaveBeenCalledWith('file-m1-1');
   });
 
-  test('download button is disabled for viewers without edit permissions', () => {
-    // Set role to viewer
-    window.setUserRole = jest.fn();
-
+  test('compile button is enabled when documents exist', () => {
     render(
-      <AuthProvider>
-        <SelectedDocumentsPanel documents={mockDocuments} onRemove={mockOnRemove} />
-      </AuthProvider>
+      <SelectedDocumentsPanel
+        selectedFiles={mockSelectedFiles}
+        onRemoveFile={mockOnRemoveFile}
+        onCompile={mockOnCompile}
+      />
     );
 
-    // Simulate changing role to viewer for limited permissions
-    if (window.setUserRole) {
-      window.setUserRole('viewer');
-    }
+    const compileButton = screen.getByRole('button', { name: /Compile eCTD Submission/i });
+    expect(compileButton).toBeEnabled();
 
-    // Find download buttons
-    const downloadButtons = screen.getAllByTitle(/Requires editor permissions/i);
-
-    // Download buttons should be present but disabled
-    expect(downloadButtons.length).toBeGreaterThan(0);
-    expect(downloadButtons[0]).toBeDisabled();
-  });
-
-  test('download button is enabled for editors and triggers download', () => {
-    // Set role to editor
-    window.setUserRole = jest.fn();
-
-    render(
-      <AuthProvider>
-        <SelectedDocumentsPanel documents={mockDocuments} onRemove={mockOnRemove} />
-      </AuthProvider>
-    );
-
-    // Simulate changing role to editor for full permissions
-    if (window.setUserRole) {
-      window.setUserRole('editor');
-    }
-
-    // Find download buttons
-    const downloadButtons = screen.getAllByTitle(/Download file/i);
-
-    // Download buttons should be present and enabled
-    expect(downloadButtons.length).toBeGreaterThan(0);
-    expect(downloadButtons[0]).not.toBeDisabled();
-
-    // Click download button
-    fireEvent.click(downloadButtons[0]);
-
-    // Check that download process was initiated
-    expect(document.createElement).toHaveBeenCalledWith('a');
-    expect(document.body.appendChild).toHaveBeenCalled();
+    fireEvent.click(compileButton);
+    expect(mockOnCompile).toHaveBeenCalledWith(mockSelectedFiles);
   });
 });

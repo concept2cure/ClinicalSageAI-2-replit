@@ -236,9 +236,9 @@ function RealCoAuthor() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-zinc-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-white/80 border-b border-slate-200/70 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
@@ -475,7 +475,7 @@ function RealCoAuthor() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Target className="h-5 w-5 mr-2 text-blue-600" />
+                  <Target className="h-5 w-5 mr-2 text-slate-600" />
                   AI Document Suggestions
                 </CardTitle>
                 <CardDescription>
@@ -485,7 +485,7 @@ function RealCoAuthor() {
               <CardContent>
                 {loadingSuggestions ? (
                   <div className="flex items-center justify-center py-8">
-                    <Clock className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                    <Clock className="h-6 w-6 animate-spin text-slate-600 mr-2" />
                     Loading AI suggestions...
                   </div>
                 ) : (
@@ -493,7 +493,7 @@ function RealCoAuthor() {
                     {suggestions.slice(0, 4).map((suggestion, index) => (
                       <div
                         key={index}
-                        className="p-4 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                        className="p-4 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
                         onClick={() => handleSuggestionClick(suggestion)}
                       >
                         <div className="flex items-center justify-between">
@@ -516,7 +516,7 @@ function RealCoAuthor() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm font-medium text-blue-600">
+                            <div className="text-sm font-medium text-slate-600">
                               {suggestion.confidence}% match
                             </div>
                           </div>
@@ -541,7 +541,7 @@ function RealCoAuthor() {
                 {recentDocuments.length > 0 ? (
                   <div className="space-y-3">
                     {recentDocuments.map((doc, index) => (
-                      <div key={index} className="p-4 border rounded-lg hover:bg-gray-50">
+                      <div key={index} className="p-4 border rounded-lg hover:bg-slate-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             {getStatusIcon(doc.status)}
@@ -660,7 +660,7 @@ function RealCoAuthor() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="bg-slate-50 p-3 rounded-lg">
                     <h4 className="font-medium text-blue-900 text-sm mb-2">
                       How to Submit to FDA:
                     </h4>

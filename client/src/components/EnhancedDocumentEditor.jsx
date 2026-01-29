@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -1921,17 +1922,20 @@ This version has been successfully restored to the editor.`;
                     <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: String(
-                          trackChanges && changes.length > 0
-                            ? applyTrackChangesMarkup(content)
-                            : content
-                        )
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                          .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                          .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                          .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                          .replace(/\n/g, '<br>'),
+                        __html: DOMPurify.sanitize(
+                          String(
+                            trackChanges && changes.length > 0
+                              ? applyTrackChangesMarkup(content)
+                              : content
+                          )
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                            .replace(/\n/g, '<br>'),
+                          { USE_PROFILES: { html: true } }
+                        ),
                       }}
                     />
                   </div>

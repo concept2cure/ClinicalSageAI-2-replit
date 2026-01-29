@@ -394,9 +394,9 @@ export default function AnalyticsDashboard() {
   if (dashboardError && !dashboardConfig) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
-        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Error Loading Dashboard</h2>
-        <p className="text-gray-600 mb-4">
+        <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2 text-slate-900">Error Loading Dashboard</h2>
+        <p className="text-slate-600 mb-4">
           {dashboardError.message || 'An error occurred while loading the dashboard'}
         </p>
         <Button
@@ -410,20 +410,20 @@ export default function AnalyticsDashboard() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Dashboard Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white/80 border-b border-slate-200/60 backdrop-blur sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Enterprise Analytics</h1>
-              <p className="text-sm text-gray-500">Advanced insights for regulatory submissions</p>
+              <h1 className="text-2xl font-bold text-slate-900">Enterprise Analytics</h1>
+              <p className="text-sm text-slate-500">Advanced insights for regulatory submissions</p>
             </div>
 
             <div className="flex items-center space-x-4">
               {/* Time Range Selector */}
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[160px] bg-white/80 border-slate-200/70">
                   <SelectValue placeholder="Select time range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -437,11 +437,11 @@ export default function AnalyticsDashboard() {
               {/* Filter Button */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="flex items-center">
+                  <Button variant="outline" className="flex items-center border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50">
                     <Filter className="mr-2 h-4 w-4" />
                     Filters
                     {Object.keys(filters).length > 0 && (
-                      <Badge className="ml-2 bg-pink-600">{Object.keys(filters).length}</Badge>
+                      <Badge className="ml-2 bg-slate-900 text-white">{Object.keys(filters).length}</Badge>
                     )}
                   </Button>
                 </SheetTrigger>
@@ -524,7 +524,7 @@ export default function AnalyticsDashboard() {
                             onChange={e => setFilters({ ...filters, start_date: e.target.value })}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           />
-                          <span className="text-sm text-gray-500">to</span>
+                          <span className="text-sm text-slate-500">to</span>
                           <input
                             type="date"
                             value={filters.end_date || ''}
@@ -650,8 +650,8 @@ export default function AnalyticsDashboard() {
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* Dashboard Title + Description */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">{getDashboardTitle(activeTab)}</h2>
-          <p className="text-sm text-gray-500">{getDashboardDescription(activeTab)}</p>
+          <h2 className="text-xl font-semibold text-slate-900">{getDashboardTitle(activeTab)}</h2>
+          <p className="text-sm text-slate-500">{getDashboardDescription(activeTab)}</p>
         </div>
 
         {/* Loading State */}
@@ -672,20 +672,20 @@ export default function AnalyticsDashboard() {
 
         {/* Error State */}
         {analyticsError && !analyticsData && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-rose-200/70 bg-rose-50/70">
             <CardHeader>
-              <CardTitle className="text-red-700 flex items-center">
+              <CardTitle className="text-rose-800 flex items-center">
                 <AlertCircle className="mr-2 h-5 w-5" />
                 Error Loading Analytics Data
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-600">
+              <p className="text-rose-700">
                 {analyticsError.message || 'An error occurred while loading analytics data'}
               </p>
               <Button
                 variant="outline"
-                className="mt-4"
+                className="mt-4 border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50"
                 onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/analytics/data'] })}
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
@@ -698,7 +698,7 @@ export default function AnalyticsDashboard() {
         {/* Dashboard Grid */}
         {dashboardConfig && (
           <div
-            className={`grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-6 ${isCustomizing ? 'border-2 border-dashed border-pink-300 p-4 rounded-lg' : ''}`}
+            className={`grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-6 ${isCustomizing ? 'border-2 border-dashed border-slate-300 p-4 rounded-lg' : ''}`}
           >
             {renderDashboardWidgets()}
           </div>
@@ -730,14 +730,14 @@ export default function AnalyticsDashboard() {
                     {getAvailableWidgets().kpi.map(widget => (
                       <div
                         key={widget.type}
-                        className="border rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="border border-slate-200/70 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"
                         onClick={() => handleAddWidget(widget.type)}
                       >
-                        <div className="flex items-center justify-center bg-pink-100 text-pink-600 w-10 h-10 rounded-lg mb-2">
+                        <div className="flex items-center justify-center bg-slate-100 text-slate-700 w-10 h-10 rounded-lg mb-2">
                           {widget.icon}
                         </div>
                         <h4 className="font-medium text-sm">{widget.name}</h4>
-                        <p className="text-xs text-gray-500">{widget.description}</p>
+                        <p className="text-xs text-slate-500">{widget.description}</p>
                       </div>
                     ))}
                   </div>
@@ -749,14 +749,14 @@ export default function AnalyticsDashboard() {
                     {getAvailableWidgets().charts.map(widget => (
                       <div
                         key={widget.type}
-                        className="border rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="border border-slate-200/70 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"
                         onClick={() => handleAddWidget(widget.type)}
                       >
-                        <div className="flex items-center justify-center bg-pink-100 text-pink-600 w-10 h-10 rounded-lg mb-2">
+                        <div className="flex items-center justify-center bg-slate-100 text-slate-700 w-10 h-10 rounded-lg mb-2">
                           {widget.icon}
                         </div>
                         <h4 className="font-medium text-sm">{widget.name}</h4>
-                        <p className="text-xs text-gray-500">{widget.description}</p>
+                        <p className="text-xs text-slate-500">{widget.description}</p>
                       </div>
                     ))}
                   </div>
@@ -768,14 +768,14 @@ export default function AnalyticsDashboard() {
                     {getAvailableWidgets().tables.map(widget => (
                       <div
                         key={widget.type}
-                        className="border rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="border border-slate-200/70 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"
                         onClick={() => handleAddWidget(widget.type)}
                       >
-                        <div className="flex items-center justify-center bg-pink-100 text-pink-600 w-10 h-10 rounded-lg mb-2">
+                        <div className="flex items-center justify-center bg-slate-100 text-slate-700 w-10 h-10 rounded-lg mb-2">
                           {widget.icon}
                         </div>
                         <h4 className="font-medium text-sm">{widget.name}</h4>
-                        <p className="text-xs text-gray-500">{widget.description}</p>
+                        <p className="text-xs text-slate-500">{widget.description}</p>
                       </div>
                     ))}
                   </div>
@@ -787,14 +787,14 @@ export default function AnalyticsDashboard() {
                     {getAvailableWidgets().advanced.map(widget => (
                       <div
                         key={widget.type}
-                        className="border rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="border border-slate-200/70 rounded-lg p-3 cursor-pointer hover:bg-slate-50 transition-colors"
                         onClick={() => handleAddWidget(widget.type)}
                       >
-                        <div className="flex items-center justify-center bg-pink-100 text-pink-600 w-10 h-10 rounded-lg mb-2">
+                        <div className="flex items-center justify-center bg-slate-100 text-slate-700 w-10 h-10 rounded-lg mb-2">
                           {widget.icon}
                         </div>
                         <h4 className="font-medium text-sm">{widget.name}</h4>
-                        <p className="text-xs text-gray-500">{widget.description}</p>
+                        <p className="text-xs text-slate-500">{widget.description}</p>
                       </div>
                     ))}
                   </div>
@@ -839,10 +839,10 @@ export default function AnalyticsDashboard() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50">
               Cancel
             </Button>
-            <Button onClick={handleSaveDashboard} disabled={saveDashboardMutation.isPending}>
+            <Button onClick={handleSaveDashboard} disabled={saveDashboardMutation.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
               {saveDashboardMutation.isPending ? 'Saving...' : 'Save Dashboard'}
             </Button>
           </DialogFooter>
@@ -872,7 +872,7 @@ export default function AnalyticsDashboard() {
         >
           <Card className={`overflow-hidden h-full ${heightClass}`}>
             {isCustomizing && (
-              <div className="absolute top-0 right-0 p-1 flex items-center space-x-1 bg-white border border-gray-200 rounded-bl-lg z-10">
+              <div className="absolute top-0 right-0 p-1 flex items-center space-x-1 bg-white/80 border border-slate-200/70 rounded-bl-lg z-10">
                 <TooltipProvider>
                   <ShadTooltip>
                     <TooltipTrigger asChild>
@@ -966,8 +966,8 @@ export default function AnalyticsDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 {data.map((item, i) => (
                   <div key={i} className="flex flex-col">
-                    <span className="text-3xl font-bold text-gray-900">{item.count}</span>
-                    <span className="text-sm text-gray-500">{item.status}</span>
+                    <span className="text-3xl font-bold text-slate-900">{item.count}</span>
+                    <span className="text-sm text-slate-500">{item.status}</span>
                     <Progress
                       value={item.percentage}
                       className="h-1.5 mt-1.5"
@@ -999,24 +999,24 @@ export default function AnalyticsDashboard() {
                     color={CHART_COLORS.primary}
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl font-bold text-gray-900">
+                    <span className="text-4xl font-bold text-slate-900">
                       {data.completionPercentage}%
                     </span>
-                    <span className="text-sm text-gray-500">Completion</span>
+                    <span className="text-sm text-slate-500">Completion</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 mt-4 w-full">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-gray-900">{data.sectionsComplete}</div>
-                    <div className="text-xs text-gray-500">Complete</div>
+                    <div className="text-xl font-bold text-slate-900">{data.sectionsComplete}</div>
+                    <div className="text-xs text-slate-500">Complete</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-gray-900">{data.sectionsInProgress}</div>
-                    <div className="text-xs text-gray-500">In Progress</div>
+                    <div className="text-xl font-bold text-slate-900">{data.sectionsInProgress}</div>
+                    <div className="text-xs text-slate-500">In Progress</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-gray-900">{data.sectionsNotStarted}</div>
-                    <div className="text-xs text-gray-500">Not Started</div>
+                    <div className="text-xl font-bold text-slate-900">{data.sectionsNotStarted}</div>
+                    <div className="text-xs text-slate-500">Not Started</div>
                   </div>
                 </div>
               </div>
@@ -1036,12 +1036,12 @@ export default function AnalyticsDashboard() {
             <CardContent>
               <div className="flex flex-col items-center">
                 <div className="flex items-center justify-center mb-4">
-                  <div className="text-4xl font-bold text-gray-900">
+                  <div className="text-4xl font-bold text-slate-900">
                     {data.timeSavedPercentage}%
                   </div>
                   <div className="flex flex-col ml-4">
                     <span className="text-sm font-medium">Time Reduction</span>
-                    <span className="text-xs text-gray-500">vs. Traditional Process</span>
+                    <span className="text-xs text-slate-500">vs. Traditional Process</span>
                   </div>
                 </div>
                 <div className="w-full mb-4">
@@ -1049,24 +1049,24 @@ export default function AnalyticsDashboard() {
                     <span>Traditional</span>
                     <span>IND Wizard</span>
                   </div>
-                  <div className="relative h-6 bg-gray-100 rounded-full">
+                  <div className="relative h-6 bg-slate-100/70 rounded-full">
                     <div
-                      className="absolute h-6 left-0 bg-pink-600 rounded-full"
+                      className="absolute h-6 left-0 bg-slate-900 rounded-full"
                       style={{ width: `${100 - data.timeSavedPercentage}%` }}
                     ></div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <div className="flex justify-between text-xs text-slate-500 mt-1">
                     <span>{data.traditionalDays} days</span>
                     <span>{data.newDays} days</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 w-full mt-2">
-                  <div className="border rounded-lg p-3">
-                    <div className="text-xs text-gray-500">Time Saved</div>
+                  <div className="border border-slate-200/70 rounded-lg p-3 bg-white/80">
+                    <div className="text-xs text-slate-500">Time Saved</div>
                     <div className="text-xl font-bold">{data.daysSaved} days</div>
                   </div>
-                  <div className="border rounded-lg p-3">
-                    <div className="text-xs text-gray-500">Cost Reduction</div>
+                  <div className="border border-slate-200/70 rounded-lg p-3 bg-white/80">
+                    <div className="text-xs text-slate-500">Cost Reduction</div>
                     <div className="text-xl font-bold">${data.costSavings}k</div>
                   </div>
                 </div>
@@ -1087,8 +1087,8 @@ export default function AnalyticsDashboard() {
             <CardContent>
               <div className="flex flex-col items-center justify-center">
                 <div className="flex items-baseline mb-4">
-                  <span className="text-5xl font-bold text-gray-900">{data.overallScore}</span>
-                  <span className="text-lg text-gray-500 ml-1">/100</span>
+                  <span className="text-5xl font-bold text-slate-900">{data.overallScore}</span>
+                  <span className="text-lg text-slate-500 ml-1">/100</span>
                 </div>
                 <div className="w-full space-y-3 mt-2">
                   {data.components.map((component, i) => (
@@ -1269,7 +1269,7 @@ export default function AnalyticsDashboard() {
             <CardContent className="p-0 overflow-auto">
               <div className="min-w-[600px]">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-700">
+                  <thead className="bg-slate-50/70 text-slate-700">
                     <tr>
                       <th className="py-2 px-3 text-left font-medium">Section</th>
                       <th className="py-2 px-3 text-left font-medium">Status</th>
@@ -1281,7 +1281,7 @@ export default function AnalyticsDashboard() {
                   </thead>
                   <tbody>
                     {data.map((section, i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white/80' : 'bg-slate-50/70'}>
                         <td className="py-2 px-3 font-medium">
                           {section.code} - {section.title}
                         </td>
@@ -1340,10 +1340,10 @@ export default function AnalyticsDashboard() {
                     color={getProbabilityColor(data.probability)}
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-gray-900">
+                    <span className="text-3xl font-bold text-slate-900">
                       {Math.round(data.probability * 100)}%
                     </span>
-                    <span className="text-xs text-gray-500">Probability</span>
+                    <span className="text-xs text-slate-500">Probability</span>
                   </div>
                 </div>
 
@@ -1355,13 +1355,13 @@ export default function AnalyticsDashboard() {
                     <div key={i} className="flex items-center justify-between text-sm">
                       <span>{factor.name}</span>
                       <div className="flex items-center">
-                        <div className="h-2 w-20 bg-gray-200 rounded-full overflow-hidden mr-2">
+                        <div className="h-2 w-20 bg-slate-200/70 rounded-full overflow-hidden mr-2">
                           <div
                             className={`h-full ${getFactorColor(factor.impact)}`}
                             style={{ width: `${Math.abs(factor.impact) * 100}%` }}
                           ></div>
                         </div>
-                        <span className={factor.impact > 0 ? 'text-green-600' : 'text-red-600'}>
+                        <span className={factor.impact > 0 ? 'text-emerald-600' : 'text-rose-600'}>
                           {factor.impact > 0 ? '+' : ''}
                           {factor.impact}
                         </span>
@@ -1384,7 +1384,7 @@ export default function AnalyticsDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 flex items-center justify-center">
-              <div className="text-center text-gray-500">
+              <div className="text-center text-slate-500">
                 <Share2 className="h-16 w-16 mx-auto mb-2 opacity-50" />
                 <p>Network visualization would appear here</p>
                 <p className="text-xs mt-1">
@@ -1414,16 +1414,16 @@ export default function AnalyticsDashboard() {
                       style={{ borderColor: getImpactColor(item.impact) }}
                     >
                       <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-gray-900">{item.title}</h4>
+                        <h4 className="font-medium text-slate-900">{item.title}</h4>
                         <Badge variant="outline" className={getImpactBadgeClass(item.impact)}>
                           Impact: {item.impact}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">{item.summary}</p>
-                      <div className="flex items-center mt-2 text-xs text-gray-500 space-x-3">
+                      <p className="text-sm text-slate-500 mt-1">{item.summary}</p>
+                      <div className="flex items-center mt-2 text-xs text-slate-500 space-x-3">
                         <span>{item.date}</span>
                         <span>{item.authority}</span>
-                        <a href="#" className="flex items-center text-pink-600 hover:underline">
+                        <a href="#" className="flex items-center text-slate-700 hover:underline">
                           <ExternalLink className="h-3 w-3 mr-1" />
                           View Source
                         </a>
@@ -1444,7 +1444,7 @@ export default function AnalyticsDashboard() {
               <CardTitle>{getWidgetTitle(widget.type)}</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-center h-full">
-              <div className="text-center text-gray-500">
+              <div className="text-center text-slate-500">
                 <p>Widget {widget.type}</p>
                 <p className="text-xs mt-1">Data visualization would appear here</p>
               </div>
@@ -1477,41 +1477,41 @@ export default function AnalyticsDashboard() {
   function getColorClass(status) {
     switch (status) {
       case 'Drafts':
-        return 'bg-blue-500';
+        return 'bg-slate-500';
       case 'In Review':
         return 'bg-amber-500';
       case 'Completed':
-        return 'bg-green-500';
+        return 'bg-emerald-500';
       case 'Submitted':
-        return 'bg-pink-600';
+        return 'bg-slate-700';
       default:
-        return 'bg-gray-500';
+        return 'bg-slate-500';
     }
   }
 
   function getQualityScoreColor(score) {
-    if (score >= 90) return 'bg-green-500';
-    if (score >= 75) return 'bg-blue-500';
+    if (score >= 90) return 'bg-emerald-500';
+    if (score >= 75) return 'bg-slate-600';
     if (score >= 60) return 'bg-amber-500';
-    return 'bg-red-500';
+    return 'bg-rose-500';
   }
 
   function getStatusBadgeClass(status) {
     switch (status) {
       case 'Not Started':
-        return 'bg-gray-500 text-white';
+        return 'bg-slate-500 text-white';
       case 'In Progress':
-        return 'bg-blue-500 text-white';
+        return 'bg-slate-600 text-white';
       case 'In Review':
         return 'bg-amber-500 text-white';
       case 'Complete':
-        return 'bg-green-500 text-white';
+        return 'bg-emerald-500 text-white';
       case 'Needs Revision':
-        return 'bg-red-500 text-white';
+        return 'bg-rose-500 text-white';
       case 'Approved':
-        return 'bg-pink-600 text-white';
+        return 'bg-slate-700 text-white';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-slate-500 text-white';
     }
   }
 
@@ -1523,8 +1523,8 @@ export default function AnalyticsDashboard() {
   }
 
   function getFactorColor(impact) {
-    if (impact > 0) return 'bg-green-500';
-    return 'bg-red-500';
+    if (impact > 0) return 'bg-emerald-500';
+    return 'bg-rose-500';
   }
 
   function getImpactColor(impact) {
@@ -1543,13 +1543,13 @@ export default function AnalyticsDashboard() {
   function getImpactBadgeClass(impact) {
     switch (impact) {
       case 'High':
-        return 'border-red-500 text-red-700';
+        return 'border-rose-500 text-rose-700';
       case 'Medium':
         return 'border-amber-500 text-amber-700';
       case 'Low':
-        return 'border-blue-500 text-blue-700';
+        return 'border-slate-500 text-slate-700';
       default:
-        return 'border-gray-500 text-gray-700';
+        return 'border-slate-500 text-slate-700';
     }
   }
 }
@@ -1648,8 +1648,8 @@ function CircularProgressIndicator({
 
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      <header className="bg-white/80 border-b border-slate-200/60 backdrop-blur sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-56" />

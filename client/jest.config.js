@@ -6,9 +6,19 @@ export default {
     '^@assets/(.*)$': '<rootDir>/../attached_assets/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  transformIgnorePatterns: ['/node_modules/(?!(@ui|@shared)/)'],
-  collectCoverage: true,
-  coverageReporters: ['text', 'lcov'],
-  coveragePathIgnorePatterns: ['/node_modules/', '/__tests__/setup.js'],
-  transform: {},
+  testMatch: ['**/__tests__/**/*.(test|spec).{js,jsx,ts,tsx}'],
+  testPathIgnorePatterns: ['/node_modules/', '/_archive/', '/__tests__/setup.js', '/_deprecated/'],
+  transformIgnorePatterns: ['/node_modules/(?!wouter)'],
+  transform: {
+    '^.+\\.[tj]sx?$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          ['@babel/preset-react', { runtime: 'automatic' }],
+          '@babel/preset-typescript',
+        ],
+      },
+    ],
+  },
 };

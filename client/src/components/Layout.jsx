@@ -8,13 +8,13 @@ import React from 'react';
  */
 const Layout = ({ children, hideNavigation = false }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       {!hideNavigation && (
-        <nav className="bg-white shadow-sm border-b border-gray-200">
+        <nav className="bg-white/80 backdrop-blur border-b border-zinc-100">
           {/* Navigation would go here if not hidden */}
         </nav>
       )}
-      <main className={hideNavigation ? '' : 'pt-16'}>
+      <main className={hideNavigation ? '' : 'pt-14'}>
         {children}
       </main>
     </div>

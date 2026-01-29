@@ -130,9 +130,9 @@ export default function UseCaseLibrary() {
 
           {/* Additional Value Propositions */}
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-6">
               <div className="mb-4">
-                <BarChart4 className="h-10 w-10 text-blue-600" />
+                <BarChart4 className="h-10 w-10 text-slate-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Data-Backed Decisions</h3>
               <p className="text-muted-foreground">
@@ -141,9 +141,9 @@ export default function UseCaseLibrary() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6">
+            <div className="bg-gradient-to-br from-slate-50/70 to-slate-100/70 rounded-lg p-6">
               <div className="mb-4">
-                <FileText className="h-10 w-10 text-indigo-600" />
+                <FileText className="h-10 w-10 text-slate-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Downloadable Assets</h3>
               <p className="text-muted-foreground">
@@ -152,9 +152,9 @@ export default function UseCaseLibrary() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100/80 rounded-lg p-6">
               <div className="mb-4">
-                <MessageCircle className="h-10 w-10 text-purple-600" />
+                <MessageCircle className="h-10 w-10 text-slate-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Expert Support</h3>
               <p className="text-muted-foreground">

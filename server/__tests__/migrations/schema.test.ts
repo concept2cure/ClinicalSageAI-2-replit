@@ -22,7 +22,7 @@ describe('Migration Files Validation', () => {
 
   describe('Core Cortex Prime Migrations', () => {
     const cortexMigrations = [
-      '073_gcc_cortex_prime_unified_brain.sql',
+      '073_cortex_prime_unified_brain.sql',
       '074_gcc_regulatory_intuition_engine.sql',
       '075_gcc_epistemic_intelligence.sql',
       '076_gcc_causal_inference_engine.sql',
@@ -44,7 +44,7 @@ describe('Migration Files Validation', () => {
     // Check key migrations for required SQL statements
     it('should have CREATE SCHEMA in bootstrap migration', () => {
       const content = fs.readFileSync(
-        path.join(MIGRATIONS_DIR, '000_gcc_bootstrap_core_functions.sql'),
+        path.join(MIGRATIONS_DIR, '000_gcc_bootstrap_core.sql'),
         'utf-8'
       );
       expect(content).toContain('CREATE');
@@ -116,8 +116,8 @@ describe('Migration Manifest', () => {
     
     if (manifestExists) {
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-      expect(manifest.execution_order).toBeDefined();
-      expect(Array.isArray(manifest.execution_order)).toBe(true);
+      expect(manifest.domains).toBeDefined();
+      expect(manifest.conflicts).toBeDefined();
     } else {
       // Manifest not yet created - this is expected before consolidation
       console.log('migrations_manifest.json not yet created');

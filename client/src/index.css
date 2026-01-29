@@ -5,6 +5,34 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --motion-duration-fast: 120ms;
+  --motion-duration-normal: 180ms;
+  --motion-duration-slow: 240ms;
+  --motion-duration-slower: 360ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasize: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-distance-xs: 4px;
+  --motion-distance-sm: 8px;
+  --motion-distance-md: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 1ms;
+    --motion-duration-normal: 1ms;
+    --motion-duration-slow: 1ms;
+    --motion-duration-slower: 1ms;
+  }
+
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
 /* Custom Switch styles for green (ON) and red (OFF) states */
 [role="switch"][aria-checked="true"] {
   background-color: #22c55e !important; /* Green when ON */

@@ -16,7 +16,7 @@ const queryClient = new QueryClient({
 const TaskManagementDemo = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-zinc-50 dark:bg-gray-900">
         <div className="h-screen flex flex-col">
           <TaskManagementSystemEnhanced 
             processId="demo-process-1"

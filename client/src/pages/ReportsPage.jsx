@@ -400,8 +400,8 @@ const ReportsPage = () => {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading report data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-400"></div>
+          <p className="mt-4 text-slate-600">Loading report data...</p>
         </div>
       );
     }
@@ -419,10 +419,10 @@ const ReportsPage = () => {
 
     if (!reportData || reportData.rows?.length === 0) {
       return (
-        <div className="text-center py-12 bg-gray-50 rounded-lg mt-4">
-          <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No data found</h3>
-          <p className="mt-2 text-gray-600">
+        <div className="text-center py-12 bg-slate-50/70 rounded-lg mt-4">
+          <Search className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900">No data found</h3>
+          <p className="mt-2 text-slate-600">
             No report data matches your current filter criteria. Try adjusting your filters or date
             range.
           </p>
@@ -648,10 +648,10 @@ const ReportsPage = () => {
 
       default:
         return (
-          <div className="text-center py-12 bg-gray-50 rounded-lg mt-4">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">Report Under Development</h3>
-            <p className="mt-2 text-gray-600">
+          <div className="text-center py-12 bg-slate-50/70 rounded-lg mt-4">
+            <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900">Report Under Development</h3>
+            <p className="mt-2 text-slate-600">
               The detailed view for this report type is still being implemented. Basic reporting
               functionality is available via the Export button.
             </p>
@@ -661,14 +661,14 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
+    <div className="container mx-auto py-6 max-w-7xl space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <FileBarChart2 className="mr-3 h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center">
+            <FileBarChart2 className="mr-3 h-8 w-8 text-slate-700" />
             CER Reports
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-slate-600 mt-1">
             Comprehensive reporting and analytics for your Clinical Evaluation Reports
           </p>
         </div>
@@ -677,7 +677,7 @@ const ReportsPage = () => {
           <Button
             onClick={exportReportAsPdf}
             disabled={isExporting || isLoading || !!error}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-slate-900 hover:bg-slate-800"
           >
             {isExporting ? (
               <>
@@ -698,21 +698,21 @@ const ReportsPage = () => {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">Generating report...</span>
-            <span className="text-sm text-gray-500">{exportProgress}%</span>
+            <span className="text-sm text-slate-500">{exportProgress}%</span>
           </div>
           <Progress value={exportProgress} className="h-2" />
         </div>
       )}
 
       {/* Report selection and filtering */}
-      <div className="bg-white rounded-lg border p-6 mb-6">
+      <div className="bg-white/80 rounded-2xl border border-slate-200/70 shadow-sm p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <div className="mb-4 md:mb-0 md:w-1/3">
             <Label htmlFor="report-type" className="mb-2 block">
               Report Type
             </Label>
             <Select value={selectedReportType} onValueChange={setSelectedReportType}>
-              <SelectTrigger id="report-type" className="w-full">
+              <SelectTrigger id="report-type" className="w-full bg-white/80 border-slate-200/70">
                 <SelectValue placeholder="Select report type" />
               </SelectTrigger>
               <SelectContent>
@@ -743,6 +743,7 @@ const ReportsPage = () => {
                     setDateRange({ ...dateRange, startDate: date });
                   }
                 }}
+                className="bg-white/80 border-slate-200/70"
               />
             </div>
             <div className="flex-1">
@@ -759,6 +760,7 @@ const ReportsPage = () => {
                     setDateRange({ ...dateRange, endDate: date });
                   }
                 }}
+                className="bg-white/80 border-slate-200/70"
               />
             </div>
           </div>
@@ -766,8 +768,8 @@ const ReportsPage = () => {
 
         <div className="mt-6">
           <div className="flex items-center mb-4">
-            <Filter className="h-5 w-5 text-gray-500 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Report Filters</h3>
+            <Filter className="h-5 w-5 text-slate-500 mr-2" />
+            <h3 className="text-lg font-medium text-slate-900">Report Filters</h3>
           </div>
 
           {renderFilterControls()}
@@ -775,12 +777,12 @@ const ReportsPage = () => {
       </div>
 
       {/* Report content */}
-      <div className="bg-white rounded-lg border p-6">
+      <div className="bg-white/80 rounded-2xl border border-slate-200/70 shadow-sm p-6">
         <div className="flex items-center mb-4">
           {reportTypes.find(r => r.id === selectedReportType)?.icon || (
             <FileText className="h-5 w-5 mr-2" />
           )}
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-slate-900">
             {reportTypes.find(r => r.id === selectedReportType)?.name || 'Report'}
           </h2>
         </div>

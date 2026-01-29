@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { CheckCircle, ChevronRight } from 'lucide-react';
 import Layout from '../components/Layout';
-import { useAuth } from '../hooks/use-auth';
+import { useAuth } from '../portal-v2/services/authService';
 
 const SubscribedSolutions = () => {
   const { user } = useAuth();
@@ -70,7 +70,9 @@ const SubscribedSolutions = () => {
         <div className="flex flex-col md:flex-row justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Your TrialSage Solutions</h1>
-            <p className="text-gray-600 mt-2">Welcome back, {user?.name || 'Valued Customer'}</p>
+            <p className="text-gray-600 mt-2">
+              Welcome back, {user?.displayName || user?.email || 'Valued Customer'}
+            </p>
           </div>
 
           <div className="mt-4 md:mt-0">

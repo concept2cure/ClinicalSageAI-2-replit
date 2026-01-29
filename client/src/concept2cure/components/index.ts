@@ -23,6 +23,23 @@ export * from './artifacts';
 export * from './templates';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CONVERGENT CANVAS - Phase 52 Sherpa System
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  ConvergentCanvas,
+  MorningBriefingPanel,
+  CouncilThreadPanel,
+  IndustryWorkspace,
+  SHERPA_PERSONAS,
+  CANVAS_ZONES,
+  type CanvasZone,
+  type IndustryType,
+  type IndustryWorkspaceProps,
+  type SherpaPersonaId,
+} from './canvas';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ZEN MINIMALIST COMPONENTS (Claude.ai / ChatGPT style)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -35,12 +52,46 @@ export { ZenSettings } from './settings';
 // Projects
 export { ProjectSwitcher } from './projects';
 
+// Welcome & Onboarding (Claude.ai style)
+export { WelcomeBackScreen } from './common/WelcomeBackScreen';
+
+// Assistant Components
+export { LumenProjectAssistant } from './assistant/LumenProjectAssistant';
+
+// Artifact Viewer (Claude.ai style)
+export { ArtifactViewer } from './artifacts/ArtifactViewer';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ENTERPRISE REGULATORY COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Dashboard Components
 export { RoleDashboard } from './dashboards/RoleDashboard';
+export { IndustryRoleDashboard } from './dashboards/IndustryRoleDashboard';
+
+// Calendar Components
+export { RegulatoryCalendar } from './calendar/RegulatoryCalendar';
+
+// Submission Components
+export { DossierNavigator } from './submission/DossierNavigator';
+
+// Medical Writing Components
+export { MedicalWriterQueue } from './writing/MedicalWriterQueue';
+
+// CRO Components
+export { CROResourceDashboard } from './cro/CROResourceDashboard';
+
+// Collaboration Components
+export { TeamCollaborationPanel } from './collaboration/TeamCollaborationPanel';
+
+// Wizard Components
+export { QuickStartWizard } from './wizard/QuickStartWizard';
+
+// Shell Components
+export { IndustryWorkspaceShell } from './shell/IndustryWorkspaceShell';
+
+// Projects
+export { ProjectTimeline } from './projects/ProjectTimeline';
 
 // Quality Components
 export { SOPManagement } from './quality/SOPManagement';

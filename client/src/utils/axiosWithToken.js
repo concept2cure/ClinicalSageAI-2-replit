@@ -39,7 +39,7 @@ axiosWithToken.interceptors.response.use(
         console.log('Unauthorized access, redirecting to login');
         // Optional: redirect to login page or refresh token
         localStorage.removeItem('token');
-        window.location.href = '/auth';
+        window.location.href = '/concept2cure/login';
       }
 
       if (error.response.status === 403) {

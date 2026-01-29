@@ -40,15 +40,16 @@ vi.mock('../../server/db', () => ({
       })),
     })),
     insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([{
-          id: 1,
-          artifactId: 'artifact_test',
-          conversationId: null,
-          organizationId: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }]),
+      values: vi.fn((payload: any) => ({
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: payload?.id ?? 1,
+            ...payload,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            version: payload?.version ?? 1,
+          },
+        ]),
       })),
     })),
     update: vi.fn(() => ({
@@ -126,10 +127,10 @@ describe('Concept2Cure API', () => {
     await handler(req, res);
 
     expectStatus(res, 201);
-    expectJson(res, expect.objectContaining({
+    expectJson(res, {
       name: 'Test Project',
       submissionType: 'IND',
-    }));
+    });
   });
 
   it('should create a conversation for a project', async () => {
@@ -150,9 +151,9 @@ describe('Concept2Cure API', () => {
     await handler(req, res);
 
     expectStatus(res, 201);
-    expectJson(res, expect.objectContaining({
+    expectJson(res, {
       title: 'New Conversation',
-    }));
+    });
   });
 
   it('should create an artifact for a project', async () => {
@@ -178,9 +179,9 @@ describe('Concept2Cure API', () => {
     await handler(req, res);
 
     expectStatus(res, 201);
-    expectJson(res, expect.objectContaining({
+    expectJson(res, {
       title: 'Test Artifact',
-    }));
+    });
   });
 
   it('should create a signature for an artifact version', async () => {
@@ -205,8 +206,8 @@ describe('Concept2Cure API', () => {
     await handler(req, res);
 
     expectStatus(res, 201);
-    expectJson(res, expect.objectContaining({
+    expectJson(res, {
       signaturePurpose: 'Approved for submission',
-    }));
+    });
   });
 });

@@ -111,6 +111,75 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const dbPool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 const textProcessor = new TextProcessor();
 
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+  'application/xml',
+  'text/xml',
+  'application/json',
+  'image/png',
+  'image/jpeg',
+  'image/tiff',
+  'application/zip',
+  'application/x-zip-compressed',
+  'multipart/x-zip',
+]);
+
+const MAGIC_SIGNATURES = [
+  { mime: 'application/pdf', magic: Buffer.from('%PDF') },
+  { mime: 'image/png', magic: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
+  { mime: 'image/jpeg', magic: Buffer.from([0xff, 0xd8, 0xff]) },
+  { mime: 'application/zip', magic: Buffer.from([0x50, 0x4b, 0x03, 0x04]) },
+];
+
+const isLikelyText = (buffer) => {
+  const sample = buffer.subarray(0, 2048);
+  if (sample.includes(0)) return false;
+  let printable = 0;
+  for (const byte of sample) {
+    if (byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte <= 126)) {
+      printable += 1;
+    }
+  }
+  return printable / sample.length > 0.9;
+};
+
+const matchesMagic = (buffer, magic) =>
+  buffer.length >= magic.length && buffer.subarray(0, magic.length).equals(magic);
+
+const validateFileSignature = (buffer, mimeType) => {
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    throw new Error('Unsupported file type');
+  }
+
+  const zipBasedMimes = new Set([
+    'application/zip',
+    'application/x-zip-compressed',
+    'multipart/x-zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ]);
+
+  const magicMatch = MAGIC_SIGNATURES.find((sig) => matchesMagic(buffer, sig.magic));
+
+  if (zipBasedMimes.has(mimeType)) {
+    if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
+      throw new Error('Invalid ZIP-based file signature');
+    }
+  } else if (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml')) {
+    if (!isLikelyText(buffer)) {
+      throw new Error('Invalid text file content');
+    }
+  } else if (magicMatch && magicMatch.mime !== mimeType && mimeType !== 'application/zip') {
+    throw new Error('File signature does not match MIME type');
+  }
+};
+
 // Central storage configuration
 const STORAGE_PATHS = {
   uploads: path.join(process.cwd(), 'uploads'),
@@ -151,6 +220,17 @@ export class UnifiedDocumentIngestion {
     console.log(`[UNIFIED INGESTION] Starting processing: ${file.originalname}`);
     console.log(`[UNIFIED INGESTION] Module: ${options.module || 'general'}`);
     console.log(`[UNIFIED INGESTION] Context: ${options.context || 'unknown'}`);
+
+    try {
+      const bufferToValidate = file.buffer
+        ? file.buffer
+        : file.path
+          ? fs.readFileSync(file.path)
+          : Buffer.alloc(0);
+      validateFileSignature(bufferToValidate, file.mimetype);
+    } catch (error) {
+      throw new Error(`Upload validation failed: ${error.message}`);
+    }
 
     try {
       // CRITICAL: Handle memoryStorage by creating temporary file for Python service

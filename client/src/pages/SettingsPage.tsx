@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/portal-v2/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Lock, User, Globe, Eye, Database, Shield, Mail, Bot, RefreshCw, Key, Copy } from "lucide-react";

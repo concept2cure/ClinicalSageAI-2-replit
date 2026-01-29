@@ -21,7 +21,7 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/portal-v2/services/authService';
 import { useTenant } from '@/contexts/TenantContext';
 
 // Types
@@ -202,7 +202,7 @@ const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
 };
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { currentOrganization, currentClientWorkspace } = useTenant();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -266,16 +266,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
 
       // Build profile from auth user and tenant context
+      const primaryRole = (user.roles?.[0] as UserRole) || 'viewer';
       const userProfile: UserProfile = {
         id: user.id?.toString() || '1',
         email: user.email || '',
-        name: user.name || user.username || 'User',
-        role: (user.role as UserRole) || 'viewer',
-        roles: (user.roles as UserRole[]) || [(user.role as UserRole) || 'viewer'],
-        organizationId: currentOrganization?.id?.toString() || '',
-        organizationName: currentOrganization?.name || 'Organization',
+        name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+        role: primaryRole,
+        roles: (user.roles as UserRole[]) || [primaryRole],
+        organizationId: user.organizationId || currentOrganization?.id?.toString() || '',
+        organizationName: user.organizationName || currentOrganization?.name || 'Organization',
         mfaEnabled: user.mfaEnabled || false,
-        lastLogin: user.lastLogin,
+        lastLogin: user.lastLoginAt?.toString(),
         preferences: {
           theme: 'light',
           notifications: true,

@@ -12500,10 +12500,29 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
             {/* Workflow Plan Results */}
             {workflowPlan && (
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium mb-3 flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                  AI Workflow Progression Plan
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                    AI Workflow Progression Plan
+                  </h4>
+                  {(() => {
+                    const proofRunId =
+                      workflowPlan?.workflowRunId ||
+                      workflowPlan?.id ||
+                      workflowTimeline?.workflowRunId ||
+                      workflowDashboard?.workflowRunId;
+                    if (!proofRunId) return null;
+                    return (
+                      <a
+                        href={`/concept2cure/proofs/${proofRunId}`}
+                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center"
+                      >
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                        View Proof
+                      </a>
+                    );
+                  })()}
+                </div>
                 
                 {/* Reusable Content Analysis */}
                 <div className="mb-4">

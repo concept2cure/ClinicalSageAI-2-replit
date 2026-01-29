@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import {
   FileText,
   Download,
@@ -38,22 +39,26 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 
 // Example HTML preview for HTML documents
-const HtmlPreview = ({ htmlContent }) => (
-  <div className="w-full h-full border rounded-lg overflow-hidden bg-white">
-    <div className="border-b border-gray-200 px-3 py-2 flex items-center justify-between">
-      <div className="flex items-center">
-        <FileCode size={16} className="text-blue-600 mr-2" />
-        <span className="text-sm font-medium">HTML Preview</span>
+const HtmlPreview = ({ htmlContent }) => {
+  const sanitizedHtml = DOMPurify.sanitize(htmlContent || '', { USE_PROFILES: { html: true } });
+
+  return (
+    <div className="w-full h-full border rounded-lg overflow-hidden bg-white">
+      <div className="border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+        <div className="flex items-center">
+          <FileCode size={16} className="text-blue-600 mr-2" />
+          <span className="text-sm font-medium">HTML Preview</span>
+        </div>
       </div>
+      <iframe
+        srcDoc={sanitizedHtml}
+        className="w-full h-[calc(100%-40px)]"
+        title="HTML Preview"
+        sandbox="allow-same-origin"
+      />
     </div>
-    <iframe
-      srcDoc={htmlContent}
-      className="w-full h-[calc(100%-40px)]"
-      title="HTML Preview"
-      sandbox="allow-same-origin"
-    />
-  </div>
-);
+  );
+};
 
 // Placeholder for PDF preview (in a real app, use a PDF viewer library)
 const PdfPreview = ({ document }) => (

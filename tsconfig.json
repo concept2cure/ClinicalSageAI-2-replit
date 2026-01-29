@@ -23,5 +23,24 @@
     }
   },
   "include": ["client/src/**/*", "server/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "dist", "**/*_backup*", "**/backup*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*_backup*",
+    "**/backup*",
+    "_archive/**",
+    "**/_archive/**",
+    "client/src/components/layout/UpdatedSidebar.tsx",
+    "client/src/components/layout/UpdatedSidebar.new.tsx",
+    "client/src/components/layout/MergedSidebar.tsx",
+    "client/src/components/layout/NewSidebar.tsx",
+    "client/src/lib/authClient.ts",
+    "client/src/contexts/AuthContext.tsx",
+    "client/src/contexts/AuthContext.jsx",
+    "client/src/hooks/use-auth.jsx",
+    "client/src/pages/AuthPage.jsx",
+    "client/src/pages/TrialSageSignOn.jsx",
+    "client/src/pages/SignupPage.tsx",
+    "client/src/components/AuthRedirector.jsx"
+  ]
 }

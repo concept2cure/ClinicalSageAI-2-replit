@@ -38,7 +38,7 @@ api.interceptors.response.use(
 
         // Only redirect to login if not already on the login page
         if (window.location.pathname !== '/auth') {
-          window.location.href = '/auth';
+          window.location.href = '/concept2cure/login';
         }
       }
 

@@ -281,15 +281,15 @@ export default function WisdomTrace() {
           </TabsList>
 
           {/* The query and recommendation section - this appears in all tabs */}
-          <Card className="bg-slate-50">
+          <Card className="bg-white border border-zinc-200/60 shadow-sm">
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <MessageSquare className="h-4 w-4 text-slate-500" />
-                    <h3 className="text-sm font-medium text-slate-500">Original Query</h3>
+                    <MessageSquare className="h-4 w-4 text-zinc-500" />
+                    <h3 className="text-sm font-medium text-zinc-500">Original Query</h3>
                   </div>
-                  <p className="text-slate-900 font-medium">"{mockWisdomTrace.query}"</p>
+                  <p className="text-zinc-900 font-medium">"{mockWisdomTrace.query}"</p>
                 </div>
 
                 <Separator />
@@ -301,57 +301,57 @@ export default function WisdomTrace() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-semibold text-slate-900">Recommendation</h3>
-                        <Badge className="bg-primary/10 text-primary border-primary/20">
+                        <h3 className="text-lg font-semibold text-zinc-900">Recommendation</h3>
+                        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
                           {mockWisdomTrace.confidenceScore}% Confidence
                         </Badge>
                         <Badge
                           variant="outline"
-                          className="bg-blue-50 text-blue-700 border-blue-200"
+                          className="bg-zinc-50 text-zinc-600 border-zinc-200"
                         >
                           <Clock className="h-3 w-3 mr-1" />
                           {new Date(mockWisdomTrace.timestamp).toLocaleString()}
                         </Badge>
                       </div>
-                      <p className="text-slate-700 mt-1">{mockWisdomTrace.recommendation}</p>
+                      <p className="text-zinc-700 mt-1">{mockWisdomTrace.recommendation}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
-                  <div className="flex flex-col items-center p-3 bg-white rounded-lg border">
-                    <div className="text-sm font-medium text-slate-500 mb-1 flex items-center">
+                  <div className="flex flex-col items-center p-3 bg-white rounded-xl border border-zinc-200/60">
+                    <div className="text-sm font-medium text-zinc-500 mb-1 flex items-center">
                       <FileText className="h-4 w-4 mr-1 text-blue-500" />
                       CSR Documents
                     </div>
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-2xl font-semibold text-zinc-900">
                       {mockWisdomTrace.dataSources.csrDocuments}
                     </div>
                   </div>
-                  <div className="flex flex-col items-center p-3 bg-white rounded-lg border">
-                    <div className="text-sm font-medium text-slate-500 mb-1 flex items-center">
+                  <div className="flex flex-col items-center p-3 bg-white rounded-xl border border-zinc-200/60">
+                    <div className="text-sm font-medium text-zinc-500 mb-1 flex items-center">
                       <Scale className="h-4 w-4 mr-1 text-purple-500" />
                       Regulatory Sources
                     </div>
-                    <div className="text-2xl font-bold text-purple-600">
+                    <div className="text-2xl font-semibold text-zinc-900">
                       {mockWisdomTrace.dataSources.regulatoryGuidance}
                     </div>
                   </div>
-                  <div className="flex flex-col items-center p-3 bg-white rounded-lg border">
-                    <div className="text-sm font-medium text-slate-500 mb-1 flex items-center">
+                  <div className="flex flex-col items-center p-3 bg-white rounded-xl border border-zinc-200/60">
+                    <div className="text-sm font-medium text-zinc-500 mb-1 flex items-center">
                       <BookOpen className="h-4 w-4 mr-1 text-emerald-500" />
                       Academic Papers
                     </div>
-                    <div className="text-2xl font-bold text-emerald-600">
+                    <div className="text-2xl font-semibold text-zinc-900">
                       {mockWisdomTrace.dataSources.academicPublications}
                     </div>
                   </div>
-                  <div className="flex flex-col items-center p-3 bg-white rounded-lg border">
-                    <div className="text-sm font-medium text-slate-500 mb-1 flex items-center">
+                  <div className="flex flex-col items-center p-3 bg-white rounded-xl border border-zinc-200/60">
+                    <div className="text-sm font-medium text-zinc-500 mb-1 flex items-center">
                       <Beaker className="h-4 w-4 mr-1 text-amber-500" />
                       Expert Guidelines
                     </div>
-                    <div className="text-2xl font-bold text-amber-600">
+                    <div className="text-2xl font-semibold text-zinc-900">
                       {mockWisdomTrace.dataSources.expertGuidelines}
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export default function WisdomTrace() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-slate-700" />
+                  <Brain className="h-5 w-5 text-zinc-700" />
                   Reasoning Process
                 </CardTitle>
                 <CardDescription>
@@ -373,7 +373,7 @@ export default function WisdomTrace() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="relative border-l-2 border-slate-200 pl-8 space-y-8 py-2">
+                <div className="relative border-l-2 border-zinc-200 pl-8 space-y-8 py-2">
                   {mockWisdomTrace.reasoningPath.map((step, index) => (
                     <div key={index} className="relative">
                       {/* Step marker */}
@@ -383,17 +383,17 @@ export default function WisdomTrace() {
 
                       {/* Step content */}
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900">{step.title}</h3>
-                        <p className="text-slate-600 mt-1">{step.description}</p>
+                        <h3 className="text-xl font-semibold text-zinc-900">{step.title}</h3>
+                        <p className="text-zinc-600 mt-1">{step.description}</p>
 
                         {/* Sub-steps */}
                         <div className="mt-4 space-y-3">
                           {step.substeps.map((substep, subIndex) => (
-                            <div key={subIndex} className="bg-slate-50 p-4 rounded-lg border">
+                            <div key={subIndex} className="bg-white p-4 rounded-xl border border-zinc-200/60">
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                                 <div>
-                                  <h4 className="font-medium text-slate-900">{substep.title}</h4>
-                                  <p className="text-slate-600 text-sm mt-1">
+                                  <h4 className="font-medium text-zinc-900">{substep.title}</h4>
+                                  <p className="text-zinc-600 text-sm mt-1">
                                     {substep.description}
                                   </p>
                                 </div>
@@ -402,7 +402,7 @@ export default function WisdomTrace() {
                                   className={`
                                     ${
                                       substep.confidence >= 90
-                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                         : substep.confidence >= 80
                                           ? 'bg-blue-50 text-blue-700 border-blue-200'
                                           : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -420,7 +420,7 @@ export default function WisdomTrace() {
                         {/* Connector arrow for all but the last step */}
                         {index < mockWisdomTrace.reasoningPath.length - 1 && (
                           <div className="flex justify-center my-4">
-                            <ArrowRight className="h-6 w-6 text-slate-400" />
+                            <ArrowRight className="h-6 w-6 text-zinc-400" />
                           </div>
                         )}
                       </div>
@@ -433,21 +433,21 @@ export default function WisdomTrace() {
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-green-700">
+                      <h3 className="text-xl font-semibold text-emerald-700">
                         Final Recommendation Generated
                       </h3>
-                      <p className="text-slate-600 mt-1">
+                      <p className="text-zinc-600 mt-1">
                         The system synthesized all evidence and reasoning into a comprehensive
                         recommendation
                       </p>
-                      <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <Sparkles className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-green-800">
+                          <Sparkles className="h-4 w-4 text-emerald-600" />
+                          <span className="font-medium text-emerald-800">
                             Recommendation Confidence: {mockWisdomTrace.confidenceScore}%
                           </span>
                         </div>
-                        <p className="text-slate-700">{mockWisdomTrace.recommendation}</p>
+                        <p className="text-zinc-700">{mockWisdomTrace.recommendation}</p>
                       </div>
                     </div>
                   </div>
@@ -461,7 +461,7 @@ export default function WisdomTrace() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileSearch className="h-5 w-5 text-slate-700" />
+                  <FileSearch className="h-5 w-5 text-zinc-700" />
                   Evidence Base
                 </CardTitle>
                 <CardDescription>Key evidence that supports the recommendation</CardDescription>
@@ -469,10 +469,10 @@ export default function WisdomTrace() {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                    <Badge className="bg-blue-50 text-blue-700 border border-blue-200">
                       Primary Evidence
                     </Badge>
-                    <span className="text-slate-500 text-sm font-normal">
+                    <span className="text-zinc-500 text-sm font-normal">
                       Highest weight in recommendation
                     </span>
                   </h3>
@@ -480,7 +480,7 @@ export default function WisdomTrace() {
                   {mockWisdomTrace.evidenceHighlights
                     .filter(evidence => evidence.weight === 'Primary')
                     .map((evidence, index) => (
-                      <Card key={index} className="bg-blue-50/50">
+                      <Card key={index} className="bg-white border border-blue-200/50 shadow-sm">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between">
                             <CardTitle className="text-lg text-blue-900">
@@ -488,7 +488,7 @@ export default function WisdomTrace() {
                             </CardTitle>
                             <Badge
                               variant="outline"
-                              className="bg-blue-100 text-blue-800 border-blue-200"
+                              className="bg-blue-50 text-blue-700 border-blue-200"
                             >
                               Primary Evidence
                             </Badge>
@@ -499,15 +499,15 @@ export default function WisdomTrace() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="bg-white p-3 rounded-md border border-blue-200">
-                            <p className="text-slate-700 italic">"{evidence.excerpt}"</p>
+                          <div className="bg-blue-50/40 p-3 rounded-md border border-blue-200/60">
+                            <p className="text-zinc-700 italic">"{evidence.excerpt}"</p>
                           </div>
                         </CardContent>
                         <CardFooter className="pt-0">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                           >
                             <FileText className="h-4 w-4 mr-1" />
                             View Full Source
@@ -517,10 +517,10 @@ export default function WisdomTrace() {
                     ))}
 
                   <h3 className="text-lg font-semibold pt-4 flex items-center gap-2">
-                    <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-200">
+                    <Badge className="bg-zinc-100 text-zinc-700 border border-zinc-200">
                       Supporting Evidence
                     </Badge>
-                    <span className="text-slate-500 text-sm font-normal">
+                    <span className="text-zinc-500 text-sm font-normal">
                       Contributed to recommendation confidence
                     </span>
                   </h3>
@@ -528,15 +528,15 @@ export default function WisdomTrace() {
                   {mockWisdomTrace.evidenceHighlights
                     .filter(evidence => evidence.weight === 'Supporting')
                     .map((evidence, index) => (
-                      <Card key={index} className="bg-slate-50/80">
+                      <Card key={index} className="bg-white border border-zinc-200/60 shadow-sm">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between">
-                            <CardTitle className="text-lg text-slate-800">
+                            <CardTitle className="text-lg text-zinc-800">
                               {evidence.title}
                             </CardTitle>
                             <Badge
                               variant="outline"
-                              className="bg-slate-100 text-slate-700 border-slate-200"
+                              className="bg-zinc-100 text-zinc-700 border-zinc-200"
                             >
                               Supporting Evidence
                             </Badge>
@@ -547,15 +547,15 @@ export default function WisdomTrace() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="bg-white p-3 rounded-md border border-slate-200">
-                            <p className="text-slate-700 italic">"{evidence.excerpt}"</p>
+                          <div className="bg-zinc-50 p-3 rounded-md border border-zinc-200">
+                            <p className="text-zinc-700 italic">"{evidence.excerpt}"</p>
                           </div>
                         </CardContent>
                         <CardFooter className="pt-0">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                            className="text-zinc-600 hover:text-zinc-800 hover:bg-zinc-100"
                           >
                             <FileText className="h-4 w-4 mr-1" />
                             View Full Source
@@ -569,7 +569,7 @@ export default function WisdomTrace() {
 
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Context Factors</h3>
-                  <Card className="bg-amber-50/50">
+                  <Card className="bg-white border border-amber-200/60 shadow-sm">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-md">User-Provided Context</CardTitle>
                     </CardHeader>
@@ -578,12 +578,12 @@ export default function WisdomTrace() {
                         {Object.entries(mockWisdomTrace.userContext).map(([key, value], index) => (
                           <div
                             key={index}
-                            className="bg-white p-3 rounded-md border border-amber-200"
+                            className="bg-amber-50/50 p-3 rounded-md border border-amber-200/60"
                           >
                             <div className="text-sm font-medium text-amber-800 capitalize mb-1">
                               {key}
                             </div>
-                            <div className="text-slate-700">{value}</div>
+                            <div className="text-zinc-700">{value}</div>
                           </div>
                         ))}
                       </div>
@@ -599,7 +599,7 @@ export default function WisdomTrace() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Network className="h-5 w-5 text-slate-700" />
+                  <Network className="h-5 w-5 text-zinc-700" />
                   Alternative Approaches
                 </CardTitle>
                 <CardDescription>
@@ -607,19 +607,19 @@ export default function WisdomTrace() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    <h3 className="font-semibold text-green-800">Recommended Approach</h3>
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    <h3 className="font-semibold text-emerald-800">Recommended Approach</h3>
                   </div>
-                  <p className="text-slate-700 mb-3 bg-white p-3 rounded-md border border-green-200">
+                  <p className="text-zinc-700 mb-3 bg-white p-3 rounded-md border border-emerald-200">
                     {mockWisdomTrace.recommendation}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-emerald-100 text-emerald-800">
                       {mockWisdomTrace.confidenceScore}% Confidence
                     </Badge>
-                    <span className="text-sm text-green-700">
+                    <span className="text-sm text-emerald-700">
                       Optimal balance of evidence, regulatory acceptance, and feasibility
                     </span>
                   </div>
@@ -631,7 +631,7 @@ export default function WisdomTrace() {
                   <h3 className="text-lg font-semibold">Alternative Options Considered</h3>
 
                   {mockWisdomTrace.alternativeOptions.map((option, index) => (
-                    <Card key={index} className="bg-slate-50">
+                    <Card key={index} className="bg-white border border-zinc-200/60 shadow-sm">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between">
                           <CardTitle className="text-lg">{option.title}</CardTitle>
@@ -650,7 +650,7 @@ export default function WisdomTrace() {
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
+                            <h4 className="text-sm font-medium text-emerald-700 mb-2 flex items-center gap-1">
                               <CheckCircle2 className="h-4 w-4" />
                               Advantages
                             </h4>
@@ -658,7 +658,7 @@ export default function WisdomTrace() {
                               {option.pros.map((pro, proIndex) => (
                                 <li
                                   key={proIndex}
-                                  className="bg-white p-2 rounded-md border border-green-100 text-slate-700"
+                                  className="bg-white p-2 rounded-md border border-emerald-100 text-zinc-700"
                                 >
                                   {pro}
                                 </li>
@@ -674,7 +674,7 @@ export default function WisdomTrace() {
                               {option.cons.map((con, conIndex) => (
                                 <li
                                   key={conIndex}
-                                  className="bg-white p-2 rounded-md border border-red-100 text-slate-700"
+                                  className="bg-white p-2 rounded-md border border-red-100 text-zinc-700"
                                 >
                                   {con}
                                 </li>
@@ -685,11 +685,11 @@ export default function WisdomTrace() {
                       </CardContent>
                       <CardFooter>
                         <div className="w-full">
-                          <div className="flex justify-between text-sm text-slate-500 mb-1">
+                          <div className="flex justify-between text-sm text-zinc-500 mb-1">
                             <span>Recommendation Strength</span>
                             <span>{option.recommendationStrength}</span>
                           </div>
-                          <div className="w-full bg-slate-200 rounded-full h-2.5">
+                          <div className="w-full bg-zinc-200 rounded-full h-2.5">
                             <div
                               className={`h-2.5 rounded-full ${
                                 option.recommendationStrength.startsWith('Moderate')
@@ -707,14 +707,14 @@ export default function WisdomTrace() {
                   ))}
                 </div>
 
-                <Card className="border-dashed border-2">
+                <Card className="border-dashed border-2 border-zinc-200">
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center text-center space-y-3">
-                      <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-                        <Sparkles className="h-6 w-6 text-slate-600" />
+                      <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center">
+                        <Sparkles className="h-6 w-6 text-zinc-600" />
                       </div>
                       <h3 className="text-lg font-medium">Why the Recommendation Is Optimal</h3>
-                      <p className="text-slate-600 max-w-2xl">
+                      <p className="text-zinc-600 max-w-2xl">
                         The recommended composite endpoint approach balances regulatory requirements
                         with practical implementation considerations. It has the strongest evidence
                         base and highest likelihood of demonstrating treatment effect while

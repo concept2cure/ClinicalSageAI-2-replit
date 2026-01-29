@@ -1,122 +1,119 @@
-# ROADMAP_INVENTORY — Concept2Cure Step 2 Compliance Audit
-**Audit Date:** 2026-01-28  
-**Audit Scope:** Step 2 (Phase 2: Submission Pyramids)  
-**Canonical Source:** [docs/CONCEPT2CURE_ROADMAP_PART4.md](CONCEPT2CURE_ROADMAP_PART4.md)
+# Concept2Cure Roadmap Inventory v4.0
+> **GA Target Date:** March 28, 2026  
+> **Current Sprint:** Phase 4.1 (Proof System — Enterprise Completion Gate)  
+> **Status:** Remediation Required — 4.1 must complete before 4.2
+
+## 🚦 Phase Status Dashboard
+
+| Phase | Component | Status | Quality Gate | Blockers |
+|-------|-----------|--------|--------------|----------|
+| 0 | Environment | ✅ Complete | Passed | - |
+| 1 | Database + RLS | ✅ Complete | Passed | - |
+| 2 | Projects UX | ⚠️ Remediation | Failed A11y | Missing 508 compliance |
+| 3 | Predictive AI | ✅ Complete | Passed | - |
+| 3.5 | Multi-Agent | ✅ Complete | Passed | - |
+| **4** | **Workflow Engine** | **🔄 In Progress** | **Pending** | **A11y, Testing, Security** |
+| 5 | Intelligent Docs | ⏳ Blocked | - | Phase 4 completion |
+| 6 | eCTD Export | ⏳ Blocked | - | Phase 4 completion |
+| 7 | Mission Control | ⏳ Blocked | - | Phase 4 completion |
+| 8 | HAQ Manager | ⏳ Blocked | - | Phase 4 completion |
+| 9 | Data Ingestion | ⏳ Blocked | - | Vendor APIs |
+| 10 | Validation | ⏳ Blocked | - | All prior phases |
+| 11 | Marketplace | 🔮 Future | - | Post-GA |
+
+## 🎯 Current Sprint Goals (Weeks 6-8)
+
+### Week 6: Security & Performance
+- [ ] Implement API rate limiting (Redis-backed)
+- [ ] Add database indexes for workflow queries
+- [ ] Integrate DOMPurify XSS protection
+- [ ] Implement connection pooling
+
+### Phase 4.1 Enhancement: Proof System (Weeks 6-9)
+- [ ] Formal Compliance Graph compiler (DAG + invariants)
+- [ ] Zero-Knowledge authorization proofs (privacy-preserving)
+- [ ] Delta Verification Engine (compliance drift detection)
+- [ ] Compliance Certificate generator (SNARK-ready proof object)
+- [ ] Proof Explorer UI for certificate visualization
+
+#### Phase 4.1 Completion Gate (Enterprise Grade, Audited)
+**Rule:** Phase 4.2 is blocked until all Phase 4.1 acceptance criteria pass.
+
+**Component Acceptance Criteria (must pass):**
+- **Formal Compliance Graph**: deterministic DAG compilation, invariants validated, cycle detection, stable hashes; negative tests for malformed/partial workflows.
+- **ZK Authorization Proofs**: role-scoped authorization statements, privacy-preserving public signals, failure on missing/invalid signatures, deterministic verification.
+- **Delta Verification Engine**: baseline snapshot hashing, drift detection on workflow/state changes, explicit diff report, false-positive rate <1% in regression suite.
+- **Compliance Certificate Generator**: immutable certificate schema, cryptographic binding to workflow run, reproducible proof bundle, verification round-trip succeeds.
+- **Proof Explorer UI**: renders certificate + verification status, handles empty/error/loading, displays failure reasons, access controlled.
+
+**Milestone Acceptance Criteria (must pass):**
+- **M1 Graph Integrity**: DAG compiles from workflow definition, invariants + hashes validated, audit log entries created.
+- **M2 Auth Proofs**: ZK auth proof emitted per approval/signature gate; negative tests for revoked/expired permissions.
+- **M3 Drift Detection**: delta verification flags unauthorized step edits or data changes; audit trail includes diff summary.
+- **M4 Certificate**: certificate generated on workflow completion; verification endpoint validates and times within SLA.
+- **M5 UI + Ops**: Proof Explorer + dashboard entry points show verification; redacted logs; performance budgets met.
+
+### Week 7: Accessibility & UI Polish (🔴 CRITICAL)
+- [ ] WCAG 2.1 AA audit remediation
+- [ ] Keyboard navigation for WorkflowTimeline
+- [ ] Screen reader testing (NVDA, JAWS, VoiceOver)
+- [ ] Color contrast validation (4.5:1 minimum)
+
+### Week 8: Testing & Validation
+- [ ] Playwright E2E suite (IND golden path)
+- [ ] Unit test coverage >90% (workflow services)
+- [ ] IQ/OQ/PQ documentation structure
+- [ ] OpenTelemetry tracing implementation
+
+## ⚠️ Technical Debt Register
+
+| Debt Item | Phase | Severity | Sprint | Owner |
+|-----------|-------|----------|--------|-------|
+| Missing aria-labels | 4.2 | 🔴 High | Week 7 | UI Team |
+| Hardcoded LLM config | 3.5 | 🟠 Med | Week 6 | Backend |
+| No DLQ for workflows | 4.1 | 🔴 High | Week 6 | Backend |
+| Console.error in prod | 2 | 🟠 Med | Week 7 | UI Team |
+| Missing query indexes | 1 | 🔴 High | Week 6 | DBA |
+| No 508 compliance | 2 | 🔴 Critical | Week 7 | UI Team |
+
+## 🏛️ Three Pillars Health
+
+### Pillar 1: Trust Rails 🔐
+- **Status:** ✅ Strong
+- **Last Verified:** 2026-01-29
+- **Gap:** Document watermarking for exports
+
+### Pillar 2: Workflow-as-Contract 📜
+- **Status:** 🔄 In Progress
+- **Gap:** Dead Letter Queue, Circuit breakers
+
+### Pillar 3: Submission-as-Asset 💎
+- **Status:** ⚠️ Partial
+- **Gap:** Asset state machine not enforced in UI (soft states only)
+
+## 🚨 GA Release Criteria (Must Pass)
+
+- [ ] 0 Critical security vulnerabilities (Snyk/Dependabot)
+- [ ] WCAG 2.1 AA compliance certificate
+- [ ] E2E test coverage >80% (critical paths)
+- [ ] Workflow engine load test: 1000 concurrent runs
+- [ ] RLS penetration test: 0 tenant isolation failures
+- [ ] Documentation: IQ/OQ/PQ complete
+- [ ] Incident runbook tested (simulated outage)
+- [ ] Accessibility audit report (third-party)
+- [ ] Performance: Lighthouse >90 all categories
+- [ ] Backup/Recovery tested (RPO <1 hour, RTO <4 hours)
+
+## 📞 Emergency Contacts
+
+| Role | Contact | Escalation |
+|------|---------|------------|
+| Engineering Lead | @lead-engineer | 24h |
+| Compliance Officer | @compliance | 24h |
+| Product Owner | @product | Business hours |
+| Security Lead | @security | 24h |
 
 ---
 
-## Canonical Roadmap Files Identified (9 Total)
-
-| # | File | Authority | Content |
-|---|------|-----------|---------|
-| 1 | CONCEPT2CURE_ROADMAP_PART1.md | AUTHORITATIVE | Lumen Cortex AI System, Portal Architecture |
-| 2 | CONCEPT2CURE_ROADMAP_PART2.md | SUPERSEDED | 10-Week Plan (replaced by Part 4) |
-| 3 | CONCEPT2CURE_ROADMAP_PART3.md | AUTHORITATIVE | UI/UX Design, Database Schema, Compliance |
-| 4 | CONCEPT2CURE_ROADMAP_PART4.md | **AUTHORITATIVE** | **12-Week Implementation Plan, Task Breakdown** |
-| 5 | CONCEPT2CURE_ROADMAP_PART5.md | AUTHORITATIVE | Testing, Deployment, KPIs |
-| 6 | CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md | INDEX | Points to Parts 1-5 |
-| 7 | CONCEPT2CURE_V3_COMPLETE_SYSTEM.md | REFERENCE | v3.0 Architecture Vision |
-| 8 | CONCEPT2CURE_UX_FOUNDATION.md | ADDENDUM | Claude.ai-Inspired UX Blueprint |
-| 9 | CONCEPT2CURE_PROJECTS_IMPLEMENTATION.md | ADDENDUM | Claude.ai Projects Implementation Guide |
-
-**Authoritative Step Sequence Source:** CONCEPT2CURE_ROADMAP_PART4.md (Section 12: Detailed Task Breakdown)
-
----
-
-## Phase/Step Inventory (Canonical 12-Week Plan)
-
-### Phase 1: Database Foundation (Week 1) — **COMPLETE**
-| Step # | Task | Defined Files | Status | Drift |
-|--------|------|---------------|--------|-------|
-| 1.1 | Create organizational topology schema | database/schema/organizations.ts, client-engagements.ts | ✅ PASS | NONE |
-| 1.2 | Create project and WBS schema | database/schema/projects.ts, project-wbs.ts, assignments.ts | ✅ PASS | NONE |
-| 1.3 | Create PM settings schema | database/schema/pm-settings.ts | ✅ PASS | NONE |
-| 1.4 | Create risk and predictions schema | database/schema/risk-factors.ts, risk-detections.ts, predictions.ts | ✅ PASS | NONE |
-| 1.5 | Create communication schema | database/schema/channels.ts, messages.ts, fda-communications.ts | ✅ PASS | NONE |
-| 1.6 | Create audit and compliance schema | database/schema/audit-log.ts, electronic-signatures.ts | ✅ PASS | NONE |
-| 1.7 | Create documents schema | database/schema/documents.ts, document-versions.ts | ✅ PASS | NONE |
-| 1.8 | Implement row-level security | database/policies/rls-policies.sql | ✅ PASS | NONE |
-| 1.9 | Create knowledge base schema | database/schema/knowledge-entries.ts, response-cache.ts | ✅ PASS | NONE |
-| 1.10 | Run all migrations and seed data | (migration runner) | ✅ PASS | NONE |
-
-### Phase 2: Submission Pyramids (Week 2) — **COMPLETE**
-| Step # | Task | Defined Files | Status | Drift |
-|--------|------|---------------|--------|-------|
-| 2.1 | Create 510(k) pyramid | services/regulatory/pyramids/510k-pyramid.ts | ✅ PASS | NONE |
-| 2.2 | Create IND pyramid | services/regulatory/pyramids/ind-pyramid.ts | ✅ PASS | NONE |
-| 2.3 | Create NDA/BLA pyramids | services/regulatory/pyramids/nda-pyramid.ts, bla-pyramid.ts | ✅ PASS | NONE |
-| 2.4 | Create PMA pyramid | services/regulatory/pyramids/pma-pyramid.ts | ✅ PASS | NONE |
-| 2.5 | Create MAA pyramid | services/regulatory/pyramids/maa-pyramid.ts | ✅ PASS | NONE |
-| 2.6 | Create De Novo pyramid | services/regulatory/pyramids/de-novo-pyramid.ts | ✅ PASS | **ADDED** |
-| 2.7 | Create Pyramid Engine service | services/regulatory/SubmissionPyramidEngine.ts | ✅ PASS | NONE |
-
-### Phase 3: Predictive Intelligence (Weeks 3-4) — **NOT STARTED**
-| Step # | Task | Defined Files | Status | Drift |
-|--------|------|---------------|--------|-------|
-| 3.1 | Create risk factor definitions | services/ai/risk-factors/*.ts | ⏳ TODO | - |
-| 3.2 | Create automated risk detectors | services/ai/detectors/*.ts | ⏳ TODO | - |
-| 3.3 | Create prediction engine | services/ai/PredictiveIntelligenceEngine.ts | ⏳ TODO | - |
-| 3.4 | Create proactive monitoring | services/ai/ProactiveMonitoringService.ts | ⏳ TODO | - |
-| 3.5 | Create outcome scenario generator | services/ai/OutcomeScenarioGenerator.ts | ⏳ TODO | - |
-
-### Phases 4-12: NOT YET IN SCOPE
-- Phase 4: Document Drafting (Week 5)
-- Phase 5: PM Settings & Configuration (Week 6)
-- Phase 6: User Context & Dashboard (Week 7)
-- Phase 7: Communication Hub (Week 8)
-- Phase 8: Lumen PM Service (Week 9)
-- Phase 9: Convergent Portal UI (Week 10)
-- Phase 10: Data Ingestion Workers (Week 11)
-- Phase 11: Integration & Testing (Week 12)
-- Phase 12: Production Deployment (Ongoing)
-
----
-
-## Implementation Verification
-
-### Step 2 Files Verified Present
-
-| File | Exists | Lines | Exports |
-|------|--------|-------|---------|
-| services/regulatory/pyramids/510k-pyramid.ts | ✅ | 128 | `build510kPyramid()` |
-| services/regulatory/pyramids/ind-pyramid.ts | ✅ | ~130 | `buildIndPyramid()` |
-| services/regulatory/pyramids/nda-pyramid.ts | ✅ | ~120 | `buildNdaPyramid()` |
-| services/regulatory/pyramids/bla-pyramid.ts | ✅ | ~130 | `buildBlaPyramid()` |
-| services/regulatory/pyramids/pma-pyramid.ts | ✅ | ~150 | `buildPmaPyramid()` |
-| services/regulatory/pyramids/maa-pyramid.ts | ✅ | ~120 | `buildMaaPyramid()` |
-| services/regulatory/pyramids/de-novo-pyramid.ts | ✅ | ~110 | `buildDeNovoPyramid()` |
-| services/regulatory/SubmissionPyramidEngine.ts | ✅ | 135 | `getPyramidForProject()`, `calculateProgress()`, `getNextAvailableTasks()`, `getCriticalPath()` |
-
-### Roadmap Alignment Check
-
-| Roadmap Requirement | Implementation | Aligned |
-|---------------------|----------------|---------|
-| 510(k): 7 phases, ~40 tasks | ✅ 7 phases with phase completion tasks | ✅ YES |
-| IND: 8 phases, ~50 tasks | ✅ 8 phases implemented | ✅ YES |
-| NDA/BLA: eCTD modules, ~60 tasks | ✅ eCTD module structure | ✅ YES |
-| PMA: 10 phases, ~80 tasks | ✅ 10 phases implemented | ✅ YES |
-| MAA: EU-specific eCTD adapted | ✅ EU regions included | ✅ YES |
-| De Novo: 7 phases, ~40 tasks | ✅ Added (not in original roadmap) | ⚠️ EXTENDED |
-| getPyramidForProject() | ✅ Implemented | ✅ YES |
-| calculateProgress() | ✅ Implemented | ✅ YES |
-| getNextAvailableTasks() | ✅ Implemented | ✅ YES |
-| getCriticalPath() | ✅ Implemented | ✅ YES |
-
----
-
-## Summary
-
-| Metric | Value |
-|--------|-------|
-| **Phase 1 Steps** | 10/10 PASS |
-| **Phase 2 Steps** | 7/7 PASS (6 canonical + 1 extension) |
-| **Total Steps Verified** | 17 |
-| **Drift Items** | 1 (De Novo added beyond roadmap) |
-| **Missing Items** | 0 |
-| **Test Coverage** | 4/4 tests passing |
-
-**INVENTORY VERDICT:** ✅ **COMPLIANT** — All canonical Phase 2 requirements implemented.
-
----
-
-*Generated by Copilot Audit Protocol — 2026-01-28*
+*Last Updated: 2026-01-29 by Kimi Agent*  
+*Next Review: Weekly Sprint Planning*

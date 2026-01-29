@@ -46,24 +46,29 @@ import {
 
 const RiskLevelColors = {
   LOW: {
-    bg: 'bg-green-50',
-    text: 'text-green-700',
-    border: 'border-green-200',
-    badgeBg: 'bg-green-100',
+    bg: 'bg-emerald-50/60',
+    text: 'text-emerald-800',
+    border: 'border-emerald-200/70',
+    badgeBg: 'bg-emerald-100/70',
   },
   MEDIUM: {
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-700',
-    border: 'border-yellow-200',
-    badgeBg: 'bg-yellow-100',
+    bg: 'bg-amber-50/60',
+    text: 'text-amber-800',
+    border: 'border-amber-200/70',
+    badgeBg: 'bg-amber-100/70',
   },
-  HIGH: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', badgeBg: 'bg-red-100' },
+  HIGH: {
+    bg: 'bg-rose-50/60',
+    text: 'text-rose-800',
+    border: 'border-rose-200/70',
+    badgeBg: 'bg-rose-100/70',
+  },
 };
 
 const RiskLevelIcons = {
-  LOW: <CheckCircle className="h-6 w-6 text-green-600" />,
-  MEDIUM: <AlertTriangle className="h-6 w-6 text-yellow-600" />,
-  HIGH: <AlertCircle className="h-6 w-6 text-red-600" />,
+  LOW: <CheckCircle className="h-6 w-6 text-emerald-600" />,
+  MEDIUM: <AlertTriangle className="h-6 w-6 text-amber-600" />,
+  HIGH: <AlertCircle className="h-6 w-6 text-rose-600" />,
 };
 
 interface RiskAnalysis {
@@ -302,8 +307,8 @@ export default function RiskAnalysis() {
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-2/3" />
               <div className="flex justify-center my-8">
-                <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
-              </div>
+                <Loader2 className="h-16 w-16 animate-spin text-slate-500" />
+              <Loader2 className="h-16 w-16 animate-spin text-slate-500" />
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-4 w-3/4" />
             </div>
@@ -320,7 +325,7 @@ export default function RiskAnalysis() {
 
         <div className="flex items-center space-x-3">
           <Select value={region} onValueChange={handleRegionChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-32 bg-white/80 border-slate-200/70">
               <SelectValue placeholder="Select Region" />
             </SelectTrigger>
             <SelectContent>
@@ -341,6 +346,7 @@ export default function RiskAnalysis() {
               startAnalysis();
             }}
             disabled={analysisInProgress}
+            className="border-slate-200/70 bg-white/80 text-slate-700 hover:bg-slate-50"
           >
             {analysisInProgress ? (
               <>
@@ -367,7 +373,7 @@ export default function RiskAnalysis() {
               {RiskLevelIcons[initialAssessment.risk_level]}
               <span className="ml-2">Initial Assessment: {initialAssessment.risk_level} Risk</span>
               {polling && (
-                <Badge variant="outline" className="ml-3 bg-blue-100 text-blue-700">
+                <Badge variant="outline" className="ml-3 bg-slate-100/70 text-slate-700">
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                   Detailed Analysis in Progress
                 </Badge>
@@ -381,19 +387,19 @@ export default function RiskAnalysis() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* QC Issues */}
-              <div className="border rounded-md p-4 bg-white">
+              <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                 <h3 className="font-medium mb-2">QC Assessment</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Failed Documents:</span>
-                    <Badge variant="outline" className="bg-red-50 text-red-700">
+                    <Badge variant="outline" className="bg-rose-50/70 text-rose-800">
                       {initialAssessment.qc_issues.failed} of {initialAssessment.qc_issues.total}
                     </Badge>
                   </div>
                   {initialAssessment.qc_issues.critical > 0 && (
                     <div className="flex justify-between">
                       <span>Critical Issues:</span>
-                      <Badge variant="outline" className="bg-red-50 text-red-700">
+                      <Badge variant="outline" className="bg-rose-50/70 text-rose-800">
                         {initialAssessment.qc_issues.critical}
                       </Badge>
                     </div>
@@ -401,7 +407,7 @@ export default function RiskAnalysis() {
                   {initialAssessment.qc_issues.major > 0 && (
                     <div className="flex justify-between">
                       <span>Major Issues:</span>
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                      <Badge variant="outline" className="bg-amber-50/70 text-amber-800">
                         {initialAssessment.qc_issues.major}
                       </Badge>
                     </div>
@@ -410,13 +416,13 @@ export default function RiskAnalysis() {
               </div>
 
               {/* Validator Issues */}
-              <div className="border rounded-md p-4 bg-white">
+              <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                 <h3 className="font-medium mb-2">Validator Assessment</h3>
                 <div className="space-y-2">
                   {initialAssessment.validator_issues.error > 0 && (
                     <div className="flex justify-between">
                       <span>Errors:</span>
-                      <Badge variant="outline" className="bg-red-50 text-red-700">
+                      <Badge variant="outline" className="bg-rose-50/70 text-rose-800">
                         {initialAssessment.validator_issues.error}
                       </Badge>
                     </div>
@@ -424,14 +430,14 @@ export default function RiskAnalysis() {
                   {initialAssessment.validator_issues.warning > 0 && (
                     <div className="flex justify-between">
                       <span>Warnings:</span>
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                      <Badge variant="outline" className="bg-amber-50/70 text-amber-800">
                         {initialAssessment.validator_issues.warning}
                       </Badge>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Info:</span>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    <Badge variant="outline" className="bg-slate-100/70 text-slate-700">
                       {initialAssessment.validator_issues.info}
                     </Badge>
                   </div>
@@ -468,7 +474,7 @@ export default function RiskAnalysis() {
                   </CardDescription>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-500">Analysis completed</div>
+                  <div className="text-sm text-slate-500">Analysis completed</div>
                   <div className="text-sm font-medium">{formatDate(analysis.timestamp)}</div>
                 </div>
               </div>
@@ -476,22 +482,22 @@ export default function RiskAnalysis() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Risk Score */}
-                <div className="border rounded-md p-4 bg-white text-center">
+                <div className="border border-slate-200/70 rounded-md p-4 bg-white/80 text-center">
                   <h3 className="font-medium mb-1">Risk Score</h3>
                   <div className="flex justify-center items-center">
                     <div
                       className={`text-4xl font-bold ${
                         calculateRiskScore() > 80
-                          ? 'text-green-600'
+                          ? 'text-emerald-600'
                           : calculateRiskScore() > 60
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
+                            ? 'text-amber-600'
+                            : 'text-rose-600'
                       }`}
                     >
                       {calculateRiskScore()}%
                     </div>
                   </div>
-                  <p className="text-sm mt-2 text-gray-600">
+                  <p className="text-sm mt-2 text-slate-600">
                     {calculateRiskScore() > 80
                       ? 'Good standing'
                       : calculateRiskScore() > 60
@@ -501,29 +507,29 @@ export default function RiskAnalysis() {
                 </div>
 
                 {/* Critical Issues */}
-                <div className="border rounded-md p-4 bg-white">
+                <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                   <h3 className="font-medium mb-2">Critical Issues</h3>
                   {analysis.ai_analysis.critical_issues.length > 0 ? (
                     <div className="space-y-1">
                       {analysis.ai_analysis.critical_issues.slice(0, 3).map((issue, i) => (
                         <div key={i} className="flex items-start">
-                          <AlertCircle className="h-4 w-4 text-red-500 mt-1 mr-2 flex-shrink-0" />
+                          <AlertCircle className="h-4 w-4 text-rose-500 mt-1 mr-2 flex-shrink-0" />
                           <span className="text-sm">{issue}</span>
                         </div>
                       ))}
                       {analysis.ai_analysis.critical_issues.length > 3 && (
-                        <div className="text-sm text-blue-600 mt-1">
+                        <div className="text-sm text-slate-600 mt-1">
                           + {analysis.ai_analysis.critical_issues.length - 3} more issues
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="text-sm text-green-600">No critical issues found</div>
+                    <div className="text-sm text-emerald-600">No critical issues found</div>
                   )}
                 </div>
 
                 {/* QC & Validator Summary */}
-                <div className="border rounded-md p-4 bg-white">
+                <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                   <h3 className="font-medium mb-2">Validation Summary</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -569,7 +575,7 @@ export default function RiskAnalysis() {
 
           {/* Detailed Tabs */}
           <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4 bg-white/80 border border-slate-200/70">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="qc-issues">QC Issues</TabsTrigger>
               <TabsTrigger value="validator-issues">Validator Issues</TabsTrigger>
@@ -578,7 +584,7 @@ export default function RiskAnalysis() {
 
             {/* Overview Tab */}
             <TabsContent value="overview">
-              <Card>
+              <Card className="bg-white/80 border-slate-200/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Submission Risk Overview</CardTitle>
                   <CardDescription>
@@ -589,7 +595,7 @@ export default function RiskAnalysis() {
                 <CardContent>
                   <div className="space-y-6">
                     {/* AI Analysis */}
-                    <div className="p-4 border rounded-md bg-blue-50">
+                    <div className="p-4 border border-slate-200/70 rounded-md bg-slate-50/70">
                       <h3 className="font-semibold mb-3">AI Risk Analysis</h3>
                       <p className="whitespace-pre-line mb-4">{analysis.ai_analysis.reasoning}</p>
 
@@ -611,16 +617,16 @@ export default function RiskAnalysis() {
                     {/* Issues Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Critical Issues */}
-                      <div className="border rounded-md p-4">
+                      <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                         <h3 className="font-medium mb-3 flex items-center">
-                          <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                          <AlertCircle className="h-5 w-5 text-rose-500 mr-2" />
                           Critical Issues
                         </h3>
                         {analysis.ai_analysis.critical_issues.length > 0 ? (
                           <ul className="space-y-2">
                             {analysis.ai_analysis.critical_issues.map((issue, i) => (
                               <li key={i} className="flex items-start">
-                                <span className="bg-red-100 text-red-800 w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                <span className="bg-rose-100/70 text-rose-800 w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                                   {i + 1}
                                 </span>
                                 <span>{issue}</span>
@@ -628,21 +634,21 @@ export default function RiskAnalysis() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-green-600">No critical issues found</p>
+                          <p className="text-emerald-600">No critical issues found</p>
                         )}
                       </div>
 
                       {/* Major Issues */}
-                      <div className="border rounded-md p-4">
+                      <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                         <h3 className="font-medium mb-3 flex items-center">
-                          <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
+                          <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
                           Major Issues
                         </h3>
                         {analysis.ai_analysis.major_issues.length > 0 ? (
                           <ul className="space-y-2">
                             {analysis.ai_analysis.major_issues.map((issue, i) => (
                               <li key={i} className="flex items-start">
-                                <span className="bg-yellow-100 text-yellow-800 w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                <span className="bg-amber-100/70 text-amber-800 w-6 h-6 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                                   {i + 1}
                                 </span>
                                 <span>{issue}</span>
@@ -650,7 +656,7 @@ export default function RiskAnalysis() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-green-600">No major issues found</p>
+                          <p className="text-emerald-600">No major issues found</p>
                         )}
                       </div>
                     </div>
@@ -661,7 +667,7 @@ export default function RiskAnalysis() {
 
             {/* QC Issues Tab */}
             <TabsContent value="qc-issues">
-              <Card>
+              <Card className="bg-white/80 border-slate-200/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Document QC Issues</CardTitle>
                   <CardDescription>
@@ -672,18 +678,18 @@ export default function RiskAnalysis() {
                   {analysis.qc_assessment.problematic_documents.length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-slate-500">
                           {analysis.qc_assessment.issue_counts.failed} of{' '}
                           {analysis.qc_assessment.issue_counts.total} documents failed QC
                         </div>
                         <div className="flex space-x-2">
-                          <Badge variant="outline" className="bg-red-50 text-red-700">
+                          <Badge variant="outline" className="bg-rose-50/70 text-rose-800">
                             Critical: {analysis.qc_assessment.issue_counts.critical}
                           </Badge>
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                          <Badge variant="outline" className="bg-amber-50/70 text-amber-800">
                             Major: {analysis.qc_assessment.issue_counts.major}
                           </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          <Badge variant="outline" className="bg-slate-100/70 text-slate-700">
                             Minor: {analysis.qc_assessment.issue_counts.minor}
                           </Badge>
                         </div>
@@ -697,10 +703,10 @@ export default function RiskAnalysis() {
                                 <div
                                   className={`mr-2 w-2 h-2 rounded-full ${
                                     doc.severity === 'critical'
-                                      ? 'bg-red-500'
+                                      ? 'bg-rose-500'
                                       : doc.severity === 'major'
-                                        ? 'bg-yellow-500'
-                                        : 'bg-blue-500'
+                                        ? 'bg-amber-500'
+                                        : 'bg-slate-500'
                                   }`}
                                 />
                                 <span className="font-medium">{doc.document_name}</span>
@@ -710,7 +716,7 @@ export default function RiskAnalysis() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent>
-                              <div className="pl-5 border-l-2 border-gray-200 ml-2">
+                              <div className="pl-5 border-l-2 border-slate-200/70 ml-2">
                                 <ul className="space-y-2">
                                   {doc.issues.map((issue, j) => (
                                     <li key={j} className="text-sm">
@@ -732,9 +738,9 @@ export default function RiskAnalysis() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                      <h3 className="text-xl font-medium text-gray-900">All Documents Passed QC</h3>
-                      <p className="text-gray-500 mt-2">No document quality issues found</p>
+                      <CheckCircle className="h-12 w-12 text-emerald-500 mb-4" />
+                      <h3 className="text-xl font-medium text-slate-900">All Documents Passed QC</h3>
+                      <p className="text-slate-500 mt-2">No document quality issues found</p>
                     </div>
                   )}
                 </CardContent>
@@ -743,7 +749,7 @@ export default function RiskAnalysis() {
 
             {/* Validator Issues Tab */}
             <TabsContent value="validator-issues">
-              <Card>
+              <Card className="bg-white/80 border-slate-200/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>eValidator Issues</CardTitle>
                   <CardDescription>
@@ -754,41 +760,41 @@ export default function RiskAnalysis() {
                   {analysis.validator_assessment.issues.length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-slate-500">
                           {analysis.validator_assessment.issues.length} issues identified
                         </div>
                         <div className="flex space-x-2">
-                          <Badge variant="outline" className="bg-red-50 text-red-700">
+                          <Badge variant="outline" className="bg-rose-50/70 text-rose-800">
                             Errors: {analysis.validator_assessment.issue_counts.error}
                           </Badge>
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                          <Badge variant="outline" className="bg-amber-50/70 text-amber-800">
                             Warnings: {analysis.validator_assessment.issue_counts.warning}
                           </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          <Badge variant="outline" className="bg-slate-100/70 text-slate-700">
                             Info: {analysis.validator_assessment.issue_counts.info}
                           </Badge>
                         </div>
                       </div>
 
-                      <div className="border rounded-md overflow-hidden">
+                      <div className="border border-slate-200/70 rounded-md overflow-hidden">
                         <table className="w-full">
                           <thead>
-                            <tr className="bg-gray-50">
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <tr className="bg-slate-50/70">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Severity
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Category
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Message
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Location
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200">
+                          <tbody className="divide-y divide-slate-200/70">
                             {analysis.validator_assessment.issues.map((issue, i) => (
                               <tr key={i}>
                                 <td className="px-4 py-2">
@@ -797,10 +803,10 @@ export default function RiskAnalysis() {
                                     className={`
                                       ${
                                         issue.severity === 'error'
-                                          ? 'bg-red-50 text-red-700'
+                                          ? 'bg-rose-50/70 text-rose-800'
                                           : issue.severity === 'warning'
-                                            ? 'bg-yellow-50 text-yellow-700'
-                                            : 'bg-blue-50 text-blue-700'
+                                            ? 'bg-amber-50/70 text-amber-800'
+                                            : 'bg-slate-100/70 text-slate-700'
                                       }
                                     `}
                                   >
@@ -818,9 +824,9 @@ export default function RiskAnalysis() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                      <h3 className="text-xl font-medium text-gray-900">No Validator Issues</h3>
-                      <p className="text-gray-500 mt-2">
+                      <CheckCircle className="h-12 w-12 text-emerald-500 mb-4" />
+                      <h3 className="text-xl font-medium text-slate-900">No Validator Issues</h3>
+                      <p className="text-slate-500 mt-2">
                         The submission passed all validation checks
                       </p>
                     </div>
@@ -831,7 +837,7 @@ export default function RiskAnalysis() {
 
             {/* Recommendations Tab */}
             <TabsContent value="recommendations">
-              <Card>
+              <Card className="bg-white/80 border-slate-200/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Recommended Actions</CardTitle>
                   <CardDescription>
@@ -841,9 +847,9 @@ export default function RiskAnalysis() {
                 <CardContent>
                   <div className="space-y-6">
                     {/* Action Items */}
-                    <div className="border rounded-md p-4">
+                    <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                       <h3 className="font-medium mb-3 flex items-center">
-                        <List className="h-5 w-5 text-blue-500 mr-2" />
+                        <List className="h-5 w-5 text-slate-600 mr-2" />
                         Priority Action Items
                       </h3>
                       {analysis.ai_analysis.action_items.length > 0 ? (
@@ -855,12 +861,12 @@ export default function RiskAnalysis() {
                           ))}
                         </ol>
                       ) : (
-                        <p className="text-green-600">No action items required</p>
+                        <p className="text-emerald-600">No action items required</p>
                       )}
                     </div>
 
                     {/* Regulatory Reference */}
-                    <div className="bg-gray-50 rounded-md p-4">
+                    <div className="bg-slate-50/70 rounded-md p-4 border border-slate-200/60">
                       <h3 className="font-medium mb-3">Regulatory References</h3>
                       <div className="space-y-3">
                         {analysis.region === 'FDA' && (
@@ -869,7 +875,7 @@ export default function RiskAnalysis() {
                               href="https://www.fda.gov/regulatory-information/search-fda-guidance-documents"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-slate-700 hover:underline flex items-center"
                             >
                               FDA Guidance Documents
                               <ExternalLink className="h-3 w-3 ml-1" />
@@ -882,7 +888,7 @@ export default function RiskAnalysis() {
                               href="https://www.ema.europa.eu/en/human-regulatory/marketing-authorisation/submission-approval/ectd-electronic-common-technical-document"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-slate-700 hover:underline flex items-center"
                             >
                               EMA eCTD Guidelines
                               <ExternalLink className="h-3 w-3 ml-1" />
@@ -895,7 +901,7 @@ export default function RiskAnalysis() {
                               href="https://www.pmda.go.jp/english/review-services/outline/0001.html"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-slate-700 hover:underline flex items-center"
                             >
                               PMDA Review Services
                               <ExternalLink className="h-3 w-3 ml-1" />
@@ -906,9 +912,9 @@ export default function RiskAnalysis() {
                     </div>
 
                     {/* Risk Mitigation */}
-                    <div className="border rounded-md p-4">
+                    <div className="border border-slate-200/70 rounded-md p-4 bg-white/80">
                       <h3 className="font-medium mb-3 flex items-center">
-                        <Shield className="h-5 w-5 text-green-500 mr-2" />
+                        <Shield className="h-5 w-5 text-emerald-600 mr-2" />
                         Risk Mitigation Strategy
                       </h3>
                       <div className="space-y-3">
@@ -916,7 +922,7 @@ export default function RiskAnalysis() {
                           Based on the analysis, we recommend the following risk mitigation
                           approach:
                         </p>
-                        <div className="pl-4 border-l-2 border-green-200">
+                        <div className="pl-4 border-l-2 border-emerald-200/70">
                           <ol className="list-decimal pl-5 space-y-2">
                             {analysis.risk_level === 'HIGH' && (
                               <>
@@ -958,7 +964,7 @@ export default function RiskAnalysis() {
                   <div className="flex flex-col w-full">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center">
-                        <BarChart className="h-5 w-5 text-blue-500 mr-2" />
+                        <BarChart className="h-5 w-5 text-slate-600 mr-2" />
                         <span className="font-medium">Overall Risk Status:</span>
                       </div>
                       <Badge

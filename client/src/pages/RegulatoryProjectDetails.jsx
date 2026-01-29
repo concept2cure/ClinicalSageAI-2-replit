@@ -519,8 +519,8 @@ const RegulatoryProjectDetails = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading project details...</p>
+            <div className="w-12 h-12 border-4 border-slate-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-zinc-500">Loading project details...</p>
           </div>
         </div>
       </div>
@@ -534,7 +534,7 @@ const RegulatoryProjectDetails = () => {
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
-            <p className="text-gray-500 mb-4">
+            <p className="text-zinc-500 mb-4">
               The project you're looking for doesn't exist or you don't have permission to view it.
             </p>
             <Button onClick={() => navigate('/regulatory-submissions')}>Back to Submissions</Button>
@@ -548,15 +548,15 @@ const RegulatoryProjectDetails = () => {
   const getStatusColor = status => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
       case 'not-started':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-zinc-100 text-zinc-700 border border-zinc-200';
       case 'on-hold':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-zinc-100 text-zinc-700 border border-zinc-200';
     }
   };
 
@@ -564,13 +564,13 @@ const RegulatoryProjectDetails = () => {
   const getValidationLevelColor = level => {
     switch (level) {
       case 'error':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-700 border border-red-200';
       case 'warning':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
       case 'info':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-zinc-100 text-zinc-700 border border-zinc-200';
     }
   };
 
@@ -613,7 +613,8 @@ const RegulatoryProjectDetails = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="min-h-screen bg-zinc-50">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
         <BreadcrumbItem>
@@ -632,7 +633,7 @@ const RegulatoryProjectDetails = () => {
         <div className="flex justify-between items-start mb-2">
           <div>
             <h1 className="text-3xl font-bold">{project.name}</h1>
-            <p className="text-gray-500">{project.description}</p>
+            <p className="text-zinc-500">{project.description}</p>
           </div>
           <Badge variant="outline" className={getStatusColor(project.status)}>
             {project.status.replace('-', ' ')}
@@ -776,7 +777,7 @@ const RegulatoryProjectDetails = () => {
                         {section.subsections.map(subsection => (
                           <div
                             key={subsection.id}
-                            className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-gray-50"
+                            className="flex justify-between items-center text-sm p-2 rounded-md hover:bg-zinc-50"
                           >
                             <span>{subsection.name}</span>
                             <div className="flex items-center">
@@ -840,7 +841,7 @@ const RegulatoryProjectDetails = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b">
+                      <tr className="border-b border-zinc-200/60">
                         <th className="text-left py-3 px-4">Document Name</th>
                         <th className="text-left py-3 px-4">Section</th>
                         <th className="text-left py-3 px-4">Uploaded</th>
@@ -855,9 +856,9 @@ const RegulatoryProjectDetails = () => {
                         const sectionName = section ? section.name : doc.section;
 
                         return (
-                          <tr key={doc.id} className="border-b hover:bg-gray-50">
+                          <tr key={doc.id} className="border-b border-zinc-200/60 hover:bg-zinc-50">
                             <td className="py-3 px-4 flex items-center">
-                              <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                              <FileText className="h-4 w-4 mr-2 text-zinc-500" />
                               {doc.name}
                             </td>
                             <td className="py-3 px-4">{sectionName}</td>
@@ -869,8 +870,8 @@ const RegulatoryProjectDetails = () => {
                                 variant="outline"
                                 className={
                                   doc.status === 'final'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-amber-100 text-amber-800'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
                                 }
                               >
                                 {doc.status}
@@ -1220,6 +1221,7 @@ const RegulatoryProjectDetails = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

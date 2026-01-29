@@ -245,7 +245,7 @@ export default function AdminProfile() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => setLocation('/auth')}
+                    onClick={() => setLocation('/concept2cure/login')}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout

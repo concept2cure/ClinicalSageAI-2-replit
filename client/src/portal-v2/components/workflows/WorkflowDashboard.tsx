@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Link,
   History,
+  ShieldCheck,
 } from 'lucide-react';
 import type { TaskSummary, Priority } from '../../core/portalTypes';
 import { usePortal, usePermission } from '../../core/portalContext';
@@ -60,6 +61,7 @@ interface Workflow {
   type: 'document_review' | 'approval' | 'submission_prep' | 'training' | 'change_control';
   status: 'active' | 'completed' | 'cancelled' | 'on_hold';
   priority: Priority;
+  workflowRunId?: string;
   documentName?: string;
   documentId?: string;
   initiator: string;
@@ -225,19 +227,31 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
             </Avatar>
             <span>{workflow.initiator}</span>
           </div>
-          <div
-            className={`flex items-center gap-1 ${
-              isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : ''
-            }`}
-          >
-            <Calendar className="h-3.5 w-3.5" />
-            <span>
-              {isOverdue
-                ? `${Math.abs(daysUntil)}d overdue`
-                : isUrgent
-                  ? `${daysUntil}d left`
-                  : formatDate(workflow.dueDate)}
-            </span>
+          <div className="flex items-center gap-3">
+            {workflow.workflowRunId && (
+              <a
+                href={`/concept2cure/proofs/${workflow.workflowRunId}`}
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Proof
+              </a>
+            )}
+            <div
+              className={`flex items-center gap-1 ${
+                isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : ''
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              <span>
+                {isOverdue
+                  ? `${Math.abs(daysUntil)}d overdue`
+                  : isUrgent
+                    ? `${daysUntil}d left`
+                    : formatDate(workflow.dueDate)}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -420,6 +434,17 @@ const WorkflowDetail: React.FC<WorkflowDetailProps> = ({ workflow, onClose, onAc
             View Document
           </Button>
         )}
+        {workflow.workflowRunId && (
+          <a
+            href={`/concept2cure/proofs/${workflow.workflowRunId}`}
+            className="flex-1"
+          >
+            <Button variant="outline" size="sm" className="w-full">
+              <ShieldCheck className="h-4 w-4 mr-1" />
+              View Proof
+            </Button>
+          </a>
+        )}
       </div>
     </Card>
   );
@@ -486,6 +511,7 @@ export const WorkflowDashboard: React.FC = () => {
       type: 'document_review',
       status: 'active',
       priority: 'high',
+      workflowRunId: 'wf-run-protocol-001',
       documentName: 'Protocol BTX-331-001 v3.1',
       documentId: 'doc-001',
       initiator: 'Sarah Johnson',
@@ -839,6 +865,7 @@ export const WorkflowDashboard: React.FC = () => {
 
             <TabsContent value="completed" className="flex-1 mt-0">
               <div className="grid gap-4 md:grid-cols-2">
+                  workflowRunId: 'wf-run-ib-2026-annual',
                 {filteredWorkflows.map(workflow => (
                   <WorkflowCard
                     key={workflow.id}
@@ -851,6 +878,7 @@ export const WorkflowDashboard: React.FC = () => {
 
             <TabsContent value="templates" className="flex-1 mt-0">
               <WorkflowTemplates
+                  workflowRunId: 'wf-run-nda-assembly-030',
                 templates={templates}
                 onCreateWorkflow={template => {
                   // TODO: Implement workflow creation from template

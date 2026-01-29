@@ -23,8 +23,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { zenAnimations } from '../design/zen';
-import * as authClient from '@/lib/authClient';
+import {
+  authService,
+  useAuth as usePortalAuth,
+  type MfaMethod,
+} from '@/portal-v2/services/authService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -250,12 +253,15 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
 
 export const ZenLogin: React.FC = () => {
   const [, setLocation] = useLocation();
+  const { login, verifyMfa } = usePortalAuth();
   
   // Form state
   const [step, setStep] = useState<AuthStep>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
+  const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
+  const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
   const [rememberMe, setRememberMe] = useState(false);
   
   // UI state
@@ -316,20 +322,32 @@ export const ZenLogin: React.FC = () => {
     setError(null);
 
     try {
-      const result = await authClient.login({ email, password });
-      
-      if (result.success) {
-        // Check if MFA is required
-        if (result.mfaRequired) {
-          setStep('mfa');
-        } else {
-          setStep('success');
-          // Navigate after brief success animation
-          setTimeout(() => {
-            setLocation('/concept2cure');
-          }, 1000);
-        }
+      const result = await login({
+        email,
+        password,
+        rememberDevice: rememberMe,
+      });
+
+      if (!result.success) {
+        setError({
+          field: 'password',
+          message: result.error?.message || 'Invalid credentials. Please try again.',
+        });
+        return;
       }
+
+      if (result.data?.mfaRequired) {
+        setAvailableMfaMethods(result.data.methods || []);
+        const preferredMethod = result.data.methods?.[0]?.type || 'totp';
+        setMfaMethod(preferredMethod);
+        setStep('mfa');
+        return;
+      }
+
+      setStep('success');
+      setTimeout(() => {
+        setLocation('/concept2cure');
+      }, 1000);
     } catch (err) {
       setError({
         field: 'password',
@@ -338,7 +356,7 @@ export const ZenLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, setLocation]);
+  }, [email, password, setLocation, login, rememberMe]);
 
   const handleMfaVerify = useCallback(async () => {
     if (mfaCode.length !== 6) {
@@ -349,10 +367,19 @@ export const ZenLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate MFA verification
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      // For demo, accept any 6-digit code
+      const result = await verifyMfa({
+        method: mfaMethod,
+        code: mfaCode,
+      });
+
+      if (!result.success) {
+        setError({
+          field: 'mfa',
+          message: result.error?.message || 'Invalid code. Please try again.',
+        });
+        return;
+      }
+
       setStep('success');
       setTimeout(() => {
         setLocation('/concept2cure');
@@ -365,7 +392,7 @@ export const ZenLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [mfaCode, setLocation]);
+  }, [mfaCode, mfaMethod, setLocation, verifyMfa]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!email.trim() || !validateEmail(email)) {
@@ -375,12 +402,27 @@ export const ZenLogin: React.FC = () => {
     }
 
     setIsLoading(true);
-    
-    // Simulate sending reset email
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    setIsLoading(false);
-    setStep('reset-sent');
+
+    try {
+      const result = await authService.requestPasswordReset({ email });
+      if (!result.success) {
+        setError({
+          field: 'email',
+          message: result.error?.message || 'Unable to send reset link. Please try again.',
+        });
+        setStep('email');
+        return;
+      }
+      setStep('reset-sent');
+    } catch (err) {
+      setError({
+        field: 'email',
+        message: 'Unable to send reset link. Please try again.',
+      });
+      setStep('email');
+    } finally {
+      setIsLoading(false);
+    }
   }, [email, validateEmail]);
 
   const handleSsoLogin = useCallback(async (provider: 'microsoft' | 'google') => {
@@ -667,6 +709,33 @@ export const ZenLogin: React.FC = () => {
           Enter the 6-digit code from your authenticator app
         </p>
       </div>
+
+      {availableMfaMethods.length > 0 && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-700">
+            Verification method
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {availableMfaMethods.map((method) => (
+              <button
+                key={method.type}
+                type="button"
+                onClick={() => setMfaMethod(method.type)}
+                className={`
+                  px-3 py-1.5 text-sm rounded-full border
+                  transition-all duration-200
+                  ${mfaMethod === method.type
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                  }
+                `}
+              >
+                {method.type.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <MfaCodeInput
         value={mfaCode}

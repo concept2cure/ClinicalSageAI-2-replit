@@ -17,8 +17,6 @@ import {
   Plus,
   MessageSquare,
   FileText,
-  ChevronRight,
-  ChevronDown,
   Settings,
   Search,
   PanelLeftClose,
@@ -30,6 +28,10 @@ import {
   Clock,
   Sparkles,
   LayoutGrid,
+  Home,
+  Users,
+  ClipboardList,
+  BarChart2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -65,6 +67,15 @@ const SubmissionBadge: React.FC<{ type: SubmissionType }> = ({ type }) => (
     {type.replace('_', ' ')}
   </Badge>
 );
+
+const ACCESS_ITEMS = [
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'projects', label: 'Projects', icon: LayoutGrid },
+  { id: 'agents', label: 'Agents', icon: Users },
+  { id: 'tasks', label: 'Tasks', icon: ClipboardList },
+  { id: 'templates', label: 'Templates', icon: LayoutGrid },
+  { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECT ITEM
@@ -361,15 +372,34 @@ export const ProjectsSidebar: React.FC = () => {
     updateProject(projectId, { status: 'archived' });
   };
 
+  const handleAccess = (id: string) => {
+    switch (id) {
+      case 'home':
+        setActiveProject(null);
+        setActiveConversation(null);
+        break;
+      case 'projects':
+        setShowNewProjectModal(true);
+        break;
+      case 'templates':
+      case 'tasks':
+      case 'agents':
+      case 'analytics':
+      default:
+        setShowArtifactsCatalog(true);
+        break;
+    }
+  };
+
   // Collapsed sidebar view
   if (isCollapsed) {
     return (
-      <div className="flex h-full w-16 flex-col border-r border-gray-200 bg-white">
+      <div className="flex h-full w-16 flex-col border-r border-zinc-200/50 bg-zinc-50/80 backdrop-blur-sm">
         {/* Logo / Toggle */}
-        <div className="flex h-14 items-center justify-center border-b border-gray-200">
+        <div className="flex h-14 items-center justify-center border-b border-zinc-200/50">
           <button
             onClick={() => toggleSidebar(false)}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            className="p-2 rounded-md text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-700"
           >
             <PanelLeftOpen className="h-5 w-5" />
           </button>
@@ -382,7 +412,7 @@ export const ProjectsSidebar: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowNewProjectModal(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -390,6 +420,30 @@ export const ProjectsSidebar: React.FC = () => {
               <TooltipContent side="right">New Project</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+        </div>
+
+        {/* Access points */}
+        <div className="px-2 pb-2">
+          <div className="flex flex-col items-center gap-1" role="navigation" aria-label="Primary">
+            {ACCESS_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <TooltipProvider key={item.id}>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleAccess(item.id)}
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900"
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{item.label}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })}
+          </div>
         </div>
 
         {/* Projects List */}
@@ -410,11 +464,11 @@ export const ProjectsSidebar: React.FC = () => {
         </ScrollArea>
 
         {/* Settings */}
-        <div className="border-t border-gray-200 p-2">
+        <div className="border-t border-zinc-200/50 p-2">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <button className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                <button className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-700">
                   <Settings className="h-5 w-5" />
                 </button>
               </TooltipTrigger>
@@ -433,31 +487,53 @@ export const ProjectsSidebar: React.FC = () => {
 
   // Expanded sidebar view
   return (
-    <div className="flex h-full w-72 flex-col border-r border-gray-200 bg-white">
+    <div className="flex h-full w-72 flex-col border-r border-zinc-200/50 bg-zinc-50/80 backdrop-blur-sm">
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-gray-200 px-4">
+      <div className="flex h-14 items-center justify-between border-b border-zinc-200/50 px-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-blue-600" />
-          <span className="font-semibold text-gray-900">Concept2Cure</span>
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-sm">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <span className="font-semibold text-zinc-900">Concept2Cure</span>
         </div>
         <button
           onClick={() => toggleSidebar(true)}
-          className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="p-1.5 rounded-md text-zinc-400 hover:bg-zinc-200/50 hover:text-zinc-600"
         >
           <PanelLeftClose className="h-4 w-4" />
         </button>
       </div>
 
+      {/* Access points */}
+      <div className="px-3 pt-3">
+        <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Access</h3>
+        <div className="space-y-1" role="navigation" aria-label="Primary">
+          {ACCESS_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleAccess(item.id)}
+                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors"
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Search */}
-      <div className="p-3 border-b border-gray-100">
+      <div className="p-3 border-b border-zinc-100">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
             type="text"
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
           />
         </div>
       </div>

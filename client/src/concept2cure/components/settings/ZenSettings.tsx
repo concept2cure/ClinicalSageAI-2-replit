@@ -12,7 +12,7 @@
  * - WCAG 2.1 AA: Fully accessible forms
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   X,
@@ -22,24 +22,16 @@ import {
   Shield,
   Key,
   Palette,
-  Globe,
   HelpCircle,
   LogOut,
   ChevronRight,
   Moon,
   Sun,
   Monitor,
-  Check,
   Mail,
-  Phone,
   Camera,
   Link2,
-  CreditCard,
-  Users,
-  Lock,
   FileText,
-  Download,
-  Trash2,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -143,7 +135,44 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => 
 const ProfileSection: React.FC = () => {
   const [name, setName] = useState('John Doe');
   const [email] = useState('john.doe@company.com');
-  const [role] = useState('Regulatory Affairs Lead');
+  const [role, setRole] = useState('Regulatory Affairs Lead');
+  const [objectives, setObjectives] = useState('Submission readiness, evidence alignment');
+  const [criteria, setCriteria] = useState('Risk reduction, audit readiness');
+
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem('concept2cure_user_profile');
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile) as {
+          role?: string;
+          objectives?: string[];
+          criteria?: string[];
+        };
+        if (parsed.role) setRole(parsed.role);
+        if (parsed.objectives?.length) setObjectives(parsed.objectives.join(', '));
+        if (parsed.criteria?.length) setCriteria(parsed.criteria.join(', '));
+      }
+    } catch (error) {
+      console.warn('Unable to load profile settings', error);
+    }
+  }, []);
+
+  const handleSave = () => {
+    const normalizeList = (value: string) =>
+      value
+        .split(/\n|,/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const profile = {
+      role,
+      objectives: normalizeList(objectives),
+      criteria: normalizeList(criteria),
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+  };
 
   return (
     <div>
@@ -202,13 +231,40 @@ const ProfileSection: React.FC = () => {
           <input
             type="text"
             value={role}
-            disabled
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-500 bg-zinc-50 cursor-not-allowed"
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+            Objectives
+          </label>
+          <textarea
+            value={objectives}
+            onChange={(e) => setObjectives(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            placeholder="Comma or new-line separated"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+            Success criteria
+          </label>
+          <textarea
+            value={criteria}
+            onChange={(e) => setCriteria(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            placeholder="What must be true for success"
           />
         </div>
       </div>
 
-      <button className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+      <button
+        onClick={handleSave}
+        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+      >
         Save Changes
       </button>
     </div>

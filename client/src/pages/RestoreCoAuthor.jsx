@@ -356,23 +356,23 @@ export default function CoAuthor() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       <NavigationBanner currentModule="eCTD Co-Author" currentSection="Document Management" />
 
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white/80 backdrop-blur border-b border-zinc-200/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">eCTD Co-Author v6.0.0</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-2xl font-semibold text-zinc-900">eCTD Co-Author v6.0.0</h1>
+              <p className="text-sm text-zinc-500">
                 AI-powered regulatory document authoring with Google Docs integration
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <Dialog open={showCreateDocumentDialog} onOpenChange={setShowCreateDocumentDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button className="bg-zinc-900 hover:bg-zinc-800">
                     <Plus className="h-4 w-4 mr-2" />
                     Create AI Document
                   </Button>
@@ -441,7 +441,7 @@ export default function CoAuthor() {
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button variant="outline">
+              <Button variant="outline" className="border-zinc-200 text-zinc-700">
                 <GoogleIcon className="h-4 w-4 mr-2" />
                 Google Docs
               </Button>
@@ -517,7 +517,7 @@ export default function CoAuthor() {
 
           <TabsContent value="templates" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-blue-600" />
@@ -533,7 +533,7 @@ export default function CoAuthor() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
@@ -549,7 +549,7 @@ export default function CoAuthor() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Database className="h-5 w-5 mr-2 text-green-600" />
@@ -634,10 +634,10 @@ export default function CoAuthor() {
                         </Badge>
                         <div>
                           <p className="font-medium">{issue.section}</p>
-                          <p className="text-sm text-gray-600">{issue.description}</p>
+                          <p className="text-sm text-zinc-600">{issue.description}</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="border-zinc-200 text-zinc-700">
                         Review
                       </Button>
                     </div>

@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Concept2CureLayout } from './layouts';
+import { ZenApp } from './ZenApp';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 /**
@@ -46,7 +46,7 @@ export const Concept2CureApp: React.FC = () => {
       onError={handleError}
       showDetails={process.env.NODE_ENV === 'development'}
     >
-      <Concept2CureLayout />
+      <ZenApp />
     </ErrorBoundary>
   );
 };

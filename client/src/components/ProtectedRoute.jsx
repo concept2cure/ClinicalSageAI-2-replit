@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '../hooks/use-auth';
+import { useAuth } from '../portal-v2/services/authService';
 
 /**
  * Protected Route Component
@@ -9,22 +9,22 @@ import { useAuth } from '../hooks/use-auth';
  * Redirects to the login page if not authenticated.
  */
 export const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
     // Only redirect after we've checked authentication status
-    if (!loading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       // Store the attempted URL for redirecting back after login
       sessionStorage.setItem('redirectAfterLogin', location);
 
       // Redirect to login
-      setLocation('/auth');
+      setLocation('/concept2cure/login');
     }
-  }, [isAuthenticated, loading, location, setLocation]);
+  }, [isAuthenticated, isLoading, location, setLocation]);
 
   // Show loading state while checking authentication
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />

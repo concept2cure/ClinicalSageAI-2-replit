@@ -32,7 +32,11 @@ import {
   monitorPerformance,
   cleanup as cleanupPerformance,
 } from './middleware/enterprise-performance.js';
-import { initializeRedisRateLimiter, closeRedisRateLimiter } from './middleware/redisRateLimiter';
+import {
+  initializeRedisRateLimiter,
+  closeRedisRateLimiter,
+  createRedisRateLimiter,
+} from './middleware/redisRateLimiter';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
@@ -180,6 +184,10 @@ if (DEBUG) {
 // ============================================================================
 // Apply enterprise security middleware first
 applySecurityMiddleware(app);
+
+// Redis-backed API rate limiting (with in-memory fallback)
+const redisRateLimiter = createRedisRateLimiter();
+app.use('/api', redisRateLimiter);
 
 // Apply enterprise performance middleware (compression, monitoring)
 applyPerformanceMiddleware(app);

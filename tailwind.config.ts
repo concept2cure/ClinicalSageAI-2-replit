@@ -81,8 +81,18 @@ export default {
         },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        'accordion-down': 'accordion-down var(--motion-duration-normal) var(--motion-ease-standard)',
+        'accordion-up': 'accordion-up var(--motion-duration-normal) var(--motion-ease-standard)',
+      },
+      transitionDuration: {
+        fast: 'var(--motion-duration-fast)',
+        normal: 'var(--motion-duration-normal)',
+        slow: 'var(--motion-duration-slow)',
+        slower: 'var(--motion-duration-slower)',
+      },
+      transitionTimingFunction: {
+        standard: 'var(--motion-ease-standard)',
+        emphasize: 'var(--motion-ease-emphasize)',
       },
     },
   },

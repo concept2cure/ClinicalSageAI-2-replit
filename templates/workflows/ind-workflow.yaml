@@ -1,0 +1,469 @@
+# IND Workflow Template
+# 
+# Complete workflow for IND (Investigational New Drug) submissions
+# Based on FDA requirements and regulatory best practices
+#
+# Pillar: Workflow-as-Contract 📜
+# Version: 1.0.0
+
+name: "IND Submission Workflow"
+description: "End-to-end workflow for preparing and submitting an Investigational New Drug application to FDA"
+submissionType: IND
+version: "1.0.0"
+
+metadata:
+  author: "Concept2Cure"
+  regulatoryBasis: "21 CFR 312"
+  estimatedDuration: 90 # days
+  complexity: HIGH
+  tags:
+    - IND
+    - FDA
+    - Drug Development
+    - Phase 1
+
+defaultSlaHours: 72
+escalationEmail: "regulatory@concept2cure.com"
+
+# ============================================================
+# WORKFLOW STEPS
+# ============================================================
+
+steps:
+  # --------------------------------------------------------
+  # PHASE 1: INITIATION
+  # --------------------------------------------------------
+  
+  - id: "step-1-program-intake"
+    name: "Program Intake"
+    description: "Capture program information, drug product details, and submission goals"
+    stepType: TASK
+    order: 1
+    phaseId: "phase-1"
+    phaseName: "Initiation"
+    assigneeRole: "regulatory-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 48
+    
+    preconditions: []
+    
+    effects:
+      - id: "effect-1-1"
+        type: CREATE_ARTIFACT
+        target: "program-brief"
+        payload:
+          templateId: "ind-program-brief"
+          
+      - id: "effect-1-2"
+        type: SEND_NOTIFICATION
+        target: "team"
+        payload:
+          message: "IND program initiated"
+          type: "info"
+    
+    uiConfig:
+      icon: "FileText"
+      color: "blue"
+      helpText: "Enter all program details including drug name, indication, and target submission date"
+      formSchema:
+        type: object
+        required:
+          - drugName
+          - indication
+          - targetDate
+        properties:
+          drugName:
+            type: string
+            title: "Drug Name (INN/USAN)"
+          indication:
+            type: string
+            title: "Proposed Indication"
+          targetDate:
+            type: string
+            format: date
+            title: "Target Submission Date"
+          sponsorReference:
+            type: string
+            title: "Sponsor Reference Number"
+
+  - id: "step-2-source-ingestion"
+    name: "Source Document Ingestion"
+    description: "Upload and index all source documents for the submission"
+    stepType: TASK
+    order: 2
+    phaseId: "phase-1"
+    phaseName: "Initiation"
+    assigneeRole: "document-specialist"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 72
+    
+    preconditions:
+      - id: "pre-2-1"
+        type: STEP_COMPLETE
+        target: "step-1-program-intake"
+        operator: EQUALS
+        value: true
+        errorMessage: "Program intake must be completed first"
+    
+    effects:
+      - id: "effect-2-1"
+        type: TRIGGER_WORKER
+        target: "document-indexer"
+        payload:
+          extractTables: true
+          generateEmbeddings: true
+    
+    uiConfig:
+      icon: "Upload"
+      color: "green"
+      helpText: "Upload all relevant source documents including CMC data, preclinical reports, and protocol"
+
+  - id: "step-3-authoring-plan"
+    name: "Authoring Plan Development"
+    description: "Create detailed authoring plan with section assignments and timelines"
+    stepType: TASK
+    order: 3
+    phaseId: "phase-1"
+    phaseName: "Initiation"
+    assigneeRole: "regulatory-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 48
+    
+    preconditions:
+      - id: "pre-3-1"
+        type: STEP_COMPLETE
+        target: "step-2-source-ingestion"
+        operator: EQUALS
+        value: true
+    
+    effects:
+      - id: "effect-3-1"
+        type: CREATE_ARTIFACT
+        target: "authoring-plan"
+        payload:
+          templateId: "ind-authoring-plan"
+          
+      - id: "effect-3-2"
+        type: ASSIGN_ROLE
+        target: "step-4-cmc-drafting"
+        payload:
+          role: "cmc-specialist"
+    
+    uiConfig:
+      icon: "Calendar"
+      color: "purple"
+      helpText: "Define section owners, review cycles, and key milestones"
+
+  # --------------------------------------------------------
+  # PHASE 2: CONTENT DEVELOPMENT
+  # --------------------------------------------------------
+
+  - id: "step-4-cmc-drafting"
+    name: "CMC Section Drafting"
+    description: "Draft Chemistry, Manufacturing, and Controls (Module 3) content"
+    stepType: TASK
+    order: 4
+    phaseId: "phase-2"
+    phaseName: "Content Development"
+    assigneeRole: "cmc-specialist"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 168 # 7 days
+    
+    preconditions:
+      - id: "pre-4-1"
+        type: STEP_COMPLETE
+        target: "step-3-authoring-plan"
+        operator: EQUALS
+        value: true
+        
+      - id: "pre-4-2"
+        type: DATA_PRESENT
+        target: "context.cmcDataAvailable"
+        operator: EQUALS
+        value: true
+        errorMessage: "CMC source data must be uploaded"
+    
+    effects:
+      - id: "effect-4-1"
+        type: CREATE_ARTIFACT
+        target: "module-3-cmc"
+        payload:
+          templateId: "ind-module-3"
+          sections:
+            - "3.2.S Drug Substance"
+            - "3.2.P Drug Product"
+    
+    escalationRules:
+      - id: "esc-4-1"
+        triggerAfterHours: 120
+        action: NOTIFY
+        recipients: ["regulatory-lead"]
+        message: "CMC drafting approaching deadline"
+        
+      - id: "esc-4-2"
+        triggerAfterHours: 168
+        action: ESCALATE_MANAGER
+        recipients: ["regulatory-director"]
+        message: "CMC drafting SLA breached"
+    
+    uiConfig:
+      icon: "Flask"
+      color: "orange"
+      helpText: "Complete all CMC sections using source documents from the document library"
+
+  - id: "step-5-preclinical-drafting"
+    name: "Preclinical Section Drafting"
+    description: "Draft Nonclinical Overview and summaries (Module 2.4, 2.6, Module 4)"
+    stepType: TASK
+    order: 5
+    phaseId: "phase-2"
+    phaseName: "Content Development"
+    assigneeRole: "preclinical-specialist"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 168
+    
+    preconditions:
+      - id: "pre-5-1"
+        type: STEP_COMPLETE
+        target: "step-3-authoring-plan"
+        operator: EQUALS
+        value: true
+    
+    effects:
+      - id: "effect-5-1"
+        type: CREATE_ARTIFACT
+        target: "module-4-nonclinical"
+        payload:
+          templateId: "ind-module-4"
+    
+    uiConfig:
+      icon: "Microscope"
+      color: "teal"
+      helpText: "Document all preclinical studies including pharmacology, PK, and toxicology"
+
+  - id: "step-6-clinical-protocol"
+    name: "Clinical Protocol Drafting"
+    description: "Draft or finalize Phase 1 clinical protocol"
+    stepType: TASK
+    order: 6
+    phaseId: "phase-2"
+    phaseName: "Content Development"
+    assigneeRole: "clinical-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 168
+    
+    preconditions:
+      - id: "pre-6-1"
+        type: STEP_COMPLETE
+        target: "step-3-authoring-plan"
+        operator: EQUALS
+        value: true
+    
+    effects:
+      - id: "effect-6-1"
+        type: CREATE_ARTIFACT
+        target: "clinical-protocol"
+        payload:
+          templateId: "phase-1-protocol"
+    
+    uiConfig:
+      icon: "Users"
+      color: "pink"
+      helpText: "Complete Phase 1 clinical protocol following ICH E6(R2) guidance"
+
+  # --------------------------------------------------------
+  # PHASE 3: REVIEW CYCLES
+  # --------------------------------------------------------
+
+  - id: "step-7-internal-review"
+    name: "Internal Review"
+    description: "Cross-functional team review of all draft content"
+    stepType: REVIEW
+    order: 7
+    phaseId: "phase-3"
+    phaseName: "Review Cycles"
+    assigneeRole: "regulatory-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 96 # 4 days
+    
+    preconditions:
+      - id: "pre-7-1"
+        type: STEP_COMPLETE
+        target: "step-4-cmc-drafting"
+        operator: EQUALS
+        value: true
+        
+      - id: "pre-7-2"
+        type: STEP_COMPLETE
+        target: "step-5-preclinical-drafting"
+        operator: EQUALS
+        value: true
+        
+      - id: "pre-7-3"
+        type: STEP_COMPLETE
+        target: "step-6-clinical-protocol"
+        operator: EQUALS
+        value: true
+    
+    effects:
+      - id: "effect-7-1"
+        type: SEND_NOTIFICATION
+        target: "review-team"
+        payload:
+          message: "IND documents ready for internal review"
+          type: "action-required"
+    
+    uiConfig:
+      icon: "Users"
+      color: "yellow"
+      helpText: "Coordinate review across CMC, preclinical, clinical, and regulatory teams"
+
+  - id: "step-8-qa-review"
+    name: "QA/QC Review"
+    description: "Quality assurance review for compliance and consistency"
+    stepType: APPROVAL
+    order: 8
+    phaseId: "phase-3"
+    phaseName: "Review Cycles"
+    assigneeRole: "qa-specialist"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 72
+    
+    preconditions:
+      - id: "pre-8-1"
+        type: APPROVAL_RECEIVED
+        target: "step-7-internal-review"
+        operator: EQUALS
+        value: true
+        errorMessage: "Internal review must be approved"
+    
+    effects:
+      - id: "effect-8-1"
+        type: LOCK_VERSION
+        target: "all-documents"
+        payload:
+          reason: "QA approved version"
+    
+    uiConfig:
+      icon: "CheckCircle"
+      color: "green"
+      helpText: "Verify all documents meet quality standards and regulatory requirements"
+
+  # --------------------------------------------------------
+  # PHASE 4: FINALIZATION
+  # --------------------------------------------------------
+
+  - id: "step-9-signature-collection"
+    name: "Signature Collection"
+    description: "Collect required electronic signatures from authorized personnel"
+    stepType: SIGNATURE
+    order: 9
+    phaseId: "phase-4"
+    phaseName: "Finalization"
+    assigneeRole: "regulatory-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 48
+    
+    preconditions:
+      - id: "pre-9-1"
+        type: APPROVAL_RECEIVED
+        target: "step-8-qa-review"
+        operator: EQUALS
+        value: true
+        errorMessage: "QA review must be approved"
+    
+    effects:
+      - id: "effect-9-1"
+        type: UPDATE_STATE
+        target: "APPROVED"
+        
+      - id: "effect-9-2"
+        type: LOCK_VERSION
+        target: "submission-package"
+        payload:
+          reason: "Authorized for submission"
+    
+    uiConfig:
+      icon: "PenTool"
+      color: "indigo"
+      helpText: "Signatures required from: Medical Officer, Regulatory Lead, QA Director"
+
+  - id: "step-10-export-release"
+    name: "Export & Release"
+    description: "Generate final eCTD package and submit to FDA ESG"
+    stepType: EXPORT
+    order: 10
+    phaseId: "phase-4"
+    phaseName: "Finalization"
+    assigneeRole: "regulatory-lead"
+    isRequired: true
+    isAutoAdvance: false
+    slaHours: 24
+    
+    preconditions:
+      - id: "pre-10-1"
+        type: SIGNATURE_OBTAINED
+        target: "step-9-signature-collection"
+        operator: EQUALS
+        value: true
+        errorMessage: "All signatures must be collected"
+    
+    effects:
+      - id: "effect-10-1"
+        type: TRIGGER_WORKER
+        target: "ectd-packager"
+        payload:
+          format: "eCTD"
+          region: "FDA"
+          
+      - id: "effect-10-2"
+        type: UPDATE_STATE
+        target: "SUBMITTED"
+        
+      - id: "effect-10-3"
+        type: SEND_NOTIFICATION
+        target: "stakeholders"
+        payload:
+          message: "IND submission completed successfully"
+          type: "success"
+    
+    uiConfig:
+      icon: "Send"
+      color: "blue"
+      helpText: "Generate eCTD package with release hash for audit trail"
+
+# ============================================================
+# WORKFLOW SUMMARY
+# ============================================================
+#
+# Total Steps: 10
+# Phases: 4 (Initiation, Content Development, Review Cycles, Finalization)
+# Estimated Duration: 90 days
+# 
+# Key Milestones:
+# 1. Program Intake Complete - Day 2
+# 2. Source Documents Indexed - Day 5
+# 3. Authoring Plan Approved - Day 7
+# 4. Content Development Complete - Day 50
+# 5. Internal Review Complete - Day 60
+# 6. QA Approved - Day 70
+# 7. Signatures Collected - Day 85
+# 8. Submission Released - Day 90
+#
+# Roles Required:
+# - regulatory-lead
+# - document-specialist
+# - cmc-specialist
+# - preclinical-specialist
+# - clinical-lead
+# - qa-specialist
+# - regulatory-director (escalation)

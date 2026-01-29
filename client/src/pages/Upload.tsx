@@ -143,10 +143,10 @@ export default function Upload() {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <div className="bg-white rounded-lg shadow border border-slate-200">
-        <div className="px-6 py-5 border-b border-slate-200">
-          <h3 className="text-lg font-medium text-slate-800">Upload Clinical Study Report</h3>
-          <p className="mt-1 text-sm text-slate-600">Upload your Clinical Study Report PDF file for AI-powered processing and biomarker analysis.</p>
+      <div className="bg-white rounded-2xl border border-zinc-200/60 shadow-sm">
+        <div className="px-6 py-5 border-b border-zinc-200/60">
+          <h3 className="text-lg font-semibold text-zinc-900">Upload Clinical Study Report</h3>
+          <p className="mt-1 text-sm text-zinc-500">Upload your Clinical Study Report PDF file for AI-powered processing and biomarker analysis.</p>
         </div>
         <div className="p-6">
           <div className="space-y-8">
@@ -166,16 +166,16 @@ export default function Upload() {
                   setDragover(false);
                 }}
                 onDrop={handleDrop}
-                className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors ${
-                  dragover ? 'border-primary bg-blue-50' : 'border-slate-300'
+                className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors ${
+                  dragover ? 'border-slate-300 bg-slate-50' : 'border-zinc-300'
                 }`}
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <UploadIcon className="mb-3 h-12 w-12 text-slate-400" />
-                  <p className="mb-2 text-sm text-slate-700">
+                  <UploadIcon className="mb-3 h-12 w-12 text-zinc-400" />
+                  <p className="mb-2 text-sm text-zinc-700">
                     <span className="font-semibold">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-slate-500">PDF files only (max size: 50MB)</p>
+                  <p className="text-xs text-zinc-500">PDF files only (max size: 50MB)</p>
                 </div>
                 <input 
                   ref={fileInputRef}
@@ -194,13 +194,13 @@ export default function Upload() {
                 animate={{ opacity: 1 }}
                 className="space-y-6"
               >
-                <div className="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-md">
-                  <div className="flex-shrink-0 p-2 bg-primary-light rounded-md">
+                <div className="flex items-center p-4 bg-zinc-50 border border-zinc-200/60 rounded-xl">
+                  <div className="flex-shrink-0 p-2 bg-slate-50 rounded-md">
                     <FilePlus2 className="h-6 w-6 text-primary" />
                   </div>
                   <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-slate-800">{file.name}</p>
-                    <div className="flex items-center text-xs text-slate-500">
+                    <p className="text-sm font-medium text-zinc-900">{file.name}</p>
+                    <div className="flex items-center text-xs text-zinc-500">
                       <span>{`PDF Document • ${Math.round(file.size / 1024)} KB`}</span>
                     </div>
                   </div>
@@ -209,7 +209,7 @@ export default function Upload() {
                       e.stopPropagation();
                       setFile(null);
                     }}
-                    className="ml-4 p-1 rounded-full text-slate-500 hover:bg-slate-100"
+                    className="ml-4 p-1 rounded-full text-zinc-500 hover:bg-zinc-100"
                   >
                     <X className="h-5 w-5" />
                   </button>

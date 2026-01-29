@@ -506,6 +506,18 @@ export class CortexPrimeService {
     }));
   }
 
+  /**
+   * Backward-compatible graph traversal alias
+   */
+  async traverseGraph(
+    startAtomId: string,
+    edgeTypes?: string[],
+    maxDepth: number = 3,
+    minStrength: number = 0.5
+  ): Promise<TraversalResult[]> {
+    return this.traverseReasoning(startAtomId, edgeTypes, maxDepth, minStrength);
+  }
+
   // ============================================================================
   // THREAD OPERATIONS
   // ============================================================================
@@ -608,6 +620,43 @@ export class CortexPrimeService {
       [JSON.stringify(output), status, tokenUsage ? JSON.stringify(tokenUsage) : null, traceId]
     );
     return result.rows.length > 0 ? this.mapTrace(result.rows[0]) : null;
+  }
+
+  // ============================================================================
+  // AGENT OPERATIONS
+  // ============================================================================
+
+  /**
+   * Create an agent definition
+   */
+  async createAgent(agent: Partial<CortexAgent>): Promise<CortexAgent> {
+    const result = await this.pool.query(
+      `INSERT INTO cortex.agents (
+        agent_name, agent_type, description, capabilities,
+        model_config, prompt_template
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *`,
+      [
+        agent.agentName,
+        agent.agentType,
+        agent.description || null,
+        agent.capabilities || [],
+        agent.modelConfig ? JSON.stringify(agent.modelConfig) : '{}',
+        agent.promptTemplate || null
+      ]
+    );
+    return this.mapAgent(result.rows[0]);
+  }
+
+  /**
+   * Get agent by ID
+   */
+  async getAgent(agentId: string): Promise<CortexAgent | null> {
+    const result = await this.pool.query(
+      'SELECT * FROM cortex.agents WHERE id = $1 AND is_active = TRUE',
+      [agentId]
+    );
+    return result.rows.length > 0 ? this.mapAgent(result.rows[0]) : null;
   }
 
   // ============================================================================
@@ -985,6 +1034,21 @@ export class CortexPrimeService {
       startedAt: row.started_at,
       completedAt: row.completed_at,
       createdAt: row.created_at
+    };
+  }
+
+  private mapAgent(row: any): CortexAgent {
+    return {
+      id: row.id,
+      agentName: row.agent_name,
+      agentType: row.agent_type,
+      description: row.description || undefined,
+      capabilities: row.capabilities || [],
+      modelConfig: row.model_config || {},
+      promptTemplate: row.prompt_template || undefined,
+      isActive: row.is_active ?? true,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
     };
   }
 

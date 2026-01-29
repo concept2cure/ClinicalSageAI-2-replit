@@ -2,5 +2,8 @@
   "primary": "#FF1493",
   "variant": "professional",
   "appearance": "light",
-  "radius": 6
+  "radius": 6,
+  "motionProfile": "subtle-global-v1",
+  "densityScale": 1,
+  "uiScale": 1
 }

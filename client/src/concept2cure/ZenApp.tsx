@@ -25,13 +25,14 @@
  * - WCAG 2.1 AA: Accessible throughout
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import { ZenSettings } from './components/settings/ZenSettings';
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
+import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import {
@@ -39,7 +40,6 @@ import {
   ChevronLeft,
   Maximize2,
   Minimize2,
-  FileText,
   ClipboardList,
   BookOpen,
   BarChart2,
@@ -47,34 +47,23 @@ import {
   CheckSquare,
   Globe,
   Folder,
+  CalendarClock,
+  ShieldCheck,
+  Clock,
   Wifi,
   WifiOff,
+  Users,
+  ClipboardCheck,
+  Compass,
+  Loader2,
 } from 'lucide-react';
+
+// Lazy load the Convergent Canvas for the Sherpa System
+const ConvergentCanvas = lazy(() => import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas })));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-interface Conversation {
-  id: string;
-  title: string;
-  projectId: string;
-  timestamp: Date;
-  starred?: boolean;
-  pinned?: boolean;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  type: string;
-  color: string;
-  description?: string;
-  lastUpdated: Date;
-  conversationCount: number;
-  starred?: boolean;
-  archived?: boolean;
-}
 
 type ToolPanel =
   | 'ectd'
@@ -85,6 +74,16 @@ type ToolPanel =
   | 'inspection'
   | 'intelligence'
   | null;
+
+type LayoutMode = 'assistant' | 'sherpa' | 'editor' | 'analytics' | 'timeline' | 'audit' | 'ctd';
+
+interface UserProfile {
+  role?: string;
+  objectives?: string[];
+  criteria?: string[];
+  preferences?: Record<string, string | number | boolean>;
+  updatedAt?: string;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL PANEL CONFIG
@@ -224,7 +223,6 @@ export const ZenApp: React.FC = () => {
   // Projects from database
   const {
     projects: rawProjects,
-    isLoading: projectsLoading,
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
@@ -252,6 +250,8 @@ export const ZenApp: React.FC = () => {
   // Sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -261,6 +261,9 @@ export const ZenApp: React.FC = () => {
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
+
+  // Layout mode (polymorphic layout states)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('assistant');
 
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
@@ -324,7 +327,7 @@ export const ZenApp: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeToolPanel, commandPaletteOpen, settingsOpen]);
+  }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -366,6 +369,7 @@ export const ZenApp: React.FC = () => {
     if (actionId.startsWith('tool-')) {
       const panel = actionId.replace('tool-', '') as ToolPanel;
       setActiveToolPanel(panel);
+      setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
       setCommandPaletteOpen(false);
       return;
     }
@@ -396,6 +400,32 @@ export const ZenApp: React.FC = () => {
         break;
     }
   }, [handleNewChat]);
+
+  const handleLayoutModeChange = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+
+    if (mode === 'assistant' || mode === 'sherpa') {
+      setActiveToolPanel(null);
+      setToolPanelFullscreen(false);
+      return;
+    }
+
+    if (mode === 'ctd') {
+      setActiveToolPanel('ectd');
+      setToolPanelFullscreen(false);
+      return;
+    }
+
+    if (mode === 'editor') {
+      setActiveToolPanel(activeToolPanel || 'protocol');
+      setToolPanelFullscreen(false);
+      return;
+    }
+
+    // Analytics, timeline, audit modes are full-width content (hide tool panel)
+    setActiveToolPanel(null);
+    setToolPanelFullscreen(false);
+  }, [activeToolPanel]);
 
   const handleCreateProject = useCallback(
     async (data: { name: string; type: string; description?: string }) => {
@@ -456,6 +486,183 @@ export const ZenApp: React.FC = () => {
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
+  const contextMetrics = {
+    deadlineDays: 47,
+    complianceScore: 0.87,
+    riskCount: 3,
+    lastActivity: 'FDA response received 2h ago',
+    auditStatus: 'Audit trail active',
+  };
+
+  const layoutModes: { id: LayoutMode; label: string; icon?: React.ComponentType<{ className?: string }> }[] = [
+    { id: 'assistant', label: 'Assistant' },
+    { id: 'sherpa', label: 'Sherpa', icon: Compass },
+    { id: 'editor', label: 'Editor' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'audit', label: 'Audit' },
+    { id: 'ctd', label: 'CTD' },
+  ];
+
+  const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
+  const timelineSteps = useMemo(
+    () => [
+      {
+        id: 'step-intake',
+        name: 'Project Intake',
+        description: 'Capture submission scope, device metadata, and milestones.',
+        status: 'COMPLETED' as const,
+        stepType: 'TASK' as const,
+        order: 1,
+        phaseId: 'phase-intake',
+        phaseName: 'Intake',
+        assigneeRole: 'RA Lead',
+        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        isRequired: true,
+      },
+      {
+        id: 'step-authoring',
+        name: 'Draft Core Sections',
+        description: 'Generate and refine core submission sections.',
+        status: 'IN_PROGRESS' as const,
+        stepType: 'TASK' as const,
+        order: 2,
+        phaseId: 'phase-authoring',
+        phaseName: 'Authoring',
+        assigneeRole: 'Medical Writer',
+        startedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
+        isRequired: true,
+      },
+      {
+        id: 'step-review',
+        name: 'Regulatory Review',
+        description: 'QA and regulatory approval of drafted sections.',
+        status: 'READY' as const,
+        stepType: 'APPROVAL' as const,
+        order: 3,
+        phaseId: 'phase-review',
+        phaseName: 'Review',
+        assigneeRole: 'QA Manager',
+        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        isRequired: true,
+      },
+      {
+        id: 'step-export',
+        name: 'Submission Export',
+        description: 'Generate finalized eCTD package for submission.',
+        status: 'PENDING' as const,
+        stepType: 'EXPORT' as const,
+        order: 4,
+        phaseId: 'phase-export',
+        phaseName: 'Submission',
+        assigneeRole: 'Project Manager',
+        isRequired: true,
+      },
+    ],
+    []
+  );
+
+  const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
+  const userRole = userProfile?.role || 'Regulatory Lead';
+
+  const agentRoster = useMemo(
+    () => [
+      {
+        id: 'agent-compliance',
+        name: `${userRole} Agent`,
+        status: 'Active',
+        focus: primaryObjective,
+      },
+      {
+        id: 'agent-evidence',
+        name: 'Evidence Agent',
+        status: 'Reviewing',
+        focus: userProfile?.criteria?.[0] || 'Clinical evidence map',
+      },
+      {
+        id: 'agent-quality',
+        name: 'Quality Agent',
+        status: 'Queued',
+        focus: userProfile?.criteria?.[1] || 'Section audit checks',
+      },
+    ],
+    [primaryObjective, userProfile, userRole]
+  );
+
+  const nextActions = useMemo(
+    () => [
+      {
+        id: 'action-compile-section',
+        name: `Advance ${primaryObjective.toLowerCase()}`,
+        description: `Progress ${primaryObjective.toLowerCase()} with evidence alignment.`,
+        stepType: 'TASK' as const,
+        status: 'READY' as const,
+        workflowName: 'Priority Objectives',
+        workflowId: 'workflow-reg-prep-01',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 1,
+        priority: 'HIGH' as const,
+      },
+      {
+        id: 'action-review-claims',
+        name: userProfile?.criteria?.[0] || 'Review efficacy claims',
+        description: 'Validate claims against source evidence.',
+        stepType: 'REVIEW' as const,
+        status: 'IN_PROGRESS' as const,
+        workflowName: 'Evidence Validation',
+        workflowId: 'workflow-evd-02',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 2,
+        priority: 'MEDIUM' as const,
+      },
+      {
+        id: 'action-approval-qa',
+        name: userProfile?.criteria?.[1] || 'QA sign-off checklist',
+        description: 'Approve final quality checklist for submission.',
+        stepType: 'APPROVAL' as const,
+        status: 'AWAITING_APPROVAL' as const,
+        workflowName: 'Quality Governance',
+        workflowId: 'workflow-qa-03',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 3,
+        priority: 'LOW' as const,
+      },
+    ],
+    [primaryObjective, userProfile, userRole, workflowRunId]
+  );
+
+  useEffect(() => {
+    const loadProfile = () => {
+      try {
+        const savedProfile = localStorage.getItem('concept2cure_user_profile');
+        if (savedProfile) {
+          setUserProfile(JSON.parse(savedProfile));
+        }
+      } catch (error) {
+        console.warn('Unable to load user profile', error);
+      }
+    };
+
+    loadProfile();
+
+    const onStorage = (event: Event) => {
+      const storageEvent = event as { key?: string };
+      if (storageEvent.key === 'concept2cure_user_profile') {
+        loadProfile();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   return (
     <div className="zen flex h-screen w-screen overflow-hidden bg-stone-50">
       {/* CSS Variables */}
@@ -509,7 +716,6 @@ export const ZenApp: React.FC = () => {
           setActiveConversationId(id);
           setActiveThreadId(id);
         }}
-        onSelectProject={setActiveProjectId}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
         onOpenSearch={() => setCommandPaletteOpen(true)}
@@ -517,41 +723,264 @@ export const ZenApp: React.FC = () => {
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
+        onNavigate={(id) => {
+          switch (id) {
+            case 'home':
+              setLayoutMode('assistant');
+              break;
+            case 'projects':
+              setProjectSwitcherOpen(true);
+              break;
+            case 'tools':
+              setActiveToolPanel('intelligence');
+              break;
+            case 'agents':
+              setLayoutMode('assistant');
+              break;
+            case 'tasks':
+              setLayoutMode('timeline');
+              break;
+            case 'templates':
+              setActiveToolPanel('protocol');
+              break;
+            case 'analytics':
+              setLayoutMode('analytics');
+              break;
+            default:
+              break;
+          }
+        }}
       />
 
       {/* Main area */}
-      <div className="flex-1 flex min-w-0">
-        {/* Chat - Connected to Cortex */}
-        <div
-          className={cn(
-            'flex-1 min-w-0 transition-all duration-200',
-            activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
-          )}
-          style={{
-            display: toolPanelFullscreen ? 'none' : 'flex',
-          }}
-        >
-          <ZenChat
-            projectId={activeProjectId}
-            projectName={activeProject?.name}
-            submissionType={activeProject?.type}
-            threadId={activeThreadId}
-            onThreadChange={handleThreadChange}
-          />
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Ambient Context Bar */}
+        <div className="border-b border-zinc-100 bg-white/80 backdrop-blur-sm transition-colors duration-normal ease-standard">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-xs text-zinc-600">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="font-medium text-zinc-800">
+                {activeProject?.name || 'Select a project'}
+              </span>
+              {activeProject?.type && (
+                <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                  {activeProject.type}
+                </span>
+              )}
+            </div>
+
+            <div className="h-4 w-px bg-zinc-200" />
+
+            <div className="flex items-center gap-1.5">
+              <CalendarClock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Target: {contextMetrics.deadlineDays} days</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Compliance {Math.round(contextMetrics.complianceScore * 100)}%</span>
+            </div>
+
+            <a
+              href={`/concept2cure/proofs/${workflowRunId}`}
+              className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700 hover:bg-emerald-100"
+            >
+              <ShieldCheck className="w-3 h-3" />
+              <span>Proofs</span>
+            </a>
+
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              <span>{contextMetrics.riskCount} risks detected</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{contextMetrics.lastActivity}</span>
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-emerald-700">{contextMetrics.auditStatus}</span>
+            </div>
+          </div>
+
+          {/* Layout Mode Switcher */}
+          <div className="flex items-center gap-2 px-4 pb-2">
+            {layoutModes.map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => handleLayoutModeChange(mode.id)}
+                className={cn(
+                  'px-3 py-1 text-xs rounded-full border transition-colors duration-normal ease-standard flex items-center gap-1.5',
+                  layoutMode === mode.id
+                    ? mode.id === 'sherpa'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                )}
+              >
+                {mode.icon && <mode.icon className="w-3.5 h-3.5" />}
+                {mode.label}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
+              {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+              <span>{isConnected ? 'Lumen connected' : 'Lumen offline'}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Tool panel */}
-        {activeToolPanel && (
-          <ToolPanelWrapper
-            panel={activeToolPanel}
-            onClose={() => {
-              setActiveToolPanel(null);
-              setToolPanelFullscreen(false);
-            }}
-            isFullscreen={toolPanelFullscreen}
-            onToggleFullscreen={() => setToolPanelFullscreen(!toolPanelFullscreen)}
-          />
-        )}
+        {/* Content Area */}
+        <div className="flex-1 flex min-w-0">
+          {/* Sherpa Mode - Convergent Canvas */}
+          {layoutMode === 'sherpa' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Sherpa System...</p>
+                  </div>
+                </div>
+              }
+            >
+              <ConvergentCanvas
+                userId={activeProjectId || 'anonymous'}
+                organizationId="org-default"
+                initialIndustry="MEDTECH"
+              />
+            </Suspense>
+          )}
+
+          {layoutMode === 'analytics' && (
+            <div className="flex-1 flex items-center justify-center p-8 bg-white">
+              <div className="max-w-md text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
+                  <BarChart2 className="w-6 h-6 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-900">Analytics Mode</h3>
+                <p className="text-sm text-zinc-500">
+                  Portfolio analytics and risk trends will render here with full-width dashboards.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {layoutMode === 'timeline' && (
+            <div className="flex-1 p-8 bg-white overflow-y-auto">
+              <div className="max-w-3xl mx-auto">
+                <WorkflowTimeline
+                  steps={timelineSteps}
+                  currentStepId="step-authoring"
+                  progressPercent={50}
+                  assetState="REVIEW"
+                  workflowRunId={workflowRunId}
+                  showPhases
+                />
+              </div>
+            </div>
+          )}
+
+          {layoutMode === 'audit' && (
+            <div className="flex-1 p-8 bg-white overflow-y-auto">
+              <div className="max-w-3xl mx-auto">
+                <WorkflowTimeline
+                  steps={timelineSteps}
+                  currentStepId="step-authoring"
+                  progressPercent={50}
+                  assetState="REVIEW"
+                  workflowRunId={workflowRunId}
+                  showPhases
+                />
+              </div>
+            </div>
+          )}
+
+          {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (
+            <>
+              {/* Chat - Connected to Cortex */}
+              <div
+                className={cn(
+                  'flex-1 min-w-0 transition-all duration-200',
+                  activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
+                )}
+                style={{
+                  display: toolPanelFullscreen ? 'none' : 'flex',
+                }}
+              >
+                <ZenChat
+                  projectId={activeProjectId}
+                  projectName={activeProject?.name}
+                  submissionType={activeProject?.type}
+                  threadId={activeThreadId}
+                  onThreadChange={handleThreadChange}
+                />
+              </div>
+
+              {!activeToolPanel && !toolPanelFullscreen && (
+                <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
+                  <div className="border-b border-zinc-100 px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-800">
+                      <Users className="h-4 w-4 text-zinc-500" />
+                      Agent Workspace
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Active agents and priority actions across projects.
+                    </p>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto zen-scroll p-4 space-y-4">
+                    <section className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Active Agents
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {agentRoster.map((agent) => (
+                          <div
+                            key={agent.id}
+                            className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
+                          >
+                            <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-zinc-800 truncate">{agent.name}</p>
+                              <p className="text-xs text-zinc-500 truncate">
+                                {agent.status} • {agent.focus}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section>
+                      <NextActionsPanel
+                        actions={nextActions}
+                        maxItems={3}
+                        showEmpty
+                        className="shadow-none"
+                      />
+                    </section>
+                  </div>
+                </div>
+              )}
+
+              {/* Tool panel */}
+              {activeToolPanel && (
+                <ToolPanelWrapper
+                  panel={activeToolPanel}
+                  onClose={() => {
+                    setActiveToolPanel(null);
+                    setToolPanelFullscreen(false);
+                  }}
+                  isFullscreen={toolPanelFullscreen}
+                  onToggleFullscreen={() => setToolPanelFullscreen(!toolPanelFullscreen)}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Command palette */}

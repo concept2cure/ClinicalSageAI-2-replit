@@ -8,7 +8,7 @@
  */
 
 import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/portal-v2/services/authService';
 import { getExperienceConfig, hasPermission, type Permission } from './portalPolicy';
 import { getModuleConfig, getRolePreset, type RoleModulePreset } from './moduleRegistry';
 import type {
@@ -88,7 +88,7 @@ export const PortalProvider = ({ children, initialModule = 'dashboard' }: Portal
   const { user: authUser } = useAuth();
 
   // User context
-  const currentRole = (authUser?.role as UserRole) || 'viewer';
+  const currentRole = (authUser?.roles?.[0] as UserRole) || 'viewer';
   const agencies: RegulatoryAgency[] = []; // TODO: Load from user profile
   const rolePreset = useMemo(() => getRolePreset(currentRole), [currentRole]);
 
@@ -97,7 +97,7 @@ export const PortalProvider = ({ children, initialModule = 'dashboard' }: Portal
     if (!authUser) return null;
     return {
       id: authUser.id?.toString() || '',
-      name: authUser.username || 'User',
+      name: authUser.displayName || authUser.email || 'User',
       email: authUser.email || '',
       role: currentRole,
       organizations: [],

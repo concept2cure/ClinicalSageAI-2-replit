@@ -408,7 +408,7 @@ export default function ExampleReportsPage() {
                     className="w-full h-32 object-cover rounded border my-3"
                   />
                 </CardContent>
-                <CardFooter className="bg-slate-50 flex justify-end">
+                <CardFooter className="bg-zinc-50 flex justify-end">
                   <Button 
                     onClick={() => handleOpenLiveDemo(demo.path)}
                     className="w-full"
@@ -428,14 +428,14 @@ export default function ExampleReportsPage() {
             {reportIndex.map(({ persona, title }) => {
               const manifest = reportManifests[persona];
               return (
-                <Card key={persona} className="bg-white shadow-sm border">
+                <Card key={persona} className="bg-white border border-zinc-200/60 shadow-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl">{title}</CardTitle>
                     {manifest && (
                       <>
                         <CardDescription>{manifest.description}</CardDescription>
                         {manifest.blurb && (
-                          <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
+                          <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200/60">
                             <p className="text-sm text-blue-800">{manifest.blurb}</p>
                           </div>
                         )}
@@ -444,7 +444,7 @@ export default function ExampleReportsPage() {
                             {manifest.insights.map((insight, idx) => (
                               <span 
                                 key={idx} 
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-800 border border-indigo-200/60"
                               >
                                 {insight}
                               </span>

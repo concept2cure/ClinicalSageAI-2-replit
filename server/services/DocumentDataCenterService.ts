@@ -169,6 +169,28 @@ class DocumentDataCenterService {
   private storage: multer.Multer;
   private uploadDir: string = path.join(process.cwd(), 'uploads', 'device-data-center');
 
+  private readonly allowedMimeTypes = new Set([
+    'application/pdf',
+    'text/csv',
+    'text/plain',
+    'application/json',
+    'application/xml',
+    'text/xml',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/zip',
+    'image/png',
+    'image/jpeg',
+  ]);
+
+  private readonly magicSignatures = [
+    { mime: 'application/pdf', magic: Buffer.from('%PDF') },
+    { mime: 'image/png', magic: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
+    { mime: 'image/jpeg', magic: Buffer.from([0xff, 0xd8, 0xff]) },
+    { mime: 'application/zip', magic: Buffer.from([0x50, 0x4b, 0x03, 0x04]) },
+  ];
+
   constructor() {
     // Configure multer for file uploads
     this.storage = multer({
@@ -188,6 +210,48 @@ class DocumentDataCenterService {
     });
     
     console.log('✅ DocumentDataCenterService initialized with AI-powered tagging');
+  }
+
+  private isLikelyText(buffer: Buffer) {
+    const sample = buffer.subarray(0, 2048);
+    if (sample.includes(0)) return false;
+    let printable = 0;
+    for (const byte of sample) {
+      if (byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte <= 126)) {
+        printable += 1;
+      }
+    }
+    return printable / sample.length > 0.9;
+  }
+
+  private matchesMagic(buffer: Buffer, magic: Buffer) {
+    return buffer.length >= magic.length && buffer.subarray(0, magic.length).equals(magic);
+  }
+
+  private validateFileSignature(buffer: Buffer, mimeType: string) {
+    if (!this.allowedMimeTypes.has(mimeType)) {
+      throw new Error('Unsupported file type');
+    }
+
+    const zipBasedMimes = new Set([
+      'application/zip',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]);
+
+    const magicMatch = this.magicSignatures.find(sig => this.matchesMagic(buffer, sig.magic));
+
+    if (zipBasedMimes.has(mimeType)) {
+      if (!this.matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
+        throw new Error('Invalid ZIP-based file signature');
+      }
+    } else if (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml')) {
+      if (!this.isLikelyText(buffer)) {
+        throw new Error('Invalid text file content');
+      }
+    } else if (magicMatch && magicMatch.mime !== mimeType && mimeType !== 'application/zip') {
+      throw new Error('File signature does not match MIME type');
+    }
   }
 
   /**
@@ -357,6 +421,7 @@ class DocumentDataCenterService {
     try {
       // Calculate file checksum
       const fileBuffer = await fs.readFile(file.path);
+      this.validateFileSignature(fileBuffer, file.mimetype);
       const checksum = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
       // Extract content for indexing

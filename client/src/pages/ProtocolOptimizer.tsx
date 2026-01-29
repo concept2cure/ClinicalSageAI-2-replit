@@ -361,7 +361,7 @@ export default function ProtocolOptimizer() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent mb-3">
           Protocol Optimizer
         </h1>
         <p className="text-slate-600 max-w-2xl mx-auto">
@@ -372,13 +372,13 @@ export default function ProtocolOptimizer() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="overflow-hidden border-0 shadow-lg rounded-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 pb-3 border-b">
-            <CardTitle className="text-blue-800">Protocol Input</CardTitle>
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 pb-3 border-b">
+            <CardTitle className="text-slate-800">Protocol Input</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             {dossierId && (
-              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mb-2">
-                <p className="text-sm text-blue-700 flex items-center">
+              <div className="bg-slate-50 p-3 rounded-md border border-slate-200 mb-2">
+                <p className="text-sm text-slate-700 flex items-center">
                   <BookCopy className="h-4 w-4 mr-2" />
                   Optimization will be saved to Dossier ID: {dossierId.slice(0, 8)}...
                 </p>
@@ -398,7 +398,7 @@ export default function ProtocolOptimizer() {
             <div className="space-y-2">
               <Label htmlFor="protocolFile">Upload Draft Protocol (PDF or DOCX)</Label>
               <div
-                className={`border-2 border-dashed ${uploadedFileName ? 'border-green-200 bg-green-50/50' : 'border-blue-200'} rounded-lg p-6 transition-colors hover:${uploadedFileName ? 'border-green-300' : 'border-blue-300'} hover:${uploadedFileName ? 'bg-green-50/70' : 'bg-blue-50/50'} cursor-pointer`}
+                className={`border-2 border-dashed ${uploadedFileName ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200'} rounded-lg p-6 transition-colors hover:${uploadedFileName ? 'border-emerald-300' : 'border-slate-300'} hover:${uploadedFileName ? 'bg-emerald-50/70' : 'bg-slate-50/50'} cursor-pointer`}
                 onClick={() => document.getElementById('protocolFile')?.click()}
               >
                 <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -424,8 +424,8 @@ export default function ProtocolOptimizer() {
                     </>
                   ) : (
                     <>
-                      <Upload className="h-10 w-10 text-blue-500" />
-                      <p className="text-sm font-medium text-blue-700">
+                      <Upload className="h-10 w-10 text-slate-500" />
+                      <p className="text-sm font-medium text-slate-700">
                         Drag and drop your protocol file, or click to browse
                       </p>
                       <p className="text-xs text-slate-500">
@@ -509,8 +509,8 @@ export default function ProtocolOptimizer() {
               />
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-3">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">Expert Analysis Options</h3>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-3">
+              <h3 className="text-sm font-medium text-slate-800 mb-2">Expert Analysis Options</h3>
 
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -569,7 +569,7 @@ export default function ProtocolOptimizer() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-blue-600 italic mt-1">
+                  <p className="text-xs text-slate-600 italic mt-1">
                     Comprehensive analysis examines every protocol section and provides
                     academic-backed recommendations
                   </p>
@@ -578,7 +578,7 @@ export default function ProtocolOptimizer() {
             </div>
 
             <Button
-              className="w-full text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md py-6 font-medium rounded-xl mt-2"
+              className="w-full text-white bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 transition-all shadow-md py-6 font-medium rounded-xl mt-2"
               disabled={analyzeLoading}
               onClick={analyzeProtocol}
             >
@@ -601,9 +601,9 @@ export default function ProtocolOptimizer() {
           {generatedContent ? (
             <>
               <Card className="overflow-hidden border-0 shadow-lg rounded-xl">
-                <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 pb-3 border-b">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 pb-3 border-b">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-blue-800">Optimization Results</CardTitle>
+                    <CardTitle className="text-slate-800">Optimization Results</CardTitle>
                     <div className="flex gap-3">
                       <ExportMenu
                         title={`Protocol Recommendations for ${indication} Study (${phase.replace('phase', 'Phase ')})`}
@@ -612,7 +612,7 @@ export default function ProtocolOptimizer() {
                         academicReferences={generatedContent?.academicReferences || []}
                         indication={indication}
                         phase={phase}
-                        className="bg-white hover:bg-blue-50 transition-colors border-blue-200 text-blue-700 hover:text-blue-800 font-medium"
+                        className="bg-white/80 hover:bg-slate-50 transition-colors border-slate-200 text-slate-700 hover:text-slate-800 font-medium"
                       />
 
                       {dossierId && (
@@ -621,7 +621,7 @@ export default function ProtocolOptimizer() {
                           size="sm"
                           onClick={saveOptimizationToDossier}
                           disabled={saveLoading}
-                          className="bg-white hover:bg-green-50 transition-colors border-green-200 text-green-700 hover:text-green-800 font-medium"
+                          className="bg-white/80 hover:bg-emerald-50 transition-colors border-emerald-200 text-emerald-700 hover:text-emerald-800 font-medium"
                         >
                           {saveLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -643,7 +643,7 @@ export default function ProtocolOptimizer() {
                       </span>
                       <Button
                         variant="link"
-                        className="ml-auto text-blue-600 hover:text-blue-800 transition-colors p-0 h-auto"
+                        className="ml-auto text-slate-600 hover:text-slate-800 transition-colors p-0 h-auto"
                         onClick={viewDossier}
                       >
                         View Dossier
@@ -656,37 +656,37 @@ export default function ProtocolOptimizer() {
                       <TabsList className="mb-4 bg-slate-100 p-1 rounded-lg">
                         <TabsTrigger
                           value="protocol-intelligence"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Protocol Intelligence
                         </TabsTrigger>
                         <TabsTrigger
                           value="academic-insights"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Academic Insights
                         </TabsTrigger>
                         <TabsTrigger
                           value="recommendations"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Recommendations
                         </TabsTrigger>
                         <TabsTrigger
                           value="key-points"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Key Points
                         </TabsTrigger>
                         <TabsTrigger
                           value="section-analysis"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Section Analysis
                         </TabsTrigger>
                         <TabsTrigger
                           value="references"
-                          className="data-[state=active]:bg-white data-[state=active]:text-blue-700 rounded-md"
+                          className="data-[state=active]:bg-white data-[state=active]:text-slate-700 rounded-md"
                         >
                           Similar Trials
                         </TabsTrigger>
@@ -701,8 +701,8 @@ export default function ProtocolOptimizer() {
 
                       <TabsContent value="key-points" className="space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-                            <h3 className="text-md font-semibold mb-3 text-blue-800 flex items-center">
+                          <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                            <h3 className="text-md font-semibold mb-3 text-slate-800 flex items-center">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="16"
@@ -723,15 +723,15 @@ export default function ProtocolOptimizer() {
                             </h3>
                             <ul className="list-disc pl-5 space-y-2">
                               {generatedContent.suggestedEndpoints?.map((item, i) => (
-                                <li key={i} className="text-sm text-blue-700">
+                                <li key={i} className="text-sm text-slate-700">
                                   {item}
                                 </li>
                               ))}
                             </ul>
                           </div>
 
-                          <div className="bg-indigo-50 p-5 rounded-xl border border-indigo-100">
-                            <h3 className="text-md font-semibold mb-3 text-indigo-800 flex items-center">
+                          <div className="bg-slate-50/70 p-5 rounded-xl border border-slate-100">
+                            <h3 className="text-md font-semibold mb-3 text-slate-800 flex items-center">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="16"
@@ -753,7 +753,7 @@ export default function ProtocolOptimizer() {
                             </h3>
                             <ul className="list-disc pl-5 space-y-2">
                               {generatedContent.suggestedArms?.map((item, i) => (
-                                <li key={i} className="text-sm text-indigo-700">
+                                <li key={i} className="text-sm text-slate-700">
                                   {item}
                                 </li>
                               ))}
@@ -822,48 +822,48 @@ export default function ProtocolOptimizer() {
                             generatedContent.csrAlignmentScore ||
                             generatedContent.academicAlignmentScore ||
                             generatedContent.overallQualityScore) && (
-                            <div className="col-span-1 md:col-span-2 bg-gray-50 p-5 rounded-xl border border-gray-200">
-                              <h3 className="text-md font-semibold mb-4 text-gray-800">
+                            <div className="col-span-1 md:col-span-2 bg-zinc-50 p-5 rounded-xl border border-zinc-200/60">
+                              <h3 className="text-md font-semibold mb-4 text-zinc-900">
                                 Protocol Quality Assessment
                               </h3>
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 {generatedContent.regulatoryAlignmentScore && (
-                                  <div className="bg-white p-3 rounded-lg border border-blue-100">
-                                    <div className="text-3xl font-bold text-blue-700 mb-1">
+                                  <div className="bg-white p-3 rounded-lg border border-blue-200/60">
+                                    <div className="text-3xl font-semibold text-zinc-900 mb-1">
                                       {generatedContent.regulatoryAlignmentScore}%
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-zinc-600">
                                       Regulatory Alignment
                                     </div>
                                   </div>
                                 )}
 
                                 {generatedContent.csrAlignmentScore && (
-                                  <div className="bg-white p-3 rounded-lg border border-indigo-100">
-                                    <div className="text-3xl font-bold text-indigo-700 mb-1">
+                                  <div className="bg-white p-3 rounded-lg border border-indigo-200/60">
+                                    <div className="text-3xl font-semibold text-zinc-900 mb-1">
                                       {generatedContent.csrAlignmentScore}%
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-zinc-600">
                                       CSR Library Alignment
                                     </div>
                                   </div>
                                 )}
 
                                 {generatedContent.academicAlignmentScore && (
-                                  <div className="bg-white p-3 rounded-lg border border-emerald-100">
-                                    <div className="text-3xl font-bold text-emerald-700 mb-1">
+                                  <div className="bg-white p-3 rounded-lg border border-emerald-200/60">
+                                    <div className="text-3xl font-semibold text-zinc-900 mb-1">
                                       {generatedContent.academicAlignmentScore}%
                                     </div>
-                                    <div className="text-sm text-gray-600">Academic Alignment</div>
+                                    <div className="text-sm text-zinc-600">Academic Alignment</div>
                                   </div>
                                 )}
 
                                 {generatedContent.overallQualityScore && (
-                                  <div className="bg-white p-3 rounded-lg border border-amber-100">
-                                    <div className="text-3xl font-bold text-amber-700 mb-1">
+                                  <div className="bg-white p-3 rounded-lg border border-amber-200/60">
+                                    <div className="text-3xl font-semibold text-zinc-900 mb-1">
                                       {generatedContent.overallQualityScore}%
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-zinc-600">
                                       Overall Quality Score
                                     </div>
                                   </div>
@@ -878,8 +878,8 @@ export default function ProtocolOptimizer() {
                       <TabsContent value="section-analysis" className="space-y-6">
                         {generatedContent.sectionAnalysis ? (
                           <>
-                            <div className="mb-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                              <h3 className="text-md font-semibold mb-2 text-blue-800 flex items-center">
+                            <div className="mb-4 p-4 bg-slate-50 border border-slate-200/60 rounded-xl">
+                              <h3 className="text-md font-semibold mb-2 text-slate-800 flex items-center">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="16"
@@ -897,7 +897,7 @@ export default function ProtocolOptimizer() {
                                 </svg>
                                 Comprehensive Protocol Section Analysis
                               </h3>
-                              <p className="text-sm text-blue-700">
+                              <p className="text-sm text-slate-700">
                                 Expert-level analysis of each protocol section with recommendations
                                 from global academic guidance and CSR library learnings
                               </p>
@@ -911,9 +911,9 @@ export default function ProtocolOptimizer() {
                                   value="design"
                                   className="border rounded-xl mb-3 overflow-hidden"
                                 >
-                                  <AccordionTrigger className="px-5 py-4 hover:bg-blue-50/50 [&[data-state=open]]:bg-blue-50">
+                                  <AccordionTrigger className="px-5 py-4 hover:bg-slate-50/50 [&[data-state=open]]:bg-slate-50">
                                     <div className="flex items-center">
-                                      <span className="font-medium text-blue-800">
+                                      <span className="font-medium text-slate-800">
                                         Study Design
                                       </span>
                                       {generatedContent.sectionAnalysis.studyDesign.alignment && (
@@ -921,11 +921,11 @@ export default function ProtocolOptimizer() {
                                           className={`ml-3 text-xs font-medium px-2 py-1 rounded-full ${
                                             generatedContent.sectionAnalysis.studyDesign
                                               .alignment >= 80
-                                              ? 'bg-green-100 text-green-800'
+                                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                               : generatedContent.sectionAnalysis.studyDesign
                                                     .alignment >= 60
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : 'bg-red-100 text-red-800'
+                                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                : 'bg-red-50 text-red-700 border border-red-200'
                                           }`}
                                         >
                                           {generatedContent.sectionAnalysis.studyDesign.alignment}%
@@ -934,7 +934,7 @@ export default function ProtocolOptimizer() {
                                       )}
                                     </div>
                                   </AccordionTrigger>
-                                  <AccordionContent className="px-5 py-4 border-t bg-white">
+                                  <AccordionContent className="px-5 py-4 border-t border-zinc-200/60 bg-white">
                                     <div className="space-y-4">
                                       {generatedContent.sectionAnalysis.studyDesign.current && (
                                         <div>
@@ -985,11 +985,11 @@ export default function ProtocolOptimizer() {
 
                                       {generatedContent.sectionAnalysis.studyDesign
                                         .academicGuidance && (
-                                        <div className="p-3 bg-indigo-50 rounded-md">
-                                          <h4 className="text-sm font-medium text-indigo-700">
+                                        <div className="p-3 bg-slate-50 rounded-md">
+                                          <h4 className="text-sm font-medium text-slate-700">
                                             Academic Guidance:
                                           </h4>
-                                          <p className="mt-1 text-sm text-indigo-900">
+                                          <p className="mt-1 text-sm text-slate-900">
                                             {
                                               generatedContent.sectionAnalysis.studyDesign
                                                 .academicGuidance
@@ -1030,9 +1030,9 @@ export default function ProtocolOptimizer() {
                                   value="eligibility"
                                   className="border rounded-xl mb-3 overflow-hidden"
                                 >
-                                  <AccordionTrigger className="px-5 py-4 hover:bg-blue-50/50 [&[data-state=open]]:bg-blue-50">
+                                  <AccordionTrigger className="px-5 py-4 hover:bg-slate-50/50 [&[data-state=open]]:bg-slate-50">
                                     <div className="flex items-center">
-                                      <span className="font-medium text-blue-800">
+                                      <span className="font-medium text-slate-800">
                                         Eligibility Criteria
                                       </span>
                                       {generatedContent.sectionAnalysis.eligibilityCriteria
@@ -1079,7 +1079,7 @@ export default function ProtocolOptimizer() {
                                         generatedContent.sectionAnalysis.eligibilityCriteria
                                           .suggestions.length > 0 && (
                                           <div>
-                                            <h4 className="text-sm font-medium text-blue-700">
+                                            <h4 className="text-sm font-medium text-slate-700">
                                               Expert Recommendations:
                                             </h4>
                                             <ul className="mt-2 space-y-2">
@@ -1113,11 +1113,11 @@ export default function ProtocolOptimizer() {
 
                                       {generatedContent.sectionAnalysis.eligibilityCriteria
                                         .academicGuidance && (
-                                        <div className="p-3 bg-indigo-50 rounded-md">
-                                          <h4 className="text-sm font-medium text-indigo-700">
+                                        <div className="p-3 bg-slate-50 rounded-md">
+                                          <h4 className="text-sm font-medium text-slate-700">
                                             Academic Guidance:
                                           </h4>
-                                          <p className="mt-1 text-sm text-indigo-900">
+                                          <p className="mt-1 text-sm text-slate-900">
                                             {
                                               generatedContent.sectionAnalysis.eligibilityCriteria
                                                 .academicGuidance
@@ -1236,7 +1236,7 @@ export default function ProtocolOptimizer() {
                             generatedContent.matchedCsrInsights.map((csr, i) => (
                               <div
                                 key={i}
-                                className="p-5 border border-slate-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
+                                className="p-5 border border-zinc-200/60 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
                               >
                                 <h3 className="font-medium text-blue-800">{csr.title}</h3>
                                 <div className="flex flex-wrap items-center gap-2 mt-2 mb-3">
@@ -1258,21 +1258,21 @@ export default function ProtocolOptimizer() {
                                   )}
                                 </div>
 
-                                <div className="mt-3 border-t border-gray-100 pt-3">
-                                  <h4 className="text-sm font-medium text-gray-700 mb-1">
+                                <div className="mt-3 border-t border-zinc-200/60 pt-3">
+                                  <h4 className="text-sm font-medium text-zinc-700 mb-1">
                                     Key Findings:
                                   </h4>
-                                  <p className="text-sm text-slate-600">
+                                  <p className="text-sm text-zinc-600">
                                     {csr.insight || 'No specific insights available'}
                                   </p>
                                 </div>
 
                                 {csr.suggestions && csr.suggestions.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t border-gray-100">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-1">
+                                  <div className="mt-3 pt-3 border-t border-zinc-200/60">
+                                    <h4 className="text-sm font-medium text-zinc-700 mb-1">
                                       Recommendations:
                                     </h4>
-                                    <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+                                    <ul className="list-disc list-inside text-sm text-zinc-600 space-y-1">
                                       {csr.suggestions.map((suggestion: string, idx: number) => (
                                         <li key={idx}>{suggestion}</li>
                                       ))}
@@ -1282,7 +1282,7 @@ export default function ProtocolOptimizer() {
                               </div>
                             ))
                           ) : (
-                            <div className="text-center py-10 text-gray-500 italic bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="text-center py-10 text-zinc-500 italic bg-zinc-50 rounded-xl border border-zinc-200/60">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="40"
@@ -1293,7 +1293,7 @@ export default function ProtocolOptimizer() {
                                 strokeWidth="1"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="mx-auto mb-3 text-slate-300"
+                                className="mx-auto mb-3 text-zinc-300"
                               >
                                 <line x1="8" y1="6" x2="21" y2="6"></line>
                                 <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -1313,21 +1313,21 @@ export default function ProtocolOptimizer() {
               </Card>
             </>
           ) : (
-            <Card className="overflow-hidden border-0 shadow-lg rounded-xl">
-              <CardContent className="p-12 flex flex-col items-center justify-center text-center h-[500px] bg-gradient-to-br from-blue-50 to-indigo-50">
-                <div className="rounded-full bg-white p-5 shadow-md mb-6">
-                  <FileText className="h-12 w-12 text-blue-400" />
+            <Card className="overflow-hidden border border-zinc-200/60 shadow-sm rounded-2xl">
+              <CardContent className="p-12 flex flex-col items-center justify-center text-center h-[500px] bg-zinc-50">
+                <div className="rounded-full bg-white p-5 shadow-sm mb-6 border border-zinc-200/60">
+                  <FileText className="h-12 w-12 text-zinc-400" />
                 </div>
-                <h3 className="text-2xl font-semibold text-blue-800 mb-3">
+                <h3 className="text-2xl font-semibold text-zinc-900 mb-3">
                   No Optimization Results Yet
                 </h3>
-                <p className="text-slate-600 mt-2 max-w-md leading-relaxed">
+                <p className="text-zinc-600 mt-2 max-w-md leading-relaxed">
                   Enter your protocol details in the form and click "Optimize Protocol" to receive
                   AI-powered recommendations and insights based on successful clinical study
                   reports.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 items-center justify-center">
-                  <div className="flex items-center text-indigo-600 font-medium text-sm bg-white rounded-full py-2 px-4 shadow-sm">
+                  <div className="flex items-center text-zinc-700 font-medium text-sm bg-white rounded-full py-2 px-4 border border-zinc-200/60">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="16"
@@ -1345,7 +1345,7 @@ export default function ProtocolOptimizer() {
                     </svg>
                     Evidence-based suggestions
                   </div>
-                  <div className="flex items-center text-emerald-600 font-medium text-sm bg-white rounded-full py-2 px-4 shadow-sm">
+                  <div className="flex items-center text-zinc-700 font-medium text-sm bg-white rounded-full py-2 px-4 border border-zinc-200/60">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="16"

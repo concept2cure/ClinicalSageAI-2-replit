@@ -35,6 +35,77 @@ import multer from 'multer';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'text/csv',
+  'text/plain',
+  'application/json',
+  'application/xml',
+  'text/xml',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/zip',
+  'image/png',
+  'image/jpeg',
+]);
+
+const MAGIC_SIGNATURES = [
+  { mime: 'application/pdf', magic: Buffer.from('%PDF') },
+  { mime: 'image/png', magic: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
+  { mime: 'image/jpeg', magic: Buffer.from([0xff, 0xd8, 0xff]) },
+  { mime: 'application/zip', magic: Buffer.from([0x50, 0x4b, 0x03, 0x04]) },
+];
+
+const isLikelyText = (buffer: Buffer) => {
+  const sample = buffer.subarray(0, 2048);
+  if (sample.includes(0)) return false;
+  let printable = 0;
+  for (const byte of sample) {
+    if (byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte <= 126)) {
+      printable += 1;
+    }
+  }
+  return printable / sample.length > 0.9;
+};
+
+const matchesMagic = (buffer: Buffer, magic: Buffer) =>
+  buffer.length >= magic.length && buffer.subarray(0, magic.length).equals(magic);
+
+const validateUploadedFile = (req: any, res: any, next: any) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    return res.status(415).json({ error: 'Unsupported file type' });
+  }
+
+  const buffer: Buffer = file.buffer || Buffer.alloc(0);
+  const zipBasedMimes = new Set([
+    'application/zip',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ]);
+
+  const magicMatch = MAGIC_SIGNATURES.find(sig => matchesMagic(buffer, sig.magic));
+
+  if (zipBasedMimes.has(file.mimetype)) {
+    if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
+      return res.status(415).json({ error: 'Invalid ZIP-based file signature' });
+    }
+  } else if (file.mimetype.startsWith('text/') || file.mimetype.includes('json') || file.mimetype.includes('xml')) {
+    if (!isLikelyText(buffer)) {
+      return res.status(415).json({ error: 'Invalid text file content' });
+    }
+  } else if (magicMatch && magicMatch.mime !== file.mimetype && file.mimetype !== 'application/zip') {
+    return res.status(415).json({ error: 'File signature does not match MIME type' });
+  }
+
+  return next();
+};
+
 // Database connection
 const router = Router();
 
@@ -466,7 +537,11 @@ router.post('/changes/:id/assess', async (req, res) => {
 
 // POST /api/reg/submissions/:id/questions/ingest
 // body: { subject, from, to, body, region? }  OR multipart with `file` (text/.eml/.txt)
-router.post('/submissions/:id/questions/ingest', upload.single('file'), async (req, res) => {
+router.post(
+  '/submissions/:id/questions/ingest',
+  upload.single('file'),
+  validateUploadedFile,
+  async (req, res) => {
   const subId = req.params.id;
   let subject = (req.body?.subject || '').toString();
   let from = (req.body?.from || '').toString();
@@ -525,7 +600,8 @@ router.post('/submissions/:id/questions/ingest', upload.single('file'), async (r
   );
 
   res.json({ message: msg[0], created });
-});
+  }
+);
 
 // GET /api/reg/submissions/:id/questions
 router.get('/submissions/:id/questions', async (req, res) => {

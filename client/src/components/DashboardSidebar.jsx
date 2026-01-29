@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '../hooks/use-auth';
+import { useAuth } from '../portal-v2/services/authService';
 import {
   BarChart2,
   Brain,
@@ -31,10 +31,10 @@ const t = text => text;
 
 export default function DashboardSidebar({ collapsed, setCollapsed }) {
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
+    await logout();
   };
 
   const isActive = path => {

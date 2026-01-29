@@ -186,7 +186,7 @@ const CitationManagerPage = () => {
                     {searchResults.length > 0 ? (
                       <div className="divide-y">
                         {searchResults.map(result => (
-                          <div key={result.pmid} className="p-3 hover:bg-gray-50">
+                          <div key={result.pmid} className="p-3 hover:bg-slate-50">
                             <div className="flex justify-between">
                               <div>
                                 <h3 className="font-medium">{result.title}</h3>

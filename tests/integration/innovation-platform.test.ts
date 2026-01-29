@@ -5,22 +5,26 @@
  * Tests cover database operations, service logic, API endpoints, and integration.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe as baseDescribe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
 // Import services
-import { RegulatoryDeltaRadarService } from '../server/services/innovation/regulatory-delta-radar-service';
-import { EvidenceConfidenceHeatmapService } from '../server/services/innovation/evidence-confidence-heatmap-service';
-import { SubmissionReadinessTwinService } from '../server/services/innovation/submission-readiness-twin-service';
-import { AutoTraceabilityService } from '../server/services/innovation/auto-traceability-service';
-import { AdaptiveReviewerWorkspaceService } from '../server/services/innovation/adaptive-reviewer-workspace-service';
-import { OutcomeBasedTemplateLearningService } from '../server/services/innovation/outcome-based-template-learning-service';
-import { RegulatoryNegotiationLogbookService } from '../server/services/innovation/regulatory-negotiation-logbook-service';
-import { ComplianceGuardrailsSDKService } from '../server/services/innovation/compliance-guardrails-sdk-service';
+import { RegulatoryDeltaRadarService } from '../../server/services/innovation/regulatory-delta-radar-service';
+import { EvidenceConfidenceHeatmapService } from '../../server/services/innovation/evidence-confidence-heatmap-service';
+import { SubmissionReadinessTwinService } from '../../server/services/innovation/submission-readiness-twin-service';
+import { AutoTraceabilityService } from '../../server/services/innovation/auto-traceability-service';
+import { AdaptiveReviewerWorkspaceService } from '../../server/services/innovation/adaptive-reviewer-workspace-service';
+import { OutcomeBasedTemplateLearningService } from '../../server/services/innovation/outcome-based-template-learning-service';
+import { RegulatoryNegotiationLogbookService } from '../../server/services/innovation/regulatory-negotiation-logbook-service';
+import { ComplianceGuardrailsSDKService } from '../../server/services/innovation/compliance-guardrails-sdk-service';
 
 // Test database pool
 let testPool: Pool;
+
+const hasTestDb = Boolean(process.env.TEST_DATABASE_URL || process.env.DATABASE_URL);
+const runIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' && hasTestDb;
+const describe = runIntegration ? baseDescribe : baseDescribe.skip;
 
 // Test IDs for cleanup
 const testIds = {
@@ -30,55 +34,82 @@ const testIds = {
   documentId: uuidv4(),
 };
 
-beforeAll(async () => {
-  testPool = new Pool({
-    connectionString: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL,
+const columnExists = async (pool: Pool, schema: string, table: string, column: string) => {
+  const result = await pool.query(
+    `
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = $1 AND table_name = $2 AND column_name = $3
+    LIMIT 1
+  `,
+    [schema, table, column]
+  );
+  return result.rows.length > 0;
+};
+
+if (runIntegration) {
+  beforeAll(async () => {
+    const connectionString = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('Missing TEST_DATABASE_URL or DATABASE_URL for integration tests.');
+    }
+
+    testPool = new Pool({
+      connectionString,
+    });
+
+    testPool.on('connect', client => {
+      client.query("SET app.bypass_rls = 'true'");
+      client.query("SET app.is_admin = 'true'");
+    });
+
+    await testPool.query("SET app.bypass_rls = 'true'");
+    await testPool.query("SET app.is_admin = 'true'");
+
+    // Create test organization, program, and user
+    await testPool.query(
+      `
+      INSERT INTO organizations (id, name, slug)
+      VALUES ($1, 'Test Org', 'test-org')
+      ON CONFLICT (id) DO NOTHING
+    `,
+      [testIds.organizationId]
+    );
+
+    await testPool.query(
+      `
+      INSERT INTO programs (id, organization_id, name, therapeutic_area)
+      VALUES ($1, $2, 'Test Program', 'Oncology')
+      ON CONFLICT (id) DO NOTHING
+    `,
+      [testIds.programId, testIds.organizationId]
+    );
+
+    await testPool.query(
+      `
+      INSERT INTO users (id, email, name, organization_id)
+      VALUES ($1, 'test@test.com', 'Test User', $2)
+      ON CONFLICT (id) DO NOTHING
+    `,
+      [testIds.userId, testIds.organizationId]
+    );
   });
 
-  // Create test organization, program, and user
-  await testPool.query(
-    `
-    INSERT INTO organizations (id, name, slug)
-    VALUES ($1, 'Test Org', 'test-org')
-    ON CONFLICT (id) DO NOTHING
-  `,
-    [testIds.organizationId]
-  );
-
-  await testPool.query(
-    `
-    INSERT INTO programs (id, organization_id, name, therapeutic_area)
-    VALUES ($1, $2, 'Test Program', 'Oncology')
-    ON CONFLICT (id) DO NOTHING
-  `,
-    [testIds.programId, testIds.organizationId]
-  );
-
-  await testPool.query(
-    `
-    INSERT INTO users (id, email, name, organization_id)
-    VALUES ($1, 'test@test.com', 'Test User', $2)
-    ON CONFLICT (id) DO NOTHING
-  `,
-    [testIds.userId, testIds.organizationId]
-  );
-});
-
-afterAll(async () => {
-  // Cleanup test data
-  await testPool.query(
-    'DELETE FROM innovation.delta_findings WHERE scan_id IN (SELECT id FROM innovation.delta_radar_scans WHERE organization_id = $1)',
-    [testIds.organizationId]
-  );
-  await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE organization_id = $1', [
-    testIds.organizationId,
-  ]);
-  await testPool.query('DELETE FROM innovation.guidance_documents WHERE organization_id = $1', [
-    testIds.organizationId,
-  ]);
-  // Add more cleanup as needed
-  await testPool.end();
-});
+  afterAll(async () => {
+    // Cleanup test data
+    await testPool.query(
+      'DELETE FROM innovation.delta_findings WHERE program_id = $1',
+      [testIds.programId]
+    );
+    await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE program_id = $1', [
+      testIds.programId,
+    ]);
+    await testPool.query('DELETE FROM innovation.guidance_documents WHERE title = $1', [
+      'Test FDA Guidance',
+    ]);
+    await testPool.end();
+  });
+}
 
 /**
  * Test Suite 1: Regulatory Delta Radar
@@ -801,16 +832,19 @@ describe('Innovation Platform Integration', () => {
 
   describe('Audit Trail Verification', () => {
     it('should maintain complete audit trail', async () => {
+      const hasOrgId = await columnExists(testPool, 'innovation', 'guardrail_api_audit', 'org_id');
+      const orgColumn = hasOrgId ? 'org_id' : 'organization_id';
       const result = await testPool.query(
         `
         SELECT COUNT(*) as count
         FROM innovation.guardrail_api_audit
-        WHERE organization_id = $1
+        WHERE ${orgColumn} = $1
       `,
         [testIds.organizationId]
       );
 
-      expect(parseInt(result.rows[0].count)).toBeGreaterThanOrEqual(0);
+      const count = result.rows[0]?.count ?? '0';
+      expect(parseInt(count)).toBeGreaterThanOrEqual(0);
     });
   });
 });
@@ -891,11 +925,13 @@ describe('Security Validation', () => {
 
   it('should hash API keys before storage', async () => {
     // Check that raw keys are not stored
+    const hasOrgId = await columnExists(testPool, 'innovation', 'guardrail_api_audit', 'org_id');
+    const orgColumn = hasOrgId ? 'org_id' : 'organization_id';
     const result = await testPool.query(
       `
       SELECT api_key_hash
       FROM innovation.guardrail_api_audit
-      WHERE organization_id = $1
+      WHERE ${orgColumn} = $1
       LIMIT 1
     `,
       [testIds.organizationId]

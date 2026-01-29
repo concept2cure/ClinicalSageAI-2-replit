@@ -15,6 +15,8 @@ import documentRoutes from './document-routes';
 import regulatorySubmissionsRoutes from './regulatorySubmissions';
 import foresightAIAdvancedRoutes from './foresight-ai-advanced';
 import foresightFeedbackRoutes from './foresight-feedback';
+import regulatoryIntelligenceRoutes from './regulatory-intelligence-api';
+import medicalDeviceRoutes from './medical-device-api';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -42,6 +44,10 @@ router.use('/documents', documentRoutes);
 router.use('/regulatory-submissions', regulatorySubmissionsRoutes);
 router.use('/foresight-ai', foresightAIAdvancedRoutes);
 router.use('/foresight-ai', foresightFeedbackRoutes);
+
+// Phase 52 Sherpa System Routes
+router.use('/regulatory-intelligence', regulatoryIntelligenceRoutes);
+router.use('/medical-device', medicalDeviceRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {

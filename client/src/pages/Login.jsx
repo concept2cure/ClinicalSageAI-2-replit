@@ -1,3 +1,13 @@
+import { Redirect } from 'wouter';
+
+/**
+ * @deprecated Legacy login page. Use Concept2Cure Zen login at /concept2cure/login.
+ */
+export default function Login() {
+  return <Redirect to="/concept2cure/login" />;
+}
+
+/*
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -148,7 +158,7 @@ export default function Login({ onLoginSuccess }) {
               className="w-full h-12 gap-3"
               onClick={() => handleSSO('Microsoft')}
             >
-              <Building2 className="h-5 w-5 text-blue-600" />
+              <Building2 className="h-5 w-5 text-slate-600" />
               Continue with Microsoft
             </Button>
             <Button
@@ -261,7 +271,7 @@ export default function Login({ onLoginSuccess }) {
             Existing client admin?{' '}
             <button
               type="button"
-              className="text-blue-600 hover:underline"
+              className="text-slate-600 hover:underline"
               onClick={() => setLocation('/login')}
             >
               Sign in here
@@ -274,16 +284,16 @@ export default function Login({ onLoginSuccess }) {
 
           <div className="mt-8 border-t pt-6 text-center">
             <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-500">
-              <a href="/help" className="hover:text-blue-600">
+              <a href="/help" className="hover:text-slate-600">
                 Help Center
               </a>
-              <a href="/privacy" className="hover:text-blue-600">
+              <a href="/privacy" className="hover:text-slate-600">
                 Privacy
               </a>
-              <a href="/terms" className="hover:text-blue-600">
+              <a href="/terms" className="hover:text-slate-600">
                 Terms
               </a>
-              <a href="mailto:support@concept2cure.com" className="hover:text-blue-600">
+              <a href="mailto:support@concept2cure.com" className="hover:text-slate-600">
                 Contact Support
               </a>
             </div>
@@ -299,7 +309,7 @@ export default function Login({ onLoginSuccess }) {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
-              <ShieldCheck className="h-6 w-6 text-blue-600" />
+              <ShieldCheck className="h-6 w-6 text-slate-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Enterprise access control</h2>
@@ -343,3 +353,5 @@ export default function Login({ onLoginSuccess }) {
     </div>
   );
 }
+
+*/

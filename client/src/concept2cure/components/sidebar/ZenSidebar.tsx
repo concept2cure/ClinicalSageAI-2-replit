@@ -13,7 +13,7 @@
  * - WCAG 2.1 AA: Full keyboard navigation
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   MessageSquare,
@@ -24,22 +24,16 @@ import {
   ChevronRight,
   Sparkles,
   FolderOpen,
-  Clock,
   Star,
-  FileText,
-  Beaker,
-  Pill,
-  Activity,
   MoreHorizontal,
   Trash2,
-  Archive,
   Pin,
   Home,
   LayoutGrid,
   BookOpen,
   BarChart2,
-  Shield,
   Users,
+  ClipboardList,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -78,7 +72,6 @@ interface ZenSidebarProps {
   activeConversationId?: string;
   activeProjectId?: string;
   onSelectConversation: (id: string) => void;
-  onSelectProject: (id: string) => void;
   onNewChat: () => void;
   onOpenProjects: () => void;
   onOpenSearch: () => void;
@@ -86,6 +79,7 @@ interface ZenSidebarProps {
   onDeleteConversation: (id: string) => void;
   onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
+  onNavigate?: (id: string) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -96,6 +90,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'projects', label: 'Projects', icon: FolderOpen },
   { id: 'tools', label: 'Tools', icon: LayoutGrid },
+  { id: 'agents', label: 'Agents', icon: Users },
+  { id: 'tasks', label: 'Tasks', icon: ClipboardList },
   { id: 'templates', label: 'Templates', icon: BookOpen },
   { id: 'analytics', label: 'Analytics', icon: BarChart2 },
 ];
@@ -256,7 +252,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   activeConversationId,
   activeProjectId,
   onSelectConversation,
-  onSelectProject,
   onNewChat,
   onOpenProjects,
   onOpenSearch,
@@ -264,6 +259,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onDeleteConversation,
   onToggleStar,
   onTogglePin,
+  onNavigate,
 }) => {
   // Sort conversations
   const sortedConversations = [...conversations].sort((a, b) => {
@@ -367,6 +363,35 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <FolderOpen className="w-4 h-4" />
             {!isCollapsed && <span className="text-sm">Projects</span>}
           </button>
+        </div>
+      </div>
+
+      {/* Access points */}
+      <div className={cn('px-2 pb-2', isCollapsed && 'px-3')}>
+        {!isCollapsed && (
+          <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Access</h3>
+        )}
+        <div className={cn('space-y-1', isCollapsed && 'flex flex-col items-center')}
+          role="navigation"
+          aria-label="Primary"
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate?.(item.id)}
+                className={cn(
+                  'flex items-center gap-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors',
+                  isCollapsed ? 'w-10 h-10 justify-center' : 'w-full px-3 py-2'
+                )}
+                title={item.label}
+              >
+                <Icon className="w-4 h-4" />
+                {!isCollapsed && <span className="text-sm">{item.label}</span>}
+              </button>
+            );
+          })}
         </div>
       </div>
 

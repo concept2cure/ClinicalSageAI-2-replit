@@ -1,5 +1,7 @@
 // This file runs before Jest executes tests
-require('dotenv').config();
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Set default timeout for all tests (10 seconds)
 jest.setTimeout(10000);
