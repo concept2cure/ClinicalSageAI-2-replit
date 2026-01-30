@@ -45,7 +45,11 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
         if (!response.ok) {
           throw new Error('Failed to load certificate');
         }
-        const data = await response.json();
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.success === false) {
+          throw new Error(payload?.error?.message || payload?.error || 'Failed to load certificate');
+        }
+        const data = payload?.data ?? payload;
         if (isMounted) setProof(data);
       } catch (err) {
         if (isMounted) {
@@ -164,7 +168,11 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
                 body: JSON.stringify(proof),
               });
               if (!response.ok) throw new Error('Verification failed');
-              const result = await response.json();
+              const payload = await response.json().catch(() => ({}));
+              if (payload?.success === false) {
+                throw new Error(payload?.error?.message || payload?.error || 'Verification failed');
+              }
+              const result = payload?.data ?? payload;
               setVerification(result);
             } catch (err) {
               setVerification({

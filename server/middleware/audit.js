@@ -30,46 +30,46 @@ const AUDIT_ACTIONS = {
 
 /**
  * Log audit event to database
- * Uses existing audit_logs table schema with tenant_id
+ * Uses audit_logs table schema (tenant_id, table_name, record_id)
  */
 async function logAuditEvent({
   userId,
   tenantId,  // Using tenantId to match database schema
   action,
-  resourceType,
-  resourceId = null,
-  details = null,
+  tableName,
+  recordId = null,
+  oldValues = null,
+  newValues = null,
   ipAddress = null,
   userAgent = null,
-  sessionId = null,
-  severity = AUDIT_LEVELS.INFO,
 }) {
   try {
+    const safeTableName = tableName || 'unknown';
+    const safeRecordId = recordId || 'unknown';
+
     // Use raw SQL to insert audit log
     await db.execute(sql`
       INSERT INTO audit_logs (
         user_id,
         tenant_id,
         action,
-        resource_type,
-        resource_id,
-        details,
+        table_name,
+        record_id,
+        old_values,
+        new_values,
         ip_address,
         user_agent,
-        session_id,
-        severity,
-        timestamp
+        created_at
       ) VALUES (
         ${userId},
         ${tenantId},
         ${action},
-        ${resourceType},
-        ${resourceId},
-        ${JSON.stringify(details)},
+        ${safeTableName},
+        ${safeRecordId},
+        ${oldValues ? JSON.stringify(oldValues) : null},
+        ${newValues ? JSON.stringify(newValues) : null},
         ${ipAddress},
         ${userAgent},
-        ${sessionId},
-        ${severity},
         NOW()
       )
     `);
@@ -82,7 +82,7 @@ async function logAuditEvent({
 /**
  * Middleware to automatically log API requests
  */
-function auditMiddleware(resourceType, action = null) {
+function auditMiddleware(tableName, action = null) {
   return async (req, res, next) => {
     // Store original send function
     const originalSend = res.send;
@@ -93,7 +93,7 @@ function auditMiddleware(resourceType, action = null) {
       const auditAction = action || getActionFromMethod(req.method);
 
       // Extract resource ID from URL params
-      const resourceId = req.params.id || req.params.deviceId || req.params.reportId || null;
+      const recordId = req.params.id || req.params.deviceId || req.params.reportId || null;
 
       // Get client IP
       const ipAddress = req.ip || req.connection.remoteAddress;
@@ -102,11 +102,11 @@ function auditMiddleware(resourceType, action = null) {
       if (req.user) {
         logAuditEvent({
           userId: req.user.id,
-          tenantId: req.user.organizationId, // Using organizationId from JWT as tenantId
+          tenantId: req.user.tenantId,
           action: auditAction,
-          resourceType,
-          resourceId,
-          details: {
+          tableName,
+          recordId,
+          newValues: {
             method: req.method,
             path: req.path,
             query: req.query,
@@ -114,7 +114,6 @@ function auditMiddleware(resourceType, action = null) {
           },
           ipAddress,
           userAgent: req.get('user-agent'),
-          severity: res.statusCode >= 400 ? AUDIT_LEVELS.WARNING : AUDIT_LEVELS.INFO,
         }).catch(err => console.error('Audit log error:', err));
       }
 
@@ -153,14 +152,14 @@ async function auditLog(req, action, resourceType, details = {}) {
 
   return logAuditEvent({
     userId: req.user.id,
-    tenantId: req.user.organizationId,
+    tenantId: req.user.tenantId,
     action,
-    resourceType,
-    resourceId: details.resourceId || null,
-    details,
+    tableName: resourceType,
+    recordId: details.recordId || details.resourceId || null,
+    oldValues: details.oldValues || null,
+    newValues: details.newValues || details || null,
     ipAddress,
     userAgent: req.get('user-agent'),
-    severity: details.severity || AUDIT_LEVELS.INFO,
   });
 }
 

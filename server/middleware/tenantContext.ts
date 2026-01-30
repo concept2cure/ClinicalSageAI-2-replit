@@ -9,10 +9,16 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import { organizations } from '../../shared/schema';
+import { query } from '../db/pool';
 
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
   organizationId: string | null;
+  organizationUuid?: string | null;
   clientWorkspaceId: string | null;
   module: string | null;
 }
@@ -22,6 +28,14 @@ declare global {
   namespace Express {
     interface Request {
       tenantContext: TenantContext;
+      user?: {
+        id: number;
+        tenantId: number;
+        industryMode?: string | null;
+        role?: string | null;
+      };
+      userId?: number;
+      tenantId?: number;
     }
   }
 }
@@ -32,12 +46,14 @@ declare global {
 export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
   // Extract tenant context from headers
   const organizationId = (req.headers['x-org-id'] as string) || null;
+  const organizationUuid = (req.headers['x-org-uuid'] as string) || null;
   const clientWorkspaceId = (req.headers['x-client-id'] as string) || null;
   const module = (req.headers['x-module'] as string) || null;
 
   // Create tenant context object
   const tenantContext: TenantContext = {
     organizationId,
+    organizationUuid,
     clientWorkspaceId,
     module,
   };
@@ -65,7 +81,95 @@ export function requireOrganizationContext(req: Request, res: Response, next: Ne
     });
   }
 
+  if (req.user?.tenantId) {
+    const contextOrgId = parseInt(req.tenantContext.organizationId, 10);
+    if (Number.isFinite(contextOrgId) && contextOrgId !== req.user.tenantId) {
+      return res.status(403).json({
+        error: 'Organization mismatch',
+        message: 'Organization context does not match authenticated tenant',
+      });
+    }
+  }
+
   next();
+}
+
+/**
+ * Strict tenant context enforcement for every protected route.
+ * Validates JWT, ensures tenant exists and is active, and sets RLS tenant context.
+ */
+export async function requireTenantContext(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '').trim();
+
+    if (!token) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Missing bearer token',
+      });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || process.env.SESSION_SECRET || ''
+    ) as {
+      userId: string;
+      organizationId: string;
+      organizationUuid?: string;
+      role?: string;
+    };
+
+    const organizationId = decoded.organizationId?.toString();
+    if (!organizationId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Missing organization context',
+      });
+    }
+
+    const tenant = await db
+      .select({ id: organizations.id, industryMode: organizations.industryMode, status: organizations.status })
+      .from(organizations)
+      .where(eq(organizations.id, parseInt(organizationId, 10)))
+      .limit(1);
+
+    if (!tenant.length || tenant[0].status === 'suspended') {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Tenant not active',
+      });
+    }
+
+    const organizationUuid = req.tenantContext?.organizationUuid || decoded.organizationUuid || null;
+
+    req.tenantContext = {
+      organizationId,
+      organizationUuid,
+      clientWorkspaceId: req.tenantContext?.clientWorkspaceId || null,
+      module: req.tenantContext?.module || null,
+    };
+
+    req.user = {
+      id: parseInt(decoded.userId, 10),
+      tenantId: parseInt(organizationId, 10),
+      industryMode: tenant[0].industryMode,
+      role: decoded.role || null,
+    };
+    req.userId = req.user.id;
+    req.tenantId = req.user.tenantId;
+
+    await query("SELECT set_config('app.current_tenant_id', $1, true)", [organizationId]);
+    await query("SELECT set_config('app.current_user_role', $1, true)", [decoded.role || 'user']);
+    await query("SELECT set_config('app.current_org_id', $1, true)", [organizationUuid || '']);
+
+    return next();
+  } catch (error) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      message: 'Invalid or expired token',
+    });
+  }
 }
 
 /**

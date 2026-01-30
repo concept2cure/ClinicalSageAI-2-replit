@@ -21,7 +21,7 @@
  * - Retry logic with exponential backoff
  */
 
-import { apiRequest } from '../../lib/queryClient';
+import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -133,6 +133,18 @@ class RegulatoryIntelligenceService {
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
   private cacheTTL = 5 * 60 * 1000; // 5 minutes
 
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+    const response = await apiRequest(method, url, body);
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new Error(payload?.error?.message || payload?.error || 'Regulatory intelligence request failed');
+    }
+    return payload?.data ?? payload;
+  }
+
   /**
    * Get cached data or fetch fresh
    */
@@ -157,11 +169,11 @@ class RegulatoryIntelligenceService {
   }> {
     return this.getCached(`briefing-${userId}`, async () => {
       try {
-        const response = await apiRequest(`${this.baseUrl}/briefing`, {
-          method: 'POST',
-          body: JSON.stringify({ userId }),
-        });
-        return response;
+        const response = await this.request<{ data?: unknown; alerts: RegulatoryAlert[]; stats: RegulatoryStats; priorities: Array<{ id: string; title: string; project?: string; deadline?: string; urgency: 'now' | 'today' | 'this_week' }> }>(
+          'GET',
+          `${this.baseUrl}/morning-briefing?userId=${encodeURIComponent(userId)}`
+        );
+        return (response as any).data || response;
       } catch (error) {
         console.error('[RegulatoryIntelligence] Briefing fetch failed:', error);
         // Return default structure on error
@@ -202,8 +214,11 @@ class RegulatoryIntelligenceService {
     if (params.limit) queryParams.set('limit', params.limit.toString());
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/maude?${queryParams}`);
-      return response.events || [];
+      const response = await this.request<{ data?: MAUDEEvent[]; events?: MAUDEEvent[] }>(
+        'GET',
+        `${this.baseUrl}/maude?${queryParams}`
+      );
+      return response.data || response.events || [];
     } catch (error) {
       console.error('[RegulatoryIntelligence] MAUDE search failed:', error);
       return [];
@@ -228,8 +243,11 @@ class RegulatoryIntelligenceService {
     if (params.limit) queryParams.set('limit', params.limit.toString());
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/recalls?${queryParams}`);
-      return response.recalls || [];
+      const response = await this.request<{ data?: FDARecall[]; recalls?: FDARecall[] }>(
+        'GET',
+        `${this.baseUrl}/recalls?${queryParams}`
+      );
+      return response.data || response.recalls || [];
     } catch (error) {
       console.error('[RegulatoryIntelligence] Recalls fetch failed:', error);
       return [];
@@ -254,8 +272,11 @@ class RegulatoryIntelligenceService {
     if (params.limit) queryParams.set('limit', params.limit.toString());
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/guidances?${queryParams}`);
-      return response.guidances || [];
+      const response = await this.request<{ data?: FDAGuidance[]; guidances?: FDAGuidance[] }>(
+        'GET',
+        `${this.baseUrl}/guidances?${queryParams}`
+      );
+      return response.data || response.guidances || [];
     } catch (error) {
       console.error('[RegulatoryIntelligence] Guidances fetch failed:', error);
       return [];
@@ -273,10 +294,11 @@ class RegulatoryIntelligenceService {
     limit?: number;
   }): Promise<CompetitorIntelligence[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/competitors`, {
-        method: 'POST',
-        body: JSON.stringify(params),
-      });
+      const response = await this.request<{ intelligence?: CompetitorIntelligence[] }>(
+        'POST',
+        `${this.baseUrl}/competitors`,
+        params
+      );
       return response.intelligence || [];
     } catch (error) {
       console.error('[RegulatoryIntelligence] Competitor intel failed:', error);
@@ -302,8 +324,11 @@ class RegulatoryIntelligenceService {
     if (params.limit) queryParams.set('limit', params.limit.toString());
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/pdufa?${queryParams}`);
-      return response.dates || [];
+      const response = await this.request<{ data?: PDUFADate[]; dates?: PDUFADate[] }>(
+        'GET',
+        `${this.baseUrl}/pdufa-dates?${queryParams}`
+      );
+      return response.data || response.dates || [];
     } catch (error) {
       console.error('[RegulatoryIntelligence] PDUFA fetch failed:', error);
       return [];
@@ -319,7 +344,7 @@ class RegulatoryIntelligenceService {
   ): () => void {
     // In production, this would be a WebSocket connection
     // For now, use Server-Sent Events or polling
-    const eventSource = new EventSource(`${this.baseUrl}/stream?userId=${userId}`);
+    const eventSource = new EventSource(`${this.baseUrl}/alerts/stream?userId=${userId}`);
 
     eventSource.onmessage = (event) => {
       try {

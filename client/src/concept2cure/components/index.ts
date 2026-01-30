@@ -34,7 +34,7 @@ export {
   SHERPA_PERSONAS,
   CANVAS_ZONES,
   type CanvasZone,
-  type IndustryType,
+  type IndustryMode,
   type IndustryWorkspaceProps,
   type SherpaPersonaId,
 } from './canvas';

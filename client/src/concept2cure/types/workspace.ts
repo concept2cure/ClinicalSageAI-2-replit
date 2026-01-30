@@ -20,6 +20,15 @@
 
 export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CN' | 'CA' | 'AU' | 'BR' | 'ROW';
 
+export type IndustryMode =
+  | 'biotech'
+  | 'pharma'
+  | 'cro'
+  | 'medtech'
+  | 'academic'
+  | 'regulatory'
+  | 'medical_writing';
+
 export type SubmissionType =
   // US FDA
   | 'IND' | 'NDA' | 'BLA' | 'ANDA' | '510K' | 'PMA' | 'DE_NOVO' | 'HDE' | 'EUA'

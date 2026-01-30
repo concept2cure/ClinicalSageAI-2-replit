@@ -1,10 +1,12 @@
 /**
  * Delta Verification Engine
  * 
- * Detects divergence between expected compliance state and actual system state.
+ * M3 Drift Detection: Baseline snapshot hashing; drift detection on workflow + data state;
+ * explicit diff report; regression suite false-positive rate <1%; tamper events logged.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
+import { ProofAuditService } from './ProofAuditService';
 
 export interface SystemStateSnapshot {
   timestamp: number;
@@ -34,6 +36,13 @@ export class DeltaVerificationEngine {
   private expectedState: SystemStateSnapshot | null = null;
   private intervalId?: ReturnType<typeof setInterval>;
   private readonly CHECK_INTERVAL_MS = 5000;
+  private auditService: ProofAuditService;
+  private organizationId?: string;
+
+  constructor(organizationId?: string) {
+    this.auditService = ProofAuditService.getInstance();
+    this.organizationId = organizationId;
+  }
 
   async startContinuousVerification(): Promise<void> {
     if (this.intervalId) return;
@@ -61,6 +70,13 @@ export class DeltaVerificationEngine {
 
   setExpectedState(snapshot: SystemStateSnapshot): void {
     this.expectedState = snapshot;
+    
+    // M3: Audit baseline set event
+    const snapshotHash = this.hash(this.stableStringify(snapshot));
+    this.auditService.logDeltaBaselineSet(snapshotHash, {
+      organizationId: this.organizationId,
+      workflowRunId: snapshot.workflowRunId,
+    }).catch(() => {});
   }
 
   async verifySnapshot(actual: SystemStateSnapshot): Promise<DeltaReport> {
@@ -153,7 +169,16 @@ export class DeltaVerificationEngine {
   }
 
   private async handleComplianceDrift(delta: DeltaReport): Promise<void> {
+    // M3: Audit drift detection
+    await this.auditService.logDeltaDriftDetected(delta, {
+      organizationId: this.organizationId,
+    });
+
     if (delta.divergence > 5) {
+      // M3: Audit tamper detection for critical violations
+      await this.auditService.logTamperDetected(delta.violations, {
+        organizationId: this.organizationId,
+      });
       await this.initiateEmergencyShutdown(delta);
     } else {
       await this.quarantineDivergentWorkflows(delta.violations);

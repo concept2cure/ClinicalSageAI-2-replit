@@ -159,20 +159,27 @@ MedTech Organization
 ### 2.1 Industry Workspace Shell
 **File**: `/client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx`
 
-The main container that adapts to organizational mode:
+The main container that adapts to industry mode:
 
 ```typescript
-type OrganizationMode = 'biotech' | 'pharma' | 'cro';
+type IndustryMode =
+  | 'biotech'
+  | 'pharma'
+  | 'cro'
+  | 'medtech'
+  | 'academic'
+  | 'regulatory'
+  | 'medical_writing';
 
 interface IndustryWorkspaceShell {
   // Adapts navigation, dashboards, and features based on mode
   currentUser: CurrentUser;
-  organizationMode: OrganizationMode;
+  industryMode: IndustryMode;
 }
 ```
 
 **Features**:
-- Mode-aware navigation (different nav items per org type)
+- Mode-aware navigation (different nav items per industry)
 - Role-based quick actions in header
 - Unified notification system
 - Keyboard shortcuts (⌘K command palette)
@@ -259,7 +266,135 @@ Module 5: Clinical Study Reports
 - Export eCTD validation
 - Linked source documents
 
-### 2.5 Medical Writer Queue
+### 2.5 Workflow Proofs & Certificate Verification
+**Files**:
+- `/client/src/concept2cure/components/proof/ProofExplorer.tsx`
+- `/server/routes/workflow.ts`
+
+**Purpose**: Provide tamper-evident proof certificates with verification UX (Part 11 support).
+
+**User Flow**:
+1. User opens a workflow run.
+2. UI requests a proof certificate.
+3. UI runs verification and displays pass/fail details.
+
+**API Contracts (Envelope Standard)**:
+```
+GET  /api/workflow/proofs/certificate/:workflowRunId
+POST /api/workflow/proofs/verify
+```
+
+**Response Envelope**:
+```
+{ "success": true, "data": { ...certificateOrVerification } }
+{ "success": false, "error": { "message": "..." } }
+```
+
+**UX Expectations**:
+- Never show raw JSON; summarize verification status.
+- Failure states provide actionable guidance (e.g., “Re-run verification”).
+- Verification results are non-blocking; the user can continue while a warning is displayed.
+
+### 2.6 Knowledge Base & Audit Logging (Part 11)
+**Files**:
+- `/client/src/concept2cure/hooks/useProjectKnowledge.ts`
+- `/server/routes/concept2cure.ts`
+- `/client/src/concept2cure/components/ErrorBoundary.tsx`
+
+**Purpose**: Align project knowledge uploads + instructions with audit-grade logging.
+
+**API Contracts (Envelope Standard)**:
+```
+GET    /api/concept2cure/projects/:projectId/knowledge
+PATCH  /api/concept2cure/projects/:projectId/knowledge
+POST   /api/concept2cure/documents/upload
+DELETE /api/concept2cure/documents/:documentId
+POST   /api/concept2cure/errors
+```
+
+**Upload Guardrails**:
+- Allowlist MIME types (PDF/DOCX/TXT/MD/CSV/XLSX)
+- Max file size 50MB
+- Filenames sanitized for storage and audit traceability
+
+**Audit Requirements**:
+- Every mutation produces a regulatory audit log entry.
+- Client errors are forwarded via `/api/concept2cure/errors` with full context.
+- Knowledge metadata (custom instructions, context) is preserved in `project.settings`.
+
+### 2.7 API Envelope Standard (System-Wide)
+All Concept2Cure and Workflow routes return a consistent envelope to support GA-grade stability:
+
+```
+{ "success": true, "data": { ... }, "meta": { ... } }
+{ "success": false, "error": { "message": "...", "code": "...", "details": [ ... ] } }
+```
+
+**Client Expectations**:
+- Always unwrap `data`.
+- Always handle `success=false` and `error.message`.
+- Never assume a raw payload.
+
+### 2.8 Concept2Cure Core API Contracts
+**Server File**: `/server/routes/concept2cure.ts`
+
+**Projects**:
+```
+GET    /api/concept2cure/projects
+GET    /api/concept2cure/projects/:id
+POST   /api/concept2cure/projects
+PUT    /api/concept2cure/projects/:id
+DELETE /api/concept2cure/projects/:id
+```
+
+**Conversations & Messages**:
+```
+POST /api/concept2cure/projects/:projectId/conversations
+POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages
+```
+
+**Artifacts & Signatures**:
+```
+GET  /api/concept2cure/projects/:projectId/artifacts
+POST /api/concept2cure/projects/:projectId/artifacts
+PUT  /api/concept2cure/projects/:projectId/artifacts/:artifactId
+POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
+```
+
+**Templates**:
+```
+GET /api/concept2cure/templates
+GET /api/concept2cure/templates/:id
+```
+
+**CMC Dashboard (Envelope Standard)**:
+```
+GET /api/cmc/status
+GET /api/cmc/metrics
+GET /api/cmc/projects
+```
+
+**Knowledge & Audit** (see 2.6):
+```
+GET    /api/concept2cure/projects/:projectId/knowledge
+PATCH  /api/concept2cure/projects/:projectId/knowledge
+POST   /api/concept2cure/documents/upload
+DELETE /api/concept2cure/documents/:documentId
+POST   /api/concept2cure/errors
+```
+
+**Client Hooks**:
+- `/client/src/concept2cure/hooks/useProjects.ts`
+- `/client/src/concept2cure/hooks/useTemplates.ts`
+- `/client/src/concept2cure/hooks/useProjectKnowledge.ts`
+- `/client/src/concept2cure/hooks/useChat.ts`
+
+**Integration Rules**:
+- `projectId` uses the `proj_` prefix externally.
+- All API mutations are audited (Part 11).
+- Artifacts preserve version history with content integrity hashes.
+
+### 2.9 Medical Writer Queue
 **File**: `/client/src/concept2cure/components/writing/MedicalWriterQueue.tsx`
 
 Document production workflow for writers:
@@ -285,7 +420,7 @@ Draft → Internal Review → SME Review → QC → Sponsor Review → Final QC 
 - Template library integration
 - Source document linking
 
-### 2.6 CRO Resource Dashboard
+### 2.10 CRO Resource Dashboard
 **File**: `/client/src/concept2cure/components/cro/CROResourceDashboard.tsx`
 
 Multi-client operations management:
@@ -304,7 +439,7 @@ Multi-client operations management:
 - Resource allocation view
 - Health score per project
 
-### 2.7 Team Collaboration Panel
+### 2.11 Team Collaboration Panel
 **File**: `/client/src/concept2cure/components/collaboration/TeamCollaborationPanel.tsx`
 
 Real-time collaboration features:
@@ -323,13 +458,13 @@ Real-time collaboration features:
 - Task assignments
 - Approvals granted
 
-### 2.8 Quick Start Wizard
+### 2.12 Quick Start Wizard
 **File**: `/client/src/concept2cure/components/wizard/QuickStartWizard.tsx`
 
 Guided project creation:
 
 **Steps**:
-1. Organization Type (Biotech/Pharma/CRO)
+1. Organization Type (Biotech/Pharma/CRO/MedTech/Academic)
 2. Submission Type (IND, NDA, BLA, 510(k), MAA, etc.)
 3. Product & Therapeutic Area
 4. Regions & Timeline
@@ -346,39 +481,48 @@ Guided project creation:
 ## 3. Type System
 
 ### 3.1 Core Types
-**File**: `/client/src/concept2cure/types/workspace.ts`
+**Files**:
+- `/client/src/concept2cure/types/workspace.ts`
+- `/client/src/concept2cure/components/industry/index.ts`
 
 ```typescript
-// User Roles
+// Organization Modes
+type IndustryMode = 'biotech' | 'pharma' | 'cro' | 'medtech' | 'academic';
+
+// User Roles (canonical)
 type UserRole = 
-  | 'ra_lead' | 'ra_specialist'
+  | 'regulatory_affairs'
+  | 'ra_lead'
+  | 'ra_specialist'
   | 'medical_writer'
-  | 'cmc_lead'
   | 'clinical_ops'
+  | 'medical_affairs'
   | 'quality_assurance'
-  | 'pharmacovigilance'
+  | 'cmc_lead'
   | 'project_manager'
-  | 'medical_director'
-  | 'executive';
+  | 'executive'
+  | 'consultant';
 
 // Submission Types
 type SubmissionType = 
-  | 'ind' | 'nda' | 'bla' | 'anda'
-  | '510k' | 'pma' | 'de_novo'
-  | 'maa' | 'cta'
-  | 'j-nda'
-  | 'variation' | 'annual';
+  | 'IND' | 'NDA' | 'BLA' | 'ANDA' | '510K' | 'PMA' | 'DE_NOVO' | 'HDE' | 'EUA'
+  | 'MAA' | 'CTA' | 'IMPD'
+  | 'CER' | 'PSUR' | 'PBRER'
+  | 'TYPE_IA' | 'TYPE_IB' | 'TYPE_II' | 'PRIOR_APPROVAL' | 'CBE' | 'CBE30' | 'ANNUAL_REPORT';
 
 // Regulatory Regions
-type RegulatoryRegion = 'us' | 'eu' | 'jp' | 'cn' | 'row' | 'global';
+type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CN' | 'CA' | 'AU' | 'BR' | 'ROW';
 
 // Product Stages
 type ProductStage = 
-  | 'discovery' | 'preclinical'
-  | 'ind_enabling' | 'ind_filed'
-  | 'phase_1' | 'phase_2' | 'phase_3'
-  | 'nda_preparation' | 'nda_filed'
-  | 'approved' | 'commercial';
+  | 'discovery'
+  | 'preclinical'
+  | 'phase1'
+  | 'phase2'
+  | 'phase3'
+  | 'registration'
+  | 'marketed'
+  | 'lifecycle';
 ```
 
 ---
@@ -388,15 +532,28 @@ type ProductStage =
 | Component | File Path | Status |
 |-----------|-----------|--------|
 | Workspace Types | `/client/src/concept2cure/types/workspace.ts` | ✅ |
-| Industry Shell | `/components/shell/IndustryWorkspaceShell.tsx` | ✅ |
-| Role Dashboard | `/components/dashboards/IndustryRoleDashboard.tsx` | ✅ |
-| Regulatory Calendar | `/components/calendar/RegulatoryCalendar.tsx` | ✅ |
-| Dossier Navigator | `/components/submission/DossierNavigator.tsx` | ✅ |
-| Writer Queue | `/components/writing/MedicalWriterQueue.tsx` | ✅ |
-| CRO Dashboard | `/components/cro/CROResourceDashboard.tsx` | ✅ |
-| Team Panel | `/components/collaboration/TeamCollaborationPanel.tsx` | ✅ |
-| Quick Start Wizard | `/components/wizard/QuickStartWizard.tsx` | ✅ |
-| Demo Integration | `/demo/UnifiedWorkspaceDemo.tsx` | ✅ |
+| Industry Shell | `/client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx` | ✅ |
+| Role Dashboard | `/client/src/concept2cure/components/dashboards/IndustryRoleDashboard.tsx` | ✅ |
+| Regulatory Calendar | `/client/src/concept2cure/components/calendar/RegulatoryCalendar.tsx` | ✅ |
+| Dossier Navigator | `/client/src/concept2cure/components/submission/DossierNavigator.tsx` | ✅ |
+| Writer Queue | `/client/src/concept2cure/components/writing/MedicalWriterQueue.tsx` | ✅ |
+| CRO Dashboard | `/client/src/concept2cure/components/cro/CROResourceDashboard.tsx` | ✅ |
+| Team Panel | `/client/src/concept2cure/components/collaboration/TeamCollaborationPanel.tsx` | ✅ |
+| Quick Start Wizard | `/client/src/concept2cure/components/wizard/QuickStartWizard.tsx` | ✅ |
+| Proof Explorer | `/client/src/concept2cure/components/proof/ProofExplorer.tsx` | ✅ |
+| Project Knowledge Hook | `/client/src/concept2cure/hooks/useProjectKnowledge.ts` | ✅ |
+| Projects Hook | `/client/src/concept2cure/hooks/useProjects.ts` | ✅ |
+| Templates Hook | `/client/src/concept2cure/hooks/useTemplates.ts` | ✅ |
+| Chat Hook | `/client/src/concept2cure/hooks/useChat.ts` | ✅ |
+| Cortex Service | `/client/src/concept2cure/services/cortexService.ts` | ✅ |
+| CMC Service | `/client/src/concept2cure/services/cmcService.ts` | ✅ |
+| Regulatory Intelligence Service | `/client/src/concept2cure/services/regulatoryIntelligenceService.ts` | ✅ |
+| Medical Device Service | `/client/src/concept2cure/services/medicalDeviceService.ts` | ✅ |
+| Document Intelligence Service | `/client/src/concept2cure/services/documentIntelligenceService.ts` | ✅ |
+| Error Boundary | `/client/src/concept2cure/components/ErrorBoundary.tsx` | ✅ |
+| Workflow Routes | `/server/routes/workflow.ts` | ✅ |
+| Concept2Cure Routes | `/server/routes/concept2cure.ts` | ✅ |
+| Demo Integration | `/client/src/concept2cure/demo/UnifiedWorkspaceDemo.tsx` | ✅ |
 
 ---
 
@@ -409,7 +566,7 @@ To integrate these components into the existing ZenApp shell:
 import { IndustryWorkspaceShell } from './components';
 
 const ZenApp = () => {
-  const { organizationMode, userRole } = useCurrentUser();
+  const { industryMode, userRole } = useCurrentUser();
   
   return (
     <IndustryWorkspaceShell 
@@ -423,6 +580,11 @@ const ZenApp = () => {
 };
 ```
 
+**Concept2Cure Shell Expectations**:
+- `ConvergentCanvas` receives `userName`, `userRole`, and `industry` from profile context.
+- Industry/role enums are canonical (lowercase industry, standardized `UserRole`).
+- API calls unwrap the `data` envelope and handle `success=false` at all boundaries.
+
 ---
 
 ## 6. Compliance Considerations
@@ -432,6 +594,11 @@ const ZenApp = () => {
 - User authentication required for all actions
 - Electronic signatures for approvals
 - Audit trail accessible
+
+**Implementation Guarantees**:
+- Artifacts store immutable version history with SHA-256 integrity hashes.
+- Signatures bind signer identity, artifact version, and content hash.
+- Audit entries include IP address, user agent, session, and integrity hash.
 
 ### 6.2 ICH Guidelines
 - eCTD structure follows ICH M4

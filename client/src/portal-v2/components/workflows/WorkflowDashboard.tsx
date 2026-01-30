@@ -878,7 +878,7 @@ export const WorkflowDashboard: React.FC = () => {
 
             <TabsContent value="templates" className="flex-1 mt-0">
               <WorkflowTemplates
-                  workflowRunId: 'wf-run-nda-assembly-030',
+                workflowRunId="wf-run-nda-assembly-030"
                 templates={templates}
                 onCreateWorkflow={template => {
                   // TODO: Implement workflow creation from template

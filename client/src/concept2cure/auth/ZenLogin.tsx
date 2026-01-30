@@ -29,6 +29,8 @@ import {
   type MfaMethod,
 } from '@/portal-v2/services/authService';
 
+import { computeRedirect } from './redirectUtils';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -345,8 +347,9 @@ export const ZenLogin: React.FC = () => {
       }
 
       setStep('success');
+
       setTimeout(() => {
-        setLocation('/concept2cure');
+        setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
       }, 1000);
     } catch (err) {
       setError({
@@ -382,7 +385,7 @@ export const ZenLogin: React.FC = () => {
 
       setStep('success');
       setTimeout(() => {
-        setLocation('/concept2cure');
+        setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
       }, 1000);
     } catch (err) {
       setError({
@@ -437,7 +440,7 @@ export const ZenLogin: React.FC = () => {
     // For demo, go to success
     setStep('success');
     setTimeout(() => {
-      setLocation('/concept2cure');
+      setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
     }, 1000);
   }, [setLocation]);
 

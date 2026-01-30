@@ -72,10 +72,13 @@ const vector = (name: string, config: { dimensions: number }) =>
  */
 export const organizations = pgTable('organizations', {
   id: serial('id').primaryKey(),
+  uuid: uuid('uuid').default(sql`gen_random_uuid()`).notNull(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   domain: text('domain'),
   logo: text('logo'),
+  industryMode: text('industry_mode'),
+  stripeCustomerId: text('stripe_customer_id'),
   settings: json('settings'),
   apiKey: text('api_key').unique(),
   tier: text('tier').default('standard').notNull(), // free, standard, professional, enterprise
@@ -97,6 +100,44 @@ export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
 // Organization Types
 export type Organization = InferSelectModel<typeof organizations>;
 export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+
+/**
+ * Audit Logs
+ * GxP-compliant immutable audit trail of CRUD activity.
+ */
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    tenantId: integer('tenant_id').notNull(),
+    userId: integer('user_id'),
+    action: text('action').notNull(),
+    tableName: text('table_name').notNull(),
+    recordId: text('record_id').notNull(),
+    oldValues: json('old_values'),
+    newValues: json('new_values'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => {
+    return {
+      idxAuditTenant: index('idx_audit_tenant').on(table.tenantId),
+      idxAuditCreated: index('idx_audit_created').on(table.createdAt),
+      idxAuditTableRecord: index('idx_audit_table_record').on(table.tableName, table.recordId),
+    };
+  }
+);
+
+export const insertAuditLogSchema = createInsertSchemaOmit(auditLogs, {
+  id: true,
+  createdAt: true,
+});
+
+export type AuditLog = InferSelectModel<typeof auditLogs>;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 /**
  * ======================================================================================
@@ -9578,6 +9619,63 @@ export const gateApprovals = pgTable(
 );
 
 // taskDependencies already defined earlier in the file - removed duplicate
+
+/**
+ * Proof Audit Logs Table
+ * 
+ * 21 CFR Part 11 compliant audit trail for the Proof System (Phase 4.1).
+ * Immutable hash-chained audit entries for:
+ * - Graph compilation and transitions
+ * - ZK proof generation and verification
+ * - Delta verification and tamper detection
+ * - Certificate generation and validation
+ */
+export const proofAuditLogs = pgTable(
+  'proof_audit_logs',
+  {
+    id: serial('id').primaryKey(),
+    entryId: text('entry_id').notNull().unique(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id),
+    workflowRunId: text('workflow_run_id'),
+    
+    // Event Details
+    eventType: text('event_type').notNull(), // GRAPH_COMPILE, ZK_PROOF_GENERATED, CERTIFICATE_GENERATED, etc.
+    actorId: text('actor_id'),
+    actorRole: text('actor_role'),
+    
+    // Proof Data (redacted for compliance)
+    details: json('details').notNull(),
+    
+    // Hash Chain Integrity (required for 21 CFR Part 11 § 11.10(e))
+    previousHash: text('previous_hash'),
+    hashChain: text('hash_chain').notNull(),
+    
+    // Trusted Timestamp (NTP-verified)
+    timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
+    timestampSource: text('timestamp_source').default('server').notNull(), // server, ntp, tsa
+    
+    // Immutability marker - row cannot be updated after insert
+    immutable: boolean('immutable').default(true).notNull(),
+  },
+  table => ({
+    entryIdIdx: uniqueIndex('proof_audit_entry_id_idx').on(table.entryId),
+    orgIdx: index('proof_audit_org_idx').on(table.organizationId),
+    workflowIdx: index('proof_audit_workflow_idx').on(table.workflowRunId),
+    eventTypeIdx: index('proof_audit_event_type_idx').on(table.eventType),
+    timestampIdx: index('proof_audit_timestamp_idx').on(table.timestamp),
+    hashChainIdx: index('proof_audit_hash_chain_idx').on(table.hashChain),
+  })
+);
+
+export const insertProofAuditLogSchema = createInsertSchemaOmit(proofAuditLogs, {
+  id: true,
+  timestamp: true,
+  immutable: true,
+});
+
+export type ProofAuditLog = InferSelectModel<typeof proofAuditLogs>;
+export type InsertProofAuditLog = z.infer<typeof insertProofAuditLogSchema>;
 
 /**
  * Regulatory Audit Logs Table

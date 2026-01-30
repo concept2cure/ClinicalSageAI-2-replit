@@ -22,6 +22,8 @@ interface FormData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   jobTitle: string;
   organization: string;
   organizationType: string;
@@ -151,6 +153,8 @@ export const ZenSignup: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     jobTitle: '',
     organization: '',
     organizationType: '',
@@ -178,6 +182,13 @@ export const ZenSignup: React.FC = () => {
         newErrors.email = 'Please enter a valid email address';
       }
       if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
+      if (!formData.password) newErrors.password = 'Password is required';
+      if (formData.password && formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters';
+      }
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
     }
 
     if (currentStep === 'organization') {
@@ -216,8 +227,36 @@ export const ZenSignup: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const industryModeMap: Record<string, string> = {
+        pharma: 'pharma',
+        biotech: 'biotech',
+        meddevice: 'medtech',
+        cro: 'cro',
+        consulting: 'regulatory',
+        academic: 'academic',
+        government: 'regulatory',
+        other: 'medical_writing',
+      };
+
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          companyName: formData.organization,
+          industryMode: industryModeMap[formData.organizationType] || 'biotech',
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.error?.message || 'Signup failed');
+      }
+
+      await response.json();
       setStep('submitted');
     } catch (error) {
       console.error('Signup error:', error);
@@ -363,6 +402,8 @@ export const ZenSignup: React.FC = () => {
         <FormInput label="Last name" field="lastName" placeholder="Smith" />
       </div>
       <FormInput label="Work email" field="email" type="email" placeholder="jane@company.com" />
+      <FormInput label="Password" field="password" type="password" placeholder="Create a password" />
+      <FormInput label="Confirm password" field="confirmPassword" type="password" placeholder="Confirm password" />
       <FormInput label="Job title" field="jobTitle" placeholder="Regulatory Affairs Manager" />
 
       <button

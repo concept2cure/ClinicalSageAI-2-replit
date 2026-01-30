@@ -72,7 +72,7 @@
 **Files to Enhance**:
 - `server/services/DocumentIntelligenceService.js`
 - `client/src/components/document-intelligence/`
-**UI Integration**: Add traceability viewer to all document outputs
+**UI Integration**: Add traceability viewer to all Artifacts
 
 #### 5. Living Record System
 **Primary Location**: `client/src/components/csr-intelligence/`

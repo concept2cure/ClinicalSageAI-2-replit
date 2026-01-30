@@ -21,7 +21,7 @@
  * @see {@link https://www.fda.gov/regulatory-information}
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Message, Artifact, SubmissionType } from '../types';
 
 /**
@@ -231,8 +231,6 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
  * @returns {Object} Chat operations and state
  */
 export function useChat() {
-  const queryClient = useQueryClient();
-
   /**
    * Mutation for sending messages to the AI
    * Includes automatic artifact parsing from responses
@@ -265,11 +263,15 @@ export function useChat() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to send message');
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error?.error?.message || error?.message || 'Failed to send message');
       }
 
-      const data = await response.json();
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.success === false) {
+        throw new Error(payload?.error?.message || payload?.error || 'Failed to send message');
+      }
+      const data = payload?.data ?? payload;
       
       // Parse response for artifacts
       const artifacts = parseArtifacts(data.answer, projectId);
@@ -314,7 +316,11 @@ export function useThread(threadId: string | null) {
       if (!response.ok) {
         throw new Error('Failed to fetch thread');
       }
-      return response.json();
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.success === false) {
+        throw new Error(payload?.error?.message || payload?.error || 'Failed to fetch thread');
+      }
+      return payload?.data ?? payload;
     },
     enabled: !!threadId,
   });

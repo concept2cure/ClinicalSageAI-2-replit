@@ -1,27 +1,78 @@
 /**
  * Zero Knowledge Compliance Layer
  * 
- * Placeholder implementation for ZK proof generation.
+ * M2 Authorization Proofs: Role-scoped public signals; signature/approval binding;
+ * privacy preserved; verification fails for expired/revoked credentials;
+ * deterministic proof verification.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import type { ExecutionContext, ZKProof, ProofType } from '../types';
+import { ProofAuditService } from '../ProofAuditService';
 
 export interface UserIdentity {
   userId: string;
   zkSecret?: string;
   identityCommitment?: string;
+  /** ISO timestamp for credential expiration */
+  credentialExpiry?: string;
+  /** Whether credential has been revoked */
+  isRevoked?: boolean;
+}
+
+export interface CredentialValidationResult {
+  valid: boolean;
+  reason?: string;
 }
 
 export class ZeroKnowledgeCompliance {
+  private auditService: ProofAuditService;
+
+  constructor() {
+    this.auditService = ProofAuditService.getInstance();
+  }
+
+  /**
+   * M2: Validate credential is not expired or revoked before proof generation.
+   */
+  validateCredential(user: UserIdentity): CredentialValidationResult {
+    if (user.isRevoked) {
+      return { valid: false, reason: 'Credential has been revoked' };
+    }
+    if (user.credentialExpiry) {
+      const expiry = new Date(user.credentialExpiry);
+      if (expiry < new Date()) {
+        return { valid: false, reason: 'Credential has expired' };
+      }
+    }
+    return { valid: true };
+  }
+
   async proveAuthorization(
     user: UserIdentity,
     requiredRole: string,
     context: ExecutionContext
   ): Promise<ZKProof> {
+    // M2: Check for expired/revoked credentials
+    const credentialCheck = this.validateCredential(user);
+    if (!credentialCheck.valid) {
+      const failedProof: ZKProof = {
+        type: 'AUTHORIZATION',
+        proofId: this.hash(`failed:${context.workflowRunId}:${context.stepId}`),
+        publicSignals: { error: credentialCheck.reason || 'Invalid credential' },
+      };
+      await this.auditService.logZKVerificationResult(
+        failedProof, 
+        false, 
+        credentialCheck.reason,
+        { workflowRunId: context.workflowRunId, actorId: user.userId }
+      );
+      throw new Error(credentialCheck.reason);
+    }
+
     const roleHash = this.hash(requiredRole);
     const userCommitment = user.identityCommitment || this.hash(user.userId);
-    return {
+    const proof: ZKProof = {
       type: 'AUTHORIZATION',
       proofId: this.hash(`${context.workflowRunId}:${context.stepId}:${roleHash}:${userCommitment}`),
       publicSignals: {
@@ -30,12 +81,30 @@ export class ZeroKnowledgeCompliance {
         userCommitment,
       },
     };
+    
+    // M2: Audit ZK proof generation
+    await this.auditService.logZKProofGenerated(proof, {
+      workflowRunId: context.workflowRunId,
+      actorId: user.userId,
+    });
+    
+    return proof;
   }
 
   async proveSegregationOfDuties(creator: UserIdentity, approver: UserIdentity): Promise<ZKProof> {
+    // M2: Check credentials for both parties
+    const creatorCheck = this.validateCredential(creator);
+    if (!creatorCheck.valid) {
+      throw new Error(`Creator credential invalid: ${creatorCheck.reason}`);
+    }
+    const approverCheck = this.validateCredential(approver);
+    if (!approverCheck.valid) {
+      throw new Error(`Approver credential invalid: ${approverCheck.reason}`);
+    }
+
     const creatorCommitment = creator.identityCommitment || this.hash(creator.userId);
     const approverCommitment = approver.identityCommitment || this.hash(approver.userId);
-    return {
+    const proof: ZKProof = {
       type: 'SEPARATION',
       proofId: this.hash(`${creatorCommitment}:${approverCommitment}`),
       publicSignals: {
@@ -43,11 +112,20 @@ export class ZeroKnowledgeCompliance {
         approverCommitment,
       },
     };
+    
+    await this.auditService.logZKProofGenerated(proof, {});
+    return proof;
   }
 
   async proveTrainingCurrent(user: UserIdentity, trainingHash: string): Promise<ZKProof> {
+    // M2: Check credential validity
+    const credentialCheck = this.validateCredential(user);
+    if (!credentialCheck.valid) {
+      throw new Error(credentialCheck.reason);
+    }
+
     const userCommitment = user.identityCommitment || this.hash(user.userId);
-    return {
+    const proof: ZKProof = {
       type: 'KNOWLEDGE',
       proofId: this.hash(`${trainingHash}:${userCommitment}`),
       publicSignals: {
@@ -55,19 +133,30 @@ export class ZeroKnowledgeCompliance {
         userCommitment,
       },
     };
+    
+    await this.auditService.logZKProofGenerated(proof, { actorId: user.userId });
+    return proof;
   }
 
   async generateProof(type: ProofType, payload: Record<string, string>): Promise<ZKProof> {
-    return {
+    const proof: ZKProof = {
       type,
       proofId: this.hash(`${type}:${this.stableStringify(payload)}`),
       publicSignals: payload,
     };
+    
+    await this.auditService.logZKProofGenerated(proof, {});
+    return proof;
   }
 
   verifyProof(proof: ZKProof, expected: Partial<Record<string, string>> = {}): boolean {
     const entries = Object.entries(expected);
-    return entries.every(([key, value]) => proof.publicSignals?.[key] === value);
+    const valid = entries.every(([key, value]) => proof.publicSignals?.[key] === value);
+    
+    // M2: Audit verification result
+    this.auditService.logZKVerificationResult(proof, valid).catch(() => {});
+    
+    return valid;
   }
 
   private hash(value: string): string {

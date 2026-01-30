@@ -2,9 +2,11 @@
  * Formal Compliance Graph
  * 
  * DAG representation of workflow states and transitions with formal checks.
+ * M1 Graph Integrity: Deterministic DAG compilation; invariant checks; 
+ * cycle detection; stable hashes; audit log entries for compile/run events.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import type {
   ExecutionContext,
   EvidenceBundle,
@@ -16,6 +18,7 @@ import type {
   SNARKProof,
 } from './types';
 import type { WorkflowDefinition, WorkflowStepDefinition } from '../../database/schema/workflow-definitions';
+import { ProofAuditService } from './ProofAuditService';
 
 export interface ComplianceNode {
   id: string;
@@ -39,8 +42,11 @@ export class FormalComplianceGraph {
   private edges = new Map<string, ComplianceEdge>();
   private genesisHash: string;
   private lastProofHash: string | undefined;
+  private auditService: ProofAuditService;
 
   constructor(nodes: ComplianceNode[], edges: ComplianceEdge[]) {
+    this.auditService = ProofAuditService.getInstance();
+    
     nodes.forEach(node => {
       if (!node.id) {
         throw new Error('Compliance node missing id');
@@ -59,6 +65,9 @@ export class FormalComplianceGraph {
     this.assertAcyclic();
     this.assertNodeCoverage();
     this.genesisHash = this.computeGenesisCommitment();
+    
+    // M1: Audit log entry for compile event
+    this.auditService.logGraphCompile(this.genesisHash, this.nodes.size, this.edges.size).catch(() => {});
   }
 
   static fromWorkflowDefinition(
@@ -165,6 +174,10 @@ export class FormalComplianceGraph {
     }
 
     this.lastProofHash = this.hashProof(proof);
+    
+    // M1: Audit log entry for transition event
+    this.auditService.logGraphTransition(proof, context).catch(() => {});
+    
     return proof;
   }
 
@@ -174,7 +187,7 @@ export class FormalComplianceGraph {
     context: ExecutionContext
   ): Promise<ZKProof[]> {
     return requiresProof.map(type => {
-      const evidenceHash = this.hashValue(evidence || {});
+      const evidenceHash = this.hashValue(evidence ? JSON.parse(JSON.stringify(evidence)) : {});
       return {
         type,
         proofId: this.hashValue({ type, evidenceHash, workflowRunId: context.workflowRunId }),
@@ -203,7 +216,7 @@ export class FormalComplianceGraph {
   }
 
   private hashProof(proof: TransitionProof): string {
-    return this.hashValue(proof);
+    return this.hashValue(JSON.parse(JSON.stringify(proof)));
   }
 
   private hashValue(value: string | Record<string, unknown>): string {
@@ -261,9 +274,19 @@ export class FormalComplianceGraph {
   private evaluateInvariant(node: ComplianceNode, context: ExecutionContext): { valid: boolean; reason?: string } {
     try {
       const valid = node.invariant?.(context) ?? true;
-      return valid ? { valid: true } : { valid: false, reason: 'Invariant failed' };
+      const result = valid ? { valid: true } : { valid: false, reason: 'Invariant failed' };
+      
+      // M1: Audit log entry for invariant check
+      this.auditService.logInvariantCheck(node.id, result.valid, result.reason, context).catch(() => {});
+      
+      return result;
     } catch (error) {
-      return { valid: false, reason: error instanceof Error ? error.message : 'Invariant error' };
+      const reason = error instanceof Error ? error.message : 'Invariant error';
+      
+      // M1: Audit log entry for invariant failure
+      this.auditService.logInvariantCheck(node.id, false, reason, context).catch(() => {});
+      
+      return { valid: false, reason };
     }
   }
 

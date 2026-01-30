@@ -238,6 +238,7 @@ function ChangeCard({ change, columnId, onEdit, onDelete, onSelect, isSelected }
                   setShowActions(!showActions);
                 }}
                 data-testid={`button-actions-${change.id}`}
+                aria-label="Open change actions"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
@@ -250,6 +251,7 @@ function ChangeCard({ change, columnId, onEdit, onDelete, onSelect, isSelected }
                       setShowActions(false);
                     }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                    data-testid={`button-edit-change-${change.id}`}
                   >
                     <Edit2 className="h-3 w-3" />
                     Edit
@@ -260,6 +262,7 @@ function ChangeCard({ change, columnId, onEdit, onDelete, onSelect, isSelected }
                       setShowActions(false);
                     }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-red-600"
+                    data-testid={`button-delete-change-${change.id}`}
                   >
                     <Trash2 className="h-3 w-3" />
                     Delete
@@ -512,6 +515,7 @@ export function WorkflowTimeline() {
               description: "The change has been deleted"
             });
           }}
+          data-testid="button-confirm-delete-change"
         >
           Delete
         </Button>
@@ -577,6 +581,7 @@ export function WorkflowTimeline() {
                   className="h-7 px-2"
                   style={{ backgroundColor: viewMode === 'board' ? sharePointColors.primary : 'transparent' }}
                   data-testid="button-view-board"
+                  aria-label="Switch to board view"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
@@ -587,6 +592,7 @@ export function WorkflowTimeline() {
                   className="h-7 px-2"
                   style={{ backgroundColor: viewMode === 'timeline' ? sharePointColors.primary : 'transparent' }}
                   data-testid="button-view-timeline"
+                  aria-label="Switch to timeline view"
                 >
                   <CalendarDays className="h-4 w-4" />
                 </Button>
@@ -597,6 +603,7 @@ export function WorkflowTimeline() {
                   className="h-7 px-2"
                   style={{ backgroundColor: viewMode === 'list' ? sharePointColors.primary : 'transparent' }}
                   data-testid="button-view-list"
+                  aria-label="Switch to list view"
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -715,6 +722,7 @@ export function WorkflowTimeline() {
                 onClick={() => refetch()}
                 className="h-6 px-2"
                 data-testid="button-refresh"
+                aria-label="Refresh change requests"
               >
                 <Activity className="h-3 w-3" />
               </Button>

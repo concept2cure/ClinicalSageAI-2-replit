@@ -66,7 +66,7 @@ function saveStoredProjects(projects: Project[]): void {
   } catch (e) {
     console.error('[useProjects] Failed to save projects:', e);
     // If quota exceeded, try to clear old data and retry once
-    if (e instanceof DOMException && e.code === 22) {
+    if (typeof e === 'object' && e && 'code' in e && (e as { code?: number }).code === 22) {
       console.warn('[useProjects] Storage quota exceeded, attempting cleanup');
       // Keep only the 10 most recent projects
       const trimmed = projects.slice(0, 10);
@@ -83,11 +83,11 @@ function saveStoredProjects(projects: Project[]): void {
  */
 async function fetchProjectsFromAPI(): Promise<Project[]> {
   const response = await fetch('/api/concept2cure/projects');
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to fetch projects: ${response.status}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`);
   }
-  return response.json();
+  return payload?.data ?? payload;
 }
 
 /**
@@ -103,11 +103,11 @@ async function createProjectAPI(project: Omit<Project, 'id' | 'createdAt' | 'upd
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(project),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to create project: ${response.status}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`);
   }
-  return response.json();
+  return payload?.data ?? payload;
 }
 
 /**
@@ -123,11 +123,11 @@ async function updateProjectAPI(project: Project): Promise<Project> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(project),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to update project: ${response.status}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`);
   }
-  return response.json();
+  return payload?.data ?? payload;
 }
 
 /**
@@ -140,9 +140,9 @@ async function deleteProjectAPI(projectId: string): Promise<void> {
   const response = await fetch(`/api/concept2cure/projects/${projectId}`, {
     method: 'DELETE',
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to delete project: ${response.status}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(payload?.error?.message || payload?.error || `Failed to delete project: ${response.status}`);
   }
 }
 
@@ -289,7 +289,11 @@ export function useProjects() {
             body: JSON.stringify({ title }),
           });
           if (response.ok) {
-            return response.json();
+            const payload = await response.json().catch(() => ({}));
+            if (payload?.success === false) {
+              throw new Error(payload?.error?.message || payload?.error || 'Failed to create conversation');
+            }
+            return payload?.data ?? payload;
           }
         } catch (e) {
           console.warn('API conversation create failed, using localStorage fallback:', e);
@@ -381,7 +385,11 @@ export function useProject(projectId: string | null) {
         try {
           const response = await fetch(`/api/concept2cure/projects/${projectId}`);
           if (response.ok) {
-            return response.json();
+            const payload = await response.json().catch(() => ({}));
+            if (payload?.success === false) {
+              throw new Error(payload?.error?.message || payload?.error || 'Failed to fetch project');
+            }
+            return payload?.data ?? payload;
           }
         } catch (e) {
           console.warn('API project fetch failed, using localStorage fallback:', e);

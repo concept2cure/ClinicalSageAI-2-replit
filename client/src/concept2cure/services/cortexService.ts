@@ -13,7 +13,6 @@
  * @version 3.0.0
  */
 
-import { apiRequest } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -189,6 +188,17 @@ export class CortexService {
     return CortexService.instance;
   }
 
+  private unwrapPayload<T>(payload: any): T {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+      return payload.data as T;
+    }
+    return payload as T;
+  }
+
+  private getErrorMessage(payload: any, fallback: string): string {
+    return payload?.error?.message || payload?.error || fallback;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // HEALTH & STATUS
   // ─────────────────────────────────────────────────────────────────────────────
@@ -207,7 +217,16 @@ export class CortexService {
           timestamp: new Date(),
         };
       }
-      const data = await response.json();
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.success === false) {
+        return {
+          status: 'unhealthy',
+          services: { search: false, chat: false, embedding: false, graph: false },
+          latencyMs: 0,
+          timestamp: new Date(),
+        };
+      }
+      const data = this.unwrapPayload<any>(payload);
       return {
         status: 'healthy',
         services: {
@@ -237,7 +256,11 @@ export class CortexService {
     if (!response.ok) {
       throw new CortexServiceError('Failed to fetch stats', 'STATS_ERROR', response.status);
     }
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new CortexServiceError(this.getErrorMessage(payload, 'Failed to fetch stats'), 'STATS_ERROR', response.status);
+    }
+    const data = this.unwrapPayload<any>(payload);
     return {
       atomCount: data.statistics?.atomCount ?? 0,
       edgeCount: data.statistics?.edgeCount ?? 0,
@@ -288,13 +311,21 @@ export class CortexService {
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Unknown error' }));
         throw new CortexServiceError(
-          error.error || 'Chat request failed',
+          this.getErrorMessage(error, 'Chat request failed'),
           'CHAT_ERROR',
           response.status
         );
       }
 
-      const data = await response.json();
+      const payload = await response.json().catch(() => ({}));
+      if (payload?.success === false) {
+        throw new CortexServiceError(
+          this.getErrorMessage(payload, 'Chat request failed'),
+          'CHAT_ERROR',
+          response.status
+        );
+      }
+      const data = this.unwrapPayload<any>(payload);
       
       return {
         response: data.answer || data.response || '',
@@ -365,11 +396,13 @@ export class CortexService {
       let fullResponse = '';
       let threadId = params.threadId || crypto.randomUUID();
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let done = false;
+      while (!done) {
+        const result = await reader.read();
+        done = result.done;
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(result.value, { stream: true });
         fullResponse += chunk;
         params.onChunk(chunk);
       }
@@ -418,7 +451,11 @@ export class CortexService {
       throw new CortexServiceError('Search failed', 'SEARCH_ERROR', response.status);
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new CortexServiceError(this.getErrorMessage(payload, 'Search failed'), 'SEARCH_ERROR', response.status);
+    }
+    const data = this.unwrapPayload<any>(payload);
     return (data.results || []).map((r: any) => ({
       id: r.atomId || r.id,
       type: r.atomType || r.type,
@@ -456,7 +493,11 @@ export class CortexService {
       throw new CortexServiceError('Graph traversal failed', 'GRAPH_ERROR', response.status);
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new CortexServiceError(this.getErrorMessage(payload, 'Graph traversal failed'), 'GRAPH_ERROR', response.status);
+    }
+    const data = this.unwrapPayload<any>(payload);
     return (data.neighbors || []).map((n: any) => ({
       id: n.atomId || n.id,
       type: n.atomType || n.type,
@@ -497,7 +538,11 @@ export class CortexService {
       return [];
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      return [];
+    }
+    const data = this.unwrapPayload<any>(payload);
     return (data.signals || []).map((s: any) => ({
       id: s.id,
       type: s.signalType || s.type,
@@ -523,7 +568,11 @@ export class CortexService {
       return [];
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      return [];
+    }
+    const data = this.unwrapPayload<any>(payload);
     return (data.predictions || []).map((p: any) => ({
       id: p.id,
       submissionId: p.submissionId,
@@ -568,7 +617,16 @@ export class CortexService {
       };
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      return {
+        signals: [],
+        predictions: [],
+        recommendations: [],
+        riskScore: 0,
+      };
+    }
+    const data = this.unwrapPayload<any>(payload);
     return {
       signals: data.signals || [],
       predictions: data.predictions || [],
@@ -600,7 +658,11 @@ export class CortexService {
       return [];
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      return [];
+    }
+    const data = this.unwrapPayload<any>(payload);
     return (data.threads || []).map((t: any) => ({
       id: t.id,
       title: t.title,
@@ -623,7 +685,11 @@ export class CortexService {
       return null;
     }
 
-    const data = await response.json();
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      return null;
+    }
+    const data = this.unwrapPayload<any>(payload);
     return {
       id: data.id,
       title: data.title,

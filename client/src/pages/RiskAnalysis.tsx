@@ -308,7 +308,7 @@ export default function RiskAnalysis() {
               <Skeleton className="h-4 w-2/3" />
               <div className="flex justify-center my-8">
                 <Loader2 className="h-16 w-16 animate-spin text-slate-500" />
-              <Loader2 className="h-16 w-16 animate-spin text-slate-500" />
+              </div>
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-4 w-3/4" />
             </div>

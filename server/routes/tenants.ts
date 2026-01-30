@@ -35,6 +35,17 @@ const createTenantSchema = z.object({
       message: 'Slug can only contain lowercase letters, numbers, and hyphens',
     }),
   domain: z.string().optional(),
+  industryMode: z
+    .enum([
+      'biotech',
+      'medtech',
+      'cro',
+      'pharma',
+      'academic',
+      'regulatory',
+      'medical_writing',
+    ])
+    .optional(),
   tier: z.enum(['standard', 'professional', 'enterprise']).default('standard'),
   maxUsers: z.number().int().positive().optional(),
   maxProjects: z.number().int().positive().optional(),

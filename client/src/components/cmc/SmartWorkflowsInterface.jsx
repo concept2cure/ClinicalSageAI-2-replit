@@ -545,6 +545,7 @@ function SmartWorkflowsInterface({ drugName, structuredInputs, onWorkflowComplet
                 onClick={() => setActiveTab('templates')}
                 size="sm"
                 className="bg-indigo-600 hover:bg-indigo-700"
+                data-testid="button-new-workflow"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Workflow
@@ -562,6 +563,7 @@ function SmartWorkflowsInterface({ drugName, structuredInputs, onWorkflowComplet
                         onClick={() =>
                           setExpandedWorkflow(expandedWorkflow === workflow.id ? null : workflow.id)
                         }
+                        data-testid={`button-toggle-workflow-${workflow.id}`}
                       >
                         {expandedWorkflow === workflow.id ? (
                           <ChevronDown className="h-4 w-4" />
@@ -686,6 +688,7 @@ function SmartWorkflowsInterface({ drugName, structuredInputs, onWorkflowComplet
                     <Button
                       onClick={createNewWorkflow}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
+                      data-testid="button-create-workflow"
                     >
                       <Workflow className="h-4 w-4 mr-2" />
                       Create Workflow
@@ -735,6 +738,7 @@ function SmartWorkflowsInterface({ drugName, structuredInputs, onWorkflowComplet
                         size="sm"
                         className="w-full"
                         variant="outline"
+                        data-testid={`button-execute-command-${command.command.replace(/\s+/g, '-').toLowerCase()}`}
                       >
                         {isExecutingCommand ? (
                           <>
@@ -778,7 +782,7 @@ function SmartWorkflowsInterface({ drugName, structuredInputs, onWorkflowComplet
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge className="bg-green-100 text-green-800">{result.status}</Badge>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" data-testid={`button-download-output-${result.id}`}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>

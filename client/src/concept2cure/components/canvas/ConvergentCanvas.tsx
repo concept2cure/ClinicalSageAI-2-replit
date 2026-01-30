@@ -22,9 +22,8 @@
  * - SOC 2 Type II: Enterprise security
  */
 
-import React, { useState, useCallback, useMemo, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
 import {
   Loader2,
   AlertTriangle,
@@ -33,52 +32,27 @@ import {
   WifiOff,
   Shield,
   Bell,
-  ChevronDown,
-  ChevronRight,
   Sun,
   Calendar,
   TrendingUp,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
   FileText,
   Beaker,
   Building2,
-  Stethoscope,
   Microscope,
-  PenTool,
-  Bot,
-  User,
-  Sparkles,
   Target,
-  Zap,
   ArrowRight,
-  ExternalLink,
   RefreshCw,
   Settings,
-  Command,
-  Plus,
   Search,
   Menu,
   X,
 } from 'lucide-react';
-
-// Lazy load heavy components
-const MorningBriefingPanel = lazy(() => import('./MorningBriefingPanel'));
-const CouncilThreadPanel = lazy(() => import('./CouncilThreadPanel'));
-const IndustryWorkspace = lazy(() => import('./IndustryWorkspace'));
+import type { IndustryMode } from '../../types/workspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-export type IndustryType = 
-  | 'BIOTECH'
-  | 'PHARMA'
-  | 'CRO'
-  | 'MEDTECH'
-  | 'REGULATORY'
-  | 'MEDICAL_WRITING';
 
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 
@@ -101,7 +75,7 @@ export interface ContextState {
   userId: string;
   userName: string;
   userRole: string;
-  industry: IndustryType;
+  industry: IndustryMode;
   
   // System context
   connectionStatus: ConnectionStatus;
@@ -126,7 +100,7 @@ export interface ConvergentCanvasProps {
   userId: string;
   userName: string;
   userRole?: string;
-  industry?: IndustryType;
+  industry?: IndustryMode;
   projectId?: string;
   
   // Event handlers
@@ -471,7 +445,7 @@ const CouncilAdvisorCard: React.FC<CouncilAdvisorCardProps> = ({
 
 interface ZeroStateProps {
   userName: string;
-  industry: IndustryType;
+  industry: IndustryMode;
   onQuickAction: (action: string) => void;
 }
 
@@ -487,22 +461,22 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
 
     // Industry-specific actions
     switch (industry) {
-      case 'MEDTECH':
+      case 'medtech':
         return [
           { id: 'predicate-search', label: 'Search predicates', icon: Search },
           { id: 'maude-analysis', label: 'Check MAUDE', icon: AlertTriangle },
           { id: 'estar-prep', label: 'Prepare eSTAR', icon: FileText },
           ...baseActions,
         ];
-      case 'BIOTECH':
-      case 'PHARMA':
+      case 'biotech':
+      case 'pharma':
         return [
           { id: 'ind-prep', label: 'Prepare IND', icon: FileText },
           { id: 'clinical-protocol', label: 'Design protocol', icon: Beaker },
           { id: 'cmc-wizard', label: 'CMC specifications', icon: Microscope },
           ...baseActions,
         ];
-      case 'CRO':
+      case 'cro':
         return [
           { id: 'client-dashboard', label: 'Client overview', icon: Building2 },
           { id: 'study-status', label: 'Study status', icon: TrendingUp },
@@ -578,12 +552,12 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
   userId,
   userName,
   userRole = 'Regulatory Affairs',
-  industry = 'PHARMA',
+  industry = 'pharma',
   projectId,
-  onProjectChange,
+  onProjectChange: _onProjectChange,
   onSettingsOpen,
   onCommandPaletteOpen,
-  onNewProject,
+  onNewProject: _onNewProject,
   className,
   showBriefingOnLoad = true,
 }) => {

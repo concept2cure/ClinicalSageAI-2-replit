@@ -14,6 +14,8 @@
  * WRITING: Document authoring, review cycles, source linking
  */
 
+import type { IndustryMode } from '../../types/workspace';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // BIOTECH COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -169,7 +171,7 @@ export {
  * Industry Mode Configuration
  * Used to determine which dashboard/workspace to show based on organization type
  */
-export type IndustryMode = 'biotech' | 'pharma' | 'cro' | 'medtech' | 'academic';
+export type { IndustryMode };
 
 /**
  * User Role Configuration
@@ -177,10 +179,13 @@ export type IndustryMode = 'biotech' | 'pharma' | 'cro' | 'medtech' | 'academic'
  */
 export type UserRole = 
   | 'regulatory_affairs'
+  | 'ra_lead'
+  | 'ra_specialist'
   | 'medical_writer'
   | 'clinical_ops'
   | 'medical_affairs'
   | 'quality_assurance'
+  | 'cmc_lead'
   | 'project_manager'
   | 'executive'
   | 'consultant';
@@ -194,6 +199,8 @@ export const INDUSTRY_DASHBOARD_MAP = {
   cro: 'CROClientPortal',
   medtech: 'MedicalDeviceDashboard',  // Now has dedicated dashboard!
   academic: 'CROClientPortal',
+  regulatory: 'FDAMeetingWorkspace',
+  medical_writing: 'ClinicalDocAuthoringWorkspace',
 } as const;
 
 /**
@@ -201,10 +208,13 @@ export const INDUSTRY_DASHBOARD_MAP = {
  */
 export const ROLE_WORKSPACE_MAP = {
   regulatory_affairs: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard', 'PharmaPortfolioDashboard'],
+  ra_lead: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard', 'PharmaPortfolioDashboard'],
+  ra_specialist: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard'],
   medical_writer: ['eCTDCoAuthor', 'ClinicalDocAuthoringWorkspace'],
   clinical_ops: ['BiotechProgramDashboard'],
   medical_affairs: ['ClinicalDocAuthoringWorkspace'],
   quality_assurance: ['CMCWizard', 'ClinicalDocAuthoringWorkspace'],
+  cmc_lead: ['CMCWizard', 'ClinicalDocAuthoringWorkspace'],
   project_manager: ['CROClientPortal', 'BiotechProgramDashboard'],
   executive: ['PharmaPortfolioDashboard', 'BiotechProgramDashboard'],
   consultant: ['CROClientPortal'],

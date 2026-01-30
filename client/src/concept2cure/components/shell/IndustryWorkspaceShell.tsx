@@ -28,11 +28,10 @@
  * - Audit logging for all navigation
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import type { IndustryMode, UserRole } from '../industry';
 import {
-  Menu,
-  X,
   Home,
   FolderKanban,
   FileText,
@@ -48,6 +47,8 @@ import {
   Building2,
   Beaker,
   Briefcase,
+  GraduationCap,
+  Microscope,
   PenTool,
   LayoutDashboard,
   FileCheck,
@@ -60,8 +61,6 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type OrganizationMode = 'biotech' | 'pharma' | 'cro';
-
 export type WorkspaceView = 
   | 'dashboard'
   | 'projects'
@@ -73,23 +72,13 @@ export type WorkspaceView =
   | 'resources'    // CRO only
   | 'clients';     // CRO only
 
-export type UserRole =
-  | 'ra_lead'
-  | 'ra_specialist'
-  | 'medical_writer'
-  | 'cmc_lead'
-  | 'clinical_ops'
-  | 'quality_assurance'
-  | 'project_manager'
-  | 'executive';
-
 export interface CurrentUser {
   id: string;
   name: string;
   email: string;
   role: UserRole;
   department: string;
-  organizationMode: OrganizationMode;
+  industryMode: IndustryMode;
   avatar?: string;
 }
 
@@ -118,7 +107,7 @@ interface IndustryWorkspaceShellProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MODE_CONFIG: Record<OrganizationMode, {
+const MODE_CONFIG: Record<IndustryMode, {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
@@ -127,9 +116,13 @@ const MODE_CONFIG: Record<OrganizationMode, {
   biotech: { label: 'Biotech', icon: Beaker, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
   pharma: { label: 'Pharma', icon: Building2, color: 'text-blue-600', bgColor: 'bg-blue-50' },
   cro: { label: 'CRO', icon: Briefcase, color: 'text-violet-600', bgColor: 'bg-violet-50' },
+  medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
+  academic: { label: 'Academic', icon: GraduationCap, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+  medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
 
-const NAVIGATION_ITEMS: Record<OrganizationMode, { view: WorkspaceView; label: string; icon: React.ComponentType<{ className?: string }> }[]> = {
+const NAVIGATION_ITEMS: Record<IndustryMode, { view: WorkspaceView; label: string; icon: React.ComponentType<{ className?: string }> }[]> = {
   biotech: [
     { view: 'dashboard', label: 'Dashboard', icon: Home },
     { view: 'projects', label: 'Products', icon: Beaker },
@@ -156,6 +149,34 @@ const NAVIGATION_ITEMS: Record<OrganizationMode, { view: WorkspaceView; label: s
     { view: 'calendar', label: 'Calendar', icon: Calendar },
     { view: 'analytics', label: 'Analytics', icon: BarChart3 },
   ],
+  medtech: [
+    { view: 'dashboard', label: 'Dashboard', icon: Home },
+    { view: 'projects', label: 'Devices', icon: Microscope },
+    { view: 'submissions', label: 'Submissions', icon: FileCheck },
+    { view: 'documents', label: 'Documents', icon: FileText },
+    { view: 'calendar', label: 'Calendar', icon: Calendar },
+    { view: 'team', label: 'Team', icon: Users },
+  ],
+  academic: [
+    { view: 'dashboard', label: 'Dashboard', icon: Home },
+    { view: 'projects', label: 'Programs', icon: FolderKanban },
+    { view: 'documents', label: 'Documents', icon: FileText },
+    { view: 'calendar', label: 'Calendar', icon: Calendar },
+    { view: 'team', label: 'Team', icon: Users },
+  ],
+  regulatory: [
+    { view: 'dashboard', label: 'Dashboard', icon: Home },
+    { view: 'submissions', label: 'Submissions', icon: FileCheck },
+    { view: 'documents', label: 'Documents', icon: FileText },
+    { view: 'calendar', label: 'Calendar', icon: Calendar },
+    { view: 'team', label: 'Team', icon: Users },
+  ],
+  medical_writing: [
+    { view: 'dashboard', label: 'Dashboard', icon: Home },
+    { view: 'documents', label: 'Documents', icon: FileText },
+    { view: 'calendar', label: 'Calendar', icon: Calendar },
+    { view: 'team', label: 'Team', icon: Users },
+  ],
 };
 
 const ROLE_CONFIG: Record<UserRole, {
@@ -174,6 +195,13 @@ const ROLE_CONFIG: Record<UserRole, {
     quickActions: [
       { label: 'Upload Document', icon: FileText, action: 'upload' },
       { label: 'Review Queue', icon: FileCheck, action: 'review_queue' },
+    ],
+  },
+  regulatory_affairs: {
+    label: 'Regulatory Affairs',
+    quickActions: [
+      { label: 'New Submission', icon: Plus, action: 'new_submission' },
+      { label: 'Monitor Guidance', icon: FileCheck, action: 'guidance_monitor' },
     ],
   },
   medical_writer: {
@@ -197,6 +225,13 @@ const ROLE_CONFIG: Record<UserRole, {
       { label: 'Studies', icon: BarChart3, action: 'studies' },
     ],
   },
+  medical_affairs: {
+    label: 'Medical Affairs',
+    quickActions: [
+      { label: 'Evidence Review', icon: FileCheck, action: 'evidence_review' },
+      { label: 'Safety Signals', icon: Bell, action: 'safety_signals' },
+    ],
+  },
   quality_assurance: {
     label: 'Quality Assurance',
     quickActions: [
@@ -218,6 +253,13 @@ const ROLE_CONFIG: Record<UserRole, {
       { label: 'Reports', icon: BarChart3, action: 'reports' },
     ],
   },
+  consultant: {
+    label: 'Consultant',
+    quickActions: [
+      { label: 'Client Work', icon: Briefcase, action: 'client_work' },
+      { label: 'Review Tasks', icon: FileCheck, action: 'review_tasks' },
+    ],
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -225,7 +267,7 @@ const ROLE_CONFIG: Record<UserRole, {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const Sidebar: React.FC<{
-  mode: OrganizationMode;
+  mode: IndustryMode;
   currentView: WorkspaceView;
   onViewChange: (view: WorkspaceView) => void;
   collapsed: boolean;
@@ -315,7 +357,6 @@ const Sidebar: React.FC<{
 // ═══════════════════════════════════════════════════════════════════════════════
 // HEADER COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const Header: React.FC<{
   currentUser: CurrentUser;
   notifications: Notification[];
@@ -450,7 +491,7 @@ export const IndustryWorkspaceShell: React.FC<IndustryWorkspaceShellProps> = ({
       {/* Sidebar */}
       <div className="relative">
         <Sidebar
-          mode={currentUser.organizationMode}
+          mode={currentUser.industryMode}
           currentView={currentView}
           onViewChange={handleViewChange}
           collapsed={sidebarCollapsed}

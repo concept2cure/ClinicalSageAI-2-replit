@@ -62,11 +62,11 @@ export function useTemplates(submissionType?: SubmissionType) {
         : '/api/concept2cure/templates';
       
       const response = await fetch(url);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch templates: ${response.status}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error?.message || payload?.error || `Failed to fetch templates: ${response.status}`);
       }
-      return response.json();
+      return payload?.data ?? payload;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes - templates don't change often
   });
@@ -94,11 +94,11 @@ export function useTemplate(templateId: string | null) {
       if (!templateId) return null;
       
       const response = await fetch(`/api/concept2cure/templates/${templateId}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Template not found: ${response.status}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error?.message || payload?.error || `Template not found: ${response.status}`);
       }
-      return response.json();
+      return payload?.data ?? payload;
     },
     enabled: !!templateId,
   });

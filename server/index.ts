@@ -19,6 +19,9 @@ import type { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
+// Phase 4.1 Proof System - 21 CFR Part 11 Compliance
+import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
+
 // Enterprise Security & Performance Middleware
 import {
   applySecurityMiddleware,
@@ -83,6 +86,9 @@ import enterpriseRoutes from './api/enterprise/routes.js';
 // Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api.ts';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.ts';
+
+// Import Phase 5: Intelligent Document System routes
+import intelligentDocsRoutes from './routes/intelligentDocs.ts';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -459,6 +465,14 @@ app.use('/api/enterprise', enterpriseRoutes);
 // Mount enhanced RBAC routes
 import rbacRoutes from './api/enterprise/rbac-routes.js';
 app.use('/api/enterprise/rbac', rbacRoutes);
+
+// Mount Phase 5: Intelligent Document System routes
+try {
+  app.use('/api/intelligent-docs', intelligentDocsRoutes);
+  console.log('✅ Phase 5: Intelligent Document System API routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Intelligent Docs routes:', error);
+}
 
 // Mount Lumen Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
@@ -4078,6 +4092,15 @@ async function startServer() {
     }
   } catch (error: any) {
     console.error('❌ Failed to initialize Redis rate limiter:', error.message);
+  }
+
+  // Initialize Phase 4.1 Proof System (21 CFR Part 11 Compliance)
+  try {
+    await initializeProofDatabasePersistence();
+    console.log('✅ Proof System audit persistence initialized (21 CFR Part 11)');
+  } catch (error: any) {
+    console.error('⚠️ Proof System initialization warning:', error.message);
+    console.log('   Proof system will operate with in-memory audit (not compliant for production)');
   }
 
   // Start Python backend first

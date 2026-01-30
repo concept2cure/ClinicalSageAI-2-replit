@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import type { Project, ProjectKnowledge, UploadedDocument } from '../types';
+import type { ProjectKnowledge, UploadedDocument } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -137,7 +137,11 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
         const response = await fetch(`/api/concept2cure/projects/${projectId}/knowledge`);
         
         if (response.ok) {
-          const data = await response.json();
+          const payload = await response.json().catch(() => ({}));
+          if (payload?.success === false) {
+            throw new Error(payload?.error?.message || payload?.error || 'Failed to load project knowledge');
+          }
+          const data = payload?.data ?? payload;
           setKnowledge(data);
         } else if (response.status === 404) {
           // Initialize empty knowledge
@@ -235,10 +239,12 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
         clearInterval(progressInterval);
 
         if (response.ok) {
-          const result: DocumentProcessingResult = await response.json();
+          const payload = await response.json().catch(() => ({}));
+          const result: DocumentProcessingResult = payload?.data ?? payload;
           processedDocument = result.document;
         } else {
-          throw new Error('API upload failed');
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload?.error?.message || payload?.error || 'API upload failed');
         }
       } catch {
         // Fallback: Create document locally with basic processing

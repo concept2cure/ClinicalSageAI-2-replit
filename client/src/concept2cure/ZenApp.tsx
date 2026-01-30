@@ -35,6 +35,7 @@ import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectS
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
+import type { IndustryMode } from './types/workspace';
 import {
   X,
   ChevronLeft,
@@ -76,6 +77,25 @@ type ToolPanel =
   | null;
 
 type LayoutMode = 'assistant' | 'sherpa' | 'editor' | 'analytics' | 'timeline' | 'audit' | 'ctd';
+
+const INDUSTRY_MODES: IndustryMode[] = [
+  'biotech',
+  'pharma',
+  'cro',
+  'medtech',
+  'academic',
+  'regulatory',
+  'medical_writing',
+];
+
+const normalizeIndustryMode = (value?: string): IndustryMode => {
+  if (!value) {
+    return 'medtech';
+  }
+
+  const normalized = value.toLowerCase().trim() as IndustryMode;
+  return INDUSTRY_MODES.includes(normalized) ? normalized : 'medtech';
+};
 
 interface UserProfile {
   role?: string;
@@ -565,6 +585,10 @@ export const ZenApp: React.FC = () => {
 
   const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
   const userRole = userProfile?.role || 'Regulatory Lead';
+  const rawIndustry = userProfile?.preferences?.industryMode;
+  const industryMode = normalizeIndustryMode(typeof rawIndustry === 'string' ? rawIndustry : undefined);
+  const rawDisplayName = userProfile?.preferences?.displayName;
+  const userName = typeof rawDisplayName === 'string' ? rawDisplayName : 'User';
 
   const agentRoster = useMemo(
     () => [
@@ -847,8 +871,9 @@ export const ZenApp: React.FC = () => {
             >
               <ConvergentCanvas
                 userId={activeProjectId || 'anonymous'}
-                organizationId="org-default"
-                initialIndustry="MEDTECH"
+                userName={userName}
+                userRole={userRole}
+                industry={industryMode}
               />
             </Suspense>
           )}

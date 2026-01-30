@@ -22,7 +22,8 @@ import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 // Import all industry components
-import { IndustryWorkspaceShell, type OrganizationMode, type WorkspaceView, type CurrentUser } from '../components/shell/IndustryWorkspaceShell';
+import { IndustryWorkspaceShell, type WorkspaceView, type CurrentUser } from '../components/shell/IndustryWorkspaceShell';
+import type { IndustryMode } from '../types/workspace';
 import { IndustryRoleDashboard } from '../components/dashboards/IndustryRoleDashboard';
 import { RegulatoryCalendar, type RegulatoryEvent } from '../components/calendar/RegulatoryCalendar';
 import { DossierNavigator, type DossierNode } from '../components/submission/DossierNavigator';
@@ -41,7 +42,7 @@ const MOCK_USER: CurrentUser = {
   email: 'sarah.chen@concept2cure.com',
   role: 'ra_lead',
   department: 'Regulatory Affairs',
-  organizationMode: 'biotech',
+  industryMode: 'biotech',
 };
 
 const MOCK_NOTIFICATIONS = [
@@ -365,7 +366,7 @@ const MOCK_CHANGE_ORDERS: ChangeOrder[] = [
 
 const DashboardView: React.FC<{ user: CurrentUser }> = ({ user }) => (
   <div className="p-6">
-    <IndustryRoleDashboard userRole={user.role} />
+    <IndustryRoleDashboard role={user.role} userName={user.name} industryMode={user.industryMode} />
   </div>
 );
 
@@ -463,8 +464,8 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
     // In real app, create project and navigate to it
   }, []);
   
-  const handleModeChange = useCallback((mode: OrganizationMode) => {
-    setCurrentUser(prev => ({ ...prev, organizationMode: mode }));
+  const handleModeChange = useCallback((mode: IndustryMode) => {
+    setCurrentUser(prev => ({ ...prev, industryMode: mode }));
   }, []);
   
   // Render the current view
@@ -505,13 +506,21 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
     <div className="h-screen">
       {/* Mode Switcher (Demo Only) */}
       <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-zinc-200 p-2 flex gap-2">
-        {(['biotech', 'pharma', 'cro'] as const).map(mode => (
+        {([
+          'biotech',
+          'pharma',
+          'cro',
+          'medtech',
+          'academic',
+          'regulatory',
+          'medical_writing',
+        ] as IndustryMode[]).map(mode => (
           <button
             key={mode}
             onClick={() => handleModeChange(mode)}
             className={cn(
               'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
-              currentUser.organizationMode === mode
+              currentUser.industryMode === mode
                 ? 'bg-blue-600 text-white'
                 : 'text-zinc-600 hover:bg-zinc-100'
             )}
@@ -539,7 +548,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
             <QuickStartWizard
               onComplete={handleWizardComplete}
               onCancel={() => setShowWizard(false)}
-              initialData={{ organizationType: currentUser.organizationMode }}
+              initialData={{ industryMode: currentUser.industryMode }}
             />
           </div>
         </div>

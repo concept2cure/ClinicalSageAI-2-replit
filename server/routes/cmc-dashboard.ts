@@ -2,19 +2,21 @@
  * CMC Dashboard Routes
  * Chemistry, Manufacturing, and Controls dashboard
  */
-import { Router } from 'express';
+import { Router, Response } from 'express';
 
 const router = Router();
 
+const sendSuccess = <T>(res: Response, data: T) => res.json({ success: true, data });
+
 router.get('/status', (req, res) => {
-  res.json({
+  return sendSuccess(res, {
     status: 'ready',
     message: 'CMC dashboard service ready',
   });
 });
 
 router.get('/metrics', (req, res) => {
-  res.json({
+  return sendSuccess(res, {
     metrics: {
       totalProjects: 0,
       activeProjects: 0,
@@ -24,7 +26,7 @@ router.get('/metrics', (req, res) => {
 });
 
 router.get('/projects', (req, res) => {
-  res.json({
+  return sendSuccess(res, {
     projects: [],
     total: 0,
   });

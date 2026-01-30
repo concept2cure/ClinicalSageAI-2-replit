@@ -652,35 +652,35 @@ const WorkflowPanel = ({
         <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
-              <TabsTrigger value="workflow">
+              <TabsTrigger value="workflow" data-testid="tab-workflow" aria-label="Workflow Overview">
                 <Database className="h-4 w-4 mr-1" />
                 Device Profile
               </TabsTrigger>
-              <TabsTrigger value="predicates">
+              <TabsTrigger value="predicates" data-testid="tab-predicates" aria-label="Predicate Devices">
                 <SearchCode className="h-4 w-4 mr-1" />
                 Predicate Devices
                 {renderSignOffBadge('Predicate Device Selection')}
               </TabsTrigger>
-              <TabsTrigger value="equivalence">
+              <TabsTrigger value="equivalence" data-testid="tab-equivalence" aria-label="Substantial Equivalence">
                 <GitCompare className="h-4 w-4 mr-1" />
                 Substantial Equivalence
                 {renderSignOffBadge('Substantial Equivalence')}
               </TabsTrigger>
-              <TabsTrigger value="compliance">
+              <TabsTrigger value="compliance" data-testid="tab-compliance" aria-label="FDA Compliance">
                 <CheckSquare className="h-4 w-4 mr-1" />
                 FDA Compliance
                 {renderSignOffBadge('FDA Compliance Check')}
               </TabsTrigger>
-              <TabsTrigger value="submission">
+              <TabsTrigger value="submission" data-testid="tab-submission" aria-label="Final Submission">
                 <Archive className="h-4 w-4 mr-1" />
                 Final Submission
                 {renderSignOffBadge('Final Submission')}
               </TabsTrigger>
-              <TabsTrigger value="estar">
+              <TabsTrigger value="estar" data-testid="tab-estar" aria-label="eSTAR Package">
                 <FileOutput className="h-4 w-4 mr-1" />
                 eSTAR Package
               </TabsTrigger>
-              <TabsTrigger value="auditTrail">
+              <TabsTrigger value="auditTrail" data-testid="tab-audit-trail" aria-label="Audit Trail">
                 <History className="h-4 w-4 mr-1" />
                 Audit Trail
               </TabsTrigger>
@@ -708,6 +708,8 @@ const WorkflowPanel = ({
                   <Button
                     onClick={() => goToStep(2)}
                     disabled={!selectedDeviceProfile || isLoading.workflowTransition}
+                    data-testid="button-continue-to-predicate"
+                    aria-label="Continue to Predicate Finder"
                   >
                     {isLoading.workflowTransition ? (
                       <>Loading...</>
@@ -733,12 +735,12 @@ const WorkflowPanel = ({
 
               {predicatesFound && (
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" onClick={() => goToStep(1)}>
+                  <Button variant="outline" onClick={() => goToStep(1)} data-testid="button-back-to-device-profile" aria-label="Back to Device Profile">
                     Back to Device Profile
                   </Button>
 
                   {isStageSignedOff('Predicate Device Selection') ? (
-                    <Button onClick={() => goToStep(3)} disabled={isLoading.workflowTransition}>
+                    <Button onClick={() => goToStep(3)} disabled={isLoading.workflowTransition} data-testid="button-continue-to-equivalence" aria-label="Continue to Equivalence Builder">
                       {isLoading.workflowTransition ? (
                         <>Loading...</>
                       ) : (
@@ -753,6 +755,8 @@ const WorkflowPanel = ({
                       onClick={() => requestManagerSignOff('Predicate Device Selection')}
                       variant="outline"
                       className="bg-blue-50"
+                      data-testid="button-signoff-predicate"
+                      aria-label="Request Manager Sign-Off for Predicate Device Selection"
                     >
                       <ClipboardSignature className="mr-2 h-4 w-4" />
                       Request Manager Sign-Off
@@ -772,12 +776,12 @@ const WorkflowPanel = ({
 
               {equivalenceCompleted && (
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" onClick={() => goToStep(2)}>
+                  <Button variant="outline" onClick={() => goToStep(2)} data-testid="button-back-to-predicate" aria-label="Back to Predicate Finder">
                     Back to Predicate Finder
                   </Button>
 
                   {isStageSignedOff('Substantial Equivalence') ? (
-                    <Button onClick={() => goToStep(4)} disabled={isLoading.workflowTransition}>
+                    <Button onClick={() => goToStep(4)} disabled={isLoading.workflowTransition} data-testid="button-continue-to-compliance" aria-label="Continue to Compliance Check">
                       {isLoading.workflowTransition ? (
                         <>Loading...</>
                       ) : (
@@ -792,6 +796,8 @@ const WorkflowPanel = ({
                       onClick={() => requestManagerSignOff('Substantial Equivalence')}
                       variant="outline"
                       className="bg-blue-50"
+                      data-testid="button-signoff-equivalence"
+                      aria-label="Request Manager Sign-Off for Substantial Equivalence"
                     >
                       <ClipboardSignature className="mr-2 h-4 w-4" />
                       Request Manager Sign-Off
@@ -813,12 +819,12 @@ const WorkflowPanel = ({
 
               {complianceScore !== null && (
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" onClick={() => goToStep(3)}>
+                  <Button variant="outline" onClick={() => goToStep(3)} data-testid="button-back-to-equivalence" aria-label="Back to Equivalence Builder">
                     Back to Equivalence Builder
                   </Button>
 
                   {isStageSignedOff('FDA Compliance Check') ? (
-                    <Button onClick={() => goToStep(5)} disabled={isLoading.workflowTransition}>
+                    <Button onClick={() => goToStep(5)} disabled={isLoading.workflowTransition} data-testid="button-continue-to-submission" aria-label="Continue to Final Submission">
                       {isLoading.workflowTransition ? (
                         <>Loading...</>
                       ) : (
@@ -833,6 +839,8 @@ const WorkflowPanel = ({
                       onClick={() => requestManagerSignOff('FDA Compliance Check')}
                       variant="outline"
                       className="bg-blue-50"
+                      data-testid="button-signoff-compliance"
+                      aria-label="Request Manager Sign-Off for FDA Compliance Check"
                     >
                       <ClipboardSignature className="mr-2 h-4 w-4" />
                       Request Manager Sign-Off
@@ -856,7 +864,7 @@ const WorkflowPanel = ({
 
               {submissionReady && (
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" onClick={() => goToStep(4)}>
+                  <Button variant="outline" onClick={() => goToStep(4)} data-testid="button-back-to-compliance" aria-label="Back to Compliance Check">
                     Back to Compliance Check
                   </Button>
 
@@ -865,6 +873,8 @@ const WorkflowPanel = ({
                       onClick={() => requestManagerSignOff('Final Submission')}
                       variant="outline"
                       className="bg-blue-50"
+                      data-testid="button-signoff-final-submission"
+                      aria-label="Request Final Manager Sign-Off"
                     >
                       <ClipboardSignature className="mr-2 h-4 w-4" />
                       Request Final Manager Sign-Off
@@ -906,7 +916,7 @@ const WorkflowPanel = ({
 
               {(estarValidationResults || estarGeneratedUrl) && (
                 <div className="mt-6 flex justify-between">
-                  <Button variant="outline" onClick={() => goToStep(5)}>
+                  <Button variant="outline" onClick={() => goToStep(5)} data-testid="button-back-to-final-submission" aria-label="Back to Final Submission">
                     Back to Final Submission
                   </Button>
 
@@ -915,6 +925,8 @@ const WorkflowPanel = ({
                       onClick={() => requestManagerSignOff('FDA eSTAR Submission')}
                       variant="outline"
                       className="bg-blue-50"
+                      data-testid="button-signoff-estar"
+                      aria-label="Request eSTAR Manager Sign-Off"
                     >
                       <ClipboardSignature className="mr-2 h-4 w-4" />
                       Request eSTAR Sign-Off

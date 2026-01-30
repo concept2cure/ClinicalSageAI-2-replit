@@ -205,7 +205,14 @@ All components share a common type foundation:
 
 ```typescript
 // Industry Mode
-type IndustryMode = 'biotech' | 'pharma' | 'cro' | 'medtech' | 'academic';
+type IndustryMode =
+   | 'biotech'
+   | 'pharma'
+   | 'cro'
+   | 'medtech'
+   | 'academic'
+   | 'regulatory'
+   | 'medical_writing';
 
 // User Roles (determines view)
 type UserRole = 
@@ -223,7 +230,10 @@ const INDUSTRY_DASHBOARD_MAP = {
   biotech: 'BiotechProgramDashboard',
   pharma: 'PharmaPortfolioDashboard',
   cro: 'CROClientPortal',
-  // ...
+   medtech: 'MedicalDeviceDashboard',
+   academic: 'CROClientPortal',
+   regulatory: 'FDAMeetingWorkspace',
+   medical_writing: 'ClinicalDocAuthoringWorkspace',
 };
 ```
 

@@ -17,6 +17,9 @@ import foresightAIAdvancedRoutes from './foresight-ai-advanced';
 import foresightFeedbackRoutes from './foresight-feedback';
 import regulatoryIntelligenceRoutes from './regulatory-intelligence-api';
 import medicalDeviceRoutes from './medical-device-api';
+import concept2cureRoutes from './concept2cure';
+import workflowRoutes from './workflow';
+import cmcDashboardRoutes from './cmc-dashboard';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -48,6 +51,15 @@ router.use('/foresight-ai', foresightFeedbackRoutes);
 // Phase 52 Sherpa System Routes
 router.use('/regulatory-intelligence', regulatoryIntelligenceRoutes);
 router.use('/medical-device', medicalDeviceRoutes);
+
+// Concept2Cure Core Routes
+router.use('/concept2cure', concept2cureRoutes);
+
+// Workflow & Proofs
+router.use('/workflow', workflowRoutes);
+
+// CMC Dashboard (base API)
+router.use('/cmc', cmcDashboardRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {

@@ -117,8 +117,21 @@ lumen_cortex/enterprise/
 These are in `docs/ARCHIVE/` and `docs/archive/` - **DO NOT REFERENCE**:
 
 - Old roadmaps
-- Deprecated planning docs
+- Deprecated PM Docs
 - Legacy implementation guides
+
+---
+
+## 📋 TERMINOLOGY REFERENCE
+
+| Term | Definition |
+|------|------------|
+| **Project** | Top-level container for a regulatory submission |
+| **Module** | Functional workspace within a project |
+| **Chat** | Conversational AI interaction |
+| **Artifact** | Persistent output (document, report, export) |
+| **Workflow** | Multi-step process with gates and approvals |
+| **PM Doc** | Project management documentation |
 
 ---
 

@@ -1,9 +1,13 @@
 /**
  * Compliance Certificate Generator
+ * 
+ * M4 Certificate: Immutable certificate schema; cryptographic binding to workflow run;
+ * reproducible proof bundle; round-trip verification succeeds; export-safe serialization.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import type { RegulatorySubmissionCertificate, SNARKProof, ZKProof } from './types';
+import { ProofAuditService } from './ProofAuditService';
 
 const BASE_TIMESTAMP = new Date('2026-01-01T00:00:00.000Z').getTime();
 
@@ -27,6 +31,11 @@ export const computeCertificateId = (
 export class ComplianceCertificateGenerator {
   private readonly cache = new Map<string, RegulatorySubmissionCertificate>();
   private readonly maxCacheEntries = 200;
+  private auditService: ProofAuditService;
+
+  constructor() {
+    this.auditService = ProofAuditService.getInstance();
+  }
 
   async generateCertificate(
     workflowRunId: string,
@@ -40,11 +49,11 @@ export class ComplianceCertificateGenerator {
     const generatedAt = options?.generatedAt || computeDeterministicTimestamp(workflowRunId);
     const submissionType = options?.submissionType || 'IND';
     const documentHashes = [...(options?.documentHashes || [])].sort();
-    const authorizationProofs = options?.authorizationProofs?.length
+    const authorizationProofs: ZKProof[] = options?.authorizationProofs?.length
       ? options.authorizationProofs
       : [
           {
-            type: 'AUTHORIZATION',
+            type: 'AUTHORIZATION' as const,
             proofId: computeProofId(workflowRunId, 'authorization-proof'),
             publicSignals: {
               workflowRunId,
@@ -122,7 +131,25 @@ export class ComplianceCertificateGenerator {
       if (firstKey) this.cache.delete(firstKey);
     }
 
+    // M4: Audit certificate generation
+    this.auditService.logCertificateGenerated(certificate).catch(() => {});
+
     return certificate;
+  }
+
+  /**
+   * M4: Export-safe serialization for regulatory submission.
+   * Returns a JSON-serializable representation safe for external systems.
+   */
+  serializeForExport(certificate: RegulatorySubmissionCertificate): string {
+    return JSON.stringify(certificate, null, 2);
+  }
+
+  /**
+   * M4: Deserialize certificate from export format.
+   */
+  deserializeFromExport(serialized: string): RegulatorySubmissionCertificate {
+    return JSON.parse(serialized) as RegulatorySubmissionCertificate;
   }
 }
 

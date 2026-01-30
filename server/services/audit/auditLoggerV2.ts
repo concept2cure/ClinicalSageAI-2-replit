@@ -234,6 +234,11 @@ async function flushAuditBuffer(): Promise<void> {
  */
 async function persistAuditEvent(event: AuditEvent): Promise<void> {
   try {
+    const organizationId = parseInt(event.organizationId, 10);
+    if (!Number.isFinite(organizationId)) {
+      throw new Error('Invalid organizationId for audit event');
+    }
+
     // Use raw SQL aligned with existing audit_events table schema
     await db.execute(sql`
       INSERT INTO audit_events (
@@ -242,7 +247,7 @@ async function persistAuditEvent(event: AuditEvent): Promise<void> {
         old_values, new_values, reason, comments, requires_signature,
         regulatory_significant, gxp_relevant, metadata
       ) VALUES (
-        ${parseInt(event.organizationId) || 1},
+        ${organizationId},
         ${event.action},
         ${event.resourceType || event.category},
         ${parseInt(event.resourceId || '0') || 0},

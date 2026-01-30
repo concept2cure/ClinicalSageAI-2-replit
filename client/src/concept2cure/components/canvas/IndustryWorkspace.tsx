@@ -11,6 +11,8 @@
 import React, { lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import type { IndustryMode } from '../../types/workspace';
+export type { IndustryMode } from '../../types/workspace';
 
 // Lazy load industry-specific components
 const MedTechWorkspace = lazy(() => import('./workspaces/MedTechWorkspace'));
@@ -24,16 +26,8 @@ const MedicalWritingWorkspace = lazy(() => import('./workspaces/MedicalWritingWo
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type IndustryType = 
-  | 'MEDTECH'
-  | 'PHARMA'
-  | 'BIOTECH'
-  | 'CRO'
-  | 'REGULATORY'
-  | 'MEDICAL_WRITING';
-
 export interface IndustryWorkspaceProps {
-  industry: IndustryType;
+  industry: IndustryMode;
   projectId?: string;
   userId: string;
   onNavigate?: (destination: string) => void;
@@ -68,17 +62,19 @@ export const IndustryWorkspace: React.FC<IndustryWorkspaceProps> = ({
     const commonProps = { projectId, userId, onNavigate };
 
     switch (industry) {
-      case 'MEDTECH':
+      case 'medtech':
         return <MedTechWorkspace {...commonProps} />;
-      case 'PHARMA':
+      case 'pharma':
         return <PharmaWorkspace {...commonProps} />;
-      case 'BIOTECH':
+      case 'biotech':
         return <BiotechWorkspace {...commonProps} />;
-      case 'CRO':
+      case 'cro':
         return <CROWorkspace {...commonProps} />;
-      case 'REGULATORY':
+      case 'academic':
+        return <BiotechWorkspace {...commonProps} />;
+      case 'regulatory':
         return <RegulatoryWorkspace {...commonProps} />;
-      case 'MEDICAL_WRITING':
+      case 'medical_writing':
         return <MedicalWritingWorkspace {...commonProps} />;
       default:
         return (

@@ -32,24 +32,23 @@ import {
   Building2,
   Beaker,
   Users,
-  FileText,
-  Calendar,
-  Globe,
   Pill,
   Heart,
   Brain,
   Syringe,
   Shield,
-  AlertTriangle,
   Info,
   Sparkles,
+  Microscope,
+  GraduationCap,
+  PenTool,
+  ClipboardCheck,
 } from 'lucide-react';
+import type { IndustryMode } from '../../types/workspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-export type OrganizationType = 'biotech' | 'pharma' | 'cro' | 'agency';
 
 export type SubmissionType = 
   | 'ind'       // Investigational New Drug
@@ -80,7 +79,7 @@ export type TherapeuticArea =
   | 'other';
 
 export interface WizardData {
-  organizationType?: OrganizationType;
+  industryMode?: IndustryMode;
   submissionType?: SubmissionType;
   regions?: RegulatoryRegion[];
   therapeuticArea?: TherapeuticArea;
@@ -216,13 +215,13 @@ const REGION_CONFIG: Record<RegulatoryRegion, { label: string; flag: string }> =
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Step 1: Organization Type
+ * Step 1: Industry Mode
  */
-const OrganizationStep: React.FC<{
-  value?: OrganizationType;
-  onChange: (value: OrganizationType) => void;
+const IndustryStep: React.FC<{
+  value?: IndustryMode;
+  onChange: (value: IndustryMode) => void;
 }> = ({ value, onChange }) => {
-  const options: { value: OrganizationType; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const options: { value: IndustryMode; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
     {
       value: 'biotech',
       label: 'Biotech',
@@ -241,11 +240,35 @@ const OrganizationStep: React.FC<{
       description: 'Contract organization serving multiple clients',
       icon: Users,
     },
+    {
+      value: 'medtech',
+      label: 'MedTech',
+      description: 'Medical device development and submissions',
+      icon: Microscope,
+    },
+    {
+      value: 'academic',
+      label: 'Academic',
+      description: 'Academic research and investigator-initiated studies',
+      icon: GraduationCap,
+    },
+    {
+      value: 'regulatory',
+      label: 'Regulatory',
+      description: 'Regulatory affairs and submission oversight',
+      icon: ClipboardCheck,
+    },
+    {
+      value: 'medical_writing',
+      label: 'Medical Writing',
+      description: 'Document authoring, review cycles, and publishing',
+      icon: PenTool,
+    },
   ];
   
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">What type of organization are you?</h3>
+      <h3 className="text-lg font-semibold text-zinc-900 mb-2">Which industry mode fits your team?</h3>
       <p className="text-sm text-zinc-500 mb-6">This helps us configure the right workflow for your needs.</p>
       
       <div className="grid grid-cols-3 gap-4">
@@ -289,11 +312,11 @@ const OrganizationStep: React.FC<{
 const SubmissionTypeStep: React.FC<{
   value?: SubmissionType;
   onChange: (value: SubmissionType) => void;
-  organizationType?: OrganizationType;
-}> = ({ value, onChange, organizationType }) => {
+  industryMode?: IndustryMode;
+}> = ({ value, onChange, industryMode }) => {
   // Filter submissions based on org type
   const relevantSubmissions = Object.entries(SUBMISSION_CONFIG).filter(([key]) => {
-    if (organizationType === 'biotech') {
+    if (industryMode === 'biotech') {
       return ['ind', 'nda', 'bla', 'cta', 'maa'].includes(key);
     }
     return true;
@@ -612,7 +635,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
   
   const canProceed = useCallback(() => {
     switch (step) {
-      case 1: return !!data.organizationType;
+      case 1: return !!data.industryMode;
       case 2: return !!data.submissionType;
       case 3: return !!data.productName && !!data.projectName;
       case 4: return data.regions && data.regions.length > 0;
@@ -664,16 +687,16 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
       {/* Content */}
       <div className="flex-1 px-8 overflow-y-auto">
         {step === 1 && (
-          <OrganizationStep
-            value={data.organizationType}
-            onChange={(v) => updateData({ organizationType: v })}
+          <IndustryStep
+            value={data.industryMode}
+            onChange={(v) => updateData({ industryMode: v })}
           />
         )}
         {step === 2 && (
           <SubmissionTypeStep
             value={data.submissionType}
             onChange={(v) => updateData({ submissionType: v })}
-            organizationType={data.organizationType}
+            industryMode={data.industryMode}
           />
         )}
         {step === 3 && (

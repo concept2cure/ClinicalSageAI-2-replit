@@ -15,6 +15,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { IndustryMode, UserRole } from '../industry';
 import {
   Building2,
   Pill,
@@ -34,18 +35,6 @@ import {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-export type IndustryMode = 'biotech' | 'pharma' | 'cro' | 'medtech' | 'academic';
-
-export type UserRole = 
-  | 'regulatory_affairs'
-  | 'medical_writer'
-  | 'clinical_ops'
-  | 'medical_affairs'
-  | 'quality_assurance'
-  | 'project_manager'
-  | 'executive'
-  | 'consultant';
 
 export interface UserConfiguration {
   industryMode: IndustryMode;

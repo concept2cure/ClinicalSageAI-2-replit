@@ -31,7 +31,6 @@ import {
   Folder,
   Target,
   BarChart2,
-  DollarSign,
   ClipboardCheck,
   MessageSquare,
   Flag,
@@ -40,6 +39,7 @@ import {
 } from 'lucide-react';
 import type {
   UserRole,
+  IndustryMode,
   DashboardMetric,
   ActionItem,
   WatchlistItem,
@@ -56,7 +56,7 @@ import type {
 interface RoleBasedDashboardProps {
   role: UserRole;
   userName: string;
-  organizationType: 'biotech' | 'pharma' | 'cro' | 'device';
+  industryMode: IndustryMode;
   
   // Data (would come from API)
   metrics?: DashboardMetric[];
@@ -168,8 +168,7 @@ const ROLE_CONFIG: Record<UserRole, {
 
 const MetricCard: React.FC<{
   metric: DashboardMetric;
-  color?: string;
-}> = ({ metric, color = 'blue' }) => {
+}> = ({ metric }) => {
   const TrendIcon = metric.trend === 'up' ? TrendingUp : metric.trend === 'down' ? TrendingDown : Minus;
   
   return (
@@ -508,24 +507,24 @@ const CROProjectManagerView: React.FC<{
 export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
   role,
   userName,
-  organizationType,
+  industryMode,
   metrics = [],
   actionItems = [],
   watchlist = [],
-  calendar = [],
+  calendar: _calendar = [],
   deliverables = [],
   pdufa_dates = [],
   commitments = [],
   onActionClick,
   onWatchlistClick,
-  onCalendarClick,
+  onCalendarClick: _onCalendarClick,
   className,
 }) => {
   const config = ROLE_CONFIG[role];
   const firstName = userName.split(' ')[0];
   
   // Role-specific views
-  if (role === 'project_manager' && organizationType === 'cro') {
+  if (role === 'project_manager' && industryMode === 'cro') {
     return (
       <div className={cn('p-6', className)}>
         <div className="mb-6">
@@ -545,7 +544,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
   }
   
   // RA Lead / Pharma view with PDUFA and commitments
-  if ((role === 'ra_lead' || role === 'executive') && (organizationType === 'pharma' || organizationType === 'biotech')) {
+  if ((role === 'ra_lead' || role === 'executive') && (industryMode === 'pharma' || industryMode === 'biotech')) {
     return (
       <div className={cn('p-6 space-y-6', className)}>
         {/* Header */}

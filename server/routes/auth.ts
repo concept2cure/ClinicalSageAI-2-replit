@@ -9,6 +9,8 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import {
@@ -33,6 +35,23 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 // Development mode flag
 const isDev = process.env.NODE_ENV !== 'production';
+
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  companyName: z.string().min(2),
+  industryMode: z.enum([
+    'biotech',
+    'medtech',
+    'cro',
+    'pharma',
+    'academic',
+    'regulatory',
+    'medical_writing',
+  ]),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+});
 
 /**
  * GET /api/auth/session
@@ -201,9 +220,13 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // In dev mode, accept any credentials
     if (isDev) {
-      const accessToken = jwt.sign({ userId: '1', email, organizationId: '2' }, JWT_SECRET, {
+      const accessToken = jwt.sign(
+        { userId: '1', email, organizationId: '2', organizationUuid: null },
+        JWT_SECRET,
+        {
         expiresIn: JWT_EXPIRES_IN,
-      });
+        }
+      );
 
       const refreshToken = jwt.sign({ userId: '1', email, type: 'refresh' }, JWT_SECRET, {
         expiresIn: REFRESH_TOKEN_EXPIRES_IN,
@@ -224,6 +247,7 @@ router.post('/login', async (req: Request, res: Response) => {
           permissions: ['*'],
           organizationId: '2',
           organizationName: 'TrialSage Demo',
+          organizationUuid: null,
           mfaEnabled: false,
           mfaMethods: [],
           mustChangePassword: false,
@@ -246,8 +270,38 @@ router.post('/login', async (req: Request, res: Response) => {
     // For now, this is a placeholder
     const userData = user[0];
 
+    const defaultOrganizationId = userData.defaultOrganizationId || null;
+    let organizationId = defaultOrganizationId;
+
+    if (!organizationId) {
+      const [membership] = await db
+        .select({ organizationId: organizationUsers.organizationId })
+        .from(organizationUsers)
+        .where(eq(organizationUsers.userId, userData.id))
+        .limit(1);
+      organizationId = membership?.organizationId || null;
+    }
+
+    if (!organizationId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'No organization assigned' },
+      });
+    }
+
+    const [organization] = await db
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1);
+
     const accessToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, organizationId: '2' },
+      {
+        userId: userData.id.toString(),
+        email: userData.email,
+        organizationId: organizationId.toString(),
+        organizationUuid: organization?.uuid || null,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -272,8 +326,9 @@ router.post('/login', async (req: Request, res: Response) => {
           `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
         roles: ['user'],
         permissions: [],
-        organizationId: '2',
-        organizationName: 'TrialSage Demo',
+        organizationId: organizationId.toString(),
+        organizationName: organization?.name || 'Organization',
+        organizationUuid: organization?.uuid || null,
         mfaEnabled: false,
         mfaMethods: [],
         mustChangePassword: false,
@@ -285,6 +340,120 @@ router.post('/login', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Login failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/signup
+ * Create organization + admin user
+ */
+router.post('/signup', async (req: Request, res: Response) => {
+  try {
+    const parsed = signupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.errors },
+      });
+    }
+
+    const { email, password, companyName, industryMode, firstName, lastName } = parsed.data;
+
+    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existing.length) {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'AUTH_002', message: 'Email already registered' },
+      });
+    }
+
+    const baseSlug = companyName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    let slug = baseSlug || `tenant-${Date.now()}`;
+
+    const existingSlug = await db.select().from(organizations).where(eq(organizations.slug, slug)).limit(1);
+    if (existingSlug.length) {
+      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    let stripeCustomerId: string | null = null;
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+    if (stripeSecretKey) {
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+      const customer = await stripe.customers.create({
+        email,
+        name: companyName,
+        metadata: { industryMode },
+      });
+      stripeCustomerId = customer.id;
+    }
+
+    const result = await db.transaction(async tx => {
+      const [org] = await tx
+        .insert(organizations)
+        .values({ name: companyName, slug, industryMode, stripeCustomerId })
+        .returning();
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      const [user] = await tx
+        .insert(users)
+        .values({
+          email,
+          passwordHash,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          defaultOrganizationId: org.id,
+        })
+        .returning();
+
+      await tx.insert(organizationUsers).values({
+        organizationId: org.id,
+        userId: user.id,
+        role: 'admin',
+      });
+
+      return { org, user };
+    });
+
+    const token = jwt.sign(
+      {
+        userId: result.user.id.toString(),
+        email: result.user.email,
+        organizationId: result.org.id.toString(),
+        organizationUuid: result.org.uuid,
+        role: 'admin',
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    return res.status(201).json({
+      success: true,
+      token,
+      organization: {
+        id: result.org.id,
+        name: result.org.name,
+        uuid: result.org.uuid,
+        industryMode: result.org.industryMode,
+        stripeCustomerId: result.org.stripeCustomerId,
+      },
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        firstName: result.user.firstName,
+        lastName: result.user.lastName,
+      },
+    });
+  } catch (error) {
+    console.error('[auth] Signup error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Internal server error' },
     });
   }
 });

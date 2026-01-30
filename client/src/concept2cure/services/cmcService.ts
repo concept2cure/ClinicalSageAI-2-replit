@@ -20,7 +20,7 @@
  * - USP/EP/JP Standards
  */
 
-import { apiRequest } from '../../lib/queryClient';
+import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES - SPECIFICATIONS
@@ -345,6 +345,18 @@ export interface BatchRecord {
 class CMCService {
   private baseUrl = '/api/cmc';
 
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+    const response = await apiRequest(method, url, body);
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new Error(payload?.error?.message || payload?.error || 'CMC request failed');
+    }
+    return payload?.data ?? payload;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // SPECIFICATIONS
   // ─────────────────────────────────────────────────────────────────────────────
@@ -354,10 +366,11 @@ class CMCService {
    */
   async createSpecification(data: Partial<Specification>): Promise<Specification> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/specifications`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await this.request<{ specification: Specification }>(
+        'POST',
+        `${this.baseUrl}/specifications`,
+        data
+      );
       return response.specification;
     } catch (error) {
       console.error('[CMC] Create specification failed:', error);
@@ -370,7 +383,10 @@ class CMCService {
    */
   async getSpecification(id: string): Promise<Specification | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/specifications/${id}`);
+      const response = await this.request<{ specification?: Specification }>(
+        'GET',
+        `${this.baseUrl}/specifications/${id}`
+      );
       return response.specification || null;
     } catch (error) {
       console.error('[CMC] Get specification failed:', error);
@@ -383,10 +399,11 @@ class CMCService {
    */
   async updateSpecification(id: string, data: Partial<Specification>): Promise<Specification> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/specifications/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+      const response = await this.request<{ specification: Specification }>(
+        'PATCH',
+        `${this.baseUrl}/specifications/${id}`,
+        data
+      );
       return response.specification;
     } catch (error) {
       console.error('[CMC] Update specification failed:', error);
@@ -410,7 +427,10 @@ class CMCService {
     });
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/specifications?${queryParams}`);
+      const response = await this.request<{ specifications?: Specification[] }>(
+        'GET',
+        `${this.baseUrl}/specifications?${queryParams}`
+      );
       return response.specifications || [];
     } catch (error) {
       console.error('[CMC] List specifications failed:', error);
@@ -423,7 +443,8 @@ class CMCService {
    */
   async checkICHCompliance(specificationId: string): Promise<ICHComplianceResult> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ compliance: ICHComplianceResult }>(
+        'GET',
         `${this.baseUrl}/specifications/${specificationId}/ich-compliance`
       );
       return response.compliance;
@@ -441,9 +462,9 @@ class CMCService {
     testId: string
   ): Promise<string> {
     try {
-      const response = await apiRequest(
-        `${this.baseUrl}/specifications/${specificationId}/tests/${testId}/justify`,
-        { method: 'POST' }
+      const response = await this.request<{ justification?: string }>(
+        'POST',
+        `${this.baseUrl}/specifications/${specificationId}/tests/${testId}/justify`
       );
       return response.justification || '';
     } catch (error) {
@@ -461,7 +482,10 @@ class CMCService {
    */
   async getImpurityProfile(productId: string): Promise<ImpurityProfile | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/impurities/${productId}`);
+      const response = await this.request<{ profile?: ImpurityProfile }>(
+        'GET',
+        `${this.baseUrl}/impurities/${productId}`
+      );
       return response.profile || null;
     } catch (error) {
       console.error('[CMC] Get impurity profile failed:', error);
@@ -478,12 +502,10 @@ class CMCService {
     data: Partial<Impurity>
   ): Promise<Impurity> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ impurity: Impurity }>(
+        'PATCH',
         `${this.baseUrl}/impurities/${profileId}/${impurityId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify(data),
-        }
+        data
       );
       return response.impurity;
     } catch (error) {
@@ -497,10 +519,11 @@ class CMCService {
    */
   async addImpurity(profileId: string, impurity: Partial<Impurity>): Promise<Impurity> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/impurities/${profileId}`, {
-        method: 'POST',
-        body: JSON.stringify(impurity),
-      });
+      const response = await this.request<{ impurity: Impurity }>(
+        'POST',
+        `${this.baseUrl}/impurities/${profileId}`,
+        impurity
+      );
       return response.impurity;
     } catch (error) {
       console.error('[CMC] Add impurity failed:', error);
@@ -521,10 +544,11 @@ class CMCService {
     unit: string;
   }> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/impurities/thresholds`, {
-        method: 'POST',
-        body: JSON.stringify(params),
-      });
+      const response = await this.request<{ thresholds: { identification: number; qualification: number; unit: string } }>(
+        'POST',
+        `${this.baseUrl}/impurities/thresholds`,
+        params
+      );
       return response.thresholds;
     } catch (error) {
       console.error('[CMC] Calculate thresholds failed:', error);
@@ -540,9 +564,9 @@ class CMCService {
     impurityId: string
   ): Promise<string> {
     try {
-      const response = await apiRequest(
-        `${this.baseUrl}/impurities/${profileId}/${impurityId}/justify`,
-        { method: 'POST' }
+      const response = await this.request<{ justification?: string }>(
+        'POST',
+        `${this.baseUrl}/impurities/${profileId}/${impurityId}/justify`
       );
       return response.justification || '';
     } catch (error) {
@@ -560,10 +584,11 @@ class CMCService {
    */
   async createStabilityProtocol(data: Partial<StabilityProtocol>): Promise<StabilityProtocol> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/stability/protocols`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await this.request<{ protocol: StabilityProtocol }>(
+        'POST',
+        `${this.baseUrl}/stability/protocols`,
+        data
+      );
       return response.protocol;
     } catch (error) {
       console.error('[CMC] Create stability protocol failed:', error);
@@ -576,7 +601,10 @@ class CMCService {
    */
   async getStabilityProtocol(id: string): Promise<StabilityProtocol | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/stability/protocols/${id}`);
+      const response = await this.request<{ protocol?: StabilityProtocol }>(
+        'GET',
+        `${this.baseUrl}/stability/protocols/${id}`
+      );
       return response.protocol || null;
     } catch (error) {
       console.error('[CMC] Get stability protocol failed:', error);
@@ -589,7 +617,8 @@ class CMCService {
    */
   async listStabilityProtocols(productId: string): Promise<StabilityProtocol[]> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ protocols?: StabilityProtocol[] }>(
+        'GET',
         `${this.baseUrl}/stability/protocols?productId=${productId}`
       );
       return response.protocols || [];
@@ -604,10 +633,11 @@ class CMCService {
    */
   async addStabilityResult(batchId: string, result: Partial<StabilityResult>): Promise<StabilityResult> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/stability/batches/${batchId}/results`, {
-        method: 'POST',
-        body: JSON.stringify(result),
-      });
+      const response = await this.request<{ result: StabilityResult }>(
+        'POST',
+        `${this.baseUrl}/stability/batches/${batchId}/results`,
+        result
+      );
       return response.result;
     } catch (error) {
       console.error('[CMC] Add stability result failed:', error);
@@ -626,10 +656,10 @@ class CMCService {
     charts: Array<{ condition: string; data: Array<{ timePoint: number; value: number }> }>;
   }> {
     try {
-      const response = await apiRequest(
+      return await this.request(
+        'GET',
         `${this.baseUrl}/stability/protocols/${protocolId}/project`
       );
-      return response;
     } catch (error) {
       console.error('[CMC] Project shelf life failed:', error);
       throw error;
@@ -645,7 +675,10 @@ class CMCService {
    */
   async getBatchRecord(batchNumber: string): Promise<BatchRecord | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/batches/${batchNumber}`);
+      const response = await this.request<{ batch?: BatchRecord }>(
+        'GET',
+        `${this.baseUrl}/batches/${batchNumber}`
+      );
       return response.batch || null;
     } catch (error) {
       console.error('[CMC] Get batch record failed:', error);
@@ -669,7 +702,10 @@ class CMCService {
     });
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/batches?${queryParams}`);
+      const response = await this.request<{ batches?: BatchRecord[] }>(
+        'GET',
+        `${this.baseUrl}/batches?${queryParams}`
+      );
       return response.batches || [];
     } catch (error) {
       console.error('[CMC] List batch records failed:', error);
@@ -698,7 +734,10 @@ class CMCService {
     });
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/batches/trends?${queryParams}`);
+      const response = await this.request<{ trends?: Array<{ batchNumber: string; manufactureDate: string; value: number; specification: { lower: number; upper: number } }> }>(
+        'GET',
+        `${this.baseUrl}/batches/trends?${queryParams}`
+      );
       return response.trends || [];
     } catch (error) {
       console.error('[CMC] Get batch trends failed:', error);

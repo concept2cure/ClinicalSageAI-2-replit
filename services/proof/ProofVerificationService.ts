@@ -1,14 +1,17 @@
 /**
  * Proof Verification Service
+ * 
+ * M4 Certificate: Round-trip verification succeeds; verification within SLA.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import type { RegulatorySubmissionCertificate } from './types';
 import {
   computeCertificateId,
   computeDeterministicTimestamp,
   computeProofId,
 } from './ComplianceCertificate';
+import { ProofAuditService } from './ProofAuditService';
 
 export interface ProofVerificationResult {
   valid: boolean;
@@ -18,6 +21,12 @@ export interface ProofVerificationResult {
 }
 
 export class ProofVerificationService {
+  private auditService: ProofAuditService;
+
+  constructor() {
+    this.auditService = ProofAuditService.getInstance();
+  }
+
   verifyCertificate(certificate: RegulatorySubmissionCertificate): ProofVerificationResult {
     const start = Date.now();
     const failures: ProofVerificationResult['failures'] = [];
@@ -105,10 +114,20 @@ export class ProofVerificationService {
     }
 
     const valid = failures.length === 0;
+    const verificationTimeMs = Date.now() - start;
+
+    // M4: Audit verification result
+    this.auditService.logCertificateVerified(
+      certificate?.certificateId || 'unknown',
+      valid,
+      verificationTimeMs,
+      failures.length,
+      { workflowRunId: certificate?.workflowRunId }
+    ).catch(() => {});
 
     return {
       valid,
-      verificationTimeMs: Date.now() - start,
+      verificationTimeMs,
       checkedProofs,
       failures,
     };

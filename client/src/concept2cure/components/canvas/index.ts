@@ -27,7 +27,7 @@ export { CouncilThreadPanel } from './CouncilThreadPanel';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { IndustryWorkspace } from './IndustryWorkspace';
-export type { IndustryType, IndustryWorkspaceProps } from './IndustryWorkspace';
+export type { IndustryMode, IndustryWorkspaceProps } from './IndustryWorkspace';
 
 // Lazy-loaded workspaces (import directly when needed)
 // - MedTechWorkspace

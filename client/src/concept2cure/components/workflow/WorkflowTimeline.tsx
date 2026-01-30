@@ -112,6 +112,7 @@ const TimelineStep: React.FC<{
       disabled={!isClickable}
       aria-label={`${step.name} (${statusLabel})`}
       aria-current={isActive ? 'step' : undefined}
+      data-testid={`button-workflow-step-${step.id}`}
     >
       {/* Icon and connector line */}
       <div className="flex flex-col items-center">
@@ -224,6 +225,7 @@ const PhaseGroup: React.FC<{
         className="flex items-center gap-3 w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         aria-expanded={phase.isExpanded}
         aria-controls={`phase-${phase.id}`}
+        data-testid={`button-phase-toggle-${phase.id}`}
       >
         {phase.isExpanded ? (
           <ChevronDown size={18} className="text-gray-500" />

@@ -27,9 +27,9 @@
  * - Full database persistence for conversations/artifacts
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { eq, desc, and, sql, isNull, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, inArray } from 'drizzle-orm';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import * as metricsModule from '../metrics.js';
@@ -37,11 +37,11 @@ import { authMiddleware } from '../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import * as DOMPurify from 'isomorphic-dompurify';
+import multer from 'multer';
+import path from 'path';
 import {
   regulatoryAuditLogs,
   projects,
-  organizations,
-  users,
   concept2cureConversations,
   concept2cureMessages,
   concept2cureArtifacts,
@@ -53,6 +53,27 @@ import * as crypto from 'crypto';
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
 const metrics = (metricsModule as { metrics?: { concept2cureErrors?: { inc: (labels: Record<string, string>) => void } } }).metrics;
+
+type ApiErrorPayload = {
+  message: string;
+  code?: string;
+  details?: unknown;
+};
+
+const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
+  if (meta) {
+    return res.json({ success: true, data, meta });
+  }
+  return res.json({ success: true, data });
+};
+
+const sendError = (
+  res: Response,
+  status: number,
+  message: string,
+  details?: unknown,
+  code?: string
+) => res.status(status).json({ success: false, error: { message, code, details } satisfies ApiErrorPayload });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECURITY MIDDLEWARE CHAIN
@@ -276,6 +297,36 @@ function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   return sanitized as T;
 }
 
+function normalizeProjectSettings(settings: unknown): Record<string, unknown> {
+  return settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
+}
+
+function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge {
+  const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
+    ? (settings.knowledge as Record<string, unknown>)
+    : {};
+
+  const documents = Array.isArray(knowledge.documents)
+    ? knowledge.documents as UploadedDocument[]
+    : [];
+  const customInstructions = typeof settings.customInstructions === 'string'
+    ? settings.customInstructions
+    : typeof knowledge.customInstructions === 'string'
+      ? knowledge.customInstructions
+      : '';
+  const context = typeof knowledge.context === 'string' ? knowledge.context : '';
+
+  return {
+    documents,
+    customInstructions,
+    context,
+  };
+}
+
+function estimateTokensFromBytes(bytes: number): number {
+  return Math.ceil(bytes * 0.25);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // VALIDATION SCHEMAS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -301,6 +352,42 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
+
+const updateKnowledgeSchema = z.object({
+  customInstructions: z.string().max(5000).optional(),
+  context: z.string().max(20000).optional(),
+}).partial();
+
+const errorLogSchema = z.object({
+  id: z.string().min(1),
+  timestamp: z.string().datetime(),
+  error: z.string().min(1).max(2000),
+  stack: z.string().optional(),
+  componentStack: z.string().optional(),
+  userAgent: z.string().optional(),
+  url: z.string().optional(),
+});
+
+const knowledgeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+const allowedKnowledgeMimeTypes = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'text/plain',
+  'text/markdown',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'text/csv',
+]);
+
+function sanitizeFilename(name: string): string {
+  const base = path.basename(name || 'document');
+  return base.replace(/[^\w.\-() ]+/g, '_');
+}
 
 const createConversationSchema = z.object({
   title: z.string().max(200).optional(),
@@ -345,26 +432,6 @@ const createSignatureSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Concept2Cure project stored in database.
- * Uses the core `projects` table with concept2cure-specific settings.
- */
-interface C2CProject {
-  id: string;
-  name: string;
-  submissionType: string;
-  description?: string;
-  organizationId: number;
-  clientWorkspaceId?: number;
-  userId: number;
-  status: string;
-  customInstructions?: string;
-  targetSubmissionDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date; // Soft delete for compliance
-}
-
-/**
  * Conversation within a project (stored as JSON in project settings).
  */
 interface Conversation {
@@ -405,6 +472,23 @@ interface Artifact {
   metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface UploadedDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+  tokenCount?: number;
+  pageCount?: number;
+  status?: string;
+}
+
+interface ProjectKnowledge {
+  documents: UploadedDocument[];
+  customInstructions?: string;
+  context?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -612,13 +696,13 @@ router.get('/projects', async (req: Request, res: Response) => {
       updatedAt: p.updatedAt,
     })));
     
-    res.json(response);
+    return sendSuccess(res, response);
   } catch (error: any) {
     logger.error('Failed to fetch projects', { 
       error: error.message,
       organizationId: req.tenantContext?.organizationId 
     });
-    res.status(500).json({ error: 'Failed to fetch projects' });
+    return sendError(res, 500, 'Failed to fetch projects');
   }
 });
 
@@ -636,7 +720,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const numericId = parseInt(projectId, 10);
     
     if (isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid project ID format' });
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
     
     // Query with tenant isolation
@@ -653,7 +737,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       .limit(1);
     
     if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     // Transform to API response with DB conversations
@@ -670,10 +754,10 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       updatedAt: project.updatedAt,
     };
     
-    res.json(response);
+    return sendSuccess(res, response);
   } catch (error: any) {
     logger.error('Failed to fetch project', { error: error.message });
-    res.status(500).json({ error: 'Failed to fetch project' });
+    return sendError(res, 500, 'Failed to fetch project');
   }
 });
 
@@ -747,13 +831,13 @@ router.post('/projects', async (req: Request, res: Response) => {
       name: newProject.name,
       organizationId 
     });
-    res.status(201).json(response);
+    return sendSuccess(res.status(201), response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logConcept2cureError('create project', error, { organizationId: req.tenantContext?.organizationId });
-    res.status(500).json({ error: 'Failed to create project' });
+    return sendError(res, 500, 'Failed to create project');
   }
 });
 
@@ -771,7 +855,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     const numericId = parseInt(projectId, 10);
     
     if (isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid project ID format' });
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
     
     const data = updateProjectSchema.parse(req.body);
@@ -789,7 +873,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       .limit(1);
     
     if (!existing) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     // Prepare sanitized update data
@@ -843,13 +927,13 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     };
     
     logger.info('Updated project', { projectId: req.params.id, organizationId });
-    res.json(response);
+    return sendSuccess(res, response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logger.error('Failed to update project', { error: error.message });
-    res.status(500).json({ error: 'Failed to update project' });
+    return sendError(res, 500, 'Failed to update project');
   }
 });
 
@@ -868,7 +952,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
     const numericId = parseInt(projectId, 10);
     
     if (isNaN(numericId)) {
-      return res.status(400).json({ error: 'Invalid project ID format' });
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
     
     // First verify ownership and capture state for audit
@@ -884,7 +968,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
       .limit(1);
     
     if (!existing) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     // Soft delete by setting actualEndDate (21 CFR Part 11 compliant)
@@ -917,10 +1001,342 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
     await logAuditEntry(req, 'DELETE', 'project', req.params.id, existing, null);
     
     logger.info('Soft-deleted project', { projectId: req.params.id, organizationId });
-    res.status(204).send();
+    return sendSuccess(res, { deleted: true, projectId: req.params.id });
   } catch (error: any) {
     logger.error('Failed to delete project', { error: error.message });
-    res.status(500).json({ error: 'Failed to delete project' });
+    return sendError(res, 500, 'Failed to delete project');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT KNOWLEDGE ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/knowledge
+ * Retrieve knowledge base state for a project.
+ */
+router.get('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, numericId),
+          eq(projects.organizationId, organizationId),
+          eq(projects.type, 'concept2cure')
+        )
+      )
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const knowledge = normalizeKnowledge(settings);
+    return sendSuccess(res, knowledge);
+  } catch (error: any) {
+    logger.error('Failed to fetch project knowledge', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch project knowledge');
+  }
+});
+
+/**
+ * PATCH /api/concept2cure/projects/:projectId/knowledge
+ * Update knowledge base metadata (custom instructions, context).
+ */
+router.patch('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const data = updateKnowledgeSchema.parse(req.body);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, numericId),
+          eq(projects.organizationId, organizationId),
+          eq(projects.type, 'concept2cure')
+        )
+      )
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const knowledge = normalizeKnowledge(settings);
+
+    const updatedKnowledge: ProjectKnowledge = {
+      ...knowledge,
+      customInstructions: data.customInstructions !== undefined
+        ? (data.customInstructions ? sanitizeContent(data.customInstructions) : '')
+        : knowledge.customInstructions,
+      context: data.context !== undefined
+        ? (data.context ? sanitizeContent(data.context) : '')
+        : knowledge.context,
+    };
+
+    const updatedSettings = {
+      ...settings,
+      customInstructions: updatedKnowledge.customInstructions,
+      knowledge: updatedKnowledge,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(
+        and(
+          eq(projects.id, numericId),
+          eq(projects.organizationId, organizationId)
+        )
+      )
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updated);
+    return sendSuccess(res, updatedKnowledge);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project knowledge', { error: error.message });
+    return sendError(res, 500, 'Failed to update project knowledge');
+  }
+});
+
+/**
+ * POST /api/concept2cure/documents/upload
+ * Upload a document and attach to project knowledge.
+ */
+router.post('/documents/upload', knowledgeUpload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectIdRaw = req.body.projectId as string | undefined;
+    const file = req.file;
+
+    if (!projectIdRaw) {
+      return sendError(res, 400, 'Project ID is required');
+    }
+
+    const numericId = parseInt(projectIdRaw.replace('proj_', ''), 10);
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    if (!file) {
+      return sendError(res, 400, 'File is required');
+    }
+
+    if (!allowedKnowledgeMimeTypes.has(file.mimetype)) {
+      return sendError(res, 400, `Unsupported file type: ${file.mimetype}`);
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, numericId),
+          eq(projects.organizationId, organizationId),
+          eq(projects.type, 'concept2cure')
+        )
+      )
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const safeOriginalName = sanitizeFilename(file.originalname);
+    const extension = safeOriginalName.split('.').pop()?.toLowerCase() || 'unknown';
+    const uploadedAt = new Date();
+    const documentId = `doc_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+    const tokenCount = estimateTokensFromBytes(file.size);
+
+    const extractedText = file.mimetype.startsWith('text/')
+      ? file.buffer.toString('utf8')
+      : `[${file.mimetype} document ${safeOriginalName}]`;
+
+    const document: UploadedDocument = {
+      id: documentId,
+      name: safeOriginalName,
+      type: extension,
+      size: file.size,
+      uploadedAt: uploadedAt.toISOString(),
+      tokenCount,
+      status: 'processed',
+    };
+
+    const settings = normalizeProjectSettings(project.settings);
+    const knowledge = normalizeKnowledge(settings);
+    const updatedKnowledge: ProjectKnowledge = {
+      ...knowledge,
+      documents: [...knowledge.documents, document],
+      customInstructions: knowledge.customInstructions,
+      context: knowledge.context,
+    };
+
+    const updatedSettings = {
+      ...settings,
+      customInstructions: updatedKnowledge.customInstructions,
+      knowledge: updatedKnowledge,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(
+        and(
+          eq(projects.id, numericId),
+          eq(projects.organizationId, organizationId)
+        )
+      )
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
+
+    res.status(201);
+    return sendSuccess(res, {
+      document,
+      extractedText,
+      tokenCount,
+    });
+  } catch (error: any) {
+    logger.error('Failed to upload knowledge document', { error: error.message });
+    return sendError(res, 500, 'Failed to upload knowledge document');
+  }
+});
+
+/**
+ * DELETE /api/concept2cure/documents/:documentId
+ * Remove a document from project knowledge.
+ */
+router.delete('/documents/:documentId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const documentId = req.params.documentId;
+
+    const dbProjects = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.organizationId, organizationId),
+          eq(projects.type, 'concept2cure'),
+          isNull(projects.actualEndDate)
+        )
+      );
+
+    const target = dbProjects.find(project => {
+      const settings = normalizeProjectSettings(project.settings);
+      const knowledge = normalizeKnowledge(settings);
+      return knowledge.documents.some(doc => doc.id === documentId);
+    });
+
+    if (!target) {
+      return sendError(res, 404, 'Document not found');
+    }
+
+    const settings = normalizeProjectSettings(target.settings);
+    const knowledge = normalizeKnowledge(settings);
+    const updatedKnowledge: ProjectKnowledge = {
+      ...knowledge,
+      documents: knowledge.documents.filter(doc => doc.id !== documentId),
+    };
+
+    const updatedSettings = {
+      ...settings,
+      customInstructions: updatedKnowledge.customInstructions,
+      knowledge: updatedKnowledge,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(
+        and(
+          eq(projects.id, target.id),
+          eq(projects.organizationId, organizationId)
+        )
+      )
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
+
+    return sendSuccess(res, { deleted: true, documentId });
+  } catch (error: any) {
+    logger.error('Failed to delete knowledge document', { error: error.message });
+    return sendError(res, 500, 'Failed to delete knowledge document');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ERROR LOGGING ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/errors
+ * Capture client-side errors for audit compliance.
+ */
+router.post('/errors', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const data = errorLogSchema.parse(req.body);
+
+    await db.insert(regulatoryAuditLogs).values({
+      auditId: data.id,
+      organizationId,
+      entityType: 'system_error',
+      entityId: data.id,
+      action: 'CREATE',
+      actionCategory: 'system',
+      previousValue: null,
+      newValue: {
+        timestamp: data.timestamp,
+        error: sanitizeContent(data.error),
+        stack: data.stack ? sanitizeContent(data.stack) : null,
+        componentStack: data.componentStack ? sanitizeContent(data.componentStack) : null,
+        userAgent: data.userAgent || null,
+        url: data.url || null,
+      },
+      userId,
+      userName: req.userEmail || 'unknown',
+      userRole: req.userRole || 'user',
+      ipAddress: getClientIp(req),
+      userAgent: req.headers['user-agent'] || null,
+      sessionId: (req as any).session?.id || null,
+      isGxpRelevant: true,
+      metadata: { source: 'client-error' },
+    });
+
+    return sendSuccess(res, { logged: true });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to log client error', { error: error.message });
+    return sendError(res, 500, 'Failed to log client error');
   }
 });
 
@@ -964,7 +1380,7 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
     
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess || isNaN(numericProjectId)) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const data = createConversationSchema.parse(req.body);
@@ -1055,13 +1471,13 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
     });
     
     logger.info('Created conversation', { projectId: req.params.projectId, conversationId });
-    res.status(201).json(newConversation);
+    return sendSuccess(res.status(201), newConversation);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logConcept2cureError('create conversation', error, { projectId: req.params.projectId });
-    res.status(500).json({ error: 'Failed to create conversation' });
+    return sendError(res, 500, 'Failed to create conversation');
   }
 });
 
@@ -1076,7 +1492,7 @@ router.post('/projects/:projectId/conversations/:conversationId/messages', async
     
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const data = addMessageSchema.parse(req.body);
@@ -1095,7 +1511,7 @@ router.post('/projects/:projectId/conversations/:conversationId/messages', async
       .limit(1);
     
     if (!dbConversation) {
-      return res.status(404).json({ error: 'Conversation not found' });
+      return sendError(res, 404, 'Conversation not found');
     }
     
     // Sanitize message content
@@ -1151,13 +1567,13 @@ router.post('/projects/:projectId/conversations/:conversationId/messages', async
       contentHash,
     });
     
-    res.status(201).json(newMessage);
+    return sendSuccess(res.status(201), newMessage);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logConcept2cureError('add message', error, { conversationId: req.params.conversationId });
-    res.status(500).json({ error: 'Failed to add message' });
+    return sendError(res, 500, 'Failed to add message');
   }
 });
 
@@ -1176,14 +1592,14 @@ router.get('/projects/:projectId/artifacts', async (req: Request, res: Response)
     
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess || isNaN(numericProjectId)) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const artifacts = await getArtifactsFromDb(numericProjectId, organizationId);
-    res.json(artifacts);
+    return sendSuccess(res, artifacts);
   } catch (error: any) {
     logger.error('Failed to fetch artifacts', { error: error.message });
-    res.status(500).json({ error: 'Failed to fetch artifacts' });
+    return sendError(res, 500, 'Failed to fetch artifacts');
   }
 });
 
@@ -1199,7 +1615,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
     
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess || isNaN(numericProjectId)) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const data = createArtifactSchema.parse(req.body);
@@ -1280,13 +1696,13 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
     });
     
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
-    res.status(201).json(newArtifact);
+    return sendSuccess(res.status(201), newArtifact);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
-    res.status(500).json({ error: 'Failed to create artifact' });
+    return sendError(res, 500, 'Failed to create artifact');
   }
 });
 
@@ -1301,7 +1717,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const { content, title } = req.body;
@@ -1319,7 +1735,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       .limit(1);
     
     if (!dbArtifact) {
-      return res.status(404).json({ error: 'Artifact not found' });
+      return sendError(res, 404, 'Artifact not found');
     }
     
     // Capture previous state for audit trail
@@ -1408,10 +1824,10 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     });
     
     logger.info('Updated artifact', { artifactId: req.params.artifactId, version: artifact.version });
-    res.json(artifact);
+    return sendSuccess(res, artifact);
   } catch (error: any) {
     logConcept2cureError('update artifact', error, { artifactId: req.params.artifactId });
-    res.status(500).json({ error: 'Failed to update artifact' });
+    return sendError(res, 500, 'Failed to update artifact');
   }
 });
 
@@ -1426,7 +1842,7 @@ router.post('/projects/:projectId/artifacts/:artifactId/signatures', async (req:
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     
     if (!hasAccess) {
-      return res.status(404).json({ error: 'Project not found' });
+      return sendError(res, 404, 'Project not found');
     }
     
     const data = createSignatureSchema.parse(req.body);
@@ -1443,7 +1859,7 @@ router.post('/projects/:projectId/artifacts/:artifactId/signatures', async (req:
       .limit(1);
     
     if (!artifact) {
-      return res.status(404).json({ error: 'Artifact not found' });
+      return sendError(res, 404, 'Artifact not found');
     }
     
     const targetVersion = data.version ?? artifact.version;
@@ -1459,7 +1875,7 @@ router.post('/projects/:projectId/artifacts/:artifactId/signatures', async (req:
       .limit(1);
     
     if (!versionRow) {
-      return res.status(404).json({ error: 'Artifact version not found' });
+      return sendError(res, 404, 'Artifact version not found');
     }
     
     const signedAt = new Date();
@@ -1518,7 +1934,8 @@ router.post('/projects/:projectId/artifacts/:artifactId/signatures', async (req:
       signatureHash,
     });
     
-    res.status(201).json({
+    res.status(201);
+    return sendSuccess(res, {
       id: signature.signatureId,
       artifactId: req.params.artifactId,
       version: targetVersion,
@@ -1533,10 +1950,10 @@ router.post('/projects/:projectId/artifacts/:artifactId/signatures', async (req:
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
+      return sendError(res, 400, 'Validation failed', error.errors);
     }
     logConcept2cureError('create signature', error, { artifactId: req.params.artifactId });
-    res.status(500).json({ error: 'Failed to create signature' });
+    return sendError(res, 500, 'Failed to create signature');
   }
 });
 
@@ -1772,10 +2189,10 @@ router.get('/templates', (req: Request, res: Response) => {
       );
     }
     
-    res.json(templates);
+    return sendSuccess(res, templates);
   } catch (error: any) {
     logger.error('Failed to fetch templates', { error: error.message });
-    res.status(500).json({ error: 'Failed to fetch templates' });
+    return sendError(res, 500, 'Failed to fetch templates');
   }
 });
 
@@ -1788,13 +2205,13 @@ router.get('/templates/:id', (req: Request, res: Response) => {
     const template = TEMPLATES.find(t => t.id === req.params.id);
     
     if (!template) {
-      return res.status(404).json({ error: 'Template not found' });
+      return sendError(res, 404, 'Template not found');
     }
     
-    res.json(template);
+    return sendSuccess(res, template);
   } catch (error: any) {
     logger.error('Failed to fetch template', { error: error.message });
-    res.status(500).json({ error: 'Failed to fetch template' });
+    return sendError(res, 500, 'Failed to fetch template');
   }
 });
 

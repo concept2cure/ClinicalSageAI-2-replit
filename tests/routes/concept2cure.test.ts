@@ -128,8 +128,11 @@ describe('Concept2Cure API', () => {
 
     expectStatus(res, 201);
     expectJson(res, {
-      name: 'Test Project',
-      submissionType: 'IND',
+      success: true,
+      data: expect.objectContaining({
+        name: 'Test Project',
+        submissionType: 'IND',
+      }),
     });
   });
 
@@ -152,7 +155,10 @@ describe('Concept2Cure API', () => {
 
     expectStatus(res, 201);
     expectJson(res, {
-      title: 'New Conversation',
+      success: true,
+      data: expect.objectContaining({
+        title: 'New Conversation',
+      }),
     });
   });
 
@@ -180,7 +186,10 @@ describe('Concept2Cure API', () => {
 
     expectStatus(res, 201);
     expectJson(res, {
-      title: 'Test Artifact',
+      success: true,
+      data: expect.objectContaining({
+        title: 'Test Artifact',
+      }),
     });
   });
 
@@ -207,7 +216,10 @@ describe('Concept2Cure API', () => {
 
     expectStatus(res, 201);
     expectJson(res, {
-      signaturePurpose: 'Approved for submission',
+      success: true,
+      data: expect.objectContaining({
+        signaturePurpose: 'Approved for submission',
+      }),
     });
   });
 });

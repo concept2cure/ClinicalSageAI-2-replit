@@ -19,7 +19,7 @@
  * - EU MDR 2017/745
  */
 
-import { apiRequest } from '../../lib/queryClient';
+import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES - DEVICE CLASSIFICATION
@@ -317,6 +317,18 @@ export interface ApprovalRecord {
 class MedicalDeviceService {
   private baseUrl = '/api/medical-device';
 
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+    const response = await apiRequest(method, url, body);
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new Error(payload?.error?.message || payload?.error || 'Medical device request failed');
+    }
+    return payload?.data ?? payload;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // PREDICATE SEARCH
   // ─────────────────────────────────────────────────────────────────────────────
@@ -325,16 +337,18 @@ class MedicalDeviceService {
    * Search FDA 510(k) database for predicate devices
    */
   async searchPredicates(params: PredicateSearchParams): Promise<PredicateDevice[]> {
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.set(key, String(value));
-      }
-    });
-
     try {
-      const response = await apiRequest(`${this.baseUrl}/predicates/search?${queryParams}`);
-      return response.predicates || [];
+      const response = await this.request<{ data?: PredicateDevice[]; predicates?: PredicateDevice[] }>(
+        'POST',
+        `${this.baseUrl}/predicates/search`,
+        {
+          query: params.deviceName || params.productCode || params.intendedUse || '',
+          productCode: params.productCode,
+          regulationNumber: params.regulationNumber,
+          limit: params.limit,
+        }
+      );
+      return response.data || response.predicates || [];
     } catch (error) {
       console.error('[MedicalDevice] Predicate search failed:', error);
       throw error;
@@ -346,8 +360,11 @@ class MedicalDeviceService {
    */
   async getPredicateDetails(kNumber: string): Promise<PredicateDevice | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/predicates/${kNumber}`);
-      return response.predicate || null;
+      const response = await this.request<{ data?: PredicateDevice; predicate?: PredicateDevice }>(
+        'GET',
+        `${this.baseUrl}/predicates/${kNumber}`
+      );
+      return response.data || response.predicate || null;
     } catch (error) {
       console.error('[MedicalDevice] Predicate details failed:', error);
       return null;
@@ -362,11 +379,12 @@ class MedicalDeviceService {
     predicateDevice: PredicateDevice
   ): Promise<PredicateComparison> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/predicates/analyze`, {
-        method: 'POST',
-        body: JSON.stringify({ subjectDevice, predicateDevice }),
-      });
-      return response;
+      const response = await this.request<PredicateComparison & { data?: PredicateComparison }>(
+        'POST',
+        `${this.baseUrl}/predicates/analyze`,
+        { subjectDevice, predicateDevice }
+      );
+      return (response as any).data || response;
     } catch (error) {
       console.error('[MedicalDevice] Equivalence analysis failed:', error);
       throw error;
@@ -378,11 +396,12 @@ class MedicalDeviceService {
    */
   async getRecommendedPredicates(deviceProfile: DeviceProfile): Promise<PredicateDevice[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/predicates/recommend`, {
-        method: 'POST',
-        body: JSON.stringify({ deviceProfile }),
-      });
-      return response.recommendations || [];
+      const response = await this.request<{ recommendations?: PredicateDevice[]; data?: PredicateDevice[] }>(
+        'POST',
+        `${this.baseUrl}/predicates/recommend`,
+        { deviceProfile }
+      );
+      return response.recommendations || response.data || [];
     } catch (error) {
       console.error('[MedicalDevice] Predicate recommendation failed:', error);
       return [];
@@ -398,11 +417,12 @@ class MedicalDeviceService {
    */
   async createSubmission(data: Partial<Submission510k>): Promise<Submission510k> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/submissions`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      return response.submission;
+      const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
+        'POST',
+        `${this.baseUrl}/submissions`,
+        data
+      );
+      return response.data || response.submission as Submission510k;
     } catch (error) {
       console.error('[MedicalDevice] Create submission failed:', error);
       throw error;
@@ -414,8 +434,11 @@ class MedicalDeviceService {
    */
   async getSubmission(id: string): Promise<Submission510k | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/submissions/${id}`);
-      return response.submission || null;
+      const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
+        'GET',
+        `${this.baseUrl}/submissions/${id}`
+      );
+      return response.data || response.submission || null;
     } catch (error) {
       console.error('[MedicalDevice] Get submission failed:', error);
       return null;
@@ -427,11 +450,12 @@ class MedicalDeviceService {
    */
   async updateSubmission(id: string, data: Partial<Submission510k>): Promise<Submission510k> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/submissions/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
-      return response.submission;
+      const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
+        'PATCH',
+        `${this.baseUrl}/submissions/${id}`,
+        data
+      );
+      return response.data || response.submission as Submission510k;
     } catch (error) {
       console.error('[MedicalDevice] Update submission failed:', error);
       throw error;
@@ -452,10 +476,13 @@ class MedicalDeviceService {
     if (params?.offset) queryParams.set('offset', String(params.offset));
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/submissions?${queryParams}`);
+      const response = await this.request<any>('GET', `${this.baseUrl}/submissions?${queryParams}`);
+      if (Array.isArray(response)) {
+        return { submissions: response, total: response.length };
+      }
       return {
-        submissions: response.submissions || [],
-        total: response.total || 0,
+        submissions: response.data || response.submissions || [],
+        total: response.total || response.data?.length || 0,
       };
     } catch (error) {
       console.error('[MedicalDevice] List submissions failed:', error);
@@ -472,8 +499,11 @@ class MedicalDeviceService {
    */
   async getEstarSections(submissionId: string): Promise<Record<string, EstarSection>> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/submissions/${submissionId}/estar`);
-      return response.sections || {};
+      const response = await this.request<{ data?: { sections?: Record<string, EstarSection> }; sections?: Record<string, EstarSection> }>(
+        'GET',
+        `${this.baseUrl}/submissions/${submissionId}/estar`
+      );
+      return response.data?.sections || response.sections || {};
     } catch (error) {
       console.error('[MedicalDevice] Get eSTAR sections failed:', error);
       return {};
@@ -489,14 +519,12 @@ class MedicalDeviceService {
     data: Partial<EstarSection>
   ): Promise<EstarSection> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ data?: { section?: EstarSection }; section?: EstarSection }>(
+        'PATCH',
         `${this.baseUrl}/submissions/${submissionId}/estar/${sectionId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify(data),
-        }
+        data
       );
-      return response.section;
+      return (response.data?.section || response.section) as EstarSection;
     } catch (error) {
       console.error('[MedicalDevice] Update eSTAR section failed:', error);
       throw error;
@@ -512,14 +540,12 @@ class MedicalDeviceService {
     context?: Record<string, unknown>
   ): Promise<string> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ data?: { content?: string }; content?: string }>(
+        'POST',
         `${this.baseUrl}/submissions/${submissionId}/estar/${sectionId}/generate`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ context }),
-        }
+        { context }
       );
-      return response.content || '';
+      return response.data?.content || response.content || '';
     } catch (error) {
       console.error('[MedicalDevice] Generate eSTAR content failed:', error);
       throw error;
@@ -535,10 +561,11 @@ class MedicalDeviceService {
     overallErrors: string[];
   }> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<any>(
+        'GET',
         `${this.baseUrl}/submissions/${submissionId}/estar/validate`
       );
-      return response;
+      return response.data || response;
     } catch (error) {
       console.error('[MedicalDevice] Validate eSTAR failed:', error);
       throw error;
@@ -569,8 +596,11 @@ class MedicalDeviceService {
     });
 
     try {
-      const response = await apiRequest(`${this.baseUrl}/maude/search?${queryParams}`);
-      return response.reports || [];
+      const response = await this.request<{ data?: MAUDEReport[]; reports?: MAUDEReport[] }>(
+        'GET',
+        `${this.baseUrl}/maude/search?${queryParams}`
+      );
+      return response.data || response.reports || [];
     } catch (error) {
       console.error('[MedicalDevice] MAUDE search failed:', error);
       return [];
@@ -582,8 +612,11 @@ class MedicalDeviceService {
    */
   async getHazardAnalysis(productCode: string): Promise<HazardAnalysis | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/maude/hazard/${productCode}`);
-      return response.analysis || null;
+      const response = await this.request<{ data?: HazardAnalysis; analysis?: HazardAnalysis }>(
+        'GET',
+        `${this.baseUrl}/maude/hazard/${productCode}`
+      );
+      return response.data || response.analysis || null;
     } catch (error) {
       console.error('[MedicalDevice] Hazard analysis failed:', error);
       return null;
@@ -622,11 +655,12 @@ class MedicalDeviceService {
    */
   async createCER(deviceId: string): Promise<ClinicalEvaluationReport> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/cer`, {
-        method: 'POST',
-        body: JSON.stringify({ deviceId }),
-      });
-      return response.cer;
+      const response = await this.request<{ data?: ClinicalEvaluationReport; cer?: ClinicalEvaluationReport }>(
+        'POST',
+        `${this.baseUrl}/cer`,
+        { deviceId }
+      );
+      return response.data || response.cer as ClinicalEvaluationReport;
     } catch (error) {
       console.error('[MedicalDevice] Create CER failed:', error);
       throw error;
@@ -638,8 +672,11 @@ class MedicalDeviceService {
    */
   async getCER(id: string): Promise<ClinicalEvaluationReport | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/cer/${id}`);
-      return response.cer || null;
+      const response = await this.request<{ data?: ClinicalEvaluationReport; cer?: ClinicalEvaluationReport }>(
+        'GET',
+        `${this.baseUrl}/cer/${id}`
+      );
+      return response.data || response.cer || null;
     } catch (error) {
       console.error('[MedicalDevice] Get CER failed:', error);
       return null;
@@ -655,11 +692,12 @@ class MedicalDeviceService {
     content: string
   ): Promise<CERSection> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/cer/${cerId}/sections/${sectionName}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ content }),
-      });
-      return response.section;
+      const response = await this.request<{ data?: { section?: CERSection }; section?: CERSection }>(
+        'PATCH',
+        `${this.baseUrl}/cer/${cerId}/sections/${sectionName}`,
+        { content }
+      );
+      return (response.data?.section || response.section) as CERSection;
     } catch (error) {
       console.error('[MedicalDevice] Update CER section failed:', error);
       throw error;
@@ -675,14 +713,12 @@ class MedicalDeviceService {
     context?: Record<string, unknown>
   ): Promise<string> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ data?: { content?: string }; content?: string }>(
+        'POST',
         `${this.baseUrl}/cer/${cerId}/sections/${sectionName}/generate`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ context }),
-        }
+        { context }
       );
-      return response.content || '';
+      return response.data?.content || response.content || '';
     } catch (error) {
       console.error('[MedicalDevice] Generate CER content failed:', error);
       throw error;

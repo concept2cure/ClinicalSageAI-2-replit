@@ -159,9 +159,12 @@ const SubmissionTimeline = ({ currentStep = 1, steps = [], onSelectStep = () => 
                     ></div>
 
                     {/* Step content */}
-                    <div
-                      className={`rounded-md border p-3 cursor-pointer transition-colors ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-gray-50 border-gray-200'}`}
+                    <button
+                      type="button"
+                      className={`w-full text-left rounded-md border p-3 transition-colors ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-gray-50 border-gray-200'}`}
                       onClick={() => onSelectStep(step.id)}
+                      aria-current={isActive ? 'step' : undefined}
+                      data-testid={`timeline-step-${step.id}`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -223,7 +226,7 @@ const SubmissionTimeline = ({ currentStep = 1, steps = [], onSelectStep = () => 
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   </div>
                 );
               })}

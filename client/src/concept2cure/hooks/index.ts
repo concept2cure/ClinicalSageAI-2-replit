@@ -15,6 +15,47 @@ export { useProjects, useProject } from './useProjects';
 export { useTemplates, useTemplate } from './useTemplates';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PHASE 5: INTELLIGENT DOCUMENT SYSTEM
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  // Source Documents
+  useSourceDocuments,
+  useCreateSourceDocument,
+  useUpdateSourceDocument,
+  
+  // Traceability Links
+  useTraceabilityLinks,
+  useCreateTraceabilityLink,
+  useVerifyTraceabilityLink,
+  
+  // Change Propagation
+  usePropagationEvents,
+  useImpactedSections,
+  useResolvePropagationEvent,
+  
+  // Compliance
+  useCalculateCompliance,
+  useComplianceHistory,
+  useComplianceRules,
+  
+  // Composite hooks
+  useDocumentCompliance,
+  useDocumentTraceability,
+  
+  // Query keys (for cache invalidation)
+  intelligentDocsKeys,
+  
+  // Types
+  type SourceDocument,
+  type TraceabilityLink,
+  type PropagationEvent,
+  type ImpactedSection,
+  type ComplianceScore,
+  type ComplianceRule,
+} from './useIntelligentDocs';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CORTEX INTEGRATION (Lumen Cortex + Project Cortex)
 // ─────────────────────────────────────────────────────────────────────────────
 

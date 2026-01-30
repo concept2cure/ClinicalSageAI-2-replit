@@ -21,7 +21,7 @@
  * - EU Annex 11: Computerized Systems
  */
 
-import { apiRequest } from '../../lib/queryClient';
+import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES - DOCUMENT STRUCTURE
@@ -332,6 +332,17 @@ export interface GenerationResult {
 
 class DocumentIntelligenceService {
   private baseUrl = '/api/documents';
+  private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
+    const response = await apiRequest(method, url, body);
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (payload?.success === false) {
+      throw new Error(payload?.error?.message || payload?.error || 'Document intelligence request failed');
+    }
+    return payload?.data ?? payload;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DOCUMENT CRUD
@@ -347,11 +358,8 @@ class DocumentIntelligenceService {
     projectId: string;
   }): Promise<Document> {
     try {
-      const response = await apiRequest(this.baseUrl, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      return response.document;
+      const response = await this.request<{ document?: Document }>('POST', this.baseUrl, data);
+      return response.document || (response as any);
     } catch (error) {
       console.error('[DocumentIntelligence] Create document failed:', error);
       throw error;
@@ -363,8 +371,8 @@ class DocumentIntelligenceService {
    */
   async getDocument(id: string): Promise<Document | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${id}`);
-      return response.document || null;
+      const response = await this.request<{ document?: Document }>('GET', `${this.baseUrl}/${id}`);
+      return response.document || (response as any) || null;
     } catch (error) {
       console.error('[DocumentIntelligence] Get document failed:', error);
       return null;
@@ -383,11 +391,12 @@ class DocumentIntelligenceService {
     }
   ): Promise<Document> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
-      return response.document;
+      const response = await this.request<{ document?: Document }>(
+        'PATCH',
+        `${this.baseUrl}/${id}`,
+        data
+      );
+      return response.document || (response as any);
     } catch (error) {
       console.error('[DocumentIntelligence] Update document failed:', error);
       throw error;
@@ -412,10 +421,13 @@ class DocumentIntelligenceService {
     });
 
     try {
-      const response = await apiRequest(`${this.baseUrl}?${queryParams}`);
+      const response = await this.request<any>('GET', `${this.baseUrl}?${queryParams}`);
+      if (Array.isArray(response)) {
+        return { documents: response, total: response.length };
+      }
       return {
-        documents: response.documents || [],
-        total: response.total || 0,
+        documents: response.documents || response.data || [],
+        total: response.total || response.data?.length || 0,
       };
     } catch (error) {
       console.error('[DocumentIntelligence] List documents failed:', error);
@@ -428,7 +440,7 @@ class DocumentIntelligenceService {
    */
   async lockDocument(id: string): Promise<boolean> {
     try {
-      await apiRequest(`${this.baseUrl}/${id}/lock`, { method: 'POST' });
+      await this.request('POST', `${this.baseUrl}/${id}/lock`);
       return true;
     } catch (error) {
       console.error('[DocumentIntelligence] Lock document failed:', error);
@@ -441,7 +453,7 @@ class DocumentIntelligenceService {
    */
   async unlockDocument(id: string): Promise<boolean> {
     try {
-      await apiRequest(`${this.baseUrl}/${id}/unlock`, { method: 'POST' });
+      await this.request('POST', `${this.baseUrl}/${id}/unlock`);
       return true;
     } catch (error) {
       console.error('[DocumentIntelligence] Unlock document failed:', error);
@@ -458,10 +470,11 @@ class DocumentIntelligenceService {
    */
   async extractSmartTags(content: string): Promise<SmartTag[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/analyze/smart-tags`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
+      const response = await this.request<{ tags?: SmartTag[] }>(
+        'POST',
+        `${this.baseUrl}/analyze/smart-tags`,
+        { content }
+      );
       return response.tags || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Extract smart tags failed:', error);
@@ -474,10 +487,11 @@ class DocumentIntelligenceService {
    */
   async linkSmartTag(tagId: string, entityType: string, entityId: string): Promise<SmartTag> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/smart-tags/${tagId}/link`, {
-        method: 'POST',
-        body: JSON.stringify({ entityType, entityId }),
-      });
+      const response = await this.request<{ tag: SmartTag }>(
+        'POST',
+        `${this.baseUrl}/smart-tags/${tagId}/link`,
+        { entityType, entityId }
+      );
       return response.tag;
     } catch (error) {
       console.error('[DocumentIntelligence] Link smart tag failed:', error);
@@ -490,10 +504,11 @@ class DocumentIntelligenceService {
    */
   async extractCitations(content: string): Promise<Citation[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/analyze/citations`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
+      const response = await this.request<{ citations?: Citation[] }>(
+        'POST',
+        `${this.baseUrl}/analyze/citations`,
+        { content }
+      );
       return response.citations || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Extract citations failed:', error);
@@ -506,10 +521,11 @@ class DocumentIntelligenceService {
    */
   async validateCitations(citations: Citation[]): Promise<Citation[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/analyze/citations/validate`, {
-        method: 'POST',
-        body: JSON.stringify({ citations }),
-      });
+      const response = await this.request<{ validatedCitations?: Citation[] }>(
+        'POST',
+        `${this.baseUrl}/analyze/citations/validate`,
+        { citations }
+      );
       return response.validatedCitations || citations;
     } catch (error) {
       console.error('[DocumentIntelligence] Validate citations failed:', error);
@@ -526,7 +542,10 @@ class DocumentIntelligenceService {
    */
   async getVersions(documentId: string): Promise<DocumentVersion[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/versions`);
+      const response = await this.request<{ versions?: DocumentVersion[] }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/versions`
+      );
       return response.versions || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Get versions failed:', error);
@@ -539,7 +558,8 @@ class DocumentIntelligenceService {
    */
   async getDiff(documentId: string, fromVersion: string, toVersion: string): Promise<DocumentDiff> {
     try {
-      const response = await apiRequest(
+      const response = await this.request<{ diff: DocumentDiff }>(
+        'GET',
         `${this.baseUrl}/${documentId}/diff?from=${fromVersion}&to=${toVersion}`
       );
       return response.diff;
@@ -554,7 +574,10 @@ class DocumentIntelligenceService {
    */
   async getRedlineAlerts(documentId: string): Promise<RedlineAlert[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/redline-alerts`);
+      const response = await this.request<{ alerts?: RedlineAlert[] }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/redline-alerts`
+      );
       return response.alerts || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Get redline alerts failed:', error);
@@ -570,10 +593,11 @@ class DocumentIntelligenceService {
     change: TextChange
   ): Promise<TextChange['regulatoryImpact']> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/analyze-change`, {
-        method: 'POST',
-        body: JSON.stringify({ change }),
-      });
+      const response = await this.request<{ impact?: TextChange['regulatoryImpact'] }>(
+        'POST',
+        `${this.baseUrl}/${documentId}/analyze-change`,
+        { change }
+      );
       return response.impact;
     } catch (error) {
       console.error('[DocumentIntelligence] Analyze change impact failed:', error);
@@ -590,7 +614,10 @@ class DocumentIntelligenceService {
    */
   async validateDocument(documentId: string): Promise<DocumentValidation> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/validate`);
+      const response = await this.request<{ validation: DocumentValidation }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/validate`
+      );
       return response.validation;
     } catch (error) {
       console.error('[DocumentIntelligence] Validate document failed:', error);
@@ -603,7 +630,10 @@ class DocumentIntelligenceService {
    */
   async validateHyperlinks(documentId: string): Promise<CrossReference[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/validate-hyperlinks`);
+      const response = await this.request<{ crossReferences?: CrossReference[] }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/validate-hyperlinks`
+      );
       return response.crossReferences || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Validate hyperlinks failed:', error);
@@ -616,10 +646,11 @@ class DocumentIntelligenceService {
    */
   async autoFix(documentId: string, issueCode: string): Promise<boolean> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/auto-fix`, {
-        method: 'POST',
-        body: JSON.stringify({ issueCode }),
-      });
+      const response = await this.request<{ success?: boolean }>(
+        'POST',
+        `${this.baseUrl}/${documentId}/auto-fix`,
+        { issueCode }
+      );
       return response.success || false;
     } catch (error) {
       console.error('[DocumentIntelligence] Auto-fix failed:', error);
@@ -636,11 +667,7 @@ class DocumentIntelligenceService {
    */
   async generateContent(request: GenerationRequest): Promise<GenerationResult> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/generate`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
-      return response;
+      return await this.request('POST', `${this.baseUrl}/generate`, request);
     } catch (error) {
       console.error('[DocumentIntelligence] Generate content failed:', error);
       throw error;
@@ -652,7 +679,10 @@ class DocumentIntelligenceService {
    */
   async getSuggestions(documentId: string): Promise<string[]> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/suggestions`);
+      const response = await this.request<{ suggestions?: string[] }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/suggestions`
+      );
       return response.suggestions || [];
     } catch (error) {
       console.error('[DocumentIntelligence] Get suggestions failed:', error);
@@ -668,14 +698,15 @@ class DocumentIntelligenceService {
     instructions: string
   ): Promise<string> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/rewrite`, {
-        method: 'POST',
-        body: JSON.stringify({ content, instructions }),
-      });
+      const response = await this.request<{ rewrittenContent?: string }>(
+        'POST',
+        `${this.baseUrl}/rewrite`,
+        { content, instructions }
+      );
       return response.rewrittenContent || content;
     } catch (error) {
       console.error('[DocumentIntelligence] Rewrite content failed:', error);
-      throw error;
+      return content;
     }
   }
 
@@ -688,7 +719,10 @@ class DocumentIntelligenceService {
    */
   async getApprovalWorkflow(documentId: string): Promise<ApprovalWorkflow | null> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/workflow`);
+      const response = await this.request<{ workflow?: ApprovalWorkflow }>(
+        'GET',
+        `${this.baseUrl}/${documentId}/workflow`
+      );
       return response.workflow || null;
     } catch (error) {
       console.error('[DocumentIntelligence] Get approval workflow failed:', error);
@@ -704,10 +738,11 @@ class DocumentIntelligenceService {
     steps: Array<{ role: string; userId?: string; dueDate?: string }>
   ): Promise<ApprovalWorkflow> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/workflow/start`, {
-        method: 'POST',
-        body: JSON.stringify({ steps }),
-      });
+      const response = await this.request<{ workflow: ApprovalWorkflow }>(
+        'POST',
+        `${this.baseUrl}/${documentId}/workflow/start`,
+        { steps }
+      );
       return response.workflow;
     } catch (error) {
       console.error('[DocumentIntelligence] Start approval workflow failed:', error);
@@ -728,10 +763,11 @@ class DocumentIntelligenceService {
     }
   ): Promise<ApprovalRecord> {
     try {
-      const response = await apiRequest(`${this.baseUrl}/${documentId}/workflow/approve`, {
-        method: 'POST',
-        body: JSON.stringify(decision),
-      });
+      const response = await this.request<{ approval: ApprovalRecord }>(
+        'POST',
+        `${this.baseUrl}/${documentId}/workflow/approve`,
+        decision
+      );
       return response.approval;
     } catch (error) {
       console.error('[DocumentIntelligence] Submit approval failed:', error);

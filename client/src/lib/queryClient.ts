@@ -34,6 +34,12 @@ export const apiRequest = async (
   const response = await fetch(url, options);
 
   if (!response.ok && response.status !== 401) {
+    const contentType = response.headers.get('Content-Type') || '';
+    if (contentType.includes('application/json')) {
+      const errorPayload = await response.json().catch(() => ({}));
+      const message = errorPayload?.error?.message || errorPayload?.error || errorPayload?.message;
+      throw new Error(message || `API request failed with status ${response.status}`);
+    }
     const errorText = await response.text();
     throw new Error(errorText || `API request failed with status ${response.status}`);
   }

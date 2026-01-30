@@ -1,7 +1,35 @@
 # Concept2Cure Master Roadmap — The Path to the Dream
-> **Version:** 1.0 | **Created:** 2026-01-28 | **Status:** AUTHORITATIVE  
+> **Version:** 2.0 | **Created:** 2026-01-28 | **Updated:** 2026-01-29 | **Status:** AUTHORITATIVE  
 > **Scope:** Complete build guide integrating Synergistic v3 + DVLP Pillars + Reality Check  
 > **Audience:** Investors, Engineering, Product
+
+---
+
+## 🧭 UI NORTH STAR — CONCEPT2CURE PROJECT WORKSPACE
+
+> Concept2Cure is architected as a **Project-centric workspace**.
+> Every user action occurs inside a Project, scoped to a Module, and expressed through Chats, Artifacts, Workflows, and PM Docs — all visible within a unified three-pane UI shell.
+
+### Canonical UI Layout
+
+| Pane | Content | Purpose |
+|------|---------|---------|
+| **Left Sidebar** | Project + Module Tree | Navigate projects, modules, conversations |
+| **Center Pane** | Chat / Workflow / Editor | Primary work surface for conversations, workflows, document editing |
+| **Right Pane** | Artifacts / Audit / Tasks | Supporting context, outputs, compliance trail |
+
+### Core UI Primitives
+
+| Primitive | Definition | Example |
+|-----------|------------|---------|
+| **Project** | Top-level container for a regulatory submission or program | "Acme 510(k) Q2 2026" |
+| **Module** | Functional workspace within a project | Client Portal V2, eCTD Co-Author, CER Generator |
+| **Chat** | Conversational AI interaction | "Draft device description for 510(k)" |
+| **Artifact** | Persistent output (document, report, export) | Clinical Summary v2.1.docx |
+| **Workflow** | Multi-step process with gates and approvals | IND Submission Pipeline |
+| **PM Doc** | Project management documentation | Roadmap, Risks, ADRs, Validation Plan |
+
+> **Rule:** All features must be accessible through the Project Workspace shell. No orphaned screens.
 
 ---
 
@@ -111,9 +139,26 @@
 
 ## 🗺️ Execution Plan (12-Week Path to Dream)
 
+### Build Order (UX-First Principle)
+
+> **Rule:** No module is considered "usable" until it is accessible through the Project Workspace shell.
+
+**Enforced Build Sequence:**
+
+1. **Project Workspace Shell** — Layout + navigation (AppShell, Sidebar, Context Panel)
+2. **Chat + Artifact Surfaces** — Core interaction primitives
+3. **Workflow Runner** — Step execution engine with UI
+4. **PM Hub** — Project management documentation screens
+5. **Compliance Overlays** — eSign, audit trail, SoD enforcement
+6. **Module-Specific Intelligence** — eCTD, CER, Regulatory Intel features
+
 ### Phase Dependency Graph
 
 ```
+                    ┌─────────────────────────────────────────────┐
+                    │  PROJECT WORKSPACE SHELL (Parallel w/ Ph4)  │
+                    └─────────────────────────────────────────────┘
+                                         │
 Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──► Phase 3.5 (Quick Wins)
                                                │
                                                ▼
@@ -212,9 +257,9 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 
 ---
 
-### Phase 4: Workflow Orchestration Engine ⏳ IN PROGRESS
+### Phase 4: Workflow Orchestration Engine ✅ COMPLETE
 
-**Status:** ⏳ IN PROGRESS | **Duration:** Weeks 5-6 | **Blockers:** None  
+**Status:** ✅ COMPLETE | **Duration:** Weeks 5-6 | **Blockers:** None  
 **Pillar Focus:** Workflow-as-Contract 📜 + Proof System 🧬
 
 | Task | File/Location | Status |
@@ -229,33 +274,36 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 | IND workflow template | templates/workflows/ind-workflow.yaml | ✅ |
 | Workflow timeline UI | client/src/concept2cure/components/workflow/ | ✅ |
 
-**Phase 4.1 Enhancement — The Proof System (Provable Regulatory Science):**
+**Phase 4.1 Enhancement — The Proof System (Provable Regulatory Science):** ✅ COMPLETE
 
 | Task | File/Location | Status |
 |------|---------------|--------|
-| Formal Compliance Graph compiler | services/proof/FormalComplianceGraph.ts | ⏳ |
-| Zero-Knowledge compliance layer | services/proof/zk/ZeroKnowledgeCompliance.ts | ⏳ |
-| Delta Verification Engine | services/proof/DeltaVerificationEngine.ts | ⏳ |
-| Compliance Certificate Generator | services/proof/ComplianceCertificate.ts | ⏳ |
-| Proof Explorer UI | client/src/concept2cure/components/proof/ProofExplorer.tsx | ⏳ |
+| Formal Compliance Graph compiler | services/proof/FormalComplianceGraph.ts | ✅ |
+| Zero-Knowledge compliance layer | services/proof/zk/ZeroKnowledgeCompliance.ts | ✅ |
+| Delta Verification Engine | services/proof/DeltaVerificationEngine.ts | ✅ |
+| Compliance Certificate Generator | services/proof/ComplianceCertificate.ts | ✅ |
+| Proof Audit Service | services/proof/ProofAuditService.ts | ✅ |
+| Proof Verification Service | services/proof/ProofVerificationService.ts | ✅ |
+| Proof Explorer UI | client/src/concept2cure/components/proof/ProofExplorer.tsx | ✅ |
+| Proof API Routes | server/routes/workflow.ts | ✅ |
 
 **Phase 4.1 Enterprise Acceptance Criteria (Completion Gate):**
-> **Gate:** Phase 4.2 is blocked until all criteria below pass.
+> **Gate:** ✅ All criteria passed. Phase 4.2 unblocked.
 
-| Component | Acceptance Criteria (Enterprise, Audited) |
-|----------|-------------------------------------------|
-| Formal Compliance Graph | Deterministic DAG compilation; invariant checks; cycle detection; stable hashes; negative tests for malformed definitions; audit log entries for compile/run events. |
-| ZK Authorization Proofs | Role-scoped public signals; signature/approval binding; privacy preserved; verification fails for expired/revoked credentials; deterministic proof verification. |
-| Delta Verification Engine | Baseline snapshot hashing; drift detection on workflow + data state; explicit diff report; regression suite false-positive rate <1%; tamper events logged. |
-| Compliance Certificate Generator | Immutable certificate schema; cryptographic binding to workflow run; reproducible proof bundle; round-trip verification succeeds; export-safe serialization. |
-| Proof Explorer UI | Certificate + verification status displayed; failure reasons surfaced; empty/error/loading handled; access control; audit-safe UI events. |
+| Component | Acceptance Criteria (Enterprise, Audited) | Status |
+|----------|-------------------------------------------|--------|
+| Formal Compliance Graph | Deterministic DAG compilation; invariant checks; cycle detection; stable hashes; negative tests for malformed definitions; audit log entries for compile/run events. | ✅ |
+| ZK Authorization Proofs | Role-scoped public signals; signature/approval binding; privacy preserved; verification fails for expired/revoked credentials; deterministic proof verification. | ✅ |
+| Delta Verification Engine | Baseline snapshot hashing; drift detection on workflow + data state; explicit diff report; regression suite false-positive rate <1%; tamper events logged. | ✅ |
+| Compliance Certificate Generator | Immutable certificate schema; cryptographic binding to workflow run; reproducible proof bundle; round-trip verification succeeds; export-safe serialization. | ✅ |
+| Proof Explorer UI | Certificate + verification status displayed; failure reasons surfaced; empty/error/loading handled; access control; audit-safe UI events. | ✅ |
 
 **Phase 4.1 Milestones (each must pass):**
-- **M1 Graph Integrity:** DAG compiles from workflow definition; invariants + hashes validated; audit trail emitted.
-- **M2 Authorization Proofs:** ZK proofs generated per approval/signature gate; negative tests for invalid credentials.
-- **M3 Drift Detection:** Unauthorized edits flagged; diff + remediation hints; audit trail includes diff summary.
-- **M4 Certificate:** Certificate generated on completion; verification endpoint validates within SLA.
-- **M5 UI + Ops:** Proof Explorer + dashboard entry points expose verification status; redacted logs; performance budgets met.
+- **M1 Graph Integrity:** ✅ DAG compiles from workflow definition; invariants + hashes validated; audit trail emitted.
+- **M2 Authorization Proofs:** ✅ ZK proofs generated per approval/signature gate; negative tests for invalid credentials.
+- **M3 Drift Detection:** ✅ Unauthorized edits flagged; diff + remediation hints; audit trail includes diff summary.
+- **M4 Certificate:** ✅ Certificate generated on completion; verification endpoint validates within SLA.
+- **M5 UI + Ops:** ✅ Proof Explorer + dashboard entry points expose verification status; redacted logs; performance budgets met.
 
 **IND Workflow Template (10 Steps):**
 1. Program Intake
@@ -271,10 +319,45 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 
 ---
 
+### EPIC: Project Workspace Shell (Foundational UI)
+
+**Status:** ⏳ PRIORITY | **Duration:** Week 5 (parallel with Phase 4) | **Blockers:** None  
+**Pillar Focus:** User Experience Foundation
+
+> **Rule:** No module is considered "usable" until it is accessible through the Project Workspace shell.
+
+| Component | File/Location | Status | Description |
+|-----------|---------------|--------|-------------|
+| AppShell | client/src/concept2cure/layouts/AppShell.tsx | ✅ | Persistent three-pane layout |
+| ProjectSidebar | client/src/concept2cure/components/sidebar/ProjectSidebar.tsx | ✅ | Tree navigation (Projects → Modules → Chats) |
+| ContextPanel | client/src/concept2cure/components/panels/ContextPanel.tsx | ⏳ | Right-hand artifacts/audit/tasks panel |
+| Global Create (+) | client/src/concept2cure/components/actions/GlobalCreate.tsx | ⏳ | Universal entry point for new items |
+| Project Switcher | client/src/concept2cure/components/navigation/ProjectSwitcher.tsx | ⏳ | Quick-switch between projects |
+| Module Router | client/src/concept2cure/routing/ModuleRouter.tsx | ⏳ | Route to module workspaces |
+
+**UI CONTEXT**
+- Project scope: Platform-level
+- Primary surface: AppShell (layout container)
+- Supporting panels: All panels are children of this shell
+
+**Acceptance Criteria:**
+- [ ] Three-pane layout renders on all screen sizes
+- [ ] Project tree expands to show modules and conversations
+- [ ] Context panel switches between Artifacts, Audit, and Tasks
+- [ ] Global Create (+) triggers modal with context-aware options
+- [ ] Project Switcher supports search and recent projects
+
+---
+
 ### Phase 5: Intelligent Document System ⏳ PENDING
 
 **Status:** ⏳ NOT STARTED | **Duration:** Week 7 | **Blockers:** Phase 4  
 **Pillar Focus:** Trust Rails 🔐
+
+**UI CONTEXT**
+- Project scope: Module-level
+- Primary surface: Artifact Editor
+- Supporting panels: Artifacts (versions), Audit (change trail), Tasks (pending reviews)
 
 | Task | File/Location | Status |
 |------|---------------|--------|
@@ -290,6 +373,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 **Status:** ⏳ NOT STARTED | **Duration:** Week 8  
 **Pillar Focus:** Trust Rails 🔐, Submission-as-Asset 💎
 
+**UI CONTEXT**
+- Project scope: Module-level
+- Primary surface: Chat (Co-Author conversations) + Artifact Editor
+- Supporting panels: Artifacts (generated documents), Audit (AI decisions)
+
 | Task | File/Location | Status |
 |------|---------------|--------|
 | Multi-Agent Council | services/ai/agents/MultiAgentCouncilService.ts | ✅ COMPLETE |
@@ -304,6 +392,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 **Status:** ⏳ NOT STARTED | **Duration:** Week 9 | **Blockers:** Phases 4-6  
 **Pillar Focus:** Submission-as-Asset 💎
 
+**UI CONTEXT**
+- Project scope: Project-level (portfolio view)
+- Primary surface: Dashboard (Mission Control)
+- Supporting panels: Artifacts (reports), Tasks (action items)
+
 | Task | File/Location | Status |
 |------|---------------|--------|
 | Portfolio view | client/src/concept2cure/pages/MissionControl/ | ⏳ |
@@ -317,6 +410,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 **Status:** ⏳ NOT STARTED | **Duration:** Week 10 | **Blockers:** Phase 4  
 **Pillar Focus:** Trust Rails 🔐, Workflow-as-Contract 📜
 
+**UI CONTEXT**
+- Project scope: Module-level
+- Primary surface: Workflow (HAQ response pipeline)
+- Supporting panels: Artifacts (FDA letters, responses), Audit (communication log)
+
 | Task | File/Location | Status |
 |------|---------------|--------|
 | HAQ intake | services/haq/HAQIntakeService.ts | ⏳ |
@@ -329,6 +427,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 
 **Status:** ⏳ NOT STARTED | **Duration:** Weeks 11-12 | **Blockers:** Vendor APIs
 
+**UI CONTEXT**
+- Project scope: Project-level (data sources)
+- Primary surface: Workflow (ingestion pipelines)
+- Supporting panels: Artifacts (parsed data), Audit (ingestion logs)
+
 | Task | File/Location | Status |
 |------|---------------|--------|
 | Worker queue (BullMQ) | worker/queue/WorkerQueue.ts | ⏳ |
@@ -340,6 +443,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 ### Phase 10: Testing, Validation, Security, Deployment ⏳ PENDING
 
 **Status:** ⏳ NOT STARTED | **Duration:** Weeks 13-14 | **Blockers:** All prior phases
+
+**UI CONTEXT**
+- Project scope: Platform-level
+- Primary surface: PM Hub (Validation Plan)
+- Supporting panels: Artifacts (IQ/OQ/PQ packets), Audit (test evidence)
 
 | Task | Category | Status |
 |------|----------|--------|
@@ -356,7 +464,114 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┬──►
 
 ---
 
-## 📊 Investor Dashboard Summary
+## � PROJECT & MODULE PM HUB
+
+> All PM Docs are first-class UI screens and must auto-link to Chats, Artifacts, Workflows, and Audit Events.
+
+The PM Hub provides centralized project management documentation accessible from any Project or Module context.
+
+### PM Hub Screens
+
+| Screen | Scope | Description | Auto-Links To |
+|--------|-------|-------------|---------------|
+| **Project Roadmap** | Project | Timeline, milestones, dependencies | Workflows, Tasks |
+| **Module Roadmap** | Module | Module-specific delivery plan | Workflows, Artifacts |
+| **Requirements** | Project/Module | Functional & regulatory requirements | Artifacts, Audit |
+| **Risks** | Project/Module | Risk register with mitigations | Predictions, Alerts |
+| **ADRs (Decisions)** | Project/Module | Architecture Decision Records | Chats, Audit |
+| **Validation Plan** | Project | IQ/OQ/PQ validation strategy | Artifacts (test evidence) |
+| **Evidence Linking** | Project | Traceability matrix | Artifacts, Audit Events |
+
+### PM Hub UI CONTEXT
+
+```
+UI CONTEXT
+- Project scope: Project-level + Module-level
+- Primary surface: PM Hub (dedicated section in left sidebar)
+- Supporting panels: Artifacts (linked documents), Audit (change history), Tasks (action items)
+```
+
+### PM Hub Implementation
+
+| Component | File/Location | Status |
+|-----------|---------------|--------|
+| PM Hub Router | client/src/concept2cure/routing/PMHubRouter.tsx | ⏳ |
+| Roadmap View | client/src/concept2cure/components/pm/RoadmapView.tsx | ⏳ |
+| Requirements Editor | client/src/concept2cure/components/pm/RequirementsEditor.tsx | ⏳ |
+| Risk Register | client/src/concept2cure/components/pm/RiskRegister.tsx | ⏳ |
+| ADR Editor | client/src/concept2cure/components/pm/ADREditor.tsx | ⏳ |
+| Validation Plan | client/src/concept2cure/components/pm/ValidationPlan.tsx | ⏳ |
+| Evidence Matrix | client/src/concept2cure/components/pm/EvidenceMatrix.tsx | ⏳ |
+
+---
+
+## 🏗️ MODULE UI FOOTPRINTS
+
+Each major module must define its complete UI footprint within the Project Workspace shell.
+
+### MODULE UI FOOTPRINT — Client Portal V2
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | Tenant configuration, subscription status, usage metrics |
+| **Chats** | Onboarding conversations, support threads |
+| **Artifacts** | Config reports, billing exports, compliance attestations |
+| **Workflows** | Tenant provisioning, role assignment, subscription upgrade |
+| **PM Docs** | Integration roadmap, validation plan |
+
+### MODULE UI FOOTPRINT — Project Cortex (Data Harvesting)
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | Data readiness score, pipeline health, validation status |
+| **Chats** | Cortex design discussions, mapping QA review threads |
+| **Artifacts** | Architecture spec, data mappings, validation packs, ETL logs |
+| **Workflows** | Ingest → Transform → Validate → Release |
+| **PM Docs** | Cortex roadmap, data source risks, validation plan |
+
+### MODULE UI FOOTPRINT — eCTD Co-Author
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | Document completion %, section status, compliance score |
+| **Chats** | Drafting conversations, multi-agent council threads |
+| **Artifacts** | eCTD modules (M1-M5), CTD sections, cover letters |
+| **Workflows** | Draft → Review → Approve → Sign → Export |
+| **PM Docs** | Submission roadmap, content risks, QA validation |
+
+### MODULE UI FOOTPRINT — CER Generator
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | CER generation status, literature coverage, gap analysis |
+| **Chats** | CER planning, literature review discussions |
+| **Artifacts** | CER reports, literature summaries, clinical data extracts |
+| **Workflows** | Data Collection → Analysis → Draft → Review → Finalize |
+| **PM Docs** | CER roadmap, data source risks, compliance plan |
+
+### MODULE UI FOOTPRINT — Regulatory Intelligence
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | Morning briefing, alerts stream, regulatory calendar |
+| **Chats** | Intelligence queries, competitor analysis threads |
+| **Artifacts** | Briefing reports, alert digests, competitor profiles |
+| **Workflows** | Alert → Triage → Analyze → Report → Archive |
+| **PM Docs** | Intelligence priorities, source coverage, validation |
+
+### MODULE UI FOOTPRINT — Mission Control
+
+| Surface | Content |
+|---------|---------|
+| **Dashboard** | Portfolio view, submission timeline, risk heatmap |
+| **Chats** | Executive briefings, stakeholder updates |
+| **Artifacts** | Portfolio reports, milestone snapshots, KPI exports |
+| **Workflows** | Planning → Execution → Review → Adjustment |
+| **PM Docs** | Program roadmap, portfolio risks, resource plan |
+
+---
+
+## �📊 Investor Dashboard Summary
 
 ### Progress Overview
 ```
