@@ -83,10 +83,15 @@ jobs:
           docker compose -f docker-compose.e2e.yml exec -T worker env | grep -E '^CELERY_(BROKER_URL|RESULT_BACKEND)=' || true
 
           echo "== Celery inspect (active reserved registered) =="
-          docker compose -f docker-compose.e2e.yml exec -T worker celery -A services.celery_app inspect active reserved registered || true
+          # Also capture the inspect output to a file so it will be uploaded as an artifact
+          mkdir -p services/test_outputs/ci-debug
+          docker compose -f docker-compose.e2e.yml exec -T worker celery -A services.celery_app inspect active reserved registered 2>&1 | tee services/test_outputs/ci-debug/celery_inspect.txt || true
 
           echo "== Tail of worker logs =="
-          docker compose -f docker-compose.e2e.yml logs --no-color --tail=200 worker || true
+          docker compose -f docker-compose.e2e.yml logs --no-color --tail=200 worker 2>&1 | tee -a services/test_outputs/ci-debug/worker_logs_tail.txt || true
+
+          echo "== Environment saved to artifact =="
+          docker compose -f docker-compose.e2e.yml exec -T worker env 2>&1 | tee services/test_outputs/ci-debug/worker_env.txt || true
 
       - name: Run E2E async test
         env:
