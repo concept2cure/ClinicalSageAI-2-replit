@@ -50,15 +50,22 @@ jobs:
 
       - name: Wait for Celery worker to respond
         run: |
-          # Poll the worker with celery inspect ping (max 30s). This uses the
-          # worker container to run the inspect command; it will fail until the
-          # worker background process has started and connected to Redis.
-          for i in {1..30}; do
+          # Poll the worker with celery inspect ping (max 90s). The worker
+          # image installs docker and other deps which can cause cold-starts on
+          # shared CI runners; increase timeout to be tolerant.
+          for i in {1..90}; do
             if docker compose exec -T worker celery -A services.celery_app inspect ping -d >/dev/null 2>&1; then
               echo "Worker responsive" && break
             fi
             sleep 1
           done
+          # If the worker never became responsive, dump the worker logs to help
+          # debugging. This will appear in the workflow logs.
+          if ! docker compose exec -T worker celery -A services.celery_app inspect ping -d >/dev/null 2>&1; then
+            echo "Worker did not respond in time; dumping worker logs:" >&2
+            docker compose logs worker || true
+            exit 1
+          fi
 
       - name: Run E2E async test
         env:
