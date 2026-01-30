@@ -74,7 +74,9 @@ jobs:
           fi
 
       - name: Debug: query Celery worker state
+        if: always()
         run: |
+          set -e
           echo "== docker compose ps =="
           docker compose -f docker-compose.e2e.yml ps || true
 
@@ -90,6 +92,12 @@ jobs:
           echo "== Tail of worker logs =="
           docker compose -f docker-compose.e2e.yml logs --no-color --tail=200 worker 2>&1 | tee -a services/test_outputs/ci-debug/worker_logs_tail.txt || true
 
+          echo "== Docker logs for worker container (if available) =="
+          CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q worker || true)
+          if [ -n "$CONTAINER" ]; then
+            docker logs "$CONTAINER" 2>&1 | tee -a services/test_outputs/ci-debug/worker_docker_logs.txt || true
+          fi
+
           echo "== Environment saved to artifact =="
           docker compose -f docker-compose.e2e.yml exec -T worker env 2>&1 | tee services/test_outputs/ci-debug/worker_env.txt || true
 
@@ -99,14 +107,21 @@ jobs:
         run: |
           pytest -q services/tests/test_e2e_async.py -q
 
-      - name: Tear down E2E docker-compose
-        if: always()
-        run: |
-          docker compose -f docker-compose.e2e.yml down
-
       - name: Upload generated DOCX artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: generated-docx
           path: services/test_outputs/**
+
+      - name: Upload debug logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: services/test_outputs/ci-debug/**
+
+      - name: Tear down E2E docker-compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.e2e.yml down
