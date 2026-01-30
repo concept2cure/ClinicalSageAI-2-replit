@@ -19,9 +19,9 @@ def test_e2e_async_flow():
     assert r.status_code == 202
     job_id = r.json()["job_id"]
 
-    # Poll for completion (20s timeout)
+    # Poll for completion (60s timeout to tolerate CI cold starts)
     status = None
-    for _ in range(20):
+    for _ in range(60):
         r = requests.get(f"{BASE}/api/ectd/status/{job_id}", timeout=5)
         assert r.status_code == 200
         status = r.json()
