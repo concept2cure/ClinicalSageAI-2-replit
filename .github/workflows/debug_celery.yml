@@ -2,6 +2,8 @@ name: Debug Celery
 
 on:
   workflow_dispatch: {}
+  push:
+    branches: [ main, chore/logging-apply-worker ]
 
 jobs:
   debug-celery:
