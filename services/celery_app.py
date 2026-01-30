@@ -61,3 +61,35 @@ def generate_docx_task(self, job_id: str, data_path: str, template_path: str = N
         logger.exception("Unexpected error in generate_docx_task for job %s", job_id)
         store.set(job_id, {"status": "FAILED", "error": str(e)})
         return {"status": "FAILED", "error": str(e)}
+
+
+@app.task(bind=True)
+def smoke_test_task(self, job_id: str, content: str):
+    """Simple smoke task that writes `content` to OUTPUT_DIR_BASE/smoke_<job_id>.txt.
+
+    This task logs the target path and UID/GID so CI logs can diagnose permission/volume issues.
+    """
+    logger = logging.getLogger(__name__)
+    logger.info("Starting smoke_test_task: %s", job_id)
+    base = os.getenv("OUTPUT_DIR_BASE")
+    try:
+        if not base:
+            # Fall back to a temp dir so tests running outside the E2E compose don't fail silently
+            tmp = tempfile.mkdtemp(prefix=f"smoke_{job_id}_")
+            target = Path(tmp) / f"smoke_{job_id}.txt"
+        else:
+            base_path = Path(base)
+            base_path.mkdir(parents=True, exist_ok=True)
+            target = base_path / f"smoke_{job_id}.txt"
+
+        logger.info("smoke_test_task running as uid=%s gid=%s, writing to %s", os.getuid(), os.getgid(), target)
+        with open(target, "w", encoding="utf-8") as fh:
+            fh.write(content)
+
+        store.set(job_id, {"status": "COMPLETED", "output": str(target)})
+        logger.info("smoke_test_task completed for %s, output=%s", job_id, target)
+        return {"status": "COMPLETED", "output": str(target)}
+    except Exception as e:
+        logger.exception("smoke_test_task failed for %s", job_id)
+        store.set(job_id, {"status": "FAILED", "error": str(e)})
+        return {"status": "FAILED", "error": str(e)}

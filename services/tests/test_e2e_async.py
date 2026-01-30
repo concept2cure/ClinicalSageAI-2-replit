@@ -43,3 +43,35 @@ def test_e2e_async_flow():
     out_dir.mkdir(parents=True, exist_ok=True)
     dest = out_dir / f"e2e_{job_id}.docx"
     dest.write_bytes(content)
+
+
+def test_smoke_task_writes_shared_file():
+    # Ensure the shared directory exists locally for the test runner
+    shared = Path("test_shared")
+    shared.mkdir(parents=True, exist_ok=True)
+
+    body = {"content": "smoke-check"}
+    r = requests.post(f"{BASE}/api/ectd/smoke", json=body, timeout=5)
+    assert r.status_code == 202
+    job_id = r.json()["job_id"]
+
+    # Poll for completion (30s timeout should be sufficient)
+    status = None
+    for _ in range(30):
+        r = requests.get(f"{BASE}/api/ectd/status/{job_id}", timeout=5)
+        assert r.status_code == 200
+        status = r.json()
+        if status.get("status") == "COMPLETED":
+            break
+        time.sleep(1)
+
+    assert status is not None and status.get("status") == "COMPLETED", f"Smoke job not completed: {status}"
+
+    # Check the file exists on the host-shared path (worker writes to /shared_data)
+    output = status.get("output")
+    assert output, "No output path recorded by smoke task"
+    p = Path(output)
+    assert p.exists(), f"Smoke file not found at {p}"
+
+    # Save for artifact upload
+    (Path("services/test_outputs") / f"smoke_{job_id}.txt").write_text(p.read_text(), encoding="utf-8")

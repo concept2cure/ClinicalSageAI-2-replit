@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from uuid import uuid4
 from services.job_store import get_store
-from services.celery_app import generate_docx_task
+from services.celery_app import generate_docx_task, smoke_test_task
 import tempfile
 from pathlib import Path
 import json
@@ -32,6 +32,18 @@ def generate(req: GenerateRequest):
     # enqueue celery task
     # pass template_path if present
     generate_docx_task.apply_async(args=[job_id, str(data_path), req.template_path])
+    return {"job_id": job_id}
+
+
+class SmokeRequest(BaseModel):
+    content: str
+
+
+@app.post("/api/ectd/smoke", status_code=202)
+def smoke(req: SmokeRequest):
+    job_id = uuid4().hex
+    store.set(job_id, {"status": "PENDING", "input": "smoke"})
+    smoke_test_task.apply_async(args=[job_id, req.content])
     return {"job_id": job_id}
 
 
