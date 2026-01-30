@@ -59,7 +59,11 @@ jobs:
             if [ -n "$CONTAINER" ]; then
               RUNNING=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || true)
               if [ "$RUNNING" = "true" ]; then
-                if docker exec -i "$CONTAINER" celery -A services.celery_app inspect ping -d >/dev/null 2>&1; then
+                # Prefer checking worker logs for a definitive "ready" message
+                # rather than `inspect ping`, which can be flaky in some CI
+                # environments. We check the recent worker logs for the word
+                # "ready." which the Celery worker prints when fully started.
+                if docker compose -f docker-compose.e2e.yml logs --no-color worker | tail -n 50 | grep -q "ready\."; then
                   echo "Worker responsive" && OK=1 && break
                 fi
               fi
