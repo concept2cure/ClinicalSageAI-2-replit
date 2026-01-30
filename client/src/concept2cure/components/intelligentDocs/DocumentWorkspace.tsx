@@ -767,6 +767,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         dataType: 'predicate_devices',
         dataLabel: 'Predicate Devices',
         status: 'connected',
+        // keep lastSyncedAt stable across renders where possible
         lastSyncedAt: new Date(),
         preview: `${predicateDevices.length} predicate device(s) available for citation`,
         itemCount: predicateDevices.length,
@@ -803,12 +804,29 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     
     // Generate initial sources from all data
     const sources = generateSourceSuggestions(predicateDevices, literatureData, cmcData, clinicalData);
-    
-    setState(prev => ({
-      ...prev,
-      dataBridges: bridges,
-      availableSources: sources,
-    }));
+
+    // Avoid unnecessary state updates which can cause render loops in tests by
+    // performing a shallow/deep comparison and only updating when values differ.
+    setState(prev => {
+      try {
+        const prevBridges = JSON.stringify(prev.dataBridges || []);
+        const prevSources = JSON.stringify(prev.availableSources || []);
+        const nextBridges = JSON.stringify(bridges || []);
+        const nextSources = JSON.stringify(sources || []);
+
+        if (prevBridges === nextBridges && prevSources === nextSources) {
+          return prev; // no change
+        }
+      } catch (e) {
+        // Fallback - if stringify fails, proceed with update
+      }
+
+      return {
+        ...prev,
+        dataBridges: bridges,
+        availableSources: sources,
+      };
+    });
   }, [predicateDevices, literatureData, cmcData, clinicalData, initialDocument?.id]);
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -27,6 +27,8 @@
     "dev": "NODE_OPTIONS=\"--trace-warnings\" tsx --inspect server/index.ts",
     "dev:local": "bash -c 'source scripts/startup.sh && tsx --inspect server/index.ts'",
     "db:ensure": "tsx server/db/ensureCoreTables.ts",
+    "db:check-assembly": "node scripts/check_assembly_docs.mjs",
+    "smoke:e2e-assembly": "node scripts/e2e_smoke_assembly.mjs",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
@@ -235,6 +237,7 @@
     "vite": "^5.4.14"
   },
   "optionalDependencies": {
-    "bufferutil": "^4.0.8"
+    "bufferutil": "^4.0.8",
+    "pino": "^8.18.0"
   }
 }

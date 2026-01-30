@@ -146,7 +146,24 @@ export function createScopedLogger(scope: string): Logger {
 // Alias for createScopedLogger to support different naming conventions
 export const createContextLogger = createScopedLogger;
 
-// Default logger instance for backward compatibility
-const logger = baseLogger;
+import pino from 'pino';
+
+// Create a Pino logger with redaction for sensitive fields
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  timestamp: pino.stdTimeFunctions.isoTime,
+  redact: {
+    paths: ['context.password', 'context.passwordHash', 'context.token', 'context.apiKey', '*.authorization'],
+    remove: false,
+  },
+});
+
+// Adapter to match the existing Logger interface used in the repo
+const logger = {
+  info: (message: string, context: any = {}) => pinoLogger.info({ context }, message),
+  error: (message: string, context: any = {}) => pinoLogger.error({ context }, message),
+  warn: (message: string, context: any = {}) => pinoLogger.warn({ context }, message),
+  debug: (message: string, context: any = {}) => pinoLogger.debug({ context }, message),
+};
 
 export default logger;

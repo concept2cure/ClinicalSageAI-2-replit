@@ -17,6 +17,21 @@ describe('computeRedirect', () => {
     expect(redirect).toBe('/concept2cure');
   });
 
+  it('handles percent-encoded next param', () => {
+    const redirect = computeRedirect('?next=%2Fclient-portal%2Fdashboard');
+    expect(redirect).toBe('/client-portal/dashboard');
+  });
+
+  it('rejects next param with leading whitespace', () => {
+    const redirect = computeRedirect('?next= /client-portal');
+    expect(redirect).toBe('/concept2cure');
+  });
+
+  it('handles double-encoded next param', () => {
+    const redirect = computeRedirect('?next=%252Fclient-portal%252Fdashboard');
+    expect(redirect).toBe('/client-portal/dashboard');
+  });
+
   it('prefers organization membership to client portal', () => {
     const user = { organizationId: 'org_123' } as any;
     const redirect = computeRedirect('', user);

@@ -1,4 +1,8 @@
 # Concept2Cure: Unified Platform Roadmap
+> **Addendum Notice (Normative)**  
+> *This roadmap is complemented by the Last‑Mile Automation & Enterprise Readiness addendum (`docs/roadmap/addenda/CONCEPT2CURE_ROADMAP_ADDENDUM_LAST_MILE_AUTOMATION.md`). The addendum introduces critical features such as document branching ("Git for regulators"), change control board workflows, semantic search & institutional memory, training & competency management, AI governance & explainability, immutable provenance, regulatory horizon scanning & SOP auto‑drafting, regulator reply studio, cybersecurity/fraud guardrails & disaster recovery/business continuity, FOIA redaction, automated literature surveillance & signal detection, statistical analysis plan validation, and flexible packaging modes (ZIP → eCTD → RPS). These are considered normative and override any conflicting guidance in this document.*
+
+
 
 ## Part 3: Convergent Portal UI/UX, Database Schema & Compliance
 

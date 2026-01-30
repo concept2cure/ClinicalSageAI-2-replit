@@ -4,8 +4,8 @@
  * This module provides Prometheus metrics endpoints and defines custom metrics
  * for monitoring CER job performance, error rates, and system health.
  */
-const client = require('prom-client');
-const express = require('express');
+import client from 'prom-client';
+import express from 'express';
 
 // Create a Registry to register metrics
 const register = new client.Registry();
@@ -74,14 +74,12 @@ function setupMetricsEndpoint() {
   return metricsApp;
 }
 
-module.exports = {
-  setupMetricsEndpoint,
-  metrics: {
-    cerJobsTotal,
-    cerJobDuration,
-    cerJobsActive,
-    cerJobsQueued,
-    cerJobErrors,
-    concept2cureErrors,
-  },
+export { setupMetricsEndpoint };
+export const metrics = {
+  cerJobsTotal,
+  cerJobDuration,
+  cerJobsActive,
+  cerJobsQueued,
+  cerJobErrors,
+  concept2cureErrors,
 };

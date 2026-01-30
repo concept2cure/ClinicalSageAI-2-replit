@@ -89,6 +89,7 @@ import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.ts';
 
 // Import Phase 5: Intelligent Document System routes
 import intelligentDocsRoutes from './routes/intelligentDocs.ts';
+import { testAssemblyRoutes } from './routes/test-assembly';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -380,6 +381,18 @@ try {
   console.error('❌ Failed to mount enterprise auth routes:', error);
 }
 
+// Mount SSO helper routes (/api/auth/sso) for developer/testing
+try {
+  const ssoModule = await import('./routes/sso.ts');
+  const ssoRouter = ssoModule.default;
+  if (ssoRouter && (typeof ssoRouter === 'function' || ssoRouter.handle)) {
+    app.use('/api/auth/sso', ssoRouter);
+    console.log('✅ SSO helper routes mounted at /api/auth/sso');
+  }
+} catch (err) {
+  console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
+}
+
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
@@ -456,6 +469,7 @@ app.use('/api/templates', templateRoutes);
 import aiRoutes from './api/ai/routes.ts';
 import phase3Routes from './api/ai/phase3-routes.js';
 app.use('/api/ai', aiRoutes);
+app.use('/api/test-assembly', testAssemblyRoutes(pool));
 // Mount Phase 3 AI routes
 app.use('/api', phase3Routes);
 

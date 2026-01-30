@@ -430,14 +430,39 @@ export const ZenLogin: React.FC = () => {
 
   const handleSsoLogin = useCallback(async (provider: 'microsoft' | 'google') => {
     setIsLoading(true);
-    // In production, this would redirect to SSO provider
     console.log(`SSO login with ${provider}`);
-    
-    // Simulate SSO redirect
+
+    // In dev, call the dev SSO helper callback endpoint directly to simulate provider
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (isDev) {
+      try {
+        const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json?.accessToken) {
+            // Persist token and use returned user for redirect decision
+            authService.setToken(json.accessToken);
+            const user = json.user;
+            setStep('success');
+            setTimeout(() => {
+              setLocation(computeRedirect(undefined, user, () => user));
+            }, 500);
+            return;
+          }
+        }
+        throw new Error('SSO callback failed');
+      } catch (err) {
+        console.error('SSO dev helper error:', err);
+        setError({ message: 'SSO failed. Please try again.' } as any);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Fallback: keep previous demo behavior for non-dev
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsLoading(false);
-    
-    // For demo, go to success
     setStep('success');
     setTimeout(() => {
       setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));

@@ -40,21 +40,14 @@ test.describe('Login -> Client Portal flows', () => {
     expect(page.url()).toContain('/client-portal');
   });
 
-  test('SSO flow should redirect licensed users to /client-portal', async ({ page }) => {
-    await page.route('**/api/users/me', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ id: 'u2', roles: ['client_admin'] }),
-      });
-    });
-
+  test('SSO flow should redirect licensed users to /client-portal (dev SSO helper)', async ({ page }) => {
+    // Use the real dev SSO helper (no network mocking) to exercise full flow
     await page.goto(`${APP_BASE}/concept2cure/login`);
 
     // Click SSO button (Microsoft)
     await page.click('button:has-text("Continue with Microsoft")');
 
-    // The app simulates SSO and then should navigate to client-portal
+    // The client will call /api/auth/sso/:provider/callback (dev helper returns token + user)
     await page.waitForURL('**/client-portal**', { timeout: 5000 });
     expect(page.url()).toContain('/client-portal');
   });

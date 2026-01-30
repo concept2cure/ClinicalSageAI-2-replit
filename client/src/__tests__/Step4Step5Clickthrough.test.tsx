@@ -324,7 +324,7 @@ describe('Step 5 click-throughs', () => {
 
     fireEvent.click(screen.getByTestId('button-bridge-sync-predicate_finder'));
     fireEvent.click(screen.getByTestId('button-bridge-connect-literature_search'));
-    fireEvent.click(screen.getByTestId('button-bridge-go-module-cmc_data'));
+    fireEvent.click(screen.getByTestId('button-bridge-connect-vault'));
   });
 
   test('AutoTraceabilityEngine detects claims and supports actions', () => {

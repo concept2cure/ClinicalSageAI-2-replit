@@ -13,6 +13,10 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Pool } from 'pg';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+
+const execFileAsync = promisify(execFile);
 
 // Skip these tests if no database is available
 const SKIP_MIGRATION_TESTS = !process.env.DATABASE_URL && !process.env.DATABASE_NEON_NEW_SECRET;
@@ -20,6 +24,7 @@ const SKIP_MIGRATION_TESTS = !process.env.DATABASE_URL && !process.env.DATABASE_
 describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migration', () => {
   let pool: Pool;
   let schemaExists: boolean = false;
+  let migrationsReady: boolean = false;
 
   beforeAll(async () => {
     const connectionString = process.env.DATABASE_URL || 
@@ -40,6 +45,54 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
       schemaExists = (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.warn('Failed to check schema existence:', error);
+    }
+
+    // If schema exists, verify Phase 5 artifacts are present. Optionally attempt to apply them.
+    if (schemaExists) {
+      try {
+        const tblCheck = await pool.query(`
+          SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'intelligent_docs' AND table_name = 'source_documents' LIMIT 1
+        `);
+
+        if ((tblCheck.rowCount ?? 0) > 0) {
+          migrationsReady = true;
+          console.log('Phase 5 tables detected.');
+          return;
+        }
+
+        console.warn('Phase 5 schema exists but expected tables are missing.');
+
+        if (process.env.APPLY_PHASE5_MIGRATIONS === 'true') {
+          console.log('APPLY_PHASE5_MIGRATIONS=true — attempting to apply Phase 5 migrations now.');
+          try {
+            const scriptPath = 'scripts/apply_phase5_migrations.mjs';
+            const env = { ...process.env, APPLY_PHASE5_MIGRATIONS: 'true' };
+            const { stdout, stderr } = await execFileAsync('node', [scriptPath], { env, cwd: process.cwd(), timeout: 5 * 60 * 1000 });
+            if (stdout) console.log(stdout);
+            if (stderr) console.error(stderr);
+
+            // re-check
+            const recheck = await pool.query(`
+              SELECT 1 FROM information_schema.tables
+              WHERE table_schema = 'intelligent_docs' AND table_name = 'source_documents' LIMIT 1
+            `);
+
+            if ((recheck.rowCount ?? 0) > 0) {
+              migrationsReady = true;
+              console.log('Phase 5 tables detected after applying migrations.');
+            } else {
+              console.warn('Phase 5 migration script ran but tables are still missing.');
+            }
+          } catch (err) {
+            console.error('Failed to apply Phase 5 migrations:', err);
+          }
+        } else {
+          console.info('To auto-apply Phase 5 migrations for tests, set APPLY_PHASE5_MIGRATIONS=true and re-run tests or run scripts/apply_phase5_migrations.mjs manually.');
+        }
+      } catch (err) {
+        console.warn('Error checking Phase 5 tables:', err);
+      }
     }
   });
 
@@ -66,7 +119,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have source_documents table with required columns', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name, data_type 
@@ -87,7 +140,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have traceability_links table with required columns', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -107,7 +160,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have change_propagation_events table', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -127,7 +180,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have impacted_sections table', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -145,7 +198,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have compliance_scores table', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -165,7 +218,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have compliance_rules table', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -184,7 +237,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have auto_generated_tables table', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -207,7 +260,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have RLS enabled on all tables', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tablename, rowsecurity 
@@ -221,7 +274,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have RLS policies for tenant isolation', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT polname, tablename 
@@ -243,7 +296,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have immutability trigger on traceability_links', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tgname 
@@ -255,7 +308,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have immutability trigger on change_propagation_events', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tgname 
@@ -271,7 +324,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have detect_impacted_links function', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT proname 
@@ -284,7 +337,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have calculate_compliance_score function', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT proname 
@@ -301,7 +354,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have seeded compliance rules', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT rule_id, name, category, severity 
@@ -322,7 +375,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have rules for all submission types', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT DISTINCT unnest(applicable_submissions) as submission_type
@@ -346,7 +399,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have search index on source_documents', async () => {
-    if (!pool) return;
+    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT indexname 

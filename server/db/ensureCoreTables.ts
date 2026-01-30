@@ -41,6 +41,8 @@ const IMPORTANT_TABLES = [
   'organization_settings',
   'document_templates',
   'lumen_data_atoms',
+  'assembly_docs',
+  'assembly_audit_logs',
 ];
 
 /**

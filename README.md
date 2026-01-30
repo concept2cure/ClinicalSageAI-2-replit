@@ -82,6 +82,13 @@ npm run dev
 - `npm test` runs Jest + Vitest.
 - Integration tests are gated behind `RUN_INTEGRATION_TESTS=true` and require a Postgres database via `TEST_DATABASE_URL` (or `DATABASE_URL`) with the GCC migrations applied (including the innovation platform schema). CI provisions a test database and runs these with the flag enabled.
 
+- Phase 5 (Intelligent Document System) migrations are required for `tests/phase5/migration.test.ts`. In dev you can either apply the migration manually or let the test runner attempt to apply it when explicitly allowed:
+
+  - Manual: run `node scripts/apply_phase5_migrations.mjs` with `DATABASE_URL` set.
+  - Auto-apply (dev-only): set `APPLY_PHASE5_MIGRATIONS=true` and re-run `npm test` (the Phase 5 tests will attempt to apply `db/migrations/20260129_phase5_intelligent_document_system.sql` and re-run checks).
+
+  **Safety:** Auto-apply is opt-in and intended for local/dev usage only. Never enable this in production or shared/staging environments without explicit coordination with the DB owner.
+
 ---
 
 ## Documentation

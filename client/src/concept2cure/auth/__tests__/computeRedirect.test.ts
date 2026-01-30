@@ -1,5 +1,4 @@
-import { describe, it, expect } from 'vitest';
-import { computeRedirect } from '../ZenLogin';
+import { computeRedirect } from '../redirectUtils';
 
 describe('computeRedirect', () => {
   it('allows internal next param', () => {
