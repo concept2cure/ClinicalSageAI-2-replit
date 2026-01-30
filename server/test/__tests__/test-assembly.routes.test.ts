@@ -130,4 +130,32 @@ describe('test-assembly routes', () => {
 
     process.env.NODE_ENV = old;
   });
+
+  it('enforces tenant gating when ALLOWED_TEST_ASSEMBLY_TENANTS is set', async () => {
+    const old = process.env.ALLOWED_TEST_ASSEMBLY_TENANTS;
+    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = 'tenant-1,tenant-2';
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/test-assembly', testAssemblyRoutes(createMockDb() as any));
+
+    // Missing header -> forbidden
+    await request(app).post('/api/test-assembly/start').send({ request: 'x' }).expect(403);
+
+    // Incorrect tenant -> forbidden
+    await request(app)
+      .post('/api/test-assembly/start')
+      .set('x-tenant-id', 'other')
+      .send({ request: 'x' })
+      .expect(403);
+
+    // Correct tenant -> allowed
+    await request(app)
+      .post('/api/test-assembly/start')
+      .set('x-tenant-id', 'tenant-1')
+      .send({ request: 'ok' })
+      .expect(200);
+
+    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
+  });
 });
