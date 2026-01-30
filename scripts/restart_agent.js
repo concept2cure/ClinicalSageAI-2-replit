@@ -14,7 +14,7 @@ if (!fs.existsSync(path.dirname(LOG_FILE))) {
 function log(message) {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
-  console.log(message);
+  logger.info(message);
   fs.appendFileSync(LOG_FILE, logMessage);
 }
 

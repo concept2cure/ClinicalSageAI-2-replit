@@ -27,12 +27,12 @@ if (vaultContentStartIndex !== -1) {
       '<!-- Removed redundant Vault content organization section -->\n    ' +
       updatedHtml.substring(vaultContentEndIndex);
 
-    console.log('Successfully removed Vault content organization section');
+    logger.info('Successfully removed Vault content organization section');
   } else {
-    console.error('Could not find the end of the Vault content organization section');
+    logger.error('Could not find the end of the Vault content organization section');
   }
 } else {
-  console.log('Vault content organization section not found (may have been already removed)');
+  logger.info('Vault content organization section not found (may have been already removed)');
 }
 
 // Step 3: Remove the "Solution 4 - Vault Module (Condensed)" section
@@ -51,7 +51,7 @@ if (vaultCondensedStartIndex !== -1) {
     let nextCloseDiv = updatedHtml.indexOf('</div>', sectionEndSearchFrom);
 
     if (nextCloseDiv === -1) {
-      console.error('Could not find proper closing div');
+      logger.error('Could not find proper closing div');
       break;
     }
 
@@ -74,12 +74,12 @@ if (vaultCondensedStartIndex !== -1) {
       '<!-- Removed redundant Solution 4 - Vault Module (Condensed) section -->\n                ' +
       updatedHtml.substring(vaultCondensedEndIndex);
 
-    console.log('Successfully removed Vault Module (Condensed) section');
+    logger.info('Successfully removed Vault Module (Condensed) section');
   } else {
-    console.error('Could not find the proper end of the Vault Module (Condensed) section');
+    logger.error('Could not find the proper end of the Vault Module (Condensed) section');
   }
 } else {
-  console.log('Vault Module (Condensed) section not found (may have been already removed)');
+  logger.info('Vault Module (Condensed) section not found (may have been already removed)');
 }
 
 // Step 4: Remove the Vault Intelligence System section with the "Learn More About Vault™" button
@@ -102,12 +102,12 @@ if (vaultIntelligenceButtonStartIndex !== -1) {
       '<!-- Removed redundant "Learn More About Vault™" button section -->\n            ' +
       updatedHtml.substring(vaultIntelligenceButtonEndIndex);
 
-    console.log('Successfully removed "Learn More About Vault™" button section');
+    logger.info('Successfully removed "Learn More About Vault™" button section');
   } else {
-    console.error('Could not find the end of the "Learn More About Vault™" button section');
+    logger.error('Could not find the end of the "Learn More About Vault™" button section');
   }
 } else {
-  console.log(
+  logger.info(
     '"Learn More About Vault™" button section not found (may have been already removed)'
   );
 }
@@ -132,12 +132,12 @@ if (regulatoryTimelineStartIndex !== -1) {
       '<!-- Removed redundant "Regulatory Timeline Section" -->\n    ' +
       updatedHtml.substring(regulatoryTimelineEndIndex);
 
-    console.log('Successfully removed "Regulatory Timeline Section"');
+    logger.info('Successfully removed "Regulatory Timeline Section"');
   } else {
-    console.error('Could not find the end of the "Regulatory Timeline Section"');
+    logger.error('Could not find the end of the "Regulatory Timeline Section"');
   }
 } else {
-  console.log('"Regulatory Timeline Section" not found (may have been already removed)');
+  logger.info('"Regulatory Timeline Section" not found (may have been already removed)');
 }
 
 // Step 6: Remove the "Vault™ Core Advantages" section
@@ -160,14 +160,14 @@ if (vaultCoreAdvantagesStartIndex !== -1) {
       '<!-- Removed "Vault™ Core Advantages" section -->\n    ' +
       updatedHtml.substring(vaultCoreAdvantagesEndIndex);
 
-    console.log('Successfully removed "Vault™ Core Advantages" section');
+    logger.info('Successfully removed "Vault™ Core Advantages" section');
   } else {
-    console.error('Could not find the end of the "Vault™ Core Advantages" section');
+    logger.error('Could not find the end of the "Vault™ Core Advantages" section');
   }
 } else {
-  console.log('"Vault™ Core Advantages" section not found (may have been already removed)');
+  logger.info('"Vault™ Core Advantages" section not found (may have been already removed)');
 }
 
 // Write the updated HTML back to the file
 fs.writeFileSync(filePath, updatedHtml, 'utf8');
-console.log('HTML file has been updated successfully');
+logger.info('HTML file has been updated successfully');

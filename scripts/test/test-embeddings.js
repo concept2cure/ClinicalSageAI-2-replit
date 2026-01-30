@@ -8,12 +8,12 @@ const HF_API_KEY = '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';
 const MODEL_ID = 'BAAI/bge-large-en-v1.5';
 
 async function testEmbeddings() {
-  console.log('Testing Hugging Face Embeddings API...');
-  console.log(`API URL: ${HF_API_URL}`);
-  console.log(
+  logger.info('Testing Hugging Face Embeddings API...');
+  logger.info(`API URL: ${HF_API_URL}`);
+  logger.info(
     `API Key: ${HF_API_KEY ? 'Configured (first 4 chars: ' + HF_API_KEY.substring(0, 4) + ')' : 'Not configured'}`
   );
-  console.log(`Model ID: ${MODEL_ID}`);
+  logger.info(`Model ID: ${MODEL_ID}`);
 
   try {
     const response = await axios.post(
@@ -27,24 +27,24 @@ async function testEmbeddings() {
       }
     );
 
-    console.log('API Call Successful!');
-    console.log('Response type:', typeof response.data);
+    logger.info('API Call Successful!');
+    logger.info('Response type:', typeof response.data);
 
     if (Array.isArray(response.data)) {
-      console.log('Response is an array of length:', response.data.length);
-      console.log('First 5 values:', response.data.slice(0, 5));
+      logger.info('Response is an array of length:', response.data.length);
+      logger.info('First 5 values:', response.data.slice(0, 5));
     } else {
-      console.log('Response data:', response.data);
+      logger.info('Response data:', response.data);
     }
 
     return response.data;
   } catch (error) {
-    console.error('Error calling Hugging Face API:');
-    console.error(`Status: ${error.response?.status || 'Unknown'}`);
-    console.error(`Message: ${error.message}`);
+    logger.error('Error calling Hugging Face API:');
+    logger.error(`Status: ${error.response?.status || 'Unknown'}`);
+    logger.error(`Message: ${error.message}`);
 
     if (error.response && error.response.data) {
-      console.error('Response data:', error.response.data);
+      logger.error('Response data:', error.response.data);
     }
 
     throw error;
@@ -53,5 +53,5 @@ async function testEmbeddings() {
 
 // Execute the test
 testEmbeddings()
-  .then(() => console.log('Test completed successfully'))
-  .catch(() => console.log('Test failed'));
+  .then(() => logger.info('Test completed successfully'))
+  .catch(() => logger.info('Test failed'));

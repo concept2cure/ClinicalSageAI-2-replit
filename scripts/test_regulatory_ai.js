@@ -52,7 +52,7 @@ const testQueries = [
  * Test the Regulatory AI endpoint
  */
 async function testRegulatoryAI() {
-  console.log('Starting Regulatory AI Test...\n');
+  logger.info('Starting Regulatory AI Test...\n');
 
   const results = {
     successful: 0,
@@ -64,7 +64,7 @@ async function testRegulatoryAI() {
 
   for (const [index, testCase] of testQueries.entries()) {
     try {
-      console.log(
+      logger.info(
         `Testing query ${index + 1}/${testQueries.length}: "${testCase.query}" (${testCase.context})`
       );
 
@@ -74,8 +74,8 @@ async function testRegulatoryAI() {
       });
 
       if (response.data && response.data.response) {
-        console.log('✅ Success');
-        console.log(`Response: ${response.data.response.substring(0, 100)}...\n`);
+        logger.info('✅ Success');
+        logger.info(`Response: ${response.data.response.substring(0, 100)}...\n`);
 
         results.successful++;
         results.responses.push({
@@ -85,7 +85,7 @@ async function testRegulatoryAI() {
           success: true,
         });
       } else {
-        console.log('❌ Failed: Received empty response');
+        logger.info('❌ Failed: Received empty response');
         results.failed++;
         results.responses.push({
           query: testCase.query,
@@ -95,7 +95,7 @@ async function testRegulatoryAI() {
         });
       }
     } catch (error) {
-      console.log(`❌ Failed: ${error.message}`);
+      logger.info(`❌ Failed: ${error.message}`);
       results.failed++;
       results.responses.push({
         query: testCase.query,
@@ -113,12 +113,12 @@ async function testRegulatoryAI() {
   const resultsPath = path.join(__dirname, '../data/regulatory_ai_test_results.json');
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
 
-  console.log('\nTest Summary:');
-  console.log(`Total Queries: ${testQueries.length}`);
-  console.log(`Successful: ${results.successful}`);
-  console.log(`Failed: ${results.failed}`);
-  console.log(`Success Rate: ${((results.successful / testQueries.length) * 100).toFixed(2)}%`);
-  console.log(`Results saved to: ${resultsPath}`);
+  logger.info('\nTest Summary:');
+  logger.info(`Total Queries: ${testQueries.length}`);
+  logger.info(`Successful: ${results.successful}`);
+  logger.info(`Failed: ${results.failed}`);
+  logger.info(`Success Rate: ${((results.successful / testQueries.length) * 100).toFixed(2)}%`);
+  logger.info(`Results saved to: ${resultsPath}`);
 }
 
 // Execute if run directly

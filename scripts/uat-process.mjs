@@ -31,12 +31,12 @@ async function j(path, method = 'GET', body, headers = HDRS) {
 
 function row(label, ok, info = '') {
   const mark = ok ? green('PASS') : red('FAIL');
-  console.log(`${mark}  ${label} ${info ? gray(`— ${info}`) : ''}`);
+  logger.info(`${mark}  ${label} ${info ? gray(`— ${info}`) : ''}`);
   if (!ok) FAIL++;
 }
 
 async function main() {
-  console.log(gray(`Process Auto-Checker @ ${BASE} (role=${ROLE})`));
+  logger.info(gray(`Process Auto-Checker @ ${BASE} (role=${ROLE})`));
 
   // 0) health
   try {
@@ -230,13 +230,13 @@ async function main() {
 }
 
 function finish() {
-  console.log(
+  logger.info(
     '\n' + (FAIL ? red(`SUMMARY: ${FAIL} check(s) FAILED`) : green('SUMMARY: ALL CHECKS PASS'))
   );
   process.exitCode = FAIL ? 1 : 0;
 }
 
 main().catch(e => {
-  console.error(e);
+  logger.error(e);
   finish();
 });

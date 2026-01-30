@@ -52,19 +52,19 @@ const testDocuments = [
 ];
 
 async function testVectorHealth() {
-  console.log('🔧 Testing vector database health...');
+  logger.info('🔧 Testing vector database health...');
   try {
     const response = await axios.get(`${BASE_URL}/vector-health`);
-    console.log('   ✅ Vector DB Health:', response.data);
+    logger.info('   ✅ Vector DB Health:', response.data);
     return response.data;
   } catch (error) {
-    console.log('   ❌ Health check failed:', error.message);
+    logger.info('   ❌ Health check failed:', error.message);
     return null;
   }
 }
 
 async function addTestDocument(doc) {
-  console.log(`📝 Adding test document: ${doc.doc_title.substring(0, 50)}...`);
+  logger.info(`📝 Adding test document: ${doc.doc_title.substring(0, 50)}...`);
   try {
     // For this test, we'll use a simple POST to add documents
     // In practice, this would go through the enhanced ingestion pipeline
@@ -72,16 +72,16 @@ async function addTestDocument(doc) {
       ...doc,
       // The API will generate embeddings automatically
     });
-    console.log(`   ✅ Added document ${doc.doc_id}`);
+    logger.info(`   ✅ Added document ${doc.doc_id}`);
     return true;
   } catch (error) {
-    console.log(`   ❌ Failed to add ${doc.doc_id}:`, error.response?.data || error.message);
+    logger.info(`   ❌ Failed to add ${doc.doc_id}:`, error.response?.data || error.message);
     return false;
   }
 }
 
 async function testEnhancedSearch() {
-  console.log('\n🔍 Testing enhanced vector search...');
+  logger.info('\n🔍 Testing enhanced vector search...');
 
   const searchTests = [
     {
@@ -107,9 +107,9 @@ async function testEnhancedSearch() {
   ];
 
   for (const test of searchTests) {
-    console.log(`\n   📋 ${test.name}:`);
-    console.log(`      Query: "${test.query}"`);
-    console.log(`      Filters:`, test.filters);
+    logger.info(`\n   📋 ${test.name}:`);
+    logger.info(`      Query: "${test.query}"`);
+    logger.info(`      Filters:`, test.filters);
 
     try {
       const searchPayload = {
@@ -121,29 +121,29 @@ async function testEnhancedSearch() {
       const response = await axios.post(`${BASE_URL}/vector-search`, searchPayload);
       const results = response.data;
 
-      console.log(`      ✅ Found ${results.total || 0} results`);
+      logger.info(`      ✅ Found ${results.total || 0} results`);
 
       if (results.results && results.results.length > 0) {
         results.results.slice(0, 2).forEach((result, i) => {
-          console.log(`         ${i + 1}. ${result.doc_title || 'Unknown'}`);
-          console.log(`            eCTD: ${result.ectd_section || 'N/A'}`);
-          console.log(`            Type: ${result.doc_type || 'N/A'}`);
-          console.log(
+          logger.info(`         ${i + 1}. ${result.doc_title || 'Unknown'}`);
+          logger.info(`            eCTD: ${result.ectd_section || 'N/A'}`);
+          logger.info(`            Type: ${result.doc_type || 'N/A'}`);
+          logger.info(
             `            Regions: ${result.region_tag ? result.region_tag.join(', ') : 'N/A'}`
           );
           if (result.similarity_score) {
-            console.log(`            Score: ${result.similarity_score.toFixed(3)}`);
+            logger.info(`            Score: ${result.similarity_score.toFixed(3)}`);
           }
         });
       }
     } catch (error) {
-      console.log(`      ❌ Search failed:`, error.response?.data || error.message);
+      logger.info(`      ❌ Search failed:`, error.response?.data || error.message);
     }
   }
 }
 
 async function verifyMetadataFields() {
-  console.log('\n📊 Verifying enhanced metadata fields...');
+  logger.info('\n📊 Verifying enhanced metadata fields...');
 
   try {
     // Test search with specific metadata filters
@@ -164,40 +164,40 @@ async function verifyMetadataFields() {
       const response = await axios.post(`${BASE_URL}/vector-search`, searchPayload);
       const count = response.data.total || 0;
 
-      console.log(`   ${test.description}: ${count} documents`);
+      logger.info(`   ${test.description}: ${count} documents`);
     }
   } catch (error) {
-    console.log('   ❌ Metadata verification failed:', error.message);
+    logger.info('   ❌ Metadata verification failed:', error.message);
   }
 }
 
 async function runCompleteTest() {
-  console.log('🚀 Enhanced Vector Database Test Suite');
-  console.log('=' * 50);
+  logger.info('🚀 Enhanced Vector Database Test Suite');
+  logger.info('=' * 50);
 
   // Test 1: Check vector database health
   const health = await testVectorHealth();
   if (!health) {
-    console.log('❌ Vector database is not accessible. Stopping tests.');
+    logger.info('❌ Vector database is not accessible. Stopping tests.');
     return;
   }
 
-  console.log('\n📈 Enhanced Schema Verification:');
-  console.log(`   Enhanced Schema: ${health.enhanced_schema ? '✅ Active' : '❌ Missing'}`);
-  console.log(
+  logger.info('\n📈 Enhanced Schema Verification:');
+  logger.info(`   Enhanced Schema: ${health.enhanced_schema ? '✅ Active' : '❌ Missing'}`);
+  logger.info(
     `   Metadata Fields: ${health.metadata_fields ? health.metadata_fields.join(', ') : 'None'}`
   );
-  console.log(`   Total Chunks: ${health.total_chunks || 0}`);
+  logger.info(`   Total Chunks: ${health.total_chunks || 0}`);
 
   // Test 2: Add test documents (if we have the endpoint)
-  console.log('\n📝 Adding test documents...');
+  logger.info('\n📝 Adding test documents...');
   let documentsAdded = 0;
   for (const doc of testDocuments) {
     if (await addTestDocument(doc)) {
       documentsAdded++;
     }
   }
-  console.log(`   Added ${documentsAdded}/${testDocuments.length} test documents`);
+  logger.info(`   Added ${documentsAdded}/${testDocuments.length} test documents`);
 
   // Test 3: Test enhanced search functionality
   await testEnhancedSearch();
@@ -205,11 +205,11 @@ async function runCompleteTest() {
   // Test 4: Verify metadata field functionality
   await verifyMetadataFields();
 
-  console.log('\n' + '=' * 50);
-  console.log('✅ Enhanced Vector Database Test Complete!');
-  console.log(`   📈 Schema Enhancement: ${health.enhanced_schema ? 'VERIFIED' : 'FAILED'}`);
-  console.log(`   🔍 Search Functionality: TESTED`);
-  console.log(`   📊 Metadata Fields: ${health.metadata_fields ? 'VERIFIED' : 'FAILED'}`);
+  logger.info('\n' + '=' * 50);
+  logger.info('✅ Enhanced Vector Database Test Complete!');
+  logger.info(`   📈 Schema Enhancement: ${health.enhanced_schema ? 'VERIFIED' : 'FAILED'}`);
+  logger.info(`   🔍 Search Functionality: TESTED`);
+  logger.info(`   📊 Metadata Fields: ${health.metadata_fields ? 'VERIFIED' : 'FAILED'}`);
 
   return health.enhanced_schema && health.metadata_fields && health.metadata_fields.length > 0;
 }
@@ -218,16 +218,16 @@ async function runCompleteTest() {
 runCompleteTest()
   .then(success => {
     if (success) {
-      console.log(
+      logger.info(
         '\n🎉 Phase 1, Step 1 VERIFIED: Enhanced vector database with regulatory metadata is operational'
       );
       process.exit(0);
     } else {
-      console.log('\n❌ Phase 1, Step 1 INCOMPLETE: Enhanced vector database verification failed');
+      logger.info('\n❌ Phase 1, Step 1 INCOMPLETE: Enhanced vector database verification failed');
       process.exit(1);
     }
   })
   .catch(error => {
-    console.error('❌ Test suite failed:', error.message);
+    logger.error('❌ Test suite failed:', error.message);
     process.exit(1);
   });

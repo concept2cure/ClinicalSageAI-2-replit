@@ -437,7 +437,7 @@ const colors = {
 
 function log(emoji, message, color = colors.reset) {
   const timestamp = new Date().toISOString().slice(11, 19);
-  console.log(
+  logger.info(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${emoji} ${message}${colors.reset}`
   );
 }
@@ -1041,7 +1041,7 @@ async function getCortexStats() {
 }
 
 async function main() {
-  console.log(`
+  logger.info(`
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
 ║  🧠  ${colors.bright}LUMEN CORTEX: REGULATORY INTELLIGENCE ENGINE${colors.reset}  🧠                    ║
@@ -1067,50 +1067,50 @@ async function main() {
     colors.blue
   );
 
-  console.log('\n' + '═'.repeat(70));
+  logger.info('\n' + '═'.repeat(70));
   log(
     '📋',
     `${colors.bright}PHASE 1: Seeding Foundational Regulatory Guidance${colors.reset}`,
     colors.magenta
   );
-  console.log('═'.repeat(70));
+  logger.info('═'.repeat(70));
 
   const guidanceResult = await seedFoundationalGuidance();
 
-  console.log('\n' + '═'.repeat(70));
+  logger.info('\n' + '═'.repeat(70));
   log(
     '📋',
     `${colors.bright}PHASE 2: Harvesting FDA Rejection Intelligence${colors.reset}`,
     colors.magenta
   );
-  console.log('═'.repeat(70));
+  logger.info('═'.repeat(70));
 
   // Harvest Warning Letters
-  console.log('\n' + '-'.repeat(50));
+  logger.info('\n' + '-'.repeat(50));
   const warningResult = await harvestWarningLetters();
 
   // Harvest Drugs@FDA (CRL patterns)
-  console.log('\n' + '-'.repeat(50));
+  logger.info('\n' + '-'.repeat(50));
   const drugsResult = await harvestDrugsAtFDA();
 
   // Harvest 510(k) NSE decisions
-  console.log('\n' + '-'.repeat(50));
+  logger.info('\n' + '-'.repeat(50));
   const deviceResult = await harvest510kDecisions();
 
   // Final stats
   const finalStats = await getCortexStats();
 
-  console.log('\n');
-  console.log('╔' + '═'.repeat(68) + '╗');
-  console.log(
+  logger.info('\n');
+  logger.info('╔' + '═'.repeat(68) + '╗');
+  logger.info(
     '║' +
       ' '.repeat(20) +
       `${colors.green}INTELLIGENCE HARVEST COMPLETE${colors.reset}` +
       ' '.repeat(19) +
       '║'
   );
-  console.log('╚' + '═'.repeat(68) + '╝');
-  console.log(`
+  logger.info('╚' + '═'.repeat(68) + '╝');
+  logger.info(`
   ${colors.bright}📊 Session Results:${colors.reset}
      • Foundational Guidance Seeded: ${guidanceResult.created}
      • Warning Letter Patterns:      ${warningResult.processed}
@@ -1136,6 +1136,6 @@ async function main() {
 
 // Run
 main().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

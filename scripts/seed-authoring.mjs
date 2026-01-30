@@ -116,39 +116,39 @@ async function submitAndSign(docId) {
 }
 
 (async function main(){
-  console.log(`Seeding Authoring @ ${BASE_URL}`);
+  logger.info(`Seeding Authoring @ ${BASE_URL}`);
   // 1) Create doc
   const doc = await createDoc();
   const DOC_ID = doc.id; // Use correct field name
-  console.log(`- Created doc: ${DOC_ID} (${doc.title}) locale=${doc.locale}`);
+  logger.info(`- Created doc: ${DOC_ID} (${doc.title}) locale=${doc.locale}`);
 
   // 2) Apply templates (if present)
   const upserts = await applyTemplates(DOC_ID).catch(()=>0);
-  console.log(`- Applied templates: ${upserts} section(s) updated via templates`);
+  logger.info(`- Applied templates: ${upserts} section(s) updated via templates`);
 
   // 3) Ensure P.5 and P.8 exist
   const sP5 = await ensureSection(DOC_ID, SECTION_P5, "Control of Drug Product");
   const sP8 = await ensureSection(DOC_ID, SECTION_P8, "Stability");
-  console.log(`- Sections ready: ${sP5.id} (P.5), ${sP8.id} (P.8)`);
+  logger.info(`- Sections ready: ${sP5.id} (P.5), ${sP8.id} (P.8)`);
 
   // 4) Insert tokens
-  const c1 = await insertToken(sP5.id, TOKEN_P5).catch(e=>{ console.warn("Insert P.5 token failed:", e.message); return null; });
-  const c2 = await insertToken(sP8.id, TOKEN_P8).catch(e=>{ console.warn("Insert P.8 token failed:", e.message); return null; });
-  console.log(`- Inserted tokens: P.5=${c1? "OK":"skip"} P.8=${c2? "OK":"skip"}`);
+  const c1 = await insertToken(sP5.id, TOKEN_P5).catch(e=>{ logger.warn("Insert P.5 token failed:", e.message); return null; });
+  const c2 = await insertToken(sP8.id, TOKEN_P8).catch(e=>{ logger.warn("Insert P.8 token failed:", e.message); return null; });
+  logger.info(`- Inserted tokens: P.5=${c1? "OK":"skip"} P.8=${c2? "OK":"skip"}`);
 
   // 5) Export DOCX/PDF
-  await exportDoc(DOC_ID).catch(e=>console.warn("Export warning:", e.message));
-  console.log(`- Exported DOCX/PDF`);
+  await exportDoc(DOC_ID).catch(e=>logger.warn("Export warning:", e.message));
+  logger.info(`- Exported DOCX/PDF`);
 
   // 6) Submit & dual-sign
-  await submitAndSign(DOC_ID).catch(e=>console.warn("Sign warning:", e.message));
-  console.log(`- Submitted and signed (QA + RA_CMC)`);
+  await submitAndSign(DOC_ID).catch(e=>logger.warn("Sign warning:", e.message));
+  logger.info(`- Submitted and signed (QA + RA_CMC)`);
 
   // 7) Print env for UAT and CI
-  console.log("\nENV for UAT / CI:");
-  console.log(`BASE_URL="${BASE_URL}" DOC_ID="${DOC_ID}" SECTION_CODE="${SECTION_P5}" TOKEN_KEY="${TOKEN_P5}"`);
-  console.log(`\nRun UAT now:\n  BASE_URL="${BASE_URL}" DOC_ID="${DOC_ID}" npm run uat:authoring`);
+  logger.info("\nENV for UAT / CI:");
+  logger.info(`BASE_URL="${BASE_URL}" DOC_ID="${DOC_ID}" SECTION_CODE="${SECTION_P5}" TOKEN_KEY="${TOKEN_P5}"`);
+  logger.info(`\nRun UAT now:\n  BASE_URL="${BASE_URL}" DOC_ID="${DOC_ID}" npm run uat:authoring`);
 })().catch(err => {
-  console.error("Seeder failed:", err.message);
+  logger.error("Seeder failed:", err.message);
   process.exit(1);
 });

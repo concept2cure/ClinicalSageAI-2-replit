@@ -33,7 +33,7 @@ async function setupRowLevelSecurity() {
 
   try {
     await client.connect();
-    console.log('Connected to database');
+    logger.info('Connected to database');
 
     // Begin transaction
     await client.query('BEGIN');
@@ -48,11 +48,11 @@ async function setupRowLevelSecurity() {
       $$ LANGUAGE plpgsql;
     `;
     await client.query(createFunctionSQL);
-    console.log('Created set_tenant_context function');
+    logger.info('Created set_tenant_context function');
 
     // Set up RLS on each tenant table
     for (const table of TENANT_TABLES) {
-      console.log(`Setting up RLS for table: ${table}`);
+      logger.info(`Setting up RLS for table: ${table}`);
 
       // Enable RLS on the table
       await client.query(`ALTER TABLE IF EXISTS ${table} ENABLE ROW LEVEL SECURITY;`);
@@ -68,13 +68,13 @@ async function setupRowLevelSecurity() {
 
       try {
         await client.query(createPolicySQL);
-        console.log(`✓ Created RLS policy for ${table}`);
+        logger.info(`✓ Created RLS policy for ${table}`);
       } catch (error) {
-        console.error(`Error setting up RLS policy for ${table}:`, error.message);
+        logger.error(`Error setting up RLS policy for ${table}:`, error.message);
 
         // If the error is due to missing organization_id column, log a warning
         if (error.message.includes('organization_id')) {
-          console.warn(`⚠️ Table ${table} might not have an organization_id column. Skipping.`);
+          logger.warn(`⚠️ Table ${table} might not have an organization_id column. Skipping.`);
         } else {
           throw error; // Re-throw other errors
         }
@@ -83,11 +83,11 @@ async function setupRowLevelSecurity() {
 
     // Commit transaction
     await client.query('COMMIT');
-    console.log('Row-Level Security setup completed successfully');
+    logger.info('Row-Level Security setup completed successfully');
   } catch (error) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
-    console.error('Error setting up Row-Level Security:', error);
+    logger.error('Error setting up Row-Level Security:', error);
     process.exit(1);
   } finally {
     await client.end();

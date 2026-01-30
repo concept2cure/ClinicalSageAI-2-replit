@@ -56,7 +56,7 @@ const colors = {
 };
 
 function log(emoji, message, color = colors.reset) {
-  console.log(`${color}${emoji} ${message}${colors.reset}`);
+  logger.info(`${color}${emoji} ${message}${colors.reset}`);
 }
 
 /**
@@ -416,9 +416,9 @@ async function getCortexStats() {
  * Main harvesting orchestrator
  */
 async function runHarvest() {
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('🧠', `${colors.bright}LUMEN CORTEX KNOWLEDGE HARVESTER${colors.reset}`, colors.cyan);
-  console.log('═'.repeat(60) + '\n');
+  logger.info('═'.repeat(60) + '\n');
 
   // Verify database connection
   try {
@@ -441,7 +441,7 @@ async function runHarvest() {
     colors.blue
   );
 
-  console.log('\n' + '-'.repeat(40));
+  logger.info('\n' + '-'.repeat(40));
 
   // Phase 1: ClinicalTrials.gov (fetch new batch)
   const ctResult = await harvestClinicalTrials(0); // Always get latest studies
@@ -451,7 +451,7 @@ async function runHarvest() {
   // Delay between sources
   await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
-  console.log('-'.repeat(40));
+  logger.info('-'.repeat(40));
 
   // Phase 2: Health Canada
   const hcBatch = progress.healthCanada.lastBatch + 1;
@@ -459,7 +459,7 @@ async function runHarvest() {
   progress.healthCanada.lastBatch = hcBatch;
   progress.healthCanada.totalImported += hcResult.imported;
 
-  console.log('-'.repeat(40));
+  logger.info('-'.repeat(40));
 
   // Phase 3: Local CSRs
   const csrResult = await harvestLocalCSRs();
@@ -473,10 +473,10 @@ async function runHarvest() {
   saveProgress(progress);
 
   // Summary
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('✅', `${colors.bright}HARVEST COMPLETE${colors.reset}`, colors.green);
-  console.log('═'.repeat(60));
-  console.log(`
+  logger.info('═'.repeat(60));
+  logger.info(`
   📊 Session Results:
      • ClinicalTrials.gov: +${ctResult.imported} trials
      • Health Canada:      +${hcResult.imported} trials
@@ -496,6 +496,6 @@ async function runHarvest() {
 
 // Run the harvester
 runHarvest().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

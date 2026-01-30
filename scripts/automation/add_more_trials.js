@@ -156,7 +156,7 @@ async function getHighestTrialId() {
 }
 
 async function importTrialsToDatabase(trials) {
-  console.log(`Importing ${trials.length} new trial records to database...`);
+  logger.info(`Importing ${trials.length} new trial records to database...`);
   let importedCount = 0;
 
   for (const trial of trials) {
@@ -167,7 +167,7 @@ async function importTrialsToDatabase(trials) {
       ]);
 
       if (existingResult.rows.length > 0) {
-        console.log(`Skipping ${trial.nctrial_id} - already exists in database`);
+        logger.info(`Skipping ${trial.nctrial_id} - already exists in database`);
         continue;
       }
 
@@ -288,10 +288,10 @@ async function importTrialsToDatabase(trials) {
 
       importedCount++;
       if (importedCount % 20 === 0) {
-        console.log(`Imported ${importedCount} studies so far...`);
+        logger.info(`Imported ${importedCount} studies so far...`);
       }
     } catch (error) {
-      console.error(`Error importing trial ${trial.nctrial_id}:`, error.message);
+      logger.error(`Error importing trial ${trial.nctrial_id}:`, error.message);
     }
   }
 
@@ -302,16 +302,16 @@ async function runAdditionalImport() {
   try {
     // Get current stats
     const totalCount = await getCurrentTrialCount();
-    console.log(`Current total trials in database: ${totalCount}`);
+    logger.info(`Current total trials in database: ${totalCount}`);
 
     // Get highest HC ID
     const highestId = await getHighestTrialId();
-    console.log(`Highest HC trial ID: HC-${highestId}`);
+    logger.info(`Highest HC trial ID: HC-${highestId}`);
 
     // Generate 200 new trials starting after the highest ID
     // Add 1000 to avoid any potential conflicts with existing IDs
     const startId = highestId + 1000;
-    console.log(`Generating 200 new trials starting from ID: HC-${startId}`);
+    logger.info(`Generating 200 new trials starting from ID: HC-${startId}`);
     const newTrials = await generateTrials(200, startId);
 
     // Import the trials
@@ -319,12 +319,12 @@ async function runAdditionalImport() {
 
     // Final stats
     const newTotalCount = await getCurrentTrialCount();
-    console.log(`\n=== Import Summary ===`);
-    console.log(`Trials before import: ${totalCount}`);
-    console.log(`New trials imported: ${importedCount}`);
-    console.log(`Total trials after import: ${newTotalCount}`);
+    logger.info(`\n=== Import Summary ===`);
+    logger.info(`Trials before import: ${totalCount}`);
+    logger.info(`New trials imported: ${importedCount}`);
+    logger.info(`Total trials after import: ${newTotalCount}`);
   } catch (error) {
-    console.error('Error during additional import:', error);
+    logger.error('Error during additional import:', error);
   } finally {
     // Close database connection
     await pool.end();

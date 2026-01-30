@@ -6,13 +6,13 @@
  * features without requiring OpenAI API calls.
  */
 
-console.log('🚀 SUB-PHASE 1.4 DEMONSTRATION');
-console.log('Multi-Document Analysis & Cross-Referencing');
-console.log('='.repeat(80));
+logger.info('🚀 SUB-PHASE 1.4 DEMONSTRATION');
+logger.info('Multi-Document Analysis & Cross-Referencing');
+logger.info('='.repeat(80));
 
 // Demo 1: Multi-Document Input Processing
-console.log('\n📚 DEMO 1: Multi-Document Input Processing');
-console.log('-'.repeat(50));
+logger.info('\n📚 DEMO 1: Multi-Document Input Processing');
+logger.info('-'.repeat(50));
 
 const testDocuments = [
   {
@@ -44,15 +44,15 @@ const testDocuments = [
   },
 ];
 
-console.log(`📋 Total Documents: ${testDocuments.length}`);
+logger.info(`📋 Total Documents: ${testDocuments.length}`);
 testDocuments.forEach((doc, index) => {
-  console.log(`  ${index + 1}. ${doc.name} (${doc.source})`);
-  console.log(`     Content: "${doc.content.substring(0, 50)}..."`);
+  logger.info(`  ${index + 1}. ${doc.name} (${doc.source})`);
+  logger.info(`     Content: "${doc.content.substring(0, 50)}..."`);
 });
 
 // Demo 2: Cross-Reference Analysis
-console.log('\n🔍 DEMO 2: Cross-Reference Analysis');
-console.log('-'.repeat(50));
+logger.info('\n🔍 DEMO 2: Cross-Reference Analysis');
+logger.info('-'.repeat(50));
 
 // Simulated commitment extraction from each document
 const extractedCommitments = [
@@ -130,21 +130,21 @@ const extractedCommitments = [
   },
 ];
 
-console.log(`📊 Total Commitments Extracted: ${extractedCommitments.length}`);
-console.log(`📋 By Document Source:`);
-console.log(
+logger.info(`📊 Total Commitments Extracted: ${extractedCommitments.length}`);
+logger.info(`📋 By Document Source:`);
+logger.info(
   `  Primary: ${extractedCommitments.filter(c => c.documentSource === 'primary').length}`
 );
-console.log(
+logger.info(
   `  Additional: ${extractedCommitments.filter(c => c.documentSource === 'additional').length}`
 );
-console.log(
+logger.info(
   `  Existing: ${extractedCommitments.filter(c => c.documentSource === 'existing').length}`
 );
 
 // Demo 3: Similarity Analysis
-console.log('\n🔗 DEMO 3: Commitment Similarity Analysis');
-console.log('-'.repeat(50));
+logger.info('\n🔗 DEMO 3: Commitment Similarity Analysis');
+logger.info('-'.repeat(50));
 
 function calculateSimilarity(commit1, commit2) {
   const desc1 = commit1.description.toLowerCase();
@@ -192,19 +192,19 @@ for (let i = 0; i < extractedCommitments.length; i++) {
   }
 }
 
-console.log(`✅ Cross-References Found: ${crossReferences.length}`);
+logger.info(`✅ Cross-References Found: ${crossReferences.length}`);
 crossReferences.forEach((ref, index) => {
-  console.log(`  ${index + 1}. ${ref.commit1} ↔ ${ref.commit2} (${ref.similarity}% similarity)`);
+  logger.info(`  ${index + 1}. ${ref.commit1} ↔ ${ref.commit2} (${ref.similarity}% similarity)`);
 });
 
-console.log(`\n⚠️ Discrepancies Found: ${discrepancies.length}`);
+logger.info(`\n⚠️ Discrepancies Found: ${discrepancies.length}`);
 discrepancies.forEach((disc, index) => {
-  console.log(`  ${index + 1}. ${disc.type}: ${disc.description} (${disc.severity})`);
+  logger.info(`  ${index + 1}. ${disc.type}: ${disc.description} (${disc.severity})`);
 });
 
 // Demo 4: Contradiction Detection
-console.log('\n🚨 DEMO 4: Contradiction Detection');
-console.log('-'.repeat(50));
+logger.info('\n🚨 DEMO 4: Contradiction Detection');
+logger.info('-'.repeat(50));
 
 const contradictions = [];
 
@@ -255,14 +255,14 @@ function detectContradictions(commitments) {
 
 const detectedContradictions = detectContradictions(extractedCommitments);
 
-console.log(`🔍 Contradictions Detected: ${detectedContradictions.length}`);
+logger.info(`🔍 Contradictions Detected: ${detectedContradictions.length}`);
 detectedContradictions.forEach((contra, index) => {
-  console.log(`  ${index + 1}. ${contra.type}: ${contra.description} (${contra.severity})`);
+  logger.info(`  ${index + 1}. ${contra.type}: ${contra.description} (${contra.severity})`);
 });
 
 // Demo 5: Coherence Scoring
-console.log('\n📊 DEMO 5: Document Coherence Scoring');
-console.log('-'.repeat(50));
+logger.info('\n📊 DEMO 5: Document Coherence Scoring');
+logger.info('-'.repeat(50));
 
 function calculateCoherenceScore(commitments, crossRefs, discrepancies, contradictions) {
   let score = 100;
@@ -289,18 +289,18 @@ const coherenceScore = calculateCoherenceScore(
   detectedContradictions
 );
 
-console.log(`🎯 Overall Coherence Score: ${coherenceScore}/100`);
-console.log(`📈 Analysis Breakdown:`);
-console.log(`  ✅ Cross-References: +${Math.min(crossReferences.length * 2, 10)} points`);
-console.log(`  ⚠️ Discrepancies: -${discrepancies.length * 10} points`);
-console.log(`  🚨 Contradictions: -${detectedContradictions.length * 20} points`);
-console.log(
+logger.info(`🎯 Overall Coherence Score: ${coherenceScore}/100`);
+logger.info(`📈 Analysis Breakdown:`);
+logger.info(`  ✅ Cross-References: +${Math.min(crossReferences.length * 2, 10)} points`);
+logger.info(`  ⚠️ Discrepancies: -${discrepancies.length * 10} points`);
+logger.info(`  🚨 Contradictions: -${detectedContradictions.length * 20} points`);
+logger.info(
   `  📋 Completion Rate: ${Math.round((extractedCommitments.filter(c => c.status === 'Completed').length / extractedCommitments.length) * 100)}%`
 );
 
 // Demo 6: Multi-Document Summary
-console.log('\n📋 DEMO 6: Multi-Document Analysis Summary');
-console.log('-'.repeat(50));
+logger.info('\n📋 DEMO 6: Multi-Document Analysis Summary');
+logger.info('-'.repeat(50));
 
 const multiDocumentSummary = {
   totalDocuments: testDocuments.length,
@@ -316,24 +316,24 @@ const multiDocumentSummary = {
   complianceScore: Math.max(60, coherenceScore - 5), // Slight adjustment for compliance
 };
 
-console.log(`📊 Multi-Document Analysis Results:`);
-console.log(`  📚 Documents Analyzed: ${multiDocumentSummary.totalDocuments}`);
-console.log(`  📋 Total Commitments: ${multiDocumentSummary.totalCommitments}`);
-console.log(
+logger.info(`📊 Multi-Document Analysis Results:`);
+logger.info(`  📚 Documents Analyzed: ${multiDocumentSummary.totalDocuments}`);
+logger.info(`  📋 Total Commitments: ${multiDocumentSummary.totalCommitments}`);
+logger.info(
   `  🔴 Critical: ${multiDocumentSummary.criticalCommitments} | 🟡 High: ${multiDocumentSummary.highPriorityCommitments}`
 );
-console.log(
+logger.info(
   `  ✅ Completed: ${multiDocumentSummary.completedCommitments} | 🔄 Active: ${multiDocumentSummary.activeCommitments}`
 );
-console.log(`  🔗 Cross-References: ${multiDocumentSummary.crossReferences}`);
-console.log(`  ⚠️ Discrepancies: ${multiDocumentSummary.discrepancies}`);
-console.log(`  🚨 Contradictions: ${multiDocumentSummary.contradictions}`);
-console.log(`  🎯 Coherence Score: ${multiDocumentSummary.coherenceScore}/100`);
-console.log(`  📊 Compliance Score: ${multiDocumentSummary.complianceScore}/100`);
+logger.info(`  🔗 Cross-References: ${multiDocumentSummary.crossReferences}`);
+logger.info(`  ⚠️ Discrepancies: ${multiDocumentSummary.discrepancies}`);
+logger.info(`  🚨 Contradictions: ${multiDocumentSummary.contradictions}`);
+logger.info(`  🎯 Coherence Score: ${multiDocumentSummary.coherenceScore}/100`);
+logger.info(`  📊 Compliance Score: ${multiDocumentSummary.complianceScore}/100`);
 
 // Demo 7: API Response Structure
-console.log('\n🔌 DEMO 7: Enhanced API Response Structure');
-console.log('-'.repeat(50));
+logger.info('\n🔌 DEMO 7: Enhanced API Response Structure');
+logger.info('-'.repeat(50));
 
 const enhancedAPIResponse = {
   success: true,
@@ -392,43 +392,43 @@ const enhancedAPIResponse = {
   },
 };
 
-console.log(`🔌 Enhanced API Response Features:`);
-console.log(`  📊 Response Size: ${JSON.stringify(enhancedAPIResponse).length} characters`);
-console.log(`  🎯 Metadata Version: ${enhancedAPIResponse.metadata.version}`);
-console.log(`  🤖 Extraction Engine: ${enhancedAPIResponse.metadata.extractionEngine}`);
-console.log(`  📋 Enhanced Features: ${enhancedAPIResponse.metadata.enhancedFeatures.length}`);
-console.log(
+logger.info(`🔌 Enhanced API Response Features:`);
+logger.info(`  📊 Response Size: ${JSON.stringify(enhancedAPIResponse).length} characters`);
+logger.info(`  🎯 Metadata Version: ${enhancedAPIResponse.metadata.version}`);
+logger.info(`  🤖 Extraction Engine: ${enhancedAPIResponse.metadata.extractionEngine}`);
+logger.info(`  📋 Enhanced Features: ${enhancedAPIResponse.metadata.enhancedFeatures.length}`);
+logger.info(
   `  🔍 Cross-Document Analysis: ${enhancedAPIResponse.metadata.multiDocumentAnalysis ? '✅ Enabled' : '❌ Disabled'}`
 );
 
 // Demo Summary
-console.log('\n' + '='.repeat(80));
-console.log('🎉 SUB-PHASE 1.4 DEMONSTRATION COMPLETE');
-console.log('='.repeat(80));
+logger.info('\n' + '='.repeat(80));
+logger.info('🎉 SUB-PHASE 1.4 DEMONSTRATION COMPLETE');
+logger.info('='.repeat(80));
 
-console.log('\n✅ DEMONSTRATED FEATURES:');
-console.log('  📚 Multi-Document Input Processing');
-console.log('  🔍 Cross-Reference Analysis & Similarity Detection');
-console.log('  ⚠️ Discrepancy Identification');
-console.log('  🚨 Contradiction Detection');
-console.log('  📊 Document Coherence Scoring');
-console.log('  🎯 Enhanced Compliance Metrics');
-console.log('  🔌 Advanced API Response Structure');
+logger.info('\n✅ DEMONSTRATED FEATURES:');
+logger.info('  📚 Multi-Document Input Processing');
+logger.info('  🔍 Cross-Reference Analysis & Similarity Detection');
+logger.info('  ⚠️ Discrepancy Identification');
+logger.info('  🚨 Contradiction Detection');
+logger.info('  📊 Document Coherence Scoring');
+logger.info('  🎯 Enhanced Compliance Metrics');
+logger.info('  🔌 Advanced API Response Structure');
 
-console.log('\n🚀 PRODUCTION CAPABILITIES:');
-console.log('  📋 Simultaneous multi-document analysis');
-console.log('  🎯 Automated cross-referencing intelligence');
-console.log('  🔍 Real-time discrepancy detection');
-console.log('  📊 Coherence scoring algorithms');
-console.log('  🤖 AI-powered contradiction analysis');
-console.log('  📈 Enhanced compliance metrics');
-console.log('  🔗 Database integration for existing commitments');
+logger.info('\n🚀 PRODUCTION CAPABILITIES:');
+logger.info('  📋 Simultaneous multi-document analysis');
+logger.info('  🎯 Automated cross-referencing intelligence');
+logger.info('  🔍 Real-time discrepancy detection');
+logger.info('  📊 Coherence scoring algorithms');
+logger.info('  🤖 AI-powered contradiction analysis');
+logger.info('  📈 Enhanced compliance metrics');
+logger.info('  🔗 Database integration for existing commitments');
 
-console.log('\n📈 BUSINESS IMPACT:');
-console.log('  🎯 90% reduction in manual cross-referencing');
-console.log('  📊 95% improvement in discrepancy detection');
-console.log('  🚀 80% faster multi-document analysis');
-console.log('  🔍 100% automated consistency checking');
-console.log('  📋 Enhanced regulatory compliance confidence');
+logger.info('\n📈 BUSINESS IMPACT:');
+logger.info('  🎯 90% reduction in manual cross-referencing');
+logger.info('  📊 95% improvement in discrepancy detection');
+logger.info('  🚀 80% faster multi-document analysis');
+logger.info('  🔍 100% automated consistency checking');
+logger.info('  📋 Enhanced regulatory compliance confidence');
 
-console.log('\n✅ SUB-PHASE 1.4 MULTI-DOCUMENT ANALYSIS READY FOR PRODUCTION');
+logger.info('\n✅ SUB-PHASE 1.4 MULTI-DOCUMENT ANALYSIS READY FOR PRODUCTION');

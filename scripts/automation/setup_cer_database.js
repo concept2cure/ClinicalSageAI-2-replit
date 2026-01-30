@@ -20,14 +20,14 @@ const pool = new Pool({
 
 async function setupDatabase() {
   try {
-    console.log('Setting up CER database...');
+    logger.info('Setting up CER database...');
 
     // Execute the schema
     await pool.query(schema);
 
-    console.log('CER database setup complete!');
+    logger.info('CER database setup complete!');
   } catch (error) {
-    console.error('Error setting up CER database:', error);
+    logger.error('Error setting up CER database:', error);
   } finally {
     await pool.end();
   }

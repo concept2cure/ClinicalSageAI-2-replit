@@ -34,7 +34,7 @@ class TrialSageAPIBenchmark {
    * Test concurrent document uploads
    */
   async benchmarkUploads(concurrency = 10, iterations = 5) {
-    console.log(`🚀 Testing ${concurrency} concurrent uploads for ${iterations} iterations`);
+    logger.info(`🚀 Testing ${concurrency} concurrent uploads for ${iterations} iterations`);
 
     const uploadPromises = [];
 
@@ -52,11 +52,11 @@ class TrialSageAPIBenchmark {
     const successful = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    console.log(`✅ Upload Results:`);
-    console.log(`   Total Time: ${endTime - startTime}ms`);
-    console.log(`   Successful: ${successful}`);
-    console.log(`   Failed: ${failed}`);
-    console.log(
+    logger.info(`✅ Upload Results:`);
+    logger.info(`   Total Time: ${endTime - startTime}ms`);
+    logger.info(`   Successful: ${successful}`);
+    logger.info(`   Failed: ${failed}`);
+    logger.info(
       `   Throughput: ${(successful / ((endTime - startTime) / 1000)).toFixed(2)} uploads/sec`
     );
 
@@ -125,11 +125,11 @@ class TrialSageAPIBenchmark {
    */
   async benchmarkDownloads(documentIds, concurrency = 10) {
     if (documentIds.length === 0) {
-      console.log('⚠️ No documents available for download testing');
+      logger.info('⚠️ No documents available for download testing');
       return { successful: 0, failed: 0, throughput: 0 };
     }
 
-    console.log(`⬇️ Testing ${concurrency} concurrent downloads`);
+    logger.info(`⬇️ Testing ${concurrency} concurrent downloads`);
 
     const downloadPromises = [];
 
@@ -146,11 +146,11 @@ class TrialSageAPIBenchmark {
     const successful = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    console.log(`✅ Download Results:`);
-    console.log(`   Total Time: ${endTime - startTime}ms`);
-    console.log(`   Successful: ${successful}`);
-    console.log(`   Failed: ${failed}`);
-    console.log(
+    logger.info(`✅ Download Results:`);
+    logger.info(`   Total Time: ${endTime - startTime}ms`);
+    logger.info(`   Successful: ${successful}`);
+    logger.info(`   Failed: ${failed}`);
+    logger.info(
       `   Throughput: ${(successful / ((endTime - startTime) / 1000)).toFixed(2)} downloads/sec`
     );
 
@@ -208,7 +208,7 @@ class TrialSageAPIBenchmark {
    * Test search performance
    */
   async benchmarkSearch(queries, concurrency = 5) {
-    console.log(`🔍 Testing ${concurrency} concurrent searches`);
+    logger.info(`🔍 Testing ${concurrency} concurrent searches`);
 
     const searchPromises = [];
 
@@ -225,11 +225,11 @@ class TrialSageAPIBenchmark {
     const successful = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    console.log(`✅ Search Results:`);
-    console.log(`   Total Time: ${endTime - startTime}ms`);
-    console.log(`   Successful: ${successful}`);
-    console.log(`   Failed: ${failed}`);
-    console.log(
+    logger.info(`✅ Search Results:`);
+    logger.info(`   Total Time: ${endTime - startTime}ms`);
+    logger.info(`   Successful: ${successful}`);
+    logger.info(`   Failed: ${failed}`);
+    logger.info(
       `   Avg Response: ${successful > 0 ? ((endTime - startTime) / successful).toFixed(2) : 0}ms per search`
     );
 
@@ -330,8 +330,8 @@ class TrialSageAPIBenchmark {
  * Main benchmark execution
  */
 async function runBenchmark() {
-  console.log('🚀 TrialSage API Performance Benchmark');
-  console.log('=====================================');
+  logger.info('🚀 TrialSage API Performance Benchmark');
+  logger.info('=====================================');
 
   const benchmark = new TrialSageAPIBenchmark();
 
@@ -354,16 +354,16 @@ async function runBenchmark() {
     // Generate and save report
     const report = benchmark.generateReport();
 
-    console.log('\n📊 Final Benchmark Report');
-    console.log('=========================');
-    console.log(JSON.stringify(report.summary, null, 2));
+    logger.info('\n📊 Final Benchmark Report');
+    logger.info('=========================');
+    logger.info(JSON.stringify(report.summary, null, 2));
 
     // Save detailed report
     const reportPath = `test/performance/reports/benchmark_${Date.now()}.json`;
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    console.log(`📄 Detailed report saved: ${reportPath}`);
+    logger.info(`📄 Detailed report saved: ${reportPath}`);
   } catch (error) {
-    console.error('❌ Benchmark failed:', error.message);
+    logger.error('❌ Benchmark failed:', error.message);
     process.exit(1);
   }
 }

@@ -15,11 +15,11 @@ const prisma = new PrismaClient();
 
 async function seedDatabase() {
   try {
-    console.log('Starting device profile migration to Prisma database...');
+    logger.info('Starting device profile migration to Prisma database...');
 
     // Get all existing profiles from the in-memory Map
     const existingProfiles = getProfiles();
-    console.log(`Found ${existingProfiles.length} profiles to migrate`);
+    logger.info(`Found ${existingProfiles.length} profiles to migrate`);
 
     // Migrate each profile to the Prisma database
     let successCount = 0;
@@ -54,21 +54,21 @@ async function seedDatabase() {
           },
         });
 
-        console.log(`✓ Migrated profile: ${profile.name} (${profile.id})`);
+        logger.info(`✓ Migrated profile: ${profile.name} (${profile.id})`);
         successCount++;
       } catch (error) {
-        console.error(`✗ Failed to migrate profile ${profile.name} (${profile.id}):`, error);
+        logger.error(`✗ Failed to migrate profile ${profile.name} (${profile.id}):`, error);
         errorCount++;
       }
     }
 
-    console.log('\nMigration Summary:');
-    console.log(`Total profiles processed: ${existingProfiles.length}`);
-    console.log(`Successfully migrated: ${successCount}`);
-    console.log(`Failed to migrate: ${errorCount}`);
-    console.log('\nMigration complete!');
+    logger.info('\nMigration Summary:');
+    logger.info(`Total profiles processed: ${existingProfiles.length}`);
+    logger.info(`Successfully migrated: ${successCount}`);
+    logger.info(`Failed to migrate: ${errorCount}`);
+    logger.info('\nMigration complete!');
   } catch (error) {
-    console.error('Migration failed:', error);
+    logger.error('Migration failed:', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

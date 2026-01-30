@@ -629,7 +629,7 @@ class OperationalHealthMonitor {
    * Comprehensive Health Check
    */
   async runComprehensiveHealthCheck() {
-    console.log('🔍 Starting comprehensive health check...');
+    logger.info('🔍 Starting comprehensive health check...');
 
     // Reset alerts for this check
     this.healthMetrics.alerts = [];
@@ -791,7 +791,7 @@ class OperationalHealthMonitor {
    * Start continuous monitoring
    */
   startContinuousMonitoring(intervalMinutes = 5) {
-    console.log(`🚀 Starting continuous health monitoring (${intervalMinutes} min intervals)`);
+    logger.info(`🚀 Starting continuous health monitoring (${intervalMinutes} min intervals)`);
 
     // Run initial check
     this.runComprehensiveHealthCheck();
@@ -801,7 +801,7 @@ class OperationalHealthMonitor {
       () => {
         this.runComprehensiveHealthCheck().then(report => {
           if (report.overallStatus !== 'healthy') {
-            console.log('⚠️  Health check alert:', report.summary);
+            logger.info('⚠️  Health check alert:', report.summary);
           }
         });
       },

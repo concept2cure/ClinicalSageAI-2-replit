@@ -257,7 +257,7 @@ async function importTrialsToDatabase(trials) {
         const checkResult = await client.query(checkQuery, [trial.nctrialId]);
 
         if (checkResult.rows.length > 0) {
-          console.log(`Skipping ${trial.nctrialId} - already exists in database`);
+          logger.info(`Skipping ${trial.nctrialId} - already exists in database`);
           skippedCount++;
           continue;
         }
@@ -313,10 +313,10 @@ async function importTrialsToDatabase(trials) {
         importedCount++;
 
         if (importedCount % 20 === 0) {
-          console.log(`Imported ${importedCount} studies so far...`);
+          logger.info(`Imported ${importedCount} studies so far...`);
         }
       } catch (error) {
-        console.error(`Error importing trial ${trial.nctrialId}:`, error.message);
+        logger.error(`Error importing trial ${trial.nctrialId}:`, error.message);
         skippedCount++;
       }
     }
@@ -324,7 +324,7 @@ async function importTrialsToDatabase(trials) {
     // Commit transaction
     await client.query('COMMIT');
 
-    console.log(`
+    logger.info(`
 === Import Summary ===
 Total Health Canada studies processed: ${trials.length}
 Successfully imported: ${importedCount}
@@ -335,7 +335,7 @@ Skipped (already exists or error): ${skippedCount}
   } catch (error) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
-    console.error('Error during transaction:', error.message);
+    logger.error('Error during transaction:', error.message);
     throw error;
   } finally {
     // Release the client
@@ -345,12 +345,12 @@ Skipped (already exists or error): ${skippedCount}
 
 // Main function
 async function runBatchImport() {
-  console.log(`Starting batch import of ${BATCH_SIZE} Canadian trials...`);
+  logger.info(`Starting batch import of ${BATCH_SIZE} Canadian trials...`);
 
   try {
     // Generate trials
     const trials = generateTrials(BATCH_SIZE, START_ID);
-    console.log(`Generated ${trials.length} trial records`);
+    logger.info(`Generated ${trials.length} trial records`);
 
     // Import to database
     await importTrialsToDatabase(trials);
@@ -359,12 +359,12 @@ async function runBatchImport() {
     const client = await pool.connect();
     try {
       const countResult = await client.query('SELECT COUNT(*) as total FROM csr_reports');
-      console.log(`\nTotal trials in database: ${countResult.rows[0].total}`);
+      logger.info(`\nTotal trials in database: ${countResult.rows[0].total}`);
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error during batch import process:', error.message);
+    logger.error('Error during batch import process:', error.message);
   } finally {
     // Close the pool
     await pool.end();

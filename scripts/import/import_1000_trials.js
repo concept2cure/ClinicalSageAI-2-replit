@@ -16,7 +16,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   return {
@@ -32,15 +32,15 @@ async function runBatches() {
   const initialData = getTrackingData();
   const startingTotal = initialData.totalImported;
 
-  console.log(`Starting import process for 1000 additional trials...`);
-  console.log(`Current trials imported: ${startingTotal}`);
-  console.log(`Target: ${startingTotal + TARGET_ADDITIONAL} trials`);
+  logger.info(`Starting import process for 1000 additional trials...`);
+  logger.info(`Current trials imported: ${startingTotal}`);
+  logger.info(`Target: ${startingTotal + TARGET_ADDITIONAL} trials`);
 
   let currentTotal = startingTotal;
   let batchesRun = 0;
 
   while (currentTotal < startingTotal + TARGET_ADDITIONAL) {
-    console.log(`\nRunning batch ${batchesRun + 1}...`);
+    logger.info(`\nRunning batch ${batchesRun + 1}...`);
 
     try {
       // Run the micro batch script
@@ -55,32 +55,32 @@ async function runBatches() {
       currentTotal = newTotal;
       batchesRun++;
 
-      console.log(`Batch ${batchesRun} complete. Imported ${batchImported} trials.`);
-      console.log(
+      logger.info(`Batch ${batchesRun} complete. Imported ${batchImported} trials.`);
+      logger.info(
         `Progress: ${currentTotal - startingTotal}/${TARGET_ADDITIONAL} additional trials imported (${Math.round(((currentTotal - startingTotal) / TARGET_ADDITIONAL) * 100)}%)`
       );
 
       // Check if we've reached our target
       if (currentTotal >= startingTotal + TARGET_ADDITIONAL) {
-        console.log(`\nTarget reached! Total imported: ${currentTotal}`);
+        logger.info(`\nTarget reached! Total imported: ${currentTotal}`);
         break;
       }
 
       // Add a small delay between batches to allow system to recover
-      console.log('Waiting 3 seconds before next batch...');
+      logger.info('Waiting 3 seconds before next batch...');
       await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (error) {
-      console.error(`Error running batch ${batchesRun + 1}:`, error.message);
-      console.log('Waiting 5 seconds before retrying...');
+      logger.error(`Error running batch ${batchesRun + 1}:`, error.message);
+      logger.info('Waiting 5 seconds before retrying...');
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
 
-  console.log(`\n=== Import Complete ===`);
-  console.log(`Started with: ${startingTotal} trials`);
-  console.log(`Ended with: ${currentTotal} trials`);
-  console.log(`Total imported: ${currentTotal - startingTotal} trials`);
-  console.log(`Batches run: ${batchesRun}`);
+  logger.info(`\n=== Import Complete ===`);
+  logger.info(`Started with: ${startingTotal} trials`);
+  logger.info(`Ended with: ${currentTotal} trials`);
+  logger.info(`Total imported: ${currentTotal - startingTotal} trials`);
+  logger.info(`Batches run: ${batchesRun}`);
 }
 
 // Run the batches

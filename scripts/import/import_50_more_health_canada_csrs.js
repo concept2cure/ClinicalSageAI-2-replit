@@ -39,7 +39,7 @@ function getTrackingData() {
 // Save tracking data
 function saveTrackingData(data) {
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
-  console.log('Progress saved to tracking file');
+  logger.info('Progress saved to tracking file');
 }
 
 // Check if a CSR already exists in the database
@@ -53,7 +53,7 @@ async function fetchHealthCanadaCSRs(offset = 0, limit = 50) {
   const url = `${process.env.HEALTH_CANADA_API_URL}/clinical-documents`;
 
   try {
-    console.log(`Fetching CSRs from Health Canada API: offset=${offset}, limit=${limit}`);
+    logger.info(`Fetching CSRs from Health Canada API: offset=${offset}, limit=${limit}`);
 
     const response = await axios.get(url, {
       params: {
@@ -71,9 +71,9 @@ async function fetchHealthCanadaCSRs(offset = 0, limit = 50) {
 
     return response.data;
   } catch (error) {
-    console.error('Error fetching CSRs from Health Canada:', error.message);
+    logger.error('Error fetching CSRs from Health Canada:', error.message);
     if (error.response) {
-      console.error('API response:', error.response.data);
+      logger.error('API response:', error.response.data);
     }
     throw error;
   }
@@ -88,7 +88,7 @@ async function downloadCSRPdf(csrId, fileName) {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
   try {
-    console.log(`Downloading PDF for CSR ${csrId} to ${outputPath}`);
+    logger.info(`Downloading PDF for CSR ${csrId} to ${outputPath}`);
 
     const response = await axios({
       method: 'get',
@@ -107,7 +107,7 @@ async function downloadCSRPdf(csrId, fileName) {
       writer.on('error', reject);
     });
   } catch (error) {
-    console.error(`Error downloading PDF for CSR ${csrId}:`, error.message);
+    logger.error(`Error downloading PDF for CSR ${csrId}:`, error.message);
     throw error;
   }
 }
@@ -115,12 +115,12 @@ async function downloadCSRPdf(csrId, fileName) {
 // Process and import a single CSR
 async function processCSR(client, csr) {
   try {
-    console.log(`Processing CSR ${csr.id}: ${csr.title}`);
+    logger.info(`Processing CSR ${csr.id}: ${csr.title}`);
 
     // Check if this CSR already exists
     const exists = await checkCSRExists(client, csr.id);
     if (exists) {
-      console.log(`CSR ${csr.id} already exists in database, skipping`);
+      logger.info(`CSR ${csr.id} already exists in database, skipping`);
       return false;
     }
 
@@ -171,21 +171,21 @@ async function processCSR(client, csr) {
       ]
     );
 
-    console.log(`Successfully imported CSR ${csr.id}`);
+    logger.info(`Successfully imported CSR ${csr.id}`);
     return true;
   } catch (error) {
-    console.error(`Error processing CSR ${csr.id}:`, error);
+    logger.error(`Error processing CSR ${csr.id}:`, error);
     return false;
   }
 }
 
 // Main function to import 50 CSRs
 async function importFiftyMoreCSRs() {
-  console.log('Starting import of 50 more Health Canada CSRs');
+  logger.info('Starting import of 50 more Health Canada CSRs');
 
   // Get tracking data
   const trackingData = getTrackingData();
-  console.log(`Previous import: ${trackingData.totalImported} CSRs imported`);
+  logger.info(`Previous import: ${trackingData.totalImported} CSRs imported`);
 
   // Connect to database
   const client = await pool.connect();
@@ -203,7 +203,7 @@ async function importFiftyMoreCSRs() {
       const result = await fetchHealthCanadaCSRs(currentOffset, 25);
 
       if (!result.documents || result.documents.length === 0) {
-        console.log('No more CSRs available from Health Canada API');
+        logger.info('No more CSRs available from Health Canada API');
         break;
       }
 
@@ -211,7 +211,7 @@ async function importFiftyMoreCSRs() {
       for (const csr of result.documents) {
         // Skip if we've already processed this ID
         if (trackingData.processedIds.includes(csr.id)) {
-          console.log(`Skipping already processed CSR ${csr.id}`);
+          logger.info(`Skipping already processed CSR ${csr.id}`);
           continue;
         }
 
@@ -219,7 +219,7 @@ async function importFiftyMoreCSRs() {
 
         if (imported) {
           importedCount++;
-          console.log(`Progress: ${importedCount}/50 CSRs imported`);
+          logger.info(`Progress: ${importedCount}/50 CSRs imported`);
 
           // Track this ID
           trackingData.processedIds.push(csr.id);
@@ -245,7 +245,7 @@ async function importFiftyMoreCSRs() {
     // Commit transaction
     await client.query('COMMIT');
 
-    console.log(`Import completed successfully. ${importedCount} new CSRs imported.`);
+    logger.info(`Import completed successfully. ${importedCount} new CSRs imported.`);
 
     // Final update to tracking data
     trackingData.lastImportDate = new Date().toISOString();
@@ -253,12 +253,12 @@ async function importFiftyMoreCSRs() {
   } catch (error) {
     // Rollback on error
     await client.query('ROLLBACK');
-    console.error('Error during import:', error);
+    logger.error('Error during import:', error);
     throw error;
   } finally {
     // Release client
     client.release();
-    console.log('Database connection closed');
+    logger.info('Database connection closed');
   }
 }
 
@@ -268,8 +268,8 @@ function checkRequiredEnvVars() {
   const missing = required.filter(name => !process.env[name]);
 
   if (missing.length > 0) {
-    console.error(`Missing required environment variables: ${missing.join(', ')}`);
-    console.error('Please check your .env file and try again');
+    logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+    logger.error('Please check your .env file and try again');
     return false;
   }
 
@@ -281,11 +281,11 @@ if (require.main === module) {
   if (checkRequiredEnvVars()) {
     importFiftyMoreCSRs()
       .then(() => {
-        console.log('Import script completed successfully');
+        logger.info('Import script completed successfully');
         process.exit(0);
       })
       .catch(error => {
-        console.error('Import script failed:', error);
+        logger.error('Import script failed:', error);
         process.exit(1);
       });
   } else {

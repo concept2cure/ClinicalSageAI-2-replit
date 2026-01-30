@@ -89,54 +89,54 @@ const mockPdfGeneration = {
  * Run a test of the 510k eSTAR generation flow
  */
 function runTest() {
-  console.log('======================================================');
-  console.log('STARTING 510K eSTAR WORKFLOW TEST WITH COMPLIANCE CHECK');
-  console.log('======================================================');
+  logger.info('======================================================');
+  logger.info('STARTING 510K eSTAR WORKFLOW TEST WITH COMPLIANCE CHECK');
+  logger.info('======================================================');
 
-  console.log('\n1. Set document type to 510k');
-  console.log('2. Fill device details:', mockDeviceData.deviceName);
-  console.log(
+  logger.info('\n1. Set document type to 510k');
+  logger.info('2. Fill device details:', mockDeviceData.deviceName);
+  logger.info(
     '3. Add predicate device:',
     mockPredicateData.deviceName,
     `(${mockPredicateData.kNumber})`
   );
 
-  console.log('\n4. FDA COMPLIANCE STATUS CHECK:');
-  console.log('-------------------------------');
-  console.log(`Overall completion: ${mockComplianceStatusData.progressSummary.overallPercentage}%`);
-  console.log(
+  logger.info('\n4. FDA COMPLIANCE STATUS CHECK:');
+  logger.info('-------------------------------');
+  logger.info(`Overall completion: ${mockComplianceStatusData.progressSummary.overallPercentage}%`);
+  logger.info(
     `Implementation steps: ${mockComplianceStatusData.progressSummary.steps.completed}/${mockComplianceStatusData.progressSummary.steps.total} (${mockComplianceStatusData.progressSummary.steps.percentage}%)`
   );
-  console.log(
+  logger.info(
     `Validation rules: ${mockComplianceStatusData.progressSummary.validationRules.implemented}/${mockComplianceStatusData.progressSummary.validationRules.total} (${mockComplianceStatusData.progressSummary.validationRules.percentage}%)`
   );
 
-  console.log('\nImplemented features:');
+  logger.info('\nImplemented features:');
   mockComplianceStatusData.implementedFeatures.forEach(feature => {
-    console.log(`✓ ${feature}`);
+    logger.info(`✓ ${feature}`);
   });
 
-  console.log('\nPending features:');
+  logger.info('\nPending features:');
   mockComplianceStatusData.pendingFeatures.forEach(feature => {
-    console.log(`○ ${feature}`);
+    logger.info(`○ ${feature}`);
   });
 
-  console.log('\nValidation Issues:');
+  logger.info('\nValidation Issues:');
   mockComplianceStatusData.validationIssues.forEach(issue => {
     const icon = issue.severity === 'warning' ? '⚠️' : 'ℹ️';
-    console.log(`${icon} ${issue.section}: ${issue.message}`);
+    logger.info(`${icon} ${issue.section}: ${issue.message}`);
   });
 
-  console.log('\n5. GENERATING 510K SUBMISSION PDF');
-  console.log('---------------------------------');
-  console.log(`PDF generation: ${mockPdfGeneration.success ? '✓ Success' : '✗ Failed'}`);
-  console.log(`File: ${mockPdfGeneration.fileUrl}`);
-  console.log(`Pages: ${mockPdfGeneration.pageCount}`);
-  console.log(`FDA Compliant: ${mockPdfGeneration.fdaCompliant ? '✓ Yes' : '✗ No'}`);
+  logger.info('\n5. GENERATING 510K SUBMISSION PDF');
+  logger.info('---------------------------------');
+  logger.info(`PDF generation: ${mockPdfGeneration.success ? '✓ Success' : '✗ Failed'}`);
+  logger.info(`File: ${mockPdfGeneration.fileUrl}`);
+  logger.info(`Pages: ${mockPdfGeneration.pageCount}`);
+  logger.info(`FDA Compliant: ${mockPdfGeneration.fdaCompliant ? '✓ Yes' : '✗ No'}`);
 
-  console.log('\n======================================================');
-  console.log('TEST COMPLETED SUCCESSFULLY');
-  console.log('======================================================');
+  logger.info('\n======================================================');
+  logger.info('TEST COMPLETED SUCCESSFULLY');
+  logger.info('======================================================');
 }
 
 // Run the test

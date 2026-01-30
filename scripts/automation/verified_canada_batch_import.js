@@ -22,7 +22,7 @@ const args = process.argv.slice(2);
 const batchIndex = args[0] ? parseInt(args[0], 10) : 0;
 
 if (isNaN(batchIndex)) {
-  console.error('Error: Batch index must be a number');
+  logger.error('Error: Batch index must be a number');
   process.exit(1);
 }
 
@@ -36,7 +36,7 @@ const pool = new pg.Pool({
 
 // Error handling for database connection
 pool.on('error', err => {
-  console.error('Unexpected database error:', err);
+  logger.error('Unexpected database error:', err);
 });
 
 /**
@@ -126,7 +126,7 @@ function generateEligibilityCriteria(indication) {
  * Generate trials for import
  */
 async function generateTrials(count, startId) {
-  console.log(`Generating ${count} trials starting at ID ${startId}...`);
+  logger.info(`Generating ${count} trials starting at ID ${startId}...`);
 
   const indications = [
     'Rheumatoid Arthritis',
@@ -228,7 +228,7 @@ async function checkTrialExists(client, nctrialId) {
     ]);
     return result.rows.length > 0;
   } catch (error) {
-    console.error('Error checking if trial exists:', error);
+    logger.error('Error checking if trial exists:', error);
     return false;
   }
 }
@@ -237,7 +237,7 @@ async function checkTrialExists(client, nctrialId) {
  * Import trials to database
  */
 async function importTrialsToDatabase(trials) {
-  console.log(`Importing ${trials.length} trials to database...`);
+  logger.info(`Importing ${trials.length} trials to database...`);
   let successfulImports = 0;
 
   const client = await pool.connect();
@@ -250,7 +250,7 @@ async function importTrialsToDatabase(trials) {
       const exists = await checkTrialExists(client, trial.nctrialId);
 
       if (exists) {
-        console.log(`Trial ${trial.nctrialId} already exists, skipping.`);
+        logger.info(`Trial ${trial.nctrialId} already exists, skipping.`);
         continue;
       }
 
@@ -294,10 +294,10 @@ async function importTrialsToDatabase(trials) {
     }
 
     await client.query('COMMIT');
-    console.log(`Successfully imported ${successfulImports} trials.`);
+    logger.info(`Successfully imported ${successfulImports} trials.`);
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error in import process:', error);
+    logger.error('Error in import process:', error);
   } finally {
     client.release();
   }
@@ -323,7 +323,7 @@ function updateTrackingData(newTrialsImported, batchIndex) {
         trackingData.totalImported = 0;
       }
     } catch (error) {
-      console.error('Error reading tracking file:', error);
+      logger.error('Error reading tracking file:', error);
     }
   }
 
@@ -339,14 +339,14 @@ function updateTrackingData(newTrialsImported, batchIndex) {
 
   // Save tracking data
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(trackingData, null, 2));
-  console.log(`Updated tracking data. Total imported: ${trackingData.totalImported}`);
+  logger.info(`Updated tracking data. Total imported: ${trackingData.totalImported}`);
 }
 
 /**
  * Run the verified batch import
  */
 async function runVerifiedBatch() {
-  console.log(
+  logger.info(
     `Starting verified batch import. Batch index: ${batchIndex}, Batch size: ${BATCH_SIZE}`
   );
 
@@ -364,29 +364,29 @@ async function runVerifiedBatch() {
     // Update tracking
     updateTrackingData(importedCount, batchIndexNum);
 
-    console.log(`Batch ${batchIndexNum} completed. Imported ${importedCount} trials.`);
+    logger.info(`Batch ${batchIndexNum} completed. Imported ${importedCount} trials.`);
     return importedCount;
   } catch (error) {
-    console.error('Error in verified batch import:', error);
+    logger.error('Error in verified batch import:', error);
     return 0;
   } finally {
     try {
       await pool.end();
-      console.log('Database connection pool closed.');
+      logger.info('Database connection pool closed.');
     } catch (poolError) {
-      console.error('Error closing pool:', poolError);
+      logger.error('Error closing pool:', poolError);
     }
   }
 }
 
 // Run the verified batch import
-console.log(`Verified Health Canada Batch Import - Index: ${batchIndex}, Size: ${BATCH_SIZE}`);
+logger.info(`Verified Health Canada Batch Import - Index: ${batchIndex}, Size: ${BATCH_SIZE}`);
 runVerifiedBatch()
   .then(count => {
-    console.log(`Batch import complete. Imported ${count} trials.`);
+    logger.info(`Batch import complete. Imported ${count} trials.`);
     process.exit(0);
   })
   .catch(error => {
-    console.error('Fatal error during batch import:', error);
+    logger.error('Fatal error during batch import:', error);
     process.exit(1);
   });

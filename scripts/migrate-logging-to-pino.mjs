@@ -51,13 +51,13 @@ function processFile(filePath) {
   let out = src;
   for (const [re, sub] of replacements) out = out.replace(re, sub);
   if (out !== src) {
-    console.log((apply ? '[APPLY]' : '[DRY RUN]') + ' ' + filePath);
+    logger.info((apply ? '[APPLY]' : '[DRY RUN]') + ' ' + filePath);
     if (apply) {
       fs.writeFileSync(filePath, out, 'utf8');
     }
   }
 }
 
-console.log('Scanning', baseDir);
+logger.info('Scanning', baseDir);
 walk(baseDir);
-console.log('Done.');
+logger.info('Done.');

@@ -26,18 +26,18 @@ if (fs.existsSync(PROGRESS_FILE)) {
   try {
     const savedProgress = JSON.parse(fs.readFileSync(PROGRESS_FILE, 'utf8'));
     progress = { ...savedProgress };
-    console.log(
+    logger.info(
       `Resuming from previous progress: ${progress.completed}/${progress.total} batches completed`
     );
   } catch (err) {
-    console.error('Error reading progress file, starting fresh:', err);
+    logger.error('Error reading progress file, starting fresh:', err);
   }
 }
 
 // Function to run a single batch import
 async function runBatch(batchNumber) {
   return new Promise((resolve, reject) => {
-    console.log(
+    logger.info(
       `Starting Canada CSR batch ${batchNumber}/${TOTAL_BATCHES} (${BATCH_SIZE} CSRs)...`
     );
 
@@ -56,13 +56,13 @@ async function runBatch(batchNumber) {
     batchProcess.stdout.on('data', data => {
       const text = data.toString();
       output += text;
-      console.log(`[Batch ${batchNumber}] ${text.trim()}`);
+      logger.info(`[Batch ${batchNumber}] ${text.trim()}`);
     });
 
     batchProcess.stderr.on('data', data => {
       const text = data.toString();
       errorOutput += text;
-      console.error(`[Batch ${batchNumber} ERROR] ${text.trim()}`);
+      logger.error(`[Batch ${batchNumber} ERROR] ${text.trim()}`);
     });
 
     batchProcess.on('close', code => {
@@ -80,10 +80,10 @@ async function runBatch(batchNumber) {
 
       if (code === 0) {
         progress.completed++;
-        console.log(`Batch ${batchNumber}/${TOTAL_BATCHES} completed successfully.`);
+        logger.info(`Batch ${batchNumber}/${TOTAL_BATCHES} completed successfully.`);
         resolve(result);
       } else {
-        console.error(`Batch ${batchNumber}/${TOTAL_BATCHES} failed with exit code ${code}`);
+        logger.error(`Batch ${batchNumber}/${TOTAL_BATCHES} failed with exit code ${code}`);
         reject(result);
       }
 
@@ -98,7 +98,7 @@ async function runAllBatches() {
   // Calculate how many batches we still need to run
   const remainingBatches = TOTAL_BATCHES - progress.completed;
 
-  console.log(
+  logger.info(
     `Starting import of ${remainingBatches} Canada CSR batches, each with ${BATCH_SIZE} CSRs (total: ${remainingBatches * BATCH_SIZE} CSRs)`
   );
 
@@ -108,11 +108,11 @@ async function runAllBatches() {
 
       // Add a short delay between batches to prevent overloading
       if (i < TOTAL_BATCHES) {
-        console.log(`Waiting 5 seconds before starting next batch...`);
+        logger.info(`Waiting 5 seconds before starting next batch...`);
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     } catch (error) {
-      console.error(`Error in batch ${i}:`, error);
+      logger.error(`Error in batch ${i}:`, error);
       // Continue with next batch even if one fails
     }
   }
@@ -121,12 +121,12 @@ async function runAllBatches() {
   const successBatches = progress.batches.filter(b => b.success).length;
   const failedBatches = progress.batches.filter(b => !b.success).length;
 
-  console.log('\n===== IMPORT SUMMARY =====');
-  console.log(`Total batches: ${TOTAL_BATCHES}`);
-  console.log(`Successfully completed: ${successBatches}`);
-  console.log(`Failed: ${failedBatches}`);
-  console.log(`Estimated CSRs imported: ${successBatches * BATCH_SIZE}`);
-  console.log('==========================\n');
+  logger.info('\n===== IMPORT SUMMARY =====');
+  logger.info(`Total batches: ${TOTAL_BATCHES}`);
+  logger.info(`Successfully completed: ${successBatches}`);
+  logger.info(`Failed: ${failedBatches}`);
+  logger.info(`Estimated CSRs imported: ${successBatches * BATCH_SIZE}`);
+  logger.info('==========================\n');
 
   // Calculate and display time stats
   const startTime = new Date(progress.startTime);
@@ -136,14 +136,14 @@ async function runAllBatches() {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  console.log(`Total import time: ${hours}h ${minutes}m ${seconds}s`);
+  logger.info(`Total import time: ${hours}h ${minutes}m ${seconds}s`);
 }
 
 // Start the batch process
 runAllBatches()
   .then(() => {
-    console.log('All Canada CSR batches have been processed.');
+    logger.info('All Canada CSR batches have been processed.');
   })
   .catch(err => {
-    console.error('Error running batches:', err);
+    logger.error('Error running batches:', err);
   });

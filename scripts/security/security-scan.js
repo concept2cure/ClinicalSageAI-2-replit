@@ -87,7 +87,7 @@ class SecurityScanner {
       this.checkForInsecureHeaders(filePath, content);
       this.checkForWeakCrypto(filePath, content);
     } catch (error) {
-      console.error(`Error scanning file ${filePath}:`, error.message);
+      logger.error(`Error scanning file ${filePath}:`, error.message);
     }
   }
 
@@ -166,14 +166,14 @@ class SecurityScanner {
     fs.writeFileSync('security-scan-report.json', JSON.stringify(report, null, 2));
 
     // Console output
-    console.log('\n🔒 Security Scan Results:');
-    console.log(`Total Issues: ${report.totalIssues}`);
-    console.log(`Critical: ${report.severityBreakdown.Critical}`);
-    console.log(`High: ${report.severityBreakdown.High}`);
-    console.log(`Medium: ${report.severityBreakdown.Medium}`);
+    logger.info('\n🔒 Security Scan Results:');
+    logger.info(`Total Issues: ${report.totalIssues}`);
+    logger.info(`Critical: ${report.severityBreakdown.Critical}`);
+    logger.info(`High: ${report.severityBreakdown.High}`);
+    logger.info(`Medium: ${report.severityBreakdown.Medium}`);
 
     if (report.severityBreakdown.Critical > 0) {
-      console.log('\n❌ Critical security issues found!');
+      logger.info('\n❌ Critical security issues found!');
       process.exit(1);
     }
 

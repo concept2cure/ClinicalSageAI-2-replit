@@ -19,14 +19,14 @@ const pool = new pg.Pool({
 });
 
 async function runCanadaTrialsImport() {
-  console.log('Starting import of Health Canada trials from canada_trials.json...');
+  logger.info('Starting import of Health Canada trials from canada_trials.json...');
 
   try {
     // Read the Health Canada trials JSON file
     const trialsPath = path.join(__dirname, 'canada_trials.json');
 
     if (!fs.existsSync(trialsPath)) {
-      console.error('Error: canada_trials.json file not found');
+      logger.error('Error: canada_trials.json file not found');
       return;
     }
 
@@ -34,11 +34,11 @@ async function runCanadaTrialsImport() {
     const trialsData = JSON.parse(fileData);
 
     if (!trialsData.studies || !Array.isArray(trialsData.studies)) {
-      console.error('Error: Invalid format in canada_trials.json');
+      logger.error('Error: Invalid format in canada_trials.json');
       return;
     }
 
-    console.log(`Found ${trialsData.studies.length} studies to import`);
+    logger.info(`Found ${trialsData.studies.length} studies to import`);
 
     // Connect to the database
     const client = await pool.connect();
@@ -58,7 +58,7 @@ async function runCanadaTrialsImport() {
           const checkResult = await client.query(checkQuery, [study.nctrialId]);
 
           if (checkResult.rows.length > 0) {
-            console.log(`Skipping ${study.nctrialId} - already exists in database`);
+            logger.info(`Skipping ${study.nctrialId} - already exists in database`);
             skippedCount++;
             continue;
           }
@@ -114,10 +114,10 @@ async function runCanadaTrialsImport() {
           importedCount++;
 
           if (importedCount % 10 === 0) {
-            console.log(`Imported ${importedCount} studies so far...`);
+            logger.info(`Imported ${importedCount} studies so far...`);
           }
         } catch (error) {
-          console.error(`Error importing study ${study.nctrialId}:`, error.message);
+          logger.error(`Error importing study ${study.nctrialId}:`, error.message);
           skippedCount++;
         }
       }
@@ -125,7 +125,7 @@ async function runCanadaTrialsImport() {
       // Commit transaction
       await client.query('COMMIT');
 
-      console.log(`
+      logger.info(`
 === Import Summary ===
 Total Health Canada studies processed: ${trialsData.studies.length}
 Successfully imported: ${importedCount}
@@ -134,13 +134,13 @@ Skipped (already exists or error): ${skippedCount}
     } catch (error) {
       // Rollback transaction on error
       await client.query('ROLLBACK');
-      console.error('Error during transaction:', error.message);
+      logger.error('Error during transaction:', error.message);
     } finally {
       // Release the client
       client.release();
     }
   } catch (error) {
-    console.error('Error during import process:', error.message);
+    logger.error('Error during import process:', error.message);
   } finally {
     // Close the pool
     await pool.end();

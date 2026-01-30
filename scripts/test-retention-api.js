@@ -65,9 +65,9 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     body: body ? JSON.stringify(body) : undefined,
   };
 
-  console.log(`${colors.blue}Request: ${method} ${url}${colors.reset}`);
+  logger.info(`${colors.blue}Request: ${method} ${url}${colors.reset}`);
   if (body) {
-    console.log(`${colors.blue}Body: ${JSON.stringify(body, null, 2)}${colors.reset}`);
+    logger.info(`${colors.blue}Body: ${JSON.stringify(body, null, 2)}${colors.reset}`);
   }
 
   try {
@@ -81,10 +81,10 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
       responseData = await response.text();
     }
 
-    console.log(
+    logger.info(
       `${colors.green}Response: ${response.status} ${response.statusText}${colors.reset}`
     );
-    console.log(`${colors.green}Data: ${JSON.stringify(responseData, null, 2)}${colors.reset}`);
+    logger.info(`${colors.green}Data: ${JSON.stringify(responseData, null, 2)}${colors.reset}`);
 
     return {
       status: response.status,
@@ -92,7 +92,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
       success: response.ok,
     };
   } catch (error) {
-    console.error(`${colors.red}Error: ${error.message}${colors.reset}`);
+    logger.error(`${colors.red}Error: ${error.message}${colors.reset}`);
     return {
       status: 0,
       data: null,
@@ -104,44 +104,44 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 
 // Test functions
 async function testGetPolicies() {
-  console.log(`\n${colors.cyan}Testing GET /api/retention/policies${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing GET /api/retention/policies${colors.reset}`);
   return await apiRequest('/api/retention/policies');
 }
 
 async function testCreatePolicy() {
-  console.log(`\n${colors.cyan}Testing POST /api/retention/policies${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing POST /api/retention/policies${colors.reset}`);
   return await apiRequest('/api/retention/policies', 'POST', testPolicy);
 }
 
 async function testGetPolicy(id) {
-  console.log(`\n${colors.cyan}Testing GET /api/retention/policies/${id}${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing GET /api/retention/policies/${id}${colors.reset}`);
   return await apiRequest(`/api/retention/policies/${id}`);
 }
 
 async function testUpdatePolicy(id) {
-  console.log(`\n${colors.cyan}Testing PUT /api/retention/policies/${id}${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing PUT /api/retention/policies/${id}${colors.reset}`);
   return await apiRequest(`/api/retention/policies/${id}`, 'PUT', updatedPolicy);
 }
 
 async function testDeletePolicy(id) {
-  console.log(`\n${colors.cyan}Testing DELETE /api/retention/policies/${id}${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing DELETE /api/retention/policies/${id}${colors.reset}`);
   return await apiRequest(`/api/retention/policies/${id}`, 'DELETE');
 }
 
 async function testRunJob() {
-  console.log(`\n${colors.cyan}Testing POST /api/retention/run-job${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing POST /api/retention/run-job${colors.reset}`);
   return await apiRequest('/api/retention/run-job', 'POST');
 }
 
 async function testGetDocumentTypes() {
-  console.log(`\n${colors.cyan}Testing GET /api/retention/document-types${colors.reset}`);
+  logger.info(`\n${colors.cyan}Testing GET /api/retention/document-types${colors.reset}`);
   return await apiRequest('/api/retention/document-types');
 }
 
 // Main function to run all tests
 async function runTests() {
-  console.log(`${colors.magenta}Starting Retention API Tests${colors.reset}`);
-  console.log(`${colors.magenta}================================${colors.reset}`);
+  logger.info(`${colors.magenta}Starting Retention API Tests${colors.reset}`);
+  logger.info(`${colors.magenta}================================${colors.reset}`);
 
   try {
     // Test getting all policies
@@ -170,8 +170,8 @@ async function runTests() {
     // Cleanup - delete the test policy
     const deletePolicyResult = await testDeletePolicy(policyId);
 
-    console.log(`\n${colors.magenta}Test Results Summary${colors.reset}`);
-    console.log(`${colors.magenta}====================${colors.reset}`);
+    logger.info(`\n${colors.magenta}Test Results Summary${colors.reset}`);
+    logger.info(`${colors.magenta}====================${colors.reset}`);
 
     const results = [
       { name: 'Get Policies', result: getPoliciesResult },
@@ -186,18 +186,18 @@ async function runTests() {
     for (const test of results) {
       const statusColor = test.result.success ? colors.green : colors.red;
       const status = test.result.success ? 'PASSED' : 'FAILED';
-      console.log(
+      logger.info(
         `${test.name}: ${statusColor}${status}${colors.reset} (Status: ${test.result.status})`
       );
     }
 
     const allPassed = results.every(test => test.result.success);
 
-    console.log(
+    logger.info(
       `\n${allPassed ? colors.green : colors.red}${allPassed ? 'ALL TESTS PASSED!' : 'SOME TESTS FAILED'}${colors.reset}`
     );
   } catch (error) {
-    console.error(`\n${colors.red}Error during test execution: ${error.message}${colors.reset}`);
+    logger.error(`\n${colors.red}Error during test execution: ${error.message}${colors.reset}`);
   }
 }
 

@@ -247,14 +247,14 @@ export class EMAEPARFarmer {
 
   constructor(pool: pg.Pool) {
     this.pool = pool;
-    console.log('✅ EMA EPAR Farmer initialized');
+    logger.info('✅ EMA EPAR Farmer initialized');
   }
 
   /**
    * Main harvest function
    */
   async harvest(): Promise<typeof this.harvestStats> {
-    console.log('🌾 Starting EMA EPAR harvest...');
+    logger.info('🌾 Starting EMA EPAR harvest...');
 
     try {
       // Process medicines
@@ -268,13 +268,13 @@ export class EMAEPARFarmer {
       // Add CHMP guidance atoms
       await this.createCHMPGuidanceAtoms();
 
-      console.log('✅ EMA EPAR harvest complete');
-      console.log(`   📊 Medicines processed: ${this.harvestStats.medicinesProcessed}`);
-      console.log(`   🧬 Atoms created: ${this.harvestStats.atomsCreated}`);
-      console.log(`   🔗 Edges created: ${this.harvestStats.edgesCreated}`);
-      console.log(`   ❌ Errors: ${this.harvestStats.errors}`);
+      logger.info('✅ EMA EPAR harvest complete');
+      logger.info(`   📊 Medicines processed: ${this.harvestStats.medicinesProcessed}`);
+      logger.info(`   🧬 Atoms created: ${this.harvestStats.atomsCreated}`);
+      logger.info(`   🔗 Edges created: ${this.harvestStats.edgesCreated}`);
+      logger.info(`   ❌ Errors: ${this.harvestStats.errors}`);
     } catch (error) {
-      console.error('❌ EMA EPAR harvest error:', error);
+      logger.error('❌ EMA EPAR harvest error:', error);
       this.harvestStats.errors++;
     }
 
@@ -844,9 +844,9 @@ async function main() {
   try {
     const farmer = new EMAEPARFarmer(pool);
     const stats = await farmer.harvest();
-    console.log('\n📊 Final harvest statistics:', stats);
+    logger.info('\n📊 Final harvest statistics:', stats);
   } catch (error) {
-    console.error('❌ Fatal error:', error);
+    logger.error('❌ Fatal error:', error);
     process.exit(1);
   } finally {
     await pool.end();

@@ -62,7 +62,7 @@ async function getDatabaseStats() {
       statusDistribution,
     };
   } catch (error) {
-    console.error('Error getting database stats:', error);
+    logger.error('Error getting database stats:', error);
     return {
       totalReports: 0,
       healthCanadaReports: 0,
@@ -78,7 +78,7 @@ async function getDatabaseStats() {
  * Generate the PDF
  */
 async function generatePDF() {
-  console.log('Generating PDF overview...');
+  logger.info('Generating PDF overview...');
 
   // Get database statistics
   const stats = await getDatabaseStats();
@@ -544,7 +544,7 @@ async function generatePDF() {
   // Finalize the PDF
   doc.end();
 
-  console.log(`PDF generated at: ${outputPath}`);
+  logger.info(`PDF generated at: ${outputPath}`);
   return outputPath;
 }
 
@@ -1058,10 +1058,10 @@ async function generatePDF() {
     // Finalize the PDF
     doc.end();
 
-    console.log('Project overview PDF generated successfully!');
-    console.log(`File saved to: ${outputPath}`);
+    logger.info('Project overview PDF generated successfully!');
+    logger.info(`File saved to: ${outputPath}`);
   } catch (error) {
-    console.error('Error generating project overview:', error);
+    logger.error('Error generating project overview:', error);
     process.exit(1);
   }
 })();

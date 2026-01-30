@@ -58,7 +58,7 @@ const colors = {
 };
 
 function log(color, ...args) {
-  console.log(color, ...args, colors.reset);
+  logger.info(color, ...args, colors.reset);
 }
 
 async function runMigration(pool, filePath, filename) {
@@ -126,8 +126,8 @@ async function runTestSuite(pool, migrationsDir) {
   }
   
   // Display results
-  console.log('\n  Test Results:');
-  console.log('  ─────────────────────────────────────────────────────────────────');
+  logger.info('\n  Test Results:');
+  logger.info('  ─────────────────────────────────────────────────────────────────');
   
   const checks = [
     { name: 'Schemas Present', key: 'schema_count', expected: 4 },
@@ -157,8 +157,8 @@ async function runTestSuite(pool, migrationsDir) {
     }
   }
   
-  console.log('  ─────────────────────────────────────────────────────────────────');
-  console.log(`  Total: ${passed} passed, ${failed} failed\n`);
+  logger.info('  ─────────────────────────────────────────────────────────────────');
+  logger.info(`  Total: ${passed} passed, ${failed} failed\n`);
   
   // Show submission breakdown
   try {
@@ -170,9 +170,9 @@ async function runTestSuite(pool, migrationsDir) {
     `);
     
     if (submissionTypes.rows.length > 0) {
-      console.log('  Submissions by Type:');
+      logger.info('  Submissions by Type:');
       for (const row of submissionTypes.rows) {
-        console.log(`    ${row.application_type}: ${row.count} (${row.apps})`);
+        logger.info(`    ${row.application_type}: ${row.count} (${row.apps})`);
       }
     }
   } catch (e) {
@@ -183,10 +183,10 @@ async function runTestSuite(pool, migrationsDir) {
 }
 
 async function main() {
-  console.log('\n╔══════════════════════════════════════════════════════════════════════════╗');
-  console.log('║  Concept2Cure v3.0 - Enterprise Architecture Migration Runner            ║');
-  console.log('║  eCTD v4.0 | Multi-Tenant RLS | Part 11 Audit                            ║');
-  console.log('╚══════════════════════════════════════════════════════════════════════════╝\n');
+  logger.info('\n╔══════════════════════════════════════════════════════════════════════════╗');
+  logger.info('║  Concept2Cure v3.0 - Enterprise Architecture Migration Runner            ║');
+  logger.info('║  eCTD v4.0 | Multi-Tenant RLS | Part 11 Audit                            ║');
+  logger.info('╚══════════════════════════════════════════════════════════════════════════╝\n');
   
   let databaseUrl;
   try {
@@ -208,16 +208,16 @@ async function main() {
   try {
     const result = await pool.query('SELECT version()');
     log(colors.green, `Connected to PostgreSQL`);
-    console.log(`  ${result.rows[0].version.split(',')[0]}\n`);
+    logger.info(`  ${result.rows[0].version.split(',')[0]}\n`);
   } catch (error) {
     log(colors.red, `Connection failed: ${error.message}`);
     await pool.end();
     process.exit(1);
   }
   
-  console.log('═══════════════════════════════════════════════════════════════════════════');
-  console.log('  Running Migrations');
-  console.log('═══════════════════════════════════════════════════════════════════════════\n');
+  logger.info('═══════════════════════════════════════════════════════════════════════════');
+  logger.info('  Running Migrations');
+  logger.info('═══════════════════════════════════════════════════════════════════════════\n');
   
   let successCount = 0;
   let failCount = 0;
@@ -240,9 +240,9 @@ async function main() {
     }
   }
   
-  console.log('\n═══════════════════════════════════════════════════════════════════════════');
-  console.log(`  Migration Summary: ${successCount} succeeded, ${failCount} failed`);
-  console.log('═══════════════════════════════════════════════════════════════════════════');
+  logger.info('\n═══════════════════════════════════════════════════════════════════════════');
+  logger.info(`  Migration Summary: ${successCount} succeeded, ${failCount} failed`);
+  logger.info('═══════════════════════════════════════════════════════════════════════════');
   
   // Run tests
   if (successCount > 0) {
@@ -259,6 +259,6 @@ async function main() {
 }
 
 main().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

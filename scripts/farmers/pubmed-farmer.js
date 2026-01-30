@@ -67,7 +67,7 @@ const colors = {
 };
 
 function log(emoji, message, color = colors.reset) {
-  console.log(`${color}${emoji} ${message}${colors.reset}`);
+  logger.info(`${color}${emoji} ${message}${colors.reset}`);
 }
 
 /**
@@ -412,9 +412,9 @@ async function getCortexStats() {
  * Main harvesting function
  */
 async function runPubMedHarvest() {
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('📚', '\x1b[1mPUBMED/NCBI DATA FARMER\x1b[0m', colors.cyan);
-  console.log('═'.repeat(60) + '\n');
+  logger.info('═'.repeat(60) + '\n');
 
   // Verify database connection
   try {
@@ -433,7 +433,7 @@ async function runPubMedHarvest() {
     colors.blue
   );
 
-  console.log('\n' + '-'.repeat(40));
+  logger.info('\n' + '-'.repeat(40));
 
   // Get current query
   const queryIndex = progress.currentQueryIndex % SEARCH_QUERIES.length;
@@ -464,10 +464,10 @@ async function runPubMedHarvest() {
   saveProgress(progress);
 
   // Summary
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('✅', '\x1b[1mPUBMED HARVEST COMPLETE\x1b[0m', colors.green);
-  console.log('═'.repeat(60));
-  console.log(`
+  logger.info('═'.repeat(60));
+  logger.info(`
   📊 Session Results:
      • Publications imported: +${result.imported}
      • Query: "${query.substring(0, 35)}..."
@@ -486,6 +486,6 @@ async function runPubMedHarvest() {
 
 // Run
 runPubMedHarvest().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

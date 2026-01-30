@@ -20,7 +20,7 @@ const THRESHOLDS = {
 };
 
 async function checkPerformanceRegression() {
-  console.log('🔍 Checking for performance regressions...');
+  logger.info('🔍 Checking for performance regressions...');
 
   let hasRegression = false;
   const issues = [];
@@ -90,7 +90,7 @@ async function checkPerformanceRegression() {
           timestamp: new Date().toISOString(),
         })
       );
-      console.log('📝 Saved bundle size baseline');
+      logger.info('📝 Saved bundle size baseline');
     }
   }
 
@@ -105,11 +105,11 @@ async function checkPerformanceRegression() {
   fs.writeFileSync('performance-regression-report.json', JSON.stringify(report, null, 2));
 
   if (hasRegression) {
-    console.error('❌ Performance regression detected:');
-    issues.forEach(issue => console.error(`  - ${issue}`));
+    logger.error('❌ Performance regression detected:');
+    issues.forEach(issue => logger.error(`  - ${issue}`));
     process.exit(1);
   } else {
-    console.log('✅ No performance regression detected');
+    logger.info('✅ No performance regression detected');
   }
 }
 

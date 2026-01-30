@@ -12,31 +12,31 @@ const formatBytes = (bytes) => {
 const monitorMemory = () => {
   const usage = process.memoryUsage();
   
-  console.log('\n📊 Memory Usage Report:');
-  console.log(`🔹 RSS: ${formatBytes(usage.rss)} (Resident Set Size)`);
-  console.log(`🔹 Heap Used: ${formatBytes(usage.heapUsed)}`);
-  console.log(`🔹 Heap Total: ${formatBytes(usage.heapTotal)}`);
-  console.log(`🔹 External: ${formatBytes(usage.external)}`);
+  logger.info('\n📊 Memory Usage Report:');
+  logger.info(`🔹 RSS: ${formatBytes(usage.rss)} (Resident Set Size)`);
+  logger.info(`🔹 Heap Used: ${formatBytes(usage.heapUsed)}`);
+  logger.info(`🔹 Heap Total: ${formatBytes(usage.heapTotal)}`);
+  logger.info(`🔹 External: ${formatBytes(usage.external)}`);
   
   const targetMemory = 400 * 1024 * 1024; // 400MB target
   const currentMemory = usage.heapUsed;
   
   if (currentMemory > targetMemory) {
-    console.log('⚠️  Memory usage above target (400MB)');
+    logger.info('⚠️  Memory usage above target (400MB)');
     if (global.gc) {
-      console.log('🧹 Running garbage collection...');
+      logger.info('🧹 Running garbage collection...');
       global.gc();
     }
   } else {
-    console.log('✅ Memory usage within target range');
+    logger.info('✅ Memory usage within target range');
   }
   
-  console.log('-----------------------------------');
+  logger.info('-----------------------------------');
 };
 
 // Monitor every 10 seconds if running as main script
 if (require.main === module) {
-  console.log('🔍 Starting memory monitor...');
+  logger.info('🔍 Starting memory monitor...');
   setInterval(monitorMemory, 10000);
   monitorMemory(); // Initial check
 }

@@ -20,13 +20,13 @@ const REPLACEMENT_MESSAGE = 'Module was blocked by import guard for application 
 Module.prototype.require = function (id) {
   // Check if the requested module is in the banned list
   if (BANNED_MODULES.includes(id)) {
-    console.warn(`⚠️ Blocked import of problematic module: ${id}`);
+    logger.warn(`⚠️ Blocked import of problematic module: ${id}`);
     // Return a mock module that won't crash the application
     return {
       __BLOCKED__: true,
       __REASON__: REPLACEMENT_MESSAGE,
       // Add mock toast functions that safely do nothing
-      toast: () => console.log('[Toast Blocked]:', ...arguments),
+      toast: () => logger.info('[Toast Blocked]:', ...arguments),
       ToastContainer: () => null,
     };
   }
@@ -35,4 +35,4 @@ Module.prototype.require = function (id) {
   return originalRequire.apply(this, arguments);
 };
 
-console.log('✅ Import guard activated - application protected from problematic dependencies.');
+logger.info('✅ Import guard activated - application protected from problematic dependencies.');

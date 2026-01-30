@@ -13,9 +13,9 @@ const optimizations = {
       if (fs.existsSync(fullPath)) {
         try {
           fs.rmSync(fullPath, { recursive: true, force: true });
-          console.log(`✅ Cleaned up ${dir}`);
+          logger.info(`✅ Cleaned up ${dir}`);
         } catch (error) {
-          console.log(`⚠️  Could not clean ${dir}: ${error.message}`);
+          logger.info(`⚠️  Could not clean ${dir}: ${error.message}`);
         }
       }
     });
@@ -36,10 +36,10 @@ const optimizations = {
     try {
       const { pool } = require('../server/db');
       await pool.query('SELECT 1');
-      console.log('✅ Database connection successful');
+      logger.info('✅ Database connection successful');
       return true;
     } catch (error) {
-      console.log(`❌ Database connection failed: ${error.message}`);
+      logger.info(`❌ Database connection failed: ${error.message}`);
       return false;
     }
   },
@@ -50,13 +50,13 @@ const optimizations = {
     const targetMB = 400;
     const currentMB = Math.round(usage.heapUsed / 1024 / 1024);
     
-    console.log(`📊 Current memory usage: ${currentMB}MB (Target: ${targetMB}MB)`);
+    logger.info(`📊 Current memory usage: ${currentMB}MB (Target: ${targetMB}MB)`);
     
     if (currentMB > targetMB) {
-      console.log('⚠️  Memory usage above target');
+      logger.info('⚠️  Memory usage above target');
       return false;
     } else {
-      console.log('✅ Memory usage within target');
+      logger.info('✅ Memory usage within target');
       return true;
     }
   }
@@ -64,7 +64,7 @@ const optimizations = {
 
 // Main optimization routine
 async function runOptimizations() {
-  console.log('🔧 Running performance optimizations...\n');
+  logger.info('🔧 Running performance optimizations...\n');
   
   // Cleanup
   optimizations.cleanupTemp();
@@ -75,9 +75,9 @@ async function runOptimizations() {
   // Database test
   await optimizations.testDbConnection();
   
-  console.log('\n✨ Optimization complete!');
-  console.log('\nRecommended start command:');
-  console.log(`NODE_OPTIONS="${optimizations.getOptimizedFlags().join(' ')}" tsx server/index.ts`);
+  logger.info('\n✨ Optimization complete!');
+  logger.info('\nRecommended start command:');
+  logger.info(`NODE_OPTIONS="${optimizations.getOptimizedFlags().join(' ')}" tsx server/index.ts`);
 }
 
 if (require.main === module) {

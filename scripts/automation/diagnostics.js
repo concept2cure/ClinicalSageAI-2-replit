@@ -80,7 +80,7 @@ function generateReport() {
     JSON.stringify(report, null, 2)
   );
 
-  console.log('Diagnostics report generated: diagnostics-report.json');
+  logger.info('Diagnostics report generated: diagnostics-report.json');
   return report;
 }
 

@@ -190,9 +190,9 @@ async function fixFile(filePath: string): Promise<FileFixResult> {
     // Only write if changes were made
     if (content !== originalContent) {
       fs.writeFileSync(fullPath, content, 'utf-8');
-      console.log(`✓ Fixed ${result.fixesApplied} issues in ${filePath}`);
+      logger.info(`✓ Fixed ${result.fixesApplied} issues in ${filePath}`);
     } else {
-      console.log(`- No fixes needed in ${filePath}`);
+      logger.info(`- No fixes needed in ${filePath}`);
     }
   } catch (err) {
     result.errors.push(`Error processing ${filePath}: ${err}`);
@@ -202,7 +202,7 @@ async function fixFile(filePath: string): Promise<FileFixResult> {
 }
 
 async function main() {
-  console.log('=== TypeScript Error Auto-Fixer ===\n');
+  logger.info('=== TypeScript Error Auto-Fixer ===\n');
 
   let totalFixes = 0;
   const results: FileFixResult[] = [];
@@ -213,14 +213,14 @@ async function main() {
     totalFixes += result.fixesApplied;
   }
 
-  console.log(`\n=== Summary ===`);
-  console.log(`Total fixes applied: ${totalFixes}`);
-  console.log(`Files processed: ${results.length}`);
+  logger.info(`\n=== Summary ===`);
+  logger.info(`Total fixes applied: ${totalFixes}`);
+  logger.info(`Files processed: ${results.length}`);
 
   const errors = results.flatMap(r => r.errors);
   if (errors.length > 0) {
-    console.log(`\nErrors encountered:`);
-    errors.forEach(e => console.log(`  - ${e}`));
+    logger.info(`\nErrors encountered:`);
+    errors.forEach(e => logger.info(`  - ${e}`));
   }
 }
 

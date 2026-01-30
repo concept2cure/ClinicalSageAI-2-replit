@@ -33,7 +33,7 @@ const fetchJson = async (url, opts={}) => {
   throw new Error(`${url} → Unexpected content-type: ${ct}`);
 };
 
-const line = () => console.log("-".repeat(72));
+const line = () => logger.info("-".repeat(72));
 
 const results = [];
 function rec(name, ok, note="") { results.push({ name, ok, note }); }
@@ -45,7 +45,7 @@ async function check(name, fn) {
 }
 
 async function main() {
-  console.log(`UAT: Document Authoring @ ${BASE_URL}`);
+  logger.info(`UAT: Document Authoring @ ${BASE_URL}`);
   line();
 
   // 0) Health – guidance/tokens endpoints should not return HTML
@@ -162,21 +162,21 @@ async function main() {
   // Print matrix
   line();
   const pad = (s,w) => (s.length >= w ? s.slice(0,w) : s + " ".repeat(w-s.length));
-  console.log(`${pad("CHECK", 40)}  RESULT  NOTE`);
+  logger.info(`${pad("CHECK", 40)}  RESULT  NOTE`);
   line();
   for (const r of results) {
-    console.log(`${pad(r.name, 40)}  ${r.ok ? "PASS  " : "FAIL  "}  ${r.note || ""}`);
+    logger.info(`${pad(r.name, 40)}  ${r.ok ? "PASS  " : "FAIL  "}  ${r.note || ""}`);
   }
   line();
 
   // Exit code for CI
   const failed = results.filter(r => !r.ok).length;
   if (failed) {
-    console.error(`❌ ${failed} check(s) failed`);
+    logger.error(`❌ ${failed} check(s) failed`);
     process.exit(1);
   } else {
-    console.log("✅ All checks passed");
+    logger.info("✅ All checks passed");
   }
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { logger.error(e); process.exit(1); });

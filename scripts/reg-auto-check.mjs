@@ -11,7 +11,7 @@ const BASE = (process.env.REPLIT_BASE_URL || 'http://localhost:5000').replace(/\
 const SUB = process.env.REPLIT_SUBMISSION_ID;
 
 if (!SUB) {
-  console.error(red('Missing env REPLIT_SUBMISSION_ID'));
+  logger.error(red('Missing env REPLIT_SUBMISSION_ID'));
   process.exit(2);
 }
 
@@ -165,15 +165,15 @@ async function run() {
       failCount++;
     }
   }
-  console.log(blue(`\nIR Auto‑Check — Submission ${SUB}\n`));
-  console.log(t.toString());
-  console.log(
+  logger.info(blue(`\nIR Auto‑Check — Submission ${SUB}\n`));
+  logger.info(t.toString());
+  logger.info(
     `\nSummary: ${green(`${passCount} PASS`)} / ${failCount ? red(`${failCount} FAIL`) : '0 FAIL'}\n`
   );
   process.exit(failCount ? 1 : 0);
 }
 
 run().catch(e => {
-  console.error(red(e?.stack || e));
+  logger.error(red(e?.stack || e));
   process.exit(2);
 });

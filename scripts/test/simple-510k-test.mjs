@@ -61,7 +61,7 @@ async function makeRequest(url, options = {}) {
 // Log function
 function log(message) {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}`);
+  logger.info(`[${timestamp}] ${message}`);
   fs.appendFileSync(path.join(CONFIG.outputDir, 'test-log.txt'), `[${timestamp}] ${message}\n`);
 }
 
@@ -69,7 +69,7 @@ function log(message) {
  * Main test function
  */
 async function runTests() {
-  console.log('=== Starting FDA 510k eSTAR Tests ===');
+  logger.info('=== Starting FDA 510k eSTAR Tests ===');
   const startTime = new Date();
 
   try {
@@ -237,13 +237,13 @@ async function runTests() {
     const endTime = new Date();
     const duration = (endTime - startTime) / 1000;
     log(`All tests completed in ${duration.toFixed(2)} seconds`);
-    console.log(`=== Tests completed in ${duration.toFixed(2)} seconds ===`);
+    logger.info(`=== Tests completed in ${duration.toFixed(2)} seconds ===`);
 
     // Summary
-    console.log('\nTest Results Summary:');
-    console.log(`- Output Directory: ${path.resolve(CONFIG.outputDir)}`);
-    console.log(`- Log File: ${path.resolve(CONFIG.outputDir, 'test-log.txt')}`);
-    console.log(`- Report: ${path.resolve(CONFIG.outputDir, 'investor-report.html')}`);
+    logger.info('\nTest Results Summary:');
+    logger.info(`- Output Directory: ${path.resolve(CONFIG.outputDir)}`);
+    logger.info(`- Log File: ${path.resolve(CONFIG.outputDir, 'test-log.txt')}`);
+    logger.info(`- Report: ${path.resolve(CONFIG.outputDir, 'investor-report.html')}`);
 
     return {
       success: true,
@@ -251,7 +251,7 @@ async function runTests() {
     };
   } catch (error) {
     log(`FATAL ERROR: ${error.message}`);
-    console.error(`=== Tests failed: ${error.message} ===`);
+    logger.error(`=== Tests failed: ${error.message} ===`);
     return {
       success: false,
       error: error.message,
@@ -603,14 +603,14 @@ function generateHtmlReport(data) {
 runTests()
   .then(result => {
     if (result.success) {
-      console.log(`\nALL TESTS PASSED in ${result.duration} seconds!`);
+      logger.info(`\nALL TESTS PASSED in ${result.duration} seconds!`);
       process.exit(0);
     } else {
-      console.error(`\nTESTS FAILED: ${result.error}`);
+      logger.error(`\nTESTS FAILED: ${result.error}`);
       process.exit(1);
     }
   })
   .catch(error => {
-    console.error('Fatal error:', error);
+    logger.error('Fatal error:', error);
     process.exit(1);
   });

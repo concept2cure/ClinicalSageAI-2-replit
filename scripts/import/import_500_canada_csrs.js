@@ -26,7 +26,7 @@ const TRACKING_FILE = 'canada_500_import_progress.json';
 function getTrackingData() {
   if (fs.existsSync(TRACKING_FILE)) {
     const data = JSON.parse(fs.readFileSync(TRACKING_FILE, 'utf8'));
-    console.log(`Loaded existing tracking data: ${JSON.stringify(data)}`);
+    logger.info(`Loaded existing tracking data: ${JSON.stringify(data)}`);
     return data;
   }
 
@@ -43,7 +43,7 @@ function getTrackingData() {
 function saveTrackingData(data) {
   data.lastRunTime = new Date().toISOString();
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
-  console.log(`Progress data saved: ${JSON.stringify(data)}`);
+  logger.info(`Progress data saved: ${JSON.stringify(data)}`);
 }
 
 // Get current count of Health Canada trials
@@ -56,7 +56,7 @@ async function getCurrentHealthCanadaCount() {
     `);
     return parseInt(result.rows[0].count);
   } catch (error) {
-    console.error('Error getting Health Canada trial count:', error);
+    logger.error('Error getting Health Canada trial count:', error);
     return 0;
   }
 }
@@ -70,7 +70,7 @@ async function getTotalTrialCount() {
     `);
     return parseInt(result.rows[0].count);
   } catch (error) {
-    console.error('Error getting total trial count:', error);
+    logger.error('Error getting total trial count:', error);
     return 0;
   }
 }
@@ -78,7 +78,7 @@ async function getTotalTrialCount() {
 // Run a single batch using the import_batch_of_50.js script
 async function runBatch(trackingData) {
   return new Promise((resolve, reject) => {
-    console.log(`\n=== Running batch import using import_batch_of_50.js ===`);
+    logger.info(`\n=== Running batch import using import_batch_of_50.js ===`);
 
     const batchProcess = spawn('node', ['import_batch_of_50.js']);
 
@@ -92,10 +92,10 @@ async function runBatch(trackingData) {
 
     batchProcess.on('close', code => {
       if (code === 0) {
-        console.log(`Batch completed successfully with exit code ${code}`);
+        logger.info(`Batch completed successfully with exit code ${code}`);
         resolve(true);
       } else {
-        console.error(`Batch failed with exit code ${code}`);
+        logger.error(`Batch failed with exit code ${code}`);
         resolve(false); // Resolve with false instead of rejecting to continue the process
       }
     });
@@ -107,7 +107,7 @@ async function runImport500() {
   try {
     const trackingData = getTrackingData();
 
-    console.log(`
+    logger.info(`
 =========================================================
 IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
 =========================================================
@@ -122,7 +122,7 @@ Current trials imported: ${trackingData.trialsImported}
     const currentHCCount = await getCurrentHealthCanadaCount();
     const totalTrials = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Current Database Status ===
 Total trials in database: ${totalTrials}
 Health Canada trials: ${currentHCCount}
@@ -132,7 +132,7 @@ Progress: ${Math.round((currentHCCount / 4000) * 100)}%
 
     // Process batches
     for (let i = trackingData.batchesCompleted; i < TOTAL_BATCHES; i++) {
-      console.log(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
+      logger.info(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
 
       const batchSuccess = await runBatch(trackingData);
 
@@ -143,14 +143,14 @@ Progress: ${Math.round((currentHCCount / 4000) * 100)}%
         trackingData.trialsImported += BATCH_SIZE;
         saveTrackingData(trackingData);
 
-        console.log(`Completed batch ${i + 1}/${TOTAL_BATCHES}`);
+        logger.info(`Completed batch ${i + 1}/${TOTAL_BATCHES}`);
       } else {
-        console.error(`Failed to process batch ${i + 1}. Stopping import.`);
+        logger.error(`Failed to process batch ${i + 1}. Stopping import.`);
         break;
       }
 
       // Add delay between batches to avoid overwhelming the system
-      console.log('Waiting 10 seconds before the next batch...');
+      logger.info('Waiting 10 seconds before the next batch...');
       await new Promise(resolve => setTimeout(resolve, 10000));
     }
 
@@ -158,7 +158,7 @@ Progress: ${Math.round((currentHCCount / 4000) * 100)}%
     const newHCCount = await getCurrentHealthCanadaCount();
     const newTotal = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Final Database Status ===
 Total trials in database: ${newTotal}
 Health Canada trials: ${newHCCount}
@@ -168,7 +168,7 @@ Progress: ${newHCCount}/4000 Health Canada trials (${Math.round((newHCCount / 40
 Import completed. ${trackingData.batchesCompleted} batches (${trackingData.trialsImported} trials) imported.
 `);
   } catch (error) {
-    console.error('Error during import process:', error);
+    logger.error('Error during import process:', error);
   } finally {
     await pool.end();
   }
@@ -176,7 +176,7 @@ Import completed. ${trackingData.batchesCompleted} batches (${trackingData.trial
 
 // Run the import
 runImport500().catch(err => {
-  console.error('Fatal error occurred during import:', err);
+  logger.error('Fatal error occurred during import:', err);
   process.exit(1);
 });
 

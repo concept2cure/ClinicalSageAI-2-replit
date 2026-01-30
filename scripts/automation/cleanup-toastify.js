@@ -27,32 +27,32 @@ function deleteFolderRecursive(directoryPath) {
       }
     });
     fs.rmdirSync(directoryPath);
-    console.log(`Deleted: ${directoryPath}`);
+    logger.info(`Deleted: ${directoryPath}`);
   }
 }
 
 // Clean up react-toastify module if it exists
 const toastifyPath = path.join(projectRoot, 'node_modules', 'react-toastify');
 if (fs.existsSync(toastifyPath)) {
-  console.log('Found react-toastify in node_modules, removing...');
+  logger.info('Found react-toastify in node_modules, removing...');
   deleteFolderRecursive(toastifyPath);
 } else {
-  console.log('react-toastify not found in node_modules (good!)');
+  logger.info('react-toastify not found in node_modules (good!)');
 }
 
 // Clean Vite cache to prevent optimization errors
 const viteCachePath = path.join(projectRoot, 'node_modules', '.vite');
 if (fs.existsSync(viteCachePath)) {
-  console.log('Clearing Vite cache...');
+  logger.info('Clearing Vite cache...');
   deleteFolderRecursive(viteCachePath);
 } else {
-  console.log('Vite cache not found or already cleared');
+  logger.info('Vite cache not found or already cleared');
 }
 
-console.log('Toast dependency cleanup complete!');
+logger.info('Toast dependency cleanup complete!');
 
 // Ensure critical dependencies are installed
-console.log('Checking critical dependencies...');
+logger.info('Checking critical dependencies...');
 
 // List of critical packages that keep getting removed
 const criticalPackages = [
@@ -91,7 +91,7 @@ const maxAttempts = 3;
 
 while (missingPackages.length > 0 && attempts < maxAttempts) {
   attempts++;
-  console.log(`[Attempt ${attempts}/${maxAttempts}] Missing ${missingPackages.length} package(s): ${missingPackages.join(', ')}`);
+  logger.info(`[Attempt ${attempts}/${maxAttempts}] Missing ${missingPackages.length} package(s): ${missingPackages.join(', ')}`);
   
   try {
     // Install ALL missing packages at once
@@ -99,19 +99,19 @@ while (missingPackages.length > 0 && attempts < maxAttempts) {
       stdio: 'inherit', 
       cwd: projectRoot 
     });
-    console.log('✅ Installation complete, verifying...');
+    logger.info('✅ Installation complete, verifying...');
     
     // Re-check what's still missing
     missingPackages = checkMissingPackages();
     
     if (missingPackages.length === 0) {
-      console.log('✅ All critical packages successfully installed and verified');
+      logger.info('✅ All critical packages successfully installed and verified');
       break;
     } else {
-      console.log(`⚠️ ${missingPackages.length} package(s) still missing after installation`);
+      logger.info(`⚠️ ${missingPackages.length} package(s) still missing after installation`);
     }
   } catch (error) {
-    console.error(`❌ Installation failed on attempt ${attempts}:`, error.message);
+    logger.error(`❌ Installation failed on attempt ${attempts}:`, error.message);
     if (attempts >= maxAttempts) {
       process.exit(1);
     }
@@ -119,15 +119,15 @@ while (missingPackages.length > 0 && attempts < maxAttempts) {
 }
 
 if (missingPackages.length > 0) {
-  console.error(`❌ Failed to install all critical packages after ${maxAttempts} attempts`);
-  console.error(`Still missing: ${missingPackages.join(', ')}`);
+  logger.error(`❌ Failed to install all critical packages after ${maxAttempts} attempts`);
+  logger.error(`Still missing: ${missingPackages.join(', ')}`);
   process.exit(1);
 }
 
-console.log('✅ All critical dependencies verified and ready');
+logger.info('✅ All critical dependencies verified and ready');
 
 // Add build size optimization
-console.log('Starting build size optimization...');
+logger.info('Starting build size optimization...');
 
 // Remove large unnecessary files
 const filesToRemove = ['node_modules/.cache', '.vite', 'dist/cache', 'tmp', 'node_modules/.pnpm'];
@@ -137,11 +137,11 @@ filesToRemove.forEach(file => {
   if (fs.existsSync(fullPath)) {
     try {
       deleteFolderRecursive(fullPath);
-      console.log(`✅ Cleaned: ${file}`);
+      logger.info(`✅ Cleaned: ${file}`);
     } catch (error) {
-      console.log(`⚠️ Could not clean ${file}: ${error.message}`);
+      logger.info(`⚠️ Could not clean ${file}: ${error.message}`);
     }
   }
 });
 
-console.log('Build size optimization complete!');
+logger.info('Build size optimization complete!');

@@ -34,7 +34,7 @@ class AIAgentProtection {
     if (!fs.existsSync('logs')) fs.mkdirSync('logs', { recursive: true });
     if (!fs.existsSync(this.backupDir)) fs.mkdirSync(this.backupDir, { recursive: true });
     
-    console.log('🛡️  AI Agent Protection System Initialized');
+    logger.info('🛡️  AI Agent Protection System Initialized');
     this.generateInitialChecksums();
   }
 
@@ -175,14 +175,14 @@ ${violations.map(v => `cp ${this.backupDir}/${path.basename(v.file)}.*.bak ${v.f
 `;
 
     fs.writeFileSync('AI_AGENT_ALERT.txt', alertContent);
-    console.log('🚨 ALERT: Unauthorized changes detected! Check AI_AGENT_ALERT.txt');
+    logger.info('🚨 ALERT: Unauthorized changes detected! Check AI_AGENT_ALERT.txt');
   }
 
   log(message) {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] ${message}\n`;
     fs.appendFileSync(this.logFile, logEntry);
-    console.log(message);
+    logger.info(message);
   }
 
   startMonitoring(intervalMs = 30000) {
@@ -211,10 +211,10 @@ ${violations.map(v => `cp ${this.backupDir}/${path.basename(v.file)}.*.bak ${v.f
   }
 
   listProtectedFiles() {
-    console.log('🛡️  Protected Files:');
+    logger.info('🛡️  Protected Files:');
     this.protectedFiles.forEach((file, index) => {
       const exists = fs.existsSync(file) ? '✅' : '❌';
-      console.log(`   ${index + 1}. ${file} ${exists}`);
+      logger.info(`   ${index + 1}. ${file} ${exists}`);
     });
   }
 }
@@ -237,7 +237,7 @@ if (require.main === module) {
       if (filePath) {
         protection.forceRestore(filePath);
       } else {
-        console.log('Usage: node ai-agent-protection.js restore <file-path>');
+        logger.info('Usage: node ai-agent-protection.js restore <file-path>');
       }
       break;
     case 'add':
@@ -245,14 +245,14 @@ if (require.main === module) {
       if (newFile) {
         protection.addProtectedFile(newFile);
       } else {
-        console.log('Usage: node ai-agent-protection.js add <file-path>');
+        logger.info('Usage: node ai-agent-protection.js add <file-path>');
       }
       break;
     case 'list':
       protection.listProtectedFiles();
       break;
     default:
-      console.log(`
+      logger.info(`
 AI Agent Protection System
 
 Commands:

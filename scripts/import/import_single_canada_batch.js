@@ -51,7 +51,7 @@ function randomDate(start, end) {
  * Generate trial data for a batch of trials
  */
 async function generateTrials(count, startId) {
-  console.log(`Generating ${count} trials starting at ID ${startId}...`);
+  logger.info(`Generating ${count} trials starting at ID ${startId}...`);
 
   const indications = [
     'COVID-19',
@@ -180,7 +180,7 @@ function generateEligibilityCriteria(indication) {
  * Import trials to the database
  */
 async function importTrialsToDatabase(trials) {
-  console.log(`Importing ${trials.length} trials to database...`);
+  logger.info(`Importing ${trials.length} trials to database...`);
 
   const client = await pool.connect();
   let importedCount = 0;
@@ -200,7 +200,7 @@ async function importTrialsToDatabase(trials) {
         );
 
         if (existingCheck.rows.length > 0) {
-          console.log(`Trial ${trial.nctrialId} already exists, skipping.`);
+          logger.info(`Trial ${trial.nctrialId} already exists, skipping.`);
           await client.query('COMMIT');
           continue;
         }
@@ -255,24 +255,24 @@ async function importTrialsToDatabase(trials) {
         successfulImports.push(trial.nctrialId);
 
         if (importedCount % 10 === 0) {
-          console.log(`Imported ${importedCount} trials so far.`);
+          logger.info(`Imported ${importedCount} trials so far.`);
         }
       } catch (error) {
         // Rollback this individual trial's transaction
         try {
           await client.query('ROLLBACK');
         } catch (rollbackError) {
-          console.error(`Error rolling back transaction: ${rollbackError.message}`);
+          logger.error(`Error rolling back transaction: ${rollbackError.message}`);
         }
 
-        console.error(`Error importing trial ${trial.nctrialId}:`, error.message);
+        logger.error(`Error importing trial ${trial.nctrialId}:`, error.message);
       }
     }
 
-    console.log(`Successfully imported ${importedCount} trials.`);
+    logger.info(`Successfully imported ${importedCount} trials.`);
     return importedCount;
   } catch (error) {
-    console.error('Error during batch import process:', error.message);
+    logger.error('Error during batch import process:', error.message);
     throw error;
   } finally {
     client.release();
@@ -293,7 +293,7 @@ function updateTrackingData(newTrialsImported, batchIndex) {
         trackingData.batches = [];
       }
     } catch (error) {
-      console.error('Error reading tracking file:', error);
+      logger.error('Error reading tracking file:', error);
     }
   }
 
@@ -309,14 +309,14 @@ function updateTrackingData(newTrialsImported, batchIndex) {
 
   // Save tracking data
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(trackingData, null, 2));
-  console.log(`Updated tracking data. Total imported: ${trackingData.totalImported}`);
+  logger.info(`Updated tracking data. Total imported: ${trackingData.totalImported}`);
 }
 
 /**
  * Run the single batch import
  */
 async function runSingleBatch() {
-  console.log(`Starting single batch import. Batch index: ${batchIndex}, Batch size: ${batchSize}`);
+  logger.info(`Starting single batch import. Batch index: ${batchIndex}, Batch size: ${batchSize}`);
 
   try {
     // Ensure batchIndex is a number
@@ -332,14 +332,14 @@ async function runSingleBatch() {
     // Update tracking
     updateTrackingData(importedCount, batchIndex);
 
-    console.log(`Batch ${batchIndex} completed. Imported ${importedCount} trials.`);
+    logger.info(`Batch ${batchIndex} completed. Imported ${importedCount} trials.`);
   } catch (error) {
-    console.error('Error in single batch import:', error);
+    logger.error('Error in single batch import:', error);
   } finally {
     await pool.end();
   }
 }
 
 // Run the batch import
-console.log(`Import Single Canada Batch - Index: ${batchIndex}, Size: ${batchSize}`);
+logger.info(`Import Single Canada Batch - Index: ${batchIndex}, Size: ${batchSize}`);
 runSingleBatch();

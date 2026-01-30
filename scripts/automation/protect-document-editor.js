@@ -28,12 +28,12 @@ class DocumentEditorProtection {
   log(message) {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] ${message}\n`;
-    console.log(logEntry.trim());
+    logger.info(logEntry.trim());
 
     try {
       fs.appendFileSync(this.logFile, logEntry);
     } catch (err) {
-      console.error('Failed to write to log file:', err.message);
+      logger.error('Failed to write to log file:', err.message);
     }
   }
 
@@ -161,26 +161,26 @@ class DocumentEditorProtection {
   }
 
   showStatus() {
-    console.log('\n=== Document Editor Protection Status ===');
+    logger.info('\n=== Document Editor Protection Status ===');
 
     const primaryExists = fs.existsSync(this.primaryFile);
     const backupExists = fs.existsSync(this.backupFile);
 
-    console.log(`Primary File: ${primaryExists ? '✅ EXISTS' : '❌ MISSING'}`);
-    console.log(`Backup File:  ${backupExists ? '✅ EXISTS' : '❌ MISSING'}`);
+    logger.info(`Primary File: ${primaryExists ? '✅ EXISTS' : '❌ MISSING'}`);
+    logger.info(`Backup File:  ${backupExists ? '✅ EXISTS' : '❌ MISSING'}`);
 
     if (primaryExists && backupExists) {
       const primaryStats = fs.statSync(this.primaryFile);
       const backupStats = fs.statSync(this.backupFile);
 
-      console.log(`Primary Size: ${primaryStats.size} bytes`);
-      console.log(`Backup Size:  ${backupStats.size} bytes`);
+      logger.info(`Primary Size: ${primaryStats.size} bytes`);
+      logger.info(`Backup Size:  ${backupStats.size} bytes`);
 
       const integrityOK = this.verifyIntegrity();
-      console.log(`Integrity:    ${integrityOK ? '✅ VERIFIED' : '❌ FAILED'}`);
+      logger.info(`Integrity:    ${integrityOK ? '✅ VERIFIED' : '❌ FAILED'}`);
     }
 
-    console.log('==========================================\n');
+    logger.info('==========================================\n');
   }
 }
 
@@ -190,7 +190,7 @@ function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.log(`
+    logger.info(`
 Document Editor Protection System
 Usage:
   node protect-document-editor.js --monitor   Start continuous monitoring
@@ -225,19 +225,19 @@ Usage:
       break;
 
     default:
-      console.log('Unknown command:', args[0]);
+      logger.info('Unknown command:', args[0]);
       process.exit(1);
   }
 }
 
 // Handle process termination gracefully
 process.on('SIGINT', () => {
-  console.log('\n🛡️  Document Editor Protection terminated');
+  logger.info('\n🛡️  Document Editor Protection terminated');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛡️  Document Editor Protection terminated');
+  logger.info('\n🛡️  Document Editor Protection terminated');
   process.exit(0);
 });
 

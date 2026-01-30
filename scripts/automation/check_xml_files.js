@@ -12,20 +12,20 @@ async function checkXmlFiles() {
     const files = fs.readdirSync(assetsDir);
     const xmlFiles = files.filter(file => file.endsWith('.xml') && file.startsWith('NCT'));
 
-    console.log(
+    logger.info(
       `Found ${xmlFiles.length} ClinicalTrials.gov XML files in attached_assets directory:`
     );
-    xmlFiles.forEach(file => console.log(`- ${file}`));
+    xmlFiles.forEach(file => logger.info(`- ${file}`));
 
     return xmlFiles.length;
   } catch (error) {
-    console.error('Error checking XML files:', error);
+    logger.error('Error checking XML files:', error);
     return 0;
   }
 }
 
 // Run the check
 checkXmlFiles().catch(err => {
-  console.error('Error:', err);
+  logger.error('Error:', err);
   process.exit(1);
 });

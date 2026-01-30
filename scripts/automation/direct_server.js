@@ -16,5 +16,5 @@ const server = http.createServer((req, res) => {
 
 const PORT = 7000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Landing page server running at http://0.0.0.0:${PORT}/`);
+  logger.info(`Landing page server running at http://0.0.0.0:${PORT}/`);
 });

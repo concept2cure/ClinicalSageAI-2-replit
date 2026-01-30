@@ -27,7 +27,7 @@ class AutomatedTestRunner {
   // Start the test runner
   start() {
     if (this.isRunning) {
-      console.warn('Test runner is already running');
+      logger.warn('Test runner is already running');
       return;
     }
 
@@ -35,11 +35,11 @@ class AutomatedTestRunner {
     this.currentTestIndex = 0;
     this.results = [];
 
-    console.log(
+    logger.info(
       '%c=== 510(k) Functionality Test Runner ===',
       'font-size: 16px; font-weight: bold; color: blue;'
     );
-    console.log(`Starting ${this.tests.length} tests`);
+    logger.info(`Starting ${this.tests.length} tests`);
 
     this.runNextTest();
   }
@@ -53,24 +53,24 @@ class AutomatedTestRunner {
 
     const test = this.tests[this.currentTestIndex];
 
-    console.log(
+    logger.info(
       `%cRunning Test ${this.currentTestIndex + 1}/${this.tests.length}: ${test.id} - ${test.title}`,
       'font-size: 14px; font-weight: bold; color: blue; background: #e6f7ff; padding: 5px;'
     );
 
     // Display test details
     console.group('Test Details');
-    console.log('Steps to perform:');
-    test.steps.forEach(step => console.log(`- ${step}`));
-    console.log('\nExpected Results:');
-    test.expected.forEach(result => console.log(`- ${result}`));
-    console.log('\nDebugging Tips:');
-    test.debugging.forEach(tip => console.log(`- ${tip}`));
+    logger.info('Steps to perform:');
+    test.steps.forEach(step => logger.info(`- ${step}`));
+    logger.info('\nExpected Results:');
+    test.expected.forEach(result => logger.info(`- ${result}`));
+    logger.info('\nDebugging Tips:');
+    test.debugging.forEach(tip => logger.info(`- ${tip}`));
     console.groupEnd();
 
     // Log start time
     const startTime = new Date();
-    console.log(`Test started at: ${startTime.toLocaleTimeString()}`);
+    logger.info(`Test started at: ${startTime.toLocaleTimeString()}`);
 
     // Create a navigation helper based on the test steps
     this.autoNavigate(test);
@@ -78,11 +78,11 @@ class AutomatedTestRunner {
 
   // Attempt to automatically navigate through test steps
   autoNavigate(test) {
-    console.log('%cAuto-navigation helper starting...', 'color: purple;');
+    logger.info('%cAuto-navigation helper starting...', 'color: purple;');
 
     const app = this.getAppContext();
     if (!app) {
-      console.warn('Could not access application context for automation');
+      logger.warn('Could not access application context for automation');
       this.promptUserContinuation(test);
       return;
     }
@@ -115,20 +115,20 @@ class AutomatedTestRunner {
 
       // For other tests, just prompt user
       default:
-        console.log('No automation available for this test - manual steps required');
+        logger.info('No automation available for this test - manual steps required');
         this.promptUserContinuation(test);
     }
   }
 
   // Helpers for automation
   automateDocumentTypeSwitching(test, app) {
-    console.log('Automating document type switching test...');
+    logger.info('Automating document type switching test...');
 
     // Define the steps
     const automationSteps = [
       // Step 1: Click the One-Click button
       () => {
-        console.log('Clicking "One-Click CER" button...');
+        logger.info('Clicking "One-Click CER" button...');
         const oneClickButton = Array.from(document.querySelectorAll('button')).find(b =>
           b.textContent.includes('One-Click')
         );
@@ -137,14 +137,14 @@ class AutomatedTestRunner {
           oneClickButton.click();
           return true;
         } else {
-          console.error('Could not find One-Click button');
+          logger.error('Could not find One-Click button');
           return false;
         }
       },
 
       // Step 2: Select 510(k) from dropdown
       () => {
-        console.log('Selecting 510(k) from dropdown...');
+        logger.info('Selecting 510(k) from dropdown...');
         setTimeout(() => {
           // First open the dropdown
           const selectTrigger = document.querySelector('button[id="documentType"]');
@@ -161,12 +161,12 @@ class AutomatedTestRunner {
                 option510k.click();
                 return true;
               } else {
-                console.error('Could not find 510(k) option');
+                logger.error('Could not find 510(k) option');
                 return false;
               }
             }, 500);
           } else {
-            console.error('Could not find document type dropdown');
+            logger.error('Could not find document type dropdown');
             return false;
           }
         }, 500);
@@ -175,7 +175,7 @@ class AutomatedTestRunner {
 
       // Step 3: Fill in form fields
       () => {
-        console.log('Filling in device info...');
+        logger.info('Filling in device info...');
 
         // Wait for animation
         setTimeout(() => {
@@ -211,7 +211,7 @@ class AutomatedTestRunner {
 
       // Step 4: Click Save & Continue
       () => {
-        console.log('Clicking "Save & Continue" button...');
+        logger.info('Clicking "Save & Continue" button...');
 
         setTimeout(() => {
           const saveButton = Array.from(document.querySelectorAll('button')).find(b =>
@@ -228,7 +228,7 @@ class AutomatedTestRunner {
 
             return true;
           } else {
-            console.error('Could not find Save & Continue button');
+            logger.error('Could not find Save & Continue button');
             return false;
           }
         }, 1000);
@@ -248,12 +248,12 @@ class AutomatedTestRunner {
     console.group('Verification Results:');
 
     // 1. Check document type
-    console.log('Document Type:', app.documentType === '510k' ? '✅ 510k' : '❌ Not 510k');
+    logger.info('Document Type:', app.documentType === '510k' ? '✅ 510k' : '❌ Not 510k');
 
     // 2. Check header text
     const headerElement = document.querySelector('h1');
     const header = headerElement ? headerElement.textContent.trim() : '';
-    console.log(
+    logger.info(
       'Header Text:',
       header.includes('FDA 510(k)') ? `✅ "${header}"` : `❌ "${header}"`
     );
@@ -262,7 +262,7 @@ class AutomatedTestRunner {
     const hasPredicateTab = Array.from(document.querySelectorAll('button')).some(b =>
       b.textContent.includes('Predicate Finder')
     );
-    console.log(
+    logger.info(
       '510k Navigation:',
       hasPredicateTab ? '✅ Found Predicate Finder tab' : '❌ No 510k tabs found'
     );
@@ -271,7 +271,7 @@ class AutomatedTestRunner {
     const oneClickText = Array.from(document.querySelectorAll('button')).find(b =>
       b.textContent.includes('One-Click')
     )?.textContent;
-    console.log(
+    logger.info(
       'Button Text:',
       oneClickText?.includes('510(k)') ? `✅ "${oneClickText}"` : `❌ "${oneClickText}"`
     );
@@ -282,7 +282,7 @@ class AutomatedTestRunner {
   }
 
   automateTabNavigation(test, app) {
-    console.log('Automating tab navigation test...');
+    logger.info('Automating tab navigation test...');
 
     // Define tab sequence to click
     const tabSequence = [
@@ -298,13 +298,13 @@ class AutomatedTestRunner {
 
     const clickNextTab = () => {
       if (currentTabIndex >= tabSequence.length) {
-        console.log('Completed tab navigation sequence');
+        logger.info('Completed tab navigation sequence');
         this.promptUserContinuation(test);
         return;
       }
 
       const tabName = tabSequence[currentTabIndex];
-      console.log(`Clicking on tab: ${tabName}`);
+      logger.info(`Clicking on tab: ${tabName}`);
 
       // Try to find and click the tab
       const tabButton = Array.from(document.querySelectorAll('button')).find(b => {
@@ -316,7 +316,7 @@ class AutomatedTestRunner {
 
       if (tabButton) {
         tabButton.click();
-        console.log(`✅ Clicked on ${tabName} tab`);
+        logger.info(`✅ Clicked on ${tabName} tab`);
 
         // Wait before clicking next tab
         setTimeout(() => {
@@ -324,7 +324,7 @@ class AutomatedTestRunner {
           clickNextTab();
         }, 2000);
       } else {
-        console.error(`❌ Could not find tab: ${tabName}`);
+        logger.error(`❌ Could not find tab: ${tabName}`);
         currentTabIndex++;
         clickNextTab();
       }
@@ -335,7 +335,7 @@ class AutomatedTestRunner {
   }
 
   automatePredicateFinder(test, app) {
-    console.log('Automating predicate finder test...');
+    logger.info('Automating predicate finder test...');
 
     // First navigate to predicates tab if not already there
     if (app.activeTab !== 'predicates') {
@@ -345,9 +345,9 @@ class AutomatedTestRunner {
 
       if (predicateTab) {
         predicateTab.click();
-        console.log('Navigated to Predicate Finder tab');
+        logger.info('Navigated to Predicate Finder tab');
       } else {
-        console.error('Could not find Predicate Finder tab');
+        logger.error('Could not find Predicate Finder tab');
         this.promptUserContinuation(test);
         return;
       }
@@ -357,7 +357,7 @@ class AutomatedTestRunner {
     const automationSteps = [
       // Step 1: Fill search criteria
       () => {
-        console.log('Filling search criteria...');
+        logger.info('Filling search criteria...');
 
         // Find and fill search fields - this will depend on your actual implementation
         const searchInputs = document.querySelectorAll('input[type="text"]');
@@ -371,14 +371,14 @@ class AutomatedTestRunner {
           });
           return true;
         } else {
-          console.warn('No search input fields found');
+          logger.warn('No search input fields found');
           return false;
         }
       },
 
       // Step 2: Click search button
       () => {
-        console.log('Clicking search button...');
+        logger.info('Clicking search button...');
 
         // Find search button
         const searchButton = Array.from(document.querySelectorAll('button')).find(
@@ -387,17 +387,17 @@ class AutomatedTestRunner {
 
         if (searchButton) {
           searchButton.click();
-          console.log('✅ Clicked search button');
+          logger.info('✅ Clicked search button');
           return true;
         } else {
-          console.error('❌ Could not find search button');
+          logger.error('❌ Could not find search button');
           return false;
         }
       },
 
       // Step 3: Wait for results and select a predicate
       () => {
-        console.log('Waiting for results...');
+        logger.info('Waiting for results...');
 
         // This is a placeholder - actual implementation would check for predicates
         // For simulation, we wait and assume results appeared
@@ -409,9 +409,9 @@ class AutomatedTestRunner {
 
           if (selectButton) {
             selectButton.click();
-            console.log('✅ Selected a predicate device');
+            logger.info('✅ Selected a predicate device');
           } else {
-            console.warn('❌ No select button found - may need to wait for data');
+            logger.warn('❌ No select button found - may need to wait for data');
           }
 
           // Continue to next test regardless
@@ -429,7 +429,7 @@ class AutomatedTestRunner {
   }
 
   automateEquivalence(test, app) {
-    console.log('Automating equivalence documentation test...');
+    logger.info('Automating equivalence documentation test...');
 
     // First navigate to equivalence tab if not already there
     if (app.activeTab !== 'equivalence') {
@@ -439,9 +439,9 @@ class AutomatedTestRunner {
 
       if (equivalenceTab) {
         equivalenceTab.click();
-        console.log('Navigated to Equivalence tab');
+        logger.info('Navigated to Equivalence tab');
       } else {
-        console.error('Could not find Equivalence tab');
+        logger.error('Could not find Equivalence tab');
         this.promptUserContinuation(test);
         return;
       }
@@ -455,7 +455,7 @@ class AutomatedTestRunner {
 
       if (continueButton) {
         continueButton.click();
-        console.log('✅ Clicked continue button');
+        logger.info('✅ Clicked continue button');
       }
 
       setTimeout(() => {
@@ -465,7 +465,7 @@ class AutomatedTestRunner {
   }
 
   automateComplianceCheck(test, app) {
-    console.log('Automating compliance check test...');
+    logger.info('Automating compliance check test...');
 
     // First navigate to compliance tab if not already there
     if (app.activeTab !== 'compliance') {
@@ -475,9 +475,9 @@ class AutomatedTestRunner {
 
       if (complianceTab) {
         complianceTab.click();
-        console.log('Navigated to Compliance tab');
+        logger.info('Navigated to Compliance tab');
       } else {
-        console.error('Could not find Compliance tab');
+        logger.error('Could not find Compliance tab');
         this.promptUserContinuation(test);
         return;
       }
@@ -492,10 +492,10 @@ class AutomatedTestRunner {
 
       if (startButton) {
         startButton.click();
-        console.log('✅ Started compliance check');
+        logger.info('✅ Started compliance check');
 
         // Wait for compliance check to complete (fixed from 98% issue)
-        console.log('Waiting for compliance check to complete...');
+        logger.info('Waiting for compliance check to complete...');
 
         // Check every second if the compliance check has completed
         let checkCount = 0;
@@ -506,12 +506,12 @@ class AutomatedTestRunner {
             clearInterval(checkInterval);
 
             if (app.compliance) {
-              console.log('✅ Compliance check completed successfully');
+              logger.info('✅ Compliance check completed successfully');
             } else {
-              console.warn('❌ Compliance check did not complete within expected time');
+              logger.warn('❌ Compliance check did not complete within expected time');
 
               // Try to force completion
-              console.log('Attempting to force completion...');
+              logger.info('Attempting to force completion...');
               if (app.setIsComplianceRunning && app.setCompliance) {
                 app.setIsComplianceRunning(false);
                 app.setCompliance({
@@ -526,7 +526,7 @@ class AutomatedTestRunner {
                   issues: [],
                   summary: 'Your 510(k) submission appears to be compliant with FDA requirements.',
                 });
-                console.log('Forced compliance data completion');
+                logger.info('Forced compliance data completion');
               }
             }
 
@@ -536,14 +536,14 @@ class AutomatedTestRunner {
           }
         }, 1000);
       } else {
-        console.error('❌ Could not find compliance check button');
+        logger.error('❌ Could not find compliance check button');
         this.promptUserContinuation(test);
       }
     }, 2000);
   }
 
   automateSubmission(test, app) {
-    console.log('Automating submission generation test...');
+    logger.info('Automating submission generation test...');
 
     // First navigate to submission tab if not already there
     if (app.activeTab !== 'submission') {
@@ -553,9 +553,9 @@ class AutomatedTestRunner {
 
       if (submissionTab) {
         submissionTab.click();
-        console.log('Navigated to Submission tab');
+        logger.info('Navigated to Submission tab');
       } else {
-        console.error('Could not find Submission tab');
+        logger.error('Could not find Submission tab');
         this.promptUserContinuation(test);
         return;
       }
@@ -569,14 +569,14 @@ class AutomatedTestRunner {
 
       if (generateButton) {
         generateButton.click();
-        console.log('✅ Started submission generation');
+        logger.info('✅ Started submission generation');
 
         // Wait a bit for generation to complete
         setTimeout(() => {
           this.promptUserContinuation(test);
         }, 3000);
       } else {
-        console.error('❌ Could not find generate button');
+        logger.error('❌ Could not find generate button');
         this.promptUserContinuation(test);
       }
     }, 2000);
@@ -588,7 +588,7 @@ class AutomatedTestRunner {
 
     const executeNextStep = () => {
       if (currentStepIndex >= steps.length) {
-        console.log('All steps completed');
+        logger.info('All steps completed');
         return;
       }
 
@@ -598,11 +598,11 @@ class AutomatedTestRunner {
       if (result) {
         currentStepIndex++;
         if (currentStepIndex < steps.length) {
-          console.log(`Next step in ${this.stepDelay}ms...`);
+          logger.info(`Next step in ${this.stepDelay}ms...`);
           setTimeout(executeNextStep, this.stepDelay);
         }
       } else {
-        console.error('Step failed, stopping automation');
+        logger.error('Step failed, stopping automation');
         this.promptUserContinuation(test);
       }
     };
@@ -625,21 +625,21 @@ class AutomatedTestRunner {
 
   // Prompt user to confirm test completion
   promptUserContinuation(test) {
-    console.log(
+    logger.info(
       '%cManual verification required',
       'font-size: 14px; color: orange; font-weight: bold;'
     );
-    console.log('Please verify the test results manually based on the expected outcomes.');
+    logger.info('Please verify the test results manually based on the expected outcomes.');
 
-    console.log('\nExpected Results:');
-    test.expected.forEach(result => console.log(`- ${result}`));
+    logger.info('\nExpected Results:');
+    test.expected.forEach(result => logger.info(`- ${result}`));
 
     // Create UI for user to continue
     const resultOptions = ['PASS', 'FAIL', 'SKIP'];
 
-    console.log('\nSelect test result:');
+    logger.info('\nSelect test result:');
     resultOptions.forEach((option, index) => {
-      console.log(`${index + 1}. ${option}`);
+      logger.info(`${index + 1}. ${option}`);
     });
 
     // Ask for issues if test failed
@@ -701,7 +701,7 @@ class AutomatedTestRunner {
   finishTesting() {
     this.isRunning = false;
 
-    console.log(
+    logger.info(
       '%c=== 510(k) Functionality Test Summary ===',
       'font-size: 16px; font-weight: bold; color: green;'
     );
@@ -712,26 +712,26 @@ class AutomatedTestRunner {
     const failed = this.results.filter(r => r.result === 'FAIL').length;
     const skipped = this.results.filter(r => r.result === 'SKIP').length;
 
-    console.log(`Tests Run: ${totalTests}/${this.tests.length}`);
-    console.log(`Passed: ${passed} (${Math.round((passed / totalTests) * 100) || 0}%)`);
-    console.log(`Failed: ${failed} (${Math.round((failed / totalTests) * 100) || 0}%)`);
-    console.log(`Skipped: ${skipped} (${Math.round((skipped / totalTests) * 100) || 0}%)`);
+    logger.info(`Tests Run: ${totalTests}/${this.tests.length}`);
+    logger.info(`Passed: ${passed} (${Math.round((passed / totalTests) * 100) || 0}%)`);
+    logger.info(`Failed: ${failed} (${Math.round((failed / totalTests) * 100) || 0}%)`);
+    logger.info(`Skipped: ${skipped} (${Math.round((skipped / totalTests) * 100) || 0}%)`);
 
     // Individual results
     console.group('Individual Test Results');
     this.results.forEach(result => {
       const icon = result.result === 'PASS' ? '✅' : result.result === 'FAIL' ? '❌' : '⏭️';
-      console.log(`${icon} ${result.id}: ${result.title} - ${result.result}`);
+      logger.info(`${icon} ${result.id}: ${result.title} - ${result.result}`);
     });
     console.groupEnd();
 
     if (failed > 0) {
-      console.log(
+      logger.info(
         '%cSome tests failed. Please review the results and address the issues.',
         'color: red; font-weight: bold;'
       );
     } else if (passed === totalTests) {
-      console.log(
+      logger.info(
         '%cAll tests passed! The 510(k) functionality appears to be working as expected.',
         'color: green; font-weight: bold;'
       );
@@ -757,9 +757,9 @@ window.k510kTestHelpers = {
     const app = document.querySelector('[role="application"]')?.__vueParentComponent?.ctx;
     if (app?.setDocumentType) {
       app.setDocumentType(type);
-      console.log('Document type set to:', type);
+      logger.info('Document type set to:', type);
     } else {
-      console.error('Could not access setDocumentType function');
+      logger.error('Could not access setDocumentType function');
     }
   },
 
@@ -779,9 +779,9 @@ window.k510kTestHelpers = {
         issues: [],
         summary: 'Your 510(k) submission appears to be compliant with FDA requirements.',
       });
-      console.log('Compliance check completed');
+      logger.info('Compliance check completed');
     } else {
-      console.error('Could not access application context');
+      logger.error('Could not access application context');
     }
   },
 
@@ -800,8 +800,8 @@ window.k510kTestHelpers = {
   },
 };
 
-console.log('%c510(k) Test Runner Ready', 'font-size: 14px; font-weight: bold; color: green;');
-console.log('Type autoRunner.start() to begin testing');
+logger.info('%c510(k) Test Runner Ready', 'font-size: 14px; font-weight: bold; color: green;');
+logger.info('Type autoRunner.start() to begin testing');
 
 // Export for Node.js environments if needed
 if (typeof module !== 'undefined') {

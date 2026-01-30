@@ -38,8 +38,8 @@ const REQUIRED_DEPENDENCIES = {
   '@tiptap/pm': '^2.8.0'
 };
 
-console.log('🔧 DEPENDENCY MANAGER - Permanent Fix');
-console.log('=====================================');
+logger.info('🔧 DEPENDENCY MANAGER - Permanent Fix');
+logger.info('=====================================');
 
 function checkPackageExists(packageName) {
   try {
@@ -56,31 +56,31 @@ function installMissingPackages() {
   for (const [pkg, version] of Object.entries(REQUIRED_DEPENDENCIES)) {
     if (!checkPackageExists(pkg)) {
       missingPackages.push(pkg);
-      console.log(`❌ MISSING: ${pkg}`);
+      logger.info(`❌ MISSING: ${pkg}`);
     } else {
-      console.log(`✅ FOUND: ${pkg}`);
+      logger.info(`✅ FOUND: ${pkg}`);
     }
   }
   
   if (missingPackages.length > 0) {
-    console.log(`\n🚨 Installing ${missingPackages.length} missing packages...`);
+    logger.info(`\n🚨 Installing ${missingPackages.length} missing packages...`);
     
     try {
       const installCmd = `npm install ${missingPackages.join(' ')}`;
-      console.log(`Executing: ${installCmd}`);
+      logger.info(`Executing: ${installCmd}`);
       execSync(installCmd, { stdio: 'inherit' });
-      console.log('✅ All missing packages installed successfully');
+      logger.info('✅ All missing packages installed successfully');
     } catch (error) {
-      console.error('❌ Failed to install packages:', error.message);
+      logger.error('❌ Failed to install packages:', error.message);
       process.exit(1);
     }
   } else {
-    console.log('✅ All required packages are present');
+    logger.info('✅ All required packages are present');
   }
 }
 
 function validateImports() {
-  console.log('\n🔍 Validating critical imports...');
+  logger.info('\n🔍 Validating critical imports...');
   
   const criticalFiles = [
     'server/routes/authoring.router.ts',
@@ -90,24 +90,24 @@ function validateImports() {
   
   for (const file of criticalFiles) {
     if (fs.existsSync(file)) {
-      console.log(`✅ Critical file exists: ${file}`);
+      logger.info(`✅ Critical file exists: ${file}`);
     } else {
-      console.log(`⚠️  File not found: ${file}`);
+      logger.info(`⚠️  File not found: ${file}`);
     }
   }
 }
 
 function lockDependencies() {
-  console.log('\n🔒 Locking dependency versions...');
+  logger.info('\n🔒 Locking dependency versions...');
   
   try {
     // Ensure package-lock.json exists to lock versions
     if (!fs.existsSync('package-lock.json')) {
       execSync('npm install', { stdio: 'inherit' });
     }
-    console.log('✅ Dependencies locked via package-lock.json');
+    logger.info('✅ Dependencies locked via package-lock.json');
   } catch (error) {
-    console.error('❌ Failed to lock dependencies:', error.message);
+    logger.error('❌ Failed to lock dependencies:', error.message);
   }
 }
 
@@ -118,11 +118,11 @@ async function main() {
     validateImports();
     lockDependencies();
     
-    console.log('\n🎉 DEPENDENCY MANAGEMENT COMPLETE');
-    console.log('All required packages are installed and verified');
-    console.log('=====================================');
+    logger.info('\n🎉 DEPENDENCY MANAGEMENT COMPLETE');
+    logger.info('All required packages are installed and verified');
+    logger.info('=====================================');
   } catch (error) {
-    console.error('💥 DEPENDENCY MANAGER FAILED:', error.message);
+    logger.error('💥 DEPENDENCY MANAGER FAILED:', error.message);
     process.exit(1);
   }
 }

@@ -22,7 +22,7 @@ class CommitValidator {
       success: '\x1b[32m✅',
       info: '\x1b[34mℹ️',
     };
-    console.log(`${colors[type]} ${message}\x1b[0m`);
+    logger.info(`${colors[type]} ${message}\x1b[0m`);
   }
 
   addError(message) {
@@ -241,7 +241,7 @@ class CommitValidator {
     this.checkTodos();
 
     // Summary
-    console.log('\n📊 Validation Summary:');
+    logger.info('\n📊 Validation Summary:');
     this.log('info', `Errors: ${this.errors.length}`);
     this.log('info', `Warnings: ${this.warnings.length}`);
 

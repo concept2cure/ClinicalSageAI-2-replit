@@ -38,7 +38,7 @@ function getSuccessfulImports() {
       return JSON.parse(data);
     }
   } catch (error) {
-    console.error('Error reading successful imports:', error.message);
+    logger.error('Error reading successful imports:', error.message);
   }
 
   return { ids: [] };
@@ -49,7 +49,7 @@ function saveSuccessfulImports(imports) {
   try {
     fs.writeFileSync(SUCCESSFUL_IMPORTS_FILE, JSON.stringify(imports, null, 2));
   } catch (error) {
-    console.error('Error saving successful imports data:', error);
+    logger.error('Error saving successful imports data:', error);
   }
 }
 
@@ -61,7 +61,7 @@ function getProgressData() {
       return JSON.parse(data);
     }
   } catch (error) {
-    console.error('Error reading progress data:', error.message);
+    logger.error('Error reading progress data:', error.message);
   }
 
   return {
@@ -78,15 +78,15 @@ function getProgressData() {
 function saveProgressData(data) {
   try {
     fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
-    console.log('Updated progress data saved');
+    logger.info('Updated progress data saved');
   } catch (error) {
-    console.error('Error saving progress data:', error);
+    logger.error('Error saving progress data:', error);
   }
 }
 
 // Fetch trial IDs from ClinicalTrials.gov using their public API
 async function fetchTrialIds(pageSize = 50, pageNum = 1) {
-  console.log(`Fetching page ${pageNum} (${pageSize} records per page)`);
+  logger.info(`Fetching page ${pageNum} (${pageSize} records per page)`);
 
   try {
     // Use a very simple query to avoid API errors
@@ -100,7 +100,7 @@ async function fetchTrialIds(pageSize = 50, pageNum = 1) {
     });
 
     if (!response.data || !response.data.studies || !Array.isArray(response.data.studies)) {
-      console.log('API response missing studies array');
+      logger.info('API response missing studies array');
       return [];
     }
 
@@ -114,11 +114,11 @@ async function fetchTrialIds(pageSize = 50, pageNum = 1) {
       })
       .filter(id => id !== null);
   } catch (error) {
-    console.error(`Error fetching trials from ClinicalTrials.gov: ${error.message}`);
+    logger.error(`Error fetching trials from ClinicalTrials.gov: ${error.message}`);
 
     // For certain types of errors, wait and retry
     if (error.response && (error.response.status === 429 || error.response.status === 503)) {
-      console.log('Rate limit or server error, waiting 60 seconds before retrying...');
+      logger.info('Rate limit or server error, waiting 60 seconds before retrying...');
       await new Promise(resolve => setTimeout(resolve, 60000));
       return fetchTrialIds(pageSize, pageNum);
     }
@@ -130,7 +130,7 @@ async function fetchTrialIds(pageSize = 50, pageNum = 1) {
 
 // Fallback list of trial IDs if API is not responsive
 function getFallbackTrialIds() {
-  console.log('Using fallback trial IDs');
+  logger.info('Using fallback trial IDs');
 
   // These are real NCT IDs from ClinicalTrials.gov
   const knownIds = [
@@ -177,7 +177,7 @@ function getFallbackTrialIds() {
 // Get detailed information about a single trial
 async function fetchTrialDetails(nctId) {
   try {
-    console.log(`Fetching details for trial ${nctId}`);
+    logger.info(`Fetching details for trial ${nctId}`);
 
     const response = await axios.get(`https://clinicaltrials.gov/api/v2/studies/${nctId}`, {
       params: { format: 'json' },
@@ -186,11 +186,11 @@ async function fetchTrialDetails(nctId) {
 
     return response.data;
   } catch (error) {
-    console.error(`Error fetching details for trial ${nctId}: ${error.message}`);
+    logger.error(`Error fetching details for trial ${nctId}: ${error.message}`);
 
     // For certain types of errors, wait and retry
     if (error.response && (error.response.status === 429 || error.response.status === 503)) {
-      console.log('Rate limit or server error, waiting 30 seconds before retrying...');
+      logger.info('Rate limit or server error, waiting 30 seconds before retrying...');
       await new Promise(resolve => setTimeout(resolve, 30000));
       return fetchTrialDetails(nctId);
     }
@@ -206,7 +206,7 @@ async function checkTrialExists(nctId) {
 
     return rows.length > 0;
   } catch (error) {
-    console.error(`Error checking if trial ${nctId} exists:`, error.message);
+    logger.error(`Error checking if trial ${nctId} exists:`, error.message);
     return false;
   }
 }
@@ -273,7 +273,7 @@ function transformTrialData(trialData) {
       }
     }
   } catch (error) {
-    console.log(`Date error for trial ${identificationModule.nctId}: ${error.message}`);
+    logger.info(`Date error for trial ${identificationModule.nctId}: ${error.message}`);
     date = null;
   }
 
@@ -383,8 +383,8 @@ async function importTrialToDatabase(trial) {
 
 // Process a batch of trials
 async function processBatch(batchSize = 50, pageNum = 1) {
-  console.log(`\n=== Processing Batch - Page ${pageNum} ===`);
-  console.log(`Timestamp: ${new Date().toISOString()}`);
+  logger.info(`\n=== Processing Batch - Page ${pageNum} ===`);
+  logger.info(`Timestamp: ${new Date().toISOString()}`);
 
   const successfulImports = getSuccessfulImports();
   const startTime = Date.now();
@@ -397,17 +397,17 @@ async function processBatch(batchSize = 50, pageNum = 1) {
     const trialIds = await fetchTrialIds(batchSize, pageNum);
 
     if (!trialIds || trialIds.length === 0) {
-      console.log('No trial IDs found.');
+      logger.info('No trial IDs found.');
       return { imported: 0, skipped: 0, failed: 0 };
     }
 
-    console.log(`Found ${trialIds.length} trial IDs`);
+    logger.info(`Found ${trialIds.length} trial IDs`);
 
     // Process each trial
     for (const nctId of trialIds) {
       // Skip if already imported
       if (successfulImports.ids.includes(nctId)) {
-        console.log(`Skipping already imported trial ID: ${nctId}`);
+        logger.info(`Skipping already imported trial ID: ${nctId}`);
         skippedCount++;
         continue;
       }
@@ -415,7 +415,7 @@ async function processBatch(batchSize = 50, pageNum = 1) {
       // Skip if already in database
       const exists = await checkTrialExists(nctId);
       if (exists) {
-        console.log(`Skipping trial already in database: ${nctId}`);
+        logger.info(`Skipping trial already in database: ${nctId}`);
         // Track to avoid database check in future
         successfulImports.ids.push(nctId);
         skippedCount++;
@@ -436,12 +436,12 @@ async function processBatch(batchSize = 50, pageNum = 1) {
         successfulImports.ids.push(nctId);
         importedCount++;
 
-        console.log(`Successfully imported trial ${nctId}`);
+        logger.info(`Successfully imported trial ${nctId}`);
 
         // Small delay between trials to avoid hitting rate limits
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
-        console.error(`Failed to import trial ${nctId}:`, error.message);
+        logger.error(`Failed to import trial ${nctId}:`, error.message);
         failedCount++;
       }
     }
@@ -451,16 +451,16 @@ async function processBatch(batchSize = 50, pageNum = 1) {
 
     const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    console.log(`\n=== Batch Summary ===`);
-    console.log(`Total trials processed: ${trialIds.length}`);
-    console.log(`Successfully imported: ${importedCount}`);
-    console.log(`Skipped (already exists): ${skippedCount}`);
-    console.log(`Failed imports: ${failedCount}`);
-    console.log(`Processing time: ${processingTime}s`);
+    logger.info(`\n=== Batch Summary ===`);
+    logger.info(`Total trials processed: ${trialIds.length}`);
+    logger.info(`Successfully imported: ${importedCount}`);
+    logger.info(`Skipped (already exists): ${skippedCount}`);
+    logger.info(`Failed imports: ${failedCount}`);
+    logger.info(`Processing time: ${processingTime}s`);
 
     return { imported: importedCount, skipped: skippedCount, failed: failedCount };
   } catch (error) {
-    console.error('Error processing batch:', error.message);
+    logger.error('Error processing batch:', error.message);
     return { imported: importedCount, skipped: skippedCount, failed: failedCount };
   }
 }
@@ -482,16 +482,16 @@ async function getDatabaseStatus() {
       ctTrials: parseInt(rows[0].ct_trials),
     };
   } catch (error) {
-    console.error('Error getting database status:', error);
+    logger.error('Error getting database status:', error);
     return { total: 0, hcTrials: 0, ctTrials: 0 };
   }
 }
 
 // Main function to run the import
 async function runEnhancedImport() {
-  console.log('\n=========================================================');
-  console.log('ENHANCED CLINICALTRIALS.GOV TRIAL IMPORT');
-  console.log('=========================================================\n');
+  logger.info('\n=========================================================');
+  logger.info('ENHANCED CLINICALTRIALS.GOV TRIAL IMPORT');
+  logger.info('=========================================================\n');
 
   try {
     // Get progress data
@@ -499,13 +499,13 @@ async function runEnhancedImport() {
 
     // If we've completed all batches, exit
     if (progress.batchesProcessed >= progress.targetBatches) {
-      console.log('All batches have been processed. Import complete.');
+      logger.info('All batches have been processed. Import complete.');
       return;
     }
 
     // If we're resuming an import
     if (progress.batchesProcessed > 0) {
-      console.log(
+      logger.info(
         `Resuming import from batch ${progress.batchesProcessed + 1}/${progress.targetBatches}`
       );
     }
@@ -515,13 +515,13 @@ async function runEnhancedImport() {
 
     // Get current database status
     const dbStatus = await getDatabaseStatus();
-    console.log(
+    logger.info(
       `Current database: ${dbStatus.total} total trials, ${dbStatus.ctTrials} ClinicalTrials.gov trials`
     );
 
     // Process batches until we reach the target
     while (progress.batchesProcessed < progress.targetBatches) {
-      console.log(
+      logger.info(
         `\n=== Processing batch ${progress.batchesProcessed + 1}/${progress.targetBatches} ===\n`
       );
 
@@ -539,19 +539,19 @@ async function runEnhancedImport() {
 
         // Get updated database counts
         const updatedStatus = await getDatabaseStatus();
-        console.log(`\n=== Current Database Status ===`);
-        console.log(`Total trials in database: ${updatedStatus.total}`);
-        console.log(`ClinicalTrials.gov trials: ${updatedStatus.ctTrials}`);
-        console.log(`Health Canada trials: ${updatedStatus.hcTrials}`);
+        logger.info(`\n=== Current Database Status ===`);
+        logger.info(`Total trials in database: ${updatedStatus.total}`);
+        logger.info(`ClinicalTrials.gov trials: ${updatedStatus.ctTrials}`);
+        logger.info(`Health Canada trials: ${updatedStatus.hcTrials}`);
 
         // Wait before next batch to avoid rate limiting
         if (progress.batchesProcessed < progress.targetBatches) {
           const waitTime = 10000; // 10 seconds
-          console.log(`\nWaiting ${waitTime / 1000} seconds before next batch...`);
+          logger.info(`\nWaiting ${waitTime / 1000} seconds before next batch...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       } catch (error) {
-        console.error('Error processing batch:', error);
+        logger.error('Error processing batch:', error);
         progress.errors.push({
           batch: progress.batchesProcessed + 1,
           timestamp: new Date().toISOString(),
@@ -570,15 +570,15 @@ async function runEnhancedImport() {
 
     // Get final database status
     const finalStatus = await getDatabaseStatus();
-    console.log('\n=== Import Complete ===');
-    console.log(`Final database status: ${finalStatus.total} total trials`);
-    console.log(`ClinicalTrials.gov trials: ${finalStatus.ctTrials}`);
-    console.log(`Health Canada trials: ${finalStatus.hcTrials}`);
+    logger.info('\n=== Import Complete ===');
+    logger.info(`Final database status: ${finalStatus.total} total trials`);
+    logger.info(`ClinicalTrials.gov trials: ${finalStatus.ctTrials}`);
+    logger.info(`Health Canada trials: ${finalStatus.hcTrials}`);
 
     // Close the database connection
     await pool.end();
   } catch (error) {
-    console.error('Error in import process:', error.message);
+    logger.error('Error in import process:', error.message);
     process.exit(1);
   }
 }

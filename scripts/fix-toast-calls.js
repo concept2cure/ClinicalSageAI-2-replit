@@ -9,7 +9,7 @@
  *         description: "...",
  *         variant: "..."
  *       })
- *   console.log('Toast would show:', {
+ *   logger.info('Toast would show:', {
  *         title: "...",
  *         description: "...",
  *         variant: "..."
@@ -106,7 +106,7 @@ function fixToastCallsAggressive(content) {
         if (toastStartLine !== -1 && toastEndLine === -1 && lines[j].includes('})')) {
           toastEndLine = j;
         }
-        if (lines[j].includes("console.log('Toast would show:'")) {
+        if (lines[j].includes("logger.info('Toast would show:'")) {
           consoleLogStartLine = j;
         }
         if (consoleLogStartLine !== -1 && consoleLogEndLine === -1 && lines[j].includes('});')) {
@@ -127,7 +127,7 @@ function fixToastCallsAggressive(content) {
         // Get middle lines until })
         for (let j = toastStartLine + 1; j <= toastEndLine; j++) {
           // Skip the console.log section if we've passed the toast end
-          if (lines[j].includes("console.log('Toast would show:'")) break;
+          if (lines[j].includes("logger.info('Toast would show:'")) break;
           
           let cleanLine = lines[j].trim();
           if (cleanLine && !cleanLine.startsWith('//')) {
@@ -158,14 +158,14 @@ function fixToastCallsAggressive(content) {
 
 // Main execution
 const clientSrcDir = path.join(__dirname, '..', 'client', 'src');
-console.log('Scanning for affected files...');
+logger.info('Scanning for affected files...');
 
 const affectedFiles = findAffectedFiles(clientSrcDir);
-console.log(`Found ${affectedFiles.length} affected files`);
+logger.info(`Found ${affectedFiles.length} affected files`);
 
 let fixedCount = 0;
 for (const filePath of affectedFiles) {
-  console.log(`Processing: ${path.relative(clientSrcDir, filePath)}`);
+  logger.info(`Processing: ${path.relative(clientSrcDir, filePath)}`);
   
   const content = fs.readFileSync(filePath, 'utf8');
   const before = (content.match(/\/\/ toast call replaced/g) || []).length;
@@ -175,11 +175,11 @@ for (const filePath of affectedFiles) {
   
   if (before !== after) {
     fs.writeFileSync(filePath, fixed);
-    console.log(`  Fixed ${before - after} toast calls (${after} remaining)`);
+    logger.info(`  Fixed ${before - after} toast calls (${after} remaining)`);
     fixedCount += (before - after);
   } else {
-    console.log(`  No changes needed or pattern not matched`);
+    logger.info(`  No changes needed or pattern not matched`);
   }
 }
 
-console.log(`\nTotal fixed: ${fixedCount} toast calls`);
+logger.info(`\nTotal fixed: ${fixedCount} toast calls`);

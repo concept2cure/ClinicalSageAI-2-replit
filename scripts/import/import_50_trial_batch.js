@@ -40,12 +40,12 @@ function getTrackingData() {
   if (fs.existsSync(TRACKING_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(TRACKING_FILE, 'utf8'));
-      console.log(
+      logger.info(
         `Loaded progress: ${data.totalImported} trials imported, next ID: ${data.nextStartId}`
       );
       return data;
     } catch (error) {
-      console.error(`Error reading progress file: ${error.message}`);
+      logger.error(`Error reading progress file: ${error.message}`);
     }
   }
 
@@ -63,7 +63,7 @@ function getTrackingData() {
 function saveTrackingData(data) {
   data.lastRunDate = new Date().toISOString();
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
-  console.log(
+  logger.info(
     `Progress saved: ${data.totalImported} trials imported, next ID: ${data.nextStartId}`
   );
 }
@@ -313,7 +313,7 @@ async function importTrialsToDatabase(trials) {
         ]);
 
         if (checkResult.rows.length > 0) {
-          console.log(`Trial ${trial.nctrialId} already exists, skipping`);
+          logger.info(`Trial ${trial.nctrialId} already exists, skipping`);
           continue;
         }
 
@@ -366,16 +366,16 @@ async function importTrialsToDatabase(trials) {
         );
 
         importCount++;
-        console.log(`Imported trial ${trial.nctrialId}: ${trial.title}`);
+        logger.info(`Imported trial ${trial.nctrialId}: ${trial.title}`);
       } catch (error) {
-        console.error(`Error importing trial ${trial.nctrialId}:`, error.message);
+        logger.error(`Error importing trial ${trial.nctrialId}:`, error.message);
       }
     }
 
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error during import transaction:', error.message);
+    logger.error('Error during import transaction:', error.message);
     throw error;
   } finally {
     client.release();
@@ -417,7 +417,7 @@ async function getHealthCanadaCount() {
  */
 async function run50TrialBatch() {
   try {
-    console.log('Starting 50-trial batch import process');
+    logger.info('Starting 50-trial batch import process');
 
     // Get current progress
     const trackingData = getTrackingData();
@@ -426,17 +426,17 @@ async function run50TrialBatch() {
     const totalTrials = await getTotalTrialCount();
     const healthCanadaTrials = await getHealthCanadaCount();
 
-    console.log(
+    logger.info(
       `Current database status: ${totalTrials} total trials, ${healthCanadaTrials} Health Canada trials`
     );
 
     // Generate exactly 50 new trials
     const trials = generateTrials(BATCH_SIZE, trackingData.nextStartId);
-    console.log(`Generated ${trials.length} new Health Canada trials`);
+    logger.info(`Generated ${trials.length} new Health Canada trials`);
 
     // Import the trials
     const importedCount = await importTrialsToDatabase(trials);
-    console.log(`Successfully imported ${importedCount} new trials`);
+    logger.info(`Successfully imported ${importedCount} new trials`);
 
     // Update tracking data
     trackingData.totalImported += importedCount;
@@ -447,10 +447,10 @@ async function run50TrialBatch() {
     const updatedTotalTrials = await getTotalTrialCount();
     const updatedHealthCanadaTrials = await getHealthCanadaCount();
 
-    console.log(
+    logger.info(
       `Updated database status: ${updatedTotalTrials} total trials, ${updatedHealthCanadaTrials} Health Canada trials`
     );
-    console.log(
+    logger.info(
       `Progress toward 4000 goal: ${((updatedHealthCanadaTrials / 4000) * 100).toFixed(2)}%`
     );
 
@@ -461,7 +461,7 @@ async function run50TrialBatch() {
       healthCanadaTrials: updatedHealthCanadaTrials,
     };
   } catch (error) {
-    console.error('Error in batch import process:', error.message);
+    logger.error('Error in batch import process:', error.message);
     return { success: false, error: error.message };
   } finally {
     // Close the database pool
@@ -474,18 +474,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   run50TrialBatch()
     .then(result => {
       if (result.success) {
-        console.log(
+        logger.info(
           `Batch import completed successfully. Imported ${result.importedCount} trials.`
         );
-        console.log(
+        logger.info(
           `Total trials: ${result.totalTrials}, Health Canada trials: ${result.healthCanadaTrials}`
         );
       } else {
-        console.error(`Batch import failed:`, result.error);
+        logger.error(`Batch import failed:`, result.error);
       }
     })
     .catch(err => {
-      console.error('Unhandled error in batch import:', err);
+      logger.error('Unhandled error in batch import:', err);
       process.exit(1);
     });
 }

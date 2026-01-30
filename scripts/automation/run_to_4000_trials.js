@@ -50,13 +50,13 @@ async function getHealthCanadaCount() {
  * Run batches until we hit the target count
  */
 async function runUntilTarget() {
-  console.log(
+  logger.info(
     `Starting multiple batch import process to reach ${TARGET_COUNT} Health Canada trials`
   );
 
   // Get initial count
   let currentCount = await getHealthCanadaCount();
-  console.log(
+  logger.info(
     `Starting with ${currentCount} Health Canada trials out of ${TARGET_COUNT} target (${((currentCount / TARGET_COUNT) * 100).toFixed(2)}%)`
   );
 
@@ -66,11 +66,11 @@ async function runUntilTarget() {
   while (currentCount < TARGET_COUNT && batchesRun < MAX_BATCH_RUNS) {
     // Log batch progress
     batchesRun++;
-    console.log(`\n===== Running batch ${batchesRun} =====`);
-    console.log(
+    logger.info(`\n===== Running batch ${batchesRun} =====`);
+    logger.info(
       `Current progress: ${currentCount}/${TARGET_COUNT} (${((currentCount / TARGET_COUNT) * 100).toFixed(2)}%)`
     );
-    console.log(`Remaining: ${TARGET_COUNT - currentCount} trials\n`);
+    logger.info(`Remaining: ${TARGET_COUNT - currentCount} trials\n`);
 
     // Run a single batch
     const result = await run50TrialBatch();
@@ -79,13 +79,13 @@ async function runUntilTarget() {
       totalImported += result.importedCount;
       currentCount = result.healthCanadaTrials;
 
-      console.log(`\nBatch ${batchesRun} complete: Imported ${result.importedCount} trials`);
-      console.log(
+      logger.info(`\nBatch ${batchesRun} complete: Imported ${result.importedCount} trials`);
+      logger.info(
         `New total: ${currentCount}/${TARGET_COUNT} (${((currentCount / TARGET_COUNT) * 100).toFixed(2)}%)`
       );
     } else {
-      console.error(`Batch ${batchesRun} failed:`, result.error);
-      console.log('Waiting before retry...');
+      logger.error(`Batch ${batchesRun} failed:`, result.error);
+      logger.info('Waiting before retry...');
     }
 
     // Wait between batches to avoid database contention
@@ -95,25 +95,25 @@ async function runUntilTarget() {
   }
 
   if (currentCount >= TARGET_COUNT) {
-    console.log(`\n✅ SUCCESS: Target of ${TARGET_COUNT} Health Canada trials reached!`);
-    console.log(`Final count: ${currentCount} trials`);
-    console.log(`Total batches run: ${batchesRun}`);
-    console.log(`Total trials imported: ${totalImported}`);
+    logger.info(`\n✅ SUCCESS: Target of ${TARGET_COUNT} Health Canada trials reached!`);
+    logger.info(`Final count: ${currentCount} trials`);
+    logger.info(`Total batches run: ${batchesRun}`);
+    logger.info(`Total trials imported: ${totalImported}`);
   } else {
-    console.log(`\n⚠️ Maximum batch limit (${MAX_BATCH_RUNS}) reached before target.`);
-    console.log(
+    logger.info(`\n⚠️ Maximum batch limit (${MAX_BATCH_RUNS}) reached before target.`);
+    logger.info(
       `Current count: ${currentCount}/${TARGET_COUNT} (${((currentCount / TARGET_COUNT) * 100).toFixed(2)}%)`
     );
-    console.log(`Total batches run: ${batchesRun}`);
-    console.log(`Total trials imported: ${totalImported}`);
-    console.log(`Remaining: ${TARGET_COUNT - currentCount} trials`);
+    logger.info(`Total batches run: ${batchesRun}`);
+    logger.info(`Total trials imported: ${totalImported}`);
+    logger.info(`Remaining: ${TARGET_COUNT - currentCount} trials`);
   }
 }
 
 // Execute if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   runUntilTarget().catch(err => {
-    console.error('Unhandled error in batch import process:', err);
+    logger.error('Unhandled error in batch import process:', err);
     process.exit(1);
   });
 }

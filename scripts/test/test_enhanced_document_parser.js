@@ -44,8 +44,8 @@ Facility inspections must be scheduled within 45 days of FDA request.
 `;
 
 async function testTextInputProcessing() {
-  console.log('\n🔍 TEST 1: Text Input Processing');
-  console.log('='.repeat(50));
+  logger.info('\n🔍 TEST 1: Text Input Processing');
+  logger.info('='.repeat(50));
 
   const payload = {
     documentText: TEST_REGULATORY_CONTENT,
@@ -63,7 +63,7 @@ async function testTextInputProcessing() {
   };
 
   try {
-    console.log('📡 Sending text input request...');
+    logger.info('📡 Sending text input request...');
 
     const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
       method: 'POST',
@@ -73,37 +73,37 @@ async function testTextInputProcessing() {
 
     const result = await response.json();
 
-    console.log(`📊 Response Status: ${response.status}`);
-    console.log(`✅ Success: ${result.success}`);
+    logger.info(`📊 Response Status: ${response.status}`);
+    logger.info(`✅ Success: ${result.success}`);
 
     if (result.success) {
-      console.log(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
-      console.log(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
-      console.log(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
-      console.log(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
+      logger.info(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
+      logger.info(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
+      logger.info(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
+      logger.info(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
 
-      console.log('\n📋 EXTRACTED COMMITMENTS:');
+      logger.info('\n📋 EXTRACTED COMMITMENTS:');
       result.data.commitments.forEach((commitment, index) => {
-        console.log(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
-        console.log(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
-        console.log(`      - Due Date: ${commitment.dueDate || 'Not specified'}`);
-        console.log(`      - Authority: ${commitment.authority}`);
+        logger.info(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
+        logger.info(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
+        logger.info(`      - Due Date: ${commitment.dueDate || 'Not specified'}`);
+        logger.info(`      - Authority: ${commitment.authority}`);
       });
 
       return { success: true, commitments: result.data.commitments.length };
     } else {
-      console.error(`❌ Error: ${result.error}`);
+      logger.error(`❌ Error: ${result.error}`);
       return { success: false, error: result.error };
     }
   } catch (error) {
-    console.error('❌ Text input test failed:', error.message);
+    logger.error('❌ Text input test failed:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 async function testFileUploadProcessing() {
-  console.log('\n🔍 TEST 2: File Upload Processing');
-  console.log('='.repeat(50));
+  logger.info('\n🔍 TEST 2: File Upload Processing');
+  logger.info('='.repeat(50));
 
   try {
     // Create a temporary test file
@@ -124,7 +124,7 @@ async function testFileUploadProcessing() {
       ...formData.getHeaders(),
     };
 
-    console.log('📎 Sending file upload request...');
+    logger.info('📎 Sending file upload request...');
 
     const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
       method: 'POST',
@@ -134,24 +134,24 @@ async function testFileUploadProcessing() {
 
     const result = await response.json();
 
-    console.log(`📊 Response Status: ${response.status}`);
-    console.log(`✅ Success: ${result.success}`);
+    logger.info(`📊 Response Status: ${response.status}`);
+    logger.info(`✅ Success: ${result.success}`);
 
     if (result.success) {
-      console.log(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
-      console.log(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
-      console.log(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
-      console.log(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
+      logger.info(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
+      logger.info(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
+      logger.info(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
+      logger.info(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
 
       const metadata = result.data.summary.documentInfo.processingMetadata;
-      console.log(`📎 File: ${metadata.filename}`);
-      console.log(`📊 Size: ${metadata.fileSize} bytes`);
-      console.log(`🔍 Type: ${metadata.mimeType}`);
+      logger.info(`📎 File: ${metadata.filename}`);
+      logger.info(`📊 Size: ${metadata.fileSize} bytes`);
+      logger.info(`🔍 Type: ${metadata.mimeType}`);
 
-      console.log('\n📋 EXTRACTED COMMITMENTS:');
+      logger.info('\n📋 EXTRACTED COMMITMENTS:');
       result.data.commitments.forEach((commitment, index) => {
-        console.log(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
-        console.log(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
+        logger.info(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
+        logger.info(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
       });
 
       // Clean up test file
@@ -159,19 +159,19 @@ async function testFileUploadProcessing() {
 
       return { success: true, commitments: result.data.commitments.length };
     } else {
-      console.error(`❌ Error: ${result.error}`);
+      logger.error(`❌ Error: ${result.error}`);
       fs.unlinkSync(testFilePath);
       return { success: false, error: result.error };
     }
   } catch (error) {
-    console.error('❌ File upload test failed:', error.message);
+    logger.error('❌ File upload test failed:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 async function testVaultDMSProcessing() {
-  console.log('\n🔍 TEST 3: Vault DMS Integration');
-  console.log('='.repeat(50));
+  logger.info('\n🔍 TEST 3: Vault DMS Integration');
+  logger.info('='.repeat(50));
 
   const payload = {
     vaultFileId: 'vault-001',
@@ -189,7 +189,7 @@ async function testVaultDMSProcessing() {
   };
 
   try {
-    console.log('🏦 Sending vault DMS request...');
+    logger.info('🏦 Sending vault DMS request...');
 
     const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
       method: 'POST',
@@ -199,40 +199,40 @@ async function testVaultDMSProcessing() {
 
     const result = await response.json();
 
-    console.log(`📊 Response Status: ${response.status}`);
-    console.log(`✅ Success: ${result.success}`);
+    logger.info(`📊 Response Status: ${response.status}`);
+    logger.info(`✅ Success: ${result.success}`);
 
     if (result.success) {
-      console.log(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
-      console.log(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
-      console.log(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
-      console.log(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
+      logger.info(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
+      logger.info(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
+      logger.info(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
+      logger.info(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
 
       const metadata = result.data.summary.documentInfo.processingMetadata;
-      console.log(`🏦 Vault File: ${metadata.filename}`);
-      console.log(`📊 Size: ${metadata.fileSize} bytes`);
-      console.log(`🆔 Vault ID: ${metadata.vaultFileId}`);
+      logger.info(`🏦 Vault File: ${metadata.filename}`);
+      logger.info(`📊 Size: ${metadata.fileSize} bytes`);
+      logger.info(`🆔 Vault ID: ${metadata.vaultFileId}`);
 
-      console.log('\n📋 EXTRACTED COMMITMENTS:');
+      logger.info('\n📋 EXTRACTED COMMITMENTS:');
       result.data.commitments.forEach((commitment, index) => {
-        console.log(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
-        console.log(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
+        logger.info(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
+        logger.info(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
       });
 
       return { success: true, commitments: result.data.commitments.length };
     } else {
-      console.error(`❌ Error: ${result.error}`);
+      logger.error(`❌ Error: ${result.error}`);
       return { success: false, error: result.error };
     }
   } catch (error) {
-    console.error('❌ Vault DMS test failed:', error.message);
+    logger.error('❌ Vault DMS test failed:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 async function testOneDriveProcessing() {
-  console.log('\n🔍 TEST 4: OneDrive Integration');
-  console.log('='.repeat(50));
+  logger.info('\n🔍 TEST 4: OneDrive Integration');
+  logger.info('='.repeat(50));
 
   const payload = {
     oneDriveFileId: 'onedrive-sample-001',
@@ -250,7 +250,7 @@ async function testOneDriveProcessing() {
   };
 
   try {
-    console.log('☁️ Sending OneDrive request...');
+    logger.info('☁️ Sending OneDrive request...');
 
     const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
       method: 'POST',
@@ -260,41 +260,41 @@ async function testOneDriveProcessing() {
 
     const result = await response.json();
 
-    console.log(`📊 Response Status: ${response.status}`);
-    console.log(`✅ Success: ${result.success}`);
+    logger.info(`📊 Response Status: ${response.status}`);
+    logger.info(`✅ Success: ${result.success}`);
 
     if (result.success) {
-      console.log(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
-      console.log(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
-      console.log(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
-      console.log(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
+      logger.info(`📄 Total Commitments: ${result.data.summary.totalCommitments}`);
+      logger.info(`🔴 Critical Commitments: ${result.data.summary.criticalCommitments}`);
+      logger.info(`📈 Compliance Score: ${result.data.summary.complianceScore}%`);
+      logger.info(`⚠️  Risk Level: ${result.data.summary.riskLevel}`);
 
       const metadata = result.data.summary.documentInfo.processingMetadata;
-      console.log(`☁️ OneDrive File: ${metadata.filename}`);
-      console.log(`📊 Size: ${metadata.fileSize} bytes`);
-      console.log(`🔍 Type: ${metadata.documentType}`);
+      logger.info(`☁️ OneDrive File: ${metadata.filename}`);
+      logger.info(`📊 Size: ${metadata.fileSize} bytes`);
+      logger.info(`🔍 Type: ${metadata.documentType}`);
 
-      console.log('\n📋 EXTRACTED COMMITMENTS:');
+      logger.info('\n📋 EXTRACTED COMMITMENTS:');
       result.data.commitments.forEach((commitment, index) => {
-        console.log(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
-        console.log(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
+        logger.info(`   ${index + 1}. ${commitment.description.substring(0, 80)}...`);
+        logger.info(`      - Priority: ${commitment.priority}, Type: ${commitment.type}`);
       });
 
       return { success: true, commitments: result.data.commitments.length };
     } else {
-      console.error(`❌ Error: ${result.error}`);
+      logger.error(`❌ Error: ${result.error}`);
       return { success: false, error: result.error };
     }
   } catch (error) {
-    console.error('❌ OneDrive test failed:', error.message);
+    logger.error('❌ OneDrive test failed:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 async function runComprehensiveTest() {
-  console.log('🚀 SUB-PHASE 1.2: ENHANCED DOCUMENT PARSER VERIFICATION SUITE');
-  console.log('='.repeat(70));
-  console.log('Testing 4-source document processing capabilities...');
+  logger.info('🚀 SUB-PHASE 1.2: ENHANCED DOCUMENT PARSER VERIFICATION SUITE');
+  logger.info('='.repeat(70));
+  logger.info('Testing 4-source document processing capabilities...');
 
   const results = {
     textInput: await testTextInputProcessing(),
@@ -303,8 +303,8 @@ async function runComprehensiveTest() {
     oneDrive: await testOneDriveProcessing(),
   };
 
-  console.log('\n🎯 SUB-PHASE 1.2 COMPREHENSIVE TEST RESULTS');
-  console.log('='.repeat(70));
+  logger.info('\n🎯 SUB-PHASE 1.2 COMPREHENSIVE TEST RESULTS');
+  logger.info('='.repeat(70));
 
   let passedTests = 0;
   let totalCommitments = 0;
@@ -313,31 +313,31 @@ async function runComprehensiveTest() {
     const status = result.success ? '✅ PASSED' : '❌ FAILED';
     const commitments = result.commitments || 0;
 
-    console.log(`${status} ${testName.toUpperCase()}: ${commitments} commitments extracted`);
+    logger.info(`${status} ${testName.toUpperCase()}: ${commitments} commitments extracted`);
 
     if (result.success) {
       passedTests++;
       totalCommitments += commitments;
     } else {
-      console.log(`   Error: ${result.error}`);
+      logger.info(`   Error: ${result.error}`);
     }
   });
 
-  console.log('\n📊 FINAL ASSESSMENT:');
-  console.log(`✅ Tests Passed: ${passedTests}/4`);
-  console.log(`📄 Total Commitments Extracted: ${totalCommitments}`);
-  console.log(`🎯 Success Rate: ${((passedTests / 4) * 100).toFixed(1)}%`);
+  logger.info('\n📊 FINAL ASSESSMENT:');
+  logger.info(`✅ Tests Passed: ${passedTests}/4`);
+  logger.info(`📄 Total Commitments Extracted: ${totalCommitments}`);
+  logger.info(`🎯 Success Rate: ${((passedTests / 4) * 100).toFixed(1)}%`);
 
   if (passedTests === 4) {
-    console.log('\n🎉 SUB-PHASE 1.2 ENHANCED DOCUMENT PARSER: COMPLETE');
-    console.log('✅ All 4 document sources successfully integrated');
-    console.log('✅ Enhanced parser handles Text, File, Vault DMS, and OneDrive');
-    console.log('✅ Document-specific AI models operational');
-    console.log('✅ Automated commitment categorization functional');
-    console.log('✅ Ready for Sub-Phase 1.3 implementation');
+    logger.info('\n🎉 SUB-PHASE 1.2 ENHANCED DOCUMENT PARSER: COMPLETE');
+    logger.info('✅ All 4 document sources successfully integrated');
+    logger.info('✅ Enhanced parser handles Text, File, Vault DMS, and OneDrive');
+    logger.info('✅ Document-specific AI models operational');
+    logger.info('✅ Automated commitment categorization functional');
+    logger.info('✅ Ready for Sub-Phase 1.3 implementation');
   } else {
-    console.log('\n⚠️  SUB-PHASE 1.2 PARTIALLY COMPLETE');
-    console.log('❌ Some document sources require additional debugging');
+    logger.info('\n⚠️  SUB-PHASE 1.2 PARTIALLY COMPLETE');
+    logger.info('❌ Some document sources require additional debugging');
   }
 }
 

@@ -33,9 +33,9 @@ const rl = readline.createInterface({
 
 // Main migration function
 async function migrateToReferenceModel() {
-  console.log('===== TrialSage Vault Reference Model Migration =====');
-  console.log('This utility will help migrate existing documents to the new reference model.');
-  console.log('Please be patient as we analyze your document collection...\n');
+  logger.info('===== TrialSage Vault Reference Model Migration =====');
+  logger.info('This utility will help migrate existing documents to the new reference model.');
+  logger.info('Please be patient as we analyze your document collection...\n');
 
   try {
     // Create a log file for the migration
@@ -60,7 +60,7 @@ async function migrateToReferenceModel() {
       type => type && type.trim() !== ''
     );
 
-    console.log(`Found ${uniqueTypes.length} unique document types to migrate.`);
+    logger.info(`Found ${uniqueTypes.length} unique document types to migrate.`);
     logStream.write(`Found ${uniqueTypes.length} unique document types to migrate.\n`);
 
     // 2. Get all available subtypes for mapping
@@ -81,9 +81,9 @@ async function migrateToReferenceModel() {
       throw new Error(`Error fetching document subtypes: ${subtypesError.message}`);
     }
 
-    console.log('\nAvailable subtypes for mapping:');
+    logger.info('\nAvailable subtypes for mapping:');
     subtypes.forEach(subtype => {
-      console.log(`[${subtype.id}] ${subtype.name} (${subtype.document_types.name})`);
+      logger.info(`[${subtype.id}] ${subtype.name} (${subtype.document_types.name})`);
     });
 
     // 3. Create mapping table for legacy types to new subtypes
@@ -97,10 +97,10 @@ async function migrateToReferenceModel() {
       logStream.write(`Mapping: "${legacyType}" -> ${subtypeId} (${selectedSubtype.name})\n`);
     }
 
-    console.log('\nVerifying mappings...');
+    logger.info('\nVerifying mappings...');
     for (const [legacyType, subtypeId] of Object.entries(mappings)) {
       const selectedSubtype = subtypes.find(s => s.id === subtypeId);
-      console.log(
+      logger.info(
         `"${legacyType}" → ${selectedSubtype.name} (${selectedSubtype.document_types.name})`
       );
     }
@@ -112,7 +112,7 @@ async function migrateToReferenceModel() {
     });
 
     if (!confirm) {
-      console.log('Migration cancelled.');
+      logger.info('Migration cancelled.');
       logStream.write('Migration cancelled by user.\n');
       logStream.end();
       rl.close();
@@ -120,7 +120,7 @@ async function migrateToReferenceModel() {
     }
 
     // 4. Update all documents with their new subtype_id
-    console.log('\nUpdating documents...');
+    logger.info('\nUpdating documents...');
     let totalUpdated = 0;
 
     for (const [legacyType, subtypeId] of Object.entries(mappings)) {
@@ -151,12 +151,12 @@ async function migrateToReferenceModel() {
         .select('id');
 
       if (updateError) {
-        console.error(`Error updating documents of type "${legacyType}": ${updateError.message}`);
+        logger.error(`Error updating documents of type "${legacyType}": ${updateError.message}`);
         logStream.write(`ERROR updating "${legacyType}": ${updateError.message}\n`);
         continue;
       }
 
-      console.log(`Updated ${updatedDocs.length} documents of type "${legacyType}"`);
+      logger.info(`Updated ${updatedDocs.length} documents of type "${legacyType}"`);
       totalUpdated += updatedDocs.length;
       logStream.write(
         `Updated ${updatedDocs.length} documents of type "${legacyType}" to ${subtypeId}\n`
@@ -171,7 +171,7 @@ async function migrateToReferenceModel() {
         .maybeSingle();
 
       if (!folder) {
-        console.log(`Creating folder for "${subtype.document_types.name}"`);
+        logger.info(`Creating folder for "${subtype.document_types.name}"`);
         // Create folder if it doesn't exist
         const { data: newFolder, error: folderError } = await supabase
           .from('folders')
@@ -183,23 +183,23 @@ async function migrateToReferenceModel() {
           .single();
 
         if (folderError) {
-          console.error(`Error creating folder: ${folderError.message}`);
+          logger.error(`Error creating folder: ${folderError.message}`);
           logStream.write(`ERROR creating folder: ${folderError.message}\n`);
         } else {
-          console.log(`Created folder: ${subtype.document_types.name} (ID: ${newFolder.id})`);
+          logger.info(`Created folder: ${subtype.document_types.name} (ID: ${newFolder.id})`);
           logStream.write(`Created folder: ${subtype.document_types.name} (ID: ${newFolder.id})\n`);
         }
       }
     }
 
-    console.log(`\nMigration complete! Updated ${totalUpdated} documents.`);
+    logger.info(`\nMigration complete! Updated ${totalUpdated} documents.`);
     logStream.write(
       `Migration completed successfully. Total updated: ${totalUpdated} documents.\n`
     );
     logStream.write(`==== Migration Finished: ${new Date().toISOString()} ====\n`);
     logStream.end();
   } catch (error) {
-    console.error('Migration failed:', error);
+    logger.error('Migration failed:', error);
   } finally {
     rl.close();
   }
@@ -213,7 +213,7 @@ async function promptForMapping(legacyType, subtypes) {
       if (subtypes.some(s => s.id === subtypeId)) {
         resolve(subtypeId);
       } else {
-        console.log('Invalid subtype ID. Please try again.');
+        logger.info('Invalid subtype ID. Please try again.');
         resolve(promptForMapping(legacyType, subtypes));
       }
     });

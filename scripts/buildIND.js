@@ -54,5 +54,5 @@ export async function assembleIND(sequence = '0000') {
 
 if (require.main === module) {
   const { sequence = '0000' } = minimist(process.argv.slice(2));
-  assembleIND(sequence).then(r => console.log('Done', r));
+  assembleIND(sequence).then(r => logger.info('Done', r));
 }

@@ -9,4 +9,4 @@ const updatedContent = fileContent.replace(
 );
 
 fs.writeFileSync(filePath, updatedContent);
-console.log('File has been updated!');
+logger.info('File has been updated!');

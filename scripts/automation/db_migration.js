@@ -12,27 +12,27 @@ import * as schema from './shared/schema.js';
 
 // Configuration validation
 if (!process.env.DATABASE_URL) {
-  console.error('Error: DATABASE_URL environment variable not set');
+  logger.error('Error: DATABASE_URL environment variable not set');
   process.exit(1);
 }
 
 async function runMigration() {
-  console.log('Starting database migration for TrialSage...');
+  logger.info('Starting database migration for TrialSage...');
 
   try {
     // Connect to the database with postgres.js
     const migrationClient = postgres(process.env.DATABASE_URL, { ssl: 'require' });
     const db = drizzle(migrationClient, { schema });
 
-    console.log('Connected to database. Running migrations...');
+    logger.info('Connected to database. Running migrations...');
 
     // Run migrations
     await migrate(db, { migrationsFolder: './migrations' });
 
-    console.log('Database migration completed successfully!');
+    logger.info('Database migration completed successfully!');
     process.exit(0);
   } catch (error) {
-    console.error('Database migration failed:', error);
+    logger.error('Database migration failed:', error);
     process.exit(1);
   }
 }

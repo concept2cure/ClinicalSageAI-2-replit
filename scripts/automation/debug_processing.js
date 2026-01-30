@@ -22,10 +22,10 @@ async function debugProcessing() {
       }
     );
 
-    console.log('🔍 FULL RESPONSE:');
-    console.log(JSON.stringify(response.data, null, 2));
+    logger.info('🔍 FULL RESPONSE:');
+    logger.info(JSON.stringify(response.data, null, 2));
   } catch (error) {
-    console.error('❌ Error:', error.response?.data || error.message);
+    logger.error('❌ Error:', error.response?.data || error.message);
   }
 }
 

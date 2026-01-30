@@ -8,9 +8,9 @@ function cleanupDirectory(dirPath) {
   if (fs.existsSync(dirPath)) {
     try {
       fs.rmSync(dirPath, { recursive: true, force: true });
-      console.log(`✅ Cleaned up: ${dirPath}`);
+      logger.info(`✅ Cleaned up: ${dirPath}`);
     } catch (error) {
-      console.log(`⚠️ Could not clean ${dirPath}: ${error.message}`);
+      logger.info(`⚠️ Could not clean ${dirPath}: ${error.message}`);
     }
   }
 }
@@ -20,14 +20,14 @@ function cleanupFiles(pattern) {
     const files = fs.readdirSync('.').filter(file => file.includes(pattern));
     files.forEach(file => {
       fs.unlinkSync(file);
-      console.log(`✅ Removed file: ${file}`);
+      logger.info(`✅ Removed file: ${file}`);
     });
   } catch (error) {
-    console.log(`⚠️ Could not clean files with pattern ${pattern}: ${error.message}`);
+    logger.info(`⚠️ Could not clean files with pattern ${pattern}: ${error.message}`);
   }
 }
 
-console.log('🧹 Starting deployment cleanup...');
+logger.info('🧹 Starting deployment cleanup...');
 
 // Clean up cache directories (avoid protected .cache/replit)
 cleanupDirectory('node_modules/.cache');
@@ -45,4 +45,4 @@ cleanupFiles('.log');
 cleanupFiles('.tmp');
 cleanupFiles('.bak');
 
-console.log('✅ Deployment cleanup complete!');
+logger.info('✅ Deployment cleanup complete!');

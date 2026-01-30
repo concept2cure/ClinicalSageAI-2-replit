@@ -312,5 +312,5 @@ updatedHtml = updatedHtml.replace('</style>', '</style>\n' + newCss);
 // Write the reorganized HTML back to the file
 fs.writeFileSync('reorganized_landing_page.html', updatedHtml, 'utf8');
 
-console.log('Landing page reorganized successfully!');
-console.log('New file created: reorganized_landing_page.html');
+logger.info('Landing page reorganized successfully!');
+logger.info('New file created: reorganized_landing_page.html');

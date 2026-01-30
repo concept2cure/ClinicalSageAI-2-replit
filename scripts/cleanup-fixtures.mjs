@@ -33,7 +33,7 @@ async function j(url, opts = {}) {
 async function deleteAuthoringDoc() {
   if (!DOC_ID) return;
   if (!ADMIN_TOKEN) throw new Error("ADMIN_TOKEN required to delete Authoring docs");
-  console.log(`- Deleting Authoring doc ${DOC_ID} (requires UAT product_code + admin token)…`);
+  logger.info(`- Deleting Authoring doc ${DOC_ID} (requires UAT product_code + admin token)…`);
   const res = await fetch(`${BASE_URL}/api/authoring/docs/${DOC_ID}`, {
     method: "DELETE",
     headers: { "x-admin-token": ADMIN_TOKEN }
@@ -43,15 +43,15 @@ async function deleteAuthoringDoc() {
     throw new Error(`Authoring delete failed: ${res.status} ${text}`);
   }
   const js = await res.json();
-  console.log(`  Deleted:`, js.deleted);
+  logger.info(`  Deleted:`, js.deleted);
 }
 
 async function pruneStabilityStudy() {
   if (!STUDY_ID) return;
-  console.log(`- Pruning Stability study ${STUDY_ID}…`);
+  logger.info(`- Pruning Stability study ${STUDY_ID}…`);
   // 1) Fetch detail
   const detail = await j(`${BASE_URL}/api/stability/studies/${STUDY_ID}`).catch(()=>null);
-  if (!detail) { console.log("  Study not found; skip."); return; }
+  if (!detail) { logger.info("  Study not found; skip."); return; }
 
   // 2) Delete results (if endpoint exists)
   const results = detail.results || [];
@@ -64,7 +64,7 @@ async function pruneStabilityStudy() {
       delResults++;
     } catch { /* not all builds expose delete; skip */ }
   }
-  console.log(`  Deleted results: ${delResults}`);
+  logger.info(`  Deleted results: ${delResults}`);
 
   // 3) Delete timepoints
   const tps = detail.timepoints || [];
@@ -77,7 +77,7 @@ async function pruneStabilityStudy() {
       delTp++;
     } catch { /* skip */ }
   }
-  console.log(`  Deleted timepoints: ${delTp}`);
+  logger.info(`  Deleted timepoints: ${delTp}`);
 
   // 4) Delete conditions
   const conds = detail.conditions || [];
@@ -90,7 +90,7 @@ async function pruneStabilityStudy() {
       delCond++;
     } catch { /* skip */ }
   }
-  console.log(`  Deleted conditions: ${delCond}`);
+  logger.info(`  Deleted conditions: ${delCond}`);
 
   // 5) Delete tests
   const tests = detail.tests || [];
@@ -103,7 +103,7 @@ async function pruneStabilityStudy() {
       delTests++;
     } catch { /* skip */ }
   }
-  console.log(`  Deleted tests: ${delTests}`);
+  logger.info(`  Deleted tests: ${delTests}`);
 
   // 6) Archive the study if update endpoint exists
   try {
@@ -112,25 +112,25 @@ async function pruneStabilityStudy() {
       headers: { "Content-Type":"application/json" },
       body: JSON.stringify({ status: "ARCHIVED" })
     });
-    console.log(`  Archived study status: ${upd?.status || "unknown"}`);
+    logger.info(`  Archived study status: ${upd?.status || "unknown"}`);
   } catch {
-    console.log("  Archive not supported; child artifacts pruned.");
+    logger.info("  Archive not supported; child artifacts pruned.");
   }
 }
 
 (async function main(){
-  console.log(`Cleanup @ ${BASE_URL}`);
+  logger.info(`Cleanup @ ${BASE_URL}`);
   if (!DOC_ID && !STUDY_ID) {
-    console.log("Nothing to do (provide DOC_ID and/or STUDY_ID).");
+    logger.info("Nothing to do (provide DOC_ID and/or STUDY_ID).");
     return;
   }
   if (DOC_ID) {
     try { await deleteAuthoringDoc(); } 
-    catch (e) { console.error("Authoring delete error:", e.message); process.exitCode = 1; }
+    catch (e) { logger.error("Authoring delete error:", e.message); process.exitCode = 1; }
   }
   if (STUDY_ID) {
     try { await pruneStabilityStudy(); } 
-    catch (e) { console.error("Stability prune error:", e.message); process.exitCode = 1; }
+    catch (e) { logger.error("Stability prune error:", e.message); process.exitCode = 1; }
   }
-  console.log("Done.");
+  logger.info("Done.");
 })();

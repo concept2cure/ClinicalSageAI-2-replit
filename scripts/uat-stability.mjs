@@ -4,10 +4,10 @@
 const BASE = process.env.BASE_URL || 'http://localhost:5000';
 const headers = { 'Content-Type': 'application/json' };
 
-const log = (...a) => console.log('[UAT]', ...a);
+const log = (...a) => logger.info('[UAT]', ...a);
 const ok = label => log('✅', label);
 const bad = (label, e) => {
-  console.error('[UAT] ❌', label, e?.message || e);
+  logger.error('[UAT] ❌', label, e?.message || e);
   process.exitCode = 1;
 };
 

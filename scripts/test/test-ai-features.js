@@ -15,7 +15,7 @@ const colors = {
 };
 
 async function testEndpoint(name, endpoint, method = 'GET', body = null) {
-  console.log(`\n${colors.blue}Testing: ${name}${colors.reset}`);
+  logger.info(`\n${colors.blue}Testing: ${name}${colors.reset}`);
   try {
     const options = {
       method,
@@ -32,36 +32,36 @@ async function testEndpoint(name, endpoint, method = 'GET', body = null) {
     const data = await response.json();
     
     if (response.ok) {
-      console.log(`${colors.green}✓ ${name} - SUCCESS${colors.reset}`);
+      logger.info(`${colors.green}✓ ${name} - SUCCESS${colors.reset}`);
       
       // Check for AI status indicators
       if (data.isRealAI !== undefined) {
-        console.log(`  AI Mode: ${data.isRealAI ? 'Real OpenAI' : 'Fallback Template'}`);
+        logger.info(`  AI Mode: ${data.isRealAI ? 'Real OpenAI' : 'Fallback Template'}`);
       }
       if (data.fallback !== undefined) {
-        console.log(`  Fallback: ${data.fallback}`);
+        logger.info(`  Fallback: ${data.fallback}`);
       }
       if (data.error) {
-        console.log(`  ${colors.yellow}Warning: ${data.error}${colors.reset}`);
+        logger.info(`  ${colors.yellow}Warning: ${data.error}${colors.reset}`);
       }
       
       return { success: true, data };
     } else {
-      console.log(`${colors.red}✗ ${name} - FAILED (Status: ${response.status})${colors.reset}`);
-      console.log(`  Error: ${data.error || 'Unknown error'}`);
+      logger.info(`${colors.red}✗ ${name} - FAILED (Status: ${response.status})${colors.reset}`);
+      logger.info(`  Error: ${data.error || 'Unknown error'}`);
       return { success: false, error: data.error };
     }
   } catch (error) {
-    console.log(`${colors.red}✗ ${name} - ERROR${colors.reset}`);
-    console.log(`  Error: ${error.message}`);
+    logger.info(`${colors.red}✗ ${name} - ERROR${colors.reset}`);
+    logger.info(`  Error: ${error.message}`);
     return { success: false, error: error.message };
   }
 }
 
 async function runAllTests() {
-  console.log(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
-  console.log(`${colors.blue}eCTD Co-Author AI Features Test Suite${colors.reset}`);
-  console.log(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  logger.info(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  logger.info(`${colors.blue}eCTD Co-Author AI Features Test Suite${colors.reset}`);
+  logger.info(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
   
   const results = {
     total: 0,
@@ -140,7 +140,7 @@ async function runAllTests() {
   verify.success ? results.passed++ : results.failed++;
   
   // Test 7: Test Rate Limiting (should handle gracefully)
-  console.log(`\n${colors.blue}Testing Rate Limiting (30 rapid requests)...${colors.reset}`);
+  logger.info(`\n${colors.blue}Testing Rate Limiting (30 rapid requests)...${colors.reset}`);
   const rateLimitPromises = [];
   for (let i = 0; i < 30; i++) {
     rateLimitPromises.push(
@@ -159,52 +159,52 @@ async function runAllTests() {
   const rateLimited = rateLimitResults.filter(r => r.status === 429).length;
   
   if (rateLimited > 0) {
-    console.log(`${colors.green}✓ Rate limiting is working (${rateLimited} requests limited)${colors.reset}`);
+    logger.info(`${colors.green}✓ Rate limiting is working (${rateLimited} requests limited)${colors.reset}`);
     results.passed++;
   } else {
-    console.log(`${colors.yellow}⚠ Rate limiting may not be active${colors.reset}`);
+    logger.info(`${colors.yellow}⚠ Rate limiting may not be active${colors.reset}`);
     results.passed++; // Still pass as it's not critical if all requests succeed
   }
   results.total++;
   
   // Print Summary
-  console.log(`\n${colors.blue}${'='.repeat(60)}${colors.reset}`);
-  console.log(`${colors.blue}Test Summary${colors.reset}`);
-  console.log(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
-  console.log(`Total Tests: ${results.total}`);
-  console.log(`${colors.green}Passed: ${results.passed}${colors.reset}`);
-  console.log(`${colors.red}Failed: ${results.failed}${colors.reset}`);
+  logger.info(`\n${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  logger.info(`${colors.blue}Test Summary${colors.reset}`);
+  logger.info(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  logger.info(`Total Tests: ${results.total}`);
+  logger.info(`${colors.green}Passed: ${results.passed}${colors.reset}`);
+  logger.info(`${colors.red}Failed: ${results.failed}${colors.reset}`);
   
   const passRate = ((results.passed / results.total) * 100).toFixed(1);
   if (passRate >= 80) {
-    console.log(`\n${colors.green}✓ PRODUCTION READY - ${passRate}% Pass Rate${colors.reset}`);
-    console.log(`${colors.green}All critical features are working!${colors.reset}`);
+    logger.info(`\n${colors.green}✓ PRODUCTION READY - ${passRate}% Pass Rate${colors.reset}`);
+    logger.info(`${colors.green}All critical features are working!${colors.reset}`);
   } else if (passRate >= 60) {
-    console.log(`\n${colors.yellow}⚠ MOSTLY READY - ${passRate}% Pass Rate${colors.reset}`);
-    console.log(`${colors.yellow}Most features working, minor issues remain${colors.reset}`);
+    logger.info(`\n${colors.yellow}⚠ MOSTLY READY - ${passRate}% Pass Rate${colors.reset}`);
+    logger.info(`${colors.yellow}Most features working, minor issues remain${colors.reset}`);
   } else {
-    console.log(`\n${colors.red}✗ NOT READY - ${passRate}% Pass Rate${colors.reset}`);
-    console.log(`${colors.red}Critical issues need to be fixed${colors.reset}`);
+    logger.info(`\n${colors.red}✗ NOT READY - ${passRate}% Pass Rate${colors.reset}`);
+    logger.info(`${colors.red}Critical issues need to be fixed${colors.reset}`);
   }
   
   // Check API Key Configuration
-  console.log(`\n${colors.blue}Configuration Status:${colors.reset}`);
+  logger.info(`\n${colors.blue}Configuration Status:${colors.reset}`);
   const apiKeySet = process.env.OPENAI_API_KEY ? true : false;
   if (apiKeySet) {
-    console.log(`${colors.green}✓ OpenAI API Key is configured${colors.reset}`);
+    logger.info(`${colors.green}✓ OpenAI API Key is configured${colors.reset}`);
   } else {
-    console.log(`${colors.yellow}⚠ OpenAI API Key not found - using fallback mode${colors.reset}`);
+    logger.info(`${colors.yellow}⚠ OpenAI API Key not found - using fallback mode${colors.reset}`);
   }
   
-  console.log(`\n${colors.blue}Features Status:${colors.reset}`);
-  console.log(`✓ AI Document Assistant: ${docAssist.success ? 'Working' : 'Failed'}`);
-  console.log(`✓ Compliance Checking: ${compliance.success ? 'Working' : 'Failed'}`);
-  console.log(`✓ Regulatory Review: ${regReview.success ? 'Working' : 'Failed'}`);
-  console.log(`✓ Content Verification: ${verify.success ? 'Working' : 'Failed'}`);
-  console.log(`✓ Rate Limiting: ${rateLimited > 0 ? 'Active' : 'Not Detected'}`);
-  console.log(`✓ Error Handling: ${results.failed === 0 ? 'Robust' : 'Needs Work'}`);
+  logger.info(`\n${colors.blue}Features Status:${colors.reset}`);
+  logger.info(`✓ AI Document Assistant: ${docAssist.success ? 'Working' : 'Failed'}`);
+  logger.info(`✓ Compliance Checking: ${compliance.success ? 'Working' : 'Failed'}`);
+  logger.info(`✓ Regulatory Review: ${regReview.success ? 'Working' : 'Failed'}`);
+  logger.info(`✓ Content Verification: ${verify.success ? 'Working' : 'Failed'}`);
+  logger.info(`✓ Rate Limiting: ${rateLimited > 0 ? 'Active' : 'Not Detected'}`);
+  logger.info(`✓ Error Handling: ${results.failed === 0 ? 'Robust' : 'Needs Work'}`);
   
-  console.log(`\n${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  logger.info(`\n${colors.blue}${'='.repeat(60)}${colors.reset}`);
 }
 
 // Run tests

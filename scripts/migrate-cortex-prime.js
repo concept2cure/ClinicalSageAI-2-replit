@@ -39,13 +39,13 @@ const colors = {
 };
 
 function log(message, color = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+  logger.info(`${color}${message}${colors.reset}`);
 }
 
 function logHeader(message) {
-  console.log('\n' + '='.repeat(70));
+  logger.info('\n' + '='.repeat(70));
   log(message, colors.bright + colors.cyan);
-  console.log('='.repeat(70));
+  logger.info('='.repeat(70));
 }
 
 function logSuccess(message) {
@@ -345,7 +345,7 @@ async function main() {
   const dryRun = args.includes('--dry-run');
   const validateOnly = args.includes('--validate-only');
   
-  console.log('\n');
+  logger.info('\n');
   log('╔══════════════════════════════════════════════════════════════════╗', colors.cyan);
   log('║              CORTEX PRIME MIGRATION ORCHESTRATOR                 ║', colors.bright + colors.cyan);
   log('║       The Definitive Life Sciences AI Mind - Database Setup      ║', colors.cyan);
@@ -435,7 +435,7 @@ async function main() {
     
   } catch (error) {
     logError(`Fatal error: ${error.message}`);
-    console.error(error);
+    logger.error(error);
     process.exit(1);
   } finally {
     if (pool) {

@@ -5,14 +5,14 @@ const TEST_FILE_ID = 'file-m1-2'; // Application Form.pdf
 const OUTPUT_PATH = './download-test.pdf';
 
 async function testDownload() {
-  console.log(`Testing download for file ID: ${TEST_FILE_ID}`);
+  logger.info(`Testing download for file ID: ${TEST_FILE_ID}`);
 
   try {
     const response = await fetch(`http://localhost:5000/api/vault/files/${TEST_FILE_ID}/download`);
 
-    console.log(`Status: ${response.status} ${response.statusText}`);
-    console.log(`Content-Type: ${response.headers.get('content-type')}`);
-    console.log(`Content-Disposition: ${response.headers.get('content-disposition')}`);
+    logger.info(`Status: ${response.status} ${response.statusText}`);
+    logger.info(`Content-Type: ${response.headers.get('content-type')}`);
+    logger.info(`Content-Disposition: ${response.headers.get('content-disposition')}`);
 
     if (!response.ok) {
       throw new Error(`Failed to download: ${response.status} ${response.statusText}`);
@@ -21,8 +21,8 @@ async function testDownload() {
     const buffer = await response.buffer();
     fs.writeFileSync(OUTPUT_PATH, buffer);
 
-    console.log(`Successfully saved file to: ${OUTPUT_PATH}`);
-    console.log(`File size: ${buffer.length} bytes`);
+    logger.info(`Successfully saved file to: ${OUTPUT_PATH}`);
+    logger.info(`File size: ${buffer.length} bytes`);
 
     return {
       success: true,
@@ -32,7 +32,7 @@ async function testDownload() {
       fileSize: buffer.length,
     };
   } catch (error) {
-    console.error('Error:', error.message);
+    logger.error('Error:', error.message);
     return {
       success: false,
       error: error.message,
@@ -42,16 +42,16 @@ async function testDownload() {
 
 // Run the test
 testDownload().then(result => {
-  console.log('\n--- AUDIT RESULTS ---');
+  logger.info('\n--- AUDIT RESULTS ---');
   if (result.success) {
-    console.log('✅ PASSED: File download successful');
-    console.log(`File: ${TEST_FILE_ID}`);
-    console.log(`HTTP Status: ${result.status}`);
-    console.log(`Content Type: ${result.contentType}`);
-    console.log(`File Size: ${result.fileSize} bytes`);
-    console.log(`Saved to: ${OUTPUT_PATH}`);
+    logger.info('✅ PASSED: File download successful');
+    logger.info(`File: ${TEST_FILE_ID}`);
+    logger.info(`HTTP Status: ${result.status}`);
+    logger.info(`Content Type: ${result.contentType}`);
+    logger.info(`File Size: ${result.fileSize} bytes`);
+    logger.info(`Saved to: ${OUTPUT_PATH}`);
   } else {
-    console.log('❌ FAILED: File download unsuccessful');
-    console.log(`Error: ${result.error}`);
+    logger.info('❌ FAILED: File download unsuccessful');
+    logger.info(`Error: ${result.error}`);
   }
 });

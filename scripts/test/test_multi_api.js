@@ -5,7 +5,7 @@
 async function testPdfDirectlyWithNarrativeAlreadyCached() {
   try {
     // Using the original NDC code we already tested and cached
-    console.log('Testing PDF generation with known cached narrative...');
+    logger.info('Testing PDF generation with known cached narrative...');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
@@ -27,19 +27,19 @@ async function testPdfDirectlyWithNarrativeAlreadyCached() {
 
       if (contentType.includes('application/pdf')) {
         const blob = await pdfResponse.blob();
-        console.log('PDF generated successfully from cached narrative!');
-        console.log(`PDF size: ${blob.size} bytes`);
-        console.log('Solution is verified and ready for use.');
+        logger.info('PDF generated successfully from cached narrative!');
+        logger.info(`PDF size: ${blob.size} bytes`);
+        logger.info('Solution is verified and ready for use.');
       } else {
         // If we received JSON, something unexpected happened
         const responseData = await pdfResponse.json();
-        console.log('PDF endpoint returned JSON (unexpected):', responseData);
+        logger.info('PDF endpoint returned JSON (unexpected):', responseData);
       }
     } else {
-      console.error('PDF generation failed:', pdfResponse.status, pdfResponse.statusText);
+      logger.error('PDF generation failed:', pdfResponse.status, pdfResponse.statusText);
     }
   } catch (error) {
-    console.error('Process failed:', error.message);
+    logger.error('Process failed:', error.message);
   }
 }
 

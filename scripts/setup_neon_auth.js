@@ -22,8 +22,8 @@ const __dirname = path.dirname(__filename);
 const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.error('❌ Missing NEON_DATABASE_URL or DATABASE_URL environment variable');
-  console.error('Please set it in your .env file');
+  logger.error('❌ Missing NEON_DATABASE_URL or DATABASE_URL environment variable');
+  logger.error('Please set it in your .env file');
   process.exit(1);
 }
 
@@ -38,7 +38,7 @@ const pool = new Pool({
 });
 
 async function setupAuthSchema() {
-  console.log('🚀 Starting Neon database setup...\n');
+  logger.info('🚀 Starting Neon database setup...\n');
   
   const client = await pool.connect();
 
@@ -50,13 +50,13 @@ async function setupAuthSchema() {
       throw new Error(`Schema file not found at ${schemaPath}`);
     }
 
-    console.log('📄 Reading auth schema from:', schemaPath);
+    logger.info('📄 Reading auth schema from:', schemaPath);
     const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
 
     // Execute the schema
-    console.log('⚙️  Executing auth schema migration...');
+    logger.info('⚙️  Executing auth schema migration...');
     await client.query(schemaSql);
-    console.log('✅ Auth schema created successfully\n');
+    logger.info('✅ Auth schema created successfully\n');
 
     // Check if tables were created
     const tableCheck = await client.query(`
@@ -67,30 +67,30 @@ async function setupAuthSchema() {
       ORDER BY table_name
     `);
 
-    console.log('📋 Created tables:');
+    logger.info('📋 Created tables:');
     tableCheck.rows.forEach(row => {
-      console.log(`   - ${row.table_name}`);
+      logger.info(`   - ${row.table_name}`);
     });
 
-    console.log('\n✅ Neon database setup completed successfully!');
-    console.log('\n📝 Next steps:');
-    console.log('   1. Make sure JWT_SECRET and REFRESH_TOKEN_SECRET are set in .env');
-    console.log('   2. Start your server with: npm run dev');
-    console.log('   3. Test registration endpoint: POST /api/auth/register');
-    console.log('   4. Test login endpoint: POST /api/auth/login\n');
+    logger.info('\n✅ Neon database setup completed successfully!');
+    logger.info('\n📝 Next steps:');
+    logger.info('   1. Make sure JWT_SECRET and REFRESH_TOKEN_SECRET are set in .env');
+    logger.info('   2. Start your server with: npm run dev');
+    logger.info('   3. Test registration endpoint: POST /api/auth/register');
+    logger.info('   4. Test login endpoint: POST /api/auth/login\n');
 
   } catch (error) {
-    console.error('❌ Database setup failed:', error);
+    logger.error('❌ Database setup failed:', error);
     throw error;
   } finally {
     client.release();
     await pool.end();
-    console.log('🔌 Database connection closed');
+    logger.info('🔌 Database connection closed');
   }
 }
 
 // Run the setup
 setupAuthSchema().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

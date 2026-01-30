@@ -14,7 +14,7 @@ neonConfig.webSocketConstructor = ws;
 
 // Configuration validation
 if (!process.env.DATABASE_URL) {
-  console.error('Error: DATABASE_URL environment variable not set');
+  logger.error('Error: DATABASE_URL environment variable not set');
   process.exit(1);
 }
 
@@ -27,7 +27,7 @@ async function setupDatabase() {
   const client = await pool.connect();
 
   try {
-    console.log('Setting up TrialSage database...');
+    logger.info('Setting up TrialSage database...');
 
     // Begin transaction
     await client.query('BEGIN');
@@ -158,11 +158,11 @@ async function setupDatabase() {
     // Commit transaction
     await client.query('COMMIT');
 
-    console.log('Database setup completed successfully');
+    logger.info('Database setup completed successfully');
   } catch (error) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
-    console.error('Database setup failed:', error);
+    logger.error('Database setup failed:', error);
     process.exit(1);
   } finally {
     client.release();

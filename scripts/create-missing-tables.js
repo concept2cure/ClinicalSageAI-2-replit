@@ -158,13 +158,13 @@ async function createMissingTables() {
   const client = await pool.connect();
 
   try {
-    console.log('Connected to database. Creating missing tables...');
-    console.log('Creating enums...');
+    logger.info('Connected to database. Creating missing tables...');
+    logger.info('Creating enums...');
     await client.query(createEnumsSQL);
-    console.log('Creating tables...');
+    logger.info('Creating tables...');
     await client.query(createTablesSQL);
 
-    console.log('Tables and enums created successfully!');
+    logger.info('Tables and enums created successfully!');
 
     // Get the updated list of tables
     const tablesResult = await client.query(`
@@ -174,21 +174,21 @@ async function createMissingTables() {
       ORDER BY table_name
     `);
 
-    console.log('\nUpdated tables in database:');
-    console.log('===========================');
+    logger.info('\nUpdated tables in database:');
+    logger.info('===========================');
 
     if (tablesResult.rows.length === 0) {
-      console.log('No tables found!');
+      logger.info('No tables found!');
     } else {
       tablesResult.rows.forEach((row, i) => {
-        console.log(`${i + 1}. ${row.table_name}`);
+        logger.info(`${i + 1}. ${row.table_name}`);
       });
-      console.log(`\nTotal tables: ${tablesResult.rows.length}`);
+      logger.info(`\nTotal tables: ${tablesResult.rows.length}`);
     }
 
     return true;
   } catch (error) {
-    console.error('Error creating tables:', error);
+    logger.error('Error creating tables:', error);
     return false;
   } finally {
     client.release();
@@ -203,6 +203,6 @@ createMissingTables()
     }
   })
   .catch(error => {
-    console.error('Unexpected error:', error);
+    logger.error('Unexpected error:', error);
     process.exit(1);
   });

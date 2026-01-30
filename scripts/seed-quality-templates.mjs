@@ -32,4 +32,4 @@ async function upsertMicro() {
 await upsertSST();
 await upsertMicro();
 await pool.end();
-console.log('Seeded SST + Micro templates.');
+logger.info('Seeded SST + Micro templates.');

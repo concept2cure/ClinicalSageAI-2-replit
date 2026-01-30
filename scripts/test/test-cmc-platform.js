@@ -8,7 +8,7 @@
 const API_BASE = 'http://localhost:5000';
 const PROJECT_ID = '45cc837f-2a7c-4216-ac5c-6454d038bc20'; // First project from our list
 
-console.log('🧪 Testing CMC Platform APIs...\n');
+logger.info('🧪 Testing CMC Platform APIs...\n');
 
 // Test API endpoint function
 async function testAPI(url, method = 'GET', data = null) {
@@ -118,7 +118,7 @@ const sampleData = {
 };
 
 async function runTests() {
-  console.log('📋 API Endpoint Testing Results:\n');
+  logger.info('📋 API Endpoint Testing Results:\n');
 
   // Test each endpoint
   const tests = [
@@ -142,12 +142,12 @@ async function runTests() {
     const dataCount = result.data?.data ? result.data.data.length : 0;
     const errorMsg = result.data?.error || '';
 
-    console.log(
+    logger.info(
       `${status} ${test.name}: ${result.status} | Data: ${dataCount} items | ${errorMsg}`
     );
   }
 
-  console.log('\n🔧 Creating Sample Data...\n');
+  logger.info('\n🔧 Creating Sample Data...\n');
 
   // Create sample data for each endpoint
   const createTests = [
@@ -183,10 +183,10 @@ async function runTests() {
     const status = result.ok ? '✅' : '❌';
     const errorMsg = result.data?.error || '';
 
-    console.log(`${status} ${test.name}: ${result.status} | ${errorMsg}`);
+    logger.info(`${status} ${test.name}: ${result.status} | ${errorMsg}`);
   }
 
-  console.log('\n📊 Re-testing Data Retrieval...\n');
+  logger.info('\n📊 Re-testing Data Retrieval...\n');
 
   // Re-test GET endpoints to see if data was created
   for (const test of tests.slice(2, -1)) {
@@ -195,14 +195,14 @@ async function runTests() {
     const status = result.ok ? '✅' : '❌';
     const dataCount = result.data?.data ? result.data.data.length : 0;
 
-    console.log(`${status} ${test.name}: ${dataCount} items retrieved`);
+    logger.info(`${status} ${test.name}: ${dataCount} items retrieved`);
   }
 
-  console.log('\n🎯 Summary:');
-  console.log('- If substances/products still show 0 items, API routing is broken');
-  console.log('- If analytical methods/stability/compliance show 0 items, database schema issues');
-  console.log('- If data creation fails, form submission in UI will be broken');
-  console.log('- All working endpoints should return JSON, not HTML');
+  logger.info('\n🎯 Summary:');
+  logger.info('- If substances/products still show 0 items, API routing is broken');
+  logger.info('- If analytical methods/stability/compliance show 0 items, database schema issues');
+  logger.info('- If data creation fails, form submission in UI will be broken');
+  logger.info('- All working endpoints should return JSON, not HTML');
 
   return results;
 }

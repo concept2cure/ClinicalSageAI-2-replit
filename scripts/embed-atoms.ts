@@ -14,12 +14,12 @@ const MAX_ATOMS = 100; // Limit for this run
 async function main() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    console.error('❌ DATABASE_URL not set');
+    logger.error('❌ DATABASE_URL not set');
     process.exit(1);
   }
 
   if (!process.env.OPENAI_API_KEY) {
-    console.error('❌ OPENAI_API_KEY not set');
+    logger.error('❌ OPENAI_API_KEY not set');
     process.exit(1);
   }
 
@@ -31,17 +31,17 @@ async function main() {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   try {
-    console.log('═══════════════════════════════════════');
-    console.log('     LUMEN CORTEX EMBEDDING BACKFILL');
-    console.log('═══════════════════════════════════════\n');
+    logger.info('═══════════════════════════════════════');
+    logger.info('     LUMEN CORTEX EMBEDDING BACKFILL');
+    logger.info('═══════════════════════════════════════\n');
 
     // Get count of atoms without embeddings
     const { rows: countRows } = await pool.query(`
       SELECT COUNT(*) as count FROM lumen_data_atoms WHERE embedding IS NULL
     `);
     const totalPending = parseInt(countRows[0].count, 10);
-    console.log(`📊 Atoms without embeddings: ${totalPending}`);
-    console.log(`📊 Processing limit: ${MAX_ATOMS}\n`);
+    logger.info(`📊 Atoms without embeddings: ${totalPending}`);
+    logger.info(`📊 Processing limit: ${MAX_ATOMS}\n`);
 
     let processed = 0;
     let errors = 0;
@@ -60,11 +60,11 @@ async function main() {
       );
 
       if (atoms.length === 0) {
-        console.log('✅ All atoms have embeddings!');
+        logger.info('✅ All atoms have embeddings!');
         break;
       }
 
-      console.log(`Processing batch of ${atoms.length} atoms...`);
+      logger.info(`Processing batch of ${atoms.length} atoms...`);
 
       // Build texts for embedding
       const texts = atoms.map(atom => {
@@ -102,9 +102,9 @@ async function main() {
         }
 
         processed += atoms.length;
-        console.log(`  ✅ Embedded ${processed}/${Math.min(MAX_ATOMS, totalPending)} atoms`);
+        logger.info(`  ✅ Embedded ${processed}/${Math.min(MAX_ATOMS, totalPending)} atoms`);
       } catch (batchError) {
-        console.error('  ❌ Batch error:', batchError);
+        logger.error('  ❌ Batch error:', batchError);
         errors += atoms.length;
         processed += atoms.length;
       }
@@ -113,13 +113,13 @@ async function main() {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    console.log('\n═══════════════════════════════════════');
-    console.log('         BACKFILL COMPLETE');
-    console.log('═══════════════════════════════════════');
-    console.log(`   Processed: ${processed}`);
-    console.log(`   Errors: ${errors}`);
-    console.log(`   Remaining: ${totalPending - processed}`);
-    console.log('═══════════════════════════════════════\n');
+    logger.info('\n═══════════════════════════════════════');
+    logger.info('         BACKFILL COMPLETE');
+    logger.info('═══════════════════════════════════════');
+    logger.info(`   Processed: ${processed}`);
+    logger.info(`   Errors: ${errors}`);
+    logger.info(`   Remaining: ${totalPending - processed}`);
+    logger.info('═══════════════════════════════════════\n');
   } finally {
     await pool.end();
   }

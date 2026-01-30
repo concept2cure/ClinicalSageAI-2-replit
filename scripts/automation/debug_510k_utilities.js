@@ -17,21 +17,21 @@ const debugUtils = {
   inspectState: function () {
     const app = this.getAppContext();
     if (!app) {
-      console.error('Could not access application context');
+      logger.error('Could not access application context');
       return;
     }
 
     console.group('🔍 Application State');
-    console.log('Document Type:', app.documentType);
-    console.log('Active Tab:', app.activeTab);
-    console.log('Device Profile:', app.deviceProfile);
-    console.log('Compliance Data:', app.compliance);
-    console.log('Compliance Running:', app.isComplianceRunning);
-    console.log('Draft Status:', app.draftStatus);
-    console.log('Device Name:', app.deviceName);
-    console.log('Manufacturer:', app.manufacturer);
-    console.log('Device Type:', app.deviceType);
-    console.log('Intended Use:', app.intendedUse);
+    logger.info('Document Type:', app.documentType);
+    logger.info('Active Tab:', app.activeTab);
+    logger.info('Device Profile:', app.deviceProfile);
+    logger.info('Compliance Data:', app.compliance);
+    logger.info('Compliance Running:', app.isComplianceRunning);
+    logger.info('Draft Status:', app.draftStatus);
+    logger.info('Device Name:', app.deviceName);
+    logger.info('Manufacturer:', app.manufacturer);
+    logger.info('Device Type:', app.deviceType);
+    logger.info('Intended Use:', app.intendedUse);
     console.groupEnd();
 
     return app;
@@ -40,18 +40,18 @@ const debugUtils = {
   // Force setting document type
   setDocumentType: function (type) {
     if (type !== 'cer' && type !== '510k') {
-      console.error('Invalid document type. Must be "cer" or "510k"');
+      logger.error('Invalid document type. Must be "cer" or "510k"');
       return;
     }
 
     const app = this.getAppContext();
     if (!app || !app.setDocumentType) {
-      console.error('Could not access setDocumentType function');
+      logger.error('Could not access setDocumentType function');
       return;
     }
 
     app.setDocumentType(type);
-    console.log(`✅ Document type set to: ${type}`);
+    logger.info(`✅ Document type set to: ${type}`);
     this.inspectState();
   },
 
@@ -59,19 +59,19 @@ const debugUtils = {
   setActiveTab: function (tabName) {
     const app = this.getAppContext();
     if (!app || !app.setActiveTab) {
-      console.error('Could not access setActiveTab function');
+      logger.error('Could not access setActiveTab function');
       return;
     }
 
     app.setActiveTab(tabName);
-    console.log(`✅ Active tab set to: ${tabName}`);
+    logger.info(`✅ Active tab set to: ${tabName}`);
   },
 
   // Force device profile update
   setDeviceProfile: function (profile) {
     const app = this.getAppContext();
     if (!app || !app.setDeviceProfile) {
-      console.error('Could not access setDeviceProfile function');
+      logger.error('Could not access setDeviceProfile function');
       return;
     }
 
@@ -87,23 +87,23 @@ const debugUtils = {
 
     const mergedProfile = { ...defaultProfile, ...profile };
     app.setDeviceProfile(mergedProfile);
-    console.log('✅ Device profile updated:', mergedProfile);
+    logger.info('✅ Device profile updated:', mergedProfile);
   },
 
   // Fix stuck compliance check
   fixComplianceCheck: function () {
     const app = this.getAppContext();
     if (!app) {
-      console.error('Could not access application context');
+      logger.error('Could not access application context');
       return;
     }
 
     if (app.isComplianceRunning) {
       if (app.setIsComplianceRunning) {
         app.setIsComplianceRunning(false);
-        console.log('✅ Stopped running compliance check');
+        logger.info('✅ Stopped running compliance check');
       } else {
-        console.error('Could not access setIsComplianceRunning function');
+        logger.error('Could not access setIsComplianceRunning function');
       }
     }
 
@@ -120,14 +120,14 @@ const debugUtils = {
         issues: [],
         summary: 'Your 510(k) submission appears to be compliant with FDA requirements.',
       });
-      console.log('✅ Set compliance data');
+      logger.info('✅ Set compliance data');
     } else {
-      console.error('Could not access setCompliance function');
+      logger.error('Could not access setCompliance function');
     }
 
     if (app.setDraftStatus) {
       app.setDraftStatus('ready-for-review');
-      console.log('✅ Updated draft status to ready-for-review');
+      logger.info('✅ Updated draft status to ready-for-review');
     }
 
     this.inspectState();
@@ -137,7 +137,7 @@ const debugUtils = {
   simulatePredicatesFound: function () {
     const app = this.getAppContext();
     if (!app) {
-      console.error('Could not access application context');
+      logger.error('Could not access application context');
       return;
     }
 
@@ -170,9 +170,9 @@ const debugUtils = {
       componentInstance.setPredicateFound(true);
       componentInstance.setProcessingStage('complete');
       componentInstance.setSearchingPredicates(false);
-      console.log('✅ Simulated predicates found');
+      logger.info('✅ Simulated predicates found');
     } else {
-      console.error('Could not access 510k component instance or required methods');
+      logger.error('Could not access 510k component instance or required methods');
     }
   },
 
@@ -182,11 +182,11 @@ const debugUtils = {
 
     // Check for document type selector
     const selectTrigger = document.querySelector('button[id="documentType"]');
-    console.log('Document Type Selector:', selectTrigger ? '✅ Found' : '❌ Not found');
+    logger.info('Document Type Selector:', selectTrigger ? '✅ Found' : '❌ Not found');
 
     // Check for tab buttons
     const tabButtons = document.querySelectorAll('button[role="tab"]');
-    console.log(
+    logger.info(
       'Tab Buttons:',
       tabButtons.length ? `✅ Found ${tabButtons.length} tabs` : '❌ No tabs found'
     );
@@ -194,7 +194,7 @@ const debugUtils = {
     if (tabButtons.length) {
       console.group('Available Tabs');
       Array.from(tabButtons).forEach(button => {
-        console.log(`- ${button.textContent.trim()}`);
+        logger.info(`- ${button.textContent.trim()}`);
       });
       console.groupEnd();
     }
@@ -224,7 +224,7 @@ const debugUtils = {
       const elements = document.querySelectorAll(
         `[data-component="${name}"], [class*="${name}"], [id*="${name}"]`
       );
-      console.log(
+      logger.info(
         `${name}:`,
         elements.length ? `✅ Found ${elements.length} instances` : '❌ Not found'
       );
@@ -245,13 +245,13 @@ const debugUtils = {
     if (app.__v && app.__v.children) {
       for (const child of app.__v.children) {
         if (child.type && child.type.name && child.type.name.includes('510k')) {
-          console.log('✅ Found 510k component instance:', child);
+          logger.info('✅ Found 510k component instance:', child);
           return child.component.ctx;
         }
       }
     }
 
-    console.warn('❌ Could not find 510k component instance');
+    logger.warn('❌ Could not find 510k component instance');
     return null;
   },
 
@@ -277,7 +277,7 @@ const debugUtils = {
 
     // Check for global error event listeners
     const errorListeners = window.getEventListeners && window.getEventListeners(window).error;
-    console.log(
+    logger.info(
       'Global error listeners:',
       errorListeners ? `✅ Found ${errorListeners.length} listeners` : '❌ No listeners found'
     );
@@ -285,14 +285,14 @@ const debugUtils = {
     // Check for global unhandled rejection listeners
     const rejectionListeners =
       window.getEventListeners && window.getEventListeners(window).unhandledrejection;
-    console.log(
+    logger.info(
       'Unhandled rejection listeners:',
       rejectionListeners
         ? `✅ Found ${rejectionListeners.length} listeners`
         : '❌ No listeners found'
     );
 
-    console.log('Testing error handling with controlled error...');
+    logger.info('Testing error handling with controlled error...');
     try {
       setTimeout(() => {
         try {
@@ -300,20 +300,20 @@ const debugUtils = {
           const nonExistentFunction = window.__debug_test_nonexistent__;
           nonExistentFunction();
         } catch (e) {
-          console.log('✅ Caught test error locally');
+          logger.info('✅ Caught test error locally');
         }
 
         // Test promise rejection
         new Promise((resolve, reject) => {
           reject(new Error('Test rejection'));
         }).catch(e => {
-          console.log('✅ Caught test promise rejection locally');
+          logger.info('✅ Caught test promise rejection locally');
         });
       }, 0);
 
-      console.log('Error tests queued. Check console for uncaught errors.');
+      logger.info('Error tests queued. Check console for uncaught errors.');
     } catch (e) {
-      console.error('Error during testing:', e);
+      logger.error('Error during testing:', e);
     }
 
     console.groupEnd();
@@ -321,21 +321,21 @@ const debugUtils = {
 
   // Help text
   help: function () {
-    console.log('%c510(k) Debugging Utilities', 'font-size: 16px; font-weight: bold; color: blue;');
-    console.log('\nAvailable commands:');
-    console.log('  debugUtils.inspectState() - Show current application state');
-    console.log('  debugUtils.setDocumentType("510k" | "cer") - Force document type');
-    console.log('  debugUtils.setActiveTab("tabName") - Force active tab');
-    console.log('  debugUtils.fixComplianceCheck() - Fix stuck compliance check');
-    console.log('  debugUtils.simulatePredicatesFound() - Simulate predicates found');
-    console.log('  debugUtils.inspectUI() - Inspect UI elements');
-    console.log('  debugUtils.checkErrorHandling() - Test error handling');
-    console.log('  debugUtils.help() - Show this help message');
+    logger.info('%c510(k) Debugging Utilities', 'font-size: 16px; font-weight: bold; color: blue;');
+    logger.info('\nAvailable commands:');
+    logger.info('  debugUtils.inspectState() - Show current application state');
+    logger.info('  debugUtils.setDocumentType("510k" | "cer") - Force document type');
+    logger.info('  debugUtils.setActiveTab("tabName") - Force active tab');
+    logger.info('  debugUtils.fixComplianceCheck() - Fix stuck compliance check');
+    logger.info('  debugUtils.simulatePredicatesFound() - Simulate predicates found');
+    logger.info('  debugUtils.inspectUI() - Inspect UI elements');
+    logger.info('  debugUtils.checkErrorHandling() - Test error handling');
+    logger.info('  debugUtils.help() - Show this help message');
 
-    console.log('\nExample usage:');
-    console.log('  1. debugUtils.setDocumentType("510k")');
-    console.log('  2. debugUtils.setActiveTab("predicates")');
-    console.log('  3. debugUtils.inspectState()');
+    logger.info('\nExample usage:');
+    logger.info('  1. debugUtils.setDocumentType("510k")');
+    logger.info('  2. debugUtils.setActiveTab("predicates")');
+    logger.info('  3. debugUtils.inspectState()');
   },
 };
 
@@ -345,7 +345,7 @@ window.debugUtils = debugUtils;
 // Auto-run help on load
 debugUtils.help();
 
-console.log('%c510(k) Debug Utilities Ready', 'font-size: 14px; font-weight: bold; color: green;');
+logger.info('%c510(k) Debug Utilities Ready', 'font-size: 14px; font-weight: bold; color: green;');
 
 // Export for Node.js environments if needed
 if (typeof module !== 'undefined') {

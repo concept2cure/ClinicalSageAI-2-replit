@@ -188,17 +188,17 @@ const demoCommitments = [
 ];
 
 async function addDemoAnalyticsData() {
-  console.log('🎯 ADDING COMPREHENSIVE DEMO ANALYTICS DATA\n');
+  logger.info('🎯 ADDING COMPREHENSIVE DEMO ANALYTICS DATA\n');
 
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    console.log('📋 Clearing existing demo data...');
+    logger.info('📋 Clearing existing demo data...');
     await client.query('DELETE FROM regulatory_commitments WHERE tenant_id = $1', [DEMO_TENANT_ID]);
 
-    console.log('📊 Adding demo commitments with varied risk profiles...\n');
+    logger.info('📊 Adding demo commitments with varied risk profiles...\n');
 
     for (let i = 0; i < demoCommitments.length; i++) {
       const commitment = demoCommitments[i];
@@ -233,14 +233,14 @@ async function addDemoAnalyticsData() {
       ]);
 
       const created = result.rows[0];
-      console.log(
+      logger.info(
         `✅ Added: [${created.status}] ${created.priority} - ${created.description.substring(0, 60)}...`
       );
     }
 
     await client.query('COMMIT');
 
-    console.log('\n📈 DEMO DATA SUMMARY:');
+    logger.info('\n📈 DEMO DATA SUMMARY:');
 
     // Generate summary statistics
     const statusCounts = await client.query(
@@ -287,19 +287,19 @@ async function addDemoAnalyticsData() {
       [DEMO_TENANT_ID]
     );
 
-    console.log('\n📊 Status Distribution:');
+    logger.info('\n📊 Status Distribution:');
     statusCounts.rows.forEach(row => {
-      console.log(`   • ${row.status}: ${row.count} commitments`);
+      logger.info(`   • ${row.status}: ${row.count} commitments`);
     });
 
-    console.log('\n🎯 Priority Distribution:');
+    logger.info('\n🎯 Priority Distribution:');
     priorityCounts.rows.forEach(row => {
-      console.log(`   • ${row.priority}: ${row.count} commitments`);
+      logger.info(`   • ${row.priority}: ${row.count} commitments`);
     });
 
-    console.log('\n⚠️ Risk Distribution:');
+    logger.info('\n⚠️ Risk Distribution:');
     riskCounts.rows.forEach(row => {
-      console.log(`   • ${row.risk_level} Risk: ${row.count} commitments`);
+      logger.info(`   • ${row.risk_level} Risk: ${row.count} commitments`);
     });
 
     // Get upcoming deadlines
@@ -316,31 +316,31 @@ async function addDemoAnalyticsData() {
       [DEMO_TENANT_ID]
     );
 
-    console.log('\n📅 Upcoming Deadlines (Next 5):');
+    logger.info('\n📅 Upcoming Deadlines (Next 5):');
     upcomingDeadlines.rows.forEach(row => {
       const daysUntil = Math.ceil((new Date(row.due_date) - new Date()) / (1000 * 60 * 60 * 24));
-      console.log(
+      logger.info(
         `   • ${daysUntil} days: [${row.priority}] ${row.description.substring(0, 50)}...`
       );
     });
 
-    console.log('\n🎉 DEMO ANALYTICS DATA SUCCESSFULLY ADDED!');
-    console.log('   ✅ Comprehensive risk scenarios included');
-    console.log('   ✅ Varied timeline examples provided');
-    console.log('   ✅ Multiple priority levels represented');
-    console.log('   ✅ Realistic regulatory authority mix');
-    console.log('   ✅ Historical completion data included');
-    console.log('   ✅ Unassigned commitments for recommendation testing');
+    logger.info('\n🎉 DEMO ANALYTICS DATA SUCCESSFULLY ADDED!');
+    logger.info('   ✅ Comprehensive risk scenarios included');
+    logger.info('   ✅ Varied timeline examples provided');
+    logger.info('   ✅ Multiple priority levels represented');
+    logger.info('   ✅ Realistic regulatory authority mix');
+    logger.info('   ✅ Historical completion data included');
+    logger.info('   ✅ Unassigned commitments for recommendation testing');
 
-    console.log('\n🔮 Ready for Predictive Analytics Testing:');
-    console.log('   • High-risk scenarios will trigger alerts');
-    console.log('   • Medium-risk items will show in insights');
-    console.log('   • Low-risk commitments demonstrate good performance');
-    console.log('   • Overdue items will generate critical recommendations');
-    console.log('   • Unassigned commitments will prompt assignment alerts');
+    logger.info('\n🔮 Ready for Predictive Analytics Testing:');
+    logger.info('   • High-risk scenarios will trigger alerts');
+    logger.info('   • Medium-risk items will show in insights');
+    logger.info('   • Low-risk commitments demonstrate good performance');
+    logger.info('   • Overdue items will generate critical recommendations');
+    logger.info('   • Unassigned commitments will prompt assignment alerts');
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('❌ Error adding demo data:', error);
+    logger.error('❌ Error adding demo data:', error);
     throw error;
   } finally {
     client.release();
@@ -350,10 +350,10 @@ async function addDemoAnalyticsData() {
 // Run the demo data generation
 addDemoAnalyticsData()
   .then(() => {
-    console.log('\n🎯 DEMO DATA GENERATION COMPLETE - Test the predictive analytics now!');
+    logger.info('\n🎯 DEMO DATA GENERATION COMPLETE - Test the predictive analytics now!');
     process.exit(0);
   })
   .catch(error => {
-    console.error('Demo data generation failed:', error);
+    logger.error('Demo data generation failed:', error);
     process.exit(1);
   });

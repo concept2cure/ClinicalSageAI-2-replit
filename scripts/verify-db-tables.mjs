@@ -9,7 +9,7 @@ import { db } from '../server/db.js';
 import { sql } from 'drizzle-orm';
 
 async function verifyDatabaseTables() {
-  console.log('Connecting to database...');
+  logger.info('Connecting to database...');
 
   try {
     // Query to list all tables in the public schema
@@ -20,16 +20,16 @@ async function verifyDatabaseTables() {
       ORDER BY table_name;
     `);
 
-    console.log('\nDatabase tables:');
-    console.log('-----------------');
+    logger.info('\nDatabase tables:');
+    logger.info('-----------------');
 
     if (tables.length === 0) {
-      console.log('No tables found in the database.');
+      logger.info('No tables found in the database.');
     } else {
       tables.forEach((table, index) => {
-        console.log(`${index + 1}. ${table.table_name}`);
+        logger.info(`${index + 1}. ${table.table_name}`);
       });
-      console.log(`\nTotal tables: ${tables.length}`);
+      logger.info(`\nTotal tables: ${tables.length}`);
     }
 
     // Query to list all enums in the database
@@ -43,8 +43,8 @@ async function verifyDatabaseTables() {
     `);
 
     if (enums.length > 0) {
-      console.log('\nDatabase enums:');
-      console.log('--------------');
+      logger.info('\nDatabase enums:');
+      logger.info('--------------');
 
       let currentEnum = null;
       let enumValues = [];
@@ -52,7 +52,7 @@ async function verifyDatabaseTables() {
       enums.forEach(enumItem => {
         if (currentEnum !== enumItem.enum_name) {
           if (currentEnum) {
-            console.log(`${currentEnum}: [${enumValues.join(', ')}]`);
+            logger.info(`${currentEnum}: [${enumValues.join(', ')}]`);
             enumValues = [];
           }
           currentEnum = enumItem.enum_name;
@@ -62,7 +62,7 @@ async function verifyDatabaseTables() {
 
       // Print the last enum
       if (currentEnum) {
-        console.log(`${currentEnum}: [${enumValues.join(', ')}]`);
+        logger.info(`${currentEnum}: [${enumValues.join(', ')}]`);
       }
     }
 
@@ -74,16 +74,16 @@ async function verifyDatabaseTables() {
     `);
 
     if (reports.length > 0) {
-      console.log('\nSample CSR reports:');
-      console.log('-----------------');
+      logger.info('\nSample CSR reports:');
+      logger.info('-----------------');
       reports.forEach(report => {
-        console.log(
+        logger.info(
           `ID: ${report.id}, Title: ${report.title}, Sponsor: ${report.sponsor}, Indication: ${report.indication}, Phase: ${report.phase}`
         );
       });
     }
   } catch (error) {
-    console.error('Error verifying database tables:', error);
+    logger.error('Error verifying database tables:', error);
   }
 }
 
