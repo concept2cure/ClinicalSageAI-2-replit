@@ -51,8 +51,7 @@ jobs:
       - name: Wait for Celery worker to respond
         run: |
           # More robust readiness: wait until the worker container exists and is
-          # running, then run `celery inspect ping` inside the container. This
-          # avoids `no such service` race conditions on some runners.
+          # running, then check recent worker logs for the "ready." message.
           OK=0
           for i in {1..90}; do
             CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q worker || true)
@@ -60,9 +59,6 @@ jobs:
               RUNNING=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || true)
               if [ "$RUNNING" = "true" ]; then
                 # Prefer checking worker logs for a definitive "ready" message
-                # rather than `inspect ping`, which can be flaky in some CI
-                # environments. We check the recent worker logs for the word
-                # "ready." which the Celery worker prints when fully started.
                 if docker compose -f docker-compose.e2e.yml logs --no-color worker | tail -n 50 | grep -q "ready\."; then
                   echo "Worker responsive" && OK=1 && break
                 fi
@@ -76,6 +72,21 @@ jobs:
             docker compose -f docker-compose.e2e.yml logs worker || true
             exit 1
           fi
+
+      - name: Debug: query Celery worker state
+        run: |
+          echo "== docker compose ps =="
+          docker compose -f docker-compose.e2e.yml ps || true
+
+          echo "== Worker CELERY_* env variables inside container =="
+          # Use -T to avoid allocating a tty; allow command to fail without failing the job
+          docker compose -f docker-compose.e2e.yml exec -T worker env | grep -E '^CELERY_(BROKER_URL|RESULT_BACKEND)=' || true
+
+          echo "== Celery inspect (active reserved registered) =="
+          docker compose -f docker-compose.e2e.yml exec -T worker celery -A services.celery_app inspect active reserved registered || true
+
+          echo "== Tail of worker logs =="
+          docker compose -f docker-compose.e2e.yml logs --no-color --tail=200 worker || true
 
       - name: Run E2E async test
         env:
