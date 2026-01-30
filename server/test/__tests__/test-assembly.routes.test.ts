@@ -158,4 +158,41 @@ describe('test-assembly routes', () => {
 
     process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
   });
+
+  it('exports a docx file for a docId', async () => {
+    const old = process.env.ALLOWED_TEST_ASSEMBLY_TENANTS;
+    delete process.env.ALLOWED_TEST_ASSEMBLY_TENANTS;
+
+    const app = express();
+    app.use(express.json());
+
+    const mockDb = {
+      async query(sql: string, params: any[]) {
+        if (sql.toLowerCase().includes('select content')) {
+          return { rows: [{ content: 'Paragraph one\n\nParagraph two', request: 'Please draft' }] };
+        }
+        return { rows: [] };
+      }
+    } as any;
+
+    app.use('/api/test-assembly', testAssemblyRoutes(mockDb));
+
+    // Force raw buffer parsing to get binary response
+    const res = await request(app)
+      .post('/api/test-assembly/export-docx')
+      .send({ docId: 'doc-1', filename: 'mydoc.docx' })
+      .buffer()
+      .parse((res, callback) => {
+        const data: Uint8Array[] = [];
+        res.on('data', chunk => data.push(Buffer.from(chunk)));
+        res.on('end', () => callback(null, Buffer.concat(data)));
+      })
+      .expect(200);
+
+    expect(res.headers['content-type']).toContain('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    const buf: Buffer = res.body as Buffer;
+    expect(buf.slice(0, 2).toString()).toBe('PK');
+
+    process.env.ALLOWED_TEST_ASSEMBLY_TENANTS = old;
+  });
 });
