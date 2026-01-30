@@ -14,7 +14,7 @@ const io = new Server(httpServer, {
 
 // Start socket.io server
 httpServer.listen(3001, () => {
-  console.log('Worker socket.io server listening on port 3001');
+  logger.info('Worker socket.io server listening on port 3001');
 });
 
 // Initialize database connection
@@ -32,11 +32,11 @@ const redisConfig = {
 const cerQueue = setupWorkers(pool, redisConfig, io);
 
 // Log worker initialization
-console.log('CER Worker initialized and processing jobs...');
+logger.info('CER Worker initialized and processing jobs...');
 
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('Worker shutting down...');
+  logger.info('Worker shutting down...');
   await cerQueue.close();
   process.exit(0);
 });

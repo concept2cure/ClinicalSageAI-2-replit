@@ -45,12 +45,12 @@ app.get('/health', (req, res) => {
 // Start HTTP server for health checks
 const server = http.createServer(app);
 server.listen(port, () => {
-  console.log(`Worker health check server running on port ${port}`);
+  logger.info(`Worker health check server running on port ${port}`);
 });
 
 // Process jobs (simplified version without Bull queue)
 async function processJob(job) {
-  console.log(`Processing job: ${job.id}`);
+  logger.info(`Processing job: ${job.id}`);
 
   try {
     // Update job status to processing
@@ -74,7 +74,7 @@ async function processJob(job) {
 
     // Complete the job
     await updateJobStatus(job.id, 'completed', 100, 'complete', null, pdfPath);
-    console.log(`Job completed: ${job.id}`);
+    logger.info(`Job completed: ${job.id}`);
 
     // Move job from active to completed
     if (activeJobs.has(job.id)) {
@@ -84,7 +84,7 @@ async function processJob(job) {
 
     return { success: true };
   } catch (err) {
-    console.error(`Error processing job ${job.id}:`, err);
+    logger.error(`Error processing job ${job.id}:`, err);
 
     // Update job status to failed
     await updateJobStatus(job.id, 'failed', 0, 'error', err.message);
@@ -133,9 +133,9 @@ async function updateJobStatus(jobId, status, progress, step, error = null, down
       const query = `UPDATE cer_jobs SET ${setClause} WHERE job_id = $1`;
       await pool.query(query, [jobId, ...values]);
 
-      console.log(`Updated job ${jobId} status to ${status} in database`);
+      logger.info(`Updated job ${jobId} status to ${status} in database`);
     } catch (dbErr) {
-      console.error(`Database error updating job ${jobId}:`, dbErr);
+      logger.error(`Database error updating job ${jobId}:`, dbErr);
 
       // Fall back to in-memory update
       if (activeJobs.has(jobId)) {
@@ -218,9 +218,9 @@ async function createSampleJob() {
          VALUES($1, $2, $3, $4, $5, $6)`,
         [jobId, userId, job.data.templateId, 'queued', 0, 'queued']
       );
-      console.log(`Job ${jobId} stored in database`);
+      logger.info(`Job ${jobId} stored in database`);
     } catch (dbErr) {
-      console.error(`Database error storing job ${jobId}:`, dbErr);
+      logger.error(`Database error storing job ${jobId}:`, dbErr);
     }
   }
 
@@ -229,18 +229,18 @@ async function createSampleJob() {
 
 // Main function to start worker
 async function main() {
-  console.log('Starting TrialSage CER Worker...');
+  logger.info('Starting TrialSage CER Worker...');
 
   // Check database connection
   if (pool) {
     try {
       const { rows } = await pool.query('SELECT NOW()');
-      console.log('Database connected:', rows[0].now);
+      logger.info('Database connected:', rows[0].now);
     } catch (dbErr) {
-      console.error('Database connection error:', dbErr);
+      logger.error('Database connection error:', dbErr);
     }
   } else {
-    console.log('No database connection configured, using in-memory storage');
+    logger.info('No database connection configured, using in-memory storage');
   }
 
   // Start processing any pending jobs from database
@@ -250,17 +250,17 @@ async function main() {
         `SELECT job_id FROM cer_jobs WHERE status = 'queued' OR status = 'processing' LIMIT 10`
       );
 
-      console.log(`Found ${rows.length} pending jobs in database`);
+      logger.info(`Found ${rows.length} pending jobs in database`);
 
       for (const row of rows) {
-        console.log(`Processing job ${row.job_id} from database`);
+        logger.info(`Processing job ${row.job_id} from database`);
         const job = { id: row.job_id };
         processJob(job).catch(err => {
-          console.error(`Error processing job ${job.id}:`, err);
+          logger.error(`Error processing job ${job.id}:`, err);
         });
       }
     } catch (dbErr) {
-      console.error('Error fetching pending jobs:', dbErr);
+      logger.error('Error fetching pending jobs:', dbErr);
     }
   }
 
@@ -269,49 +269,49 @@ async function main() {
     if (activeJobs.size < 2) {
       // Limit concurrent jobs
       try {
-        console.log('Creating and processing a sample job');
+        logger.info('Creating and processing a sample job');
         const job = await createSampleJob();
         processJob(job).catch(err => {
-          console.error(`Error processing job ${job.id}:`, err);
+          logger.error(`Error processing job ${job.id}:`, err);
         });
       } catch (err) {
-        console.error('Error creating sample job:', err);
+        logger.error('Error creating sample job:', err);
       }
     }
   }, 60000); // Check for jobs every minute
 
   // Process SIGTERM for graceful shutdown
   process.on('SIGTERM', async () => {
-    console.log('Received SIGTERM, shutting down gracefully');
+    logger.info('Received SIGTERM, shutting down gracefully');
 
     // Stop accepting new jobs
     clearInterval(checkQueueInterval);
 
     // Wait for active jobs to complete (with timeout)
     const shutdownTimeout = setTimeout(() => {
-      console.log('Shutdown timeout reached, forcing exit');
+      logger.info('Shutdown timeout reached, forcing exit');
       process.exit(1);
     }, 30000);
 
     // Close HTTP server
     server.close(() => {
-      console.log('HTTP server closed');
+      logger.info('HTTP server closed');
     });
 
     // Close database connection if exists
     if (pool) {
       try {
         await pool.end();
-        console.log('Database connection closed');
+        logger.info('Database connection closed');
       } catch (err) {
-        console.error('Error closing database connection:', err);
+        logger.error('Error closing database connection:', err);
       }
     }
 
     // If no active jobs, exit cleanly
     if (activeJobs.size === 0) {
       clearTimeout(shutdownTimeout);
-      console.log('No active jobs, clean shutdown');
+      logger.info('No active jobs, clean shutdown');
       process.exit(0);
     }
   });
@@ -319,6 +319,6 @@ async function main() {
 
 // Start the worker
 main().catch(err => {
-  console.error('Fatal worker error:', err);
+  logger.error('Fatal worker error:', err);
   process.exit(1);
 });
