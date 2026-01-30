@@ -7,7 +7,7 @@
  */
 
 async function testMLDrivenAnalytics() {
-  console.log('🧪 Testing ML-Driven Predictive Analytics Implementation...\n');
+  logger.info('🧪 Testing ML-Driven Predictive Analytics Implementation...\n');
 
   try {
     // Test the enhanced dashboard analytics endpoint
@@ -26,77 +26,77 @@ async function testMLDrivenAnalytics() {
     const data = await response.json();
 
     if (data.success) {
-      console.log('✅ ML-Driven Analytics Endpoint Operational');
-      console.log('\n📊 Analytics Overview:');
-      console.log(`   • Total Commitments: ${data.data.overview?.totalCommitments || 'N/A'}`);
-      console.log(
+      logger.info('✅ ML-Driven Analytics Endpoint Operational');
+      logger.info('\n📊 Analytics Overview:');
+      logger.info(`   • Total Commitments: ${data.data.overview?.totalCommitments || 'N/A'}`);
+      logger.info(
         `   • Average Prediction Score: ${((data.data.overview?.averagePredictionScore || 0) * 100).toFixed(1)}%`
       );
-      console.log(`   • Model Confidence: ${data.data.overview?.confidenceLevel || 'N/A'}`);
-      console.log(`   • Risk Assessment: ${data.data.overview?.riskAssessment || 'N/A'}`);
+      logger.info(`   • Model Confidence: ${data.data.overview?.confidenceLevel || 'N/A'}`);
+      logger.info(`   • Risk Assessment: ${data.data.overview?.riskAssessment || 'N/A'}`);
 
-      console.log('\n🔮 Predictive Insights:');
+      logger.info('\n🔮 Predictive Insights:');
       if (data.data.predictiveInsights && data.data.predictiveInsights.length > 0) {
         data.data.predictiveInsights.forEach((insight, idx) => {
-          console.log(`   ${idx + 1}. ${insight}`);
+          logger.info(`   ${idx + 1}. ${insight}`);
         });
       } else {
-        console.log('   • No predictive insights available');
+        logger.info('   • No predictive insights available');
       }
 
-      console.log('\n⚠️ Risk Distribution:');
+      logger.info('\n⚠️ Risk Distribution:');
       if (data.data.riskDistribution) {
-        console.log(`   • High Risk: ${data.data.riskDistribution.high || 0}`);
-        console.log(`   • Medium Risk: ${data.data.riskDistribution.medium || 0}`);
-        console.log(`   • Low Risk: ${data.data.riskDistribution.low || 0}`);
+        logger.info(`   • High Risk: ${data.data.riskDistribution.high || 0}`);
+        logger.info(`   • Medium Risk: ${data.data.riskDistribution.medium || 0}`);
+        logger.info(`   • Low Risk: ${data.data.riskDistribution.low || 0}`);
       }
 
-      console.log('\n📈 Performance Metrics:');
+      logger.info('\n📈 Performance Metrics:');
       if (data.data.performanceOverview) {
-        console.log(
+        logger.info(
           `   • Avg Fulfillment Score: ${((data.data.performanceOverview.avgFulfillmentScore || 0) * 100).toFixed(1)}%`
         );
-        console.log(`   • High Risk Count: ${data.data.performanceOverview.highRiskCount || 0}`);
-        console.log(
+        logger.info(`   • High Risk Count: ${data.data.performanceOverview.highRiskCount || 0}`);
+        logger.info(
           `   • Predicted On Time: ${data.data.performanceOverview.predictedOnTimeCount || 0}`
         );
-        console.log(
+        logger.info(
           `   • Avg Confidence: ${((data.data.performanceOverview.avgConfidence || 0) * 100).toFixed(1)}%`
         );
       }
 
-      console.log('\n🎯 Timeline Analysis:');
+      logger.info('\n🎯 Timeline Analysis:');
       if (data.data.timelineAnalysis) {
-        console.log(`   • Critical Items: ${data.data.timelineAnalysis.critical || 0}`);
-        console.log(`   • Urgent Items: ${data.data.timelineAnalysis.urgent || 0}`);
-        console.log(`   • Standard Items: ${data.data.timelineAnalysis.standard || 0}`);
-        console.log(`   • Trend: ${data.data.timelineAnalysis.trend || 'Stable'}`);
+        logger.info(`   • Critical Items: ${data.data.timelineAnalysis.critical || 0}`);
+        logger.info(`   • Urgent Items: ${data.data.timelineAnalysis.urgent || 0}`);
+        logger.info(`   • Standard Items: ${data.data.timelineAnalysis.standard || 0}`);
+        logger.info(`   • Trend: ${data.data.timelineAnalysis.trend || 'Stable'}`);
       }
 
-      console.log('\n✅ ML-DRIVEN ANALYTICS VERIFICATION COMPLETE');
-      console.log('   🔬 Statistical Analysis: OPERATIONAL');
-      console.log('   📊 Performance Metrics: AUTHENTIC');
-      console.log('   🔮 Predictive Insights: PRODUCTION-GRADE');
-      console.log('   📈 Trend Analysis: FUNCTIONAL');
+      logger.info('\n✅ ML-DRIVEN ANALYTICS VERIFICATION COMPLETE');
+      logger.info('   🔬 Statistical Analysis: OPERATIONAL');
+      logger.info('   📊 Performance Metrics: AUTHENTIC');
+      logger.info('   🔮 Predictive Insights: PRODUCTION-GRADE');
+      logger.info('   📈 Trend Analysis: FUNCTIONAL');
 
       return true;
     } else {
-      console.error('❌ Analytics endpoint returned unsuccessful response:', data.error);
+      logger.error('❌ Analytics endpoint returned unsuccessful response:', data.error);
       return false;
     }
   } catch (error) {
-    console.error('❌ ML-Driven Analytics Test Failed:', error.message);
-    console.log('\n🔧 Troubleshooting:');
-    console.log('   1. Verify server is running on port 5000');
-    console.log('   2. Check PredictiveAnalyticsService implementation');
-    console.log('   3. Ensure analytics routes are properly registered');
+    logger.error('❌ ML-Driven Analytics Test Failed:', error.message);
+    logger.info('\n🔧 Troubleshooting:');
+    logger.info('   1. Verify server is running on port 5000');
+    logger.info('   2. Check PredictiveAnalyticsService implementation');
+    logger.info('   3. Ensure analytics routes are properly registered');
     return false;
   }
 }
 
 // Test individual prediction functionality
 async function testIndividualPrediction() {
-  console.log('\n🔬 Testing Individual Commitment Prediction...\n');
+  logger.info('\n🔬 Testing Individual Commitment Prediction...\n');
 
   try {
     const testCommitment = {
@@ -131,61 +131,61 @@ async function testIndividualPrediction() {
     const data = await response.json();
 
     if (data.success) {
-      console.log('✅ Individual Prediction Endpoint Operational');
-      console.log('\n📊 Prediction Results:');
-      console.log(`   • Likelihood Score: ${(data.prediction.likelihoodScore * 100).toFixed(1)}%`);
-      console.log(`   • Confidence Level: ${(data.prediction.confidence * 100).toFixed(1)}%`);
-      console.log(`   • Predicted Date: ${data.prediction.predictedDate}`);
-      console.log(`   • Explanation: ${data.prediction.explanation}`);
+      logger.info('✅ Individual Prediction Endpoint Operational');
+      logger.info('\n📊 Prediction Results:');
+      logger.info(`   • Likelihood Score: ${(data.prediction.likelihoodScore * 100).toFixed(1)}%`);
+      logger.info(`   • Confidence Level: ${(data.prediction.confidence * 100).toFixed(1)}%`);
+      logger.info(`   • Predicted Date: ${data.prediction.predictedDate}`);
+      logger.info(`   • Explanation: ${data.prediction.explanation}`);
 
       if (data.prediction.riskFactors && data.prediction.riskFactors.length > 0) {
-        console.log('\n⚠️ Risk Factors:');
+        logger.info('\n⚠️ Risk Factors:');
         data.prediction.riskFactors.forEach((factor, idx) => {
-          console.log(`   ${idx + 1}. ${factor}`);
+          logger.info(`   ${idx + 1}. ${factor}`);
         });
       }
 
       if (data.prediction.recommendations && data.prediction.recommendations.length > 0) {
-        console.log('\n💡 Recommendations:');
+        logger.info('\n💡 Recommendations:');
         data.prediction.recommendations.forEach((rec, idx) => {
-          console.log(`   ${idx + 1}. ${rec}`);
+          logger.info(`   ${idx + 1}. ${rec}`);
         });
       }
 
       return true;
     } else {
-      console.error('❌ Individual prediction failed:', data.error);
+      logger.error('❌ Individual prediction failed:', data.error);
       return false;
     }
   } catch (error) {
-    console.error('❌ Individual Prediction Test Failed:', error.message);
+    logger.error('❌ Individual Prediction Test Failed:', error.message);
     return false;
   }
 }
 
 // Run all tests
 async function runMLAnalyticsTests() {
-  console.log('🚀 STARTING ML-DRIVEN ANALYTICS COMPREHENSIVE TEST SUITE\n');
-  console.log('='.repeat(60));
+  logger.info('🚀 STARTING ML-DRIVEN ANALYTICS COMPREHENSIVE TEST SUITE\n');
+  logger.info('='.repeat(60));
 
   const dashboardTest = await testMLDrivenAnalytics();
   const predictionTest = await testIndividualPrediction();
 
-  console.log('\n' + '='.repeat(60));
-  console.log('📋 TEST SUMMARY:');
-  console.log(`   • Dashboard Analytics: ${dashboardTest ? '✅ PASS' : '❌ FAIL'}`);
-  console.log(`   • Individual Predictions: ${predictionTest ? '✅ PASS' : '❌ FAIL'}`);
+  logger.info('\n' + '='.repeat(60));
+  logger.info('📋 TEST SUMMARY:');
+  logger.info(`   • Dashboard Analytics: ${dashboardTest ? '✅ PASS' : '❌ FAIL'}`);
+  logger.info(`   • Individual Predictions: ${predictionTest ? '✅ PASS' : '❌ FAIL'}`);
 
   const overallSuccess = dashboardTest && predictionTest;
-  console.log(
+  logger.info(
     `\n🎯 OVERALL RESULT: ${overallSuccess ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}`
   );
 
   if (overallSuccess) {
-    console.log('\n🎉 ML-DRIVEN ANALYTICS IMPLEMENTATION VERIFIED');
-    console.log('   ✅ Statistical analysis replaced basic text generation');
-    console.log('   ✅ Production-grade predictive capabilities operational');
-    console.log('   ✅ Authentic machine learning behaviors confirmed');
+    logger.info('\n🎉 ML-DRIVEN ANALYTICS IMPLEMENTATION VERIFIED');
+    logger.info('   ✅ Statistical analysis replaced basic text generation');
+    logger.info('   ✅ Production-grade predictive capabilities operational');
+    logger.info('   ✅ Authentic machine learning behaviors confirmed');
   }
 
   return overallSuccess;

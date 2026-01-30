@@ -50,7 +50,7 @@ const colors = {
 };
 
 function log(emoji, message, color = colors.reset) {
-  console.log(`${color}${emoji} ${message}${colors.reset}`);
+  logger.info(`${color}${emoji} ${message}${colors.reset}`);
 }
 
 /**
@@ -522,9 +522,9 @@ async function getCortexStats() {
  * Main harvesting function
  */
 async function runFDAHarvest() {
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('🏛️', '\x1b[1mFDA OPENFDA DATA FARMER\x1b[0m', colors.magenta);
-  console.log('═'.repeat(60) + '\n');
+  logger.info('═'.repeat(60) + '\n');
 
   // Verify database connection
   try {
@@ -543,7 +543,7 @@ async function runFDAHarvest() {
     colors.blue
   );
 
-  console.log('\n' + '-'.repeat(40));
+  logger.info('\n' + '-'.repeat(40));
 
   // Harvest FAERS
   const faersResult = await harvestFAERS(progress.faers.lastSkip);
@@ -551,7 +551,7 @@ async function runFDAHarvest() {
   progress.faers.totalHarvested += faersResult.imported;
 
   await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
-  console.log('-'.repeat(40));
+  logger.info('-'.repeat(40));
 
   // Harvest Drug Labels
   const labelsResult = await harvestDrugLabels(progress.labels.lastSkip);
@@ -559,7 +559,7 @@ async function runFDAHarvest() {
   progress.labels.totalHarvested += labelsResult.imported;
 
   await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
-  console.log('-'.repeat(40));
+  logger.info('-'.repeat(40));
 
   // Harvest 510(k)
   const k510Result = await harvest510k(progress.devices510k.lastSkip);
@@ -567,7 +567,7 @@ async function runFDAHarvest() {
   progress.devices510k.totalHarvested += k510Result.imported;
 
   await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
-  console.log('-'.repeat(40));
+  logger.info('-'.repeat(40));
 
   // Harvest PMA
   const pmaResult = await harvestPMA(progress.devicesPma.lastSkip);
@@ -579,10 +579,10 @@ async function runFDAHarvest() {
   saveProgress(progress);
 
   // Summary
-  console.log('\n' + '═'.repeat(60));
+  logger.info('\n' + '═'.repeat(60));
   log('✅', '\x1b[1mFDA HARVEST COMPLETE\x1b[0m', colors.green);
-  console.log('═'.repeat(60));
-  console.log(`
+  logger.info('═'.repeat(60));
+  logger.info(`
   📊 Session Results:
      • FAERS Events:    +${faersResult.imported} reports
      • Drug Labels:     +${labelsResult.imported} labels
@@ -605,6 +605,6 @@ async function runFDAHarvest() {
 
 // Run
 runFDAHarvest().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

@@ -40,7 +40,7 @@ function getProgressData() {
 function saveProgressData(data) {
   data.lastRunTime = new Date().toISOString();
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
-  console.log(`Progress data saved: ${JSON.stringify(data)}`);
+  logger.info(`Progress data saved: ${JSON.stringify(data)}`);
 }
 
 // Get current count of ClinicalTrials.gov trials
@@ -54,7 +54,7 @@ async function getCurrentCTGovCount() {
     `);
     return parseInt(result.rows[0].count);
   } catch (error) {
-    console.error('Error getting ClinicalTrials.gov trial count:', error);
+    logger.error('Error getting ClinicalTrials.gov trial count:', error);
     return 0;
   }
 }
@@ -68,7 +68,7 @@ async function getTotalTrialCount() {
     `);
     return parseInt(result.rows[0].count);
   } catch (error) {
-    console.error('Error getting total trial count:', error);
+    logger.error('Error getting total trial count:', error);
     return 0;
   }
 }
@@ -76,24 +76,24 @@ async function getTotalTrialCount() {
 // Run a script and capture its output
 function runScript(scriptName) {
   return new Promise((resolve, reject) => {
-    console.log(`Running script: ${scriptName}`);
+    logger.info(`Running script: ${scriptName}`);
 
     const process = spawn('node', [scriptName]);
 
     process.stdout.on('data', data => {
-      console.log(data.toString());
+      logger.info(data.toString());
     });
 
     process.stderr.on('data', data => {
-      console.error(data.toString());
+      logger.error(data.toString());
     });
 
     process.on('close', code => {
       if (code === 0) {
-        console.log(`Script ${scriptName} completed successfully with exit code ${code}`);
+        logger.info(`Script ${scriptName} completed successfully with exit code ${code}`);
         resolve(true);
       } else {
-        console.error(`Script ${scriptName} failed with exit code ${code}`);
+        logger.error(`Script ${scriptName} failed with exit code ${code}`);
         resolve(false); // Resolve with false instead of rejecting to continue the process
       }
     });
@@ -106,7 +106,7 @@ async function runBatch() {
   const downloadSuccess = await runScript('download_clinicaltrials_xml.js');
 
   if (!downloadSuccess) {
-    console.warn('Download failed or no new files were downloaded.');
+    logger.warn('Download failed or no new files were downloaded.');
     // Continue anyway, we might still have files to import
   }
 
@@ -121,7 +121,7 @@ async function runDownloadAndImport() {
   try {
     const progressData = getProgressData();
 
-    console.log(`
+    logger.info(`
 =========================================================
 DOWNLOADING AND IMPORTING CLINICALTRIALS.GOV TRIALS
 TARGET: 500 TRIALS IN BATCHES OF 50
@@ -136,7 +136,7 @@ Current trials imported: ${progressData.trialsImported}
     const currentCTGovCount = await getCurrentCTGovCount();
     const totalTrials = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Current Database Status ===
 Total trials in database: ${totalTrials}
 ClinicalTrials.gov trials: ${currentCTGovCount}
@@ -145,13 +145,13 @@ Remaining to reach target: ${Math.max(0, 500 - currentCTGovCount)}
 
     // Check if we've already reached the target
     if (currentCTGovCount >= 500) {
-      console.log('Target of 500 ClinicalTrials.gov trials already achieved!');
+      logger.info('Target of 500 ClinicalTrials.gov trials already achieved!');
       return;
     }
 
     // Process batches
     for (let i = progressData.batchesCompleted; i < TOTAL_BATCHES; i++) {
-      console.log(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
+      logger.info(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
 
       const batchSuccess = await runBatch();
 
@@ -161,9 +161,9 @@ Remaining to reach target: ${Math.max(0, 500 - currentCTGovCount)}
         progressData.trialsImported += BATCH_SIZE;
         saveProgressData(progressData);
 
-        console.log(`Completed batch ${i + 1}/${TOTAL_BATCHES}`);
+        logger.info(`Completed batch ${i + 1}/${TOTAL_BATCHES}`);
       } else {
-        console.error(`Failed to process batch ${i + 1}. Retrying...`);
+        logger.error(`Failed to process batch ${i + 1}. Retrying...`);
         i--; // Retry this batch
         continue;
       }
@@ -171,12 +171,12 @@ Remaining to reach target: ${Math.max(0, 500 - currentCTGovCount)}
       // Check if we've reached the target
       const newCTGovCount = await getCurrentCTGovCount();
       if (newCTGovCount >= 500) {
-        console.log('Target of 500 ClinicalTrials.gov trials achieved!');
+        logger.info('Target of 500 ClinicalTrials.gov trials achieved!');
         break;
       }
 
       // Add delay between batches
-      console.log('Waiting 60 seconds before the next batch...');
+      logger.info('Waiting 60 seconds before the next batch...');
       await new Promise(resolve => setTimeout(resolve, 60000));
     }
 
@@ -184,7 +184,7 @@ Remaining to reach target: ${Math.max(0, 500 - currentCTGovCount)}
     const newCTGovCount = await getCurrentCTGovCount();
     const newTotal = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Final Database Status ===
 Total trials in database: ${newTotal}
 ClinicalTrials.gov trials: ${newCTGovCount}
@@ -194,7 +194,7 @@ Target progress: ${Math.min(100, (newCTGovCount / 500) * 100).toFixed(1)}%
 Import completed. ${progressData.batchesCompleted} batches (${progressData.trialsImported} trials) imported.
 `);
   } catch (error) {
-    console.error('Error during download and import process:', error);
+    logger.error('Error during download and import process:', error);
   } finally {
     await pool.end();
   }
@@ -202,6 +202,6 @@ Import completed. ${progressData.batchesCompleted} batches (${progressData.trial
 
 // Run the process
 runDownloadAndImport().catch(err => {
-  console.error('Fatal error occurred during process:', err);
+  logger.error('Fatal error occurred during process:', err);
   process.exit(1);
 });

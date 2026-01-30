@@ -322,7 +322,7 @@ export class EMADataFarmer {
     let atomsCreated = 0;
     let edgesCreated = 0;
 
-    console.log('🌾 Seeding EMA regulatory intelligence...');
+    logger.info('🌾 Seeding EMA regulatory intelligence...');
 
     for (const record of EMA_REGULATORY_INTELLIGENCE) {
       const atomId = crypto.randomUUID();
@@ -358,11 +358,11 @@ export class EMADataFarmer {
         atomsCreated++;
         edgesCreated++; // placeholder
       } catch (error) {
-        console.error(`Failed to seed EMA record for ${record.product}:`, error);
+        logger.error(`Failed to seed EMA record for ${record.product}:`, error);
       }
     }
 
-    console.log(`✅ EMA Intelligence: ${atomsCreated} atoms, ${edgesCreated} edges`);
+    logger.info(`✅ EMA Intelligence: ${atomsCreated} atoms, ${edgesCreated} edges`);
     return { atomsCreated, edgesCreated };
   }
 
@@ -373,7 +373,7 @@ export class EMADataFarmer {
     let atomsCreated = 0;
     let edgesCreated = 0;
 
-    console.log('🌾 Seeding ICH Guidelines...');
+    logger.info('🌾 Seeding ICH Guidelines...');
 
     for (const guideline of ICH_GUIDELINES) {
       const atomId = crypto.randomUUID();
@@ -408,11 +408,11 @@ export class EMADataFarmer {
         atomsCreated++;
         edgesCreated++; // placeholder
       } catch (error) {
-        console.error(`Failed to seed ICH guideline ${guideline.id}:`, error);
+        logger.error(`Failed to seed ICH guideline ${guideline.id}:`, error);
       }
     }
 
-    console.log(`✅ ICH Guidelines: ${atomsCreated} atoms, ${edgesCreated} edges`);
+    logger.info(`✅ ICH Guidelines: ${atomsCreated} atoms, ${edgesCreated} edges`);
     return { atomsCreated, edgesCreated };
   }
 
@@ -490,7 +490,7 @@ This ICH guideline is harmonized across FDA, EMA, and PMDA. Sponsors should ensu
 async function main() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    console.error('❌ DATABASE_URL not set');
+    logger.error('❌ DATABASE_URL not set');
     process.exit(1);
   }
 
@@ -503,12 +503,12 @@ async function main() {
     const farmer = new EMADataFarmer(pool);
     const results = await farmer.harvest();
 
-    console.log('\n════════════════════════════════════════');
-    console.log('   EMA/ICH DATA HARVEST COMPLETE');
-    console.log('════════════════════════════════════════');
-    console.log(`   Atoms Created: ${results.total.atoms}`);
-    console.log(`   Edges Created: ${results.total.edges}`);
-    console.log('════════════════════════════════════════\n');
+    logger.info('\n════════════════════════════════════════');
+    logger.info('   EMA/ICH DATA HARVEST COMPLETE');
+    logger.info('════════════════════════════════════════');
+    logger.info(`   Atoms Created: ${results.total.atoms}`);
+    logger.info(`   Edges Created: ${results.total.edges}`);
+    logger.info('════════════════════════════════════════\n');
   } finally {
     await pool.end();
   }

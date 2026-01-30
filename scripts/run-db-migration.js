@@ -26,7 +26,7 @@ const colors = {
 
 // Helper function to print colored output
 function printColored(text, color) {
-  console.log(`${color}${text}${colors.reset}`);
+  logger.info(`${color}${text}${colors.reset}`);
 }
 
 // Helper function to print a step
@@ -114,12 +114,12 @@ async function runMigration() {
     });
 
     printColored('Migration output:', colors.cyan);
-    console.log(output);
+    logger.info(output);
 
     printColored('✓ Schema successfully pushed to database!', colors.green);
   } catch (error) {
     printColored('ERROR: Migration failed!', colors.red);
-    console.error(error.toString());
+    logger.error(error.toString());
     process.exit(1);
   }
 
@@ -135,7 +135,7 @@ async function runMigration() {
       encoding: 'utf-8',
     });
 
-    console.log(output);
+    logger.info(output);
 
     printColored('✓ Tables verified successfully!', colors.green);
   } catch (error) {
@@ -143,7 +143,7 @@ async function runMigration() {
       'WARNING: Verification failed, but migration might still have succeeded.',
       colors.yellow
     );
-    console.error(error.toString());
+    logger.error(error.toString());
   }
 
   printColored('\n╔══════════════════════════════════════════════════╗', colors.green);
@@ -154,6 +154,6 @@ async function runMigration() {
 // Run the migration
 runMigration().catch(error => {
   printColored('\nERROR: Unexpected error occurred:', colors.red);
-  console.error(error);
+  logger.error(error);
   process.exit(1);
 });

@@ -777,7 +777,7 @@ Serious Adverse Events:
 ];
 
 async function seedTemplates() {
-  console.log('🚀 Starting eCTD template seeding...');
+  logger.info('🚀 Starting eCTD template seeding...');
 
   try {
     // First check if templates already exist
@@ -786,8 +786,8 @@ async function seedTemplates() {
     );
 
     if (checkResult.rows[0].count > 0) {
-      console.log('⚠️  Templates already exist. Skipping seed to avoid duplicates.');
-      console.log(`   Found ${checkResult.rows[0].count} existing templates.`);
+      logger.info('⚠️  Templates already exist. Skipping seed to avoid duplicates.');
+      logger.info(`   Found ${checkResult.rows[0].count} existing templates.`);
       return;
     }
 
@@ -819,11 +819,11 @@ async function seedTemplates() {
           ]
         );
 
-        console.log(
+        logger.info(
           `✅ Created template: ${result.rows[0].template_name} (ID: ${result.rows[0].id})`
         );
       } catch (error) {
-        console.error(`❌ Failed to create template: ${template.templateName}`, error.message);
+        logger.error(`❌ Failed to create template: ${template.templateName}`, error.message);
       }
     }
 
@@ -832,7 +832,7 @@ async function seedTemplates() {
       'SELECT COUNT(*) as count FROM ectd_templates WHERE organization_id = 1'
     );
 
-    console.log(`\n✨ Template seeding complete! Total templates: ${finalCount.rows[0].count}`);
+    logger.info(`\n✨ Template seeding complete! Total templates: ${finalCount.rows[0].count}`);
 
     // Show summary by module
     const summaryResult = await pool.query(
@@ -843,12 +843,12 @@ async function seedTemplates() {
        ORDER BY module_number`
     );
 
-    console.log('\n📊 Templates by Module:');
+    logger.info('\n📊 Templates by Module:');
     summaryResult.rows.forEach(row => {
-      console.log(`   Module ${row.module_number}: ${row.count} templates`);
+      logger.info(`   Module ${row.module_number}: ${row.count} templates`);
     });
   } catch (error) {
-    console.error('❌ Error seeding templates:', error);
+    logger.error('❌ Error seeding templates:', error);
   } finally {
     await pool.end();
   }

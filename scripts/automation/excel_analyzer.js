@@ -20,56 +20,56 @@ const EXCEL_FILE_PATH = path.join(__dirname, 'attached_assets', 'dream eCTD mach
 
 // Check if the file exists
 function checkFile() {
-  console.log(`\nChecking file: ${EXCEL_FILE_PATH}`);
+  logger.info(`\nChecking file: ${EXCEL_FILE_PATH}`);
 
   try {
     const stats = fs.statSync(EXCEL_FILE_PATH);
-    console.log(`File exists: ${stats.size} bytes`);
+    logger.info(`File exists: ${stats.size} bytes`);
     return true;
   } catch (error) {
-    console.error(`Error accessing file: ${error.message}`);
+    logger.error(`Error accessing file: ${error.message}`);
     return false;
   }
 }
 
 // Get basic file information
 async function getBasicFileInfo() {
-  console.log('\nGetting basic file info...');
+  logger.info('\nGetting basic file info...');
 
   try {
     const { stdout: fileOutput } = await exec(`file "${EXCEL_FILE_PATH}"`);
-    console.log(`File type: ${fileOutput.trim()}`);
+    logger.info(`File type: ${fileOutput.trim()}`);
 
     const { stdout: stringsOutput } = await exec(
       `strings "${EXCEL_FILE_PATH}" | grep -i "IND\\|eCTD\\|workflow\\|module" | head -30`
     );
 
-    console.log('\nRelevant strings found in file:');
+    logger.info('\nRelevant strings found in file:');
     if (stringsOutput.trim()) {
-      console.log(stringsOutput);
+      logger.info(stringsOutput);
     } else {
-      console.log('No relevant strings found with grep search.');
+      logger.info('No relevant strings found with grep search.');
     }
 
     // Try to extract sheet names
     try {
       const { stdout: unzipOutput } = await exec(`unzip -l "${EXCEL_FILE_PATH}" | grep "sheet"`);
-      console.log('\nSheet information:');
-      console.log(unzipOutput);
+      logger.info('\nSheet information:');
+      logger.info(unzipOutput);
     } catch (err) {
-      console.log('Could not extract sheet names with unzip.');
+      logger.info('Could not extract sheet names with unzip.');
     }
 
     return true;
   } catch (error) {
-    console.error(`Error getting file info: ${error.message}`);
+    logger.error(`Error getting file info: ${error.message}`);
     return false;
   }
 }
 
 // Try to extract XML content from the Excel file
 async function extractXmlContent() {
-  console.log('\nAttempting to extract XML content...');
+  logger.info('\nAttempting to extract XML content...');
 
   try {
     // Create a temp directory for extraction
@@ -88,25 +88,25 @@ async function extractXmlContent() {
     const sheetFile = findOutput.trim();
 
     if (sheetFile) {
-      console.log(`Found sheet XML: ${sheetFile}`);
+      logger.info(`Found sheet XML: ${sheetFile}`);
 
       // Extract basic content
       const { stdout: xmlContent } = await exec(
         `cat "${sheetFile}" | grep -o "<v>[^<]*</v>" | sed 's/<v>\\(.*\\)<\\/v>/\\1/' | head -50`
       );
 
-      console.log('\nExtracted cell values:');
-      console.log(xmlContent || 'No values found in the expected format.');
+      logger.info('\nExtracted cell values:');
+      logger.info(xmlContent || 'No values found in the expected format.');
 
       // Try to find column headers or labels
       const { stdout: headerContent } = await exec(
         `cat "${sheetFile}" | grep -A 3 -B 3 "IND\\|eCTD\\|Module\\|workflow" | head -20`
       );
 
-      console.log('\nPossible header or section content:');
-      console.log(headerContent || 'No relevant header content found.');
+      logger.info('\nPossible header or section content:');
+      logger.info(headerContent || 'No relevant header content found.');
     } else {
-      console.log('No worksheet XML files found.');
+      logger.info('No worksheet XML files found.');
     }
 
     // Clean up
@@ -114,28 +114,28 @@ async function extractXmlContent() {
 
     return true;
   } catch (error) {
-    console.error(`Error extracting XML content: ${error.message}`);
+    logger.error(`Error extracting XML content: ${error.message}`);
     return false;
   }
 }
 
 // Main execution
 async function main() {
-  console.log('eCTD Machine Blueprint Analyzer');
-  console.log('===============================');
+  logger.info('eCTD Machine Blueprint Analyzer');
+  logger.info('===============================');
 
   if (!checkFile()) {
-    console.log('Exiting: File not accessible');
+    logger.info('Exiting: File not accessible');
     return;
   }
 
   await getBasicFileInfo();
   await extractXmlContent();
 
-  console.log('\nAnalysis complete.');
+  logger.info('\nAnalysis complete.');
 }
 
 // Run the script
 main().catch(err => {
-  console.error('Fatal error:', err);
+  logger.error('Fatal error:', err);
 });

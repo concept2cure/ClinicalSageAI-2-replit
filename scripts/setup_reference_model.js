@@ -25,7 +25,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error(
+  logger.error(
     'Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables must be set.'
   );
   process.exit(1);
@@ -57,7 +57,7 @@ function delay(ms) {
  * Step 1: Run the SQL schema script
  */
 async function runSqlSchema() {
-  console.log('Step 1: Setting up database schema...');
+  logger.info('Step 1: Setting up database schema...');
 
   try {
     // Read the SQL schema file
@@ -71,14 +71,14 @@ async function runSqlSchema() {
     for (const statement of statements) {
       const { error } = await supabase.rpc('exec', { query: statement });
       if (error) {
-        console.warn(`Warning executing SQL: ${error.message}`);
+        logger.warn(`Warning executing SQL: ${error.message}`);
       }
     }
 
-    console.log('✓ Database schema created successfully');
+    logger.info('✓ Database schema created successfully');
     return true;
   } catch (error) {
-    console.error(`Error executing SQL schema: ${error.message}`);
+    logger.error(`Error executing SQL schema: ${error.message}`);
     return false;
   }
 }
@@ -87,7 +87,7 @@ async function runSqlSchema() {
  * Step 2: Verify database structure
  */
 async function verifyDatabaseStructure() {
-  console.log('Step 2: Verifying database structure...');
+  logger.info('Step 2: Verifying database structure...');
 
   try {
     // Check for required tables
@@ -112,7 +112,7 @@ async function verifyDatabaseStructure() {
       }
 
       if (!data || data.length === 0) {
-        console.error(`Table '${table}' not found in database.`);
+        logger.error(`Table '${table}' not found in database.`);
         return false;
       }
     }
@@ -127,15 +127,15 @@ async function verifyDatabaseStructure() {
     }
 
     if (typesData[0].count < 1) {
-      console.warn(
+      logger.warn(
         'Warning: document_types table is empty. Initial data might not have been loaded.'
       );
     }
 
-    console.log('✓ Database structure verified successfully');
+    logger.info('✓ Database structure verified successfully');
     return true;
   } catch (error) {
-    console.error(`Error verifying database structure: ${error.message}`);
+    logger.error(`Error verifying database structure: ${error.message}`);
     return false;
   }
 }
@@ -144,7 +144,7 @@ async function verifyDatabaseStructure() {
  * Step 3: Migrate legacy documents
  */
 async function migrateLegacyDocuments() {
-  console.log('Step 3: Migrating legacy documents...');
+  logger.info('Step 3: Migrating legacy documents...');
 
   try {
     // Check if there are documents without subtype_id
@@ -160,11 +160,11 @@ async function migrateLegacyDocuments() {
     const legacyCount = legacyDocs[0].count;
 
     if (legacyCount === 0) {
-      console.log('No legacy documents found that need migration.');
+      logger.info('No legacy documents found that need migration.');
       return true;
     }
 
-    console.log(`Found ${legacyCount} documents that need migration.`);
+    logger.info(`Found ${legacyCount} documents that need migration.`);
 
     // Get unique legacy types
     const { data: legacyTypes, error: typesError } = await supabase
@@ -179,7 +179,7 @@ async function migrateLegacyDocuments() {
     // Extract unique types
     const uniqueTypes = [...new Set(legacyTypes.map(doc => doc.doc_type))].filter(type => type);
 
-    console.log(`Found ${uniqueTypes.length} unique document types to map.`);
+    logger.info(`Found ${uniqueTypes.length} unique document types to map.`);
 
     // Get all subtypes for mapping
     const { data: subtypes, error: subtypesError } = await supabase
@@ -199,9 +199,9 @@ async function migrateLegacyDocuments() {
       throw subtypesError;
     }
 
-    console.log('\nAvailable subtypes for mapping:');
+    logger.info('\nAvailable subtypes for mapping:');
     subtypes.forEach(subtype => {
-      console.log(`[${subtype.id}] ${subtype.name} (${subtype.document_types.name})`);
+      logger.info(`[${subtype.id}] ${subtype.name} (${subtype.document_types.name})`);
     });
 
     // Create mapping for each legacy type
@@ -218,7 +218,7 @@ async function migrateLegacyDocuments() {
             if (subtypes.some(s => s.id === id)) {
               resolve(id);
             } else {
-              console.log('Invalid subtype ID. Please try again.');
+              logger.info('Invalid subtype ID. Please try again.');
               resolve(null);
             }
           });
@@ -229,10 +229,10 @@ async function migrateLegacyDocuments() {
     }
 
     // Confirm mappings
-    console.log('\nVerifying mappings:');
+    logger.info('\nVerifying mappings:');
     for (const [legacyType, subtypeId] of Object.entries(mappings)) {
       const selectedSubtype = subtypes.find(s => s.id === subtypeId);
-      console.log(
+      logger.info(
         `"${legacyType}" → ${selectedSubtype.name} (${selectedSubtype.document_types.name})`
       );
     }
@@ -240,7 +240,7 @@ async function migrateLegacyDocuments() {
     const proceed = await confirm('\nDo you want to proceed with the migration?');
 
     if (!proceed) {
-      console.log('Migration cancelled.');
+      logger.info('Migration cancelled.');
       return false;
     }
 
@@ -275,19 +275,19 @@ async function migrateLegacyDocuments() {
         .select('id');
 
       if (updateError) {
-        console.error(`Error updating documents of type "${legacyType}": ${updateError.message}`);
+        logger.error(`Error updating documents of type "${legacyType}": ${updateError.message}`);
         continue;
       }
 
       const count = updatedDocs?.length || 0;
-      console.log(`Updated ${count} documents of type "${legacyType}"`);
+      logger.info(`Updated ${count} documents of type "${legacyType}"`);
       totalUpdated += count;
     }
 
-    console.log(`\n✓ Migration complete! Updated ${totalUpdated} documents.`);
+    logger.info(`\n✓ Migration complete! Updated ${totalUpdated} documents.`);
     return true;
   } catch (error) {
-    console.error(`Error migrating legacy documents: ${error.message}`);
+    logger.error(`Error migrating legacy documents: ${error.message}`);
     return false;
   }
 }
@@ -296,7 +296,7 @@ async function migrateLegacyDocuments() {
  * Step 4: Initialize folder structure for tenants
  */
 async function initializeFolderStructure() {
-  console.log('Step 4: Initializing folder structure...');
+  logger.info('Step 4: Initializing folder structure...');
 
   try {
     // Get all tenants
@@ -307,15 +307,15 @@ async function initializeFolderStructure() {
     }
 
     if (!tenants || tenants.length === 0) {
-      console.log('No tenants found to initialize folders for.');
+      logger.info('No tenants found to initialize folders for.');
       return true;
     }
 
-    console.log(`Found ${tenants.length} tenants to initialize folders for.`);
+    logger.info(`Found ${tenants.length} tenants to initialize folders for.`);
 
     // Create folders for each tenant
     for (const tenant of tenants) {
-      console.log(`Initializing folders for tenant ${tenant.id}...`);
+      logger.info(`Initializing folders for tenant ${tenant.id}...`);
 
       // Check if tenant already has folders
       const { data: existingFolders, error: foldersError } = await supabase
@@ -324,12 +324,12 @@ async function initializeFolderStructure() {
         .eq('tenant_id', tenant.id);
 
       if (foldersError) {
-        console.error(`Error checking existing folders: ${foldersError.message}`);
+        logger.error(`Error checking existing folders: ${foldersError.message}`);
         continue;
       }
 
       if (existingFolders && existingFolders.length > 0) {
-        console.log(`Tenant ${tenant.id} already has ${existingFolders.length} folders.`);
+        logger.info(`Tenant ${tenant.id} already has ${existingFolders.length} folders.`);
         continue;
       }
 
@@ -340,7 +340,7 @@ async function initializeFolderStructure() {
         .order('sort_order');
 
       if (templatesError) {
-        console.error(`Error fetching folder templates: ${templatesError.message}`);
+        logger.error(`Error fetching folder templates: ${templatesError.message}`);
         continue;
       }
 
@@ -361,11 +361,11 @@ async function initializeFolderStructure() {
           .single();
 
         if (createError) {
-          console.error(`Error creating folder ${template.name}: ${createError.message}`);
+          logger.error(`Error creating folder ${template.name}: ${createError.message}`);
           continue;
         }
 
-        console.log(`Created folder: ${folder.name} (ID: ${folder.id})`);
+        logger.info(`Created folder: ${folder.name} (ID: ${folder.id})`);
         createdFolders.push({
           template_id: template.id,
           folder_id: folder.id,
@@ -383,7 +383,7 @@ async function initializeFolderStructure() {
         const parentMapping = createdFolders.find(cf => cf.template_id === template.parent_id);
 
         if (!parentMapping) {
-          console.warn(
+          logger.warn(
             `Warning: Parent template ${template.parent_id} not found for template ${template.id}`
           );
           continue;
@@ -402,11 +402,11 @@ async function initializeFolderStructure() {
           .single();
 
         if (createError) {
-          console.error(`Error creating folder ${template.name}: ${createError.message}`);
+          logger.error(`Error creating folder ${template.name}: ${createError.message}`);
           continue;
         }
 
-        console.log(`Created subfolder: ${folder.name} (ID: ${folder.id})`);
+        logger.info(`Created subfolder: ${folder.name} (ID: ${folder.id})`);
         createdFolders.push({
           template_id: template.id,
           folder_id: folder.id,
@@ -416,13 +416,13 @@ async function initializeFolderStructure() {
         await delay(100);
       }
 
-      console.log(`✓ Created ${createdFolders.length} folders for tenant ${tenant.id}.`);
+      logger.info(`✓ Created ${createdFolders.length} folders for tenant ${tenant.id}.`);
     }
 
-    console.log('✓ Folder structure initialized successfully');
+    logger.info('✓ Folder structure initialized successfully');
     return true;
   } catch (error) {
-    console.error(`Error initializing folder structure: ${error.message}`);
+    logger.error(`Error initializing folder structure: ${error.message}`);
     return false;
   }
 }
@@ -431,7 +431,7 @@ async function initializeFolderStructure() {
  * Step 5: Verify the migration and setup
  */
 async function verifySetup() {
-  console.log('Step 5: Verifying setup...');
+  logger.info('Step 5: Verifying setup...');
 
   try {
     // Verify that all documents have a document_subtype_id
@@ -447,9 +447,9 @@ async function verifySetup() {
     const missingCount = missingSubtypes[0].count;
 
     if (missingCount > 0) {
-      console.warn(`Warning: Found ${missingCount} documents without a document_subtype_id.`);
+      logger.warn(`Warning: Found ${missingCount} documents without a document_subtype_id.`);
     } else {
-      console.log('✓ All documents have been assigned a document_subtype_id.');
+      logger.info('✓ All documents have been assigned a document_subtype_id.');
     }
 
     // Verify that periodic review tasks exist for documents that need them
@@ -461,7 +461,7 @@ async function verifySetup() {
       throw tasksError;
     }
 
-    console.log(`✓ Found ${reviewTasks[0].count} periodic review tasks.`);
+    logger.info(`✓ Found ${reviewTasks[0].count} periodic review tasks.`);
 
     // Verify that all tenants have folder structures
     const { data: tenantsWithFolders, error: foldersError } = await supabase.from('tenants')
@@ -477,16 +477,16 @@ async function verifySetup() {
     for (const tenant of tenantsWithFolders) {
       const folderCount = tenant.folders[0].count;
       if (folderCount === 0) {
-        console.warn(`Warning: Tenant ${tenant.id} has no folders.`);
+        logger.warn(`Warning: Tenant ${tenant.id} has no folders.`);
       } else {
-        console.log(`✓ Tenant ${tenant.id} has ${folderCount} folders.`);
+        logger.info(`✓ Tenant ${tenant.id} has ${folderCount} folders.`);
       }
     }
 
-    console.log('✓ Setup verification completed');
+    logger.info('✓ Setup verification completed');
     return true;
   } catch (error) {
-    console.error(`Error verifying setup: ${error.message}`);
+    logger.error(`Error verifying setup: ${error.message}`);
     return false;
   }
 }
@@ -495,14 +495,14 @@ async function verifySetup() {
  * Main function to run all setup steps
  */
 async function main() {
-  console.log('=====================================================');
-  console.log('TrialSage Vault Enhanced Reference Model Setup');
-  console.log('=====================================================');
+  logger.info('=====================================================');
+  logger.info('TrialSage Vault Enhanced Reference Model Setup');
+  logger.info('=====================================================');
 
   // Step 1: Run SQL schema
   const schemaResult = await runSqlSchema();
   if (!schemaResult) {
-    console.error('Failed to run SQL schema. Aborting setup.');
+    logger.error('Failed to run SQL schema. Aborting setup.');
     rl.close();
     return;
   }
@@ -510,7 +510,7 @@ async function main() {
   // Step 2: Verify database structure
   const verifyResult = await verifyDatabaseStructure();
   if (!verifyResult) {
-    console.error('Database structure verification failed. Aborting setup.');
+    logger.error('Database structure verification failed. Aborting setup.');
     rl.close();
     return;
   }
@@ -522,7 +522,7 @@ async function main() {
       'Document migration failed or was cancelled. Continue with setup?'
     );
     if (!proceed) {
-      console.log('Setup aborted.');
+      logger.info('Setup aborted.');
       rl.close();
       return;
     }
@@ -535,7 +535,7 @@ async function main() {
       'Folder structure initialization failed. Continue with verification?'
     );
     if (!proceed) {
-      console.log('Setup aborted.');
+      logger.info('Setup aborted.');
       rl.close();
       return;
     }
@@ -544,23 +544,23 @@ async function main() {
   // Step 5: Verify setup
   const verifySetupResult = await verifySetup();
   if (!verifySetupResult) {
-    console.warn('Setup verification encountered issues.');
+    logger.warn('Setup verification encountered issues.');
   }
 
-  console.log('\n=====================================================');
-  console.log('Setup Complete!');
-  console.log('=====================================================');
-  console.log('\nNext steps:');
-  console.log('1. Make sure the reference model API routes are registered in your Express app');
-  console.log('2. Use the SubtypeSelect component in your document upload forms');
-  console.log('3. Add TypeBreadcrumb to your document preview pages');
-  console.log('4. Check the PeriodicReviewDashboard for documents needing review');
+  logger.info('\n=====================================================');
+  logger.info('Setup Complete!');
+  logger.info('=====================================================');
+  logger.info('\nNext steps:');
+  logger.info('1. Make sure the reference model API routes are registered in your Express app');
+  logger.info('2. Use the SubtypeSelect component in your document upload forms');
+  logger.info('3. Add TypeBreadcrumb to your document preview pages');
+  logger.info('4. Check the PeriodicReviewDashboard for documents needing review');
 
   rl.close();
 }
 
 // Run the main function
 main().catch(error => {
-  console.error('Unhandled error during setup:', error);
+  logger.error('Unhandled error during setup:', error);
   rl.close();
 });

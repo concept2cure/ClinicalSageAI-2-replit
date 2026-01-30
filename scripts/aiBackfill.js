@@ -24,7 +24,7 @@ try {
     pdfParse = module.default;
   });
 } catch (error) {
-  console.error('Error importing pdf-parse:', error.message);
+  logger.error('Error importing pdf-parse:', error.message);
 }
 
 /**
@@ -33,7 +33,7 @@ try {
 function log(message) {
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
+  logger.info(logMessage);
 
   // Ensure log directory exists
   if (!fs.existsSync(LOG_DIR)) {

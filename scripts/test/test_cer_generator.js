@@ -36,7 +36,7 @@ const CACHE_DIR = path.join(process.cwd(), 'data', 'cache');
  * Run a test of the CER generator
  */
 async function runTest() {
-  console.log('Starting CER generator test...');
+  logger.info('Starting CER generator test...');
   
   try {
     // Test parameters
@@ -50,26 +50,26 @@ async function runTest() {
     };
     
     // Step 1: Test data integration
-    console.log('\n1. Testing data integration...');
+    logger.info('\n1. Testing data integration...');
     const integratedData = await dataIntegration.gatherIntegratedData(testParams);
     
-    console.log(`Data integration gathered ${integratedData.sources.length} data sources:`);
-    console.log(`- Sources: ${integratedData.sources.join(', ')}`);
+    logger.info(`Data integration gathered ${integratedData.sources.length} data sources:`);
+    logger.info(`- Sources: ${integratedData.sources.join(', ')}`);
     
     if (integratedData.integratedData.summary) {
       const summary = integratedData.integratedData.summary;
-      console.log(`- Total events: ${summary.totalEvents}`);
-      console.log(`- Serious events: ${summary.seriousEvents}`);
-      console.log(`- Top events: ${summary.topEvents.length}`);
+      logger.info(`- Total events: ${summary.totalEvents}`);
+      logger.info(`- Serious events: ${summary.seriousEvents}`);
+      logger.info(`- Top events: ${summary.topEvents.length}`);
     }
     
     // Save the integrated data to a temporary file for inspection
     const tempDataFile = path.join(CACHE_DIR, 'cer_test_data.json');
     fs.writeFileSync(tempDataFile, JSON.stringify(integratedData, null, 2));
-    console.log(`Integrated data saved to ${tempDataFile}`);
+    logger.info(`Integrated data saved to ${tempDataFile}`);
     
     // Step 2: Test CER generation using run_cer_generator.py
-    console.log('\n2. Testing CER generation...');
+    logger.info('\n2. Testing CER generation...');
     
     // Build command to run the Python script
     const scriptPath = path.join(process.cwd(), 'server', 'run_cer_generator.py');
@@ -88,33 +88,33 @@ async function runTest() {
     
     // Construct and execute the command
     const command = `python3 "${scriptPath}" ${args.join(' ')}`;
-    console.log(`Executing command: ${command}`);
+    logger.info(`Executing command: ${command}`);
     
     try {
       const output = execSync(command, { encoding: 'utf8' });
-      console.log('CER Generator Output:');
-      console.log(output);
+      logger.info('CER Generator Output:');
+      logger.info(output);
       
       // Extract the output file path
       const outputFilePath = output.match(/Output file: (.+)/)?.[1]?.trim();
       
       if (outputFilePath && fs.existsSync(outputFilePath)) {
         const stats = fs.statSync(outputFilePath);
-        console.log(`Generated CER file: ${outputFilePath} (${(stats.size / 1024).toFixed(2)} KB)`);
-        console.log('CER generation test passed!');
+        logger.info(`Generated CER file: ${outputFilePath} (${(stats.size / 1024).toFixed(2)} KB)`);
+        logger.info('CER generation test passed!');
       } else {
-        console.error('CER generation test failed: Output file not found');
+        logger.error('CER generation test failed: Output file not found');
       }
     } catch (error) {
-      console.error('Error executing CER generator:');
-      console.error(error.message);
-      if (error.stdout) console.log('STDOUT:', error.stdout);
-      if (error.stderr) console.error('STDERR:', error.stderr);
+      logger.error('Error executing CER generator:');
+      logger.error(error.message);
+      if (error.stdout) logger.info('STDOUT:', error.stdout);
+      if (error.stderr) logger.error('STDERR:', error.stderr);
     }
     
-    console.log('\nCER generator test completed');
+    logger.info('\nCER generator test completed');
   } catch (error) {
-    console.error('Test failed:', error);
+    logger.error('Test failed:', error);
   }
 }
 

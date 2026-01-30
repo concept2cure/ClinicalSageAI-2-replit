@@ -8,7 +8,7 @@ const dbSecret = process.env.DATABASE_NEON_NEW_SECRET || '';
 const url = dbSecret.replace(/^psql '/, '').replace(/'$/, '');
 
 if (!url) {
-  console.error('DATABASE_NEON_NEW_SECRET not set');
+  logger.error('DATABASE_NEON_NEW_SECRET not set');
   process.exit(1);
 }
 
@@ -23,11 +23,11 @@ async function verify() {
     `;
     
     if (tables.length === 0) {
-      console.log('❌ proof_audit_logs table NOT FOUND');
+      logger.info('❌ proof_audit_logs table NOT FOUND');
       process.exit(1);
     }
     
-    console.log('✅ proof_audit_logs table EXISTS');
+    logger.info('✅ proof_audit_logs table EXISTS');
     
     // Check columns
     const columns = await sql`
@@ -37,9 +37,9 @@ async function verify() {
       ORDER BY ordinal_position
     `;
     
-    console.log('\nTable Columns:');
+    logger.info('\nTable Columns:');
     columns.forEach(col => {
-      console.log(`  - ${col.column_name}: ${col.data_type}`);
+      logger.info(`  - ${col.column_name}: ${col.data_type}`);
     });
     
     // Check triggers
@@ -48,9 +48,9 @@ async function verify() {
       WHERE event_object_table = 'proof_audit_logs'
     `;
     
-    console.log('\nTriggers:');
+    logger.info('\nTriggers:');
     triggers.forEach(t => {
-      console.log(`  - ${t.trigger_name}`);
+      logger.info(`  - ${t.trigger_name}`);
     });
     
     // Check RLS
@@ -59,15 +59,15 @@ async function verify() {
       WHERE tablename = 'proof_audit_logs'
     `;
     
-    console.log('\nRLS Policies:');
+    logger.info('\nRLS Policies:');
     rls.forEach(p => {
-      console.log(`  - ${p.polname}`);
+      logger.info(`  - ${p.polname}`);
     });
     
-    console.log('\n✅ Migration verified successfully!');
+    logger.info('\n✅ Migration verified successfully!');
     
   } catch (error) {
-    console.error('Error:', error.message);
+    logger.error('Error:', error.message);
     process.exit(1);
   } finally {
     await sql.end();

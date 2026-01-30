@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 
 const DB_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
 if (!DB_URL) {
-  console.error('TEST_DATABASE_URL or DATABASE_URL is required for E2E smoke tests');
+  logger.error('TEST_DATABASE_URL or DATABASE_URL is required for E2E smoke tests');
   process.exit(2);
 }
 
@@ -34,12 +34,12 @@ async function waitForReady(timeout = 20000) {
 (async () => {
   const ready = await waitForReady();
   if (!ready) {
-    console.error('Server did not become ready in time');
+    logger.error('Server did not become ready in time');
     server.kill('SIGTERM');
     process.exit(3);
   }
 
-  console.log('Server ready — running smoke flow');
+  logger.info('Server ready — running smoke flow');
 
   // Step 1: start
   const startRes = await fetch('http://localhost:5000/api/test-assembly/start', {
@@ -49,12 +49,12 @@ async function waitForReady(timeout = 20000) {
   });
   const startJson = await startRes.json();
   if (!startJson?.data?.docId) {
-    console.error('Start did not return docId', startJson);
+    logger.error('Start did not return docId', startJson);
     server.kill('SIGTERM');
     process.exit(4);
   }
   const docId = startJson.data.docId;
-  console.log('Created doc', docId);
+  logger.info('Created doc', docId);
 
   // Step 2: edit
   await fetch('http://localhost:5000/api/test-assembly/edit', {
@@ -71,7 +71,7 @@ async function waitForReady(timeout = 20000) {
   });
   const polishJson = await polishRes.json();
   if (!polishJson?.data?.content || !polishJson.data.content.includes('AI added: smoke polish')) {
-    console.error('Polish did not add expected content', polishJson);
+    logger.error('Polish did not add expected content', polishJson);
     server.kill('SIGTERM');
     process.exit(5);
   }
@@ -80,14 +80,14 @@ async function waitForReady(timeout = 20000) {
   const pool = new Pool({ connectionString: DB_URL });
   const r = await pool.query('SELECT content FROM assembly_docs WHERE id = $1', [docId]);
   if (!r.rows || !r.rows[0] || !r.rows[0].content.includes('AI added: smoke polish')) {
-    console.error('DB verification failed', r.rows);
+    logger.error('DB verification failed', r.rows);
     await pool.end();
     server.kill('SIGTERM');
     process.exit(6);
   }
   await pool.end();
 
-  console.log('E2E smoke succeeded');
+  logger.info('E2E smoke succeeded');
   server.kill('SIGTERM');
   process.exit(0);
 })();

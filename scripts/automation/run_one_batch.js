@@ -15,7 +15,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   return {
@@ -31,16 +31,16 @@ async function runSingleBatch() {
   // Get initial tracking data
   const initialData = getTrackingData();
 
-  console.log(`Current tracking data:`);
-  console.log(`Next ID: HC-${initialData.nextId}`);
-  console.log(`Batches completed: ${initialData.batchesCompleted}`);
-  console.log(`Total imported: ${initialData.totalImported}`);
-  console.log(`Last run: ${initialData.lastRunTime || 'Never'}`);
+  logger.info(`Current tracking data:`);
+  logger.info(`Next ID: HC-${initialData.nextId}`);
+  logger.info(`Batches completed: ${initialData.batchesCompleted}`);
+  logger.info(`Total imported: ${initialData.totalImported}`);
+  logger.info(`Last run: ${initialData.lastRunTime || 'Never'}`);
 
   try {
-    console.log('\nRunning a single batch of 50 trials...');
+    logger.info('\nRunning a single batch of 50 trials...');
     const { stdout } = await execPromise('node import_micro_batch.js');
-    console.log('Batch output summary:');
+    logger.info('Batch output summary:');
 
     // Extract the key information from stdout
     // Note: This is a simple extraction, not a full parse
@@ -49,28 +49,28 @@ async function runSingleBatch() {
     const progressMatch = stdout.match(/Progress: (\d+)%/g);
 
     if (summaryMatch && summaryMatch[1]) {
-      console.log(`Successfully imported: ${summaryMatch[1]} trials`);
+      logger.info(`Successfully imported: ${summaryMatch[1]} trials`);
     }
 
     if (updatedHCCountMatch && updatedHCCountMatch.length >= 2) {
-      console.log(
+      logger.info(
         `Updated Health Canada trial count: ${updatedHCCountMatch[updatedHCCountMatch.length - 1]}`
       );
     }
 
     if (progressMatch && progressMatch.length >= 2) {
-      console.log(`Current progress: ${progressMatch[progressMatch.length - 1]}`);
+      logger.info(`Current progress: ${progressMatch[progressMatch.length - 1]}`);
     }
 
     // Get updated tracking data
     const updatedData = getTrackingData();
-    console.log('\nUpdated tracking data:');
-    console.log(`Next ID: HC-${updatedData.nextId}`);
-    console.log(`Batches completed: ${updatedData.batchesCompleted}`);
-    console.log(`Total imported: ${updatedData.totalImported}`);
-    console.log(`Last run: ${updatedData.lastRunTime || 'Never'}`);
+    logger.info('\nUpdated tracking data:');
+    logger.info(`Next ID: HC-${updatedData.nextId}`);
+    logger.info(`Batches completed: ${updatedData.batchesCompleted}`);
+    logger.info(`Total imported: ${updatedData.totalImported}`);
+    logger.info(`Last run: ${updatedData.lastRunTime || 'Never'}`);
   } catch (error) {
-    console.error(`Error running batch:`, error.message);
+    logger.error(`Error running batch:`, error.message);
   }
 }
 

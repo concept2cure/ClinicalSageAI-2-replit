@@ -713,14 +713,14 @@ export class ICHGuidelinesFarmer {
 
   constructor(pool: pg.Pool) {
     this.pool = pool;
-    console.log('✅ ICH Guidelines Farmer initialized');
+    logger.info('✅ ICH Guidelines Farmer initialized');
   }
 
   /**
    * Main harvest function
    */
   async harvest(): Promise<typeof this.harvestStats> {
-    console.log('🌾 Starting ICH Guidelines harvest...');
+    logger.info('🌾 Starting ICH Guidelines harvest...');
 
     try {
       // Process each guideline
@@ -731,13 +731,13 @@ export class ICHGuidelinesFarmer {
       // Create cross-cutting ICH atoms
       await this.createICHOverviewAtoms();
 
-      console.log('✅ ICH Guidelines harvest complete');
-      console.log(`   📊 Guidelines processed: ${this.harvestStats.guidelinesProcessed}`);
-      console.log(`   🧬 Atoms created: ${this.harvestStats.atomsCreated}`);
-      console.log(`   🔗 Edges created: ${this.harvestStats.edgesCreated}`);
-      console.log(`   ❌ Errors: ${this.harvestStats.errors}`);
+      logger.info('✅ ICH Guidelines harvest complete');
+      logger.info(`   📊 Guidelines processed: ${this.harvestStats.guidelinesProcessed}`);
+      logger.info(`   🧬 Atoms created: ${this.harvestStats.atomsCreated}`);
+      logger.info(`   🔗 Edges created: ${this.harvestStats.edgesCreated}`);
+      logger.info(`   ❌ Errors: ${this.harvestStats.errors}`);
     } catch (error) {
-      console.error('❌ ICH Guidelines harvest error:', error);
+      logger.error('❌ ICH Guidelines harvest error:', error);
       this.harvestStats.errors++;
     }
 
@@ -1028,9 +1028,9 @@ async function main() {
   try {
     const farmer = new ICHGuidelinesFarmer(pool);
     const stats = await farmer.harvest();
-    console.log('\n📊 Final harvest statistics:', stats);
+    logger.info('\n📊 Final harvest statistics:', stats);
   } catch (error) {
-    console.error('❌ Fatal error:', error);
+    logger.error('❌ Fatal error:', error);
     process.exit(1);
   } finally {
     await pool.end();

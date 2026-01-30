@@ -124,9 +124,9 @@ export const coAuthorProtection = new CoAuthorProtectionSystem();
 // Auto-verify on import
 try {
   const status = coAuthorProtection.verifyOfficialVersion();
-  console.log('✓ CoAuthor Protection System: ACTIVE');
-  console.log(`✓ Official version verified: ${status.size} bytes`);
+  logger.info('✓ CoAuthor Protection System: ACTIVE');
+  logger.info(`✓ Official version verified: ${status.size} bytes`);
 } catch (error) {
-  console.error('✗ CoAuthor Protection System: VIOLATION DETECTED');
-  console.error(error.message);
+  logger.error('✗ CoAuthor Protection System: VIOLATION DETECTED');
+  logger.error(error.message);
 }

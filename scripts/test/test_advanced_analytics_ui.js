@@ -3,13 +3,13 @@
  * Testing Advanced Analytics Display in Extract Commitments Modal
  */
 
-console.log('🧪 LIVE UI FUNCTIONALITY TEST');
-console.log('Testing Advanced Analytics Display in Extract Commitments Modal');
-console.log('===============================================');
+logger.info('🧪 LIVE UI FUNCTIONALITY TEST');
+logger.info('Testing Advanced Analytics Display in Extract Commitments Modal');
+logger.info('===============================================');
 
 // Test the actual API endpoint that feeds the analytics data
 async function testAdvancedAnalyticsAPI() {
-  console.log('\n📡 Testing Backend API Integration...');
+  logger.info('\n📡 Testing Backend API Integration...');
 
   try {
     const response = await fetch('/api/multi-agency-validation/dashboard', {
@@ -21,11 +21,11 @@ async function testAdvancedAnalyticsAPI() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ API Response Status:', response.status);
-      console.log('✅ Dashboard Data Structure:');
-      console.log('- Success:', data.success);
-      console.log('- Has advancedAnalytics:', !!data.dashboard?.advancedAnalytics);
-      console.log(
+      logger.info('✅ API Response Status:', response.status);
+      logger.info('✅ Dashboard Data Structure:');
+      logger.info('- Success:', data.success);
+      logger.info('- Has advancedAnalytics:', !!data.dashboard?.advancedAnalytics);
+      logger.info(
         '- Historical Data:',
         data.dashboard?.advancedAnalytics?.historicalCompliance?.length || 0,
         'records'
@@ -33,69 +33,69 @@ async function testAdvancedAnalyticsAPI() {
 
       return data;
     } else {
-      console.log('❌ API Error:', response.status, response.statusText);
+      logger.info('❌ API Error:', response.status, response.statusText);
       return null;
     }
   } catch (error) {
-    console.log('❌ Network Error:', error.message);
+    logger.info('❌ Network Error:', error.message);
     return null;
   }
 }
 
 // Test console logs verification
-console.log('\n🔍 Console Logs Verification:');
-console.log('Expected logs when modal opens:');
-console.log('1. "✅ Advanced analytics data loaded successfully"');
-console.log('2. "✅ Dashboard metrics updated successfully"');
-console.log('3. "✅ Phase 2: Successfully loaded 9 commitments from database"');
+logger.info('\n🔍 Console Logs Verification:');
+logger.info('Expected logs when modal opens:');
+logger.info('1. "✅ Advanced analytics data loaded successfully"');
+logger.info('2. "✅ Dashboard metrics updated successfully"');
+logger.info('3. "✅ Phase 2: Successfully loaded 9 commitments from database"');
 
 // Test the actual state management
-console.log('\n📊 State Management Verification:');
-console.log('State variables in CommitmentIntelligenceHub.jsx:');
-console.log('- isLoadingAnalytics: Controls loading spinner display');
-console.log('- advancedAnalytics: Contains full analytics data object');
-console.log('- historicalComplianceData: Array of historical compliance records');
+logger.info('\n📊 State Management Verification:');
+logger.info('State variables in CommitmentIntelligenceHub.jsx:');
+logger.info('- isLoadingAnalytics: Controls loading spinner display');
+logger.info('- advancedAnalytics: Contains full analytics data object');
+logger.info('- historicalComplianceData: Array of historical compliance records');
 
 // Test UI component structure
-console.log('\n🎨 UI Component Structure Test:');
-console.log('Location: Lines 1074-1155 in CommitmentIntelligenceHub.jsx');
-console.log('Container: <div className="mt-8 p-4 border rounded-lg bg-white shadow-sm">');
-console.log('Header: <h3>Advanced Compliance Insights</h3>');
-console.log('Components:');
-console.log('  1. Historical Compliance Trends');
-console.log('  2. Department-Specific Overview');
-console.log('  3. Predictive Insights Display');
-console.log('  4. Comparative Benchmarks');
+logger.info('\n🎨 UI Component Structure Test:');
+logger.info('Location: Lines 1074-1155 in CommitmentIntelligenceHub.jsx');
+logger.info('Container: <div className="mt-8 p-4 border rounded-lg bg-white shadow-sm">');
+logger.info('Header: <h3>Advanced Compliance Insights</h3>');
+logger.info('Components:');
+logger.info('  1. Historical Compliance Trends');
+logger.info('  2. Department-Specific Overview');
+logger.info('  3. Predictive Insights Display');
+logger.info('  4. Comparative Benchmarks');
 
 // Test data flow
-console.log('\n🔄 Data Flow Test:');
-console.log('1. Modal opens → useEffect triggers');
-console.log('2. fetchPerformanceMetrics() called');
-console.log('3. setIsLoadingAnalytics(true) → Loading spinner shows');
-console.log('4. API call to /api/multi-agency-validation/dashboard');
-console.log('5. setAdvancedAnalytics(data) → UI populates');
-console.log('6. setIsLoadingAnalytics(false) → Loading spinner hides');
+logger.info('\n🔄 Data Flow Test:');
+logger.info('1. Modal opens → useEffect triggers');
+logger.info('2. fetchPerformanceMetrics() called');
+logger.info('3. setIsLoadingAnalytics(true) → Loading spinner shows');
+logger.info('4. API call to /api/multi-agency-validation/dashboard');
+logger.info('5. setAdvancedAnalytics(data) → UI populates');
+logger.info('6. setIsLoadingAnalytics(false) → Loading spinner hides');
 
 // Run the actual API test
 testAdvancedAnalyticsAPI().then(data => {
-  console.log('\n🏁 TEST RESULTS:');
+  logger.info('\n🏁 TEST RESULTS:');
   if (data && data.success) {
-    console.log('✅ Backend Integration: WORKING');
-    console.log('✅ Data Structure: VALID');
-    console.log('✅ API Endpoint: RESPONSIVE');
+    logger.info('✅ Backend Integration: WORKING');
+    logger.info('✅ Data Structure: VALID');
+    logger.info('✅ API Endpoint: RESPONSIVE');
   } else {
-    console.log('⚠️ Backend Integration: Limited (using fallback data)');
-    console.log('✅ UI Structure: IMPLEMENTED');
-    console.log('✅ Frontend Logic: COMPLETE');
+    logger.info('⚠️ Backend Integration: Limited (using fallback data)');
+    logger.info('✅ UI Structure: IMPLEMENTED');
+    logger.info('✅ Frontend Logic: COMPLETE');
   }
 
-  console.log('\n📋 FINAL VERIFICATION:');
-  console.log('File: client/src/components/CommitmentIntelligenceHub.jsx');
-  console.log('Lines: 1074-1155');
-  console.log('Location: Extract Commitments Modal > Results & Analysis tab');
-  console.log('Status: ✅ IMPLEMENTED AND OPERATIONAL');
-  console.log('UI Quality: ✅ PRODUCTION-READY');
-  console.log('Integration: ✅ SEAMLESS WITH EXISTING SYSTEM');
+  logger.info('\n📋 FINAL VERIFICATION:');
+  logger.info('File: client/src/components/CommitmentIntelligenceHub.jsx');
+  logger.info('Lines: 1074-1155');
+  logger.info('Location: Extract Commitments Modal > Results & Analysis tab');
+  logger.info('Status: ✅ IMPLEMENTED AND OPERATIONAL');
+  logger.info('UI Quality: ✅ PRODUCTION-READY');
+  logger.info('Integration: ✅ SEAMLESS WITH EXISTING SYSTEM');
 });
 
 // Export verification data
@@ -121,5 +121,5 @@ const implementationVerification = {
   productionReady: true,
 };
 
-console.log('\n📄 Implementation Verification Object:');
-console.log(JSON.stringify(implementationVerification, null, 2));
+logger.info('\n📄 Implementation Verification Object:');
+logger.info(JSON.stringify(implementationVerification, null, 2));

@@ -1,13 +1,13 @@
 // Script to create the cer_approvals table
 import { pool } from '../server/db.js';
 
-console.log('Starting migration to create cer_approvals table...');
+logger.info('Starting migration to create cer_approvals table...');
 
 async function runMigration() {
   const client = await pool.connect();
 
   try {
-    console.log('Checking if table exists...');
+    logger.info('Checking if table exists...');
 
     // Check if table exists
     const tableCheck = await client.query(`
@@ -19,11 +19,11 @@ async function runMigration() {
     `);
 
     if (tableCheck.rows[0].exists) {
-      console.log('Table cer_approvals already exists, skipping creation');
+      logger.info('Table cer_approvals already exists, skipping creation');
       return;
     }
 
-    console.log('Table does not exist, creating...');
+    logger.info('Table does not exist, creating...');
 
     // Start transaction
     await client.query('BEGIN');
@@ -66,11 +66,11 @@ async function runMigration() {
     // Commit transaction
     await client.query('COMMIT');
 
-    console.log('Successfully created cer_approvals table and indexes');
+    logger.info('Successfully created cer_approvals table and indexes');
   } catch (error) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
-    console.error('Migration failed:', error.message);
+    logger.error('Migration failed:', error.message);
     throw error;
   } finally {
     // Release the client back to the pool
@@ -81,10 +81,10 @@ async function runMigration() {
 // Run the migration
 runMigration()
   .then(() => {
-    console.log('Migration completed successfully');
+    logger.info('Migration completed successfully');
     process.exit(0);
   })
   .catch(error => {
-    console.error('Migration failed:', error);
+    logger.error('Migration failed:', error);
     process.exit(1);
   });

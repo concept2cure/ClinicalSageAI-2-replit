@@ -11,21 +11,21 @@ const openai = new OpenAI({
 const db = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function main() {
-  console.log('Starting embedding backfill process...');
+  logger.info('Starting embedding backfill process...');
 
   try {
     // Get all devices without embeddings
     const devices = (
       await db.query(`SELECT id, description FROM predicate_devices WHERE embedding IS NULL`)
     ).rows;
-    console.log(`Found ${devices.length} devices without embeddings`);
+    logger.info(`Found ${devices.length} devices without embeddings`);
 
     let processedCount = 0;
 
     // Process each device
     for (let { id, description } of devices) {
       if (!description) {
-        console.log(`Skipping device ${id} - no description available`);
+        logger.info(`Skipping device ${id} - no description available`);
         continue;
       }
 
@@ -49,22 +49,22 @@ async function main() {
           [id, formattedVector]
         );
 
-        console.log(`Successfully processed device ${id}`);
+        logger.info(`Successfully processed device ${id}`);
         processedCount++;
 
         if (processedCount % 10 === 0) {
-          console.log(`Processed ${processedCount}/${devices.length} devices`);
+          logger.info(`Processed ${processedCount}/${devices.length} devices`);
         }
       } catch (err) {
-        console.error(`Error processing device ${id}:`, err);
+        logger.error(`Error processing device ${id}:`, err);
       }
     }
 
-    console.log(
+    logger.info(
       `Completed embedding backfill. Processed ${processedCount}/${devices.length} devices.`
     );
   } catch (error) {
-    console.error('Error during embedding backfill:', error);
+    logger.error('Error during embedding backfill:', error);
   } finally {
     // Close the database connection
     await db.end();
@@ -73,6 +73,6 @@ async function main() {
 
 // Run the main function
 main().catch(err => {
-  console.error('Fatal error during backfill:', err);
+  logger.error('Fatal error during backfill:', err);
   process.exit(1);
 });

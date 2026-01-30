@@ -11,7 +11,7 @@ import fs from 'fs';
 const { Client } = pg;
 
 async function checkUploadProgress() {
-  console.log('Checking continuous upload progress...');
+  logger.info('Checking continuous upload progress...');
 
   // Connect to database
   const client = new Client({
@@ -48,19 +48,19 @@ async function checkUploadProgress() {
     }
 
     // Display results
-    console.log(`\n=== CSR Upload Statistics ===`);
-    console.log(`Total trials in database: ${totalTrials}`);
-    console.log(`Recent imports (24h): ${recentImports}`);
-    console.log(`Continuous upload status: ${processingInfo}`);
-    console.log('\nBreakdown by source:');
+    logger.info(`\n=== CSR Upload Statistics ===`);
+    logger.info(`Total trials in database: ${totalTrials}`);
+    logger.info(`Recent imports (24h): ${recentImports}`);
+    logger.info(`Continuous upload status: ${processingInfo}`);
+    logger.info('\nBreakdown by source:');
 
     sourceResult.rows.forEach(row => {
-      console.log(`- ${row.source}: ${row.count} trials`);
+      logger.info(`- ${row.source}: ${row.count} trials`);
     });
 
-    console.log('\nTest complete!');
+    logger.info('\nTest complete!');
   } catch (error) {
-    console.error('Error checking upload progress:', error);
+    logger.error('Error checking upload progress:', error);
   } finally {
     await client.end();
   }

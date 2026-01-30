@@ -80,7 +80,7 @@ const colors = {
 
 function log(emoji, message, color = colors.reset) {
   const timestamp = new Date().toISOString().slice(11, 19);
-  console.log(
+  logger.info(
     `${colors.dim}[${timestamp}]${colors.reset} ${color}${emoji} ${message}${colors.reset}`
   );
 }
@@ -189,18 +189,18 @@ function runFarmer(farmer) {
  * Run a complete harvest cycle
  */
 async function runHarvestCycle(state) {
-  console.log('\n');
-  console.log('╔' + '═'.repeat(58) + '╗');
-  console.log(
+  logger.info('\n');
+  logger.info('╔' + '═'.repeat(58) + '╗');
+  logger.info(
     '║' +
       ' '.repeat(12) +
       `${colors.bright}PROJECT CORTEX HARVEST CYCLE${colors.reset}` +
       ' '.repeat(18) +
       '║'
   );
-  console.log('║' + ' '.repeat(20) + `Cycle #${state.cycleCount + 1}` + ' '.repeat(29) + '║');
-  console.log('╚' + '═'.repeat(58) + '╝');
-  console.log();
+  logger.info('║' + ' '.repeat(20) + `Cycle #${state.cycleCount + 1}` + ' '.repeat(29) + '║');
+  logger.info('╚' + '═'.repeat(58) + '╝');
+  logger.info();
 
   state.lastCycleStart = new Date().toISOString();
   const cycleStartStats = await getCortexStats();
@@ -210,7 +210,7 @@ async function runHarvestCycle(state) {
     `Cortex Status: ${cycleStartStats.totalAtoms} atoms, ${cycleStartStats.totalEdges} edges`,
     colors.blue
   );
-  console.log();
+  logger.info();
 
   // Sort farmers by priority
   const enabledFarmers = FARMERS.filter(f => f.enabled).sort((a, b) => a.priority - b.priority);
@@ -223,7 +223,7 @@ async function runHarvestCycle(state) {
         continue;
       }
 
-      console.log('\n' + '─'.repeat(50));
+      logger.info('\n' + '─'.repeat(50));
       const result = await runFarmer(farmer);
 
       // Update farmer stats
@@ -256,7 +256,7 @@ async function runHarvestCycle(state) {
   }
 
   // Cycle complete
-  console.log('\n' + '─'.repeat(50));
+  logger.info('\n' + '─'.repeat(50));
   const cycleEndStats = await getCortexStats();
   state.lastCycleEnd = new Date().toISOString();
   state.cycleCount++;
@@ -266,13 +266,13 @@ async function runHarvestCycle(state) {
   state.totalAtomsHarvested += atomsAdded;
 
   // Summary
-  console.log('\n');
-  console.log('╔' + '═'.repeat(58) + '╗');
-  console.log(
+  logger.info('\n');
+  logger.info('╔' + '═'.repeat(58) + '╗');
+  logger.info(
     '║' + ' '.repeat(15) + `${colors.green}CYCLE COMPLETE${colors.reset}` + ' '.repeat(29) + '║'
   );
-  console.log('╚' + '═'.repeat(58) + '╝');
-  console.log(`
+  logger.info('╚' + '═'.repeat(58) + '╝');
+  logger.info(`
   ${colors.bright}📊 Cycle Results:${colors.reset}
      • Atoms Added:  +${atomsAdded}
      • Edges Added:  +${edgesAdded}
@@ -282,10 +282,10 @@ async function runHarvestCycle(state) {
   ${colors.bright}🧠 Knowledge by Type:${colors.reset}`);
 
   cycleEndStats.byType.forEach(row => {
-    console.log(`     • ${row.atom_type}: ${row.count}`);
+    logger.info(`     • ${row.atom_type}: ${row.count}`);
   });
 
-  console.log(`
+  logger.info(`
   ${colors.bright}📈 Lifetime Stats:${colors.reset}
      • Cycles Run:    ${state.cycleCount}
      • Total Atoms:   ${state.totalAtomsHarvested}
@@ -302,7 +302,7 @@ async function runHarvestCycle(state) {
  */
 async function main() {
   // Display banner
-  console.log(`
+  logger.info(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
 ║     🧠  ${colors.bright}PROJECT CORTEX${colors.reset}  🧠                              ║
@@ -331,7 +331,7 @@ async function main() {
   log('🚜', `Active farmers (${enabledFarmers.length}):`, colors.magenta);
   enabledFarmers.forEach(f => {
     const exists = fs.existsSync(f.script) ? '✓' : '✗';
-    console.log(`   ${f.icon} ${f.name} [${exists}]`);
+    logger.info(`   ${f.icon} ${f.name} [${exists}]`);
   });
 
   // Run initial cycle immediately
@@ -366,6 +366,6 @@ process.on('SIGTERM', async () => {
 
 // Run
 main().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

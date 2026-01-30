@@ -21,7 +21,7 @@ function getDatabaseUrl() {
 async function main() {
   const applyFlag = process.env.APPLY_PHASE5_MIGRATIONS === 'true';
   if (!applyFlag) {
-    console.error('APPLY_PHASE5_MIGRATIONS is not set to "true". Aborting (safe guard).');
+    logger.error('APPLY_PHASE5_MIGRATIONS is not set to "true". Aborting (safe guard).');
     process.exit(2);
   }
 
@@ -32,29 +32,29 @@ async function main() {
   const migrationFile = path.join(migrationsDir, '20260129_phase5_intelligent_document_system.sql');
 
   if (!fs.existsSync(migrationFile)) {
-    console.error(`Migration file not found: ${migrationFile}`);
+    logger.error(`Migration file not found: ${migrationFile}`);
     await pool.end();
     process.exit(1);
   }
 
   const sql = fs.readFileSync(migrationFile, 'utf8');
 
-  console.log('Applying Phase 5 migration:', migrationFile);
+  logger.info('Applying Phase 5 migration:', migrationFile);
 
   try {
     await pool.query(sql);
-    console.log('Phase 5 migration applied (idempotent run).');
+    logger.info('Phase 5 migration applied (idempotent run).');
     await pool.end();
     process.exit(0);
   } catch (err) {
-    console.error('Error applying Phase 5 migration:', err.message);
-    if (err.detail) console.error('Detail:', err.detail);
+    logger.error('Error applying Phase 5 migration:', err.message);
+    if (err.detail) logger.error('Detail:', err.detail);
     await pool.end();
     process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error('Fatal error:', err);
+  logger.error('Fatal error:', err);
   process.exit(1);
 });

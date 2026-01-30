@@ -17,31 +17,31 @@ const pool = new pg.Pool({
 
 async function getTrialCounts() {
   try {
-    console.log('=== Trial Count Verification ===');
-    console.log('Time:', new Date().toISOString());
-    console.log('\nQuerying database for counts...');
+    logger.info('=== Trial Count Verification ===');
+    logger.info('Time:', new Date().toISOString());
+    logger.info('\nQuerying database for counts...');
 
     // Get total count
     const totalResult = await pool.query('SELECT COUNT(*) FROM csr_reports');
     const totalCount = parseInt(totalResult.rows[0].count, 10);
-    console.log(`Total trials in database: ${totalCount}`);
+    logger.info(`Total trials in database: ${totalCount}`);
 
     // Get Health Canada count
     const hcResult = await pool.query("SELECT COUNT(*) FROM csr_reports WHERE title LIKE 'HC%'");
     const hcCount = parseInt(hcResult.rows[0].count, 10);
-    console.log(`Health Canada trials: ${hcCount}`);
+    logger.info(`Health Canada trials: ${hcCount}`);
 
     // Get ClinicalTrials.gov count
     const ctgResult = await pool.query("SELECT COUNT(*) FROM csr_reports WHERE title LIKE 'NCT%'");
     const ctgCount = parseInt(ctgResult.rows[0].count, 10);
-    console.log(`ClinicalTrials.gov trials: ${ctgCount}`);
+    logger.info(`ClinicalTrials.gov trials: ${ctgCount}`);
 
     // Get other sources count
     const otherCount = totalCount - hcCount - ctgCount;
-    console.log(`Trials from other sources: ${otherCount}`);
+    logger.info(`Trials from other sources: ${otherCount}`);
 
     // Get top 10 indications
-    console.log('\n=== Top 10 Indications ===');
+    logger.info('\n=== Top 10 Indications ===');
     const indicationsResult = await pool.query(`
       SELECT indication, COUNT(*) as count
       FROM csr_reports
@@ -52,11 +52,11 @@ async function getTrialCounts() {
     `);
 
     indicationsResult.rows.forEach((row, index) => {
-      console.log(`${index + 1}. ${row.indication}: ${row.count}`);
+      logger.info(`${index + 1}. ${row.indication}: ${row.count}`);
     });
 
     // Get phase distribution
-    console.log('\n=== Phase Distribution ===');
+    logger.info('\n=== Phase Distribution ===');
     const phaseResult = await pool.query(`
       SELECT phase, COUNT(*) as count
       FROM csr_reports
@@ -66,11 +66,11 @@ async function getTrialCounts() {
     `);
 
     phaseResult.rows.forEach(row => {
-      console.log(`${row.phase}: ${row.count}`);
+      logger.info(`${row.phase}: ${row.count}`);
     });
 
     // Get sponsor distribution
-    console.log('\n=== Top 10 Sponsors ===');
+    logger.info('\n=== Top 10 Sponsors ===');
     const sponsorResult = await pool.query(`
       SELECT sponsor, COUNT(*) as count
       FROM csr_reports
@@ -81,17 +81,17 @@ async function getTrialCounts() {
     `);
 
     sponsorResult.rows.forEach((row, index) => {
-      console.log(`${index + 1}. ${row.sponsor}: ${row.count}`);
+      logger.info(`${index + 1}. ${row.sponsor}: ${row.count}`);
     });
 
     // Get progress to 4000 target
     const target = 4000;
     const progress = (totalCount / target) * 100;
-    console.log(`\n=== Progress to Target ===`);
-    console.log(`Target: ${target} trials`);
-    console.log(`Current: ${totalCount} trials`);
-    console.log(`Progress: ${progress.toFixed(2)}%`);
-    console.log(`Remaining: ${Math.max(0, target - totalCount)} trials`);
+    logger.info(`\n=== Progress to Target ===`);
+    logger.info(`Target: ${target} trials`);
+    logger.info(`Current: ${totalCount} trials`);
+    logger.info(`Progress: ${progress.toFixed(2)}%`);
+    logger.info(`Remaining: ${Math.max(0, target - totalCount)} trials`);
 
     return {
       total: totalCount,
@@ -101,7 +101,7 @@ async function getTrialCounts() {
       progress: progress,
     };
   } catch (error) {
-    console.error('Error verifying trial counts:', error);
+    logger.error('Error verifying trial counts:', error);
     return null;
   } finally {
     await pool.end();
@@ -110,6 +110,6 @@ async function getTrialCounts() {
 
 // Run the function
 getTrialCounts().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

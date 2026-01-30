@@ -380,7 +380,7 @@ async function insertModulesRecursive(modules, parentId, organizationId, depth =
     );
     
     const insertedModule = result.rows[0];
-    console.log(`${indent}✅ ${insertedModule.module_number} - ${insertedModule.module_name}`);
+    logger.info(`${indent}✅ ${insertedModule.module_number} - ${insertedModule.module_name}`);
     
     // Recursively insert children
     if (children && children.length > 0) {
@@ -393,31 +393,31 @@ async function insertModulesRecursive(modules, parentId, organizationId, depth =
  * Main function to populate eCTD modules
  */
 async function populateEctdModules() {
-  console.log('🚀 Populating complete IND/eCTD module hierarchy...\n');
+  logger.info('🚀 Populating complete IND/eCTD module hierarchy...\n');
 
   try {
     // Check if modules already exist
     const existingCheck = await pool.query('SELECT COUNT(*) as count FROM ectd_modules');
     
     if (existingCheck.rows[0].count > 0) {
-      console.log(`⚠️  Found ${existingCheck.rows[0].count} existing modules.`);
-      console.log('🗑️  Clearing existing modules...');
+      logger.info(`⚠️  Found ${existingCheck.rows[0].count} existing modules.`);
+      logger.info('🗑️  Clearing existing modules...');
       await pool.query('DELETE FROM ectd_modules');
-      console.log('✅ Cleared.\n');
+      logger.info('✅ Cleared.\n');
     }
 
     // Get organization ID (default to 1)
     const orgResult = await pool.query('SELECT id FROM organizations LIMIT 1');
     const organizationId = orgResult.rows[0]?.id || 1;
 
-    console.log(`📋 Inserting modules for organization ${organizationId}...\n`);
+    logger.info(`📋 Inserting modules for organization ${organizationId}...\n`);
 
     // Insert all modules recursively
     await insertModulesRecursive(ectdModuleHierarchy, null, organizationId);
 
     // Final count
     const finalCount = await pool.query('SELECT COUNT(*) as count FROM ectd_modules');
-    console.log(`\n✨ Successfully populated ${finalCount.rows[0].count} eCTD modules!`);
+    logger.info(`\n✨ Successfully populated ${finalCount.rows[0].count} eCTD modules!`);
     
     // Show module breakdown
     const breakdown = await pool.query(`
@@ -427,13 +427,13 @@ async function populateEctdModules() {
       ORDER BY level
     `);
     
-    console.log('\n📊 Module Breakdown by Level:');
+    logger.info('\n📊 Module Breakdown by Level:');
     breakdown.rows.forEach(row => {
-      console.log(`   Level ${row.level}: ${row.count} modules`);
+      logger.info(`   Level ${row.level}: ${row.count} modules`);
     });
 
   } catch (error) {
-    console.error('❌ Error populating eCTD modules:', error);
+    logger.error('❌ Error populating eCTD modules:', error);
     throw error;
   } finally {
     await pool.end();

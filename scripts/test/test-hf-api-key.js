@@ -11,21 +11,21 @@ const HF_API_KEY = process.env.HF_API_KEY;
 const TEST_MODEL = 'sentence-transformers/all-MiniLM-L6-v2'; // Simple embedding model for testing
 
 async function testHuggingFaceApiKey() {
-  console.log('Testing Hugging Face API key...');
+  logger.info('Testing Hugging Face API key...');
 
   // Basic validation check
   if (!HF_API_KEY) {
-    console.error('❌ HF_API_KEY environment variable is not set');
+    logger.error('❌ HF_API_KEY environment variable is not set');
     return false;
   }
 
   if (!HF_API_KEY.startsWith('hf_')) {
-    console.error('❌ HF_API_KEY is incorrectly formatted. It should start with "hf_"');
-    console.error(`   Current format: ${HF_API_KEY.substring(0, 4)}...`);
+    logger.error('❌ HF_API_KEY is incorrectly formatted. It should start with "hf_"');
+    logger.error(`   Current format: ${HF_API_KEY.substring(0, 4)}...`);
     return false;
   }
 
-  console.log('✅ HF_API_KEY basic format check passed (starts with "hf_")');
+  logger.info('✅ HF_API_KEY basic format check passed (starts with "hf_")');
 
   // Test API call
   try {
@@ -41,32 +41,32 @@ async function testHuggingFaceApiKey() {
     );
 
     if (response.status === 200) {
-      console.log('✅ Successfully connected to Hugging Face API');
-      console.log('✅ API key is valid and working');
+      logger.info('✅ Successfully connected to Hugging Face API');
+      logger.info('✅ API key is valid and working');
 
       // Check what was returned
-      console.log('\nAPI Response:');
-      console.log(JSON.stringify(response.data, null, 2));
+      logger.info('\nAPI Response:');
+      logger.info(JSON.stringify(response.data, null, 2));
 
       return true;
     } else {
-      console.error(`❌ API call returned status ${response.status}`);
+      logger.error(`❌ API call returned status ${response.status}`);
       return false;
     }
   } catch (error) {
-    console.error('❌ Error testing Hugging Face API:');
+    logger.error('❌ Error testing Hugging Face API:');
 
     if (error.response) {
-      console.error(`   Status: ${error.response.status}`);
-      console.error(`   Message: ${JSON.stringify(error.response.data)}`);
+      logger.error(`   Status: ${error.response.status}`);
+      logger.error(`   Message: ${JSON.stringify(error.response.data)}`);
 
       if (error.response.status === 401) {
-        console.error('   The API key appears to be invalid or unauthorized');
+        logger.error('   The API key appears to be invalid or unauthorized');
       }
     } else if (error.request) {
-      console.error('   No response received from Hugging Face API');
+      logger.error('   No response received from Hugging Face API');
     } else {
-      console.error(`   Error message: ${error.message}`);
+      logger.error(`   Error message: ${error.message}`);
     }
 
     return false;
@@ -76,8 +76,8 @@ async function testHuggingFaceApiKey() {
 // Run the test
 testHuggingFaceApiKey().then(success => {
   if (success) {
-    console.log('\n🎉 All tests passed! Hugging Face API key is correctly configured.');
+    logger.info('\n🎉 All tests passed! Hugging Face API key is correctly configured.');
   } else {
-    console.error('\n❌ Test failed. Please check the error messages above.');
+    logger.error('\n❌ Test failed. Please check the error messages above.');
   }
 });

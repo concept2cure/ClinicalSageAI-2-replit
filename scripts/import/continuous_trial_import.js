@@ -40,7 +40,7 @@ const pool = new pg.Pool({
 function log(message) {
   const timestamp = new Date().toISOString();
   const logEntry = `${timestamp} - ${message}`;
-  console.log(logEntry);
+  logger.info(logEntry);
 
   // Append to log file
   fs.appendFileSync(LOG_FILE, logEntry + '\n');

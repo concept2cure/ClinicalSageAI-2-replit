@@ -23,8 +23,8 @@ const modules = [
 async function checkModules() {
   const baseUrl = 'http://localhost:3000';
 
-  console.log('TrialSage™ Module Status Check');
-  console.log('==============================');
+  logger.info('TrialSage™ Module Status Check');
+  logger.info('==============================');
 
   for (const module of modules) {
     try {
@@ -32,22 +32,22 @@ async function checkModules() {
       const response = await fetch(url);
 
       if (response.ok) {
-        console.log(`✅ ${module.name} (${module.path}): Available`);
+        logger.info(`✅ ${module.name} (${module.path}): Available`);
       } else {
-        console.log(
+        logger.info(
           `❌ ${module.name} (${module.path}): Error ${response.status} - ${response.statusText}`
         );
       }
     } catch (error) {
-      console.log(`❌ ${module.name} (${module.path}): Connection failed - ${error.message}`);
+      logger.info(`❌ ${module.name} (${module.path}): Connection failed - ${error.message}`);
     }
   }
 
-  console.log('\nEmergency Access Points:');
-  console.log('----------------------');
-  console.log(`• Main app: ${baseUrl}`);
-  console.log(`• Emergency portal: ${baseUrl}/emergency.html`);
-  console.log(`• Emergency server: http://localhost:8080`);
+  logger.info('\nEmergency Access Points:');
+  logger.info('----------------------');
+  logger.info(`• Main app: ${baseUrl}`);
+  logger.info(`• Emergency portal: ${baseUrl}/emergency.html`);
+  logger.info(`• Emergency server: http://localhost:8080`);
 }
 
 checkModules();

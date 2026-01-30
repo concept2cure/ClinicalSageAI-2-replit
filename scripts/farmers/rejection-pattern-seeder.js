@@ -419,14 +419,14 @@ async function seedRejectionPattern(pattern) {
       );
       return true;
     } catch (e) {
-      console.log(`  ⚠️ Pattern exists: ${pattern.sourceId}`);
+      logger.info(`  ⚠️ Pattern exists: ${pattern.sourceId}`);
       return false;
     }
   }
 }
 
 async function main() {
-  console.log(`
+  logger.info(`
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
 ║  🧠  REJECTION PATTERN SEEDER - Historical FDA Intelligence  🧠            ║
@@ -437,9 +437,9 @@ async function main() {
   // Verify connection
   try {
     const result = await pool.query('SELECT current_database() as db');
-    console.log(`🔗 Connected to: ${result.rows[0].db}\n`);
+    logger.info(`🔗 Connected to: ${result.rows[0].db}\n`);
   } catch (error) {
-    console.error('❌ Database connection failed');
+    logger.error('❌ Database connection failed');
     process.exit(1);
   }
 
@@ -447,9 +447,9 @@ async function main() {
   const initialStats = await pool.query(
     `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'rejection_pattern'`
   );
-  console.log(`📊 Current rejection patterns: ${initialStats.rows[0].count}\n`);
+  logger.info(`📊 Current rejection patterns: ${initialStats.rows[0].count}\n`);
 
-  console.log('📋 Seeding historical rejection patterns...\n');
+  logger.info('📋 Seeding historical rejection patterns...\n');
 
   let seeded = 0;
   let failed = 0;
@@ -457,7 +457,7 @@ async function main() {
   for (const pattern of HISTORICAL_REJECTION_PATTERNS) {
     const success = await seedRejectionPattern(pattern);
     if (success) {
-      console.log(`  ✅ ${pattern.sourceId}: ${pattern.context}`);
+      logger.info(`  ✅ ${pattern.sourceId}: ${pattern.context}`);
       seeded++;
     } else {
       failed++;
@@ -469,7 +469,7 @@ async function main() {
     `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'rejection_pattern'`
   );
 
-  console.log(`
+  logger.info(`
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                          SEEDING COMPLETE                                  ║
 ╚════════════════════════════════════════════════════════════════════════════╝

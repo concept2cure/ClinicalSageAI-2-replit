@@ -134,7 +134,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data - start high to avoid conflicts
@@ -151,7 +151,7 @@ function saveTrackingData(data) {
   try {
     fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error('Error saving tracking file:', error.message);
+    logger.error('Error saving tracking file:', error.message);
   }
 }
 
@@ -289,7 +289,7 @@ async function importBatch(trials) {
         const checkResult = await client.query(checkQuery, [trial.nctrialId]);
 
         if (checkResult.rows.length > 0) {
-          console.log(`Skipping ${trial.nctrialId} - already exists in database`);
+          logger.info(`Skipping ${trial.nctrialId} - already exists in database`);
           skippedCount++;
           continue;
         }
@@ -344,7 +344,7 @@ async function importBatch(trials) {
 
         importedCount++;
       } catch (error) {
-        console.error(`Error importing trial ${trial.nctrialId}:`, error.message);
+        logger.error(`Error importing trial ${trial.nctrialId}:`, error.message);
         skippedCount++;
       }
     }
@@ -352,7 +352,7 @@ async function importBatch(trials) {
     // Commit transaction
     await client.query('COMMIT');
 
-    console.log(`
+    logger.info(`
 === Batch Import Summary ===
 Total trials processed: ${trials.length}
 Successfully imported: ${importedCount}
@@ -363,7 +363,7 @@ Skipped (already exists or error): ${skippedCount}
   } catch (error) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
-    console.error('Error during transaction:', error.message);
+    logger.error('Error during transaction:', error.message);
     throw error;
   } finally {
     // Release the client
@@ -398,17 +398,17 @@ async function getHealthCanadaCount() {
 // Run a single batch import
 async function runMicroBatch() {
   try {
-    console.log('Starting micro batch import process...');
+    logger.info('Starting micro batch import process...');
 
     // Get tracking data
     const trackingData = getTrackingData();
-    console.log('Current tracking data:', trackingData);
+    logger.info('Current tracking data:', trackingData);
 
     // Get current counts
     const currentHCCount = await getHealthCanadaCount();
     const totalTrials = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Current Database Status ===
 Total trials in database: ${totalTrials}
 Health Canada trials: ${currentHCCount}
@@ -417,7 +417,7 @@ Progress: ${Math.round((currentHCCount / TARGET_TOTAL) * 100)}%
     `);
 
     if (currentHCCount >= TARGET_TOTAL) {
-      console.log(
+      logger.info(
         `Target of ${TARGET_TOTAL} Health Canada trials already met (${currentHCCount}). No import needed.`
       );
       await pool.end();
@@ -428,7 +428,7 @@ Progress: ${Math.round((currentHCCount / TARGET_TOTAL) * 100)}%
     const remainingToImport = TARGET_TOTAL - currentHCCount;
     const batchSize = Math.min(BATCH_SIZE, remainingToImport);
 
-    console.log(`
+    logger.info(`
 === Running Micro Batch ${trackingData.batchesCompleted + 1} ===
 Batch size: ${batchSize}
 Starting ID: HC-${trackingData.nextId}
@@ -451,7 +451,7 @@ Starting ID: HC-${trackingData.nextId}
     const newHCCount = await getHealthCanadaCount();
     const newTotal = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Updated Database Status ===
 Total trials in database: ${newTotal}
 Health Canada trials: ${newHCCount}
@@ -464,7 +464,7 @@ Remaining: ${TARGET_TOTAL - newHCCount}
 To continue importing, run this script again.
     `);
   } catch (error) {
-    console.error('Error during import process:', error.message);
+    logger.error('Error during import process:', error.message);
   } finally {
     // Close the pool
     await pool.end();

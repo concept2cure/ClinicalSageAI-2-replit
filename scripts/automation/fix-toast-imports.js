@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 // Get client source directory
 const CLIENT_SRC_DIR = path.join(__dirname, 'client', 'src');
 
-console.log('🔍 Finding all files with react-toastify imports...');
+logger.info('🔍 Finding all files with react-toastify imports...');
 
 // Function to process a file
 function processFile(filePath) {
@@ -22,7 +22,7 @@ function processFile(filePath) {
 
     // Check if file contains react-toastify imports
     if (content.includes('react-toastify')) {
-      console.log(`🔧 Fixing imports in: ${filePath}`);
+      logger.info(`🔧 Fixing imports in: ${filePath}`);
 
       // Replace imports
       let newContent = content;
@@ -48,10 +48,10 @@ function processFile(filePath) {
       // Write the modified content
       fs.writeFileSync(filePath, newContent, 'utf8');
 
-      console.log(`✅ Fixed: ${filePath}`);
+      logger.info(`✅ Fixed: ${filePath}`);
     }
   } catch (err) {
-    console.error(`❌ Error processing file ${filePath}:`, err.message);
+    logger.error(`❌ Error processing file ${filePath}:`, err.message);
   }
 }
 
@@ -77,14 +77,14 @@ function processDirectory(directoryPath) {
       }
     }
   } catch (err) {
-    console.error(`❌ Error processing directory ${directoryPath}:`, err.message);
+    logger.error(`❌ Error processing directory ${directoryPath}:`, err.message);
   }
 }
 
 // Start processing from client src directory
 if (fs.existsSync(CLIENT_SRC_DIR)) {
   processDirectory(CLIENT_SRC_DIR);
-  console.log('✨ Toast import fixing complete!');
+  logger.info('✨ Toast import fixing complete!');
 } else {
-  console.error(`❌ Client source directory not found: ${CLIENT_SRC_DIR}`);
+  logger.error(`❌ Client source directory not found: ${CLIENT_SRC_DIR}`);
 }

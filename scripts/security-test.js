@@ -71,9 +71,9 @@ const results = {
 // Helper for logging test results
 const logTest = (name, passed, error = null) => {
   const status = passed ? 'PASSED' : 'FAILED';
-  console.log(`[${status}] ${name}`);
+  logger.info(`[${status}] ${name}`);
   if (error) {
-    console.error(`  Error: ${error}`);
+    logger.error(`  Error: ${error}`);
   }
 
   results.tests.push({
@@ -248,7 +248,7 @@ async function testDatabaseRLS() {
     // with actual database access
 
     // For now, we'll just skip this test
-    console.log('[SKIPPED] Database Row-Level Security - requires direct DB access');
+    logger.info('[SKIPPED] Database Row-Level Security - requires direct DB access');
     results.skipped++;
   } catch (error) {
     logTest('Database Row-Level Security', false, error);
@@ -257,7 +257,7 @@ async function testDatabaseRLS() {
 
 // Run all tests
 async function runTests() {
-  console.log('🔒 Starting Security Integration Tests');
+  logger.info('🔒 Starting Security Integration Tests');
 
   // Run tests in sequence
   await testHealthCheck();
@@ -268,31 +268,31 @@ async function runTests() {
   await testDatabaseRLS();
 
   // Print summary
-  console.log('\n📊 Test Summary:');
-  console.log(`✅ Passed: ${results.passed}`);
-  console.log(`❌ Failed: ${results.failed}`);
-  console.log(`⏭️ Skipped: ${results.skipped}`);
+  logger.info('\n📊 Test Summary:');
+  logger.info(`✅ Passed: ${results.passed}`);
+  logger.info(`❌ Failed: ${results.failed}`);
+  logger.info(`⏭️ Skipped: ${results.skipped}`);
 
   // Exit with appropriate code
   if (results.failed > 0) {
-    console.log('\n❌ Security tests failed!');
+    logger.info('\n❌ Security tests failed!');
     process.exit(1);
   } else {
-    console.log('\n✅ All security tests passed!');
+    logger.info('\n✅ All security tests passed!');
     process.exit(0);
   }
 }
 
 // Set timeout
 const timeout = setTimeout(() => {
-  console.error('Tests timed out after', TEST_TIMEOUT, 'ms');
+  logger.error('Tests timed out after', TEST_TIMEOUT, 'ms');
   process.exit(1);
 }, TEST_TIMEOUT);
 
 // Run tests and clear timeout on completion
 runTests()
   .catch(error => {
-    console.error('Error running tests:', error);
+    logger.error('Error running tests:', error);
     process.exit(1);
   })
   .finally(() => {

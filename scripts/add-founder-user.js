@@ -27,7 +27,7 @@ async function addFounderUser() {
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const db = drizzle(pool, { schema });
 
-    console.log('Connected to database, checking for existing founder account...');
+    logger.info('Connected to database, checking for existing founder account...');
 
     // Check if the founder account already exists
     const existingUser = await db
@@ -37,7 +37,7 @@ async function addFounderUser() {
       .execute();
 
     if (existingUser.length > 0) {
-      console.log('Founder account already exists. Updating password...');
+      logger.info('Founder account already exists. Updating password...');
 
       // Update the existing founder account
       await db
@@ -49,9 +49,9 @@ async function addFounderUser() {
         .where(eq(schema.users.username, 'Founder'))
         .execute();
 
-      console.log('Founder account password updated successfully!');
+      logger.info('Founder account password updated successfully!');
     } else {
-      console.log('Creating new founder account...');
+      logger.info('Creating new founder account...');
 
       // Create the founder account
       await db
@@ -66,12 +66,12 @@ async function addFounderUser() {
         })
         .execute();
 
-      console.log('Founder account created successfully!');
+      logger.info('Founder account created successfully!');
     }
 
     await pool.end();
   } catch (error) {
-    console.error('Error adding founder user:', error);
+    logger.error('Error adding founder user:', error);
     process.exit(1);
   }
 }

@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 
 // Make sure we have the DATABASE_URL environment variable
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL environment variable not set');
+  logger.error('DATABASE_URL environment variable not set');
   process.exit(1);
 }
 
@@ -33,12 +33,12 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 // Create a function to run the import process
 async function runImport() {
   try {
-    console.log('Starting batch import process...');
+    logger.info('Starting batch import process...');
 
     // Check if attached_assets directory exists
     const assetsDir = path.join(process.cwd(), 'attached_assets');
     if (!fs.existsSync(assetsDir)) {
-      console.error('attached_assets directory not found');
+      logger.error('attached_assets directory not found');
       process.exit(1);
     }
 
@@ -47,20 +47,20 @@ async function runImport() {
       .readdirSync(assetsDir)
       .filter(file => file.startsWith('NCT') && file.endsWith('.xml'));
 
-    console.log(`Found ${xmlFiles.length} NCT XML files in ${assetsDir}`);
+    logger.info(`Found ${xmlFiles.length} NCT XML files in ${assetsDir}`);
 
     if (xmlFiles.length === 0) {
-      console.error('No NCT XML files found in attached_assets directory');
+      logger.error('No NCT XML files found in attached_assets directory');
       process.exit(1);
     }
 
     // Run the Python script to process the XML files
-    console.log('Running Python script to process XML files...');
+    logger.info('Running Python script to process XML files...');
     execSync(`python3 server/scripts/import_nct_xml.py ${assetsDir}`, { stdio: 'inherit' });
 
     // Check if processed_trials.json was created
     if (!fs.existsSync('processed_trials.json')) {
-      console.error('Failed to generate processed_trials.json');
+      logger.error('Failed to generate processed_trials.json');
       process.exit(1);
     }
 
@@ -68,11 +68,11 @@ async function runImport() {
     const processedData = JSON.parse(fs.readFileSync('processed_trials.json', 'utf-8'));
 
     if (!processedData.studies || !Array.isArray(processedData.studies)) {
-      console.error('Invalid format in processed_trials.json');
+      logger.error('Invalid format in processed_trials.json');
       process.exit(1);
     }
 
-    console.log(
+    logger.info(
       `Successfully processed ${processedData.processed_count} trials. Importing to database...`
     );
 
@@ -88,7 +88,7 @@ async function runImport() {
         );
 
         if (existingReports.length > 0) {
-          console.log(`Study ${study.nctrialId} already exists in database, skipping...`);
+          logger.info(`Study ${study.nctrialId} already exists in database, skipping...`);
           continue;
         }
 
@@ -136,23 +136,23 @@ async function runImport() {
         );
 
         importedCount++;
-        console.log(
+        logger.info(
           `Imported study ${study.nctrialId} (${importedCount}/${processedData.studies.length})`
         );
       } catch (error) {
-        console.error(`Error importing study ${study.nctrialId}:`, error);
+        logger.error(`Error importing study ${study.nctrialId}:`, error);
       }
     }
 
-    console.log(`Successfully imported ${importedCount} new studies to the database.`);
+    logger.info(`Successfully imported ${importedCount} new studies to the database.`);
 
     // Close the database connection pool
     await pool.end();
 
-    console.log('Batch import process completed.');
+    logger.info('Batch import process completed.');
     process.exit(0);
   } catch (error) {
-    console.error('Error in batch import process:', error);
+    logger.error('Error in batch import process:', error);
     process.exit(1);
   }
 }

@@ -7,15 +7,15 @@ const { runAllMigrations } = require('../server/migrations/runMigrations');
 
 async function main() {
   try {
-    console.log('=== Starting Database Migrations ===');
+    logger.info('=== Starting Database Migrations ===');
 
     // Run all migrations
     await runAllMigrations();
 
-    console.log('=== Migrations completed successfully ===');
+    logger.info('=== Migrations completed successfully ===');
     process.exit(0);
   } catch (error) {
-    console.error('Migration failed:', error);
+    logger.error('Migration failed:', error);
     process.exit(1);
   }
 }

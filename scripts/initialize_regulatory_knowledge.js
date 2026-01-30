@@ -10,7 +10,7 @@ const fs = require('fs');
 const { setupKnowledgeBase, importDocuments } = require('../server/services/documentProcessor');
 
 async function initializeKnowledgeBase() {
-  console.log('Setting up regulatory knowledge base structure...');
+  logger.info('Setting up regulatory knowledge base structure...');
 
   // Create directory structure
   const directories = [
@@ -26,16 +26,16 @@ async function initializeKnowledgeBase() {
   for (const dir of directories) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      console.log(`Created directory: ${dir}`);
+      logger.info(`Created directory: ${dir}`);
     }
   }
 
   // Setup database
   try {
     await setupKnowledgeBase();
-    console.log('Knowledge base database initialized successfully');
+    logger.info('Knowledge base database initialized successfully');
   } catch (error) {
-    console.error('Error setting up knowledge base:', error);
+    logger.error('Error setting up knowledge base:', error);
     return;
   }
 
@@ -45,9 +45,9 @@ async function initializeKnowledgeBase() {
 
     // Check if directory exists
     if (fs.existsSync(attachedAssetsDir)) {
-      console.log(`Processing PDFs from ${attachedAssetsDir}`);
+      logger.info(`Processing PDFs from ${attachedAssetsDir}`);
       const result = await importDocuments(attachedAssetsDir);
-      console.log(result.message);
+      logger.info(result.message);
 
       // Log sample of processed files
       const pdfFiles = fs
@@ -56,14 +56,14 @@ async function initializeKnowledgeBase() {
         .slice(0, 10); // Take first 10 files as a sample
 
       if (pdfFiles.length > 0) {
-        console.log('\nSample of processed PDFs:');
-        pdfFiles.forEach(file => console.log(` - ${file}`));
+        logger.info('\nSample of processed PDFs:');
+        pdfFiles.forEach(file => logger.info(` - ${file}`));
       }
     } else {
-      console.log(`Directory not found: ${attachedAssetsDir}`);
+      logger.info(`Directory not found: ${attachedAssetsDir}`);
     }
   } catch (error) {
-    console.error('Error processing documents:', error);
+    logger.error('Error processing documents:', error);
   }
 }
 
@@ -106,18 +106,18 @@ function createRegulatoryTaxonomy() {
   // Save taxonomy to file
   const taxonomyPath = path.join(__dirname, '../data/regulatory_taxonomy.json');
   fs.writeFileSync(taxonomyPath, JSON.stringify(taxonomy, null, 2));
-  console.log(`Regulatory taxonomy created and saved to ${taxonomyPath}`);
+  logger.info(`Regulatory taxonomy created and saved to ${taxonomyPath}`);
 }
 
 // Main function
 async function main() {
   try {
-    console.log('Starting regulatory knowledge base initialization...');
+    logger.info('Starting regulatory knowledge base initialization...');
     await initializeKnowledgeBase();
     createRegulatoryTaxonomy();
-    console.log('Regulatory knowledge base initialization complete');
+    logger.info('Regulatory knowledge base initialization complete');
   } catch (error) {
-    console.error('Error in initialization:', error);
+    logger.error('Error in initialization:', error);
   }
 }
 

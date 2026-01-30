@@ -8,32 +8,32 @@
 import { DocumentSpecificAIService } from './server/services/DocumentSpecificAIService.js';
 
 async function demonstrateSubPhase13Features() {
-  console.log('🚀 SUB-PHASE 1.3 DEMONSTRATION');
-  console.log('Document Type-Specific AI Models & Automated Commitment Categorization');
-  console.log('='.repeat(80));
+  logger.info('🚀 SUB-PHASE 1.3 DEMONSTRATION');
+  logger.info('Document Type-Specific AI Models & Automated Commitment Categorization');
+  logger.info('='.repeat(80));
 
   const aiService = new DocumentSpecificAIService();
 
   // Demo 1: Document-Specific AI Model Selection
-  console.log('\n📊 DEMO 1: Document-Specific AI Model Selection');
-  console.log('-'.repeat(50));
+  logger.info('\n📊 DEMO 1: Document-Specific AI Model Selection');
+  logger.info('-'.repeat(50));
 
   const submissionTypes = ['IND', 'NDA', 'BLA', 'CSR'];
 
   submissionTypes.forEach(type => {
     const config = aiService.modelConfigurations[type];
-    console.log(`${type} Model Configuration:`);
-    console.log(`  🤖 Model Version: ${config.modelVersion}`);
-    console.log(`  🌡️ Temperature: ${config.temperatureOptimal}`);
-    console.log(`  📝 Max Tokens: ${config.maxTokens}`);
-    console.log(`  🔍 Focus Keywords: ${config.focusKeywords.slice(0, 3).join(', ')}...`);
-    console.log(`  📋 Extraction Patterns: ${config.extractionPatterns.slice(0, 3).join(', ')}...`);
-    console.log('');
+    logger.info(`${type} Model Configuration:`);
+    logger.info(`  🤖 Model Version: ${config.modelVersion}`);
+    logger.info(`  🌡️ Temperature: ${config.temperatureOptimal}`);
+    logger.info(`  📝 Max Tokens: ${config.maxTokens}`);
+    logger.info(`  🔍 Focus Keywords: ${config.focusKeywords.slice(0, 3).join(', ')}...`);
+    logger.info(`  📋 Extraction Patterns: ${config.extractionPatterns.slice(0, 3).join(', ')}...`);
+    logger.info('');
   });
 
   // Demo 2: Automated Categorization System
-  console.log('\n🏷️ DEMO 2: Automated Categorization System');
-  console.log('-'.repeat(50));
+  logger.info('\n🏷️ DEMO 2: Automated Categorization System');
+  logger.info('-'.repeat(50));
 
   const testCommitments = [
     {
@@ -61,16 +61,16 @@ async function demonstrateSubPhase13Features() {
     );
     const subCategory = aiService.validateAndEnhanceSubCategory(null, validatedCategory);
 
-    console.log(`📋 ${commitment.submissionType} Commitment:`);
-    console.log(`  Description: "${commitment.description}"`);
-    console.log(`  ✅ Primary Category: ${validatedCategory}`);
-    console.log(`  🔸 Sub-Category: ${subCategory}`);
-    console.log('');
+    logger.info(`📋 ${commitment.submissionType} Commitment:`);
+    logger.info(`  Description: "${commitment.description}"`);
+    logger.info(`  ✅ Primary Category: ${validatedCategory}`);
+    logger.info(`  🔸 Sub-Category: ${subCategory}`);
+    logger.info('');
   });
 
   // Demo 3: Enhanced Compliance Scoring
-  console.log('\n📊 DEMO 3: Enhanced Compliance Scoring');
-  console.log('-'.repeat(50));
+  logger.info('\n📊 DEMO 3: Enhanced Compliance Scoring');
+  logger.info('-'.repeat(50));
 
   const scoringTestCases = [
     {
@@ -108,40 +108,40 @@ async function demonstrateSubPhase13Features() {
       commitment.submissionType
     );
 
-    console.log(`Test Case ${index + 1}:`);
-    console.log(`  📝 Description: "${commitment.description}"`);
-    console.log(`  📊 Compliance Score: ${complianceScore}/100`);
-    console.log(`  🎯 Priority: ${commitment.priority}`);
-    console.log(`  ⚠️ Risk Level: ${commitment.riskLevel}`);
-    console.log(`  🔍 Confidence: ${commitment.confidence}`);
-    console.log(`  📋 Document Type: ${commitment.submissionType}`);
-    console.log('');
+    logger.info(`Test Case ${index + 1}:`);
+    logger.info(`  📝 Description: "${commitment.description}"`);
+    logger.info(`  📊 Compliance Score: ${complianceScore}/100`);
+    logger.info(`  🎯 Priority: ${commitment.priority}`);
+    logger.info(`  ⚠️ Risk Level: ${commitment.riskLevel}`);
+    logger.info(`  🔍 Confidence: ${commitment.confidence}`);
+    logger.info(`  📋 Document Type: ${commitment.submissionType}`);
+    logger.info('');
   });
 
   // Demo 4: Enhanced Prompt Generation
-  console.log('\n🤖 DEMO 4: Enhanced Prompt Generation');
-  console.log('-'.repeat(50));
+  logger.info('\n🤖 DEMO 4: Enhanced Prompt Generation');
+  logger.info('-'.repeat(50));
 
   const promptExample = aiService.getDocumentSpecificPrompt('IND', 'Phase 1');
-  console.log(`Generated IND Phase 1 Prompt:`);
-  console.log(`  📏 Length: ${promptExample.length} characters`);
-  console.log(
+  logger.info(`Generated IND Phase 1 Prompt:`);
+  logger.info(`  📏 Length: ${promptExample.length} characters`);
+  logger.info(
     `  🎯 Contains AI Model Configuration: ${promptExample.includes('AI MODEL CONFIGURATION') ? '✅' : '❌'}`
   );
-  console.log(
+  logger.info(
     `  🏷️ Contains Automated Categorization: ${promptExample.includes('AUTOMATED CATEGORIZATION') ? '✅' : '❌'}`
   );
-  console.log(
+  logger.info(
     `  📊 Contains Compliance Scoring: ${promptExample.includes('complianceScore') ? '✅' : '❌'}`
   );
-  console.log(
+  logger.info(
     `  🔍 Contains NLP Pattern Instructions: ${promptExample.includes('nlpPatterns') ? '✅' : '❌'}`
   );
-  console.log('');
+  logger.info('');
 
   // Demo 5: NLP Pattern Validation
-  console.log('\n🔍 DEMO 5: NLP Pattern Validation');
-  console.log('-'.repeat(50));
+  logger.info('\n🔍 DEMO 5: NLP Pattern Validation');
+  logger.info('-'.repeat(50));
 
   const testPatterns = [
     'shall submit reports',
@@ -154,49 +154,49 @@ async function demonstrateSubPhase13Features() {
   const modelConfig = aiService.modelConfigurations.IND;
   const validatedPatterns = aiService.validateNLPPatterns(testPatterns, modelConfig);
 
-  console.log('Pattern Validation Results:');
+  logger.info('Pattern Validation Results:');
   testPatterns.forEach(pattern => {
     const isValid = validatedPatterns.some(vp => vp.includes(pattern.split(' ')[0]));
-    console.log(`  "${pattern}": ${isValid ? '✅ Valid' : '❌ Invalid'}`);
+    logger.info(`  "${pattern}": ${isValid ? '✅ Valid' : '❌ Invalid'}`);
   });
 
-  console.log(`\n📋 Total Validated Patterns: ${validatedPatterns.length}`);
-  console.log(`🎯 Pattern Types: ${validatedPatterns.slice(0, 3).join(', ')}...`);
+  logger.info(`\n📋 Total Validated Patterns: ${validatedPatterns.length}`);
+  logger.info(`🎯 Pattern Types: ${validatedPatterns.slice(0, 3).join(', ')}...`);
 
   // Demo 6: Regulatory Framework Integration
-  console.log('\n📜 DEMO 6: Regulatory Framework Integration');
-  console.log('-'.repeat(50));
+  logger.info('\n📜 DEMO 6: Regulatory Framework Integration');
+  logger.info('-'.repeat(50));
 
   Object.entries(aiService.regulatoryFrameworks).forEach(([type, framework]) => {
-    console.log(`${type} Framework: ${framework}`);
+    logger.info(`${type} Framework: ${framework}`);
   });
 
   // Demo Summary
-  console.log('\n' + '='.repeat(80));
-  console.log('🎉 SUB-PHASE 1.3 DEMONSTRATION COMPLETE');
-  console.log('='.repeat(80));
+  logger.info('\n' + '='.repeat(80));
+  logger.info('🎉 SUB-PHASE 1.3 DEMONSTRATION COMPLETE');
+  logger.info('='.repeat(80));
 
-  console.log('\n✅ DEMONSTRATED FEATURES:');
-  console.log('  🤖 Document-Specific AI Model Configurations');
-  console.log('  🏷️ Automated Commitment Categorization');
-  console.log('  📊 Enhanced Compliance Scoring (65-100 range)');
-  console.log('  🔍 NLP Pattern Validation System');
-  console.log('  📜 Regulatory Framework Integration');
-  console.log('  🎯 Document-Specific Prompt Generation');
+  logger.info('\n✅ DEMONSTRATED FEATURES:');
+  logger.info('  🤖 Document-Specific AI Model Configurations');
+  logger.info('  🏷️ Automated Commitment Categorization');
+  logger.info('  📊 Enhanced Compliance Scoring (65-100 range)');
+  logger.info('  🔍 NLP Pattern Validation System');
+  logger.info('  📜 Regulatory Framework Integration');
+  logger.info('  🎯 Document-Specific Prompt Generation');
 
-  console.log('\n🚀 PRODUCTION CAPABILITIES:');
-  console.log('  📋 Real-time document type detection');
-  console.log('  🎯 Specialized AI model selection');
-  console.log('  🏷️ Automated commitment categorization');
-  console.log('  📊 Intelligent compliance scoring');
-  console.log('  🔍 Advanced NLP pattern recognition');
-  console.log('  📜 Regulatory compliance validation');
+  logger.info('\n🚀 PRODUCTION CAPABILITIES:');
+  logger.info('  📋 Real-time document type detection');
+  logger.info('  🎯 Specialized AI model selection');
+  logger.info('  🏷️ Automated commitment categorization');
+  logger.info('  📊 Intelligent compliance scoring');
+  logger.info('  🔍 Advanced NLP pattern recognition');
+  logger.info('  📜 Regulatory compliance validation');
 
-  console.log('\n📈 BUSINESS IMPACT:');
-  console.log('  🎯 85% reduction in manual categorization');
-  console.log('  📊 92% improvement in compliance accuracy');
-  console.log('  🚀 78% faster regulatory processing');
-  console.log('  🔍 100% automated pattern recognition');
+  logger.info('\n📈 BUSINESS IMPACT:');
+  logger.info('  🎯 85% reduction in manual categorization');
+  logger.info('  📊 92% improvement in compliance accuracy');
+  logger.info('  🚀 78% faster regulatory processing');
+  logger.info('  🔍 100% automated pattern recognition');
 
   return true;
 }
@@ -204,10 +204,10 @@ async function demonstrateSubPhase13Features() {
 // Run demonstration
 demonstrateSubPhase13Features()
   .then(() => {
-    console.log('\n✅ SUB-PHASE 1.3 DEMONSTRATION SUCCESSFUL');
+    logger.info('\n✅ SUB-PHASE 1.3 DEMONSTRATION SUCCESSFUL');
     process.exit(0);
   })
   .catch(error => {
-    console.error('\n❌ DEMONSTRATION FAILED:', error);
+    logger.error('\n❌ DEMONSTRATION FAILED:', error);
     process.exit(1);
   });

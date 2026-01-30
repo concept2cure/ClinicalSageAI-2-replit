@@ -21,7 +21,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data
@@ -34,14 +34,14 @@ function getTrackingData() {
 
 // Run parallel import processes
 async function runParallelImports() {
-  console.log(`=== Running ${PARALLEL_PROCESSES} Parallel Import Processes ===`);
-  console.log(`Each process will import 50 trials. Total: ${PARALLEL_PROCESSES * 50} trials`);
-  console.log('Timestamp:', new Date().toISOString());
+  logger.info(`=== Running ${PARALLEL_PROCESSES} Parallel Import Processes ===`);
+  logger.info(`Each process will import 50 trials. Total: ${PARALLEL_PROCESSES * 50} trials`);
+  logger.info('Timestamp:', new Date().toISOString());
 
   // Make a backup of tracking file before starting
   const trackingData = getTrackingData();
   fs.writeFileSync('tracking_backup.json', JSON.stringify(trackingData, null, 2));
-  console.log('Created backup of tracking data');
+  logger.info('Created backup of tracking data');
 
   // Modify the import script to use different nextId values for each process
   for (let i = 0; i < PARALLEL_PROCESSES; i++) {
@@ -61,10 +61,10 @@ async function runParallelImports() {
       import('./import_batch_of_50.js')
         .then(module => {
           // The module will run automatically
-          console.log('Import process ${i + 1} completed with nextId ${nextId}');
+          logger.info('Import process ${i + 1} completed with nextId ${nextId}');
         })
         .catch(err => {
-          console.error('Error importing module in process ${i + 1}:', err);
+          logger.error('Error importing module in process ${i + 1}:', err);
         });
     `;
 
@@ -72,7 +72,7 @@ async function runParallelImports() {
     fs.writeFileSync(scriptPath, scriptContent);
 
     // Run the process
-    console.log(`Starting import process ${i + 1} with nextId ${nextId}`);
+    logger.info(`Starting import process ${i + 1} with nextId ${nextId}`);
     try {
       // Use spawn to run the process in the background
       const childProcess = require('child_process').spawn('node', [scriptPath], {
@@ -83,13 +83,13 @@ async function runParallelImports() {
       // Don't wait for the child process
       childProcess.unref();
 
-      console.log(`Process ${i + 1} started with PID ${childProcess.pid}`);
+      logger.info(`Process ${i + 1} started with PID ${childProcess.pid}`);
     } catch (error) {
-      console.error(`Error starting process ${i + 1}:`, error.message);
+      logger.error(`Error starting process ${i + 1}:`, error.message);
     }
   }
 
-  console.log(`
+  logger.info(`
 All ${PARALLEL_PROCESSES} import processes have been started in parallel.
 Each process will log its own progress.
 The main tracking file will be updated as each process completes.

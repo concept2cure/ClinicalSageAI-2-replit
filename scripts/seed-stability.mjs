@@ -77,17 +77,17 @@ async function ensureStudy() {
   if (s) return s;
   try {
     s = await createStudyAI();
-    console.log(`- Created AI study: ${s.study_id || s.id}`);
+    logger.info(`- Created AI study: ${s.study_id || s.id}`);
     return s;
   } catch (e) {
-    console.warn("- AI study creation not available; falling back to manual creation…");
+    logger.warn("- AI study creation not available; falling back to manual creation…");
     const body = { code: STUDY_CODE, name: STUDY_NAME, product_code: PRODUCT_CODE, zone: "II", duration_months: 24 };
     s = await j(`${BASE_URL}/api/stability/studies`, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
       body: JSON.stringify(body)
     });
-    console.log(`- Created study: ${s.study_id || s.id}`);
+    logger.info(`- Created study: ${s.study_id || s.id}`);
     return s;
   }
 }
@@ -259,41 +259,41 @@ async function ensureP8Tokens(docId) {
 }
 
 (async function main(){
-  console.log(`Seeding Stability @ ${BASE_URL}`);
+  logger.info(`Seeding Stability @ ${BASE_URL}`);
   try {
     // 1) Ensure study
     const s = await ensureStudy();
     const studyId = s.study_id || s.id;
-    console.log(`- Study: ${studyId} (${s.name || STUDY_NAME})`);
+    logger.info(`- Study: ${studyId} (${s.name || STUDY_NAME})`);
 
     // 2) Conditions, timepoints, tests
     await ensureCondition(studyId, LT);
     await ensureCondition(studyId, ACC);
     let detail = await ensureTimepoints(studyId, TP_MONTHS);
     detail = await ensureTests(studyId);
-    console.log(`- Configured: ${detail.conditions?.length || 0} conditions, ${detail.timepoints?.length || 0} timepoints, ${detail.tests?.length || 0} tests`);
+    logger.info(`- Configured: ${detail.conditions?.length || 0} conditions, ${detail.timepoints?.length || 0} timepoints, ${detail.tests?.length || 0} tests`);
 
     // 3) Seed results
     await seedResults(studyId, detail);
-    console.log(`- Seeded stability results`);
+    logger.info(`- Seeded stability results`);
 
     // 4) OOT rules and surveillance
     await ensureOotRules(studyId);
     const surv = await runSurveillance(studyId);
-    console.log(`- OOT surveillance: Assay=${surv.assay.findings?.length || 0} findings, Dissolution=${surv.disso.findings?.length || 0} findings`);
+    logger.info(`- OOT surveillance: Assay=${surv.assay.findings?.length || 0} findings, Dissolution=${surv.disso.findings?.length || 0} findings`);
 
     // 5) Optionally insert P.8 tokens into authoring doc
     if (DOC_ID) {
       await ensureP8Tokens(DOC_ID);
-      console.log(`- Inserted P.8 tokens into doc: ${DOC_ID}`);
+      logger.info(`- Inserted P.8 tokens into doc: ${DOC_ID}`);
     }
 
-    console.log(`✅ Stability seeding complete!`);
-    console.log(`\nEnvironment variables for UAT testing:`);
-    console.log(`BASE_URL="${BASE_URL}" STUDY_CODE="${STUDY_CODE}" PRODUCT_CODE="${PRODUCT_CODE}" ${DOC_ID ? `DOC_ID="${DOC_ID}"` : ''}`);
+    logger.info(`✅ Stability seeding complete!`);
+    logger.info(`\nEnvironment variables for UAT testing:`);
+    logger.info(`BASE_URL="${BASE_URL}" STUDY_CODE="${STUDY_CODE}" PRODUCT_CODE="${PRODUCT_CODE}" ${DOC_ID ? `DOC_ID="${DOC_ID}"` : ''}`);
     
   } catch (error) {
-    console.error(`❌ Seeder failed:`, error.message);
+    logger.error(`❌ Seeder failed:`, error.message);
     process.exit(1);
   }
 })();

@@ -48,7 +48,7 @@ with statistical significance (HR 0.68, 95% CI: 0.54-0.85, p<0.001).
 
 async function testTextProcessing() {
   try {
-    console.log('Testing Lumen AI Text Processing Capabilities...\n');
+    logger.info('Testing Lumen AI Text Processing Capabilities...\n');
 
     const response = await fetch('http://localhost:5000/api/ask-lumen', {
       method: 'POST',
@@ -64,64 +64,64 @@ async function testTextProcessing() {
 
     const data = await response.json();
 
-    console.log('=== TEXT PROCESSING RESULTS ===\n');
+    logger.info('=== TEXT PROCESSING RESULTS ===\n');
 
     if (data.metadata && data.metadata.document_analysis) {
       const analysis = data.metadata.document_analysis;
 
-      console.log('Document Type:', analysis.document_type);
-      console.log('Jurisdiction:', analysis.jurisdiction);
-      console.log('\nRegulatory Tags Found:', analysis.regulatory_tags?.length || 0);
+      logger.info('Document Type:', analysis.document_type);
+      logger.info('Jurisdiction:', analysis.jurisdiction);
+      logger.info('\nRegulatory Tags Found:', analysis.regulatory_tags?.length || 0);
       if (analysis.regulatory_tags?.length > 0) {
-        analysis.regulatory_tags.forEach(tag => console.log(`  - ${tag}`));
+        analysis.regulatory_tags.forEach(tag => logger.info(`  - ${tag}`));
       }
 
-      console.log('\nMedical Terms Found:', analysis.medical_terms?.length || 0);
+      logger.info('\nMedical Terms Found:', analysis.medical_terms?.length || 0);
       if (analysis.medical_terms?.length > 0) {
-        analysis.medical_terms.forEach(term => console.log(`  - ${term}`));
+        analysis.medical_terms.forEach(term => logger.info(`  - ${term}`));
       }
 
       if (analysis.text_statistics) {
-        console.log('\nText Statistics:');
-        console.log(`  - Word Count: ${analysis.text_statistics.wordCount}`);
-        console.log(`  - Sentence Count: ${analysis.text_statistics.sentenceCount}`);
-        console.log(`  - Average Word Length: ${analysis.text_statistics.averageWordLength}`);
-        console.log(`  - Readability Score: ${analysis.text_statistics.readabilityScore}`);
+        logger.info('\nText Statistics:');
+        logger.info(`  - Word Count: ${analysis.text_statistics.wordCount}`);
+        logger.info(`  - Sentence Count: ${analysis.text_statistics.sentenceCount}`);
+        logger.info(`  - Average Word Length: ${analysis.text_statistics.averageWordLength}`);
+        logger.info(`  - Readability Score: ${analysis.text_statistics.readabilityScore}`);
       }
 
       if (analysis.extracted_entities) {
-        console.log('\nExtracted Entities:');
-        console.log(`  - Organizations: ${analysis.extracted_entities.organizations?.length || 0}`);
+        logger.info('\nExtracted Entities:');
+        logger.info(`  - Organizations: ${analysis.extracted_entities.organizations?.length || 0}`);
         if (analysis.extracted_entities.organizations?.length > 0) {
-          analysis.extracted_entities.organizations.forEach(org => console.log(`    • ${org}`));
+          analysis.extracted_entities.organizations.forEach(org => logger.info(`    • ${org}`));
         }
-        console.log(`  - Drug Names: ${analysis.extracted_entities.drugNames?.length || 0}`);
+        logger.info(`  - Drug Names: ${analysis.extracted_entities.drugNames?.length || 0}`);
         if (analysis.extracted_entities.drugNames?.length > 0) {
-          analysis.extracted_entities.drugNames.forEach(drug => console.log(`    • ${drug}`));
+          analysis.extracted_entities.drugNames.forEach(drug => logger.info(`    • ${drug}`));
         }
-        console.log(`  - Study IDs: ${analysis.extracted_entities.studyIdentifiers?.length || 0}`);
+        logger.info(`  - Study IDs: ${analysis.extracted_entities.studyIdentifiers?.length || 0}`);
         if (analysis.extracted_entities.studyIdentifiers?.length > 0) {
-          analysis.extracted_entities.studyIdentifiers.forEach(id => console.log(`    • ${id}`));
+          analysis.extracted_entities.studyIdentifiers.forEach(id => logger.info(`    • ${id}`));
         }
-        console.log(`  - Dates: ${analysis.extracted_entities.dates?.length || 0}`);
+        logger.info(`  - Dates: ${analysis.extracted_entities.dates?.length || 0}`);
         if (analysis.extracted_entities.dates?.length > 0) {
-          analysis.extracted_entities.dates.forEach(date => console.log(`    • ${date}`));
+          analysis.extracted_entities.dates.forEach(date => logger.info(`    • ${date}`));
         }
       }
 
-      console.log(`\nSegment Count: ${analysis.segment_count || 0}`);
-      console.log(`Parser Used: ${analysis.parser_used}`);
+      logger.info(`\nSegment Count: ${analysis.segment_count || 0}`);
+      logger.info(`Parser Used: ${analysis.parser_used}`);
     }
 
-    console.log('\n=== CSR DATABASE RESULTS ===');
+    logger.info('\n=== CSR DATABASE RESULTS ===');
     if (data.metadata && data.metadata.csr_database_results) {
-      console.log(`Found ${data.metadata.csr_database_results.count} related CSRs`);
+      logger.info(`Found ${data.metadata.csr_database_results.count} related CSRs`);
     }
 
-    console.log('\n=== AI RESPONSE ===');
-    console.log(data.response);
+    logger.info('\n=== AI RESPONSE ===');
+    logger.info(data.response);
   } catch (error) {
-    console.error('Error:', error.message);
+    logger.error('Error:', error.message);
   }
 }
 

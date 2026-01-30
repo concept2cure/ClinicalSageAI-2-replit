@@ -1,0 +1,137 @@
+name: Test DOCX Generator
+
+on:
+  push:
+    branches: [ main, chore/logging-apply-worker, '**']
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-generator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install service requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/requirements.txt
+
+      - name: Prepare test output directory
+        run: mkdir -p services/test_outputs
+        env:
+          TEST_OUTPUT_DIR: services/test_outputs
+
+      - name: Run generator tests
+        env:
+          TEST_OUTPUT_DIR: services/test_outputs
+        run: |
+          pytest -q services/tests/test_generator.py -q
+
+      - name: Start E2E docker-compose
+        run: |
+          docker compose -f docker-compose.e2e.yml up -d --build
+
+      - name: Wait for API to be ready
+        run: |
+          # Wait for the API to respond on port 8000 (max 30s)
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8000/docs > /dev/null; then
+              echo "API ready" && break
+            fi
+            sleep 1
+          done
+
+      - name: Wait for Celery worker to respond
+        run: |
+          # More robust readiness: wait until the worker container exists and is
+          # running, then check recent worker logs for the "ready." message.
+          OK=0
+          for i in {1..90}; do
+            CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q worker || true)
+            if [ -n "$CONTAINER" ]; then
+              RUNNING=$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null || true)
+              if [ "$RUNNING" = "true" ]; then
+                # Prefer checking worker logs for a definitive "ready" message
+                if docker compose -f docker-compose.e2e.yml logs --no-color worker | tail -n 50 | grep -q "ready\."; then
+                  echo "Worker responsive" && OK=1 && break
+                fi
+              fi
+            fi
+            sleep 1
+          done
+          if [ "$OK" -ne 1 ]; then
+            echo "Worker did not respond in time; dumping compose ps and worker logs:" >&2
+            docker compose -f docker-compose.e2e.yml ps || true
+            docker compose -f docker-compose.e2e.yml logs worker || true
+            exit 1
+          fi
+
+      - name: Debug: query Celery worker state
+        if: always()
+        run: |
+          set -e
+          echo "== docker compose ps =="
+          docker compose -f docker-compose.e2e.yml ps || true
+
+          echo "== Worker CELERY_* env variables inside container =="
+          # Use -T to avoid allocating a tty; allow command to fail without failing the job
+          docker compose -f docker-compose.e2e.yml exec -T worker env | grep -E '^CELERY_(BROKER_URL|RESULT_BACKEND)=' || true
+
+          echo "== Celery inspect (active reserved registered) =="
+          # Also capture the inspect output to a file so it will be uploaded as an artifact
+          mkdir -p services/test_outputs/ci-debug
+          docker compose -f docker-compose.e2e.yml exec -T worker celery -A services.celery_app inspect active reserved registered 2>&1 | tee services/test_outputs/ci-debug/celery_inspect.txt || true
+
+          echo "== Tail of worker logs =="
+          docker compose -f docker-compose.e2e.yml logs --no-color --tail=200 worker 2>&1 | tee -a services/test_outputs/ci-debug/worker_logs_tail.txt || true
+
+          echo "== Docker logs for worker container (if available) =="
+          CONTAINER=$(docker compose -f docker-compose.e2e.yml ps -q worker || true)
+          if [ -n "$CONTAINER" ]; then
+            docker logs "$CONTAINER" 2>&1 | tee -a services/test_outputs/ci-debug/worker_docker_logs.txt || true
+          fi
+
+          echo "== Environment saved to artifact =="
+          docker compose -f docker-compose.e2e.yml exec -T worker env 2>&1 | tee services/test_outputs/ci-debug/worker_env.txt || true
+
+      - name: Run E2E async test
+        env:
+          TEST_OUTPUT_DIR: services/test_outputs
+        run: |
+          pytest -q services/tests/test_e2e_async.py -q
+
+      - name: Upload generated DOCX artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-docx
+          path: services/test_outputs/**
+
+      - name: Show collected debug files
+        if: always()
+        run: |
+          echo "== list debug dir =="
+          ls -la services/test_outputs/ci-debug || true
+          echo "== show first 200 lines of celery inspect if exists =="
+          [ -f services/test_outputs/ci-debug/celery_inspect.txt ] && (echo "--- celery_inspect.txt ---" && head -n 200 services/test_outputs/ci-debug/celery_inspect.txt) || true
+          echo "== show first 200 lines of worker_logs_tail.txt if exists =="
+          [ -f services/test_outputs/ci-debug/worker_logs_tail.txt ] && (echo "--- worker_logs_tail.txt ---" && head -n 200 services/test_outputs/ci-debug/worker_logs_tail.txt) || true
+
+      - name: Upload debug logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: services/test_outputs/ci-debug/**
+
+      - name: Tear down E2E docker-compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.e2e.yml down

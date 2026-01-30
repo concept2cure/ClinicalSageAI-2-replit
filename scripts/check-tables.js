@@ -18,7 +18,7 @@ const pool = new Pool({
 async function checkTables() {
   const client = await pool.connect();
   try {
-    console.log('Connected to database. Checking tables...\n');
+    logger.info('Connected to database. Checking tables...\n');
 
     // Get a list of all tables in the public schema
     const tablesResult = await client.query(`
@@ -39,58 +39,58 @@ async function checkTables() {
       ORDER BY t.typname
     `);
 
-    console.log('Tables found in database:');
-    console.log('========================');
+    logger.info('Tables found in database:');
+    logger.info('========================');
 
     if (tablesResult.rows.length === 0) {
-      console.log('No tables found!');
+      logger.info('No tables found!');
     } else {
       tablesResult.rows.forEach((row, i) => {
-        console.log(`${i + 1}. ${row.table_name}`);
+        logger.info(`${i + 1}. ${row.table_name}`);
       });
-      console.log(`\nTotal tables: ${tablesResult.rows.length}`);
+      logger.info(`\nTotal tables: ${tablesResult.rows.length}`);
     }
 
-    console.log('\nEnum types found in database:');
-    console.log('===========================');
+    logger.info('\nEnum types found in database:');
+    logger.info('===========================');
 
     if (enumsResult.rows.length === 0) {
-      console.log('No enum types found!');
+      logger.info('No enum types found!');
     } else {
       enumsResult.rows.forEach((row, i) => {
-        console.log(`${i + 1}. ${row.enum_name}`);
+        logger.info(`${i + 1}. ${row.enum_name}`);
       });
-      console.log(`\nTotal enum types: ${enumsResult.rows.length}`);
+      logger.info(`\nTotal enum types: ${enumsResult.rows.length}`);
     }
 
     // Check for specific required tables
     const requiredTables = ['users', 'csr_reports', 'protocols', 'projects'];
 
-    console.log('\nVerifying required tables:');
-    console.log('=========================');
+    logger.info('\nVerifying required tables:');
+    logger.info('=========================');
 
     const missingTables = [];
 
     for (const table of requiredTables) {
       const found = tablesResult.rows.some(row => row.table_name === table);
       if (found) {
-        console.log(`✓ ${table} - Found`);
+        logger.info(`✓ ${table} - Found`);
       } else {
-        console.log(`✗ ${table} - MISSING`);
+        logger.info(`✗ ${table} - MISSING`);
         missingTables.push(table);
       }
     }
 
     if (missingTables.length > 0) {
-      console.log('\n⚠️  WARNING: Some required tables are missing!');
-      console.log(`Missing tables: ${missingTables.join(', ')}`);
+      logger.info('\n⚠️  WARNING: Some required tables are missing!');
+      logger.info(`Missing tables: ${missingTables.join(', ')}`);
       return false;
     } else {
-      console.log('\n✓ All required tables are present!');
+      logger.info('\n✓ All required tables are present!');
       return true;
     }
   } catch (error) {
-    console.error('Error checking database tables:', error);
+    logger.error('Error checking database tables:', error);
     return false;
   } finally {
     client.release();
@@ -105,6 +105,6 @@ checkTables()
     }
   })
   .catch(error => {
-    console.error('Unexpected error:', error);
+    logger.error('Unexpected error:', error);
     process.exit(1);
   });

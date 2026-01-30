@@ -5,8 +5,8 @@ const { spawn } = require('child_process');
 const optimizations = require('./optimize-performance.js');
 
 async function startOptimized() {
-  console.log('🚀 TrialSage Optimized Startup');
-  console.log('==============================\n');
+  logger.info('🚀 TrialSage Optimized Startup');
+  logger.info('==============================\n');
   
   // Run pre-flight optimizations
   await optimizations.runOptimizations();
@@ -14,7 +14,7 @@ async function startOptimized() {
   // Set optimized Node.js flags
   const nodeFlags = optimizations.getOptimizedFlags();
   
-  console.log('\n🎯 Starting server with optimizations...');
+  logger.info('\n🎯 Starting server with optimizations...');
   
   // Start the server with optimized settings
   const serverProcess = spawn('tsx', ['server/index.ts'], {
@@ -26,13 +26,13 @@ async function startOptimized() {
   });
   
   serverProcess.on('exit', (code) => {
-    console.log(`\n📊 Server exited with code: ${code}`);
+    logger.info(`\n📊 Server exited with code: ${code}`);
     process.exit(code);
   });
   
   // Handle graceful shutdown
   process.on('SIGINT', () => {
-    console.log('\n🛑 Shutting down gracefully...');
+    logger.info('\n🛑 Shutting down gracefully...');
     serverProcess.kill('SIGINT');
   });
 }

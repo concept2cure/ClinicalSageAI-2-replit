@@ -638,8 +638,8 @@ const outputPath = process.argv[2] || './Concept2Cure_Enterprise_SignOn_Specific
 
 Packer.toBuffer(doc).then(buffer => {
   fs.writeFileSync(outputPath, buffer);
-  console.log(`✅ Document created: ${outputPath}`);
+  logger.info(`✅ Document created: ${outputPath}`);
 }).catch(err => {
-  console.error('❌ Error creating document:', err);
+  logger.error('❌ Error creating document:', err);
   process.exit(1);
 });

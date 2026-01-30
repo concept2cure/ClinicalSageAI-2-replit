@@ -41,7 +41,7 @@ function getDownloadLog() {
 function saveDownloadLog(data) {
   data.lastRunTime = new Date().toISOString();
   fs.writeFileSync(DOWNLOAD_LOG, JSON.stringify(data, null, 2));
-  console.log(`Download progress saved. Total downloaded: ${data.totalDownloaded}`);
+  logger.info(`Download progress saved. Total downloaded: ${data.totalDownloaded}`);
 }
 
 // Check if an NCT ID already exists in the database
@@ -58,7 +58,7 @@ async function checkTrialExists(nctId) {
 
     return parseInt(result.rows[0].count) > 0;
   } catch (error) {
-    console.error('Error checking if trial exists:', error);
+    logger.error('Error checking if trial exists:', error);
     return true; // Assume it exists to avoid duplicate downloads
   }
 }
@@ -71,12 +71,12 @@ function downloadTrialXML(nctId) {
 
     // Check if file already exists
     if (fs.existsSync(outputPath)) {
-      console.log(`File ${nctId}.xml already exists, skipping.`);
+      logger.info(`File ${nctId}.xml already exists, skipping.`);
       resolve(false);
       return;
     }
 
-    console.log(`Downloading ${nctId} from ${url}`);
+    logger.info(`Downloading ${nctId} from ${url}`);
 
     const file = fs.createWriteStream(outputPath);
 
@@ -85,7 +85,7 @@ function downloadTrialXML(nctId) {
         // Handle HTTP redirects
         if (response.statusCode === 301 || response.statusCode === 302) {
           const location = response.headers.location;
-          console.log(`Redirected to ${location}`);
+          logger.info(`Redirected to ${location}`);
           file.close();
           fs.unlinkSync(outputPath); // Remove the incomplete file
 
@@ -95,7 +95,7 @@ function downloadTrialXML(nctId) {
             redirectUrl = `https://clinicaltrials.gov${location}`;
           }
 
-          console.log(`Following redirect to ${redirectUrl}`);
+          logger.info(`Following redirect to ${redirectUrl}`);
 
           https
             .get(redirectUrl, finalResponse => {
@@ -103,13 +103,13 @@ function downloadTrialXML(nctId) {
 
               file.on('finish', () => {
                 file.close();
-                console.log(`Downloaded ${nctId}.xml`);
+                logger.info(`Downloaded ${nctId}.xml`);
                 resolve(true);
               });
             })
             .on('error', err => {
               fs.unlinkSync(outputPath); // Remove the incomplete file
-              console.error(`Error downloading ${nctId}: ${err.message}`);
+              logger.error(`Error downloading ${nctId}: ${err.message}`);
               reject(err);
             });
 
@@ -128,12 +128,12 @@ function downloadTrialXML(nctId) {
 
         file.on('finish', () => {
           file.close();
-          console.log(`Downloaded ${nctId}.xml`);
+          logger.info(`Downloaded ${nctId}.xml`);
 
           // Check if file is valid XML (contains trial data)
           const content = fs.readFileSync(outputPath, 'utf8');
           if (!content.includes('<full_studies>') && !content.includes('<clinical_study>')) {
-            console.warn(`${nctId}.xml does not contain valid trial data, removing file.`);
+            logger.warn(`${nctId}.xml does not contain valid trial data, removing file.`);
             fs.unlinkSync(outputPath);
             resolve(false);
             return;
@@ -145,7 +145,7 @@ function downloadTrialXML(nctId) {
       .on('error', err => {
         file.close();
         fs.unlinkSync(outputPath); // Remove the incomplete file
-        console.error(`Error downloading ${nctId}: ${err.message}`);
+        logger.error(`Error downloading ${nctId}: ${err.message}`);
         reject(err);
       });
   });
@@ -236,8 +236,8 @@ async function downloadTrialBatch() {
 
     // Load download log
     const downloadLog = getDownloadLog();
-    console.log(`Starting download from ID: ${downloadLog.lastNCTID}`);
-    console.log(`Previously downloaded: ${downloadLog.totalDownloaded} files`);
+    logger.info(`Starting download from ID: ${downloadLog.lastNCTID}`);
+    logger.info(`Previously downloaded: ${downloadLog.totalDownloaded} files`);
 
     // Generate IDs to try
     const idsToTry = generateNCTIDs(downloadLog.lastNCTID, NUM_TO_DOWNLOAD);
@@ -250,7 +250,7 @@ async function downloadTrialBatch() {
       const exists = await checkTrialExists(nctId);
 
       if (exists) {
-        console.log(`Trial ${nctId} already exists in database, skipping.`);
+        logger.info(`Trial ${nctId} already exists in database, skipping.`);
         continue;
       }
 
@@ -271,7 +271,7 @@ async function downloadTrialBatch() {
           break;
         }
       } catch (error) {
-        console.error(`Error downloading ${nctId}:`, error);
+        logger.error(`Error downloading ${nctId}:`, error);
         continue;
       }
     }
@@ -281,8 +281,8 @@ async function downloadTrialBatch() {
     downloadLog.totalDownloaded += successCount;
     saveDownloadLog(downloadLog);
 
-    console.log(`Downloaded ${successCount} new XML files.`);
-    console.log(`Total downloaded so far: ${downloadLog.totalDownloaded}`);
+    logger.info(`Downloaded ${successCount} new XML files.`);
+    logger.info(`Total downloaded so far: ${downloadLog.totalDownloaded}`);
 
     return {
       success: successCount > 0,
@@ -298,14 +298,14 @@ async function downloadTrialBatch() {
 downloadTrialBatch()
   .then(result => {
     if (result.success) {
-      console.log('Download completed successfully.');
+      logger.info('Download completed successfully.');
       process.exit(0);
     } else {
-      console.error('No new trials downloaded.');
+      logger.error('No new trials downloaded.');
       process.exit(1);
     }
   })
   .catch(error => {
-    console.error('Error during download process:', error);
+    logger.error('Error during download process:', error);
     process.exit(1);
   });

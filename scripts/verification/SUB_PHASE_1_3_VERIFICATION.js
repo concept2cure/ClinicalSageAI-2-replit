@@ -8,75 +8,75 @@
 import { DocumentSpecificAIService } from './server/services/DocumentSpecificAIService.js';
 
 async function verifySubPhase13Implementation() {
-  console.log(
+  logger.info(
     '🔍 SUB-PHASE 1.3 VERIFICATION: Document Type-Specific AI Models & Automated Categorization'
   );
-  console.log('='.repeat(80));
+  logger.info('='.repeat(80));
 
   const aiService = new DocumentSpecificAIService();
 
   // Test 1: Verify enhanced AI model configurations
-  console.log('\n📊 TEST 1: Enhanced AI Model Configurations');
-  console.log('-'.repeat(50));
+  logger.info('\n📊 TEST 1: Enhanced AI Model Configurations');
+  logger.info('-'.repeat(50));
 
   const submissionTypes = ['IND', 'NDA', 'BLA', 'CSR'];
 
   submissionTypes.forEach(type => {
     const config = aiService.modelConfigurations[type];
-    console.log(`${type} Model Configuration:`);
-    console.log(`  - Model Version: ${config.modelVersion}`);
-    console.log(`  - Temperature: ${config.temperatureOptimal}`);
-    console.log(`  - Max Tokens: ${config.maxTokens}`);
-    console.log(`  - Focus Keywords: ${config.focusKeywords.join(', ')}`);
-    console.log(`  - Extraction Patterns: ${config.extractionPatterns.join(', ')}`);
-    console.log('');
+    logger.info(`${type} Model Configuration:`);
+    logger.info(`  - Model Version: ${config.modelVersion}`);
+    logger.info(`  - Temperature: ${config.temperatureOptimal}`);
+    logger.info(`  - Max Tokens: ${config.maxTokens}`);
+    logger.info(`  - Focus Keywords: ${config.focusKeywords.join(', ')}`);
+    logger.info(`  - Extraction Patterns: ${config.extractionPatterns.join(', ')}`);
+    logger.info('');
   });
 
   // Test 2: Verify regulatory taxonomy
-  console.log('\n📚 TEST 2: Regulatory Taxonomy Structure');
-  console.log('-'.repeat(50));
+  logger.info('\n📚 TEST 2: Regulatory Taxonomy Structure');
+  logger.info('-'.repeat(50));
 
-  console.log('Primary Categories:', aiService.regulatoryTaxonomy.primary.join(', '));
-  console.log('\nSecondary Categories:');
+  logger.info('Primary Categories:', aiService.regulatoryTaxonomy.primary.join(', '));
+  logger.info('\nSecondary Categories:');
   Object.entries(aiService.regulatoryTaxonomy.secondary).forEach(([primary, secondary]) => {
-    console.log(`  ${primary}: ${secondary.join(', ')}`);
+    logger.info(`  ${primary}: ${secondary.join(', ')}`);
   });
 
   // Test 3: Verify document-specific prompt generation
-  console.log('\n🤖 TEST 3: Document-Specific Prompt Generation');
-  console.log('-'.repeat(50));
+  logger.info('\n🤖 TEST 3: Document-Specific Prompt Generation');
+  logger.info('-'.repeat(50));
 
   const testSubmissionType = 'IND';
   const testPhase = 'Phase 1';
   const prompt = aiService.getDocumentSpecificPrompt(testSubmissionType, testPhase);
 
-  console.log(`Generated prompt for ${testSubmissionType} (${testPhase}):`);
-  console.log(`Length: ${prompt.length} characters`);
-  console.log('Contains enhanced features:');
-  console.log(`  - AI Model Configuration: ${prompt.includes('AI MODEL CONFIGURATION')} ✓`);
-  console.log(
+  logger.info(`Generated prompt for ${testSubmissionType} (${testPhase}):`);
+  logger.info(`Length: ${prompt.length} characters`);
+  logger.info('Contains enhanced features:');
+  logger.info(`  - AI Model Configuration: ${prompt.includes('AI MODEL CONFIGURATION')} ✓`);
+  logger.info(
     `  - Automated Categorization: ${prompt.includes('SUB-PHASE 1.3 AUTOMATED CATEGORIZATION')} ✓`
   );
-  console.log(`  - Enhanced Structure: ${prompt.includes('ENHANCED COMMITMENT STRUCTURE')} ✓`);
-  console.log(`  - NLP Patterns: ${prompt.includes('nlpPatterns')} ✓`);
-  console.log(`  - Compliance Score: ${prompt.includes('complianceScore')} ✓`);
+  logger.info(`  - Enhanced Structure: ${prompt.includes('ENHANCED COMMITMENT STRUCTURE')} ✓`);
+  logger.info(`  - NLP Patterns: ${prompt.includes('nlpPatterns')} ✓`);
+  logger.info(`  - Compliance Score: ${prompt.includes('complianceScore')} ✓`);
 
   // Test 4: Verify categorization validation
-  console.log('\n✅ TEST 4: Categorization Validation');
-  console.log('-'.repeat(50));
+  logger.info('\n✅ TEST 4: Categorization Validation');
+  logger.info('-'.repeat(50));
 
   const testCategories = ['Safety', 'InvalidCategory', 'Manufacturing', 'Quality'];
 
   testCategories.forEach(category => {
     const validated = aiService.validateAndEnhanceCategory(category, 'IND');
-    console.log(
+    logger.info(
       `Category "${category}" → "${validated}" ${category === validated ? '✓' : '(fallback applied)'}`
     );
   });
 
   // Test 5: Verify compliance scoring
-  console.log('\n📊 TEST 5: Compliance Scoring Algorithm');
-  console.log('-'.repeat(50));
+  logger.info('\n📊 TEST 5: Compliance Scoring Algorithm');
+  logger.info('-'.repeat(50));
 
   const testCommitment = {
     description: 'Submit safety reports within 15 days of adverse events',
@@ -88,59 +88,59 @@ async function verifySubPhase13Implementation() {
   };
 
   const complianceScore = aiService.calculateComplianceScore(testCommitment, 'IND');
-  console.log(`Test commitment compliance score: ${complianceScore}/100`);
-  console.log('Score breakdown:');
-  console.log(`  - Base score: 50`);
-  console.log(
+  logger.info(`Test commitment compliance score: ${complianceScore}/100`);
+  logger.info('Score breakdown:');
+  logger.info(`  - Base score: 50`);
+  logger.info(
     `  - Confidence (${testCommitment.confidence}): +${Math.round(testCommitment.confidence * 30)}`
   );
-  console.log(`  - Priority (${testCommitment.priority}): +20`);
-  console.log(`  - Risk Level (${testCommitment.riskLevel}): +15`);
-  console.log(`  - Document Type Bonus: +15`);
-  console.log(`  - NLP Patterns (${testCommitment.nlpPatterns.length}): +6`);
+  logger.info(`  - Priority (${testCommitment.priority}): +20`);
+  logger.info(`  - Risk Level (${testCommitment.riskLevel}): +15`);
+  logger.info(`  - Document Type Bonus: +15`);
+  logger.info(`  - NLP Patterns (${testCommitment.nlpPatterns.length}): +6`);
 
   // Test 6: Verify NLP pattern validation
-  console.log('\n🔍 TEST 6: NLP Pattern Validation');
-  console.log('-'.repeat(50));
+  logger.info('\n🔍 TEST 6: NLP Pattern Validation');
+  logger.info('-'.repeat(50));
 
   const testPatterns = ['shall comply', 'must submit', 'will provide', 'invalid pattern'];
   const modelConfig = aiService.modelConfigurations.IND;
   const validatedPatterns = aiService.validateNLPPatterns(testPatterns, modelConfig);
 
-  console.log('Pattern validation results:');
+  logger.info('Pattern validation results:');
   testPatterns.forEach(pattern => {
     const isValid = validatedPatterns.some(vp => vp.includes(pattern));
-    console.log(`  "${pattern}": ${isValid ? '✓ Valid' : '✗ Invalid'}`);
+    logger.info(`  "${pattern}": ${isValid ? '✓ Valid' : '✗ Invalid'}`);
   });
 
   // Test 7: Verify document-specific categories
-  console.log('\n📋 TEST 7: Document-Specific Categories');
-  console.log('-'.repeat(50));
+  logger.info('\n📋 TEST 7: Document-Specific Categories');
+  logger.info('-'.repeat(50));
 
   submissionTypes.forEach(type => {
     const categories = aiService.getDocumentSpecificCategories(type);
-    console.log(`${type} Categories:`);
-    console.log(`  Length: ${categories.length} characters`);
-    console.log(`  Contains ${type}-specific terms: ✓`);
+    logger.info(`${type} Categories:`);
+    logger.info(`  Length: ${categories.length} characters`);
+    logger.info(`  Contains ${type}-specific terms: ✓`);
   });
 
   // Summary
-  console.log('\n' + '='.repeat(80));
-  console.log('🎯 SUB-PHASE 1.3 VERIFICATION SUMMARY');
-  console.log('='.repeat(80));
-  console.log('✅ Enhanced AI model configurations implemented');
-  console.log('✅ Regulatory taxonomy structure established');
-  console.log('✅ Document-specific prompt generation enhanced');
-  console.log('✅ Automated categorization validation working');
-  console.log('✅ Compliance scoring algorithm operational');
-  console.log('✅ NLP pattern validation functional');
-  console.log('✅ Document-specific categories configured');
+  logger.info('\n' + '='.repeat(80));
+  logger.info('🎯 SUB-PHASE 1.3 VERIFICATION SUMMARY');
+  logger.info('='.repeat(80));
+  logger.info('✅ Enhanced AI model configurations implemented');
+  logger.info('✅ Regulatory taxonomy structure established');
+  logger.info('✅ Document-specific prompt generation enhanced');
+  logger.info('✅ Automated categorization validation working');
+  logger.info('✅ Compliance scoring algorithm operational');
+  logger.info('✅ NLP pattern validation functional');
+  logger.info('✅ Document-specific categories configured');
 
-  console.log('\n📈 READY FOR PRODUCTION TESTING:');
-  console.log('  - Text input with document type selection');
-  console.log('  - Automated commitment categorization');
-  console.log('  - Enhanced compliance scoring');
-  console.log('  - Document-specific AI model deployment');
+  logger.info('\n📈 READY FOR PRODUCTION TESTING:');
+  logger.info('  - Text input with document type selection');
+  logger.info('  - Automated commitment categorization');
+  logger.info('  - Enhanced compliance scoring');
+  logger.info('  - Document-specific AI model deployment');
 
   return true;
 }
@@ -149,11 +149,11 @@ async function verifySubPhase13Implementation() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   verifySubPhase13Implementation()
     .then(() => {
-      console.log('\n✅ SUB-PHASE 1.3 VERIFICATION COMPLETE');
+      logger.info('\n✅ SUB-PHASE 1.3 VERIFICATION COMPLETE');
       process.exit(0);
     })
     .catch(error => {
-      console.error('\n❌ SUB-PHASE 1.3 VERIFICATION FAILED:', error);
+      logger.error('\n❌ SUB-PHASE 1.3 VERIFICATION FAILED:', error);
       process.exit(1);
     });
 }

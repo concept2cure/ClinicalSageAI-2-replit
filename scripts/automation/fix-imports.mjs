@@ -17,7 +17,7 @@ if (originalResolve) {
   import.meta.resolve = function (specifier, parent) {
     // Check if the requested module is in the banned list
     if (BANNED_MODULES.some(banned => specifier.includes(banned))) {
-      console.warn(`⚠️ Blocked ESM import of problematic module: ${specifier}`);
+      logger.warn(`⚠️ Blocked ESM import of problematic module: ${specifier}`);
       // Return a safe path instead
       return import.meta.url;
     }
@@ -32,8 +32,8 @@ export const createSafeMock = () => ({
   __BLOCKED__: true,
   __REASON__: REPLACEMENT_MESSAGE,
   // Add mock toast functions that safely do nothing
-  toast: (...args) => console.log('[Toast Blocked]:', ...args),
+  toast: (...args) => logger.info('[Toast Blocked]:', ...args),
   ToastContainer: () => null,
 });
 
-console.log('✅ ESM Import guard activated - application protected from problematic dependencies.');
+logger.info('✅ ESM Import guard activated - application protected from problematic dependencies.');

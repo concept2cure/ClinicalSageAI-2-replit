@@ -40,7 +40,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data
@@ -58,7 +58,7 @@ function getTrackingData() {
  */
 function saveTrackingData(data) {
   fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
-  console.log('Tracking data saved.');
+  logger.info('Tracking data saved.');
 }
 
 /**
@@ -70,7 +70,7 @@ function getBatchLog() {
       return JSON.parse(fs.readFileSync(BATCH_LOG_FILE, 'utf8'));
     }
   } catch (error) {
-    console.error('Error reading batch log file:', error.message);
+    logger.error('Error reading batch log file:', error.message);
   }
 
   return {
@@ -160,7 +160,7 @@ async function getTotalAvailableTrials() {
     const response = await axios.get(HC_SEARCH_ENDPOINT, axiosConfig);
     return response.data.totalElements || 0;
   } catch (error) {
-    console.error('Error getting total available trials:', error.message);
+    logger.error('Error getting total available trials:', error.message);
     return 0;
   }
 }
@@ -169,7 +169,7 @@ async function getTotalAvailableTrials() {
  * Run a single batch import at the specified index
  */
 async function runSingleBatch(batchIndex) {
-  console.log(`\n=== Running single batch at index ${batchIndex} ===`);
+  logger.info(`\n=== Running single batch at index ${batchIndex} ===`);
 
   try {
     // Run the import process
@@ -217,7 +217,7 @@ async function runSingleBatch(batchIndex) {
  * Run multiple batches sequentially
  */
 async function runMultipleBatches(startIndex, count) {
-  console.log(`\n=== Running ${count} batches starting at index ${startIndex} ===`);
+  logger.info(`\n=== Running ${count} batches starting at index ${startIndex} ===`);
 
   const results = [];
   let successfulBatches = 0;
@@ -228,7 +228,7 @@ async function runMultipleBatches(startIndex, count) {
 
   for (let i = 0; i < count; i++) {
     const currentBatchIndex = startIndex + i;
-    console.log(`\n--- Starting batch ${i + 1}/${count} (index: ${currentBatchIndex}) ---`);
+    logger.info(`\n--- Starting batch ${i + 1}/${count} (index: ${currentBatchIndex}) ---`);
 
     try {
       const result = await runSingleBatch(currentBatchIndex);
@@ -245,7 +245,7 @@ async function runMultipleBatches(startIndex, count) {
         saveTrackingData(trackingData);
       }
     } catch (error) {
-      console.error(`Error running batch ${currentBatchIndex}:`, error);
+      logger.error(`Error running batch ${currentBatchIndex}:`, error);
       logBatch(currentBatchIndex, false, 0, error);
       results.push({
         success: false,
@@ -257,20 +257,20 @@ async function runMultipleBatches(startIndex, count) {
 
     // Get current count and check if we've reached the target
     const currentCount = await getHealthCanadaCount();
-    console.log(
+    logger.info(
       `\nCurrent progress: ${currentCount}/${TARGET_COUNT} trials (${Math.round((currentCount / TARGET_COUNT) * 100)}%)`
     );
 
     if (currentCount >= TARGET_COUNT) {
-      console.log(`\n=== Target Reached! ===`);
+      logger.info(`\n=== Target Reached! ===`);
       break;
     }
   }
 
-  console.log(`\n=== Batch Run Summary ===`);
-  console.log(`Batches attempted: ${count}`);
-  console.log(`Successful batches: ${successfulBatches}`);
-  console.log(`Total trials imported: ${totalImported}`);
+  logger.info(`\n=== Batch Run Summary ===`);
+  logger.info(`Batches attempted: ${count}`);
+  logger.info(`Successful batches: ${successfulBatches}`);
+  logger.info(`Total trials imported: ${totalImported}`);
 
   return {
     batchesAttempted: count,
@@ -284,8 +284,8 @@ async function runMultipleBatches(startIndex, count) {
  * Run until target count is reached
  */
 async function runUntilTarget() {
-  console.log('=== Health Canada Trial Manager ===');
-  console.log('Starting timestamp:', new Date().toISOString());
+  logger.info('=== Health Canada Trial Manager ===');
+  logger.info('Starting timestamp:', new Date().toISOString());
 
   try {
     // Get current count and tracking data
@@ -293,19 +293,19 @@ async function runUntilTarget() {
     const trackingData = getTrackingData();
     const totalAvailable = await getTotalAvailableTrials();
 
-    console.log(`Current status:`);
-    console.log(`- Health Canada trials in database: ${currentCount}`);
-    console.log(`- Total available from API: ${totalAvailable}`);
-    console.log(`- Target count: ${TARGET_COUNT}`);
-    console.log(`- Progress: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
-    console.log(`- Last batch index: ${trackingData.lastBatchIndex}`);
-    console.log(`- Batches completed: ${trackingData.batchesCompleted}`);
+    logger.info(`Current status:`);
+    logger.info(`- Health Canada trials in database: ${currentCount}`);
+    logger.info(`- Total available from API: ${totalAvailable}`);
+    logger.info(`- Target count: ${TARGET_COUNT}`);
+    logger.info(`- Progress: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
+    logger.info(`- Last batch index: ${trackingData.lastBatchIndex}`);
+    logger.info(`- Batches completed: ${trackingData.batchesCompleted}`);
 
     // Check if we've already reached the target
     if (currentCount >= TARGET_COUNT) {
-      console.log(`\n=== Target Already Reached! ===`);
-      console.log(`Target of ${TARGET_COUNT} Health Canada trials has been reached.`);
-      console.log(`Current count: ${currentCount} trials`);
+      logger.info(`\n=== Target Already Reached! ===`);
+      logger.info(`Target of ${TARGET_COUNT} Health Canada trials has been reached.`);
+      logger.info(`Current count: ${currentCount} trials`);
       await pool.end();
       return;
     }
@@ -315,42 +315,42 @@ async function runUntilTarget() {
     const estimatedBatchesNeeded = Math.ceil(remaining / BATCH_SIZE);
     const batchesToRun = Math.min(estimatedBatchesNeeded, MAX_BATCHES_PER_RUN);
 
-    console.log(
+    logger.info(
       `\nPlanning to run ${batchesToRun} batches to import approximately ${batchesToRun * BATCH_SIZE} trials`
     );
-    console.log(`Starting from batch index ${trackingData.lastBatchIndex + 1}`);
+    logger.info(`Starting from batch index ${trackingData.lastBatchIndex + 1}`);
 
     // Run the batches
     await runMultipleBatches(trackingData.lastBatchIndex + 1, batchesToRun);
 
     // Get final count
     const finalCount = await getHealthCanadaCount();
-    console.log(`\n=== Final Status ===`);
-    console.log(`Health Canada trials in database: ${finalCount}`);
-    console.log(`Target: ${TARGET_COUNT}`);
-    console.log(`Progress: ${Math.round((finalCount / TARGET_COUNT) * 100)}%`);
+    logger.info(`\n=== Final Status ===`);
+    logger.info(`Health Canada trials in database: ${finalCount}`);
+    logger.info(`Target: ${TARGET_COUNT}`);
+    logger.info(`Progress: ${Math.round((finalCount / TARGET_COUNT) * 100)}%`);
 
     if (finalCount >= TARGET_COUNT) {
-      console.log(`\n=== Target Reached! ===`);
+      logger.info(`\n=== Target Reached! ===`);
     } else {
-      console.log(`\n=== Progress Made ===`);
-      console.log(`Imported ${finalCount - currentCount} new trials in this run.`);
-      console.log(`Run the script again to continue importing.`);
+      logger.info(`\n=== Progress Made ===`);
+      logger.info(`Imported ${finalCount - currentCount} new trials in this run.`);
+      logger.info(`Run the script again to continue importing.`);
     }
   } catch (error) {
-    console.error('Error during trial import:', error);
+    logger.error('Error during trial import:', error);
   } finally {
     await pool.end();
   }
 
-  console.log('Process completed at:', new Date().toISOString());
+  logger.info('Process completed at:', new Date().toISOString());
 }
 
 /**
  * Display help
  */
 function showHelp() {
-  console.log(`
+  logger.info(`
 Health Canada Trial Manager
 ---------------------------
 Commands:
@@ -374,25 +374,25 @@ async function showStatus() {
     const totalAvailable = await getTotalAvailableTrials();
     const batchLog = getBatchLog();
 
-    console.log('=== Health Canada Import Status ===');
-    console.log(`Health Canada trials in database: ${currentCount}`);
-    console.log(`Total available from API: ${totalAvailable}`);
-    console.log(`Target count: ${TARGET_COUNT}`);
-    console.log(`Progress: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
-    console.log(`Last batch index: ${trackingData.lastBatchIndex}`);
-    console.log(`Batches completed: ${trackingData.batchesCompleted}`);
-    console.log(
+    logger.info('=== Health Canada Import Status ===');
+    logger.info(`Health Canada trials in database: ${currentCount}`);
+    logger.info(`Total available from API: ${totalAvailable}`);
+    logger.info(`Target count: ${TARGET_COUNT}`);
+    logger.info(`Progress: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
+    logger.info(`Last batch index: ${trackingData.lastBatchIndex}`);
+    logger.info(`Batches completed: ${trackingData.batchesCompleted}`);
+    logger.info(
       `Estimated batches remaining: ${Math.ceil((TARGET_COUNT - currentCount) / BATCH_SIZE)}`
     );
 
     if (batchLog.lastRunTimestamp) {
-      console.log(`Last import run: ${batchLog.lastRunTimestamp}`);
-      console.log(`Total logged imports: ${batchLog.totalTrialsImported}`);
-      console.log(`Total batches logged: ${batchLog.batches.length}`);
-      console.log(`Error count: ${batchLog.errors.length}`);
+      logger.info(`Last import run: ${batchLog.lastRunTimestamp}`);
+      logger.info(`Total logged imports: ${batchLog.totalTrialsImported}`);
+      logger.info(`Total batches logged: ${batchLog.batches.length}`);
+      logger.info(`Error count: ${batchLog.errors.length}`);
     }
   } catch (error) {
-    console.error('Error showing status:', error);
+    logger.error('Error showing status:', error);
   } finally {
     await pool.end();
   }
@@ -402,8 +402,8 @@ async function showStatus() {
  * Reset tracking data
  */
 function resetTracking() {
-  console.log('WARNING: This will reset all tracking data. Import will start from the beginning.');
-  console.log('Creating backup of current tracking data...');
+  logger.info('WARNING: This will reset all tracking data. Import will start from the beginning.');
+  logger.info('Creating backup of current tracking data...');
 
   // Backup current files
   if (fs.existsSync(TRACKING_FILE)) {
@@ -435,7 +435,7 @@ function resetTracking() {
 
   saveBatchLog(defaultBatchLog);
 
-  console.log('Tracking data has been reset. Import will start from the beginning.');
+  logger.info('Tracking data has been reset. Import will start from the beginning.');
 }
 
 /**
@@ -469,7 +469,7 @@ async function main() {
     const batchIndex = parseInt(indexArg, 10);
 
     if (isNaN(batchIndex)) {
-      console.error('Error: --batch requires a valid index number');
+      logger.error('Error: --batch requires a valid index number');
       return;
     }
 
@@ -483,7 +483,7 @@ async function main() {
     const batchCount = parseInt(countArg, 10);
 
     if (isNaN(batchCount) || batchCount <= 0) {
-      console.error('Error: --multi requires a positive number of batches');
+      logger.error('Error: --multi requires a positive number of batches');
       return;
     }
 
@@ -493,11 +493,11 @@ async function main() {
     return;
   }
 
-  console.log('Unknown command. Use --help to see available commands.');
+  logger.info('Unknown command. Use --help to see available commands.');
 }
 
 // Run the main function
 main().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

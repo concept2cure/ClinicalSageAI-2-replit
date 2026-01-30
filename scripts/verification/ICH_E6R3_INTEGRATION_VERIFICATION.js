@@ -6,8 +6,8 @@
  * framework understanding and data-driven analytical justification.
  */
 
-console.log('🎯 ICH E6(R3) INTEGRATION VERIFICATION');
-console.log('=====================================');
+logger.info('🎯 ICH E6(R3) INTEGRATION VERIFICATION');
+logger.info('=====================================');
 
 // ICH E6(R3) Core Framework Understanding
 const ichE6R3Framework = {
@@ -132,8 +132,8 @@ const riskBasedMonitoringFramework = {
 
 // Cost Analysis Methodology with ICH E6(R3) Justification
 function demonstrateICHCostJustification() {
-  console.log('\n💰 ICH E6(R3) COST ANALYSIS METHODOLOGY');
-  console.log('========================================');
+  logger.info('\n💰 ICH E6(R3) COST ANALYSIS METHODOLOGY');
+  logger.info('========================================');
 
   const ichCostModel = {
     implementation_costs: {
@@ -186,24 +186,24 @@ function demonstrateICHCostJustification() {
     },
   };
 
-  console.log(
+  logger.info(
     '✅ ICH E6(R3) Implementation Cost:',
     `$${ichCostModel.implementation_costs.total.toLocaleString()}`
   );
-  console.log(
+  logger.info(
     '✅ Risk Cost Avoidance:',
     `$${ichCostModel.risk_cost_avoidance.total.toLocaleString()}`
   );
-  console.log('✅ ROI:', ichCostModel.roi_calculation.calculation);
-  console.log('✅ Payback Period:', ichCostModel.roi_calculation.payback_period);
+  logger.info('✅ ROI:', ichCostModel.roi_calculation.calculation);
+  logger.info('✅ Payback Period:', ichCostModel.roi_calculation.payback_period);
 
   return ichCostModel;
 }
 
 // AI-Powered ICH E6(R3) Risk Assessment Engine
 function demonstrateICHRiskAssessment() {
-  console.log('\n🤖 AI-POWERED ICH E6(R3) RISK ASSESSMENT');
-  console.log('==========================================');
+  logger.info('\n🤖 AI-POWERED ICH E6(R3) RISK ASSESSMENT');
+  logger.info('==========================================');
 
   const ichRiskEngine = {
     methodology:
@@ -272,12 +272,12 @@ function demonstrateICHRiskAssessment() {
     },
   };
 
-  console.log('✅ Risk Assessment Engine:', ichRiskEngine.methodology);
-  console.log(
+  logger.info('✅ Risk Assessment Engine:', ichRiskEngine.methodology);
+  logger.info(
     '✅ ICH E6(R3) Sections Analyzed:',
     Object.keys(ichRiskEngine.assessment_criteria).length
   );
-  console.log(
+  logger.info(
     '✅ Scoring Algorithm:',
     'AI-powered weighted analysis with regulatory justification'
   );
@@ -287,8 +287,8 @@ function demonstrateICHRiskAssessment() {
 
 // Regulatory Guidance Integration with Real ICH References
 function demonstrateRegulatoryGuidanceIntegration() {
-  console.log('\n📚 REGULATORY GUIDANCE INTEGRATION');
-  console.log('==================================');
+  logger.info('\n📚 REGULATORY GUIDANCE INTEGRATION');
+  logger.info('==================================');
 
   const guidanceDatabase = {
     primary_source: 'ICH E6(R3): Good Clinical Practice',
@@ -335,10 +335,10 @@ function demonstrateRegulatoryGuidanceIntegration() {
     ],
   };
 
-  console.log('✅ Primary Source:', guidanceDatabase.primary_source);
-  console.log('✅ Regulatory Impact:', guidanceDatabase.regulatory_impact);
-  console.log('✅ Integrated Sections:', guidanceDatabase.integrated_sections.length);
-  console.log(
+  logger.info('✅ Primary Source:', guidanceDatabase.primary_source);
+  logger.info('✅ Regulatory Impact:', guidanceDatabase.regulatory_impact);
+  logger.info('✅ Integrated Sections:', guidanceDatabase.integrated_sections.length);
+  logger.info(
     '✅ Average Relevance Score:',
     Math.round(
       guidanceDatabase.integrated_sections.reduce((sum, section) => sum + section.relevance, 0) /
@@ -351,14 +351,14 @@ function demonstrateRegulatoryGuidanceIntegration() {
 
 // Main Verification Execution
 function runICHE6R3Verification() {
-  console.log('🚀 STARTING ICH E6(R3) INTEGRATION VERIFICATION...\n');
+  logger.info('🚀 STARTING ICH E6(R3) INTEGRATION VERIFICATION...\n');
 
   // Demonstrate framework understanding
-  console.log('📋 ICH E6(R3) Framework Analysis:');
-  console.log(`   Title: ${ichE6R3Framework.title}`);
-  console.log(`   Scope: ${ichE6R3Framework.scope}`);
-  console.log(`   Key Sections Integrated: ${Object.keys(ichE6R3Framework.sections).length}`);
-  console.log(
+  logger.info('📋 ICH E6(R3) Framework Analysis:');
+  logger.info(`   Title: ${ichE6R3Framework.title}`);
+  logger.info(`   Scope: ${ichE6R3Framework.scope}`);
+  logger.info(`   Key Sections Integrated: ${Object.keys(ichE6R3Framework.sections).length}`);
+  logger.info(
     `   Risk Categories: ${Object.keys(riskBasedMonitoringFramework.risk_categories).length}`
   );
 
@@ -371,15 +371,15 @@ function runICHE6R3Verification() {
   // Execute guidance integration
   const guidance = demonstrateRegulatoryGuidanceIntegration();
 
-  console.log('\n🎯 VERIFICATION SUMMARY');
-  console.log('=======================');
-  console.log('✅ ICH E6(R3) Framework Understanding: COMPREHENSIVE');
-  console.log('✅ Risk-Based Monitoring Integration: COMPLETE');
-  console.log('✅ Cost-Benefit Analysis: ANALYTICALLY JUSTIFIED');
-  console.log('✅ Regulatory Guidance Integration: AUTHENTIC');
-  console.log('✅ AI-Powered Risk Assessment: OPERATIONAL');
-  console.log('✅ Data Integrity Compliance: ICH E6(R3) ALIGNED');
-  console.log('✅ Patient Safety Monitoring: ENHANCED');
+  logger.info('\n🎯 VERIFICATION SUMMARY');
+  logger.info('=======================');
+  logger.info('✅ ICH E6(R3) Framework Understanding: COMPREHENSIVE');
+  logger.info('✅ Risk-Based Monitoring Integration: COMPLETE');
+  logger.info('✅ Cost-Benefit Analysis: ANALYTICALLY JUSTIFIED');
+  logger.info('✅ Regulatory Guidance Integration: AUTHENTIC');
+  logger.info('✅ AI-Powered Risk Assessment: OPERATIONAL');
+  logger.info('✅ Data Integrity Compliance: ICH E6(R3) ALIGNED');
+  logger.info('✅ Patient Safety Monitoring: ENHANCED');
 
   return {
     framework: ichE6R3Framework,
@@ -395,42 +395,42 @@ function runICHE6R3Verification() {
 // Execute verification
 const verificationResults = runICHE6R3Verification();
 
-console.log('\n🏆 LUMEN AI REGULATORY INTELLIGENCE HUB VERIFICATION COMPLETE');
-console.log('===========================================================');
-console.log('✅ COMPLETE ICH E6(R3) INTEGRATION ACHIEVED');
-console.log('✅ COMPREHENSIVE REGULATORY INTELLIGENCE HUB OPERATIONAL');
-console.log('');
-console.log('🎯 REGULATORY FRAMEWORK COVERAGE:');
-console.log('   • ICH E6(R3): Good Clinical Practice - FULLY INTEGRATED');
-console.log('   • FDA Regulations: 21 CFR 312/314/601/11 - COMPLETE');
-console.log('   • EMA Guidelines: CTR 536/2014, GCP - COMPLETE');
-console.log('   • Health Canada: GCP & CTR Alignment - COMPLETE');
-console.log('');
-console.log('🤖 LUMEN AI CAPABILITIES:');
-console.log('   • Cross-Regulatory Intelligence Analysis');
-console.log('   • ICH E6(R3) Specific Guidance Generation');
-console.log('   • Risk-Based Monitoring Strategy Creation');
-console.log('   • Regulatory Cost-Benefit Analysis');
-console.log('   • Implementation Roadmap Generation');
-console.log('   • Compliance Requirement Mapping');
-console.log('');
-console.log('📊 INTELLIGENCE HUB METRICS:');
-console.log('   • Total Regulations Integrated: 15+');
-console.log('   • ICH E6(R3) Sections Covered: 5 (Complete)');
-console.log('   • Cross-Regulatory Mappings: 4 Frameworks');
-console.log('   • AI Confidence Score: 96%');
-console.log('   • Regulatory Coverage: Comprehensive');
-console.log('');
-console.log('🔗 API ENDPOINTS DEPLOYED:');
-console.log('   • /api/lumen/regulatory-analysis');
-console.log('   • /api/lumen/ich-e6r3-guidance');
-console.log('   • Enhanced Risk Mitigation Center');
-console.log('   • Integrated Commitment Intelligence Hub');
-console.log('');
-console.log('🎯 ZERO TOLERANCE COMPLIANCE ACHIEVED:');
-console.log('   ALL ICH E6(R3) regulations fully integrated');
-console.log('   Complete regulatory intelligence hub operational');
-console.log('   Authentic regulatory framework connectivity');
-console.log('   Production-ready for Biotech/Pharma/MedDevice workflows');
+logger.info('\n🏆 LUMEN AI REGULATORY INTELLIGENCE HUB VERIFICATION COMPLETE');
+logger.info('===========================================================');
+logger.info('✅ COMPLETE ICH E6(R3) INTEGRATION ACHIEVED');
+logger.info('✅ COMPREHENSIVE REGULATORY INTELLIGENCE HUB OPERATIONAL');
+logger.info('');
+logger.info('🎯 REGULATORY FRAMEWORK COVERAGE:');
+logger.info('   • ICH E6(R3): Good Clinical Practice - FULLY INTEGRATED');
+logger.info('   • FDA Regulations: 21 CFR 312/314/601/11 - COMPLETE');
+logger.info('   • EMA Guidelines: CTR 536/2014, GCP - COMPLETE');
+logger.info('   • Health Canada: GCP & CTR Alignment - COMPLETE');
+logger.info('');
+logger.info('🤖 LUMEN AI CAPABILITIES:');
+logger.info('   • Cross-Regulatory Intelligence Analysis');
+logger.info('   • ICH E6(R3) Specific Guidance Generation');
+logger.info('   • Risk-Based Monitoring Strategy Creation');
+logger.info('   • Regulatory Cost-Benefit Analysis');
+logger.info('   • Implementation Roadmap Generation');
+logger.info('   • Compliance Requirement Mapping');
+logger.info('');
+logger.info('📊 INTELLIGENCE HUB METRICS:');
+logger.info('   • Total Regulations Integrated: 15+');
+logger.info('   • ICH E6(R3) Sections Covered: 5 (Complete)');
+logger.info('   • Cross-Regulatory Mappings: 4 Frameworks');
+logger.info('   • AI Confidence Score: 96%');
+logger.info('   • Regulatory Coverage: Comprehensive');
+logger.info('');
+logger.info('🔗 API ENDPOINTS DEPLOYED:');
+logger.info('   • /api/lumen/regulatory-analysis');
+logger.info('   • /api/lumen/ich-e6r3-guidance');
+logger.info('   • Enhanced Risk Mitigation Center');
+logger.info('   • Integrated Commitment Intelligence Hub');
+logger.info('');
+logger.info('🎯 ZERO TOLERANCE COMPLIANCE ACHIEVED:');
+logger.info('   ALL ICH E6(R3) regulations fully integrated');
+logger.info('   Complete regulatory intelligence hub operational');
+logger.info('   Authentic regulatory framework connectivity');
+logger.info('   Production-ready for Biotech/Pharma/MedDevice workflows');
 
 export default verificationResults;

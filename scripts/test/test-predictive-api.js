@@ -18,20 +18,20 @@ async function testPredictiveAPI() {
       }),
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers.raw());
+    logger.info('Response status:', response.status);
+    logger.info('Response headers:', response.headers.raw());
 
     const text = await response.text();
-    console.log('Response body (first 500 chars):', text.substring(0, 500));
+    logger.info('Response body (first 500 chars):', text.substring(0, 500));
 
     try {
       const json = JSON.parse(text);
-      console.log('Parsed JSON:', json);
+      logger.info('Parsed JSON:', json);
     } catch (e) {
-      console.log('Response is not JSON, it appears to be HTML');
+      logger.info('Response is not JSON, it appears to be HTML');
     }
   } catch (error) {
-    console.error('Error testing API:', error);
+    logger.error('Error testing API:', error);
   }
 }
 

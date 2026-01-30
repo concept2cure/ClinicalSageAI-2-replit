@@ -11,7 +11,7 @@ const assertOk = async (path, validator) => {
   }
   const data = await res.json();
   validator(data);
-  console.log(`✅ ${path} ok`);
+  logger.info(`✅ ${path} ok`);
   return data;
 };
 
@@ -41,6 +41,6 @@ const run = async () => {
 };
 
 run().catch(error => {
-  console.error(`❌ smoke test failed: ${error.message}`);
+  logger.error(`❌ smoke test failed: ${error.message}`);
   process.exit(1);
 });

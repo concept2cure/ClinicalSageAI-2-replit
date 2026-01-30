@@ -8,8 +8,8 @@
 import PredictiveAnalyticsService from './server/services/PredictiveAnalyticsService.js';
 import NotificationService from './server/services/NotificationService.js';
 
-console.log('🧪 LIVE AI ALERTING SYSTEM TEST');
-console.log('='.repeat(50));
+logger.info('🧪 LIVE AI ALERTING SYSTEM TEST');
+logger.info('='.repeat(50));
 
 // Create test commitment data that will trigger alerts
 const testCommitments = [
@@ -45,13 +45,13 @@ const testCommitments = [
 const tenantId = '550e8400-e29b-41d4-a716-446655440000';
 
 async function testAIAlertingSystem() {
-  console.log('\n🔍 Testing AI Intelligent Alerting System...');
+  logger.info('\n🔍 Testing AI Intelligent Alerting System...');
 
   for (const commitment of testCommitments) {
-    console.log(`\n📋 Processing Commitment: ${commitment.id}`);
-    console.log(`   Description: ${commitment.description}`);
-    console.log(`   Status: ${commitment.status}`);
-    console.log(`   Due Date: ${commitment.due_date}`);
+    logger.info(`\n📋 Processing Commitment: ${commitment.id}`);
+    logger.info(`   Description: ${commitment.description}`);
+    logger.info(`   Status: ${commitment.status}`);
+    logger.info(`   Due Date: ${commitment.due_date}`);
 
     try {
       // This will trigger the AI alerting system
@@ -60,10 +60,10 @@ async function testAIAlertingSystem() {
         tenantId
       );
 
-      console.log(`   AI Prediction Score: ${Math.round(prediction.score * 100)}%`);
-      console.log(`   Explanation: ${prediction.explanation}`);
+      logger.info(`   AI Prediction Score: ${Math.round(prediction.score * 100)}%`);
+      logger.info(`   Explanation: ${prediction.explanation}`);
     } catch (error) {
-      console.log(`   ⚠️ Prediction failed (expected): ${error.message}`);
+      logger.info(`   ⚠️ Prediction failed (expected): ${error.message}`);
 
       // Manually trigger alert to show the system works
       const alertMessage = `🚨 CRITICAL RISK ALERT: "${commitment.description}" is ${commitment.status} and requires immediate attention. Manual trigger for demonstration.`;
@@ -76,13 +76,13 @@ async function testAIAlertingSystem() {
         'commitment_risk_alert'
       );
 
-      console.log(`   Alert Result: ${alertResult.success ? 'SUCCESS' : 'FAILED'}`);
+      logger.info(`   Alert Result: ${alertResult.success ? 'SUCCESS' : 'FAILED'}`);
     }
   }
 }
 
 async function testNotificationDelivery() {
-  console.log('\n📨 Testing Notification Delivery Channels...');
+  logger.info('\n📨 Testing Notification Delivery Channels...');
 
   // Test different alert types to show delivery channels
   const alertTypes = [
@@ -93,58 +93,58 @@ async function testNotificationDelivery() {
   ];
 
   for (const alertType of alertTypes) {
-    console.log(`\n🔔 Testing ${alertType}:`);
+    logger.info(`\n🔔 Testing ${alertType}:`);
 
     const channels = NotificationService.getDeliveryChannels(alertType);
     const priority = NotificationService.calculateAlertPriority(alertType);
 
-    console.log(`   Priority: ${priority}`);
-    console.log(`   Delivery Channels: ${channels.join(', ')}`);
+    logger.info(`   Priority: ${priority}`);
+    logger.info(`   Delivery Channels: ${channels.join(', ')}`);
 
     // Show where alerts are delivered
-    console.log(`   📍 Alert Delivery Locations:`);
+    logger.info(`   📍 Alert Delivery Locations:`);
     if (channels.includes('dashboard')) {
-      console.log(`      ✅ Dashboard: Real-time notification in client portal`);
+      logger.info(`      ✅ Dashboard: Real-time notification in client portal`);
     }
     if (channels.includes('email')) {
-      console.log(`      ✅ Email: Sent to assigned user's email address`);
+      logger.info(`      ✅ Email: Sent to assigned user's email address`);
     }
     if (channels.includes('mobile')) {
-      console.log(`      ✅ Mobile: Push notification to mobile app`);
+      logger.info(`      ✅ Mobile: Push notification to mobile app`);
     }
     if (channels.includes('slack')) {
-      console.log(`      ✅ Slack: Posted to regulatory compliance channel`);
+      logger.info(`      ✅ Slack: Posted to regulatory compliance channel`);
     }
   }
 }
 
 async function demonstrateAlertIntegration() {
-  console.log('\n🔗 Demonstrating Alert Integration Points...');
+  logger.info('\n🔗 Demonstrating Alert Integration Points...');
 
-  console.log('\n📍 WHERE ALERTS ARE TRIGGERED:');
-  console.log('   ✅ Extract Commitments Modal - when commitment status changes');
-  console.log('   ✅ Predictive Analytics Service - automatic risk assessment');
-  console.log('   ✅ Database updates - via PUT /api/commitments/:id');
-  console.log('   ✅ Scheduled jobs - daily compliance monitoring');
+  logger.info('\n📍 WHERE ALERTS ARE TRIGGERED:');
+  logger.info('   ✅ Extract Commitments Modal - when commitment status changes');
+  logger.info('   ✅ Predictive Analytics Service - automatic risk assessment');
+  logger.info('   ✅ Database updates - via PUT /api/commitments/:id');
+  logger.info('   ✅ Scheduled jobs - daily compliance monitoring');
 
-  console.log('\n⏰ WHEN ALERTS ARE SENT:');
-  console.log('   ✅ Commitment becomes Overdue');
-  console.log('   ✅ At Risk status + AI prediction < 50%');
-  console.log('   ✅ Active commitment within 7 days + prediction < 70%');
-  console.log('   ✅ Status changes to critical states');
+  logger.info('\n⏰ WHEN ALERTS ARE SENT:');
+  logger.info('   ✅ Commitment becomes Overdue');
+  logger.info('   ✅ At Risk status + AI prediction < 50%');
+  logger.info('   ✅ Active commitment within 7 days + prediction < 70%');
+  logger.info('   ✅ Status changes to critical states');
 
-  console.log('\n📱 HOW ALERTS ARE DELIVERED:');
-  console.log('   ✅ Real-time dashboard notifications');
-  console.log('   ✅ Email notifications to assigned users');
-  console.log('   ✅ Mobile push notifications (when integrated)');
-  console.log('   ✅ Slack/Teams integration (when configured)');
-  console.log('   ✅ Audit trail in notifications database table');
+  logger.info('\n📱 HOW ALERTS ARE DELIVERED:');
+  logger.info('   ✅ Real-time dashboard notifications');
+  logger.info('   ✅ Email notifications to assigned users');
+  logger.info('   ✅ Mobile push notifications (when integrated)');
+  logger.info('   ✅ Slack/Teams integration (when configured)');
+  logger.info('   ✅ Audit trail in notifications database table');
 
-  console.log('\n🌐 PORTAL INTEGRATION:');
-  console.log('   ✅ Sign-in alerts: Check for pending notifications');
-  console.log('   ✅ Dashboard widget: Active alert count');
-  console.log('   ✅ Commitment cards: Risk indicators');
-  console.log('   ✅ Navigation badges: Unread alert count');
+  logger.info('\n🌐 PORTAL INTEGRATION:');
+  logger.info('   ✅ Sign-in alerts: Check for pending notifications');
+  logger.info('   ✅ Dashboard widget: Active alert count');
+  logger.info('   ✅ Commitment cards: Risk indicators');
+  logger.info('   ✅ Navigation badges: Unread alert count');
 }
 
 // Run the tests
@@ -154,10 +154,10 @@ async function runAllTests() {
     await testNotificationDelivery();
     await demonstrateAlertIntegration();
 
-    console.log('\n🎉 AI ALERTING SYSTEM TEST COMPLETE!');
-    console.log('✅ All alert mechanisms demonstrated successfully');
+    logger.info('\n🎉 AI ALERTING SYSTEM TEST COMPLETE!');
+    logger.info('✅ All alert mechanisms demonstrated successfully');
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    logger.error('❌ Test failed:', error);
   }
 }
 

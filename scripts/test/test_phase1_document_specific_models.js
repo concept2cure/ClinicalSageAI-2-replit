@@ -56,13 +56,13 @@ const TEST_DOCUMENTS = {
 };
 
 async function testDocumentSpecificModels() {
-  console.log('\n🧪 TESTING PHASE 1: DOCUMENT-TYPE SPECIFIC AI MODELS');
-  console.log('=' * 60);
+  logger.info('\n🧪 TESTING PHASE 1: DOCUMENT-TYPE SPECIFIC AI MODELS');
+  logger.info('=' * 60);
 
   for (const [submissionType, testData] of Object.entries(TEST_DOCUMENTS)) {
-    console.log(`\n📋 Testing ${submissionType} Specialized Model`);
-    console.log(`Document Type: ${testData.documentType}`);
-    console.log('─'.repeat(40));
+    logger.info(`\n📋 Testing ${submissionType} Specialized Model`);
+    logger.info(`Document Type: ${testData.documentType}`);
+    logger.info('─'.repeat(40));
 
     const payload = {
       documentText: testData.text,
@@ -80,7 +80,7 @@ async function testDocumentSpecificModels() {
     };
 
     try {
-      console.log(`🚀 Sending request to enhanced extract commitments endpoint...`);
+      logger.info(`🚀 Sending request to enhanced extract commitments endpoint...`);
 
       const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
         method: 'POST',
@@ -90,48 +90,48 @@ async function testDocumentSpecificModels() {
 
       const responseData = await response.json();
 
-      console.log(`📊 Response Status: ${response.status}`);
-      console.log(`✅ Success: ${responseData.success}`);
+      logger.info(`📊 Response Status: ${response.status}`);
+      logger.info(`✅ Success: ${responseData.success}`);
 
       if (responseData.success && responseData.data) {
         const { commitments, summary } = responseData.data;
 
-        console.log('\n🎯 DOCUMENT-SPECIFIC MODEL VERIFICATION:');
-        console.log(`✓ Total Commitments: ${summary.totalCommitments}`);
-        console.log(`✓ Critical Commitments: ${summary.criticalCommitments}`);
-        console.log(
+        logger.info('\n🎯 DOCUMENT-SPECIFIC MODEL VERIFICATION:');
+        logger.info(`✓ Total Commitments: ${summary.totalCommitments}`);
+        logger.info(`✓ Critical Commitments: ${summary.criticalCommitments}`);
+        logger.info(
           `✓ Model Version: ${summary.documentInfo?.documentSpecificModel || 'Not specified'}`
         );
-        console.log(
+        logger.info(
           `✓ AI Enhanced Features: ${summary.documentInfo?.aiEnhancedFeatures?.join(', ') || 'Not specified'}`
         );
 
         // Test automated categorization
         if (commitments && commitments.length > 0) {
-          console.log('\n🤖 AUTOMATED CATEGORIZATION ANALYSIS:');
+          logger.info('\n🤖 AUTOMATED CATEGORIZATION ANALYSIS:');
 
           commitments.forEach((commitment, index) => {
-            console.log(`\nCommitment ${index + 1}:`);
-            console.log(`  Description: ${commitment.description.substring(0, 60)}...`);
-            console.log(`  Type: ${commitment.type}`);
-            console.log(`  Priority: ${commitment.priority}`);
-            console.log(`  Risk Level: ${commitment.riskLevel}`);
+            logger.info(`\nCommitment ${index + 1}:`);
+            logger.info(`  Description: ${commitment.description.substring(0, 60)}...`);
+            logger.info(`  Type: ${commitment.type}`);
+            logger.info(`  Priority: ${commitment.priority}`);
+            logger.info(`  Risk Level: ${commitment.riskLevel}`);
 
             if (commitment.aiAnalysis) {
-              console.log(`  AI Analysis:`);
-              console.log(`    Pattern: ${commitment.aiAnalysis.linguisticPattern}`);
-              console.log(`    Confidence: ${commitment.aiAnalysis.confidenceScore}`);
-              console.log(`    Context: ${commitment.aiAnalysis.semanticContext}`);
+              logger.info(`  AI Analysis:`);
+              logger.info(`    Pattern: ${commitment.aiAnalysis.linguisticPattern}`);
+              logger.info(`    Confidence: ${commitment.aiAnalysis.confidenceScore}`);
+              logger.info(`    Context: ${commitment.aiAnalysis.semanticContext}`);
 
               if (commitment.aiAnalysis.automaticCategorization) {
-                console.log(`    Categorization:`);
-                console.log(
+                logger.info(`    Categorization:`);
+                logger.info(
                   `      Primary: ${commitment.aiAnalysis.automaticCategorization.primaryCategory}`
                 );
-                console.log(
+                logger.info(
                   `      Regulatory: ${commitment.aiAnalysis.automaticCategorization.regulatoryCategory}`
                 );
-                console.log(
+                logger.info(
                   `      Risk Assessment: ${commitment.aiAnalysis.automaticCategorization.riskAssessment}`
                 );
               }
@@ -152,22 +152,22 @@ async function testDocumentSpecificModels() {
         );
 
         if (hasPhase1Features) {
-          console.log('\n✅ PHASE 1 FEATURES CONFIRMED:');
-          console.log('  ✓ Document-specific patterns detected');
-          console.log('  ✓ Automated categorization active');
-          console.log('  ✓ Confidence scoring implemented');
+          logger.info('\n✅ PHASE 1 FEATURES CONFIRMED:');
+          logger.info('  ✓ Document-specific patterns detected');
+          logger.info('  ✓ Automated categorization active');
+          logger.info('  ✓ Confidence scoring implemented');
         } else {
-          console.log('\n⚠️  PHASE 1 FEATURES NOT DETECTED');
+          logger.info('\n⚠️  PHASE 1 FEATURES NOT DETECTED');
         }
       } else {
-        console.log(`❌ Error: ${responseData.error || 'Unknown error'}`);
+        logger.info(`❌ Error: ${responseData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error(`❌ Request failed: ${error.message}`);
+      logger.error(`❌ Request failed: ${error.message}`);
     }
   }
 
-  console.log('\n🏁 PHASE 1 TESTING COMPLETE');
+  logger.info('\n🏁 PHASE 1 TESTING COMPLETE');
 }
 
 // Run the test

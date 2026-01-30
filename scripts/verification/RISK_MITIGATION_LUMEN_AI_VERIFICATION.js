@@ -6,8 +6,8 @@
  */
 
 async function verifyRiskMitigationLumenAIIntegration() {
-  console.log('🔍 RISK MITIGATION CENTER - LUMEN AI VERIFICATION');
-  console.log('================================================');
+  logger.info('🔍 RISK MITIGATION CENTER - LUMEN AI VERIFICATION');
+  logger.info('================================================');
 
   const testCommitment = {
     id: 'test-commitment-001',
@@ -16,12 +16,12 @@ async function verifyRiskMitigationLumenAIIntegration() {
     description: 'ICH E6(R3) risk-based monitoring implementation for Phase III oncology trial',
   };
 
-  console.log('📋 Test Commitment:', testCommitment.description);
-  console.log('');
+  logger.info('📋 Test Commitment:', testCommitment.description);
+  logger.info('');
 
   // Test 1: Verify Lumen AI Regulatory Analysis Integration
-  console.log('🧪 TEST 1: Lumen AI Regulatory Analysis Connection');
-  console.log('-----------------------------------------------');
+  logger.info('🧪 TEST 1: Lumen AI Regulatory Analysis Connection');
+  logger.info('-----------------------------------------------');
 
   try {
     const response = await fetch('http://localhost:5000/api/lumen/regulatory-analysis', {
@@ -47,27 +47,27 @@ async function verifyRiskMitigationLumenAIIntegration() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Lumen AI Regulatory Analysis: CONNECTED');
-      console.log('   • Response Type:', typeof data);
-      console.log('   • Has Analysis:', !!data.comprehensive_analysis);
-      console.log('   • Has Cost Data:', !!data.cost_analysis);
-      console.log('   • ICH E6(R3) Covered:', !!data.ich_e6r3_coverage);
-      console.log('   • AI Confidence:', data.overall_confidence_score || 'N/A');
+      logger.info('✅ Lumen AI Regulatory Analysis: CONNECTED');
+      logger.info('   • Response Type:', typeof data);
+      logger.info('   • Has Analysis:', !!data.comprehensive_analysis);
+      logger.info('   • Has Cost Data:', !!data.cost_analysis);
+      logger.info('   • ICH E6(R3) Covered:', !!data.ich_e6r3_coverage);
+      logger.info('   • AI Confidence:', data.overall_confidence_score || 'N/A');
     } else {
-      console.log('❌ Lumen AI Regulatory Analysis: API ERROR');
-      console.log('   • Status:', response.status);
-      console.log('   • Response:', await response.text());
+      logger.info('❌ Lumen AI Regulatory Analysis: API ERROR');
+      logger.info('   • Status:', response.status);
+      logger.info('   • Response:', await response.text());
     }
   } catch (error) {
-    console.log('❌ Lumen AI Regulatory Analysis: CONNECTION FAILED');
-    console.log('   • Error:', error.message);
+    logger.info('❌ Lumen AI Regulatory Analysis: CONNECTION FAILED');
+    logger.info('   • Error:', error.message);
   }
 
-  console.log('');
+  logger.info('');
 
   // Test 2: Verify ICH E6(R3) Guidance Integration
-  console.log('🧪 TEST 2: ICH E6(R3) Guidance Connection');
-  console.log('----------------------------------------');
+  logger.info('🧪 TEST 2: ICH E6(R3) Guidance Connection');
+  logger.info('----------------------------------------');
 
   try {
     const response = await fetch('http://localhost:5000/api/lumen/ich-e6r3-guidance', {
@@ -90,40 +90,40 @@ async function verifyRiskMitigationLumenAIIntegration() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ ICH E6(R3) Guidance: CONNECTED');
-      console.log('   • Response Type:', typeof data);
-      console.log('   • ICH Sections:', data.ich_e6r3_sections_covered?.length || 0);
-      console.log('   • Lumen AI Analysis:', !!data.lumen_ai_ich_analysis);
-      console.log('   • Regulatory Impact:', !!data.regulatory_impact_assessment);
-      console.log('   • Implementation Roadmap:', !!data.implementation_roadmap);
+      logger.info('✅ ICH E6(R3) Guidance: CONNECTED');
+      logger.info('   • Response Type:', typeof data);
+      logger.info('   • ICH Sections:', data.ich_e6r3_sections_covered?.length || 0);
+      logger.info('   • Lumen AI Analysis:', !!data.lumen_ai_ich_analysis);
+      logger.info('   • Regulatory Impact:', !!data.regulatory_impact_assessment);
+      logger.info('   • Implementation Roadmap:', !!data.implementation_roadmap);
     } else {
-      console.log('❌ ICH E6(R3) Guidance: API ERROR');
-      console.log('   • Status:', response.status);
-      console.log('   • Response:', await response.text());
+      logger.info('❌ ICH E6(R3) Guidance: API ERROR');
+      logger.info('   • Status:', response.status);
+      logger.info('   • Response:', await response.text());
     }
   } catch (error) {
-    console.log('❌ ICH E6(R3) Guidance: CONNECTION FAILED');
-    console.log('   • Error:', error.message);
+    logger.info('❌ ICH E6(R3) Guidance: CONNECTION FAILED');
+    logger.info('   • Error:', error.message);
   }
 
-  console.log('');
-  console.log('🎯 VERIFICATION SUMMARY');
-  console.log('======================');
-  console.log('✅ Risk Mitigation Center now connects to REAL Lumen AI endpoints');
-  console.log('✅ No mock data or placeholder APIs used');
-  console.log('✅ Authentic ICH E6(R3) regulatory intelligence integration');
-  console.log('✅ Production-ready for Biotech/Pharma/MedDevice client workflows');
-  console.log('');
-  console.log('🔗 INTEGRATED ENDPOINTS:');
-  console.log('   • /api/lumen/regulatory-analysis');
-  console.log('   • /api/lumen/ich-e6r3-guidance');
-  console.log('');
-  console.log('📊 CLIENT BENEFITS:');
-  console.log('   • Real regulatory intelligence, not mock data');
-  console.log('   • Authentic ICH E6(R3) compliance analysis');
-  console.log('   • AI-powered risk assessment with regulatory justification');
-  console.log('   • Cross-regulatory framework harmonization');
-  console.log('   • Cost-benefit analysis with authentic regulatory ROI');
+  logger.info('');
+  logger.info('🎯 VERIFICATION SUMMARY');
+  logger.info('======================');
+  logger.info('✅ Risk Mitigation Center now connects to REAL Lumen AI endpoints');
+  logger.info('✅ No mock data or placeholder APIs used');
+  logger.info('✅ Authentic ICH E6(R3) regulatory intelligence integration');
+  logger.info('✅ Production-ready for Biotech/Pharma/MedDevice client workflows');
+  logger.info('');
+  logger.info('🔗 INTEGRATED ENDPOINTS:');
+  logger.info('   • /api/lumen/regulatory-analysis');
+  logger.info('   • /api/lumen/ich-e6r3-guidance');
+  logger.info('');
+  logger.info('📊 CLIENT BENEFITS:');
+  logger.info('   • Real regulatory intelligence, not mock data');
+  logger.info('   • Authentic ICH E6(R3) compliance analysis');
+  logger.info('   • AI-powered risk assessment with regulatory justification');
+  logger.info('   • Cross-regulatory framework harmonization');
+  logger.info('   • Cost-benefit analysis with authentic regulatory ROI');
 }
 
 // Execute verification

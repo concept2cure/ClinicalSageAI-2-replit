@@ -19,11 +19,11 @@ app.get('/api/health', (req, res) => {
 // Start server
 const PORT = 3001;
 app.listen(PORT, () => {
-  console.log(`FDA 510k test server running on port ${PORT}`);
-  console.log(
+  logger.info(`FDA 510k test server running on port ${PORT}`);
+  logger.info(
     `Test the compliance status endpoint at: http://localhost:${PORT}/api/fda510k/estar/compliance-status`
   );
-  console.log(
+  logger.info(
     `Test the PDF generation endpoint at: http://localhost:${PORT}/api/fda510k/pdf/submission (POST)`
   );
 });

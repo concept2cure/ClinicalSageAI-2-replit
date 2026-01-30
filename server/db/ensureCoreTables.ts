@@ -36,6 +36,8 @@ const IMPORTANT_TABLES = [
   'auth_users',
   'auth_refresh_tokens',
   'roles',
+  'workflow_runs',
+  'step_runs',
   'permissions',
   'user_roles',
   'organization_settings',

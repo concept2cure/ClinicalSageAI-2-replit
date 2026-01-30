@@ -174,7 +174,7 @@ async function processXmlFile(filePath) {
       },
     };
   } catch (error) {
-    console.error(`Error processing ${filePath}:`, error);
+    logger.error(`Error processing ${filePath}:`, error);
     return null;
   }
 }
@@ -229,11 +229,11 @@ async function insertTrialData(client, processedData) {
 
       return reportId;
     } else {
-      console.log(`Trial ${processedData.report.nctrial_id} already exists in database, skipping`);
+      logger.info(`Trial ${processedData.report.nctrial_id} already exists in database, skipping`);
       return null;
     }
   } catch (error) {
-    console.error('Error inserting trial data:', error);
+    logger.error('Error inserting trial data:', error);
     return null;
   }
 }
@@ -249,21 +249,21 @@ async function getXmlBatch() {
 
     return xmlFiles;
   } catch (error) {
-    console.error('Error getting XML files:', error);
+    logger.error('Error getting XML files:', error);
     return [];
   }
 }
 
 // Run the batch import
 async function runBatchImport() {
-  console.log('=== Starting Import of ClinicalTrials.gov XML Files ===');
-  console.log('Timestamp:', new Date().toISOString());
+  logger.info('=== Starting Import of ClinicalTrials.gov XML Files ===');
+  logger.info('Timestamp:', new Date().toISOString());
 
   const client = await pool.connect();
   try {
     // Get XML files to process
     const xmlFiles = await getXmlBatch();
-    console.log(`Found ${xmlFiles.length} XML files to process`);
+    logger.info(`Found ${xmlFiles.length} XML files to process`);
 
     // Process each file
     let successCount = 0;
@@ -271,7 +271,7 @@ async function runBatchImport() {
     let errorCount = 0;
 
     for (const filePath of xmlFiles) {
-      console.log(`Processing ${path.basename(filePath)}...`);
+      logger.info(`Processing ${path.basename(filePath)}...`);
       const processedData = await processXmlFile(filePath);
 
       if (processedData) {
@@ -282,7 +282,7 @@ async function runBatchImport() {
         );
 
         if (checkResult.rows.length > 0) {
-          console.log(
+          logger.info(
             `Trial ${processedData.report.nctrial_id} already exists in database, skipping`
           );
           skipCount++;
@@ -296,32 +296,32 @@ async function runBatchImport() {
 
           if (reportId) {
             await client.query('COMMIT');
-            console.log(`Successfully imported trial ${processedData.report.nctrial_id}`);
+            logger.info(`Successfully imported trial ${processedData.report.nctrial_id}`);
             successCount++;
           } else {
             await client.query('ROLLBACK');
-            console.error(`Failed to import trial ${processedData.report.nctrial_id}`);
+            logger.error(`Failed to import trial ${processedData.report.nctrial_id}`);
             errorCount++;
           }
         } catch (error) {
           await client.query('ROLLBACK');
-          console.error(`Transaction failed for ${processedData.report.nctrial_id}:`, error);
+          logger.error(`Transaction failed for ${processedData.report.nctrial_id}:`, error);
           errorCount++;
         }
       } else {
-        console.error(`Failed to process ${path.basename(filePath)}`);
+        logger.error(`Failed to process ${path.basename(filePath)}`);
         errorCount++;
       }
     }
 
     // Summary
-    console.log('\n=== Import Summary ===');
-    console.log(`Total studies processed: ${xmlFiles.length}`);
-    console.log(`Successfully imported: ${successCount}`);
-    console.log(`Skipped (already exists): ${skipCount}`);
-    console.log(`Failed imports: ${errorCount}`);
+    logger.info('\n=== Import Summary ===');
+    logger.info(`Total studies processed: ${xmlFiles.length}`);
+    logger.info(`Successfully imported: ${successCount}`);
+    logger.info(`Skipped (already exists): ${skipCount}`);
+    logger.info(`Failed imports: ${errorCount}`);
   } catch (error) {
-    console.error('Error during batch import:', error);
+    logger.error('Error during batch import:', error);
   } finally {
     client.release();
     await pool.end();
@@ -330,6 +330,6 @@ async function runBatchImport() {
 
 // Run the import
 runBatchImport().catch(err => {
-  console.error('Fatal error during import:', err);
+  logger.error('Fatal error during import:', err);
   process.exit(1);
 });

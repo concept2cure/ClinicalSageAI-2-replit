@@ -17,7 +17,7 @@ const pool = new pg.Pool({
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function buildKnowledgeGraph(limit: number = 200): Promise<number> {
-  console.log('\n🔗 Building Knowledge Graph...');
+  logger.info('\n🔗 Building Knowledge Graph...');
 
   // Get atoms for graph building
   const atoms = await pool.query(
@@ -190,7 +190,7 @@ async function buildKnowledgeGraph(limit: number = 200): Promise<number> {
     }
   }
 
-  console.log(`   ✅ Created ${edgesCreated} edges`);
+  logger.info(`   ✅ Created ${edgesCreated} edges`);
   return edgesCreated;
 }
 
@@ -199,7 +199,7 @@ async function buildKnowledgeGraph(limit: number = 200): Promise<number> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function assessQuality(limit: number = 500): Promise<number> {
-  console.log('\n📊 Assessing Atom Quality...');
+  logger.info('\n📊 Assessing Atom Quality...');
 
   // Source reliability scores
   const sourceReliability: Record<string, number> = {
@@ -289,7 +289,7 @@ async function assessQuality(limit: number = 500): Promise<number> {
     assessed++;
   }
 
-  console.log(`   ✅ Assessed ${assessed} atoms`);
+  logger.info(`   ✅ Assessed ${assessed} atoms`);
   return assessed;
 }
 
@@ -298,7 +298,7 @@ async function assessQuality(limit: number = 500): Promise<number> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function initializeVersions(limit: number = 500): Promise<number> {
-  console.log('\n📝 Creating Initial Version Records...');
+  logger.info('\n📝 Creating Initial Version Records...');
 
   const atoms = await pool.query(
     `
@@ -355,7 +355,7 @@ async function initializeVersions(limit: number = 500): Promise<number> {
     versioned++;
   }
 
-  console.log(`   ✅ Created ${versioned} initial versions`);
+  logger.info(`   ✅ Created ${versioned} initial versions`);
   return versioned;
 }
 
@@ -364,9 +364,9 @@ async function initializeVersions(limit: number = 500): Promise<number> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function main() {
-  console.log('🧠 LUMEN CORTEX ENHANCEMENT RUNNER');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('Starting comprehensive knowledge base enhancement...\n');
+  logger.info('🧠 LUMEN CORTEX ENHANCEMENT RUNNER');
+  logger.info('═══════════════════════════════════════════════════════════');
+  logger.info('Starting comprehensive knowledge base enhancement...\n');
 
   try {
     // Build knowledge graph
@@ -379,9 +379,9 @@ async function main() {
     const versioned = await initializeVersions(2200);
 
     // Final statistics
-    console.log('\n═══════════════════════════════════════════════════════════');
-    console.log('📊 FINAL STATISTICS');
-    console.log('═══════════════════════════════════════════════════════════');
+    logger.info('\n═══════════════════════════════════════════════════════════');
+    logger.info('📊 FINAL STATISTICS');
+    logger.info('═══════════════════════════════════════════════════════════');
 
     const finalEdges = await pool.query('SELECT COUNT(*) FROM lumen_knowledge_graph_edges');
     const finalQuality = await pool.query(
@@ -389,10 +389,10 @@ async function main() {
     );
     const finalVersions = await pool.query('SELECT COUNT(*) FROM lumen_atom_versions');
 
-    console.log(`\n📈 Knowledge Graph: ${finalEdges.rows[0].count} edges`);
-    console.log(`✅ Quality Scores: ${finalQuality.rows[0].count} atoms assessed`);
-    console.log(`   Average Quality: ${(parseFloat(finalQuality.rows[0].avg) * 100).toFixed(1)}%`);
-    console.log(`📝 Version Records: ${finalVersions.rows[0].count}`);
+    logger.info(`\n📈 Knowledge Graph: ${finalEdges.rows[0].count} edges`);
+    logger.info(`✅ Quality Scores: ${finalQuality.rows[0].count} atoms assessed`);
+    logger.info(`   Average Quality: ${(parseFloat(finalQuality.rows[0].avg) * 100).toFixed(1)}%`);
+    logger.info(`📝 Version Records: ${finalVersions.rows[0].count}`);
 
     // Quality distribution
     const distribution = await pool.query(`
@@ -404,11 +404,11 @@ async function main() {
       FROM lumen_atom_quality_scores
     `);
 
-    console.log('\n📊 Quality Distribution:');
-    console.log(`   🟢 Excellent (≥80%): ${distribution.rows[0].excellent}`);
-    console.log(`   🔵 Good (60-80%): ${distribution.rows[0].good}`);
-    console.log(`   🟡 Fair (40-60%): ${distribution.rows[0].fair}`);
-    console.log(`   🔴 Poor (<40%): ${distribution.rows[0].poor}`);
+    logger.info('\n📊 Quality Distribution:');
+    logger.info(`   🟢 Excellent (≥80%): ${distribution.rows[0].excellent}`);
+    logger.info(`   🔵 Good (60-80%): ${distribution.rows[0].good}`);
+    logger.info(`   🟡 Fair (40-60%): ${distribution.rows[0].fair}`);
+    logger.info(`   🔴 Poor (<40%): ${distribution.rows[0].poor}`);
 
     // Edge type distribution
     const edgeTypes = await pool.query(`
@@ -418,14 +418,14 @@ async function main() {
       ORDER BY count DESC
     `);
 
-    console.log('\n🔗 Knowledge Graph Relationships:');
+    logger.info('\n🔗 Knowledge Graph Relationships:');
     for (const row of edgeTypes.rows) {
-      console.log(`   - ${row.relationship_type}: ${row.count}`);
+      logger.info(`   - ${row.relationship_type}: ${row.count}`);
     }
 
-    console.log('\n✅ Enhancement complete!');
+    logger.info('\n✅ Enhancement complete!');
   } catch (error) {
-    console.error('❌ Error during enhancement:', error);
+    logger.error('❌ Error during enhancement:', error);
   } finally {
     await pool.end();
   }

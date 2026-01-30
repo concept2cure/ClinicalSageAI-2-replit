@@ -40,7 +40,7 @@ FDA COMMITMENT EXAMPLES FOR TESTING:
  * Test the enhanced commitment extraction endpoint
  */
 async function testCommitmentIntelligenceHub() {
-  console.log('\n🚀 TESTING COMMITMENT INTELLIGENCE HUB PHASE 1\n');
+  logger.info('\n🚀 TESTING COMMITMENT INTELLIGENCE HUB PHASE 1\n');
 
   const testPayload = {
     documentText: TEST_DOCUMENT,
@@ -57,7 +57,7 @@ async function testCommitmentIntelligenceHub() {
   };
 
   try {
-    console.log('📡 Sending request to enhanced extract commitments endpoint...');
+    logger.info('📡 Sending request to enhanced extract commitments endpoint...');
 
     const response = await fetch(`${BASE_URL}/api/ai/commitments/extract`, {
       method: 'POST',
@@ -67,38 +67,38 @@ async function testCommitmentIntelligenceHub() {
 
     const responseData = await response.json();
 
-    console.log('📊 RESPONSE ANALYSIS:');
-    console.log('Status:', response.status);
-    console.log('Success:', responseData.success);
+    logger.info('📊 RESPONSE ANALYSIS:');
+    logger.info('Status:', response.status);
+    logger.info('Success:', responseData.success);
 
     if (responseData.success) {
-      console.log('\n✅ COMMITMENT INTELLIGENCE HUB OPERATIONAL');
-      console.log('🎯 Enhanced Features Confirmed:');
+      logger.info('\n✅ COMMITMENT INTELLIGENCE HUB OPERATIONAL');
+      logger.info('🎯 Enhanced Features Confirmed:');
 
       // Analyze response structure
       if (responseData.metadata?.version?.includes('commitment-intelligence-hub')) {
-        console.log('✓ Version 2.0 Commitment Intelligence Hub active');
+        logger.info('✓ Version 2.0 Commitment Intelligence Hub active');
       }
 
       if (responseData.metadata?.capabilities?.proactiveDiscovery) {
-        console.log('✓ Proactive Discovery Engine operational');
+        logger.info('✓ Proactive Discovery Engine operational');
       }
 
       if (responseData.commitmentIntelligenceHub) {
-        console.log('✓ AI-powered enhancement system active');
-        console.log(
+        logger.info('✓ AI-powered enhancement system active');
+        logger.info(
           '✓ Performance targets configured:',
           responseData.commitmentIntelligenceHub.performance
         );
       }
 
       if (responseData.data?.commitments) {
-        console.log(`✓ Successfully extracted ${responseData.data.commitments.length} commitments`);
+        logger.info(`✓ Successfully extracted ${responseData.data.commitments.length} commitments`);
 
         // Analyze commitment structure for AI enhancements
         responseData.data.commitments.forEach((commitment, index) => {
           if (commitment.aiAnalysis) {
-            console.log(
+            logger.info(
               `  - Commitment ${index + 1}: AI Analysis present (confidence: ${commitment.aiAnalysis.confidenceScore})`
             );
           }
@@ -106,35 +106,35 @@ async function testCommitmentIntelligenceHub() {
       }
 
       if (responseData.data?.summary?.commitmentIntelligenceHub) {
-        console.log('✓ Cross-module integration ready');
-        console.log('✓ Automated verification capable');
+        logger.info('✓ Cross-module integration ready');
+        logger.info('✓ Automated verification capable');
       }
     } else {
-      console.log('\n⚠️  RESPONSE ANALYSIS - API Quota Issue Detected');
-      console.log('Error:', responseData.error);
-      console.log('Details:', responseData.details);
+      logger.info('\n⚠️  RESPONSE ANALYSIS - API Quota Issue Detected');
+      logger.info('Error:', responseData.error);
+      logger.info('Details:', responseData.details);
 
       // Check if the error is quota-related (not implementation-related)
       if (responseData.details?.includes('exceeded your current quota')) {
-        console.log('\n🔍 TECHNICAL VERIFICATION:');
-        console.log('✅ Endpoint routing operational (received structured error response)');
-        console.log('✅ Request processing initiated (quota check performed)');
-        console.log('✅ Enhanced logging active (AI-powered discovery message logged)');
-        console.log('⚠️  OpenAI API quota limitation preventing completion');
+        logger.info('\n🔍 TECHNICAL VERIFICATION:');
+        logger.info('✅ Endpoint routing operational (received structured error response)');
+        logger.info('✅ Request processing initiated (quota check performed)');
+        logger.info('✅ Enhanced logging active (AI-powered discovery message logged)');
+        logger.info('⚠️  OpenAI API quota limitation preventing completion');
 
-        console.log('\n🎯 IMPLEMENTATION STATUS:');
-        console.log('✅ Enhanced extract commitments endpoint: INTEGRATED');
-        console.log('✅ CommitmentIntelligenceService: IMPORTED');
-        console.log('✅ Proactive discovery engine: CONFIGURED');
-        console.log('✅ Database schema (17 AI fields): READY');
-        console.log('✅ Audit logging system: IMPLEMENTED');
-        console.log('✅ Cross-module architecture: ESTABLISHED');
+        logger.info('\n🎯 IMPLEMENTATION STATUS:');
+        logger.info('✅ Enhanced extract commitments endpoint: INTEGRATED');
+        logger.info('✅ CommitmentIntelligenceService: IMPORTED');
+        logger.info('✅ Proactive discovery engine: CONFIGURED');
+        logger.info('✅ Database schema (17 AI fields): READY');
+        logger.info('✅ Audit logging system: IMPLEMENTED');
+        logger.info('✅ Cross-module architecture: ESTABLISHED');
 
         return true; // Implementation verified despite quota issue
       }
     }
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    logger.error('❌ Test failed:', error.message);
     return false;
   }
 }
@@ -143,7 +143,7 @@ async function testCommitmentIntelligenceHub() {
  * Verify database schema for regulatory_commitments table
  */
 async function verifyDatabaseSchema() {
-  console.log('\n🗄️  VERIFYING DATABASE SCHEMA...');
+  logger.info('\n🗄️  VERIFYING DATABASE SCHEMA...');
 
   const { Pool } = require('pg');
   const pool = new Pool({
@@ -162,8 +162,8 @@ async function verifyDatabaseSchema() {
     const result = await pool.query(tableQuery);
 
     if (result.rows.length > 0) {
-      console.log('✅ regulatory_commitments table exists');
-      console.log('📋 Enhanced schema columns:');
+      logger.info('✅ regulatory_commitments table exists');
+      logger.info('📋 Enhanced schema columns:');
 
       const enhancedFields = [
         'discovery_pattern',
@@ -188,19 +188,19 @@ async function verifyDatabaseSchema() {
       const foundFields = result.rows.map(row => row.column_name);
       enhancedFields.forEach(field => {
         if (foundFields.includes(field)) {
-          console.log(`  ✓ ${field}: present`);
+          logger.info(`  ✓ ${field}: present`);
         } else {
-          console.log(`  - ${field}: not found (may be in different column)`);
+          logger.info(`  - ${field}: not found (may be in different column)`);
         }
       });
 
       return true;
     } else {
-      console.log('❌ regulatory_commitments table not found');
+      logger.info('❌ regulatory_commitments table not found');
       return false;
     }
   } catch (error) {
-    console.error('❌ Database verification failed:', error.message);
+    logger.error('❌ Database verification failed:', error.message);
     return false;
   } finally {
     await pool.end();
@@ -211,7 +211,7 @@ async function verifyDatabaseSchema() {
  * Check server logs for Commitment Intelligence Hub integration
  */
 async function checkServerIntegration() {
-  console.log('\n🔍 CHECKING SERVER INTEGRATION...');
+  logger.info('\n🔍 CHECKING SERVER INTEGRATION...');
 
   const fs = require('fs');
 
@@ -220,24 +220,24 @@ async function checkServerIntegration() {
     const serverContent = fs.readFileSync('server/index.ts', 'utf8');
 
     if (serverContent.includes('CommitmentIntelligenceService')) {
-      console.log('✅ CommitmentIntelligenceService imported in server/index.ts');
+      logger.info('✅ CommitmentIntelligenceService imported in server/index.ts');
     }
 
     if (serverContent.includes('COMMITMENT INTELLIGENCE HUB')) {
-      console.log('✅ Enhanced logging with Commitment Intelligence Hub identifier');
+      logger.info('✅ Enhanced logging with Commitment Intelligence Hub identifier');
     }
 
     if (serverContent.includes('proactiveDiscovery')) {
-      console.log('✅ Proactive discovery engine integration confirmed');
+      logger.info('✅ Proactive discovery engine integration confirmed');
     }
 
     if (serverContent.includes("version: '2.0-commitment-intelligence-hub'")) {
-      console.log('✅ Version 2.0 commitment-intelligence-hub metadata configured');
+      logger.info('✅ Version 2.0 commitment-intelligence-hub metadata configured');
     }
 
     return true;
   } catch (error) {
-    console.error('❌ Server integration check failed:', error.message);
+    logger.error('❌ Server integration check failed:', error.message);
     return false;
   }
 }
@@ -246,8 +246,8 @@ async function checkServerIntegration() {
  * Main test execution
  */
 async function runComprehensiveTest() {
-  console.log('🎯 COMMITMENT INTELLIGENCE HUB COMPREHENSIVE TEST SUITE');
-  console.log('='.repeat(60));
+  logger.info('🎯 COMMITMENT INTELLIGENCE HUB COMPREHENSIVE TEST SUITE');
+  logger.info('='.repeat(60));
 
   const results = {
     apiTest: await testCommitmentIntelligenceHub(),
@@ -255,24 +255,24 @@ async function runComprehensiveTest() {
     integrationTest: await checkServerIntegration(),
   };
 
-  console.log('\n📊 FINAL RESULTS:');
-  console.log('='.repeat(40));
-  console.log('API Endpoint Test:', results.apiTest ? '✅ PASS' : '❌ FAIL');
-  console.log('Database Schema:', results.schemaTest ? '✅ PASS' : '❌ FAIL');
-  console.log('Server Integration:', results.integrationTest ? '✅ PASS' : '❌ FAIL');
+  logger.info('\n📊 FINAL RESULTS:');
+  logger.info('='.repeat(40));
+  logger.info('API Endpoint Test:', results.apiTest ? '✅ PASS' : '❌ FAIL');
+  logger.info('Database Schema:', results.schemaTest ? '✅ PASS' : '❌ FAIL');
+  logger.info('Server Integration:', results.integrationTest ? '✅ PASS' : '❌ FAIL');
 
   const overallSuccess = results.apiTest && results.schemaTest && results.integrationTest;
 
-  console.log('\n🎯 COMMITMENT INTELLIGENCE HUB PHASE 1 STATUS:');
-  console.log(overallSuccess ? '✅ FULLY OPERATIONAL' : '⚠️  PARTIALLY OPERATIONAL');
+  logger.info('\n🎯 COMMITMENT INTELLIGENCE HUB PHASE 1 STATUS:');
+  logger.info(overallSuccess ? '✅ FULLY OPERATIONAL' : '⚠️  PARTIALLY OPERATIONAL');
 
   if (overallSuccess) {
-    console.log('\n🚀 READY FOR PRODUCTION USE:');
-    console.log('• Enhanced extract commitments endpoint');
-    console.log('• AI-powered proactive discovery');
-    console.log('• Database persistence with 17 AI fields');
-    console.log('• Comprehensive audit logging');
-    console.log('• Cross-module integration architecture');
+    logger.info('\n🚀 READY FOR PRODUCTION USE:');
+    logger.info('• Enhanced extract commitments endpoint');
+    logger.info('• AI-powered proactive discovery');
+    logger.info('• Database persistence with 17 AI fields');
+    logger.info('• Comprehensive audit logging');
+    logger.info('• Cross-module integration architecture');
   }
 
   return overallSuccess;

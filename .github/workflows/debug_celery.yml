@@ -1,0 +1,45 @@
+name: Debug Celery
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  debug-celery:
+    name: Debug Celery
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start E2E docker-compose
+        run: |
+          docker compose -f docker-compose.e2e.yml up -d --build
+
+      - name: Wait for warmup
+        run: |
+          echo "sleeping 30s for services to start"
+          sleep 30
+
+      - name: Capture celery inspect
+        run: |
+          set -e
+          echo "== celery inspect -> celery_inspect.txt =="
+          docker compose -f docker-compose.e2e.yml exec -T worker celery -A services.celery_app inspect active reserved registered > celery_inspect.txt 2>&1 || true
+
+      - name: Capture worker logs
+        run: |
+          echo "== docker compose logs worker -> worker.log =="
+          docker compose -f docker-compose.e2e.yml logs --no-color worker > worker.log 2>&1 || true
+
+      - name: Upload debug-logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            celery_inspect.txt
+            worker.log
+
+      - name: Tear down E2E docker-compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.e2e.yml down || true

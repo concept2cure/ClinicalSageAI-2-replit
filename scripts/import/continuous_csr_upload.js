@@ -76,10 +76,10 @@ function loadTrackingData() {
     if (fs.existsSync(PROGRESS_FILE)) {
       const data = fs.readFileSync(PROGRESS_FILE, 'utf8');
       trackingData = JSON.parse(data);
-      console.log(`Loaded tracking data: ${trackingData.totalImported} trials imported so far`);
+      logger.info(`Loaded tracking data: ${trackingData.totalImported} trials imported so far`);
     }
   } catch (error) {
-    console.error('Error loading tracking data:', error);
+    logger.error('Error loading tracking data:', error);
   }
 }
 
@@ -91,12 +91,12 @@ function loadProcessedFiles() {
     if (fs.existsSync(PROCESSED_FILE)) {
       const data = fs.readFileSync(PROCESSED_FILE, 'utf8');
       processedFiles = JSON.parse(data);
-      console.log(
+      logger.info(
         `Loaded processed files data: ${Object.values(processedFiles).flat().length} files tracked`
       );
     }
   } catch (error) {
-    console.error('Error loading processed files data:', error);
+    logger.error('Error loading processed files data:', error);
   }
 }
 
@@ -108,7 +108,7 @@ function saveTrackingData() {
     trackingData.lastRun = new Date().toISOString();
     fs.writeFileSync(PROGRESS_FILE, JSON.stringify(trackingData, null, 2));
   } catch (error) {
-    console.error('Error saving tracking data:', error);
+    logger.error('Error saving tracking data:', error);
   }
 }
 
@@ -119,7 +119,7 @@ function saveProcessedFiles() {
   try {
     fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedFiles, null, 2));
   } catch (error) {
-    console.error('Error saving processed files data:', error);
+    logger.error('Error saving processed files data:', error);
   }
 }
 
@@ -138,7 +138,7 @@ async function getDatabaseConnection() {
     await client.connect();
     return client;
   } catch (err) {
-    console.error('Database connection error:', err);
+    logger.error('Database connection error:', err);
     throw err;
   }
 }
@@ -177,7 +177,7 @@ async function processCurrentSourceBatch() {
   const sourceType = sourceInfo.name;
   const sourceProgress = trackingData.sourceProgress[sourceType];
 
-  console.log(`Processing batch from source: ${sourceType}`);
+  logger.info(`Processing batch from source: ${sourceType}`);
 
   let processedCount = 0;
 
@@ -217,7 +217,7 @@ async function processCurrentSourceBatch() {
             processedCount++;
             sourceProgress.lastFile = file;
           } catch (error) {
-            console.error(`Error processing file ${file}:`, error);
+            logger.error(`Error processing file ${file}:`, error);
           }
         }
 
@@ -237,12 +237,12 @@ async function processCurrentSourceBatch() {
       trackingData.batchHistory.push(batchRecord);
       trackingData.totalImported += processedCount;
 
-      console.log(`Successfully imported ${processedCount} trials from ${sourceType}`);
-      console.log(
+      logger.info(`Successfully imported ${processedCount} trials from ${sourceType}`);
+      logger.info(
         `Progress: ${sourceProgress.processed}/${sourceProgress.total} (${Math.round((sourceProgress.processed / Math.max(1, sourceProgress.total)) * 100)}%)`
       );
     } else {
-      console.log(`No new trials imported from ${sourceType}`);
+      logger.info(`No new trials imported from ${sourceType}`);
     }
 
     // Save progress
@@ -252,7 +252,7 @@ async function processCurrentSourceBatch() {
     // Move to next source for the next run
     trackingData.currentSource = (currentSource + 1) % DATA_SOURCES.length;
   } catch (error) {
-    console.error('Error processing batch:', error);
+    logger.error('Error processing batch:', error);
   } finally {
     // Close database connection
     await client.end();
@@ -292,7 +292,7 @@ async function processCtGovFile(client, filePath) {
           ]);
 
           if (existingCheck.rows.length > 0) {
-            console.log(`Trial ${nctId} already exists, skipping`);
+            logger.info(`Trial ${nctId} already exists, skipping`);
             return resolve();
           }
 
@@ -359,7 +359,7 @@ async function processCsrFile(client, filePath) {
   );
 
   if (existingCheck.rows.length > 0) {
-    console.log(`CSR ${csrId} already exists, skipping`);
+    logger.info(`CSR ${csrId} already exists, skipping`);
     return;
   }
 
@@ -396,7 +396,7 @@ async function processCsrFile(client, filePath) {
     ]
   );
 
-  console.log(`Imported CSR: ${csrId} (${title})`);
+  logger.info(`Imported CSR: ${csrId} (${title})`);
 }
 
 /**
@@ -514,7 +514,7 @@ async function importTrialsToDatabase(client, trials) {
       );
 
       if (existingCheck.rows.length > 0) {
-        console.log(
+        logger.info(
           `Trial ${trial.trial_id || trial.nct_id || trial.csr_id} already exists, skipping`
         );
         continue;
@@ -542,9 +542,9 @@ async function importTrialsToDatabase(client, trials) {
         ]
       );
 
-      console.log(`Imported trial: ${trial.trial_id || trial.nct_id || trial.csr_id}`);
+      logger.info(`Imported trial: ${trial.trial_id || trial.nct_id || trial.csr_id}`);
     } catch (error) {
-      console.error(
+      logger.error(
         `Error importing trial ${trial.trial_id || trial.nct_id || trial.csr_id}:`,
         error
       );
@@ -556,27 +556,27 @@ async function importTrialsToDatabase(client, trials) {
  * Initialize the continuous upload service
  */
 async function initContinuousUpload() {
-  console.log('Initializing Continuous CSR Upload Service...');
+  logger.info('Initializing Continuous CSR Upload Service...');
 
   // Load existing progress data
   loadTrackingData();
   loadProcessedFiles();
 
   // Immediately run first batch
-  console.log('Running initial batch...');
+  logger.info('Running initial batch...');
   await processCurrentSourceBatch();
 
   // Schedule regular uploads using cron
-  console.log(`Scheduling continuous uploads: ${SCHEDULE}`);
+  logger.info(`Scheduling continuous uploads: ${SCHEDULE}`);
   cron.schedule(SCHEDULE, async () => {
-    console.log(`Scheduled upload triggered at ${new Date().toISOString()}`);
+    logger.info(`Scheduled upload triggered at ${new Date().toISOString()}`);
     await processCurrentSourceBatch();
   });
 
-  console.log('Continuous CSR Upload Service initialized successfully!');
+  logger.info('Continuous CSR Upload Service initialized successfully!');
 }
 
 // Start the service
 initContinuousUpload().catch(error => {
-  console.error('Failed to initialize continuous upload service:', error);
+  logger.error('Failed to initialize continuous upload service:', error);
 });

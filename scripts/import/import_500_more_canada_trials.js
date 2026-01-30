@@ -31,7 +31,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data - this shouldn't happen if import_batch_of_50.js has been run before
@@ -51,7 +51,7 @@ function getProgressData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading progress file:', error.message);
+    logger.error('Error reading progress file:', error.message);
   }
 
   // Default progress data
@@ -69,33 +69,33 @@ function getProgressData() {
 function saveProgressData(data) {
   try {
     fs.writeFileSync(PROGRESS_LOG, JSON.stringify(data, null, 2));
-    console.log('Updated progress data saved');
+    logger.info('Updated progress data saved');
   } catch (error) {
-    console.error('Error saving progress file:', error.message);
+    logger.error('Error saving progress file:', error.message);
   }
 }
 
 // Run a single batch
 async function runSingleBatch() {
-  console.log(`\n\n=== Running batch import using ${IMPORT_SCRIPT} ===\n`);
+  logger.info(`\n\n=== Running batch import using ${IMPORT_SCRIPT} ===\n`);
 
   try {
     const { stdout, stderr } = await execPromise(`node ${IMPORT_SCRIPT}`);
-    console.log(stdout);
+    logger.info(stdout);
     if (stderr) {
-      console.error('Stderr:', stderr);
+      logger.error('Stderr:', stderr);
       return false;
     }
     return true;
   } catch (error) {
-    console.error('Error executing batch import:', error.message);
+    logger.error('Error executing batch import:', error.message);
     return false;
   }
 }
 
 // Run all batches
 async function runAllBatches() {
-  console.log(`
+  logger.info(`
 =========================================================
 IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
 =========================================================
@@ -104,13 +104,13 @@ IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
   // Initialize progress
   const progress = getProgressData();
   if (progress.batchesProcessed >= TOTAL_BATCHES) {
-    console.log('All batches have already been processed. Import complete!');
+    logger.info('All batches have already been processed. Import complete!');
     return;
   }
 
   // If resuming, show status
   if (progress.batchesProcessed > 0) {
-    console.log(`Resuming import from batch ${progress.batchesProcessed + 1}/${TOTAL_BATCHES}`);
+    logger.info(`Resuming import from batch ${progress.batchesProcessed + 1}/${TOTAL_BATCHES}`);
   }
 
   progress.status = 'in_progress';
@@ -118,18 +118,18 @@ IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
 
   // Initial tracking data
   const initialTracking = getTrackingData();
-  console.log(`Starting with ID: HC-${initialTracking.nextId}`);
-  console.log(`Current trials imported: ${initialTracking.trialsImported}`);
+  logger.info(`Starting with ID: HC-${initialTracking.nextId}`);
+  logger.info(`Current trials imported: ${initialTracking.trialsImported}`);
 
   // Run each batch
   let batchSuccess = true;
   for (let i = progress.batchesProcessed; i < TOTAL_BATCHES; i++) {
-    console.log(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
+    logger.info(`\n=== Processing batch ${i + 1}/${TOTAL_BATCHES} ===\n`);
 
     batchSuccess = await runSingleBatch();
 
     if (!batchSuccess) {
-      console.error(`Batch ${i + 1} failed. Stopping process.`);
+      logger.error(`Batch ${i + 1} failed. Stopping process.`);
       progress.status = 'failed';
       progress.errors.push({
         batch: i + 1,
@@ -147,11 +147,11 @@ IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
 
     // Get updated tracking data
     const currentTracking = getTrackingData();
-    console.log(`\nProgress: ${currentTracking.trialsImported} trials imported`);
+    logger.info(`\nProgress: ${currentTracking.trialsImported} trials imported`);
 
     // Delay before next batch (except for the last one)
     if (i < TOTAL_BATCHES - 1) {
-      console.log(`Waiting ${BATCH_DELAY_MS / 1000} seconds before next batch...\n`);
+      logger.info(`Waiting ${BATCH_DELAY_MS / 1000} seconds before next batch...\n`);
       await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
     }
   }
@@ -165,7 +165,7 @@ IMPORTING 500 MORE HEALTH CANADA TRIALS IN BATCHES OF 50
     progress.completionTimestamp = new Date().toISOString();
     saveProgressData(progress);
 
-    console.log(`
+    logger.info(`
 =========================================================
             IMPORT OF 500 TRIALS COMPLETED
 =========================================================
@@ -175,7 +175,7 @@ Added: ${trialsImported} new trials
 Progress toward 4,000 target: ${Math.round((finalTracking.trialsImported / 4000) * 100)}%
     `);
   } else {
-    console.log(`
+    logger.info(`
 =========================================================
             IMPORT PROCESS INCOMPLETE
 =========================================================
@@ -190,5 +190,5 @@ Status: ${progress.status}
 
 // Run the main function
 runAllBatches().catch(error => {
-  console.error('Fatal error during batch processing:', error);
+  logger.error('Fatal error during batch processing:', error);
 });

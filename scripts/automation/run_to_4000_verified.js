@@ -30,7 +30,7 @@ async function getHealthCanadaCount() {
     const result = await pool.query("SELECT COUNT(*) FROM csr_reports WHERE title LIKE 'HC%'");
     return parseInt(result.rows[0].count, 10);
   } catch (error) {
-    console.error('Error getting Health Canada trial count:', error);
+    logger.error('Error getting Health Canada trial count:', error);
     return 0;
   }
 }
@@ -59,7 +59,7 @@ function getTrackingData() {
         trackingData.runs = [];
       }
     } catch (error) {
-      console.error('Error reading tracking file:', error);
+      logger.error('Error reading tracking file:', error);
     }
   }
 
@@ -77,17 +77,17 @@ function saveTrackingData(data) {
  * Run the main import process
  */
 async function main() {
-  console.log('=== Run To 4000 Verified Health Canada Trials ===');
-  console.log('Starting at:', new Date().toISOString());
+  logger.info('=== Run To 4000 Verified Health Canada Trials ===');
+  logger.info('Starting at:', new Date().toISOString());
 
   try {
     // Get initial count
     const initialCount = await getHealthCanadaCount();
-    console.log(`Starting with ${initialCount} Health Canada trials`);
-    console.log(`Target: ${TARGET_COUNT} trials`);
+    logger.info(`Starting with ${initialCount} Health Canada trials`);
+    logger.info(`Target: ${TARGET_COUNT} trials`);
 
     if (initialCount >= TARGET_COUNT) {
-      console.log(`Target already reached! Current count: ${initialCount}`);
+      logger.info(`Target already reached! Current count: ${initialCount}`);
       return;
     }
 
@@ -104,7 +104,7 @@ async function main() {
     let runCount = 0;
 
     while (currentCount < TARGET_COUNT && runCount < MAX_RUNS) {
-      console.log(`\n=== Starting batch sequence run ${runCount + 1} ===`);
+      logger.info(`\n=== Starting batch sequence run ${runCount + 1} ===`);
 
       // Run the batch sequence script
       try {
@@ -113,15 +113,15 @@ async function main() {
           timeout: 1800000, // 30 minutes timeout
         });
       } catch (error) {
-        console.error('Batch sequence run timed out or failed:', error.message);
+        logger.error('Batch sequence run timed out or failed:', error.message);
       }
 
       // Get updated count
       const newCount = await getHealthCanadaCount();
-      console.log(`\nAfter run ${runCount + 1}:`);
-      console.log(`- Previous count: ${currentCount}`);
-      console.log(`- Current count: ${newCount}`);
-      console.log(`- Progress: ${Math.round((newCount / TARGET_COUNT) * 100)}%`);
+      logger.info(`\nAfter run ${runCount + 1}:`);
+      logger.info(`- Previous count: ${currentCount}`);
+      logger.info(`- Current count: ${newCount}`);
+      logger.info(`- Progress: ${Math.round((newCount / TARGET_COUNT) * 100)}%`);
 
       // Update tracking
       trackingData.runs[trackingData.runs.length - 1].runNumber = runCount + 1;
@@ -135,38 +135,38 @@ async function main() {
       runCount++;
 
       if (currentCount >= TARGET_COUNT) {
-        console.log(`\n=== Target Reached! ===`);
-        console.log(`Target of ${TARGET_COUNT} trials has been reached.`);
-        console.log(`Final count: ${currentCount}`);
+        logger.info(`\n=== Target Reached! ===`);
+        logger.info(`Target of ${TARGET_COUNT} trials has been reached.`);
+        logger.info(`Final count: ${currentCount}`);
         break;
       }
 
       if (runCount >= MAX_RUNS) {
-        console.log(`\n=== Maximum Runs Reached ===`);
-        console.log(`Reached maximum number of runs (${MAX_RUNS}).`);
-        console.log(`Current count: ${currentCount}`);
-        console.log(`Remaining to target: ${TARGET_COUNT - currentCount}`);
+        logger.info(`\n=== Maximum Runs Reached ===`);
+        logger.info(`Reached maximum number of runs (${MAX_RUNS}).`);
+        logger.info(`Current count: ${currentCount}`);
+        logger.info(`Remaining to target: ${TARGET_COUNT - currentCount}`);
         break;
       }
     }
 
     // Final summary
-    console.log(`\n=== Final Summary ===`);
-    console.log(`Starting count: ${initialCount}`);
-    console.log(`Final count: ${currentCount}`);
-    console.log(`Total imported: ${currentCount - initialCount}`);
-    console.log(`Progress to target: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
+    logger.info(`\n=== Final Summary ===`);
+    logger.info(`Starting count: ${initialCount}`);
+    logger.info(`Final count: ${currentCount}`);
+    logger.info(`Total imported: ${currentCount - initialCount}`);
+    logger.info(`Progress to target: ${Math.round((currentCount / TARGET_COUNT) * 100)}%`);
   } catch (error) {
-    console.error('Error during automated import process:', error);
+    logger.error('Error during automated import process:', error);
   } finally {
     await pool.end();
   }
 
-  console.log('Process completed at:', new Date().toISOString());
+  logger.info('Process completed at:', new Date().toISOString());
 }
 
 // Run the main function
 main().catch(error => {
-  console.error('Fatal error:', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });

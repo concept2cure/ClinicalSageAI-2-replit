@@ -16,7 +16,7 @@ function createCheckpoint(description) {
     }
   });
 
-  console.log(`Checkpoint saved: ${checkpointDir}`);
+  logger.info(`Checkpoint saved: ${checkpointDir}`);
 }
 
 // Usage: node scripts/save_checkpoint.js "description"

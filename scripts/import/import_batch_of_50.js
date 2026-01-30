@@ -135,7 +135,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data
@@ -151,9 +151,9 @@ function getTrackingData() {
 function saveTrackingData(data) {
   try {
     fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
-    console.log('Updated tracking data saved');
+    logger.info('Updated tracking data saved');
   } catch (error) {
-    console.error('Error saving tracking file:', error.message);
+    logger.error('Error saving tracking file:', error.message);
   }
 }
 
@@ -164,7 +164,7 @@ function getSuccessfulImports() {
       return JSON.parse(fs.readFileSync(SUCCESSFUL_IMPORTS_LOG, 'utf8'));
     }
   } catch (error) {
-    console.error('Error reading successful imports file:', error.message);
+    logger.error('Error reading successful imports file:', error.message);
   }
   return [];
 }
@@ -178,7 +178,7 @@ function logSuccessfulImport(trialId) {
       fs.writeFileSync(SUCCESSFUL_IMPORTS_LOG, JSON.stringify(successful, null, 2));
     }
   } catch (error) {
-    console.error('Error logging successful import:', error.message);
+    logger.error('Error logging successful import:', error.message);
   }
 }
 
@@ -193,7 +193,7 @@ function logFailedImport(trialId, reason) {
     failed.push({ trialId, reason, timestamp: new Date().toISOString() });
     fs.writeFileSync(FAILED_IMPORTS_LOG, JSON.stringify(failed, null, 2));
   } catch (error) {
-    console.error('Error logging failed import:', error.message);
+    logger.error('Error logging failed import:', error.message);
   }
 }
 
@@ -221,7 +221,7 @@ function generateTrials(count, startId) {
 
     // Skip if already successfully imported
     if (successfulImports.includes(nctrialId)) {
-      console.log(`Skipping already imported trial ID: ${nctrialId}`);
+      logger.info(`Skipping already imported trial ID: ${nctrialId}`);
       continue;
     }
 
@@ -345,14 +345,14 @@ function createProcessedCSR(trial) {
     fs.writeFileSync(filePath, JSON.stringify(trial, null, 2));
     return true;
   } catch (error) {
-    console.error(`Error creating processed CSR file for ${trial.nctrialId}:`, error.message);
+    logger.error(`Error creating processed CSR file for ${trial.nctrialId}:`, error.message);
     return false;
   }
 }
 
 // Import trials to the database with enhanced error handling
 async function importTrialsToDatabase(trials) {
-  console.log(`Starting import of ${trials.length} trials...`);
+  logger.info(`Starting import of ${trials.length} trials...`);
   const client = await pool.connect();
 
   let importedCount = 0;
@@ -368,7 +368,7 @@ async function importTrialsToDatabase(trials) {
       try {
         // Check if trial already exists
         if (await checkTrialExists(client, trial.nctrialId)) {
-          console.log(`Trial ${trial.nctrialId} already exists in database, skipping`);
+          logger.info(`Trial ${trial.nctrialId} already exists in database, skipping`);
           skippedCount++;
           continue;
         }
@@ -443,22 +443,22 @@ async function importTrialsToDatabase(trials) {
           logSuccessfulImport(trial.nctrialId);
 
           importedCount++;
-          console.log(`Successfully imported trial ${trial.nctrialId}`);
+          logger.info(`Successfully imported trial ${trial.nctrialId}`);
         } catch (trialError) {
           // Rollback on error for this trial
           await client.query('ROLLBACK');
-          console.error(`Error importing trial ${trial.nctrialId}:`, trialError.message);
+          logger.error(`Error importing trial ${trial.nctrialId}:`, trialError.message);
           logFailedImport(trial.nctrialId, trialError.message);
           failedCount++;
         }
       } catch (outerError) {
-        console.error(`Fatal error processing trial ${trial.nctrialId}:`, outerError.message);
+        logger.error(`Fatal error processing trial ${trial.nctrialId}:`, outerError.message);
         logFailedImport(trial.nctrialId, `Fatal error: ${outerError.message}`);
         failedCount++;
       }
     }
 
-    console.log(`
+    logger.info(`
 === Import Summary ===
 Total Health Canada studies processed: ${trials.length}
 Successfully imported: ${importedCount}
@@ -473,7 +473,7 @@ Failed imports: ${failedCount}
       successfulIds: successfulBatchImports,
     };
   } catch (error) {
-    console.error('Error during overall import process:', error.message);
+    logger.error('Error during overall import process:', error.message);
     throw error;
   } finally {
     client.release();
@@ -506,13 +506,13 @@ async function getTotalTrialCount() {
 
 // Main function - run batch of 50 trials
 async function runBatchOf50() {
-  console.log('=== Starting Import of 50 Health Canada Trials ===');
-  console.log('Timestamp:', new Date().toISOString());
+  logger.info('=== Starting Import of 50 Health Canada Trials ===');
+  logger.info('Timestamp:', new Date().toISOString());
 
   try {
     // Get tracking data
     const trackingData = getTrackingData();
-    console.log('Current tracking data:', JSON.stringify(trackingData, null, 2));
+    logger.info('Current tracking data:', JSON.stringify(trackingData, null, 2));
 
     // Ensure importedIds array exists
     if (!trackingData.importedIds) {
@@ -523,7 +523,7 @@ async function runBatchOf50() {
     const currentHCCount = await getCurrentHealthCanadaCount();
     const totalTrials = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Current Database Status ===
 Total trials in database: ${totalTrials}
 Health Canada trials: ${currentHCCount}
@@ -533,7 +533,7 @@ Progress: ${Math.round((currentHCCount / 4000) * 100)}%
 
     // Generate and import trials
     console.time('Trial generation');
-    console.log(
+    logger.info(
       `Generating batch of ${BATCH_SIZE} trials starting from ID: HC-${trackingData.nextId}`
     );
     const trials = generateTrials(BATCH_SIZE, trackingData.nextId);
@@ -554,7 +554,7 @@ Progress: ${Math.round((currentHCCount / 4000) * 100)}%
     const newHCCount = await getCurrentHealthCanadaCount();
     const newTotal = await getTotalTrialCount();
 
-    console.log(`
+    logger.info(`
 === Updated Database Status ===
 Total trials in database: ${newTotal}
 Health Canada trials: ${newHCCount}
@@ -564,7 +564,7 @@ Progress: ${newHCCount}/4000 Health Canada trials (${Math.round((newHCCount / 40
 Batch completed. To continue importing, run this script again.
 `);
   } catch (error) {
-    console.error('Error during import process:', error);
+    logger.error('Error during import process:', error);
   } finally {
     await pool.end();
   }

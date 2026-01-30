@@ -21,7 +21,7 @@ function getTrackingData() {
       return data;
     }
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
   }
 
   // Default tracking data
@@ -37,13 +37,13 @@ function saveTrackingData(data) {
   try {
     fs.writeFileSync(TRACKING_FILE, JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error('Error saving tracking file:', error.message);
+    logger.error('Error saving tracking file:', error.message);
   }
 }
 
 // Run batches of imports
 async function runBatches() {
-  console.log(`Starting to import ${BATCH_COUNT} batches of ${BATCH_SIZE} trials each`);
+  logger.info(`Starting to import ${BATCH_COUNT} batches of ${BATCH_SIZE} trials each`);
 
   // Update the batch size in the original script
   const originalScript = fs.readFileSync('batch_import_large_canada.js', 'utf8');
@@ -52,27 +52,27 @@ async function runBatches() {
     `const BATCH_SIZE = ${BATCH_SIZE};`
   );
   fs.writeFileSync('temp_batch_import.js', updatedScript);
-  console.log('Created temporary import script with smaller batch size');
+  logger.info('Created temporary import script with smaller batch size');
 
   // Run multiple batches
   for (let i = 0; i < BATCH_COUNT; i++) {
-    console.log(`\n=== Running Batch ${i + 1} of ${BATCH_COUNT} ===`);
+    logger.info(`\n=== Running Batch ${i + 1} of ${BATCH_COUNT} ===`);
     try {
       // Run the import script
       execSync('node temp_batch_import.js', { stdio: 'inherit' });
 
       // Get updated tracking data
       const trackingData = getTrackingData();
-      console.log(`Completed batch ${i + 1}. New tracking data:`, trackingData);
+      logger.info(`Completed batch ${i + 1}. New tracking data:`, trackingData);
     } catch (error) {
-      console.error(`Error running batch ${i + 1}:`, error.message);
+      logger.error(`Error running batch ${i + 1}:`, error.message);
       break;
     }
   }
 
   // Clean up
   fs.unlinkSync('temp_batch_import.js');
-  console.log('\nImport process completed.');
+  logger.info('\nImport process completed.');
 }
 
 // Run the batches

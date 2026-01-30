@@ -16,7 +16,7 @@ class BestPracticesAuditor {
   }
 
   auditProject() {
-    console.log('🔍 Auditing Development Best Practices...\n');
+    logger.info('🔍 Auditing Development Best Practices...\n');
     
     this.checkProjectStructure();
     this.checkSecurityPractices();
@@ -30,7 +30,7 @@ class BestPracticesAuditor {
   }
 
   checkProjectStructure() {
-    console.log('📁 Checking Project Structure...');
+    logger.info('📁 Checking Project Structure...');
     
     const requiredDirs = [
       'tests',
@@ -53,11 +53,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Create .env.example with sanitized environment variables');
     }
 
-    console.log('   ✅ Project structure audit complete');
+    logger.info('   ✅ Project structure audit complete');
   }
 
   checkSecurityPractices() {
-    console.log('🔒 Checking Security Practices...');
+    logger.info('🔒 Checking Security Practices...');
     
     // Check for secrets in code
     const sensitivePatterns = [
@@ -82,11 +82,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Implement input validation using Joi or Yup');
     }
 
-    console.log('   ✅ Security practices audit complete');
+    logger.info('   ✅ Security practices audit complete');
   }
 
   checkTestingPractices() {
-    console.log('🧪 Checking Testing Practices...');
+    logger.info('🧪 Checking Testing Practices...');
     
     const hasJest = fs.existsSync('jest.config.js') || this.checkFileContains('package.json', 'jest');
     const hasTestFiles = this.countFiles('**/*.test.js') + this.countFiles('**/*.spec.js') > 0;
@@ -107,11 +107,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Add test coverage reporting to package.json scripts');
     }
 
-    console.log('   ✅ Testing practices audit complete');
+    logger.info('   ✅ Testing practices audit complete');
   }
 
   checkDocumentationPractices() {
-    console.log('📚 Checking Documentation Practices...');
+    logger.info('📚 Checking Documentation Practices...');
     
     if (!fs.existsSync('README.md') || fs.statSync('README.md').size < 1000) {
       this.addFinding('POOR_README', 'README.md is missing or minimal', 'MEDIUM');
@@ -134,11 +134,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Document APIs using Swagger/OpenAPI or markdown');
     }
 
-    console.log('   ✅ Documentation practices audit complete');
+    logger.info('   ✅ Documentation practices audit complete');
   }
 
   checkCodeQualityPractices() {
-    console.log('✨ Checking Code Quality Practices...');
+    logger.info('✨ Checking Code Quality Practices...');
     
     // Check for linting
     if (!fs.existsSync('.eslintrc.js') && !fs.existsSync('.eslintrc.json')) {
@@ -165,11 +165,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Set up pre-commit hooks with Husky for quality gates');
     }
 
-    console.log('   ✅ Code quality practices audit complete');
+    logger.info('   ✅ Code quality practices audit complete');
   }
 
   checkDeploymentPractices() {
-    console.log('🚀 Checking Deployment Practices...');
+    logger.info('🚀 Checking Deployment Practices...');
     
     // Check for CI/CD
     if (!fs.existsSync('.github/workflows') && !fs.existsSync('.replit-ci.yml')) {
@@ -189,11 +189,11 @@ class BestPracticesAuditor {
       this.addRecommendation('Implement health check endpoints for monitoring');
     }
 
-    console.log('   ✅ Deployment practices audit complete');
+    logger.info('   ✅ Deployment practices audit complete');
   }
 
   checkMonitoringPractices() {
-    console.log('📊 Checking Monitoring Practices...');
+    logger.info('📊 Checking Monitoring Practices...');
     
     // Check for logging
     if (!this.checkFileContains('server', 'winston') && !this.checkFileContains('server', 'pino')) {
@@ -213,7 +213,7 @@ class BestPracticesAuditor {
       this.addRecommendation('Consider adding application metrics collection');
     }
 
-    console.log('   ✅ Monitoring practices audit complete');
+    logger.info('   ✅ Monitoring practices audit complete');
   }
 
   // Helper methods
@@ -318,35 +318,35 @@ class BestPracticesAuditor {
   }
 
   generateReport() {
-    console.log('\n📋 DEVELOPMENT BEST PRACTICES AUDIT REPORT');
-    console.log('='.repeat(50));
+    logger.info('\n📋 DEVELOPMENT BEST PRACTICES AUDIT REPORT');
+    logger.info('='.repeat(50));
     
     const criticalCount = this.findings.filter(f => f.severity === 'CRITICAL').length;
     const highCount = this.findings.filter(f => f.severity === 'HIGH').length;
     const mediumCount = this.findings.filter(f => f.severity === 'MEDIUM').length;
     const lowCount = this.findings.filter(f => f.severity === 'LOW').length;
     
-    console.log(`\n📊 SUMMARY:`);
-    console.log(`   🚨 Critical: ${criticalCount}`);
-    console.log(`   ⚠️  High: ${highCount}`);
-    console.log(`   📋 Medium: ${mediumCount}`);
-    console.log(`   💡 Low: ${lowCount}`);
-    console.log(`   📝 Total: ${this.findings.length}`);
+    logger.info(`\n📊 SUMMARY:`);
+    logger.info(`   🚨 Critical: ${criticalCount}`);
+    logger.info(`   ⚠️  High: ${highCount}`);
+    logger.info(`   📋 Medium: ${mediumCount}`);
+    logger.info(`   💡 Low: ${lowCount}`);
+    logger.info(`   📝 Total: ${this.findings.length}`);
     
     if (this.findings.length > 0) {
-      console.log(`\n🔍 FINDINGS:`);
+      logger.info(`\n🔍 FINDINGS:`);
       this.findings.forEach((finding, index) => {
         const icon = finding.severity === 'CRITICAL' ? '🚨' : 
                     finding.severity === 'HIGH' ? '⚠️' : 
                     finding.severity === 'MEDIUM' ? '📋' : '💡';
-        console.log(`   ${index + 1}. ${icon} [${finding.severity}] ${finding.description}`);
+        logger.info(`   ${index + 1}. ${icon} [${finding.severity}] ${finding.description}`);
       });
     }
     
     if (this.recommendations.length > 0) {
-      console.log(`\n💡 RECOMMENDATIONS:`);
+      logger.info(`\n💡 RECOMMENDATIONS:`);
       this.recommendations.forEach((rec, index) => {
-        console.log(`   ${index + 1}. ${rec}`);
+        logger.info(`   ${index + 1}. ${rec}`);
       });
     }
     
@@ -359,17 +359,17 @@ class BestPracticesAuditor {
     };
     
     fs.writeFileSync('development-audit-report.json', JSON.stringify(report, null, 2));
-    console.log(`\n📄 Detailed report saved to: development-audit-report.json`);
+    logger.info(`\n📄 Detailed report saved to: development-audit-report.json`);
     
-    console.log(`\n🎯 PRIORITY ACTIONS:`);
+    logger.info(`\n🎯 PRIORITY ACTIONS:`);
     if (criticalCount > 0) {
-      console.log(`   1. Address ${criticalCount} critical issue(s) immediately`);
+      logger.info(`   1. Address ${criticalCount} critical issue(s) immediately`);
     }
     if (highCount > 0) {
-      console.log(`   2. Plan to fix ${highCount} high-priority issue(s) this sprint`);
+      logger.info(`   2. Plan to fix ${highCount} high-priority issue(s) this sprint`);
     }
     if (mediumCount > 0) {
-      console.log(`   3. Schedule ${mediumCount} medium-priority improvement(s) for next sprint`);
+      logger.info(`   3. Schedule ${mediumCount} medium-priority improvement(s) for next sprint`);
     }
   }
 }

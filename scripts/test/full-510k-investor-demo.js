@@ -71,7 +71,7 @@ if (!fs.existsSync(CONFIG.outputDir)) {
  * Run the complete 510k workflow demonstration
  */
 async function runFullDemonstration() {
-  console.log('=== Starting Full 510k eSTAR Investor Demonstration ===');
+  logger.info('=== Starting Full 510k eSTAR Investor Demonstration ===');
   const startTime = new Date();
 
   // Create log file
@@ -85,7 +85,7 @@ async function runFullDemonstration() {
   const log = message => {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] ${message}`;
-    console.log(logMessage);
+    logger.info(logMessage);
     logStream.write(logMessage + '\n');
   };
 
@@ -846,16 +846,16 @@ if (require.main === module) {
   runFullDemonstration()
     .then(result => {
       if (result.success) {
-        console.log(`\nDemonstration completed successfully in ${result.duration} seconds`);
-        console.log(`Log file: ${result.logFile}`);
+        logger.info(`\nDemonstration completed successfully in ${result.duration} seconds`);
+        logger.info(`Log file: ${result.logFile}`);
       } else {
-        console.error(`\nDemonstration failed: ${result.error}`);
-        console.error(`Log file: ${result.logFile}`);
+        logger.error(`\nDemonstration failed: ${result.error}`);
+        logger.error(`Log file: ${result.logFile}`);
         process.exit(1);
       }
     })
     .catch(error => {
-      console.error('Fatal error:', error);
+      logger.error('Fatal error:', error);
       process.exit(1);
     });
 }

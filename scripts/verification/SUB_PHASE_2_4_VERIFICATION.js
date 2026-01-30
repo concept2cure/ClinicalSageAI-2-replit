@@ -11,8 +11,8 @@
  * - Automated Workflow Suggestions based on AI analysis
  */
 
-console.log('🧠 SUB-PHASE 2.4 VERIFICATION: Advanced Commitment Intelligence Features');
-console.log('===============================================================================');
+logger.info('🧠 SUB-PHASE 2.4 VERIFICATION: Advanced Commitment Intelligence Features');
+logger.info('===============================================================================');
 
 // Verification Constants
 const VERIFICATION_ITEMS = [
@@ -80,83 +80,83 @@ const VERIFICATION_ITEMS = [
 
 // Verification Functions
 function verifyEnhancedAIAnalysis() {
-  console.log('\n🧠 ENHANCED AI-POWERED COMMITMENT ANALYSIS VERIFICATION:');
-  console.log('  • Enhanced DocumentSpecificAIService prompts with advanced intelligence');
-  console.log('  • AI-powered insight generation for commitment importance analysis');
-  console.log('  • Next steps recommendations with actionable remediation points');
-  console.log('  • Risk factors identification for each individual commitment');
-  console.log('  • Dependencies mapping to track related commitments and processes');
-  console.log(
+  logger.info('\n🧠 ENHANCED AI-POWERED COMMITMENT ANALYSIS VERIFICATION:');
+  logger.info('  • Enhanced DocumentSpecificAIService prompts with advanced intelligence');
+  logger.info('  • AI-powered insight generation for commitment importance analysis');
+  logger.info('  • Next steps recommendations with actionable remediation points');
+  logger.info('  • Risk factors identification for each individual commitment');
+  logger.info('  • Dependencies mapping to track related commitments and processes');
+  logger.info(
     '  • Advanced JSON response structure with insight, nextSteps, riskFactors, dependencies'
   );
-  console.log('  • Sub-Phase 2.4 advanced intelligence integration in extraction process');
+  logger.info('  • Sub-Phase 2.4 advanced intelligence integration in extraction process');
   return true;
 }
 
 function verifyAdvancedRiskAssessment() {
-  console.log('\n🎯 ADVANCED RISK ASSESSMENT DASHBOARD VERIFICATION:');
-  console.log('  • Granular risk statistics query with High, Medium, Low, Unassigned breakdown');
-  console.log('  • Critical metrics calculation: overdue, due soon, critical priority counts');
-  console.log('  • Enhanced risk level determination with multiple factor analysis');
-  console.log('  • Risk breakdown structure with TotalAssessed calculation');
-  console.log('  • Overall risk level algorithm: High/Medium/Low based on multiple criteria');
-  console.log('  • Risk factors array with specific counts and detailed descriptions');
-  console.log('  • Mitigation strategies enhanced with risk-specific recommendations');
-  console.log('  • Critical metrics dashboard with comprehensive risk overview');
+  logger.info('\n🎯 ADVANCED RISK ASSESSMENT DASHBOARD VERIFICATION:');
+  logger.info('  • Granular risk statistics query with High, Medium, Low, Unassigned breakdown');
+  logger.info('  • Critical metrics calculation: overdue, due soon, critical priority counts');
+  logger.info('  • Enhanced risk level determination with multiple factor analysis');
+  logger.info('  • Risk breakdown structure with TotalAssessed calculation');
+  logger.info('  • Overall risk level algorithm: High/Medium/Low based on multiple criteria');
+  logger.info('  • Risk factors array with specific counts and detailed descriptions');
+  logger.info('  • Mitigation strategies enhanced with risk-specific recommendations');
+  logger.info('  • Critical metrics dashboard with comprehensive risk overview');
   return true;
 }
 
 function verifyComplianceTrendAnalysis() {
-  console.log('\n📈 COMPLIANCE TREND ANALYSIS VERIFICATION:');
-  console.log('  • Historical compliance trends with 12-week data analysis');
-  console.log('  • Predictive insights framework for deadline risk assessment');
-  console.log('  • Compliance score trending with average, min, max analysis');
-  console.log('  • Performance gap analysis comparing to industry benchmarks');
-  console.log('  • Automated trend detection for declining compliance patterns');
-  console.log('  • Department-specific compliance breakdown with completion rates');
-  console.log('  • Benchmark comparison with industry average performance metrics');
+  logger.info('\n📈 COMPLIANCE TREND ANALYSIS VERIFICATION:');
+  logger.info('  • Historical compliance trends with 12-week data analysis');
+  logger.info('  • Predictive insights framework for deadline risk assessment');
+  logger.info('  • Compliance score trending with average, min, max analysis');
+  logger.info('  • Performance gap analysis comparing to industry benchmarks');
+  logger.info('  • Automated trend detection for declining compliance patterns');
+  logger.info('  • Department-specific compliance breakdown with completion rates');
+  logger.info('  • Benchmark comparison with industry average performance metrics');
   return true;
 }
 
 function verifyCrossReferenceIntelligence() {
-  console.log('\n🔗 CROSS-REFERENCE INTELLIGENCE VERIFICATION:');
-  console.log('  • Dependency tracking field added to commitment analysis');
-  console.log('  • Cross-reference pattern detection in AI prompts');
-  console.log('  • Automated relationship mapping between related commitments');
-  console.log('  • Coherence scoring framework for commitment consistency');
-  console.log('  • Conflict detection capabilities between commitments');
-  console.log('  • Intelligent workflow suggestions based on dependency analysis');
-  console.log('  • Enhanced commitment structure with dependencies array');
+  logger.info('\n🔗 CROSS-REFERENCE INTELLIGENCE VERIFICATION:');
+  logger.info('  • Dependency tracking field added to commitment analysis');
+  logger.info('  • Cross-reference pattern detection in AI prompts');
+  logger.info('  • Automated relationship mapping between related commitments');
+  logger.info('  • Coherence scoring framework for commitment consistency');
+  logger.info('  • Conflict detection capabilities between commitments');
+  logger.info('  • Intelligent workflow suggestions based on dependency analysis');
+  logger.info('  • Enhanced commitment structure with dependencies array');
   return true;
 }
 
 function verifyBackendAPIIntegration() {
-  console.log('\n🔧 BACKEND API INTEGRATION VERIFICATION:');
-  console.log('  • Enhanced dashboard API with Sub-Phase 2.4 risk assessment');
-  console.log('  • Granular risk statistics query implementation');
-  console.log('  • Advanced analytics endpoints with predictive insights');
-  console.log('  • Real-time risk assessment calculations');
-  console.log('  • Comprehensive dashboard response structure');
-  console.log('  • Performance optimization for complex intelligence queries');
-  console.log('  • Error handling for advanced intelligence features');
+  logger.info('\n🔧 BACKEND API INTEGRATION VERIFICATION:');
+  logger.info('  • Enhanced dashboard API with Sub-Phase 2.4 risk assessment');
+  logger.info('  • Granular risk statistics query implementation');
+  logger.info('  • Advanced analytics endpoints with predictive insights');
+  logger.info('  • Real-time risk assessment calculations');
+  logger.info('  • Comprehensive dashboard response structure');
+  logger.info('  • Performance optimization for complex intelligence queries');
+  logger.info('  • Error handling for advanced intelligence features');
   return true;
 }
 
 function verifyIntelligenceFeatures() {
-  console.log('\n🤖 ADVANCED INTELLIGENCE FEATURES VERIFICATION:');
-  console.log('  • AI-powered commitment analysis with contextual insights');
-  console.log('  • Risk assessment dashboard with granular statistics');
-  console.log('  • Compliance trend analysis with predictive capabilities');
-  console.log('  • Cross-reference intelligence with dependency mapping');
-  console.log('  • Automated workflow suggestions based on AI analysis');
-  console.log('  • Enhanced commitment structure with intelligence fields');
-  console.log('  • Production-ready advanced intelligence capabilities');
+  logger.info('\n🤖 ADVANCED INTELLIGENCE FEATURES VERIFICATION:');
+  logger.info('  • AI-powered commitment analysis with contextual insights');
+  logger.info('  • Risk assessment dashboard with granular statistics');
+  logger.info('  • Compliance trend analysis with predictive capabilities');
+  logger.info('  • Cross-reference intelligence with dependency mapping');
+  logger.info('  • Automated workflow suggestions based on AI analysis');
+  logger.info('  • Enhanced commitment structure with intelligence fields');
+  logger.info('  • Production-ready advanced intelligence capabilities');
   return true;
 }
 
 // Main Verification Function
 function runSubPhase24Verification() {
-  console.log('🚀 STARTING SUB-PHASE 2.4 COMPREHENSIVE VERIFICATION...\n');
+  logger.info('🚀 STARTING SUB-PHASE 2.4 COMPREHENSIVE VERIFICATION...\n');
 
   const verificationResults = [];
 
@@ -172,31 +172,31 @@ function runSubPhase24Verification() {
   const passedChecks = verificationResults.filter(result => result).length;
   const totalChecks = verificationResults.length;
 
-  console.log('\n' + '='.repeat(80));
-  console.log('📋 SUB-PHASE 2.4 VERIFICATION SUMMARY');
-  console.log('='.repeat(80));
-  console.log(`✅ Verification Results: ${passedChecks}/${totalChecks} checks passed`);
-  console.log(`🎯 Success Rate: ${Math.round((passedChecks / totalChecks) * 100)}%`);
+  logger.info('\n' + '='.repeat(80));
+  logger.info('📋 SUB-PHASE 2.4 VERIFICATION SUMMARY');
+  logger.info('='.repeat(80));
+  logger.info(`✅ Verification Results: ${passedChecks}/${totalChecks} checks passed`);
+  logger.info(`🎯 Success Rate: ${Math.round((passedChecks / totalChecks) * 100)}%`);
 
   if (passedChecks === totalChecks) {
-    console.log('🎉 SUB-PHASE 2.4 ADVANCED COMMITMENT INTELLIGENCE FEATURES COMPLETE!');
-    console.log('');
-    console.log('MAJOR INTELLIGENCE CAPABILITIES VERIFIED:');
-    console.log('• ✅ Enhanced AI-Powered Commitment Analysis with insights and recommendations');
-    console.log('• ✅ Advanced Risk Assessment Dashboard with granular risk statistics');
-    console.log('• ✅ Compliance Trend Analysis with predictive insights and benchmarking');
-    console.log('• ✅ Cross-Reference Intelligence with dependency mapping and conflict detection');
-    console.log('• ✅ Automated Workflow Suggestions based on AI analysis and risk assessment');
-    console.log('• ✅ Backend API Integration with enhanced dashboard and analytics endpoints');
-    console.log('• ✅ Advanced Intelligence Features ready for biotech/pharma workflows');
-    console.log('• ✅ Production-Ready AI-Powered Regulatory Compliance Intelligence');
-    console.log('');
-    console.log('🏆 READY FOR ADVANCED INTELLIGENCE TESTING AND VALIDATION');
-    console.log('📊 Transform Extract Commitments Modal into AI-Powered Intelligence Hub');
-    console.log('🎯 Enhanced commitment analysis with contextual insights and recommendations');
-    console.log('⚡ Advanced risk assessment with granular statistics and predictive analytics');
+    logger.info('🎉 SUB-PHASE 2.4 ADVANCED COMMITMENT INTELLIGENCE FEATURES COMPLETE!');
+    logger.info('');
+    logger.info('MAJOR INTELLIGENCE CAPABILITIES VERIFIED:');
+    logger.info('• ✅ Enhanced AI-Powered Commitment Analysis with insights and recommendations');
+    logger.info('• ✅ Advanced Risk Assessment Dashboard with granular risk statistics');
+    logger.info('• ✅ Compliance Trend Analysis with predictive insights and benchmarking');
+    logger.info('• ✅ Cross-Reference Intelligence with dependency mapping and conflict detection');
+    logger.info('• ✅ Automated Workflow Suggestions based on AI analysis and risk assessment');
+    logger.info('• ✅ Backend API Integration with enhanced dashboard and analytics endpoints');
+    logger.info('• ✅ Advanced Intelligence Features ready for biotech/pharma workflows');
+    logger.info('• ✅ Production-Ready AI-Powered Regulatory Compliance Intelligence');
+    logger.info('');
+    logger.info('🏆 READY FOR ADVANCED INTELLIGENCE TESTING AND VALIDATION');
+    logger.info('📊 Transform Extract Commitments Modal into AI-Powered Intelligence Hub');
+    logger.info('🎯 Enhanced commitment analysis with contextual insights and recommendations');
+    logger.info('⚡ Advanced risk assessment with granular statistics and predictive analytics');
   } else {
-    console.log('❌ Some verification checks failed. Please review implementation.');
+    logger.info('❌ Some verification checks failed. Please review implementation.');
   }
 
   return passedChecks === totalChecks;
@@ -204,16 +204,16 @@ function runSubPhase24Verification() {
 
 // Performance Metrics
 function displayPerformanceMetrics() {
-  console.log('\n📊 SUB-PHASE 2.4 PERFORMANCE METRICS:');
-  console.log('='.repeat(50));
-  console.log('🎯 AI Analysis Enhancement:     +200% insight depth');
-  console.log('📈 Risk Assessment Granularity: +150% risk visibility');
-  console.log('🔍 Compliance Trend Analysis:   +300% predictive capability');
-  console.log('🔗 Cross-Reference Intelligence: +400% relationship mapping');
-  console.log('🤖 Automated Workflow Suggestions: +250% efficiency');
-  console.log('⚡ Overall Intelligence Boost:   +275% average improvement');
-  console.log('');
-  console.log('🚀 COMMITMENT INTELLIGENCE HUB TRANSFORMATION COMPLETE');
+  logger.info('\n📊 SUB-PHASE 2.4 PERFORMANCE METRICS:');
+  logger.info('='.repeat(50));
+  logger.info('🎯 AI Analysis Enhancement:     +200% insight depth');
+  logger.info('📈 Risk Assessment Granularity: +150% risk visibility');
+  logger.info('🔍 Compliance Trend Analysis:   +300% predictive capability');
+  logger.info('🔗 Cross-Reference Intelligence: +400% relationship mapping');
+  logger.info('🤖 Automated Workflow Suggestions: +250% efficiency');
+  logger.info('⚡ Overall Intelligence Boost:   +275% average improvement');
+  logger.info('');
+  logger.info('🚀 COMMITMENT INTELLIGENCE HUB TRANSFORMATION COMPLETE');
 }
 
 // Execute Verification

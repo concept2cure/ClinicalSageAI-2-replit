@@ -85,10 +85,10 @@ const versionLock = new CoAuthorVersionLock();
 // Verify integrity on import
 try {
   const status = versionLock.verifyIntegrity();
-  console.log('✓ eCTD Co-Author Version Lock: VERIFIED');
+  logger.info('✓ eCTD Co-Author Version Lock: VERIFIED');
 } catch (error) {
-  console.error('✗ eCTD Co-Author Version Lock: INTEGRITY FAILURE');
-  console.error(error.message);
+  logger.error('✗ eCTD Co-Author Version Lock: INTEGRITY FAILURE');
+  logger.error(error.message);
 }
 
 module.exports = versionLock;

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 function verifyReorganization() {
-  console.log('🔍 Verifying reorganization...');
+  logger.info('🔍 Verifying reorganization...');
 
   const checks = [
     // Client structure
@@ -30,23 +30,23 @@ function verifyReorganization() {
 
   checks.forEach(check => {
     if (fs.existsSync(check.path)) {
-      console.log(`✅ ${check.name}`);
+      logger.info(`✅ ${check.name}`);
       passed++;
     } else {
-      console.log(`❌ ${check.name} - Missing: ${check.path}`);
+      logger.info(`❌ ${check.name} - Missing: ${check.path}`);
       failed++;
     }
   });
 
-  console.log(`\n📊 Verification Results:`);
-  console.log(`✅ Passed: ${passed}`);
-  console.log(`❌ Failed: ${failed}`);
+  logger.info(`\n📊 Verification Results:`);
+  logger.info(`✅ Passed: ${passed}`);
+  logger.info(`❌ Failed: ${failed}`);
 
   if (failed === 0) {
-    console.log(`🎉 Reorganization verification successful!`);
-    console.log(`📁 You can now replace the old structure with trialsage-clean/`);
+    logger.info(`🎉 Reorganization verification successful!`);
+    logger.info(`📁 You can now replace the old structure with trialsage-clean/`);
   } else {
-    console.log(`⚠️  Please review failed checks before proceeding`);
+    logger.info(`⚠️  Please review failed checks before proceeding`);
   }
 
   return failed === 0;

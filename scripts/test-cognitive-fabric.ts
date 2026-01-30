@@ -57,11 +57,11 @@ async function generateEmbedding(text: string): Promise<number[]> {
 }
 
 async function main() {
-  console.log('=== Cognitive Fabric RAG Test ===\n');
+  logger.info('=== Cognitive Fabric RAG Test ===\n');
 
   try {
     // Step 1: Insert test document
-    console.log('Step 1: Creating test document...');
+    logger.info('Step 1: Creating test document...');
     const documentId = uuidv4();
     
     await pool.query(`
@@ -70,10 +70,10 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `, [documentId, 'CSR_Study_101_Safety.pdf', 'application/pdf', 1024000, 'processed']);
     
-    console.log(`   Document ID: ${documentId}`);
+    logger.info(`   Document ID: ${documentId}`);
 
     // Step 2: Insert table chunk with structured content
-    console.log('\nStep 2: Inserting TABLE chunk with structured content...');
+    logger.info('\nStep 2: Inserting TABLE chunk with structured content...');
     const tableMarkdown = tableToMarkdown(SAMPLE_TABLE);
     const tableEmbedding = await generateEmbedding(tableMarkdown);
     const tableChunkId = uuidv4();
@@ -104,10 +104,10 @@ async function main() {
       0.92,
     ]);
     
-    console.log(`   Table chunk ID: ${tableChunkId}`);
+    logger.info(`   Table chunk ID: ${tableChunkId}`);
 
     // Step 3: Insert text chunk for comparison
-    console.log('\nStep 3: Inserting TEXT chunk...');
+    logger.info('\nStep 3: Inserting TEXT chunk...');
     const textContent = `Study 101 was a randomized, double-blind, placebo-controlled trial 
 evaluating the safety and efficacy of Drug X in patients with moderate to severe condition Y. 
 The study enrolled 450 patients across 35 sites. Primary endpoint was the change from baseline 
@@ -135,10 +135,10 @@ received at least one dose of study medication.`;
       'text-embedding-3-small',
     ]);
     
-    console.log(`   Text chunk ID: ${textChunkId}`);
+    logger.info(`   Text chunk ID: ${textChunkId}`);
 
     // Step 4: Insert entity for hybrid search
-    console.log('\nStep 4: Inserting extracted entities...');
+    logger.info('\nStep 4: Inserting extracted entities...');
     await pool.query(`
       INSERT INTO vault.extracted_entities (chunk_id, entity_type, entity_value, entity_normalized, confidence)
       VALUES 
@@ -148,10 +148,10 @@ received at least one dose of study medication.`;
         ($2, 'PATIENT_COUNT', '450', '450', 0.92)
     `, [tableChunkId, textChunkId]);
     
-    console.log('   Entities inserted for both chunks');
+    logger.info('   Entities inserted for both chunks');
 
     // Step 5: Test hybrid search
-    console.log('\nStep 5: Testing Hybrid Search...');
+    logger.info('\nStep 5: Testing Hybrid Search...');
     const queryEmbedding = await generateEmbedding('What are the adverse events for Drug X?');
     
     const searchResult = await pool.query(`
@@ -164,45 +164,45 @@ received at least one dose of study medication.`;
       )
     `, [JSON.stringify(queryEmbedding)]);
 
-    console.log(`   Found ${searchResult.rows.length} matching chunks:`);
+    logger.info(`   Found ${searchResult.rows.length} matching chunks:`);
     for (const row of searchResult.rows) {
-      console.log(`   - ${row.content_type}: score=${row.combined_score?.toFixed(3)}, page=${row.page_number}`);
+      logger.info(`   - ${row.content_type}: score=${row.combined_score?.toFixed(3)}, page=${row.page_number}`);
     }
 
     // Step 6: Test table-priority search
-    console.log('\nStep 6: Testing Table-Priority Search...');
+    logger.info('\nStep 6: Testing Table-Priority Search...');
     const tablePriorityResult = await pool.query(`
       SELECT * FROM vault.table_priority_search($1, NULL, 10, 1.5)
     `, [JSON.stringify(queryEmbedding)]);
 
-    console.log(`   Found ${tablePriorityResult.rows.length} chunks (table-boosted):`);
+    logger.info(`   Found ${tablePriorityResult.rows.length} chunks (table-boosted):`);
     for (const row of tablePriorityResult.rows) {
-      console.log(`   - ${row.content_type}: similarity=${row.similarity_score?.toFixed(3)}, boosted=${row.boosted_score?.toFixed(3)}`);
+      logger.info(`   - ${row.content_type}: similarity=${row.similarity_score?.toFixed(3)}, boosted=${row.boosted_score?.toFixed(3)}`);
     }
 
     // Step 7: Verify TABLE is prioritized
     const topResult = tablePriorityResult.rows[0];
     if (topResult?.content_type === 'TABLE') {
-      console.log('\n✅ SUCCESS: TABLE chunk correctly prioritized as top result!');
+      logger.info('\n✅ SUCCESS: TABLE chunk correctly prioritized as top result!');
     } else {
-      console.log('\n⚠️  NOTE: TABLE not top result (may depend on query semantics)');
+      logger.info('\n⚠️  NOTE: TABLE not top result (may depend on query semantics)');
     }
 
     // Step 8: Show structured table data
-    console.log('\nStep 7: Structured Table Content:');
+    logger.info('\nStep 7: Structured Table Content:');
     if (topResult?.structured_content) {
       const structured = typeof topResult.structured_content === 'string' 
         ? JSON.parse(topResult.structured_content) 
         : topResult.structured_content;
-      console.log(`   Caption: ${structured.caption}`);
-      console.log(`   Headers: ${structured.headers?.join(', ')}`);
-      console.log(`   Rows: ${structured.rows?.length} data rows`);
+      logger.info(`   Caption: ${structured.caption}`);
+      logger.info(`   Headers: ${structured.headers?.join(', ')}`);
+      logger.info(`   Rows: ${structured.rows?.length} data rows`);
     }
 
     // Cleanup (optional)
-    console.log('\n=== Test Complete ===');
-    console.log('\nTo test the full Drafting Service:');
-    console.log(`curl -X POST http://localhost:5000/api/gcc/drafting/generate \\
+    logger.info('\n=== Test Complete ===');
+    logger.info('\nTo test the full Drafting Service:');
+    logger.info(`curl -X POST http://localhost:5000/api/gcc/drafting/generate \\
   -H "Content-Type: application/json" \\
   -d '{
     "prompt": "Summarize the adverse events from Study 101",
@@ -212,7 +212,7 @@ received at least one dose of study medication.`;
   }'`);
 
   } catch (error: any) {
-    console.error('Error:', error.message);
+    logger.error('Error:', error.message);
   } finally {
     await pool.end();
   }

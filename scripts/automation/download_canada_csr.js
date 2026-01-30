@@ -37,7 +37,7 @@ let processedCount = 0;
  * Download trials data from Health Canada API
  */
 async function downloadTrialsFromHealthCanada() {
-  console.log(`Starting download of up to ${MAX_TRIALS} trials from Health Canada...`);
+  logger.info(`Starting download of up to ${MAX_TRIALS} trials from Health Canada...`);
 
   try {
     // Create array to store trial data
@@ -46,13 +46,13 @@ async function downloadTrialsFromHealthCanada() {
     let hasMoreData = true;
 
     while (hasMoreData && downloadedCount < MAX_TRIALS) {
-      console.log(`Downloading batch ${page}...`);
+      logger.info(`Downloading batch ${page}...`);
 
       // Make API request
       const response = await axios.get(`${BASE_URL}?page=${page}&size=${BATCH_SIZE}`);
 
       if (!response.data || !response.data.content || !Array.isArray(response.data.content)) {
-        console.error('Error: Invalid response format from Health Canada API');
+        logger.error('Error: Invalid response format from Health Canada API');
         hasMoreData = false;
         continue;
       }
@@ -83,13 +83,13 @@ async function downloadTrialsFromHealthCanada() {
           downloadedCount++;
 
           if (downloadedCount % 10 === 0) {
-            console.log(`Downloaded ${downloadedCount} trials so far...`);
+            logger.info(`Downloaded ${downloadedCount} trials so far...`);
           }
 
           // Small delay to avoid overwhelming the API
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
-          console.error(
+          logger.error(
             `Error downloading detailed information for trial ${trial.protocol_id}:`,
             error.message
           );
@@ -108,7 +108,7 @@ async function downloadTrialsFromHealthCanada() {
 
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(outputData, null, 2));
 
-    console.log(`
+    logger.info(`
 === Download Summary ===
 Total trials downloaded: ${downloadedCount}
 Data saved to: ${OUTPUT_FILE}
@@ -116,7 +116,7 @@ Data saved to: ${OUTPUT_FILE}
 
     return outputData;
   } catch (error) {
-    console.error('Error during download process:', error.message);
+    logger.error('Error during download process:', error.message);
     throw error;
   }
 }
@@ -305,12 +305,12 @@ function mapStatus(statusString) {
  * Import trials from JSON file to database
  */
 async function importTrialsToDatabase() {
-  console.log('Starting import of Health Canada trials to database...');
+  logger.info('Starting import of Health Canada trials to database...');
 
   try {
     // Read the Health Canada trials JSON file
     if (!fs.existsSync(OUTPUT_FILE)) {
-      console.error(`Error: ${OUTPUT_FILE} file not found`);
+      logger.error(`Error: ${OUTPUT_FILE} file not found`);
       return;
     }
 
@@ -318,11 +318,11 @@ async function importTrialsToDatabase() {
     const trialsData = JSON.parse(fileData);
 
     if (!trialsData.studies || !Array.isArray(trialsData.studies)) {
-      console.error(`Error: Invalid format in ${OUTPUT_FILE}`);
+      logger.error(`Error: Invalid format in ${OUTPUT_FILE}`);
       return;
     }
 
-    console.log(`Found ${trialsData.studies.length} studies to import`);
+    logger.info(`Found ${trialsData.studies.length} studies to import`);
 
     // Connect to the database
     const client = await pool.connect();
@@ -342,7 +342,7 @@ async function importTrialsToDatabase() {
           const checkResult = await client.query(checkQuery, [study.nctrialId]);
 
           if (checkResult.rows.length > 0) {
-            console.log(`Skipping ${study.nctrialId} - already exists in database`);
+            logger.info(`Skipping ${study.nctrialId} - already exists in database`);
             skippedCount++;
             continue;
           }
@@ -398,10 +398,10 @@ async function importTrialsToDatabase() {
           importedCount++;
 
           if (importedCount % 10 === 0) {
-            console.log(`Imported ${importedCount} studies so far...`);
+            logger.info(`Imported ${importedCount} studies so far...`);
           }
         } catch (error) {
-          console.error(`Error importing study ${study.nctrialId}:`, error.message);
+          logger.error(`Error importing study ${study.nctrialId}:`, error.message);
           skippedCount++;
         }
       }
@@ -409,7 +409,7 @@ async function importTrialsToDatabase() {
       // Commit transaction
       await client.query('COMMIT');
 
-      console.log(`
+      logger.info(`
 === Import Summary ===
 Total Health Canada studies processed: ${trialsData.studies.length}
 Successfully imported: ${importedCount}
@@ -418,13 +418,13 @@ Skipped (already exists or error): ${skippedCount}
     } catch (error) {
       // Rollback transaction on error
       await client.query('ROLLBACK');
-      console.error('Error during transaction:', error.message);
+      logger.error('Error during transaction:', error.message);
     } finally {
       // Release the client
       client.release();
     }
   } catch (error) {
-    console.error('Error during import process:', error.message);
+    logger.error('Error during import process:', error.message);
   }
 }
 
@@ -433,7 +433,7 @@ Skipped (already exists or error): ${skippedCount}
  */
 async function downloadAndImportCanadaCSR() {
   try {
-    console.log('Starting Health Canada CSR download and import process...');
+    logger.info('Starting Health Canada CSR download and import process...');
 
     // Step 1: Download trials from Health Canada
     await downloadTrialsFromHealthCanada();
@@ -447,18 +447,18 @@ async function downloadAndImportCanadaCSR() {
       const countResult = await client.query(
         "SELECT COUNT(*) as total FROM csr_reports WHERE region = 'Health Canada'"
       );
-      console.log(`\nTotal Health Canada trials in database: ${countResult.rows[0].total}`);
+      logger.info(`\nTotal Health Canada trials in database: ${countResult.rows[0].total}`);
 
       // Get overall trial count
       const totalResult = await client.query('SELECT COUNT(*) as total FROM csr_reports');
-      console.log(`Total trials in database: ${totalResult.rows[0].total}`);
+      logger.info(`Total trials in database: ${totalResult.rows[0].total}`);
     } finally {
       client.release();
     }
 
-    console.log('Health Canada CSR download and import process completed successfully!');
+    logger.info('Health Canada CSR download and import process completed successfully!');
   } catch (error) {
-    console.error('Error during download and import process:', error);
+    logger.error('Error during download and import process:', error);
   } finally {
     // Close the database pool
     await pool.end();

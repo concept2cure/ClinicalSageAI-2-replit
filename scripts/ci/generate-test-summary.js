@@ -44,7 +44,7 @@ function generateTestSummary() {
     summary += `- **SEO Score**: ${Math.round(lighthouse.categories.seo.score * 100)}/100\n\n`;
   }
 
-  console.log(summary);
+  logger.info(summary);
 }
 
 generateTestSummary();

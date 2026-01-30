@@ -275,11 +275,11 @@ const debugHelpers = {
   // Check the current state of key variables
   checkState: `
     // Paste this in browser console to inspect key state variables
-    console.log('Current state:');
-    console.log('documentType:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.documentType);
-    console.log('activeTab:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.activeTab);
-    console.log('deviceProfile:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.deviceProfile);
-    console.log('compliance:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.compliance);
+    logger.info('Current state:');
+    logger.info('documentType:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.documentType);
+    logger.info('activeTab:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.activeTab);
+    logger.info('deviceProfile:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.deviceProfile);
+    logger.info('compliance:', document.querySelector('[role="application"]')?.__vueParentComponent?.ctx?.compliance);
   `,
 
   // Force navigation to a specific tab
@@ -289,9 +289,9 @@ const debugHelpers = {
       const app = document.querySelector('[role="application"]')?.__vueParentComponent?.ctx;
       if (app?.setActiveTab) {
         app.setActiveTab(tabName);
-        console.log('Tab set to:', tabName);
+        logger.info('Tab set to:', tabName);
       } else {
-        console.error('Could not access setActiveTab function');
+        logger.error('Could not access setActiveTab function');
       }
     }
   `,
@@ -303,9 +303,9 @@ const debugHelpers = {
       const app = document.querySelector('[role="application"]')?.__vueParentComponent?.ctx;
       if (app?.setDocumentType) {
         app.setDocumentType(type);
-        console.log('Document type set to:', type);
+        logger.info('Document type set to:', type);
       } else {
-        console.error('Could not access setDocumentType function');
+        logger.error('Could not access setDocumentType function');
       }
     }
   `,
@@ -329,9 +329,9 @@ const debugHelpers = {
           issues: [],
           summary: 'Your 510(k) submission appears to be compliant with FDA requirements.'
         });
-        console.log('Compliance check completed');
+        logger.info('Compliance check completed');
       } else {
-        console.error('Could not access application context');
+        logger.error('Could not access application context');
       }
     }
   `,

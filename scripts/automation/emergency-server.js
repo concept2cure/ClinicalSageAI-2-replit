@@ -24,6 +24,6 @@ app.use(express.static(join(__dirname, 'public')));
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Emergency Portal server running on port ${PORT}`);
-  console.log(`Access it at: http://localhost:${PORT}`);
+  logger.info(`Emergency Portal server running on port ${PORT}`);
+  logger.info(`Access it at: http://localhost:${PORT}`);
 });

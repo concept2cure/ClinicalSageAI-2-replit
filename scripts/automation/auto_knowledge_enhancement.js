@@ -116,12 +116,12 @@ const CONFIG = {
 
 // Ensure all required directories exist
 function ensureDirectories() {
-  console.log('Ensuring required directories exist...');
+  logger.info('Ensuring required directories exist...');
 
   for (const dir of Object.values(CONFIG.directories)) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      console.log(`Created directory: ${dir}`);
+      logger.info(`Created directory: ${dir}`);
     }
   }
 }
@@ -137,7 +137,7 @@ function getProcessedPapers() {
     try {
       return JSON.parse(fs.readFileSync(trackerFile, 'utf8'));
     } catch (error) {
-      console.error('Error reading processed papers file:', error.message);
+      logger.error('Error reading processed papers file:', error.message);
       return [];
     }
   }
@@ -151,9 +151,9 @@ function saveProcessedPapers(papers) {
 
   try {
     fs.writeFileSync(trackerFile, JSON.stringify(papers, null, 2));
-    console.log('Updated processed papers list saved');
+    logger.info('Updated processed papers list saved');
   } catch (error) {
-    console.error('Error saving processed papers:', error.message);
+    logger.error('Error saving processed papers:', error.message);
   }
 }
 
@@ -161,7 +161,7 @@ function saveProcessedPapers(papers) {
  * Search PubMed for recent papers based on search terms
  */
 async function searchPubMed(term, maxResults = 100) {
-  console.log(`Searching PubMed for: "${term}"`);
+  logger.info(`Searching PubMed for: "${term}"`);
 
   try {
     const pubmed = CONFIG.academicSources.pubmed;
@@ -193,7 +193,7 @@ async function searchPubMed(term, maxResults = 100) {
 
     return [];
   } catch (error) {
-    console.error(`Error searching PubMed for ${term}:`, error.message);
+    logger.error(`Error searching PubMed for ${term}:`, error.message);
     return [];
   }
 }
@@ -202,7 +202,7 @@ async function searchPubMed(term, maxResults = 100) {
  * Fetch paper details from PubMed
  */
 async function fetchPubMedPapers(pmids) {
-  console.log(`Fetching ${pmids.length} papers from PubMed`);
+  logger.info(`Fetching ${pmids.length} papers from PubMed`);
 
   if (pmids.length === 0) return [];
 
@@ -232,12 +232,12 @@ async function fetchPubMedPapers(pmids) {
     );
     fs.writeFileSync(outputFile, response.data);
 
-    console.log(`Saved PubMed batch to ${outputFile}`);
+    logger.info(`Saved PubMed batch to ${outputFile}`);
 
     // Return file path for further processing
     return outputFile;
   } catch (error) {
-    console.error('Error fetching PubMed papers:', error.message);
+    logger.error('Error fetching PubMed papers:', error.message);
     return null;
   }
 }
@@ -246,7 +246,7 @@ async function fetchPubMedPapers(pmids) {
  * Process papers with Hugging Face models
  */
 async function processPapersWithHuggingFace(paperFiles) {
-  console.log(`Processing ${paperFiles.length} paper files with Hugging Face models`);
+  logger.info(`Processing ${paperFiles.length} paper files with Hugging Face models`);
 
   try {
     // This would be a call to our HuggingFace service
@@ -269,11 +269,11 @@ async function processPapersWithHuggingFace(paperFiles) {
     };
 
     fs.writeFileSync(outputFile, JSON.stringify(structuredData, null, 2));
-    console.log(`Saved structured data to ${outputFile}`);
+    logger.info(`Saved structured data to ${outputFile}`);
 
     return outputFile;
   } catch (error) {
-    console.error('Error processing papers with Hugging Face:', error.message);
+    logger.error('Error processing papers with Hugging Face:', error.message);
     return null;
   }
 }
@@ -282,7 +282,7 @@ async function processPapersWithHuggingFace(paperFiles) {
  * Integrate processed papers into academic knowledge service
  */
 async function integrateIntoKnowledgeBase(structuredDataFiles) {
-  console.log(
+  logger.info(
     `Integrating ${structuredDataFiles.length} structured data files into knowledge base`
   );
 
@@ -312,7 +312,7 @@ async function integrateIntoKnowledgeBase(structuredDataFiles) {
         });
       });
     } catch (error) {
-      console.error(`Error processing structured data file ${file}:`, error.message);
+      logger.error(`Error processing structured data file ${file}:`, error.message);
     }
   }
 
@@ -322,7 +322,7 @@ async function integrateIntoKnowledgeBase(structuredDataFiles) {
   );
   fs.writeFileSync(outputFile, JSON.stringify(integrationSummary, null, 2));
 
-  console.log(`Saved knowledge integration suggestions to ${outputFile}`);
+  logger.info(`Saved knowledge integration suggestions to ${outputFile}`);
   return outputFile;
 }
 
@@ -330,12 +330,12 @@ async function integrateIntoKnowledgeBase(structuredDataFiles) {
  * Search and fetch from clinical trial registries
  */
 async function fetchFromTrialRegistries() {
-  console.log('Fetching data from clinical trial registries...');
+  logger.info('Fetching data from clinical trial registries...');
 
   const results = [];
 
   for (const registry of CONFIG.trialRegistries) {
-    console.log(`Fetching from ${registry.name}...`);
+    logger.info(`Fetching from ${registry.name}...`);
 
     try {
       // Implementation would vary by registry
@@ -364,7 +364,7 @@ async function fetchFromTrialRegistries() {
             JSON.stringify(response.data.StudyFieldsResponse.StudyFields, null, 2)
           );
 
-          console.log(
+          logger.info(
             `Saved ${response.data.StudyFieldsResponse.StudyFields.length} trials from ClinicalTrials.gov to ${outputFile}`
           );
           results.push(outputFile);
@@ -372,7 +372,7 @@ async function fetchFromTrialRegistries() {
       }
       // Additional registries would be implemented here
     } catch (error) {
-      console.error(`Error fetching from ${registry.name}:`, error.message);
+      logger.error(`Error fetching from ${registry.name}:`, error.message);
     }
 
     // Respect rate limits
@@ -388,7 +388,7 @@ async function fetchFromTrialRegistries() {
  * Main function to run the automated knowledge enhancement
  */
 async function enhanceKnowledgeBase() {
-  console.log('Starting automated knowledge enhancement...');
+  logger.info('Starting automated knowledge enhancement...');
 
   try {
     // Initialize
@@ -396,17 +396,17 @@ async function enhanceKnowledgeBase() {
     const processedPapers = getProcessedPapers();
 
     // 1. Academic Papers Enhancement
-    console.log('\n=== Academic Papers Enhancement ===');
+    logger.info('\n=== Academic Papers Enhancement ===');
     let paperIds = [];
 
     // Search each term
     for (const term of CONFIG.academicSources.pubmed.searchTerms) {
       const ids = await searchPubMed(term, CONFIG.academicSources.pubmed.maxResults);
-      console.log(`Found ${ids.length} papers for term: "${term}"`);
+      logger.info(`Found ${ids.length} papers for term: "${term}"`);
 
       // Filter out already processed papers
       const newIds = ids.filter(id => !processedPapers.includes(id));
-      console.log(`${newIds.length} new papers to process`);
+      logger.info(`${newIds.length} new papers to process`);
 
       paperIds = [...paperIds, ...newIds];
 
@@ -418,7 +418,7 @@ async function enhanceKnowledgeBase() {
 
     // Remove duplicates
     paperIds = [...new Set(paperIds)];
-    console.log(`Total unique new papers to process: ${paperIds.length}`);
+    logger.info(`Total unique new papers to process: ${paperIds.length}`);
 
     // Process in batches
     const paperFiles = [];
@@ -441,11 +441,11 @@ async function enhanceKnowledgeBase() {
     }
 
     // 2. Clinical Trial Registry Enhancement
-    console.log('\n=== Clinical Trial Registry Enhancement ===');
+    logger.info('\n=== Clinical Trial Registry Enhancement ===');
     const trialFiles = await fetchFromTrialRegistries();
 
     // 3. Process papers with Hugging Face
-    console.log('\n=== Processing with Hugging Face Models ===');
+    logger.info('\n=== Processing with Hugging Face Models ===');
     const allFiles = [...paperFiles, ...trialFiles];
     const structuredFiles = [];
 
@@ -455,24 +455,24 @@ async function enhanceKnowledgeBase() {
         structuredFiles.push(structuredFile);
       }
     } else {
-      console.log('No new files to process');
+      logger.info('No new files to process');
     }
 
     // 4. Integrate into knowledge base
-    console.log('\n=== Integrating into Knowledge Base ===');
+    logger.info('\n=== Integrating into Knowledge Base ===');
     if (structuredFiles.length > 0) {
       const integrationFile = await integrateIntoKnowledgeBase(structuredFiles);
-      console.log(`Integration complete. Review suggestions in ${integrationFile}`);
+      logger.info(`Integration complete. Review suggestions in ${integrationFile}`);
     } else {
-      console.log('No structured files to integrate');
+      logger.info('No structured files to integrate');
     }
 
     // Save processed papers list
     saveProcessedPapers(processedPapers);
 
-    console.log('\n=== Knowledge Enhancement Complete ===');
-    console.log(`Processed ${paperIds.length} new academic papers`);
-    console.log(`Fetched data from ${trialFiles.length} clinical trial registry batches`);
+    logger.info('\n=== Knowledge Enhancement Complete ===');
+    logger.info(`Processed ${paperIds.length} new academic papers`);
+    logger.info(`Fetched data from ${trialFiles.length} clinical trial registry batches`);
 
     return {
       success: true,
@@ -481,7 +481,7 @@ async function enhanceKnowledgeBase() {
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Error during knowledge enhancement:', error);
+    logger.error('Error during knowledge enhancement:', error);
     return {
       success: false,
       error: error.message,
@@ -494,17 +494,17 @@ async function enhanceKnowledgeBase() {
  * Create automated knowledge update service
  */
 async function setupAutomatedUpdates() {
-  console.log('Setting up automated knowledge update service...');
+  logger.info('Setting up automated knowledge update service...');
 
   try {
     // Schedule regular updates (this would typically be done via cron in production)
-    console.log('Knowledge base will be automatically updated daily');
+    logger.info('Knowledge base will be automatically updated daily');
 
     // Run initial update
     await enhanceKnowledgeBase();
 
     // Example of scheduling logic (for demonstration - would use proper scheduler in production)
-    console.log('Next update scheduled for tomorrow');
+    logger.info('Next update scheduled for tomorrow');
 
     return {
       success: true,
@@ -512,7 +512,7 @@ async function setupAutomatedUpdates() {
       nextUpdateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
     };
   } catch (error) {
-    console.error('Error setting up automated updates:', error);
+    logger.error('Error setting up automated updates:', error);
     return {
       success: false,
       error: error.message,
@@ -525,15 +525,15 @@ const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
   setupAutomatedUpdates()
     .then(result => {
-      console.log('Setup result:', result);
+      logger.info('Setup result:', result);
       if (result.success) {
-        console.log('TrialSage AI knowledge will now be continuously enhanced automatically.');
+        logger.info('TrialSage AI knowledge will now be continuously enhanced automatically.');
       } else {
-        console.error('Failed to set up automated knowledge enhancement.');
+        logger.error('Failed to set up automated knowledge enhancement.');
       }
     })
     .catch(error => {
-      console.error('Fatal error during setup:', error);
+      logger.error('Fatal error during setup:', error);
     });
 }
 

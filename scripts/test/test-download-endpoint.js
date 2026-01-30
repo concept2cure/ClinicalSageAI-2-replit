@@ -15,7 +15,7 @@ const testResults = [];
 
 function testDownloadEndpoint(fileId) {
   return new Promise((resolve, reject) => {
-    console.log(`Testing download for file ID: ${fileId}`);
+    logger.info(`Testing download for file ID: ${fileId}`);
 
     const options = {
       hostname: 'localhost',
@@ -25,9 +25,9 @@ function testDownloadEndpoint(fileId) {
     };
 
     const req = http.request(options, res => {
-      console.log(`Status Code: ${res.statusCode}`);
-      console.log(`Content-Type: ${res.headers['content-type']}`);
-      console.log(`Content-Disposition: ${res.headers['content-disposition']}`);
+      logger.info(`Status Code: ${res.statusCode}`);
+      logger.info(`Content-Type: ${res.headers['content-type']}`);
+      logger.info(`Content-Disposition: ${res.headers['content-disposition']}`);
 
       let data = [];
 
@@ -52,7 +52,7 @@ function testDownloadEndpoint(fileId) {
     });
 
     req.on('error', error => {
-      console.error(`Error testing download for ${fileId}:`, error.message);
+      logger.error(`Error testing download for ${fileId}:`, error.message);
       const result = {
         fileId,
         statusCode: 0,
@@ -68,7 +68,7 @@ function testDownloadEndpoint(fileId) {
 }
 
 async function runTests() {
-  console.log('Starting file download endpoint tests...');
+  logger.info('Starting file download endpoint tests...');
 
   try {
     // Test each file ID
@@ -77,24 +77,24 @@ async function runTests() {
     }
 
     // Print summary results
-    console.log('\n--- TEST SUMMARY ---');
+    logger.info('\n--- TEST SUMMARY ---');
     testResults.forEach(result => {
-      console.log(
+      logger.info(
         `${result.fileId}: ${result.success ? 'PASS' : 'FAIL'} - Status ${result.statusCode} - Content Length: ${result.contentLength || 'N/A'}`
       );
     });
 
     // Overall result
     const passedTests = testResults.filter(r => r.success).length;
-    console.log(`\nOverall: ${passedTests}/${testResults.length} tests passed`);
+    logger.info(`\nOverall: ${passedTests}/${testResults.length} tests passed`);
 
     if (passedTests === testResults.length) {
-      console.log('✅ All download endpoint tests PASSED');
+      logger.info('✅ All download endpoint tests PASSED');
     } else {
-      console.log('❌ Some download endpoint tests FAILED');
+      logger.info('❌ Some download endpoint tests FAILED');
     }
   } catch (error) {
-    console.error('Error running tests:', error);
+    logger.error('Error running tests:', error);
   }
 }
 

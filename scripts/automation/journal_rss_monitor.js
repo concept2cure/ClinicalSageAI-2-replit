@@ -213,7 +213,7 @@ const IMPORT_LOG = path.join(DATA_DIR, 'import_log.json');
 function ensureDirectories() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log(`Created directory: ${DATA_DIR}`);
+    logger.info(`Created directory: ${DATA_DIR}`);
   }
 }
 
@@ -226,7 +226,7 @@ function getProcessedArticles() {
   try {
     return JSON.parse(fs.readFileSync(TRACKING_FILE, 'utf8'));
   } catch (error) {
-    console.error('Error reading tracking file:', error.message);
+    logger.error('Error reading tracking file:', error.message);
     return {};
   }
 }
@@ -235,9 +235,9 @@ function getProcessedArticles() {
 function saveProcessedArticles(articles) {
   try {
     fs.writeFileSync(TRACKING_FILE, JSON.stringify(articles, null, 2));
-    console.log('Updated processed articles list saved');
+    logger.info('Updated processed articles list saved');
   } catch (error) {
-    console.error('Error saving processed articles:', error.message);
+    logger.error('Error saving processed articles:', error.message);
   }
 }
 
@@ -257,13 +257,13 @@ function logImport(entry) {
 
     fs.writeFileSync(IMPORT_LOG, JSON.stringify(log, null, 2));
   } catch (error) {
-    console.error('Error logging import:', error.message);
+    logger.error('Error logging import:', error.message);
   }
 }
 
 // Fetch RSS feed
 async function fetchRssFeed(journal) {
-  console.log(`Fetching RSS feed for ${journal.name}...`);
+  logger.info(`Fetching RSS feed for ${journal.name}...`);
 
   try {
     const response = await axios.get(journal.rssFeed);
@@ -283,7 +283,7 @@ async function fetchRssFeed(journal) {
       });
     });
   } catch (error) {
-    console.error(`Error fetching RSS feed for ${journal.name}:`, error.message);
+    logger.error(`Error fetching RSS feed for ${journal.name}:`, error.message);
     return null;
   }
 }
@@ -330,10 +330,10 @@ function extractArticlesFromFeed(journal, feedData) {
       }));
     }
 
-    console.log(`Extracted ${articles.length} articles from ${journal.name}`);
+    logger.info(`Extracted ${articles.length} articles from ${journal.name}`);
     return articles;
   } catch (error) {
-    console.error(`Error extracting articles from ${journal.name}:`, error.message);
+    logger.error(`Error extracting articles from ${journal.name}:`, error.message);
     return [];
   }
 }
@@ -373,7 +373,7 @@ function calculateRelevanceScore(article, journal) {
 
 // Process a batch of articles
 async function processArticles(articles, journal) {
-  console.log(`Processing ${articles.length} articles from ${journal.name}...`);
+  logger.info(`Processing ${articles.length} articles from ${journal.name}...`);
 
   // Get already processed articles
   const processed = getProcessedArticles();
@@ -413,7 +413,7 @@ async function processArticles(articles, journal) {
   // Save updated processed list
   saveProcessedArticles(processed);
 
-  console.log(`Found ${newArticles.length} new articles, ${relevantArticles.length} relevant`);
+  logger.info(`Found ${newArticles.length} new articles, ${relevantArticles.length} relevant`);
   return relevantArticles;
 }
 
@@ -441,7 +441,7 @@ function formatForKnowledgeService(article) {
 
 // Monitor all journal RSS feeds
 async function monitorJournalFeeds() {
-  console.log('Starting journal RSS feed monitoring...');
+  logger.info('Starting journal RSS feed monitoring...');
 
   ensureDirectories();
 
@@ -449,7 +449,7 @@ async function monitorJournalFeeds() {
 
   for (const journal of JOURNALS) {
     try {
-      console.log(`Processing ${journal.name}...`);
+      logger.info(`Processing ${journal.name}...`);
 
       // Fetch and parse RSS feed
       const feedData = await fetchRssFeed(journal);
@@ -466,7 +466,7 @@ async function monitorJournalFeeds() {
       // Add delay to respect rate limits
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error(`Error processing journal ${journal.name}:`, error.message);
+      logger.error(`Error processing journal ${journal.name}:`, error.message);
     }
   }
 
@@ -478,7 +478,7 @@ async function monitorJournalFeeds() {
     const outputFile = path.join(DATA_DIR, `new_articles_${Date.now()}.json`);
     fs.writeFileSync(outputFile, JSON.stringify(knowledgeEntries, null, 2));
 
-    console.log(`Saved ${knowledgeEntries.length} new knowledge entries to ${outputFile}`);
+    logger.info(`Saved ${knowledgeEntries.length} new knowledge entries to ${outputFile}`);
 
     // Log import
     logImport({
@@ -494,7 +494,7 @@ async function monitorJournalFeeds() {
       outputFile,
     };
   } else {
-    console.log('No new relevant articles found');
+    logger.info('No new relevant articles found');
 
     logImport({
       articlesProcessed: 0,
@@ -512,7 +512,7 @@ async function monitorJournalFeeds() {
 
 // Perform auto-integration with academic-knowledge-service
 async function integrateWithKnowledgeService(outputFile) {
-  console.log(`Integrating articles from ${outputFile} with academic-knowledge-service...`);
+  logger.info(`Integrating articles from ${outputFile} with academic-knowledge-service...`);
 
   try {
     const articles = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
@@ -520,7 +520,7 @@ async function integrateWithKnowledgeService(outputFile) {
     // This would be integrated with the academic-knowledge-service.ts
     // For this demo, we'll just log what would be integrated
 
-    console.log(`Ready to integrate ${articles.length} articles into academic-knowledge-service`);
+    logger.info(`Ready to integrate ${articles.length} articles into academic-knowledge-service`);
 
     // Sample of how integration would look
     const integration = {
@@ -535,7 +535,7 @@ async function integrateWithKnowledgeService(outputFile) {
     const integrationLog = path.join(DATA_DIR, `integration_${Date.now()}.json`);
     fs.writeFileSync(integrationLog, JSON.stringify(integration, null, 2));
 
-    console.log(`Integration plan saved to ${integrationLog}`);
+    logger.info(`Integration plan saved to ${integrationLog}`);
 
     return {
       success: true,
@@ -543,7 +543,7 @@ async function integrateWithKnowledgeService(outputFile) {
       integrationLog,
     };
   } catch (error) {
-    console.error('Error integrating with knowledge service:', error.message);
+    logger.error('Error integrating with knowledge service:', error.message);
     return {
       success: false,
       error: error.message,
@@ -562,7 +562,7 @@ async function runJournalMonitor() {
 
     return result;
   } catch (error) {
-    console.error('Error running journal monitor:', error.message);
+    logger.error('Error running journal monitor:', error.message);
     return {
       success: false,
       error: error.message,
@@ -575,10 +575,10 @@ const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
   runJournalMonitor()
     .then(result => {
-      console.log('Journal monitoring complete:', result);
+      logger.info('Journal monitoring complete:', result);
     })
     .catch(error => {
-      console.error('Fatal error during journal monitoring:', error);
+      logger.error('Fatal error during journal monitoring:', error);
     });
 }
 

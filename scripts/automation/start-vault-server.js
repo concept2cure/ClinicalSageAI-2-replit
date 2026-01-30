@@ -9,11 +9,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Path to the vault server script
 const vaultServerPath = path.join(__dirname, 'server', 'vault-server.js');
 
-console.log(`Starting Vault server from: ${vaultServerPath}`);
+logger.info(`Starting Vault server from: ${vaultServerPath}`);
 
 // Check if the vault server script exists
 if (!fs.existsSync(vaultServerPath)) {
-  console.error(`Vault server script not found at: ${vaultServerPath}`);
+  logger.error(`Vault server script not found at: ${vaultServerPath}`);
   process.exit(1);
 }
 
@@ -25,7 +25,7 @@ const env = {
 };
 
 // Log the environment variables
-console.log('Vault server environment:', {
+logger.info('Vault server environment:', {
   VAULT_PORT: env.VAULT_PORT,
   NODE_ENV: env.NODE_ENV,
   SUPABASE_URL: env.SUPABASE_URL ? 'CONFIGURED' : 'MISSING',
@@ -37,7 +37,7 @@ console.log('Vault server environment:', {
 // Check if the vault server dependencies are installed
 const nodeModulesPath = path.join(__dirname, 'node_modules');
 if (!fs.existsSync(nodeModulesPath)) {
-  console.error('Node modules not found. Please run "npm install" to install dependencies.');
+  logger.error('Node modules not found. Please run "npm install" to install dependencies.');
   process.exit(1);
 }
 
@@ -49,22 +49,22 @@ const vaultServer = spawn('node', [vaultServerPath], {
 
 // Handle vault server process events
 vaultServer.on('error', err => {
-  console.error('Failed to start the Vault server:', err);
+  logger.error('Failed to start the Vault server:', err);
   process.exit(1);
 });
 
 vaultServer.on('close', code => {
-  console.log(`Vault server process exited with code ${code}`);
+  logger.info(`Vault server process exited with code ${code}`);
   process.exit(code);
 });
 
 // Handle parent process exit
 process.on('SIGINT', () => {
-  console.log('Stopping Vault server...');
+  logger.info('Stopping Vault server...');
   vaultServer.kill('SIGINT');
 });
 
 process.on('SIGTERM', () => {
-  console.log('Stopping Vault server...');
+  logger.info('Stopping Vault server...');
   vaultServer.kill('SIGTERM');
 });

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { AssemblyLine } from '../../services/AssemblyLine';
 
 function createMockDb() {
-  const store: Record<string, { id: string; status: string; content: string; created_at?: string }> = {};
-  return {
+  const store: Record<string, { id: string; status: string; content: string; created_at?: string; audit?: any[] }> = {};
+  const db = {
     async query(sql: string, params: any[]) {
       const stmt = sql.toLowerCase().trim();
       if (stmt.startsWith('insert into assembly_docs')) {
@@ -40,11 +40,12 @@ function createMockDb() {
       return { rows: [] };
     }
   };
+  return { db, store };
 }
 
 describe('AssemblyLine', () => {
   it('creates, edits, and polishes a document', async () => {
-    const db = createMockDb();
+    const { db, store } = createMockDb();
     const a = new AssemblyLine(db as any);
 
     const startRes = await a.start('hello world');

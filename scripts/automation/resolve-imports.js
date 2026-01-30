@@ -38,7 +38,7 @@ const PROBLEM_PACKAGES = [
 function processFile(filePath) {
   try {
     if (!fs.existsSync(filePath)) {
-      console.log(`File not found: ${filePath}`);
+      logger.info(`File not found: ${filePath}`);
       return;
     }
 
@@ -87,10 +87,10 @@ function processFile(filePath) {
     // Save the file if it was modified
     if (modified) {
       fs.writeFileSync(filePath, content, 'utf8');
-      console.log(`Updated imports in: ${filePath}`);
+      logger.info(`Updated imports in: ${filePath}`);
     }
   } catch (error) {
-    console.error(`Error processing file ${filePath}:`, error);
+    logger.error(`Error processing file ${filePath}:`, error);
   }
 }
 
@@ -110,11 +110,11 @@ function processDirectory(directoryPath) {
       }
     }
   } catch (error) {
-    console.error(`Error processing directory ${directoryPath}:`, error);
+    logger.error(`Error processing directory ${directoryPath}:`, error);
   }
 }
 
 // Start processing the client/src directory
-console.log('Starting to process React files in client/src...');
+logger.info('Starting to process React files in client/src...');
 processDirectory(CLIENT_SRC_DIR);
-console.log('Finished processing React files. Imports should now use lightweight wrappers.');
+logger.info('Finished processing React files. Imports should now use lightweight wrappers.');

@@ -3,9 +3,9 @@
 */
 const BASE = process.env.BASE_URL || 'http://localhost:5000';
 const H = { 'Content-Type': 'application/json' };
-const ok = m => console.log('✅', m);
+const ok = m => logger.info('✅', m);
 const fail = (m, e) => {
-  console.error('❌', m, e?.message || e);
+  logger.error('❌', m, e?.message || e);
   process.exitCode = 1;
 };
 
@@ -92,7 +92,7 @@ async function j(path, method = 'GET', body) {
     await j(`/api/stability/oot-surveillance?studyId=${SID}&test=Assay`);
     ok('OOT JSON');
 
-    console.log('\nUAT Workflow PASS');
+    logger.info('\nUAT Workflow PASS');
   } catch (e) {
     fail('UAT Workflow FAILED', e);
   }

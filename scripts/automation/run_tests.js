@@ -3,7 +3,7 @@
  */
 const { execSync } = require('child_process');
 
-console.log('Running device profile API tests...');
+logger.info('Running device profile API tests...');
 
 try {
   // Run Jest with the correct options
@@ -15,8 +15,8 @@ try {
     },
   });
 
-  console.log('✅ All tests completed successfully!');
+  logger.info('✅ All tests completed successfully!');
 } catch (error) {
-  console.error('❌ Test execution failed:', error.message);
+  logger.error('❌ Test execution failed:', error.message);
   process.exit(1);
 }

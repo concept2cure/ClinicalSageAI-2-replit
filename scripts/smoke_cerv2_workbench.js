@@ -45,9 +45,9 @@ const ensureProgramId = async () => {
   const fallbackProgramId = randomUUID();
   const filePath = path.resolve(process.cwd(), '.cerv2_program_id');
   await writeFile(filePath, `${fallbackProgramId}\n`, 'utf8');
-  console.warn('No CERV2 program ID provided. Generated a demo ID for this run:');
-  console.warn(fallbackProgramId);
-  console.warn(`Saved to ${filePath}. Override with CERV2_PROGRAM_ID or --programId if needed.`);
+  logger.warn('No CERV2 program ID provided. Generated a demo ID for this run:');
+  logger.warn(fallbackProgramId);
+  logger.warn(`Saved to ${filePath}. Override with CERV2_PROGRAM_ID or --programId if needed.`);
   return fallbackProgramId;
 };
 
@@ -96,19 +96,19 @@ const requestJson = async (name, options) => {
     try {
       json = JSON.parse(text);
     } catch (error) {
-      console.error(`Response for ${name} was not valid JSON.`);
-      console.error(text);
+      logger.error(`Response for ${name} was not valid JSON.`);
+      logger.error(text);
       throw error;
     }
   }
 
   if (!response.ok) {
-    console.error(`Request failed for ${name}: ${response.status} ${response.statusText}`);
-    console.error(json || text);
+    logger.error(`Request failed for ${name}: ${response.status} ${response.statusText}`);
+    logger.error(json || text);
     throw new Error(`Smoke test failed for ${name}`);
   }
 
-  console.log(`✔ ${name}: ${response.status}`);
+  logger.info(`✔ ${name}: ${response.status}`);
   return json;
 };
 
@@ -146,12 +146,12 @@ const run = async () => {
   const evidenceId = getFirstId(results.evidence, ['id', 'evidenceId']);
 
   if (!claimId) {
-    console.error('No claim ID found in claims response.');
+    logger.error('No claim ID found in claims response.');
     process.exit(1);
   }
 
   if (!evidenceId) {
-    console.error('No evidence ID found in evidence response.');
+    logger.error('No evidence ID found in evidence response.');
     process.exit(1);
   }
 
@@ -177,10 +177,10 @@ const run = async () => {
     },
   });
 
-  console.log('Smoke test completed successfully.');
+  logger.info('Smoke test completed successfully.');
 };
 
 run().catch(error => {
-  console.error(error);
+  logger.error(error);
   process.exit(1);
 });

@@ -488,7 +488,7 @@ Overall Benefit-Risk Assessment:
 ];
 
 async function addINDTemplates() {
-  console.log('🚀 Adding real IND eCTD templates...');
+  logger.info('🚀 Adding real IND eCTD templates...');
 
   try {
     // Check existing templates
@@ -497,11 +497,11 @@ async function addINDTemplates() {
     );
 
     if (checkResult.rows[0].count > 0) {
-      console.log(`⚠️  Found ${checkResult.rows[0].count} existing IND templates.`);
+      logger.info(`⚠️  Found ${checkResult.rows[0].count} existing IND templates.`);
 
       // Delete existing IND templates to replace with new ones
       await pool.query("DELETE FROM ectd_templates WHERE name LIKE 'IND_%'");
-      console.log('🗑️  Removed existing IND templates.');
+      logger.info('🗑️  Removed existing IND templates.');
     }
 
     // Insert new templates
@@ -523,9 +523,9 @@ async function addINDTemplates() {
           ]
         );
 
-        console.log(`✅ Created template: ${result.rows[0].title} (ID: ${result.rows[0].id})`);
+        logger.info(`✅ Created template: ${result.rows[0].title} (ID: ${result.rows[0].id})`);
       } catch (error) {
-        console.error(`❌ Failed to create template: ${template.title}`, error.message);
+        logger.error(`❌ Failed to create template: ${template.title}`, error.message);
       }
     }
 
@@ -534,11 +534,11 @@ async function addINDTemplates() {
       "SELECT COUNT(*) as count, STRING_AGG(title, ', ' ORDER BY id) as titles FROM ectd_templates WHERE organization_id = 1"
     );
 
-    console.log(`\n✨ Template addition complete!`);
-    console.log(`Total templates in database: ${finalCount.rows[0].count}`);
-    console.log(`Templates: ${finalCount.rows[0].titles}`);
+    logger.info(`\n✨ Template addition complete!`);
+    logger.info(`Total templates in database: ${finalCount.rows[0].count}`);
+    logger.info(`Templates: ${finalCount.rows[0].titles}`);
   } catch (error) {
-    console.error('❌ Error adding templates:', error);
+    logger.error('❌ Error adding templates:', error);
   } finally {
     await pool.end();
   }

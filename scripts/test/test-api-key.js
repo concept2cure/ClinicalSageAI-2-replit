@@ -10,7 +10,7 @@ const MODEL = 'mistralai/Mixtral-8x7B-Instruct-v0.1';
 
 async function testDirectly() {
   try {
-    console.log('Testing with direct API key...');
+    logger.info('Testing with direct API key...');
 
     const response = await axios.post(
       `https://api-inference.huggingface.co/models/${MODEL}`,
@@ -29,13 +29,13 @@ async function testDirectly() {
       }
     );
 
-    console.log('Success! Response:');
-    console.log(JSON.stringify(response.data, null, 2));
+    logger.info('Success! Response:');
+    logger.info(JSON.stringify(response.data, null, 2));
   } catch (error) {
-    console.error('Error:', error.message);
+    logger.error('Error:', error.message);
     if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Data:', error.response.data);
+      logger.error('Status:', error.response.status);
+      logger.error('Data:', error.response.data);
     }
   }
 }

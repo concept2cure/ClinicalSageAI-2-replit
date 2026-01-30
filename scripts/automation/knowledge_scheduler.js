@@ -65,7 +65,7 @@ const SCHEDULER_CONFIG = {
 function ensureLogDirectory() {
   if (!fs.existsSync(SCHEDULER_CONFIG.logDirectory)) {
     fs.mkdirSync(SCHEDULER_CONFIG.logDirectory, { recursive: true });
-    console.log(`Created log directory: ${SCHEDULER_CONFIG.logDirectory}`);
+    logger.info(`Created log directory: ${SCHEDULER_CONFIG.logDirectory}`);
   }
 }
 
@@ -95,15 +95,15 @@ function logTaskExecution(task, result) {
 
     // Save log
     fs.writeFileSync(logFile, JSON.stringify(log, null, 2));
-    console.log(`Task execution logged to ${logFile}`);
+    logger.info(`Task execution logged to ${logFile}`);
   } catch (error) {
-    console.error(`Error logging task execution for ${task.label}:`, error.message);
+    logger.error(`Error logging task execution for ${task.label}:`, error.message);
   }
 }
 
 // Execute a task
 async function executeTask(task) {
-  console.log(`Executing task: ${task.label}...`);
+  logger.info(`Executing task: ${task.label}...`);
 
   try {
     // Execute the script
@@ -120,10 +120,10 @@ async function executeTask(task) {
     };
 
     logTaskExecution(task, result);
-    console.log(`Successfully executed ${task.label}`);
+    logger.info(`Successfully executed ${task.label}`);
     return result;
   } catch (error) {
-    console.error(`Error executing ${task.label}:`, error.message);
+    logger.error(`Error executing ${task.label}:`, error.message);
 
     // Log error
     const result = {
@@ -139,32 +139,32 @@ async function executeTask(task) {
 
 // Schedule all tasks
 function scheduleAllTasks() {
-  console.log('Scheduling knowledge enhancement tasks...');
+  logger.info('Scheduling knowledge enhancement tasks...');
 
   ensureLogDirectory();
 
   for (const [key, task] of Object.entries(SCHEDULER_CONFIG.schedules)) {
     if (!task.enabled) {
-      console.log(`Task ${task.label} is disabled, skipping`);
+      logger.info(`Task ${task.label} is disabled, skipping`);
       continue;
     }
 
     try {
-      console.log(`Scheduling ${task.label} with cron pattern: ${task.cronSchedule}`);
+      logger.info(`Scheduling ${task.label} with cron pattern: ${task.cronSchedule}`);
 
       cron.schedule(task.cronSchedule, async () => {
-        console.log(`Cron triggered for ${task.label} at ${new Date().toISOString()}`);
+        logger.info(`Cron triggered for ${task.label} at ${new Date().toISOString()}`);
         await executeTask(task);
       });
 
-      console.log(`Successfully scheduled ${task.label}`);
+      logger.info(`Successfully scheduled ${task.label}`);
     } catch (error) {
-      console.error(`Error scheduling ${task.label}:`, error.message);
+      logger.error(`Error scheduling ${task.label}:`, error.message);
     }
   }
 
-  console.log('All tasks scheduled successfully!');
-  console.log(
+  logger.info('All tasks scheduled successfully!');
+  logger.info(
     'Knowledge enhancement system will run automatically based on the configured schedules.'
   );
 }
@@ -174,7 +174,7 @@ async function runTaskNow(taskKey) {
   const task = SCHEDULER_CONFIG.schedules[taskKey];
 
   if (!task) {
-    console.error(`Task ${taskKey} not found in configuration`);
+    logger.error(`Task ${taskKey} not found in configuration`);
     return {
       success: false,
       error: `Task ${taskKey} not found in configuration`,
@@ -182,14 +182,14 @@ async function runTaskNow(taskKey) {
   }
 
   if (!task.enabled) {
-    console.warn(`Task ${task.label} is disabled`);
+    logger.warn(`Task ${task.label} is disabled`);
     return {
       success: false,
       error: `Task ${task.label} is disabled`,
     };
   }
 
-  console.log(`Manually running task: ${task.label}...`);
+  logger.info(`Manually running task: ${task.label}...`);
   return await executeTask(task);
 }
 
@@ -219,7 +219,7 @@ function getScheduleStatus() {
           lastExecution = log[log.length - 1];
         }
       } catch (error) {
-        console.error(`Error reading log file for ${task.label}:`, error.message);
+        logger.error(`Error reading log file for ${task.label}:`, error.message);
       }
     }
 
@@ -242,7 +242,7 @@ function getScheduleStatus() {
 
 // Start the scheduler
 function startScheduler() {
-  console.log('Starting knowledge enhancement scheduler...');
+  logger.info('Starting knowledge enhancement scheduler...');
 
   try {
     scheduleAllTasks();
@@ -267,7 +267,7 @@ function startScheduler() {
       status: getScheduleStatus(),
     };
   } catch (error) {
-    console.error('Error starting scheduler:', error.message);
+    logger.error('Error starting scheduler:', error.message);
     return {
       success: false,
       error: error.message,
@@ -280,29 +280,29 @@ async function installDependencies() {
   try {
     try {
       require.resolve('node-cron');
-      console.log('node-cron is already installed');
+      logger.info('node-cron is already installed');
       return true;
     } catch (e) {
-      console.log('Installing required dependencies...');
+      logger.info('Installing required dependencies...');
       await execPromise('npm install node-cron');
-      console.log('Dependencies installed successfully');
+      logger.info('Dependencies installed successfully');
       return true;
     }
   } catch (error) {
-    console.error('Error installing dependencies:', error.message);
+    logger.error('Error installing dependencies:', error.message);
     return false;
   }
 }
 
 // Main function
 async function main() {
-  console.log('Initializing knowledge enhancement scheduler...');
+  logger.info('Initializing knowledge enhancement scheduler...');
 
   // Ensure dependencies are installed
   const dependenciesInstalled = await installDependencies();
 
   if (!dependenciesInstalled) {
-    console.error('Failed to install required dependencies. Aborting.');
+    logger.error('Failed to install required dependencies. Aborting.');
     return {
       success: false,
       error: 'Failed to install required dependencies',
@@ -313,7 +313,7 @@ async function main() {
   const result = startScheduler();
 
   if (result.success) {
-    console.log(`
+    logger.info(`
 =========================================================
       KNOWLEDGE ENHANCEMENT SCHEDULER IS ACTIVE
 =========================================================
@@ -352,31 +352,31 @@ function parseArgs() {
 
   switch (command) {
     case 'status':
-      console.log('Getting scheduler status...');
-      console.log(JSON.stringify(getScheduleStatus(), null, 2));
+      logger.info('Getting scheduler status...');
+      logger.info(JSON.stringify(getScheduleStatus(), null, 2));
       break;
 
     case 'run':
       const taskKey = args[1];
       if (!taskKey) {
-        console.error('No task key provided. Usage: node knowledge_scheduler.js run <taskKey>');
-        console.log('Available task keys:', Object.keys(SCHEDULER_CONFIG.schedules).join(', '));
+        logger.error('No task key provided. Usage: node knowledge_scheduler.js run <taskKey>');
+        logger.info('Available task keys:', Object.keys(SCHEDULER_CONFIG.schedules).join(', '));
         return;
       }
 
-      console.log(`Manually running task: ${taskKey}`);
+      logger.info(`Manually running task: ${taskKey}`);
       runTaskNow(taskKey)
         .then(result => {
-          console.log('Task execution result:', result);
+          logger.info('Task execution result:', result);
         })
         .catch(error => {
-          console.error('Error executing task:', error);
+          logger.error('Error executing task:', error);
         });
       break;
 
     default:
-      console.error(`Unknown command: ${command}`);
-      console.log('Available commands: status, run <taskKey>');
+      logger.error(`Unknown command: ${command}`);
+      logger.info('Available commands: status, run <taskKey>');
   }
 }
 
