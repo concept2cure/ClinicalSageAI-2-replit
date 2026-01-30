@@ -114,6 +114,16 @@ jobs:
           name: generated-docx
           path: services/test_outputs/**
 
+      - name: Show collected debug files
+        if: always()
+        run: |
+          echo "== list debug dir =="
+          ls -la services/test_outputs/ci-debug || true
+          echo "== show first 200 lines of celery inspect if exists =="
+          [ -f services/test_outputs/ci-debug/celery_inspect.txt ] && (echo "--- celery_inspect.txt ---" && head -n 200 services/test_outputs/ci-debug/celery_inspect.txt) || true
+          echo "== show first 200 lines of worker_logs_tail.txt if exists =="
+          [ -f services/test_outputs/ci-debug/worker_logs_tail.txt ] && (echo "--- worker_logs_tail.txt ---" && head -n 200 services/test_outputs/ci-debug/worker_logs_tail.txt) || true
+
       - name: Upload debug logs artifact
         if: always()
         uses: actions/upload-artifact@v4
