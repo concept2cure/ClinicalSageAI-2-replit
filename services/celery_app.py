@@ -18,11 +18,24 @@ def generate_docx_task(self, job_id: str, data_path: str, template_path: str = N
     """Celery task to run the secure runner and update job status in the job store."""
     store.set(job_id, {"status": "PROCESSING"})
     try:
-        out_dir = Path(shutil.mkdtemp(prefix=f"docgen_{job_id}_"))
+        # Use a shared output directory when running in docker-compose E2E. If
+        # OUTPUT_DIR_BASE is set (e.g., "/shared_data"), create a per-job
+        # subdirectory there so the worker's spawned containers (via host
+        # Docker daemon) can mount the same host path and write outputs
+        # visible to the `api` service.
+        base = os.getenv("OUTPUT_DIR_BASE")
+        if base:
+            base_path = Path(base)
+            base_path.mkdir(parents=True, exist_ok=True)
+            out_dir = Path(tempfile.mkdtemp(prefix=f"docgen_{job_id}_", dir=str(base_path)))
+        else:
+            out_dir = Path(shutil.mkdtemp(prefix=f"docgen_{job_id}_"))
+
         code, stdout, stderr = run_container(data_path, str(out_dir), template_docx=template_path)
         if code == 0:
             generated = out_dir / "generated.docx"
             if generated.exists():
+                # store absolute host path and a download endpoint
                 store.set(job_id, {"status": "COMPLETED", "output": str(generated)})
                 return {"status": "COMPLETED", "output": str(generated)}
             else:

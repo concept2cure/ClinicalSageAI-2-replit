@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from uuid import uuid4
 from services.job_store import get_store
@@ -39,4 +40,24 @@ def job_status(job_id: str):
     job = store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
+    # augment with a download URL when completed
+    if job.get("status") == "COMPLETED":
+        job = dict(job)
+        job["download_url"] = f"/api/ectd/download/{job_id}"
     return job
+
+
+@app.get("/api/ectd/download/{job_id}")
+def download_generated(job_id: str):
+    job = store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="job not found")
+    if job.get("status") != "COMPLETED":
+        raise HTTPException(status_code=404, detail="document not ready")
+    output_path = job.get("output")
+    if not output_path:
+        raise HTTPException(status_code=404, detail="no output recorded")
+    p = Path(output_path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="output file not found")
+    return FileResponse(path=str(p), filename=p.name, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")

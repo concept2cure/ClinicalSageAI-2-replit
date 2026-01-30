@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./test_shared:/shared_data
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker.Dockerfile
+    volumes:
+      - ./test_shared:/shared_data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - OUTPUT_DIR_BASE=/shared_data
+    depends_on:
+      - redis

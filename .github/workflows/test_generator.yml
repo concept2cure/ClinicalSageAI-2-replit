@@ -34,6 +34,31 @@ jobs:
         run: |
           pytest -q services/tests/test_generator.py -q
 
+      - name: Start E2E docker-compose
+        run: |
+          docker compose -f docker-compose.e2e.yml up -d --build
+
+      - name: Wait for API to be ready
+        run: |
+          # Wait for the API to respond on port 8000 (max 30s)
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8000/docs > /dev/null; then
+              echo "API ready" && break
+            fi
+            sleep 1
+          done
+
+      - name: Run E2E async test
+        env:
+          TEST_OUTPUT_DIR: services/test_outputs
+        run: |
+          pytest -q services/tests/test_e2e_async.py -q
+
+      - name: Tear down E2E docker-compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.e2e.yml down
+
       - name: Upload generated DOCX artifacts
         if: always()
         uses: actions/upload-artifact@v4

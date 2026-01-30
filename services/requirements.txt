@@ -5,3 +5,8 @@ pytest==7.4.3
 # Queue and Broker
 celery==5.3.6
 redis==4.6.0
+
+# API/Dev
+fastapi==0.100.1
+uvicorn==0.23.2
+requests==2.31.0
