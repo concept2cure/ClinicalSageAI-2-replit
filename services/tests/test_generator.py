@@ -1,5 +1,9 @@
 import json
 import os
+import sys
+from pathlib import Path
+# Ensure repo root is on sys.path in CI environment
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from docx import Document
 from services.ectd_generator import generate_docx_from_json
 
