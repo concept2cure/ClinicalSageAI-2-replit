@@ -1,7 +1,10 @@
 # Concept2Cure Roadmap Inventory v4.0
+> **Canonical Source:** `docs/roadmap/CONCEPT2CURE_MASTER_ROADMAP.md`  
 > **GA Target Date:** March 28, 2026  
 > **Current Sprint:** Phase 4.1 (Proof System — Enterprise Completion Gate)  
-> **Status:** Remediation Required — 4.1 must complete before 4.2
+> **Status:** Phase 3: **Complete** | Phase 4: **In Progress**
+
+
 
 ## 🚦 Phase Status Dashboard
 
