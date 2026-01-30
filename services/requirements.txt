@@ -1,0 +1,3 @@
+# Requirements for service-level scripts and tests
+python-docx==0.8.11
+pytest==7.4.3
