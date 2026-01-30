@@ -3,5 +3,5 @@ python-docx==0.8.11
 pytest==7.4.3
 
 # Queue and Broker
-celery==5.3.2
+celery==5.3.6
 redis==4.6.0
