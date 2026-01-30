@@ -420,7 +420,9 @@ def generate_clinical_summary(output_path: str = OUTPUT_FILENAME, data: Dict[str
             "Study design: Randomized, double-blind. Statistical tests: ANCOVA on change from baseline."
         )
 
-    add_footer(doc)
+    # Only add default footer if no template provided - preserve template footer otherwise
+    if not template_path:
+        add_footer(doc)
 
     # Ensure output directory exists
     out_dir = os.path.dirname(os.path.abspath(output_path)) or "."
