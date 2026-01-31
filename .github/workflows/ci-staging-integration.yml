@@ -47,6 +47,11 @@ jobs:
     needs: compliance-checks
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      # Protection Rule: This job requires approval from @concept2cure/security-team
+      # when `environment` == 'staging-aws' to prevent unauthorized access to signing keys
+      # Note: Set environment protection rules in GitHub UI for the `staging-aws` environment.
     
     steps:
       - uses: actions/checkout@v4
