@@ -25,7 +25,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install pytest python-docx lxml defusedxml rsa requests cryptography
+          pip install pytest python-docx lxml defusedxml rsa requests cryptography boto3 pyasn1 pyasn1-modules
       
       - name: Run eCTD 4.0 Compliance Tests
         run: |

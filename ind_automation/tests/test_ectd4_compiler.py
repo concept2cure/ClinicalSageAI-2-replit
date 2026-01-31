@@ -238,12 +238,24 @@ class TestDigitalSignatures:
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
         from ind_automation.signatures.pki_signer import TSASignature
 
-        # Mock TSA response
+        # Mock TSA response (return a valid TimeStampResp DER with granted status)
         class FakeResp:
             status_code = 200
-            content = b'FAKE_TSA_TOKEN'
-        def fake_post(url, data=None, headers=None):
-            return FakeResp()
+            def __init__(self, content):
+                self.content = content
+            def raise_for_status(self):
+                return None
+        from pyasn1.codec.der import encoder
+        from pyasn1_modules import rfc3161, rfc5652
+        def fake_post(url, data=None, headers=None, timeout=None):
+            # Construct a minimal TimeStampResp with granted status
+            resp = rfc3161.TimeStampResp()
+            pki = rfc3161.PKIStatusInfo()
+            pki.setComponentByName('status', 0)
+            resp.setComponentByName('status', pki)
+            # minimal empty ContentInfo
+            resp.setComponentByName('timeStampToken', rfc5652.ContentInfo())
+            return FakeResp(encoder.encode(resp))
         monkeypatch.setattr('requests.post', fake_post)
 
         compiler = ECTD4Compiler(output_dir=str(tmp_path))
@@ -268,7 +280,7 @@ class TestDigitalSignatures:
             'name': 'TSA User', 'role': 'QA', 'user_id': 'tsa_01'
         })
 
-        # Inspect signatures.xml
+        # Inspect signatures.xml for timestamp element
         import zipfile
         with zipfile.ZipFile(signed_path) as z:
             sig_xml = z.read('_signatures/signatures.xml')
@@ -282,3 +294,111 @@ class TestDigitalSignatures:
         assert any(d.get('type') == 'tsa-token-present' and d.get('valueBoolean') for d in details)
         assert any(d.get('type') == 'tsa-provider' for d in details)
         assert any(d.get('type') == 'timestamp-rfc3161' for d in details)
+
+    def test_tsa_request_is_valid_asn1(self):
+        """TSA query must be valid RFC3161 ASN.1 TimeStampReq."""
+        from ind_automation.signatures.pki_signer import TSASignature
+        from pyasn1.codec.der import decoder
+        from pyasn1_modules import rfc3161
+        from pyasn1.type import univ
+
+        signer = TSASignature()
+        test_data = b"test signature xml"
+        tsq = signer._create_tsa_query(test_data)
+
+        decoded, _ = decoder.decode(tsq, asn1Spec=rfc3161.TimeStampReq())
+        assert isinstance(decoded, univ.Sequence)
+        assert int(decoded.getComponentByName('version')) == 1
+        msg_imprint = decoded.getComponentByName('messageImprint')
+        algo_oid = str(msg_imprint.getComponentByName('hashAlgorithm').getComponentByName('algorithm'))
+        assert algo_oid == '2.16.840.1.101.3.4.2.1'
+
+    def test_tsa_response_parsing(self):
+        """Must parse a minimal TimeStampResp ASN.1 and extract token."""
+        from ind_automation.signatures.pki_signer import TSASignature
+        from pyasn1_modules import rfc3161, rfc5652
+
+        signer = TSASignature()
+        # Build minimal granted TimeStampResp
+        from pyasn1.codec.der import encoder
+        resp = rfc3161.TimeStampResp()
+        pki = rfc3161.PKIStatusInfo()
+        pki.setComponentByName('status', 0)
+        resp.setComponentByName('status', pki)
+        resp.setComponentByName('timeStampToken', rfc5652.ContentInfo())
+
+        der = encoder.encode(resp)
+        result = signer._parse_tsa_response(der)
+        assert result['status'] == 'granted'
+        assert 'token' in result
+        # parsed may be False for minimal/partial ContentInfo fixtures
+        assert result.get('parsed') in (True, False)
+
+
+class TestHSMSignatures:
+    """Requires AWS credentials (mocked for CI)."""
+
+    def test_hsm_signature_uses_kms(self, tmp_path, monkeypatch):
+        """Verify HSM signing invokes KMS (not local key)."""
+        from ind_automation.signatures.hsm_signer import HSMSignature
+        from unittest.mock import MagicMock, patch
+        from docx import Document
+
+        mock_kms = MagicMock()
+        mock_kms.get_public_key.return_value = {'PublicKey': b'fakepub', 'SigningAlgorithms': ['RSASSA_PKCS1_V1_5_SHA_256']}
+        mock_kms.sign.return_value = {'Signature': b'mocked_hsm_signature'}
+
+        with patch('boto3.client', return_value=mock_kms):
+            signer = HSMSignature(kms_key_id='alias/fda-signing-key')
+
+            # Create test doc
+            docx_path = tmp_path / "test.docx"
+            Document().add_paragraph("Test").save(docx_path)
+
+            signed = signer.sign_document(docx_path, {
+                "name": "Dr. Smith", "role": "PI"
+            })
+
+            # Verify KMS was called
+            mock_kms.sign.assert_called_once()
+            called = mock_kms.sign.call_args.kwargs
+            assert called['KeyId'] == 'alias/fda-signing-key'
+            assert called['MessageType'] == 'DIGEST'
+
+    def test_hsm_includes_key_id_in_audit(self, tmp_path, monkeypatch):
+        """Signature AuditEvent must reference HSM key for traceability."""
+        from ind_automation.signatures.hsm_signer import HSMSignature
+        from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+        from unittest.mock import MagicMock, patch
+
+        mock_kms = MagicMock()
+        mock_kms.get_public_key.return_value = {'PublicKey': b'fakepub', 'SigningAlgorithms': ['RSASSA_PKCS1_V1_5_SHA_256']}
+        mock_kms.sign.return_value = {'Signature': b'mocked_hsm_signature'}
+
+        with patch('boto3.client', return_value=mock_kms):
+            signer = HSMSignature(kms_key_id='alias/fda-signing-key')
+            compiler = ECTD4Compiler(output_dir=str(tmp_path))
+
+            class Canvas:
+                def __init__(self):
+                    self.study_id = 'HSM-001'
+                    self.module = '2.6.2'
+                    self.section = 'Pharmacokinetics'
+                    self.language = 'en'
+                    self.content_blocks = [{'text': 'HSM test', 'sdt_tag': 'h'}]
+                    self.events = []
+                    self.created_at = '2026-01-01T00:00:00Z'
+            canvas = Canvas()
+
+            ectd_doc = compiler.compile(canvas)
+            signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, canvas, signer, {
+                'name': 'HSM User', 'role': 'QA', 'user_id': 'hsm_01'
+            })
+
+            sig_events = [e for e in audited_doc.modification_history if isinstance(e.get('type'), dict) and e['type'].get('code') == '110107']
+            assert len(sig_events) == 1
+            details = sig_events[0]['entity'][0]['detail']
+            assert any(d.get('type') == 'certificate-fingerprint' for d in details)
+            # HSM key id should be discoverable somewhere in the audit event payload
+            assert any('hsm' in json.dumps(details).lower() or 'kms' in json.dumps(details).lower())
+
