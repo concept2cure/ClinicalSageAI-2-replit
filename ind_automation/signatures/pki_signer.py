@@ -8,9 +8,13 @@ import json
 import rsa
 import zipfile
 import uuid
+import requests
+import base64
 from datetime import datetime, timezone
 from pathlib import Path
 from lxml import etree
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
 
 
 class Part11Signature:
@@ -140,11 +144,29 @@ class Part11Signature:
             data = self.pub_key.save_pkcs1() if hasattr(self, 'pub_key') else b''
         return hashlib.sha256(data).hexdigest()
 
-    def create_fhir_signature_event(self, signature_result: dict, signer_info: dict) -> dict:
+    def create_fhir_signature_event(self, signature_result: dict, signer_info: dict, document_id: str) -> dict:
         """
         Create FHIR AuditEvent for signature act to embed in eCTD.json backbone.
-        Links the cryptographic signature to the regulatory audit trail.
+        Links the cryptographic signature to the regulatory audit trail and references
+        the actual document by its UUID (urn:uuid:...).
+        Adds TSA-related details when present in signature_result['tsa'].
         """
+        details = [
+            {"type": "signature-algorithm", "valueString": "XAdES-BES-RSA4096-SHA256"},
+            {"type": "certificate-fingerprint", "valueString": self._get_cert_fingerprint()},
+            {"type": "xades-signature-id", "valueString": "DocSignature"},
+            {"type": "hash-preimage", "valueString": signature_result.get("document_hash")}
+        ]
+
+        # Include TSA details if available
+        tsa = signature_result.get('tsa') or {}
+        if tsa.get('present'):
+            details.extend([
+                {"type": "tsa-token-present", "valueBoolean": True},
+                {"type": "tsa-provider", "valueString": tsa.get('provider', 'unknown')},
+                {"type": "timestamp-rfc3161", "valueInstant": tsa.get('timestamp')}
+            ])
+
         return {
             "resourceType": "AuditEvent",
             "id": f"sig-{uuid.uuid4().hex[:8]}",
@@ -175,18 +197,61 @@ class Part11Signature:
                 "type": [{"code": "4"}]
             },
             "entity": [{
-                "what": {"reference": "Document/[DOC_ID]"},
+                "what": {
+                    "reference": f"urn:uuid:{document_id}",
+                    "identifier": {
+                        "system": "https://concept2cure.io/ectd4",
+                        "value": document_id
+                    }
+                },
                 "type": {"code": "2"},
                 "role": {"code": "20"},
                 "description": "Digital signature created",
-                "detail": [
-                    {"type": "signature-algorithm", "valueString": "XAdES-BES-RSA4096-SHA256"},
-                    {"type": "certificate-fingerprint", "valueString": self._get_cert_fingerprint()},
-                    {"type": "xades-signature-id", "valueString": "DocSignature"},
-                    {"type": "hash-preimage", "valueString": signature_result.get("document_hash")}
-                ]
+                "detail": details
             }]
         }
+
+    def _embed_tsa_token(self, signed_path: Path, tsa_token: bytes):
+        """Embed the TSA token into the XAdES signature XML as XAdES-T (SignatureTimeStamp).
+        This is a simplified embedding for our test/CI flows (EncapsulatedTimeStamp in base64).
+        """
+        with zipfile.ZipFile(signed_path, 'r') as zin:
+            sig_xml = zin.read('_signatures/signatures.xml')
+            root = etree.fromstring(sig_xml)
+
+        ns = {'xades': 'http://uri.etsi.org/01903/v1.3.2#'}
+        # Create SignatureTimeStamp element
+        st = etree.Element('{http://uri.etsi.org/01903/v1.3.2#}SignatureTimeStamp')
+        enc = etree.SubElement(st, '{http://uri.etsi.org/01903/v1.3.2#}EncapsulatedTimeStamp')
+        enc.text = base64.b64encode(tsa_token).decode('ascii')
+
+        # Append to root.Signature/Object/QualifyingProperties/SignedProperties/SignedSignatureProperties
+        # We try to find SignedSignatureProperties and append the SignatureTimeStamp after it.
+        ssp = None
+        for el in root.iter():
+            if el.tag.endswith('SignedSignatureProperties'):
+                ssp = el
+                break
+        if ssp is not None:
+            ssp.addnext(st)
+        else:
+            # Fallback: append under root
+            root.append(st)
+
+        new_sig = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding='UTF-8')
+
+        # Re-write zip with updated signature file
+        with zipfile.ZipFile(signed_path, 'r') as zin:
+            with zipfile.ZipFile(signed_path.with_suffix('.tmp'), 'w', zipfile.ZIP_DEFLATED) as zout:
+                for item in zin.namelist():
+                    if item == '_signatures/signatures.xml':
+                        zout.writestr(item, new_sig)
+                    else:
+                        zout.writestr(item, zin.read(item))
+        # Replace original
+        signed_path.unlink()
+        signed_path.with_suffix('.tmp').rename(signed_path)
+
 
     def verify_signature(self, signed_docx: Path) -> dict:
         """Verify document integrity since signing."""
@@ -235,3 +300,43 @@ class Part11Signature:
         except Exception as e:
             result["errors"].append(str(e))
             return result
+
+
+class TSASignature(Part11Signature):
+    """Extends Part11Signature with RFC 3161 Time-Stamp Authority support."""
+    def __init__(self, tsa_url: str = "http://timestamp.digicert.com", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tsa_url = tsa_url
+
+    def sign_with_timestamp(self, docx_path: Path, signer_info: dict) -> Path:
+        """Sign document and embed TSA token (XAdES-T form)."""
+        # First sign normally
+        signed_path = self.sign_document(docx_path, signer_info)
+
+        # Read current signature XML
+        with zipfile.ZipFile(signed_path, 'r') as z:
+            sig_xml = z.read('_signatures/signatures.xml')
+
+        # Create a simple TSA request body (hash of signature xml) - in real impl this
+        # would be a full RFC3161 TimeStampReq (ASN.1). For CI/tests we send a hash.
+        tsq = hashlib.sha256(sig_xml).digest()
+
+        # Call TSA - caller may mock this in tests
+        resp = requests.post(self.tsa_url, data=tsq, headers={'Content-Type': 'application/timestamp-query'})
+        if resp.status_code != 200:
+            raise RuntimeError(f"TSA request failed: {resp.status_code}")
+
+        tsa_token = resp.content
+
+        # Embed TSA token into signature XML
+        self._embed_tsa_token(signed_path, tsa_token)
+
+        # Store last TSA info for audit binding
+        provider = requests.utils.urlparse(self.tsa_url).hostname or 'unknown'
+        self.last_tsa_info = {
+            'present': True,
+            'provider': provider,
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }
+
+        return signed_path

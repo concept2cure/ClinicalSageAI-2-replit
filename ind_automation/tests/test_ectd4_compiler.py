@@ -217,3 +217,68 @@ class TestDigitalSignatures:
         hash_pre = [d for d in details if d["type"] == "hash-preimage"]
         assert len(hash_pre) == 1
         assert len(hash_pre[0]["valueString"]) == 64
+
+    def test_signature_audit_references_correct_document(self, tmp_path, sample_canvas_doc):
+        """Signature AuditEvent must reference actual document UUID."""
+        from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+
+        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        signer = Part11Signature()
+
+        ectd_doc = compiler.compile(sample_canvas_doc)
+        signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, sample_canvas_doc, signer, {
+            "name": "Dr. Smith", "role": "PI", "user_id": "pi_001"
+        })
+
+        sig_event = [e for e in audited_doc.modification_history if isinstance(e.get('type'), dict) and e['type'].get('code') == '110107'][0]
+        assert sig_event["entity"][0]["what"]["reference"] == f"urn:uuid:{audited_doc.document_id}"
+
+    def test_signature_includes_tsa_timestamp(self, tmp_path, monkeypatch):
+        """TSA token must be embedded in XAdES and AuditEvent must record TSA info."""
+        from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+        from ind_automation.signatures.pki_signer import TSASignature
+
+        # Mock TSA response
+        class FakeResp:
+            status_code = 200
+            content = b'FAKE_TSA_TOKEN'
+        def fake_post(url, data=None, headers=None):
+            return FakeResp()
+        monkeypatch.setattr('requests.post', fake_post)
+
+        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        signer = TSASignature(tsa_url='http://timestamp.digicert.com')
+
+        # Create a minimal canvas doc
+        class Canvas:
+            def __init__(self):
+                self.study_id = 'TSA-001'
+                self.module = '2.6.2'
+                self.section = 'Pharmacokinetics'
+                self.language = 'en'
+                self.content_blocks = [{'text': 'TSA test', 'sdt_tag': 't'}]
+                self.events = []
+                self.created_at = '2026-01-01T00:00:00Z'
+        canvas = Canvas()
+
+        ectd_doc = compiler.compile(canvas)
+
+        # Sign with TSA
+        signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, canvas, signer, {
+            'name': 'TSA User', 'role': 'QA', 'user_id': 'tsa_01'
+        })
+
+        # Inspect signatures.xml
+        import zipfile
+        with zipfile.ZipFile(signed_path) as z:
+            sig_xml = z.read('_signatures/signatures.xml')
+            assert b'SignatureTimeStamp' in sig_xml or b'EncapsulatedTimeStamp' in sig_xml
+
+        # Verify AuditEvent includes TSA details
+        sig_events = [e for e in audited_doc.modification_history if isinstance(e.get('type'), dict) and e['type'].get('code') == '110107']
+        assert len(sig_events) == 1
+        event = sig_events[0]
+        details = event['entity'][0]['detail']
+        assert any(d.get('type') == 'tsa-token-present' and d.get('valueBoolean') for d in details)
+        assert any(d.get('type') == 'tsa-provider' for d in details)
+        assert any(d.get('type') == 'timestamp-rfc3161' for d in details)
