@@ -213,7 +213,7 @@ class ECTD4Compiler:
    <ich:specificationLevel>{ectd_doc.specification_level}</ich:specificationLevel>
    <ich:contentHash algorithm="sha256">{ectd_doc.content_hash}</ich:contentHash>
    <ich:submissionType>IND</ich:submissionType>
-   <ich:dataIntegrity attribut="{str(ectd_doc.data_integrity['attributable']).lower()}" 
+   <ich:dataIntegrity attribut="{str(ectd_doc.data_integrity['attributable']).lower()}"
                        complete="{str(ectd_doc.data_integrity['complete']).lower()}"/>
   </rdf:Description>
   <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">
