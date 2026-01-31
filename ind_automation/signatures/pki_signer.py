@@ -7,6 +7,7 @@ import hashlib
 import json
 import rsa
 import zipfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from lxml import etree
@@ -130,6 +131,63 @@ class Part11Signature:
                     )
                     zip_out.writestr('[Content_Types].xml', manifest)
     
+    def _get_cert_fingerprint(self) -> str:
+        """Return SHA-256 hex fingerprint of certificate or public key PEM."""
+        if self.certificate:
+            data = self.certificate
+        else:
+            # Use public key PEM when no certificate provided
+            data = self.pub_key.save_pkcs1() if hasattr(self, 'pub_key') else b''
+        return hashlib.sha256(data).hexdigest()
+
+    def create_fhir_signature_event(self, signature_result: dict, signer_info: dict) -> dict:
+        """
+        Create FHIR AuditEvent for signature act to embed in eCTD.json backbone.
+        Links the cryptographic signature to the regulatory audit trail.
+        """
+        return {
+            "resourceType": "AuditEvent",
+            "id": f"sig-{uuid.uuid4().hex[:8]}",
+            "recorded": datetime.now(timezone.utc).isoformat(),
+            "type": {
+                "system": "http://dicom.nema.org/resources/ontology/DCM",
+                "code": "110107",
+                "display": "Document Signature"
+            },
+            "subtype": [{
+                "code": "DIGITAL_SIGNATURE",
+                "display": "XAdES-BES Digital Signature"
+            }],
+            "agent": [{
+                "who": {"identifier": {"value": signer_info.get("user_id")}},
+                "name": signer_info.get("name"),
+                "requestor": True,
+                "role": [{
+                    "coding": [{
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                        "code": "AUT",
+                        "display": signer_info.get("role", "Author")
+                    }]
+                }]
+            }],
+            "source": {
+                "observer": {"display": "Concept2Cure-PKISigner"},
+                "type": [{"code": "4"}]
+            },
+            "entity": [{
+                "what": {"reference": "Document/[DOC_ID]"},
+                "type": {"code": "2"},
+                "role": {"code": "20"},
+                "description": "Digital signature created",
+                "detail": [
+                    {"type": "signature-algorithm", "valueString": "XAdES-BES-RSA4096-SHA256"},
+                    {"type": "certificate-fingerprint", "valueString": self._get_cert_fingerprint()},
+                    {"type": "xades-signature-id", "valueString": "DocSignature"},
+                    {"type": "hash-preimage", "valueString": signature_result.get("document_hash")}
+                ]
+            }]
+        }
+
     def verify_signature(self, signed_docx: Path) -> dict:
         """Verify document integrity since signing."""
         result = {

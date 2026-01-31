@@ -14,6 +14,11 @@ import zipfile
 from lxml import etree
 
 from ind_automation.utils.content_controls import inject_sdt_to_paragraph
+# Import signature type for type hints only (no runtime import required here)
+try:
+    from ind_automation.signatures.pki_signer import Part11Signature  # type: ignore
+except Exception:
+    Part11Signature = None  # graceful fallback for environments without rsa
 
 
 @dataclass
@@ -115,6 +120,38 @@ class ECTD4Compiler:
         temp_path.unlink()
 
         return final_path
+
+    def sign_and_audit(self, ectd_doc: ECTD4Document, canvas_document, signer, signer_info: dict):
+        """Sign document and append signature event to modification history.
+
+        This generates the DOCX, signs it with the provided signer implementation,
+        creates a FHIR AuditEvent for the signature act, and appends it to the
+        document's modification history (immutable audit chain).
+        """
+        # Generate the physical document
+        docx_path = self.generate_docx(ectd_doc, canvas_document)
+
+        # Perform cryptographic signing
+        signed_path = signer.sign_document(docx_path, signer_info)
+
+        # Build signature audit event and append
+        signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
+        try:
+            sig_event = signer.create_fhir_signature_event(signature_result, signer_info)
+        except Exception:
+            # Ensure we don't break signing flow if the signer lacks method
+            sig_event = {
+                "resourceType": "AuditEvent",
+                "id": f"sig-{uuid.uuid4().hex[:8]}",
+                "recorded": datetime.now(timezone.utc).isoformat(),
+                "type": {"code": "110107"},
+                "agent": [],
+                "entity": [{"detail": [{"type": "hash-preimage", "valueString": signature_result["document_hash"]}]}]
+            }
+
+        ectd_doc.modification_history.append(sig_event)
+
+        return signed_path, ectd_doc
 
     def generate_backbone(self, documents: List[ECTD4Document]) -> Dict:
         return {

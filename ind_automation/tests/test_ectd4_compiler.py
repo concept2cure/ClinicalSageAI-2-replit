@@ -190,3 +190,30 @@ class TestDigitalSignatures:
         tamper_check = signer.verify_signature(tampered_path)
         assert tamper_check["document_hash_match"] is False
         assert tamper_check["valid"] is False
+
+    def test_signature_creates_fhir_audit_event(self, tmp_path, sample_canvas_doc):
+        """Signature must create traceable FHIR AuditEvent in backbone."""
+        from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+
+        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        signer = Part11Signature()
+
+        ectd_doc = compiler.compile(sample_canvas_doc)
+        signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, sample_canvas_doc, signer, {
+            "name": "Dr. Smith",
+            "role": "Principal Investigator",
+            "user_id": "pi_001"
+        })
+
+        sig_events = [e for e in audited_doc.modification_history if isinstance(e.get('type'), dict) and e['type'].get('code') == '110107']
+        assert len(sig_events) == 1
+
+        event = sig_events[0]
+        details = event["entity"][0]["detail"]
+        cert_fp = [d for d in details if d["type"] == "certificate-fingerprint"]
+        assert len(cert_fp) == 1
+        assert len(cert_fp[0]["valueString"]) == 64  # SHA-256 hex
+
+        hash_pre = [d for d in details if d["type"] == "hash-preimage"]
+        assert len(hash_pre) == 1
+        assert len(hash_pre[0]["valueString"]) == 64
