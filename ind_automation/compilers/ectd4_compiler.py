@@ -131,22 +131,40 @@ class ECTD4Compiler:
         # Generate the physical document
         docx_path = self.generate_docx(ectd_doc, canvas_document)
 
-        # Perform cryptographic signing
-        signed_path = signer.sign_document(docx_path, signer_info)
+        # Perform cryptographic signing (use TSA-enabled signing if available)
+        if hasattr(signer, 'sign_with_timestamp'):
+            signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+        else:
+            signed_path = signer.sign_document(docx_path, signer_info)
 
         # Build signature audit event and append
         signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
+        # Include TSA info when provided by the signer
+        if hasattr(signer, 'last_tsa_info') and getattr(signer, 'last_tsa_info'):
+            signature_result['tsa'] = signer.last_tsa_info
+
         try:
-            sig_event = signer.create_fhir_signature_event(signature_result, signer_info)
+            sig_event = signer.create_fhir_signature_event(signature_result, signer_info, ectd_doc.document_id)
         except Exception:
             # Ensure we don't break signing flow if the signer lacks method
+            tsa = signature_result.get('tsa', {})
+            entity = {
+                "what": {"reference": f"urn:uuid:{ectd_doc.document_id}", "identifier": {"system": "https://concept2cure.io/ectd4", "value": ectd_doc.document_id}},
+                "detail": [{"type": "hash-preimage", "valueString": signature_result["document_hash"]}]
+            }
+            if tsa.get('present'):
+                entity['detail'].extend([
+                    {"type": "tsa-token-present", "valueBoolean": True},
+                    {"type": "tsa-provider", "valueString": tsa.get('provider')},
+                    {"type": "timestamp-rfc3161", "valueInstant": tsa.get('timestamp')}
+                ])
             sig_event = {
                 "resourceType": "AuditEvent",
                 "id": f"sig-{uuid.uuid4().hex[:8]}",
                 "recorded": datetime.now(timezone.utc).isoformat(),
                 "type": {"code": "110107"},
                 "agent": [],
-                "entity": [{"detail": [{"type": "hash-preimage", "valueString": signature_result["document_hash"]}]}]
+                "entity": [entity]
             }
 
         ectd_doc.modification_history.append(sig_event)
