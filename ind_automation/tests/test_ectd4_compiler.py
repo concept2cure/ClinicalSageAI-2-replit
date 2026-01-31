@@ -335,6 +335,57 @@ class TestDigitalSignatures:
         assert result.get('parsed') in (True, False)
 
 
+class TestSignatureConfiguration:
+    """Validate FDA Part 11 configuration requirements."""
+
+    def test_production_requires_kms_config(self):
+        """Production mode must have KMS configuration."""
+        import os
+        os.environ['CONCEPT2CURE_SIGNER_MODE'] = 'hsm_kms'
+        os.environ.pop('KMS_KEY_ID', None)  # Ensure missing
+
+        with pytest.raises(ValueError, match="KMS_KEY_ID"):
+            from ind_automation.config.signature_config import SignatureConfig
+            SignatureConfig()
+
+        # Cleanup
+        os.environ.pop('CONCEPT2CURE_SIGNER_MODE', None)
+
+    def test_dev_mode_allows_missing_config(self):
+        """Development mode works without KMS."""
+        import os
+        os.environ['CONCEPT2CURE_SIGNER_MODE'] = 'dev'
+
+        from ind_automation.config.signature_config import SignatureConfig, SignerMode
+        config = SignatureConfig()
+        assert config.mode == SignerMode.DEV
+        assert not config.is_production()
+
+        os.environ.pop('CONCEPT2CURE_SIGNER_MODE', None)
+
+    def test_config_provides_audit_metadata(self):
+        """Configuration must expose audit metadata for FHIR."""
+        import os
+        os.environ['CONCEPT2CURE_SIGNER_MODE'] = 'hsm_kms'
+        os.environ['KMS_KEY_ID'] = 'arn:aws:kms:us-east-1:123:key/abc'
+        os.environ['AWS_REGION'] = 'us-west-2'
+        os.environ['KMS_KEY_CUSTODY_SOP'] = 'SOP-SEC-001'
+
+        from ind_automation.config.signature_config import SignatureConfig
+        config = SignatureConfig()
+        meta = config.get_audit_metadata()
+
+        assert meta['signer_mode'] == 'hsm_kms'
+        assert meta['environment'] == 'production'
+        assert meta['key_custody'] == 'SOP-SEC-001'
+        assert meta['hosted_in'] == 'us-west-2'
+
+        os.environ.pop('CONCEPT2CURE_SIGNER_MODE', None)
+        os.environ.pop('KMS_KEY_ID', None)
+        os.environ.pop('AWS_REGION', None)
+        os.environ.pop('KMS_KEY_CUSTODY_SOP', None)
+
+
 class TestHSMSignatures:
     """Requires AWS credentials (mocked for CI)."""
 

@@ -66,9 +66,26 @@ class ECTD4Document:
 class ECTD4Compiler:
     """Native eCTD 4.0 compiler."""
 
-    def __init__(self, output_dir: str = "./ind_automation/output"):
+    def __init__(self, output_dir: str = "./ind_automation/output", signature_config=None):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Signature configuration and signer wiring
+        try:
+            from ind_automation.config.signature_config import SignatureConfig
+        except Exception:
+            SignatureConfig = None
+
+        self.sig_config = signature_config or (SignatureConfig() if SignatureConfig else None)
+        self.signer = None
+        self._audit_config = {}
+        if self.sig_config:
+            signer_conf = self.sig_config.get_signer_config()
+            signer_cls = signer_conf.get('class')
+            signer_params = signer_conf.get('params', {})
+            # Instantiate signer (deferred errors in tests will be more explicit)
+            self.signer = signer_cls(**{k: v for k, v in signer_params.items() if v})
+            self._audit_config = self.sig_config.get_audit_metadata()
 
     def compile(self, canvas_document) -> ECTD4Document:
         """
@@ -121,25 +138,35 @@ class ECTD4Compiler:
 
         return final_path
 
-    def sign_and_audit(self, ectd_doc: ECTD4Document, canvas_document, signer, signer_info: dict):
+    def sign_and_audit(self, ectd_doc: ECTD4Document, canvas_document, signer=None, signer_info: dict = None):
         """Sign document and append signature event to modification history.
 
-        This generates the DOCX, signs it with the provided signer implementation,
-        creates a FHIR AuditEvent for the signature act, and appends it to the
-        document's modification history (immutable audit chain).
+        Uses provided signer if given, otherwise the configured signer from init.
+        Enforces production requirements (e.g., TSA timestamping) when running in production mode.
         """
+        signer = signer or self.signer
+        signer_info = signer_info or {}
+
+        if signer is None:
+            raise RuntimeError("No signer available. Provide a signer or configure SignatureConfig.")
+
         # Generate the physical document
         docx_path = self.generate_docx(ectd_doc, canvas_document)
 
-        # Perform cryptographic signing (use TSA-enabled signing if available)
-        if hasattr(signer, 'sign_with_timestamp'):
-            signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+        # Perform cryptographic signing (use TSA-enabled signing if available and required)
+        if self.sig_config and self.sig_config.is_production():
+            if hasattr(signer, 'sign_with_timestamp'):
+                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+            else:
+                raise RuntimeError("Production requires TSA timestamping on signatures")
         else:
-            signed_path = signer.sign_document(docx_path, signer_info)
+            if hasattr(signer, 'sign_document'):
+                signed_path = signer.sign_document(docx_path, signer_info)
+            else:
+                raise RuntimeError("Signer does not implement sign_document")
 
         # Build signature audit event and append
         signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
-        # Include TSA info when provided by the signer
         if hasattr(signer, 'last_tsa_info') and getattr(signer, 'last_tsa_info'):
             signature_result['tsa'] = signer.last_tsa_info
 
@@ -166,6 +193,13 @@ class ECTD4Compiler:
                 "agent": [],
                 "entity": [entity]
             }
+
+        # Attach config metadata to audit event when available
+        if hasattr(self, '_audit_config') and self._audit_config:
+            try:
+                sig_event.setdefault('source', {}).setdefault('config', {}).update(self._audit_config)
+            except Exception:
+                pass
 
         ectd_doc.modification_history.append(sig_event)
 
