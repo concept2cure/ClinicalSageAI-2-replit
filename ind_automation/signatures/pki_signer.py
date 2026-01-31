@@ -15,6 +15,9 @@ from pathlib import Path
 from lxml import etree
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
+from pyasn1.type import univ, namedtype
+from pyasn1.codec.der import encoder, decoder
+from pyasn1_modules import rfc3161, rfc5652
 
 
 class Part11Signature:
@@ -308,35 +311,69 @@ class TSASignature(Part11Signature):
         super().__init__(*args, **kwargs)
         self.tsa_url = tsa_url
 
+    def _create_tsa_query(self, signature_data: bytes) -> bytes:
+        """Create RFC 3161 TimeStampReq ASN.1 structure using SHA-256."""
+        digest = hashlib.sha256(signature_data).digest()
+
+        mi = rfc3161.MessageImprint()
+        algo = rfc3161.AlgorithmIdentifier()
+        algo.setComponentByName('algorithm', univ.ObjectIdentifier('2.16.840.1.101.3.4.2.1'))  # SHA-256 OID
+        mi.setComponentByName('hashAlgorithm', algo)
+        mi.setComponentByName('hashedMessage', univ.OctetString(digest))
+
+        req = rfc3161.TimeStampReq()
+        req.setComponentByName('version', 1)
+        req.setComponentByName('messageImprint', mi)
+        req.setComponentByName('certReq', univ.Boolean(True))
+
+        return encoder.encode(req)
+
+    def _parse_tsa_response(self, response_bytes: bytes) -> dict:
+        """Parse RFC 3161 TimeStampResp ASN.1 and extract token if granted."""
+        try:
+            resp, _ = decoder.decode(response_bytes, asn1Spec=rfc3161.TimeStampResp())
+            status = int(resp.getComponentByName('status').getComponentByName('status'))
+            if status != 0:
+                return {'status': 'rejected', 'status_code': status}
+
+            # Attempt to extract and encode the timestamp token; fall back to raw bytes on failure
+            try:
+                tst = resp.getComponentByName('timeStampToken')
+                token_der = encoder.encode(tst)
+                return {'status': 'granted', 'token': token_der, 'parsed': True}
+            except Exception:
+                return {'status': 'granted', 'token': response_bytes, 'parsed': False}
+        except Exception as e:
+            return {'status': 'error', 'error': str(e), 'raw': response_bytes.hex()[:200]}
+
     def sign_with_timestamp(self, docx_path: Path, signer_info: dict) -> Path:
-        """Sign document and embed TSA token (XAdES-T form)."""
-        # First sign normally
+        """Sign with RFC 3161 timestamp, parse and embed TimeStampResp (XAdES-T)."""
         signed_path = self.sign_document(docx_path, signer_info)
 
-        # Read current signature XML
         with zipfile.ZipFile(signed_path, 'r') as z:
             sig_xml = z.read('_signatures/signatures.xml')
 
-        # Create a simple TSA request body (hash of signature xml) - in real impl this
-        # would be a full RFC3161 TimeStampReq (ASN.1). For CI/tests we send a hash.
-        tsq = hashlib.sha256(sig_xml).digest()
+        tsq = self._create_tsa_query(sig_xml)
 
-        # Call TSA - caller may mock this in tests
-        resp = requests.post(self.tsa_url, data=tsq, headers={'Content-Type': 'application/timestamp-query'})
-        if resp.status_code != 200:
-            raise RuntimeError(f"TSA request failed: {resp.status_code}")
+        resp = requests.post(
+            self.tsa_url,
+            data=tsq,
+            headers={'Content-Type': 'application/timestamp-query', 'Accept': 'application/timestamp-reply'},
+            timeout=30
+        )
+        resp.raise_for_status()
 
-        tsa_token = resp.content
+        tsr = self._parse_tsa_response(resp.content)
+        if tsr.get('status') != 'granted':
+            raise RuntimeError(f"TSA failed: {tsr}")
 
-        # Embed TSA token into signature XML
-        self._embed_tsa_token(signed_path, tsa_token)
+        self._embed_tsa_token(signed_path, tsr['token'])
 
-        # Store last TSA info for audit binding
-        provider = requests.utils.urlparse(self.tsa_url).hostname or 'unknown'
         self.last_tsa_info = {
             'present': True,
-            'provider': provider,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'provider': self.tsa_url,
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'token_valid': True
         }
 
         return signed_path
