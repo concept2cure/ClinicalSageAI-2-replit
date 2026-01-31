@@ -25,14 +25,44 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install pytest python-docx lxml defusedxml
+          pip install pytest python-docx lxml defusedxml rsa
       
       - name: Run eCTD 4.0 Compliance Tests
         run: |
           PYTHONPATH=/workspaces/ClinicalSageAI-2-replit/ \
           python -m pytest ind_automation/tests/test_ectd4_compiler.py -v \
           --tb=short --strict-markers
-      
+
+      - name: Test Digital Signatures
+        run: |
+          PYTHONPATH=/workspaces/ClinicalSageAI-2-replit/ python - <<'PY'
+          from ind_automation.signatures.pki_signer import Part11Signature
+          from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+          
+          # Minimal sample document generation
+          class MockCanvas:
+              def __init__(self):
+                  self.study_id = 'CI-TEST'
+                  self.module = '2.6.2'
+                  self.section = 'Pharmacokinetics'
+                  self.subsection = None
+                  self.language = 'en'
+                  self.created_at = '2026-01-01T00:00:00Z'
+                  self.content_blocks = [{'text':'CI test', 'sdt_tag': 'ci'}]
+                  self.events = []
+
+          compiler = ECTD4Compiler(output_dir='./test-artifacts')
+          canvas = MockCanvas()
+          doc = compiler.compile(canvas)
+          docx = compiler.generate_docx(doc, canvas)
+
+          signer = Part11Signature()
+          signed = signer.sign_document(docx, {'name': 'CI', 'role': 'QA'})
+          result = signer.verify_signature(signed)
+          assert result['valid'], f"Signature verification failed: {result}"
+          print('✅ Digital signature verification passed')
+          PY
+
       - name: Validate XMP Schema Compliance
         run: |
           python scripts/validate_ectd4_xmp.py \
