@@ -55,6 +55,16 @@ Verify ALCOA+ compliance (Attributable, Legible, Contemporaneous, Original, Accu
 - [ ] Artifact retention in GitHub Actions is configured (default 30 days, adjustable)
 - [ ] No secrets in artifact logs (check for `npg_`, `AKIA`, private keys)
 
+### LocalStack Pro Licensing Note
+- [ ] **Local:** If using LocalStack Pro for S3 Object Lock testing, verify your team has an active API key
+- [ ] **Alternative:** MinIO can substitute LocalStack for Object Lock validation (see `docker-compose.staging.yml` comments)
+- [ ] **Evidence:** Smoke test passed locally (attach `evidence/evidence_report_*.json`)
+  - *Note: Cannot verify from CI runner environment—maintainers must run locally:*
+  ```bash
+  docker compose -f docker-compose.staging.yml up -d
+  python scripts/e2e_staging_smoke.py --environment local --output-dir ./evidence
+  ```
+
 ### 8. Environment Protection (Pre-Merge Requirement)
 - [ ] **Required:** GitHub Environment `staging-aws` is created in repo settings
 - [ ] **Required:** Environment protection rule requires 1 approval from `@concept2cure/security-team`
