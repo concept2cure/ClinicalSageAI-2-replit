@@ -46,3 +46,7 @@ When migrating to AWS:
 2. Add secrets: `AWS_ROLE_ARN`, `KMS_KEY_ID`, `S3_BUCKET`, `TSA_URL`
 3. Trigger workflow with `environment: staging-aws`
 4. **Blast Radius Protection**: The job will fail if S3 bucket name does not contain `-staging-`
+
+---
+
+**Note:** See `docs/SECURITY_REVIEW_CHECKLIST.md` for the canonical pre-merge Security & Compliance Review Checklist (Part 11). This checklist must be completed and attached to the PR before merging Part 11-related changes.
