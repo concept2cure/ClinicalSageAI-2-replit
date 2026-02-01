@@ -1,12 +1,12 @@
 {
   "name": "ClinicalSageAI Development",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
   
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
+      "version": "22"
     },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
   },
   
@@ -37,6 +37,7 @@
   },
   
   "forwardPorts": [3000, 5000, 5173, 8000],
+  
   "portsAttributes": {
     "5000": {
       "label": "Express Server",
@@ -53,5 +54,6 @@
   "remoteEnv": {
     "NODE_ENV": "development"
   },
+  
   "remoteUser": "node"
 }
