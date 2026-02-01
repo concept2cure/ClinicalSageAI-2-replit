@@ -1,0 +1,30 @@
+# Override for local Kind/Minikube deployment
+environment: local
+
+ros-api:
+  replicaCount: 1
+  
+  env:
+    - name: AWS_ENDPOINT_URL
+      value: "http://localstack:4566"
+    - name: USE_LOCALSTACK
+      value: "true"
+    - name: TSA_URL
+      value: "http://tsa-server:8080/tsa"
+    - name: POSTGRES_DSN
+      valueFrom:
+        secretKeyRef:
+          name: ros-db-credentials
+          key: dsn.local
+
+  persistence:
+    enabled: false  # Use S3 only
+
+objectLock:
+  enabled: true
+  mode: GOVERNANCE
+  retentionDays: 2555  # 7 years even in staging for realistic testing
+
+part11:
+  enforcement: strict  # Fail closed if any check fails
+  mockHsm: true  # Use software HSM in local, AWS KMS in cloud

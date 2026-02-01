@@ -1,0 +1,122 @@
+version: "3.8"
+
+services:
+  # AWS Cloud Emulation (S3 Object Lock + KMS)
+  localstack:
+    image: localstack/localstack-pro:latest  # Pro needed for Object Lock
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_API_KEY:-dev}  # Free tier works
+      - SERVICES=s3,kms,cloudtrail,iam
+      - S3_OBJECT_LOCK_ENABLED=1
+      - KMS_PROVIDER=local-kms
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "./init-scripts:/etc/localstack/init/ready.d"
+      - "localstack_data:/var/lib/localstack"
+    networks:
+      - ros-staging
+
+  # Part 11 Compliant Database with Row-Level Security
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ros_admin
+      POSTGRES_PASSWORD: ros_staging_secret
+      POSTGRES_DB: regulatory_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-sql:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres 
+      -c wal_level=replica 
+      -c max_wal_senders=10 
+      -c max_replication_slots=10
+    networks:
+      - ros-staging
+
+  # Event Bus (MSK simulation)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - ros-staging
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - ros-staging
+
+  # Knowledge Graph
+  neo4j:
+    image: neo4j:5-enterprise
+    environment:
+      NEO4J_AUTH: neo4j/ros-staging
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: yes
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - ros-staging
+
+  # Local RFC3161 TSA Server (OpenSSL-based)
+  tsa-server:
+    build:
+      context: ./tsa-server
+    ports:
+      - "8080:8080"
+    environment:
+      - TSA_CERT_CN=ROS Staging TSA
+      - TSA_POLICY_OID=1.2.3.4.5
+    volumes:
+      - tsa_certs:/certs
+    networks:
+      - ros-staging
+
+  # Kubernetes-in-Docker (Kind) for Helm deployment
+  # Alternative: Run ROS components directly in Docker Compose for speed
+  kind:
+    image: kindest/node:v1.29.0
+    privileged: true
+    volumes:
+      - kind_data:/var/lib/docker
+    networks:
+      - ros-staging
+
+  # Airflow for DAG testing
+  airflow:
+    image: apache/airflow:2.8.0
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://ros_admin:ros_staging_secret@postgres:5432/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+    networks:
+      - ros-staging
+
+volumes:
+  localstack_data:
+  postgres_data:
+  neo4j_data:
+  tsa_certs:
+  kind_data:
+
+networks:
+  ros-staging:
+    driver: bridge
