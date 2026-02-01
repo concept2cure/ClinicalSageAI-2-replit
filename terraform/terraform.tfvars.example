@@ -1,0 +1,12 @@
+# Example tfvars for staging (do not commit secrets)
+region = "us-east-1"
+vpc_cidr = "10.9.0.0/16"
+private_subnets = ["10.9.1.0/24", "10.9.2.0/24"]
+azs = ["us-east-1a", "us-east-1b"]
+eks_workloads_sg = "sg-REPLACE_ME"
+evidence_bucket_name = "ros-staging-cloudtrail-evidence-ACCOUNT"
+evidence_kms_key_id = "alias/ros-staging-evidence"
+kms_policy = ""
+object_lock_mode = "GOVERNANCE"
+retention_days = 2555
+tags = { Project = "ros-staging" }

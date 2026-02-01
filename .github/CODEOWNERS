@@ -137,6 +137,22 @@
 /SECURITY.md                            @concept2cure/security-team @concept2cure/platform-leads
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
+# │                    PART 11 STAGING VALIDATION OWNERSHIP                       │
+# └─────────────────────────────────────────────────────────────────────────────┘
+# Part 11 Database Schema - Security critical (RBAC, immutability triggers)
+/init-sql/ @concept2cure/security-team @concept2cure/qa-lead
+
+# TSA Server and crypto config - Security/Infrastructure
+/tsa-server/ @concept2cure/security-team @concept2cure/infra-team
+
+# Smoke tests and validation logic - QA/Compliance ownership
+/scripts/e2e_staging_smoke.py @concept2cure/qa-lead @concept2cure/security-team
+/scripts/generate_part11_report.py @concept2cure/qa-lead
+
+# Workflow files with blast-radius checks - DevOps/Security
+/.github/workflows/ci-staging-integration.yml @concept2cure/infra-team @concept2cure/security-team
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
 # │                           PACKAGE MANAGEMENT                                 │
 # └─────────────────────────────────────────────────────────────────────────────┘
 
