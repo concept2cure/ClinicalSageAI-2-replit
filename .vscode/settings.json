@@ -1,16 +1,4 @@
 {
-<<<<<<< HEAD
-  "github.copilot.chat.confirmations": "onNewFileOnly",
-  "github.copilot.enable": {
-    "*": true
-  },
-  "github.copilot.advanced": {
-    "timeoutMs": 30000
-  },
-  "github.copilot.chat.maxDuration": 600000,
-  "terminal.integrated.enablePersistentSessions": true,
-  "github.copilot.chat.welcomeMessage": "never"
-=======
   "remote.extensionKind": {
     "GitHub.copilot": ["ui"],
     "GitHub.copilot-chat": ["ui"]
@@ -18,6 +6,12 @@
   "github.copilot.enable": {
     "*": true
   },
+  "github.copilot.chat.confirmations": "onNewFileOnly",
+  "github.copilot.advanced": {
+    "timeoutMs": 30000
+  },
+  "github.copilot.chat.maxDuration": 600000,
+  "github.copilot.chat.welcomeMessage": "never",
   "chat.agent.enabled": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
@@ -61,8 +55,8 @@
   "git.autofetch": true,
   "git.confirmSync": false,
   "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
   }
->>>>>>> copilot/add-vscode-settings-for-copilot
 }
