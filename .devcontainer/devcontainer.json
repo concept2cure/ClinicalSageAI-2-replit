@@ -1,13 +1,13 @@
 {
   "name": "ClinicalSageAI Development",
-<<<<<<< HEAD
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
   
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
-    }
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
   },
   
   "customizations": {
@@ -19,37 +19,6 @@
         "GitHub.copilot-chat",
         "bradlc.vscode-tailwindcss",
         "ms-azuretools.vscode-docker"
-      ]
-    },
-    "codespaces": {
-      "openFiles": ["README.md"]
-    }
-  },
-  
-  "forwardPorts": [5000, 8000],
-  "portsAttributes": {
-    "5000": {
-      "label": "Express Server",
-      "onAutoForward": "notify"
-    },
-    "8000": {
-      "label": "FastAPI Server",
-      "onAutoForward": "notify"
-    }
-  },
-  
-  "postCreateCommand": "npm install --ignore-scripts",
-  
-  "remoteEnv": {
-    "NODE_ENV": "development"
-  }
-=======
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "GitHub.copilot",
-        "GitHub.copilot-chat"
       ],
       "settings": {
         "remote.extensionKind": {
@@ -61,16 +30,28 @@
         },
         "chat.agent.enabled": true
       }
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
     }
   },
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22"
+  
+  "forwardPorts": [3000, 5000, 5173, 8000],
+  "portsAttributes": {
+    "5000": {
+      "label": "Express Server",
+      "onAutoForward": "notify"
     },
-    "ghcr.io/devcontainers/features/git:1": {}
+    "8000": {
+      "label": "FastAPI Server",
+      "onAutoForward": "notify"
+    }
   },
-  "forwardPorts": [3000, 5000, 5173],
+  
   "postCreateCommand": "npm install",
+  
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  },
   "remoteUser": "node"
->>>>>>> copilot/add-vscode-settings-for-copilot
 }
