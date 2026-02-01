@@ -17,17 +17,20 @@
         "esbenp.prettier-vscode",
         "GitHub.copilot",
         "GitHub.copilot-chat",
+        "GitHub.copilot-edits",
         "bradlc.vscode-tailwindcss",
         "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "remote.extensionKind": {
           "GitHub.copilot": ["ui"],
-          "GitHub.copilot-chat": ["ui"]
+          "GitHub.copilot-chat": ["ui"],
+          "GitHub.copilot-edits": ["ui"]
         },
         "github.copilot.enable": {
           "*": true
         },
+        "github.copilot.editor.enableAutoCompletions": true,
         "chat.agent.enabled": true
       }
     },
