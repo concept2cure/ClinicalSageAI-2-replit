@@ -1,0 +1,137 @@
+name: ROS Staging Integration (Part 11 Validated)
+
+on:
+  workflow_dispatch:  # Manual trigger only (protected)
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'local'
+        type: choice
+        options:
+          - local  # LocalStack/Docker
+          - staging-aws  # Real AWS (needs secrets)
+      retention_days:
+        description: 'How long to keep evidence artifacts'
+        required: false
+        default: '30'
+
+# Protection rules ensure this only runs with approval when secrets are involved
+environment: ${{ github.event.inputs.environment }}
+
+jobs:
+  compliance-checks:
+    name: Pre-flight Compliance Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Blast Radius Check
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" == "staging-aws" && -z "${{ secrets.S3_BUCKET }}" ]]; then
+            echo "❌ ERROR: Attempting AWS deployment without secrets"
+            exit 1
+          fi
+          
+          # Paranoid check: Ensure bucket name contains 'staging' if using AWS
+          if [[ "${{ github.event.inputs.environment }}" == "staging-aws" ]]; then
+            BUCKET="${{ secrets.S3_BUCKET }}"
+            if [[ "$BUCKET" != *"-staging-"* && "$BUCKET" != *"staging"* ]]; then
+              echo "❌ BLAST RADIUS VIOLATION: S3 bucket '$BUCKET' does not contain 'staging'"
+              exit 1
+            fi
+          fi
+
+  smoke-test:
+    name: Part 11 E2E Smoke Test
+    needs: compliance-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      # Protection Rule: This job requires approval from @concept2cure/security-team
+      # when `environment` == 'staging-aws' to prevent unauthorized access to signing keys
+      # Note: Set environment protection rules in GitHub UI for the `staging-aws` environment.
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Setup based on environment
+      - name: Setup Local Environment
+        if: github.event.inputs.environment == 'local'
+        run: |
+          docker compose -f docker-compose.staging.yml up -d
+          sleep 30  # Wait for services
+          docker compose -f docker-compose.staging.yml ps
+          
+      - name: Setup AWS Environment
+        if: github.event.inputs.environment == 'staging-aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      
+      # Python setup
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements-staging.txt
+          # Install ROS package
+          pip install -e .
+      
+      # The actual smoke test
+      - name: Execute Part 11 Smoke Test
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          # Local overrides
+          LOCALSTACK_ENDPOINT: http://localhost:4566
+          TSA_URL: http://localhost:8080/tsa
+          POSTGRES_DSN: postgresql://app_user:app_secret@localhost:5432/regulatory_db
+          S3_BUCKET: ros-staging-evidence-store  # LocalStack bucket name
+          KMS_KEY_ID: alias/ros-staging-key      # LocalStack KMS alias
+          # AWS overrides (only used if ENVIRONMENT=staging-aws)
+          AWS_KMS_KEY_ID: ${{ secrets.KMS_KEY_ID }}
+          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        run: |
+          python scripts/e2e_staging_smoke.py \
+            --environment ${{ github.event.inputs.environment }} \
+            --output-dir ./evidence \
+            --strict-part11
+      
+      # Upload evidence artifacts (signed docs, TSA chains, logs)
+      - name: Upload Evidence Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()  # Upload even if tests fail (investigation needed)
+        with:
+          name: part11-evidence-${{ github.run_id }}
+          path: |
+            ./evidence/
+            ./cloudtrail-logs/
+            !./evidence/tmp/
+          retention-days: ${{ github.event.inputs.retention_days }}
+          
+      - name: Generate Compliance Report
+        if: always()
+        run: |
+          python scripts/generate_part11_report.py \
+            --evidence-dir ./evidence \
+            --output ./evidence/ALCOA_plus_report.md
+            
+      - name: Upload Compliance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report-${{ github.run_id }}
+          path: ./evidence/ALCOA_plus_report.md
+
+  teardown:
+    name: Cleanup
+    needs: smoke-test
+    if: ${{ github.event.inputs.environment == 'local' && always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Destroy Local Infrastructure
+        run: docker compose -f docker-compose.staging.yml down -v
