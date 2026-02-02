@@ -31,9 +31,9 @@ jest.mock('pg', () => {
 });
 
 // Get directory paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const serverDir = join(__dirname, '../../server');
+const testFilePath = fileURLToPath(import.meta.url);
+const testDir = dirname(testFilePath);
+const serverDir = join(testDir, '../../server');
 
 // Import API routes
 const vaultApiModule = await import(join(serverDir, 'routes/vaultApi.js'));

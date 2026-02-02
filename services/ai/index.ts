@@ -6,6 +6,18 @@
  * risk analysis, prediction, and proactive monitoring.
  */
 
+import { PredictiveIntelligenceEngine } from './PredictiveIntelligenceEngine';
+import type { PredictionInput } from './PredictiveIntelligenceEngine';
+import { OutcomeScenarioGenerator } from './OutcomeScenarioGenerator';
+import { ProactiveMonitoringService } from './ProactiveMonitoringService';
+import {
+  IFUConsistencyDetector,
+  PredicateMonitor,
+  DeviceDescriptionChecker,
+  CMCAnalyzer,
+  ProtocolDesignAnalyzer
+} from './detectors';
+
 // Core Prediction Engine
 export { 
   PredictiveIntelligenceEngine,
@@ -130,7 +142,6 @@ export function createPredictiveIntelligenceService(config?: {
   let monitoringService: ProactiveMonitoringService | undefined;
   
   if (config?.monitoringEnabled) {
-    const { ProactiveMonitoringService } = require('./ProactiveMonitoringService');
     monitoringService = new ProactiveMonitoringService({
       cycleIntervalHours: config.monitoringIntervalHours ?? 4
     });

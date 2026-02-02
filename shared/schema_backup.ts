@@ -2212,22 +2212,7 @@ export const crossFeatureConnectivity = pgTable(
   })
 );
 
-// Schema and Type Exports for Semantic Tables
-export const insertSemanticEntitySchema = createInsertSchema(semanticEntities).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertSemanticRelationshipSchema = createInsertSchema(semanticRelationships).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertStructuredObservationTermSchema = createInsertSchema(
-  structuredObservationTerms
-).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -2261,18 +2246,8 @@ export const insertCrossFeatureConnectivitySchema = createInsertSchema(
   updatedAt: true,
 });
 
-// Type Exports
-export type SemanticEntity = InferSelectModel<typeof semanticEntities>;
-export type InsertSemanticEntity = z.infer<typeof insertSemanticEntitySchema>;
-
 export type SemanticRelationship = InferSelectModel<typeof semanticRelationships>;
 export type InsertSemanticRelationship = z.infer<typeof insertSemanticRelationshipSchema>;
-
-export type StructuredObservationTerm = InferSelectModel<typeof structuredObservationTerms>;
-export type InsertStructuredObservationTerm = z.infer<typeof insertStructuredObservationTermSchema>;
-
-export type KnowledgeGraphNode = InferSelectModel<typeof knowledgeGraph>;
-export type InsertKnowledgeGraphNode = z.infer<typeof insertKnowledgeGraphSchema>;
 
 export type KnowledgeGraphEdge = InferSelectModel<typeof knowledgeGraphEdges>;
 export type InsertKnowledgeGraphEdge = z.infer<typeof insertKnowledgeGraphEdgeSchema>;

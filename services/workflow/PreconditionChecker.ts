@@ -416,7 +416,7 @@ export class PreconditionChecker {
   /**
    * Get human-readable description of a precondition
    */
-  describePrecon dition(precondition: Precondition): string {
+  describePrecondition(precondition: Precondition): string {
     const { type, target, operator, value } = precondition;
 
     switch (type) {

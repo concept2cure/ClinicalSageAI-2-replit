@@ -12,9 +12,8 @@
 const express = require('express');
 const http = require('http');
 const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
+const logger = require('../server/utils/logger');
 
 // Create Express app for health checks and metrics
 const app = express();
@@ -265,7 +264,7 @@ async function main() {
   }
 
   // Set up interval to check queue (simplified)
-  setInterval(async () => {
+  const checkQueueInterval = setInterval(async () => {
     if (activeJobs.size < 2) {
       // Limit concurrent jobs
       try {
@@ -280,9 +279,8 @@ async function main() {
     }
   }, 60000); // Check for jobs every minute
 
-  // Process SIGTERM for graceful shutdown
-  process.on('SIGTERM', async () => {
-    logger.info('Received SIGTERM, shutting down gracefully');
+  const shutdown = async (signal) => {
+    logger.info(`Received ${signal}, shutting down gracefully`);
 
     // Stop accepting new jobs
     clearInterval(checkQueueInterval);
@@ -314,7 +312,11 @@ async function main() {
       logger.info('No active jobs, clean shutdown');
       process.exit(0);
     }
-  });
+  };
+
+  // Process termination signals for graceful shutdown
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 // Start the worker
