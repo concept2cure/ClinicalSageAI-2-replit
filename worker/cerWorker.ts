@@ -2,6 +2,7 @@ import { setupWorkers } from '../server/services/cerGenerator';
 import { Pool } from 'pg';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
+import logger from '../server/utils/logger';
 
 // Create a standalone HTTP server for the worker's socket.io instance
 const httpServer = createServer();

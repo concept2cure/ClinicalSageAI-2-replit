@@ -7,9 +7,10 @@
 
 const { expect } = require('chai');
 const sinon = require('sinon');
-const { runRetentionJob } = require('../server/jobs/retentionCron');
-const { validateBody, schemas } = require('../server/middleware/validation');
-const { logAction, logSystemEvent } = require('../server/utils/audit-logger');
+/* global describe, it, before, after, beforeEach */
+const { runRetentionJob } = require('../../server/jobs/retentionCron');
+const { validateBody, schemas } = require('../../server/middleware/validation');
+const { logAction, logSystemEvent } = require('../../server/utils/audit-logger');
 
 // Mock dependencies
 const mockSupabase = {
