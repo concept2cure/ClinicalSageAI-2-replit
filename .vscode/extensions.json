@@ -4,6 +4,7 @@
     "esbenp.prettier-vscode",
     "github.copilot",
     "github.copilot-chat",
+    "github.copilot-edits",
     "bradlc.vscode-tailwindcss",
     "ms-azuretools.vscode-docker",
     "christian-kohler.path-intellisense",
