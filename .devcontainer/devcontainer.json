@@ -22,11 +22,6 @@
         "ms-azuretools.vscode-docker"
       ],
       "settings": {
-        "remote.extensionKind": {
-          "GitHub.copilot": ["ui"],
-          "GitHub.copilot-chat": ["ui"],
-          "GitHub.copilot-edits": ["ui"]
-        },
         "github.copilot.enable": {
           "*": true
         },
