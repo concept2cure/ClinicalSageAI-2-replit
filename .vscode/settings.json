@@ -8,7 +8,7 @@
   },
   "github.copilot.chat.maxDuration": 600000,
   "github.copilot.chat.welcomeMessage": "never",
-  "chat.agent.enabled": true,
+  "github.copilot.chat.agent.enabled": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "javascript.suggest.autoImports": true,
