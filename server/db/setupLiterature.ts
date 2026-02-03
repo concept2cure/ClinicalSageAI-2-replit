@@ -8,12 +8,10 @@
 import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
-import { getDatabaseUrl } from './getDatabaseUrl';
+import { getPool } from '../db';
 
-// Connect to the PostgreSQL database with cleaned URL
-const pool = new Pool({
-  connectionString: getDatabaseUrl(),
-});
+// Re-export the canonical pool for backward compatibility with services
+export const pool = getPool();
 
 /**
  * Initialize literature database tables and extensions
