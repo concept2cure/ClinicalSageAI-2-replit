@@ -83,8 +83,11 @@ export class TemplateService {
   /**
    * Enhanced category display information with regulatory context
    */
-  private getCategoryDisplayInfo(category: string, module: string) {
-    const categoryMap = {
+  private getCategoryDisplayInfo(category: string | null, module: string | null) {
+    const categoryMap: Record<
+      string,
+      { displayName: string; regions: string[]; description: string }
+    > = {
       quality: {
         displayName: 'eCTD Module 3 - Quality',
         regions: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
@@ -130,8 +133,9 @@ export class TemplateService {
       };
     }
 
+    const categoryKey = category || 'other';
     return (
-      categoryMap[category] || {
+      categoryMap[categoryKey] || {
         displayName: 'Other Templates',
         regions: ['FDA'],
         description: 'Additional regulatory templates',

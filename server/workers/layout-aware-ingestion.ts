@@ -1,20 +1,26 @@
 /**
  * Layout-Aware Ingestion Worker
- * 
+ *
  * Vision-First document processing that treats Tables and Figures as first-class citizens.
  * Unlike standard pdf-parse which destroys table structures, this worker:
- * 
+ *
  * 1. SEGMENTS: Detects page regions (text, table, figure)
  * 2. EXTRACTS: Preserves table structure as Markdown/JSON
  * 3. VECTORIZES: Creates separate embeddings for tables vs body text
- * 
+ *
  * Critical for Clinical Regulatory documents where 50%+ of data is in tables
  * (Adverse Events, PK Parameters, Survival Curves).
  */
-import { Pool } from 'pg';
 import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
-import { s3Storage, ProcessedDocument, TableAtom, TextAtom, FigureAtom } from '../services/s3-storage';
+import { pool } from '../db';
+import {
+  s3Storage,
+  ProcessedDocument,
+  TableAtom,
+  TextAtom,
+  FigureAtom,
+} from '../services/s3-storage';
 
 // Types
 interface PageLayout {
@@ -36,7 +42,7 @@ interface TableStructure {
   caption?: string;
 }
 
-interface ExtractionResult {
+export interface ExtractionResult {
   documentId: string;
   pageCount: number;
   textAtoms: TextAtom[];
@@ -68,18 +74,12 @@ const CONFIG = {
   openaiModel: 'gpt-4o', // Vision-capable model for table extraction
   embeddingModel: 'text-embedding-3-small',
   embeddingDimensions: 1536,
-  chunkSize: 1000,      // tokens
-  chunkOverlap: 200,    // tokens
+  chunkSize: 1000, // tokens
+  chunkOverlap: 200, // tokens
   maxConcurrent: 2,
   retryAttempts: 3,
   retryDelayMs: 2000,
 };
-
-// Database pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('neon') ? { rejectUnauthorized: false } : undefined,
-});
 
 // OpenAI client
 const openai = new OpenAI({
@@ -172,9 +172,10 @@ export class LayoutAwareIngestionWorker {
         },
       };
 
-      console.log(`[Ingestion] Extracted: ${textAtoms.length} text, ${tableAtoms.length} tables, ${figureAtoms.length} figures`);
+      console.log(
+        `[Ingestion] Extracted: ${textAtoms.length} text, ${tableAtoms.length} tables, ${figureAtoms.length} figures`
+      );
       return result;
-
     } catch (error: any) {
       console.error(`[Ingestion] Processing failed:`, error.message);
       throw error;
@@ -188,13 +189,13 @@ export class LayoutAwareIngestionWorker {
   private async segmentDocument(pdfBuffer: Buffer): Promise<PageLayout[]> {
     // For now, use a simplified text-based segmentation
     // In production, integrate with pdf2json, pdfjs-dist, or vision API
-    
+
     const pdfParse = await import('pdf-parse');
     const parsed = await pdfParse.default(pdfBuffer);
-    
+
     const layouts: PageLayout[] = [];
     const pages = this.splitIntoPages(parsed.text, parsed.numpages);
-    
+
     for (let i = 0; i < pages.length; i++) {
       const pageText = pages[i];
       const regions = this.detectRegions(pageText, i + 1);
@@ -212,13 +213,13 @@ export class LayoutAwareIngestionWorker {
    */
   private splitIntoPages(fullText: string, numPages: number): string[] {
     if (numPages <= 1) return [fullText];
-    
+
     // Estimate page boundaries using form feeds or equal division
     const pageBreaks = fullText.split(/\f/);
     if (pageBreaks.length >= numPages) {
       return pageBreaks.slice(0, numPages);
     }
-    
+
     // Fall back to equal division
     const charsPerPage = Math.ceil(fullText.length / numPages);
     const pages: string[] = [];
@@ -233,18 +234,18 @@ export class LayoutAwareIngestionWorker {
    */
   private detectRegions(pageText: string, pageNumber: number): PageRegion[] {
     const regions: PageRegion[] = [];
-    
+
     // Detect tables using common patterns
     const tablePatterns = [
-      /Table\s+\d+[.:]/gi,                    // "Table 1:" or "Table 1."
-      /\|[\s\-]+\|/g,                          // Markdown-style table dividers
-      /\t.*\t.*\t/g,                           // Tab-separated data
+      /Table\s+\d+[.:]/gi, // "Table 1:" or "Table 1."
+      /\|[\s\-]+\|/g, // Markdown-style table dividers
+      /\t.*\t.*\t/g, // Tab-separated data
       /^\s*[\w\s]+\s+[\d.]+\s+[\d.]+\s+[\d.]+/gm, // Numeric columns
     ];
 
     // Check for table indicators
     let hasTableIndicators = tablePatterns.some(pattern => pattern.test(pageText));
-    
+
     // Detect figure references
     const figurePattern = /Figure\s+\d+[.:]/gi;
     const figureMatches = pageText.match(figurePattern) || [];
@@ -260,13 +261,13 @@ export class LayoutAwareIngestionWorker {
           confidence: 0.75,
         });
       }
-      
+
       // Remove table content from text regions
       let remainingText = pageText;
       for (const block of tableBlocks) {
         remainingText = remainingText.replace(block, '');
       }
-      
+
       if (remainingText.trim()) {
         regions.push({
           type: 'text',
@@ -304,18 +305,17 @@ export class LayoutAwareIngestionWorker {
    */
   private extractTableBlocks(text: string): string[] {
     const blocks: string[] = [];
-    
+
     // Pattern 1: Lines with consistent delimiters (tabs, pipes, multiple spaces)
     const lines = text.split('\n');
     let currentBlock: string[] = [];
     let inTable = false;
 
     for (const line of lines) {
-      const hasTabularData = (
+      const hasTabularData =
         (line.match(/\t/g) || []).length >= 2 ||
         (line.match(/\|/g) || []).length >= 2 ||
-        /^\s*[\w\s]+\s{2,}[\d.]+\s{2,}[\d.]+/.test(line)
-      );
+        /^\s*[\w\s]+\s{2,}[\d.]+\s{2,}[\d.]+/.test(line);
 
       if (hasTabularData) {
         inTable = true;
@@ -344,7 +344,7 @@ export class LayoutAwareIngestionWorker {
   private async extractTableStructure(region: PageRegion): Promise<TableStructure> {
     const content = region.content;
     const lines = content.split('\n').filter(l => l.trim());
-    
+
     if (lines.length === 0) {
       return { headers: [], rows: [] };
     }
@@ -352,7 +352,7 @@ export class LayoutAwareIngestionWorker {
     // Detect delimiter (tab, pipe, or multiple spaces)
     const firstLine = lines[0];
     let delimiter: RegExp;
-    
+
     if (firstLine.includes('\t')) {
       delimiter = /\t+/;
     } else if (firstLine.includes('|')) {
@@ -362,8 +362,11 @@ export class LayoutAwareIngestionWorker {
     }
 
     // Parse rows
-    const allRows = lines.map(line => 
-      line.split(delimiter).map(cell => cell.trim()).filter(Boolean)
+    const allRows = lines.map(line =>
+      line
+        .split(delimiter)
+        .map(cell => cell.trim())
+        .filter(Boolean)
     );
 
     // First non-empty row is headers
@@ -384,7 +387,7 @@ export class LayoutAwareIngestionWorker {
     if (table.headers.length === 0) return '';
 
     let md = '';
-    
+
     // Caption
     if (table.caption) {
       md += `**${table.caption}**\n\n`;
@@ -419,9 +422,7 @@ export class LayoutAwareIngestionWorker {
         const value = row[i] || '';
         // Try to parse numeric values
         const numericValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
-        obj[header] = !isNaN(numericValue) && value.match(/^[\d.,\-%]+$/) 
-          ? numericValue 
-          : value;
+        obj[header] = !isNaN(numericValue) && value.match(/^[\d.,\-%]+$/) ? numericValue : value;
       });
       return obj;
     });
@@ -475,7 +476,7 @@ export class LayoutAwareIngestionWorker {
         // Embed the markdown representation for semantic search
         const tableText = `${table.caption || 'Table'}\n${table.markdown}`;
         const embedding = await this.generateEmbedding(tableText);
-        
+
         const chunkId = await this.storeAtom(client, {
           documentId,
           atomType: 'TABLE',
@@ -505,7 +506,7 @@ export class LayoutAwareIngestionWorker {
       for (const figure of extraction.figureAtoms) {
         const figureText = `${figure.caption || 'Figure'}: ${figure.altText || figure.imageType}`;
         const embedding = await this.generateEmbedding(figureText);
-        
+
         await this.storeAtom(client, {
           documentId,
           atomType: 'FIGURE',
@@ -529,10 +530,11 @@ export class LayoutAwareIngestionWorker {
       }
 
       await client.query('COMMIT');
-      console.log(`[Ingestion] Stored ${atomCount} atoms (${tableCount} tables, ${figureCount} figures)`);
+      console.log(
+        `[Ingestion] Stored ${atomCount} atoms (${tableCount} tables, ${figureCount} figures)`
+      );
 
       return { atomCount, tableCount, figureCount };
-
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -559,7 +561,8 @@ export class LayoutAwareIngestionWorker {
   ): Promise<string> {
     const id = uuidv4();
 
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO vault.document_chunks (
         id, document_id, chunk_index, chunk_type, content_type,
         chunk_text, structured_content, page_number,
@@ -571,20 +574,22 @@ export class LayoutAwareIngestionWorker {
         structured_content = EXCLUDED.structured_content,
         embedding = EXCLUDED.embedding,
         vectorized_at = NOW()
-    `, [
-      id,
-      atom.documentId,
-      0, // chunk_index - will be set properly in batch
-      atom.atomType.toLowerCase(),
-      atom.atomType,
-      atom.content,
-      atom.structuredContent ? JSON.stringify(atom.structuredContent) : null,
-      atom.pageNumber,
-      JSON.stringify(atom.embedding),
-      CONFIG.embeddingModel,
-      atom.metadata?.confidence || 1.0,
-    ]);
-    
+    `,
+      [
+        id,
+        atom.documentId,
+        0, // chunk_index - will be set properly in batch
+        atom.atomType.toLowerCase(),
+        atom.atomType,
+        atom.content,
+        atom.structuredContent ? JSON.stringify(atom.structuredContent) : null,
+        atom.pageNumber,
+        JSON.stringify(atom.embedding),
+        CONFIG.embeddingModel,
+        atom.metadata?.confidence || 1.0,
+      ]
+    );
+
     return id;
   }
 
@@ -594,14 +599,15 @@ export class LayoutAwareIngestionWorker {
   private chunkText(text: string): string[] {
     const words = text.split(/\s+/);
     const chunks: string[] = [];
-    
+
     // Approximate tokens as words * 1.3
     const wordsPerChunk = Math.floor(CONFIG.chunkSize / 1.3);
     const overlapWords = Math.floor(CONFIG.chunkOverlap / 1.3);
 
     for (let i = 0; i < words.length; i += wordsPerChunk - overlapWords) {
       const chunk = words.slice(i, i + wordsPerChunk).join(' ');
-      if (chunk.trim().length > 50) { // Minimum chunk size
+      if (chunk.trim().length > 50) {
+        // Minimum chunk size
         chunks.push(chunk);
       }
     }
@@ -627,7 +633,7 @@ export class LayoutAwareIngestionWorker {
    */
   async extractTableWithVision(imageBase64: string): Promise<TableStructure> {
     console.log('[Ingestion] Using Vision API for table extraction');
-    
+
     const response = await openai.chat.completions.create({
       model: CONFIG.openaiModel,
       messages: [

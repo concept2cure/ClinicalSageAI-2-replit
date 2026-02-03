@@ -1,10 +1,8 @@
-import { Pool } from 'pg';
+import { getPool } from '../../../db';
 import OpenAI from 'openai';
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+// Database connection - use canonical pool
+const pool = getPool();
 
 // Helper function for database queries
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
@@ -44,7 +42,7 @@ async function computeRPI(subId: string): Promise<number> {
         SELECT 1 FROM reg_questions WHERE sub_id=$1 AND status IN ('OPEN','DRAFTED') AND due_date < NOW()
         UNION ALL
         SELECT 1 FROM reg_m3_sections WHERE sub_id=$1 AND status != 'COMPLETE'
-        UNION ALL  
+        UNION ALL
         SELECT 1 FROM reg_preflight_issues WHERE seq_id IN (SELECT seq_id FROM reg_sequences WHERE sub_id=$1) AND severity='CRITICAL'
       ) issues
     `,

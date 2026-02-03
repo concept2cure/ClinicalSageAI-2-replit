@@ -6,12 +6,10 @@
  * and ensuring query performance.
  */
 
-const { Pool } = require('pg');
+const { getPool } = require('../db');
 const logger = require('./logger');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 /**
  * Create necessary indexes for 510(k) workflow tables
@@ -40,7 +38,7 @@ async function create510kIndexes() {
     // Create index on device_profiles table for faster lookups (if table exists)
     if (deviceProfilesExists) {
       await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_device_profiles_id 
+        CREATE INDEX IF NOT EXISTS idx_device_profiles_id
         ON device_profiles(id)
       `);
       logger.info('Created index on device_profiles table');
@@ -52,13 +50,13 @@ async function create510kIndexes() {
     if (predicateSelectionsExists) {
       const columnCheck = await pool.query(`
         SELECT EXISTS (
-          SELECT FROM information_schema.columns 
+          SELECT FROM information_schema.columns
           WHERE table_name='predicate_selections' AND column_name='device_id'
         )
       `);
       if (columnCheck.rows[0].exists) {
         await pool.query(`
-          CREATE INDEX IF NOT EXISTS idx_predicate_selections_device_id 
+          CREATE INDEX IF NOT EXISTS idx_predicate_selections_device_id
           ON predicate_selections(device_id)
         `);
         logger.info('Created index on predicate_selections.device_id');
@@ -71,13 +69,13 @@ async function create510kIndexes() {
     if (equivalenceAnalysesExists) {
       const columnCheck = await pool.query(`
         SELECT EXISTS (
-          SELECT FROM information_schema.columns 
+          SELECT FROM information_schema.columns
           WHERE table_name='equivalence_analyses' AND column_name='device_id'
         )
       `);
       if (columnCheck.rows[0].exists) {
         await pool.query(`
-          CREATE INDEX IF NOT EXISTS idx_equivalence_analyses_device_id 
+          CREATE INDEX IF NOT EXISTS idx_equivalence_analyses_device_id
           ON equivalence_analyses(device_id)
         `);
         logger.info('Created index on equivalence_analyses.device_id');
@@ -89,14 +87,14 @@ async function create510kIndexes() {
     // Create composite index for better performance on workflow status checks (if table exists)
     if (workflowStatusExists) {
       const columnsCheck = await pool.query(`
-        SELECT 
+        SELECT
           EXISTS (SELECT FROM information_schema.columns WHERE table_name='workflow_status' AND column_name='device_id') as device_id_exists,
           EXISTS (SELECT FROM information_schema.columns WHERE table_name='workflow_status' AND column_name='organization_id') as org_id_exists
       `);
       if (columnsCheck.rows[0].device_id_exists && columnsCheck.rows[0].org_id_exists) {
         await pool.query(`
           CREATE INDEX IF NOT EXISTS idx_workflow_status_device_org
-          ON workflow_status(device_id, organization_id) 
+          ON workflow_status(device_id, organization_id)
         `);
         logger.info('Created composite index on workflow_status');
       } else {
@@ -159,7 +157,7 @@ async function analyzeSlowQueries() {
     const result = await pool.query(`
       SELECT query, calls, total_time / calls as avg_time, rows
       FROM pg_stat_statements
-      WHERE query LIKE '%device_profiles%' OR query LIKE '%predicate_selections%' 
+      WHERE query LIKE '%device_profiles%' OR query LIKE '%predicate_selections%'
         OR query LIKE '%equivalence_analyses%'
       ORDER BY total_time / calls DESC
       LIMIT 10

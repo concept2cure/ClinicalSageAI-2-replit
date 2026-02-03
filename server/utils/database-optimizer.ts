@@ -6,12 +6,10 @@
  * and ensuring query performance.
  */
 
-import { Pool } from 'pg';
-import logger from './logger.ts';
+import { getPool } from '../db';
+import logger from './logger';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 /**
  * Create necessary indexes for 510(k) workflow tables
@@ -23,26 +21,26 @@ export async function create510kIndexes(): Promise<boolean> {
   try {
     // Create index on device_profiles table for faster lookups
     await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_device_profiles_id 
+      CREATE INDEX IF NOT EXISTS idx_device_profiles_id
       ON device_profiles(id)
     `);
 
     // Create index on predicate_selections for device_id
     await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_predicate_selections_device_id 
+      CREATE INDEX IF NOT EXISTS idx_predicate_selections_device_id
       ON predicate_selections(device_id)
     `);
 
     // Create index on equivalence_analyses for device_id
     await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_equivalence_analyses_device_id 
+      CREATE INDEX IF NOT EXISTS idx_equivalence_analyses_device_id
       ON equivalence_analyses(device_id)
     `);
 
     // Create composite index for better performance on workflow status checks
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_workflow_status_device_org
-      ON workflow_status(device_id, organization_id) 
+      ON workflow_status(device_id, organization_id)
     `);
 
     logger.info('Successfully created 510(k) database indexes');
@@ -105,7 +103,7 @@ export async function analyzeSlowQueries(): Promise<void> {
     const result = await pool.query(`
       SELECT query, calls, total_time / calls as avg_time, rows
       FROM pg_stat_statements
-      WHERE query LIKE '%device_profiles%' OR query LIKE '%predicate_selections%' 
+      WHERE query LIKE '%device_profiles%' OR query LIKE '%predicate_selections%'
         OR query LIKE '%equivalence_analyses%'
       ORDER BY total_time / calls DESC
       LIMIT 10

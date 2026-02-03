@@ -32,6 +32,7 @@ import {
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
+export * from './schema/vault';
 
 // Type-safe helper for omitting fields from insert schemas
 // This resolves TypeScript compatibility issues with drizzle-zod omit()
@@ -1406,6 +1407,79 @@ export const insertResponseCacheSchema = createInsertSchemaOmit(responseCache, {
 // Response Cache Types
 export type ResponseCacheEntry = InferSelectModel<typeof responseCache>;
 export type InsertResponseCacheEntry = z.infer<typeof insertResponseCacheSchema>;
+
+/**
+ * Lumen Cortex - SEC Filing Harvesting & Signal Extraction
+ */
+export const lumenFilingDocuments = pgTable(
+  'lumen_filing_documents',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').references(() => organizations.id),
+    source: text('source').notNull(),
+    cik: text('cik'),
+    accessionNo: text('accession_no').notNull(),
+    filingDate: text('filing_date'),
+    reportYear: integer('report_year'),
+    companyName: text('company_name'),
+    formType: text('form_type'),
+    primaryDocument: text('primary_document'),
+    filingUrl: text('filing_url'),
+    content: text('content'),
+    extractedSignals: json('extracted_signals'),
+    rejectionSignals: json('rejection_signals'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    lumenFilingOrgIdx: index('lumen_filing_org_idx').on(table.organizationId),
+    lumenFilingAccessionIdx: index('lumen_filing_accession_idx').on(table.accessionNo),
+  })
+);
+
+export const lumenDataAtoms = pgTable(
+  'lumen_data_atoms',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').references(() => organizations.id),
+    sourceType: text('source_type').notNull(),
+    sourceId: text('source_id').notNull(),
+    atomType: text('atom_type').notNull(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    structuredData: json('structured_data'),
+    tags: text('tags').array(),
+    confidence: real('confidence').default(0.5),
+    status: text('status').default('active'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    lumenAtomOrgIdx: index('lumen_atom_org_idx').on(table.organizationId),
+    lumenAtomSourceIdx: index('lumen_atom_source_idx').on(table.sourceType, table.sourceId),
+  })
+);
+
+export const lumenObservationTerms = pgTable(
+  'lumen_observation_terms',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').references(() => organizations.id),
+    term: text('term').notNull(),
+    termType: text('term_type').notNull(),
+    category: text('category').notNull(),
+    sourceType: text('source_type').notNull(),
+    sourceId: text('source_id').notNull(),
+    weight: real('weight').default(1.0),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    lumenTermsOrgIdx: index('lumen_terms_org_idx').on(table.organizationId),
+    lumenTermsTermIdx: index('lumen_terms_term_idx').on(table.term),
+  })
+);
 
 /**
  * ======================================================================================

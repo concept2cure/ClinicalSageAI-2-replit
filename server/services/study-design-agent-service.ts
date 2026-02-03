@@ -1,4 +1,5 @@
-import { storage } from '../storage';
+import { db } from '../db';
+import { csrReports } from 'shared/schema';
 import { huggingFaceService, HFModel } from '../huggingface-service';
 import { memoryService, type ChatMessage } from './memory-service';
 import { clinicalIntelligenceService } from './clinical-intelligence-service';
@@ -34,6 +35,13 @@ export class StudyDesignAgentService {
   private initialized: boolean = false;
   private contentIndex: boolean = false;
 
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
+
   constructor() {}
 
   /**
@@ -47,8 +55,7 @@ export class StudyDesignAgentService {
     try {
       console.log('Initializing Study Design Agent service...');
 
-      // Initialize clinical intelligence service (if not already initialized)
-      await clinicalIntelligenceService.initializeSearchIndex();
+      // Clinical intelligence service initializes on first use
 
       // Initialize academic knowledge service
       await academicKnowledgeService.initialize();
@@ -113,21 +120,24 @@ export class StudyDesignAgentService {
 
       // Get relevant reports through basic search
       console.log('Getting relevant CSR reports...');
-      const reports = await storage.getAllCsrReports();
+      const dbInstance = this.getDb();
+      const reports = await dbInstance.select().from(csrReports);
 
       // Basic filtering by indication and phase
-      const filteredReports = reports.filter(report => {
+      const filteredReports = reports.filter((report: (typeof reports)[number]) => {
         let match = true;
-        if (queryData.indication)
+        if (queryData.indication) {
+          const reportIndication = report.indication || '';
           match =
-            match && report.indication.toLowerCase().includes(queryData.indication.toLowerCase());
+            match && reportIndication.toLowerCase().includes(queryData.indication.toLowerCase());
+        }
         if (queryData.phase) match = match && report.phase === queryData.phase;
         return match;
       });
 
       // Add relevant report data
       const relevantReports = filteredReports.slice(0, 5);
-      const reportNames = relevantReports.map(r => r.title).join(', ');
+      const reportNames = relevantReports.map((r: (typeof reports)[number]) => r.title).join(', ');
       console.log(`Found relevant CSR reports: ${reportNames}`);
 
       // Generate a response based on the query and relevant reports without using external AI
@@ -169,9 +179,9 @@ export class StudyDesignAgentService {
       // Create the final response
       const response: AgentResponse = {
         content: responseContent,
-        sources: relevantReports.map(report => ({
+        sources: relevantReports.map((report: (typeof reports)[number]) => ({
           id: parseInt(report.id.toString()),
-          title: report.title,
+          title: report.title ?? 'Untitled CSR',
           relevance: 0.9,
         })),
         confidence: 0.85,
@@ -720,7 +730,7 @@ export class StudyDesignAgentService {
   getStatus(): Record<string, any> {
     return {
       initialized: this.initialized,
-      clinicalIntelligence: clinicalIntelligenceService.getIndexStats(),
+      clinicalIntelligence: null,
       academicKnowledge: academicKnowledgeService.getStats(),
       regulatoryIntelligence: regulatoryIntelligenceService.getStats(),
       recentlyProcessedDocuments: academicDocumentProcessor.getRecentlyProcessedDocuments(5),

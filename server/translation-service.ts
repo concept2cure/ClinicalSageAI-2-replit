@@ -45,7 +45,7 @@ export class TranslationService {
           apiKey: process.env.HF_API_KEY,
         });
 
-        return await model.invoke(text);
+        return await model._call(text, {});
       } catch (error) {
         console.error('Translation model error:', error);
         // Fall back to mock implementation if model fails
@@ -197,14 +197,14 @@ export class TranslationService {
 
         const prompt = `
           Translate the following regulatory guidance from English to ${targetLanguage}.
-          Use appropriate regulatory terminology and preserve all procedural, compliance, 
+          Use appropriate regulatory terminology and preserve all procedural, compliance,
           and technical requirements.
-          
+
           Original guidance:
           ${guidance}
         `;
 
-        return await model.invoke(prompt);
+        return await model._call(prompt, {});
       } catch (error) {
         console.error('Regulatory translation error:', error);
         // Fall back to mock implementation if model fails

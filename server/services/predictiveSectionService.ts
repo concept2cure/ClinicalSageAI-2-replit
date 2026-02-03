@@ -175,7 +175,7 @@ class PredictiveSectionService {
     try {
       const prompt = `
         As a regulatory affairs expert, analyze this submission context and suggest the next most logical document sections:
-        
+
         Submission Type: ${context.submissionType}
         Document Type: ${context.documentType}
         Current Section: ${context.currentSection || 'None'}
@@ -183,13 +183,13 @@ class PredictiveSectionService {
         Study Phase: ${context.studyPhase || 'Not specified'}
         Regulatory Region: ${context.regulatoryRegion}
         Existing Sections: ${context.existingSections.join(', ') || 'None'}
-        
+
         Provide suggestions in JSON format with the following structure:
         {
           "suggestions": [
             {
               "sectionCode": "string",
-              "sectionTitle": "string", 
+              "sectionTitle": "string",
               "priority": "High|Medium|Low",
               "confidence": number (0-100),
               "reasoning": "string",
@@ -199,7 +199,7 @@ class PredictiveSectionService {
             }
           ]
         }
-        
+
         Focus on ICH M4 structure for pharmaceutical submissions and FDA guidance for device submissions.
         Consider logical document flow and regulatory requirements.
       `;
@@ -221,9 +221,11 @@ class PredictiveSectionService {
         temperature: 0.3,
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content || '{}';
+      const result = JSON.parse(content);
+      const suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
 
-      return result.suggestions.map(suggestion => ({
+      return suggestions.map((suggestion: any) => ({
         ...suggestion,
         aiGenerated: true,
         templateAvailable: this.hasTemplate(suggestion.sectionCode),
@@ -238,18 +240,19 @@ class PredictiveSectionService {
    * Get rule-based section suggestions
    */
   private getAvailableSections(context: DocumentContext): SectionSuggestion[] {
-    const patterns = this.sectionPatterns[context.submissionType] || {};
+    const normalizedType = this.normalizeSubmissionType(context.submissionType);
+    const patterns = this.sectionPatterns[normalizedType] || {};
     const suggestions: SectionSuggestion[] = [];
 
-    Object.entries(patterns).forEach(([module, sections]) => {
-      sections.forEach(sectionCode => {
+    (Object.entries(patterns) as Array<[string, string[]]>).forEach(([module, sections]) => {
+      sections.forEach((sectionCode: string) => {
         if (!context.existingSections.includes(sectionCode)) {
-          const metadata = this.sectionMetadata[sectionCode];
+          const metadata = this.sectionMetadata[sectionCode as SectionMetadataKey];
 
           // Check if dependencies are met
           const dependenciesMet =
             !metadata?.dependencies ||
-            metadata.dependencies.every(dep => context.existingSections.includes(dep));
+            metadata.dependencies.every((dep: string) => context.existingSections.includes(dep));
 
           if (dependenciesMet) {
             suggestions.push({
@@ -300,7 +303,9 @@ class PredictiveSectionService {
    * Calculate completion progress
    */
   private calculateProgress(context: DocumentContext): number {
-    const totalSections = this.getTotalSections(context.submissionType);
+    const totalSections = this.getTotalSections(
+      this.normalizeSubmissionType(context.submissionType)
+    );
     const completedSections = context.existingSections.length;
     return Math.round((completedSections / totalSections) * 100);
   }
@@ -309,13 +314,14 @@ class PredictiveSectionService {
    * Get critical path sections
    */
   private getCriticalPath(context: DocumentContext): string[] {
+    const normalizedType = this.normalizeSubmissionType(context.submissionType);
     const criticalSections = {
       IND: ['2.5', '3.2.S', '3.2.P', '4.2', '5.2'],
       NDA: ['2.5', '2.7', '3.2.S', '3.2.P', '5.3.5.1'],
       '510k': ['510k.2', '510k.5', '510k.8'],
     };
 
-    return criticalSections[context.submissionType] || [];
+    return criticalSections[normalizedType] || [];
   }
 
   /**
@@ -327,7 +333,7 @@ class PredictiveSectionService {
 
     criticalSections.forEach(section => {
       if (!context.existingSections.includes(section)) {
-        const metadata = this.sectionMetadata[section];
+        const metadata = this.sectionMetadata[section as SectionMetadataKey];
         gaps.push(`Missing critical section: ${section} - ${metadata?.title || section}`);
       }
     });
@@ -358,7 +364,7 @@ class PredictiveSectionService {
     const criticalSections = this.getCriticalPath(context);
     if (criticalSections.includes(sectionCode)) return 'High';
 
-    const metadata = this.sectionMetadata[sectionCode];
+    const metadata = this.sectionMetadata[sectionCode as SectionMetadataKey];
     if (metadata?.requirement === 'Mandatory') return 'High';
     if (metadata?.requirement === 'Recommended') return 'Medium';
     return 'Low';
@@ -378,14 +384,14 @@ class PredictiveSectionService {
     }
 
     // Boost for mandatory sections
-    const metadata = this.sectionMetadata[sectionCode];
+    const metadata = this.sectionMetadata[sectionCode as SectionMetadataKey];
     if (metadata?.requirement === 'Mandatory') confidence += 15;
 
     return Math.min(confidence, 95);
   }
 
   private generateReasoning(sectionCode: string, context: DocumentContext): string {
-    const metadata = this.sectionMetadata[sectionCode];
+    const metadata = this.sectionMetadata[sectionCode as SectionMetadataKey];
     const reasons: string[] = [];
 
     if (metadata?.requirement === 'Mandatory') {
@@ -393,7 +399,7 @@ class PredictiveSectionService {
     }
 
     if (metadata?.dependencies?.length > 0) {
-      const completedDeps = metadata.dependencies.filter(dep =>
+      const completedDeps = metadata.dependencies.filter((dep: string) =>
         context.existingSections.includes(dep)
       );
       if (completedDeps.length === metadata.dependencies.length) {
@@ -414,9 +420,21 @@ class PredictiveSectionService {
     return templatedSections.includes(sectionCode);
   }
 
-  private getTotalSections(submissionType: string): number {
+  private getTotalSections(submissionType: SupportedSubmissionType): number {
     const patterns = this.sectionPatterns[submissionType] || {};
     return Object.values(patterns).flat().length;
+  }
+
+  private normalizeSubmissionType(
+    submissionType: DocumentContext['submissionType']
+  ): SupportedSubmissionType {
+    if (submissionType === 'BLA' || submissionType === 'PMA') {
+      return 'NDA';
+    }
+    if (submissionType === 'Other') {
+      return 'IND';
+    }
+    return submissionType;
   }
 }
 

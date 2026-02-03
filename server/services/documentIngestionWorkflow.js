@@ -15,7 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
-import { Pool } from 'pg';
+import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';
 import mammoth from 'mammoth';
@@ -25,11 +25,6 @@ import { v4 as uuidv4 } from 'uuid';
 // Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Database connection
-const dbPool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Document storage configuration
@@ -225,13 +220,13 @@ export class DocumentIngestionWorkflow {
     try {
       const classificationPrompt = `
         Classify this regulatory document based on its content and metadata:
-        
+
         Document Content Preview:
         ${textContent.substring(0, 2000)}...
-        
+
         Metadata:
         ${JSON.stringify(metadata, null, 2)}
-        
+
         Please classify as one of:
         - CSR (Clinical Study Report)
         - Protocol
@@ -244,7 +239,7 @@ export class DocumentIngestionWorkflow {
         - CTD (Common Technical Document)
         - PSUR (Periodic Safety Update Report)
         - Other
-        
+
         Respond with just the classification and confidence level.
       `;
 
@@ -280,9 +275,9 @@ export class DocumentIngestionWorkflow {
     try {
       const regulatoryPrompt = `
         Extract key regulatory information from this document:
-        
+
         ${textContent.substring(0, 3000)}...
-        
+
         Please extract:
         1. Regulatory agencies mentioned (FDA, EMA, Health Canada, etc.)
         2. Regulatory guidelines referenced (ICH, CFR, etc.)
@@ -291,7 +286,7 @@ export class DocumentIngestionWorkflow {
         5. Indication/therapeutic area
         6. Key dates
         7. Compliance requirements
-        
+
         Format as JSON with clear categories.
       `;
 
@@ -330,16 +325,16 @@ export class DocumentIngestionWorkflow {
     try {
       const summaryPrompt = `
         Generate a comprehensive summary of this ${documentType} document:
-        
+
         ${textContent.substring(0, 4000)}...
-        
+
         Include:
         1. Executive summary (3-4 sentences)
         2. Key objectives
         3. Main findings/conclusions
         4. Regulatory implications
         5. Action items or recommendations
-        
+
         Make it suitable for regulatory professionals.
       `;
 
@@ -393,7 +388,7 @@ export class DocumentIngestionWorkflow {
       const query = `
         INSERT INTO ingested_documents (
           id, original_name, file_path, file_size, mime_type, document_type,
-          text_content, processed_text, regulatory_info, ai_summary, 
+          text_content, processed_text, regulatory_info, ai_summary,
           embeddings, metadata, uploaded_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
@@ -461,7 +456,7 @@ export class DocumentIngestionWorkflow {
   async searchDocuments(query, filters = {}) {
     try {
       let searchQuery = `
-        SELECT * FROM ingested_documents 
+        SELECT * FROM ingested_documents
         WHERE text_content ILIKE $1
       `;
 

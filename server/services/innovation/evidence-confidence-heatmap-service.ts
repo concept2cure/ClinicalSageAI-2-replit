@@ -1,16 +1,16 @@
 /**
  * Evidence Confidence Heatmap Service
- * 
+ *
  * Enterprise-grade service for analyzing evidence quality and citation
  * strength across regulatory submissions. Provides real-time scoring
  * to identify weak areas before submission.
- * 
+ *
  * Features:
  * - Multi-dimensional evidence scoring
  * - Citation quality analysis
  * - Gap detection and prioritization
  * - Heatmap visualization data generation
- * 
+ *
  * Part 11 Compliance: Full audit trail for all assessments
  */
 
@@ -99,7 +99,14 @@ interface ClaimAnalysis {
 
 interface CitationAnalysis {
   reference: string;
-  type: 'clinical_trial' | 'meta_analysis' | 'review' | 'case_report' | 'preclinical' | 'guidance' | 'other';
+  type:
+    | 'clinical_trial'
+    | 'meta_analysis'
+    | 'review'
+    | 'case_report'
+    | 'preclinical'
+    | 'guidance'
+    | 'other';
   year?: number;
   quality: 'high' | 'medium' | 'low';
   relevance: number;
@@ -131,7 +138,7 @@ export class EvidenceConfidenceHeatmapService {
       citationQuality: 0.25,
       dataRecency: 0.15,
       sourceAuthority: 0.2,
-      consistency: 0.2
+      consistency: 0.2,
     };
 
     const client = await this.pool.connect();
@@ -159,7 +166,7 @@ export class EvidenceConfidenceHeatmapService {
         weights.sourceAuthority,
         weights.consistency,
         0.3,
-        0.6
+        0.6,
       ]
     );
 
@@ -178,7 +185,7 @@ export class EvidenceConfidenceHeatmapService {
         criticalThreshold: 0.3,
         warningThreshold: 0.6,
         isDefault: false,
-        isActive: true
+        isActive: true,
       };
       EvidenceConfidenceHeatmapService.scoringConfigs.push(fallback);
       client.release();
@@ -221,15 +228,16 @@ export class EvidenceConfidenceHeatmapService {
     sections?: string[];
   }): Promise<EvidenceConfidenceAssessment & { overallScore: number }> {
     const programId = await this.resolveProgramId();
-    const sections = options.sections && options.sections.length > 0
-      ? options.sections
-      : ['summary', 'efficacy', 'safety'];
+    const sections =
+      options.sections && options.sections.length > 0
+        ? options.sections
+        : ['summary', 'efficacy', 'safety'];
 
     const content = new Map<string, { title: string; content: string }>();
     for (const section of sections) {
       content.set(section, {
         title: section,
-        content: `This section discusses ${section}. The study demonstrated significant improvement (p=0.03) [1]. See (Smith et al., 2020).`
+        content: `This section discusses ${section}. The study demonstrated significant improvement (p=0.03) [1]. See (Smith et al., 2020).`,
       });
     }
 
@@ -243,7 +251,7 @@ export class EvidenceConfidenceHeatmapService {
       const enriched = {
         ...assessment,
         documentId: options.documentId,
-        overallScore: Math.round(assessment.overallScore * 100)
+        overallScore: Math.round(assessment.overallScore * 100),
       };
 
       EvidenceConfidenceHeatmapService.assessments.push(enriched);
@@ -264,10 +272,12 @@ export class EvidenceConfidenceHeatmapService {
         moderateCitations: 0,
         weakCitations: 0,
         status: 'completed',
-        assessedAt: new Date()
+        assessedAt: new Date(),
       };
       EvidenceConfidenceHeatmapService.assessments.push(fallback);
-      return { ...fallback, overallScore: 75 } as EvidenceConfidenceAssessment & { overallScore: number };
+      return { ...fallback, overallScore: 75 } as EvidenceConfidenceAssessment & {
+        overallScore: number;
+      };
     }
   }
 
@@ -291,7 +301,10 @@ export class EvidenceConfidenceHeatmapService {
   /**
    * Identify evidence gaps for a document
    */
-  async identifyGaps(documentId: string, options?: { minConfidence?: number }): Promise<{ gaps: EvidenceGap[] }> {
+  async identifyGaps(
+    documentId: string,
+    options?: { minConfidence?: number }
+  ): Promise<{ gaps: EvidenceGap[] }> {
     const assessmentId = await this.getLatestAssessmentId(documentId);
     if (!assessmentId) {
       return { gaps: [] };
@@ -299,9 +312,11 @@ export class EvidenceConfidenceHeatmapService {
 
     try {
       const { gaps } = await this.getAssessmentWithGaps(assessmentId);
-      const filtered = options?.minConfidence
-        ? gaps.filter(g => g.confidenceScore * 100 >= options.minConfidence)
-        : gaps;
+      const minConfidence = options?.minConfidence;
+      const filtered =
+        typeof minConfidence === 'number'
+          ? gaps.filter(g => g.confidenceScore * 100 >= minConfidence)
+          : gaps;
       return { gaps: filtered };
     } catch {
       return { gaps: [] };
@@ -313,18 +328,22 @@ export class EvidenceConfidenceHeatmapService {
    */
   async getOrCreateDefaultConfig(orgId: string): Promise<EvidenceScoringConfig> {
     // Try to get existing default config
-    const existing = await this.pool.query(`
+    const existing = await this.pool.query(
+      `
       SELECT * FROM innovation.evidence_scoring_configs
       WHERE org_id = $1 AND is_default = TRUE AND is_active = TRUE
       LIMIT 1
-    `, [orgId]);
+    `,
+      [orgId]
+    );
 
     if (existing.rows.length > 0) {
       return this.mapConfig(existing.rows[0]);
     }
 
     // Create default config
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       INSERT INTO innovation.evidence_scoring_configs (
         org_id, name, description,
         weight_citation_density, weight_citation_quality, weight_data_recency,
@@ -338,7 +357,9 @@ export class EvidenceConfidenceHeatmapService {
         TRUE, TRUE
       )
       RETURNING *
-    `, [orgId]);
+    `,
+      [orgId]
+    );
 
     return this.mapConfig(result.rows[0]);
   }
@@ -357,9 +378,12 @@ export class EvidenceConfidenceHeatmapService {
       await client.query('BEGIN');
 
       // Get program's org for config
-      const programResult = await client.query(`
+      const programResult = await client.query(
+        `
         SELECT org_id FROM core.programs WHERE id = $1
-      `, [programId]);
+      `,
+        [programId]
+      );
 
       if (programResult.rows.length === 0) {
         throw new Error('Program not found');
@@ -370,9 +394,12 @@ export class EvidenceConfidenceHeatmapService {
       // Get scoring config
       let config: EvidenceScoringConfig;
       if (configId) {
-        const configResult = await client.query(`
+        const configResult = await client.query(
+          `
           SELECT * FROM innovation.evidence_scoring_configs WHERE id = $1
-        `, [configId]);
+        `,
+          [configId]
+        );
         config = this.mapConfig(configResult.rows[0]);
       } else {
         config = await this.getOrCreateDefaultConfig(orgId);
@@ -394,7 +421,7 @@ export class EvidenceConfidenceHeatmapService {
           title: section.title,
           claims: analysis.claims,
           citations: analysis.citations,
-          score: analysis.score
+          score: analysis.score,
         });
       }
 
@@ -402,7 +429,8 @@ export class EvidenceConfidenceHeatmapService {
       const scores = this.calculateAggregateScores(sectionAnalyses, config);
 
       // Create assessment record
-      const assessmentResult = await client.query(`
+      const assessmentResult = await client.query(
+        `
         INSERT INTO innovation.evidence_confidence_assessments (
           program_id, assessment_type,
           overall_score, citation_density_score, citation_quality_score,
@@ -418,57 +446,63 @@ export class EvidenceConfidenceHeatmapService {
           $16, 'completed'
         )
         RETURNING *
-      `, [
-        programId,
-        scores.overall,
-        scores.citationDensity,
-        scores.citationQuality,
-        scores.dataRecency,
-        scores.sourceAuthority,
-        scores.consistency,
-        scores.totalClaims,
-        scores.supportedClaims,
-        scores.unsupportedClaims,
-        scores.weaklySupportedClaims,
-        scores.totalCitations,
-        scores.strongCitations,
-        scores.moderateCitations,
-        scores.weakCitations,
-        config.id
-      ]);
+      `,
+        [
+          programId,
+          scores.overall,
+          scores.citationDensity,
+          scores.citationQuality,
+          scores.dataRecency,
+          scores.sourceAuthority,
+          scores.consistency,
+          scores.totalClaims,
+          scores.supportedClaims,
+          scores.unsupportedClaims,
+          scores.weaklySupportedClaims,
+          scores.totalCitations,
+          scores.strongCitations,
+          scores.moderateCitations,
+          scores.weakCitations,
+          config.id,
+        ]
+      );
 
       const assessment = this.mapAssessment(assessmentResult.rows[0]);
 
       // Generate and store gaps
       const gaps = this.buildGaps(sectionAnalyses, config);
-      
+
       for (const gap of gaps) {
-        await client.query(`
+        await client.query(
+          `
           INSERT INTO innovation.evidence_gaps (
             assessment_id, program_id, section_path, section_title,
             gap_type, severity, claim_text, existing_citations,
             recommended_sources, confidence_score, gap_score, status
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'open')
-        `, [
-          assessment.id,
-          programId,
-          gap.sectionPath,
-          gap.sectionTitle,
-          gap.gapType,
-          gap.severity,
-          gap.claimText,
-          gap.existingCitations,
-          gap.recommendedSources,
-          gap.confidenceScore,
-          gap.gapScore
-        ]);
+        `,
+          [
+            assessment.id,
+            programId,
+            gap.sectionPath,
+            gap.sectionTitle,
+            gap.gapType,
+            gap.severity,
+            gap.claimText,
+            gap.existingCitations,
+            gap.recommendedSources,
+            gap.confidenceScore,
+            gap.gapScore,
+          ]
+        );
       }
 
       await client.query('COMMIT');
 
-      console.log(`[EvidenceHeatmap] Assessment completed: score=${scores.overall}, gaps=${gaps.length}`);
+      console.log(
+        `[EvidenceHeatmap] Assessment completed: score=${scores.overall}, gaps=${gaps.length}`
+      );
       return assessment;
-
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('[EvidenceHeatmap] Assessment failed:', error);
@@ -497,13 +531,16 @@ export class EvidenceConfidenceHeatmapService {
     }
 
     // Calculate section score
-    const supportedRatio = claims.filter(c => c.strength !== 'none').length / Math.max(claims.length, 1);
-    const strongRatio = claims.filter(c => c.strength === 'strong').length / Math.max(claims.length, 1);
-    const citationQuality = citations.reduce((sum, c) => {
-      return sum + (c.quality === 'high' ? 1 : c.quality === 'medium' ? 0.6 : 0.3);
-    }, 0) / Math.max(citations.length, 1);
+    const supportedRatio =
+      claims.filter(c => c.strength !== 'none').length / Math.max(claims.length, 1);
+    const strongRatio =
+      claims.filter(c => c.strength === 'strong').length / Math.max(claims.length, 1);
+    const citationQuality =
+      citations.reduce((sum, c) => {
+        return sum + (c.quality === 'high' ? 1 : c.quality === 'medium' ? 0.6 : 0.3);
+      }, 0) / Math.max(citations.length, 1);
 
-    const score = (supportedRatio * 0.4) + (strongRatio * 0.3) + (citationQuality * 0.3);
+    const score = supportedRatio * 0.4 + strongRatio * 0.3 + citationQuality * 0.3;
 
     return { claims, citations, score };
   }
@@ -513,19 +550,38 @@ export class EvidenceConfidenceHeatmapService {
    */
   private extractClaims(text: string): ClaimAnalysis[] {
     const claims: ClaimAnalysis[] = [];
-    
+
     // Patterns indicating claims
     const claimPatterns = [
       // Efficacy claims
-      { pattern: /(?:demonstrated?|showed?|resulted? in|led to|achieved?|produced?)\s+(?:a\s+)?(?:significant|substantial|meaningful|notable|marked)\s+(?:improvement|reduction|increase|decrease|effect)/gi, type: 'efficacy' as const },
+      {
+        pattern:
+          /(?:demonstrated?|showed?|resulted? in|led to|achieved?|produced?)\s+(?:a\s+)?(?:significant|substantial|meaningful|notable|marked)\s+(?:improvement|reduction|increase|decrease|effect)/gi,
+        type: 'efficacy' as const,
+      },
       // Safety claims
-      { pattern: /(?:was|were)\s+(?:well[\s-]?tolerated|safe|without\s+(?:serious|significant)\s+(?:adverse|side)\s+effects?)/gi, type: 'safety' as const },
+      {
+        pattern:
+          /(?:was|were)\s+(?:well[\s-]?tolerated|safe|without\s+(?:serious|significant)\s+(?:adverse|side)\s+effects?)/gi,
+        type: 'safety' as const,
+      },
       // Statistical claims
-      { pattern: /(?:p[\s-]?(?:value)?[\s=<>]+[\d.]+|CI[\s:]+[\d.]+[\s-]+[\d.]+|HR[\s=:]+[\d.]+|OR[\s=:]+[\d.]+|statistically\s+significant)/gi, type: 'statistical' as const },
+      {
+        pattern:
+          /(?:p[\s-]?(?:value)?[\s=<>]+[\d.]+|CI[\s:]+[\d.]+[\s-]+[\d.]+|HR[\s=:]+[\d.]+|OR[\s=:]+[\d.]+|statistically\s+significant)/gi,
+        type: 'statistical' as const,
+      },
       // Comparison claims
-      { pattern: /(?:superior|non[\s-]?inferior|equivalent|comparable|better|worse)\s+(?:to|than|compared)/gi, type: 'comparison' as const },
+      {
+        pattern:
+          /(?:superior|non[\s-]?inferior|equivalent|comparable|better|worse)\s+(?:to|than|compared)/gi,
+        type: 'comparison' as const,
+      },
       // Mechanism claims
-      { pattern: /(?:mechanism|pathway|receptor|binding|inhibit|activate|modulate|target)/gi, type: 'mechanism' as const }
+      {
+        pattern: /(?:mechanism|pathway|receptor|binding|inhibit|activate|modulate|target)/gi,
+        type: 'mechanism' as const,
+      },
     ];
 
     for (const { pattern, type } of claimPatterns) {
@@ -537,7 +593,7 @@ export class EvidenceConfidenceHeatmapService {
         if (sentenceEnd === -1) sentenceEnd = text.length;
 
         const claimText = text.substring(sentenceStart, sentenceEnd + 1).trim();
-        
+
         // Avoid duplicates
         if (!claims.some(c => c.text === claimText)) {
           claims.push({
@@ -546,7 +602,7 @@ export class EvidenceConfidenceHeatmapService {
             endIndex: sentenceEnd,
             type,
             citations: [],
-            strength: 'none'
+            strength: 'none',
           });
         }
       }
@@ -560,7 +616,7 @@ export class EvidenceConfidenceHeatmapService {
    */
   private extractCitations(text: string): CitationAnalysis[] {
     const citations: CitationAnalysis[] = [];
-    
+
     // Citation patterns
     const patterns = [
       // Numbered citations [1], [1-3], [1,2,3]
@@ -568,27 +624,33 @@ export class EvidenceConfidenceHeatmapService {
       // Author-year (Smith et al., 2020)
       /\(([A-Z][a-z]+(?:\s+et\s+al\.?)?,?\s*\d{4}[a-z]?)\)/g,
       // Inline references (see Study ABC-123)
-      /(?:see\s+)?(?:Study|Trial|Protocol)\s+([A-Z0-9-]+)/gi
+      /(?:see\s+)?(?:Study|Trial|Protocol)\s+([A-Z0-9-]+)/gi,
     ];
 
     for (const pattern of patterns) {
       let match;
       while ((match = pattern.exec(text)) !== null) {
         const reference = match[1];
-        
+
         // Extract year if present
         const yearMatch = reference.match(/\d{4}/);
         const year = yearMatch ? parseInt(yearMatch[0]) : undefined;
 
         // Determine type and quality based on context
-        const context = text.substring(Math.max(0, match.index - 100), match.index + 100).toLowerCase();
+        const context = text
+          .substring(Math.max(0, match.index - 100), match.index + 100)
+          .toLowerCase();
         let type: CitationAnalysis['type'] = 'other';
         let quality: CitationAnalysis['quality'] = 'medium';
 
         if (context.includes('meta-analysis') || context.includes('systematic review')) {
           type = 'meta_analysis';
           quality = 'high';
-        } else if (context.includes('randomized') || context.includes('phase 3') || context.includes('pivotal')) {
+        } else if (
+          context.includes('randomized') ||
+          context.includes('phase 3') ||
+          context.includes('pivotal')
+        ) {
           type = 'clinical_trial';
           quality = 'high';
         } else if (context.includes('phase 2') || context.includes('phase 1')) {
@@ -600,10 +662,19 @@ export class EvidenceConfidenceHeatmapService {
         } else if (context.includes('case report') || context.includes('case series')) {
           type = 'case_report';
           quality = 'low';
-        } else if (context.includes('preclinical') || context.includes('in vitro') || context.includes('animal')) {
+        } else if (
+          context.includes('preclinical') ||
+          context.includes('in vitro') ||
+          context.includes('animal')
+        ) {
           type = 'preclinical';
           quality = 'low';
-        } else if (context.includes('guidance') || context.includes('regulation') || context.includes('fda') || context.includes('ema')) {
+        } else if (
+          context.includes('guidance') ||
+          context.includes('regulation') ||
+          context.includes('fda') ||
+          context.includes('ema')
+        ) {
           type = 'guidance';
           quality = 'high';
         }
@@ -618,7 +689,7 @@ export class EvidenceConfidenceHeatmapService {
           type,
           year,
           quality,
-          relevance: 0.8 // Default, would be refined with more context
+          relevance: 0.8, // Default, would be refined with more context
         });
       }
     }
@@ -635,7 +706,7 @@ export class EvidenceConfidenceHeatmapService {
     fullText: string
   ): string[] {
     const matched: string[] = [];
-    
+
     // Look for citations within a window around the claim
     const windowStart = Math.max(0, claim.startIndex - 50);
     const windowEnd = Math.min(fullText.length, claim.endIndex + 100);
@@ -671,12 +742,13 @@ export class EvidenceConfidenceHeatmapService {
     const mediumQualityCount = matchedDetails.filter(c => c.quality === 'medium').length;
 
     // Efficacy and safety claims need stronger evidence
-    const isHighStakesClaim = claim.type === 'efficacy' || claim.type === 'safety' || claim.type === 'statistical';
+    const isHighStakesClaim =
+      claim.type === 'efficacy' || claim.type === 'safety' || claim.type === 'statistical';
 
     if (highQualityCount >= 2 || (highQualityCount >= 1 && mediumQualityCount >= 2)) {
       return 'strong';
     }
-    
+
     if (highQualityCount >= 1 || mediumQualityCount >= 2) {
       return isHighStakesClaim ? 'moderate' : 'strong';
     }
@@ -692,7 +764,13 @@ export class EvidenceConfidenceHeatmapService {
    * Calculate aggregate scores from section analyses
    */
   private calculateAggregateScores(
-    analyses: { path: string; title: string; claims: ClaimAnalysis[]; citations: CitationAnalysis[]; score: number }[],
+    analyses: {
+      path: string;
+      title: string;
+      claims: ClaimAnalysis[];
+      citations: CitationAnalysis[];
+      score: number;
+    }[],
     config: EvidenceScoringConfig
   ): {
     overall: number;
@@ -714,7 +792,9 @@ export class EvidenceConfidenceHeatmapService {
     const allCitations = analyses.flatMap(a => a.citations);
 
     const totalClaims = allClaims.length;
-    const supportedClaims = allClaims.filter(c => c.strength === 'strong' || c.strength === 'moderate').length;
+    const supportedClaims = allClaims.filter(
+      c => c.strength === 'strong' || c.strength === 'moderate'
+    ).length;
     const unsupportedClaims = allClaims.filter(c => c.strength === 'none').length;
     const weaklySupportedClaims = allClaims.filter(c => c.strength === 'weak').length;
 
@@ -724,13 +804,12 @@ export class EvidenceConfidenceHeatmapService {
     const weakCitations = allCitations.filter(c => c.quality === 'low').length;
 
     // Calculate dimension scores
-    const citationDensity = totalClaims > 0 
-      ? Math.min(1, totalCitations / totalClaims) 
-      : 1;
+    const citationDensity = totalClaims > 0 ? Math.min(1, totalCitations / totalClaims) : 1;
 
-    const citationQuality = totalCitations > 0
-      ? (strongCitations * 1 + moderateCitations * 0.6 + weakCitations * 0.3) / totalCitations
-      : 0;
+    const citationQuality =
+      totalCitations > 0
+        ? (strongCitations * 1 + moderateCitations * 0.6 + weakCitations * 0.3) / totalCitations
+        : 0;
 
     const currentYear = new Date().getFullYear();
     const recentCitations = allCitations.filter(c => c.year && c.year >= currentYear - 5).length;
@@ -747,17 +826,18 @@ export class EvidenceConfidenceHeatmapService {
       return a.claims.length > 0 ? supported / a.claims.length : 1;
     });
     const avgSupport = supportRatios.reduce((a, b) => a + b, 0) / Math.max(supportRatios.length, 1);
-    const variance = supportRatios.reduce((sum, r) => sum + Math.pow(r - avgSupport, 2), 0) / Math.max(supportRatios.length, 1);
+    const variance =
+      supportRatios.reduce((sum, r) => sum + Math.pow(r - avgSupport, 2), 0) /
+      Math.max(supportRatios.length, 1);
     const consistency = 1 - Math.min(1, Math.sqrt(variance));
 
     // Weighted overall score
-    const overall = (
+    const overall =
       citationDensity * config.weightCitationDensity +
       citationQuality * config.weightCitationQuality +
       dataRecency * config.weightDataRecency +
       sourceAuthority * config.weightSourceAuthority +
-      consistency * config.weightConsistency
-    );
+      consistency * config.weightConsistency;
 
     return {
       overall,
@@ -773,7 +853,7 @@ export class EvidenceConfidenceHeatmapService {
       totalCitations,
       strongCitations,
       moderateCitations,
-      weakCitations
+      weakCitations,
     };
   }
 
@@ -781,7 +861,13 @@ export class EvidenceConfidenceHeatmapService {
    * Identify gaps requiring attention
    */
   private buildGaps(
-    analyses: { path: string; title: string; claims: ClaimAnalysis[]; citations: CitationAnalysis[]; score: number }[],
+    analyses: {
+      path: string;
+      title: string;
+      claims: ClaimAnalysis[];
+      citations: CitationAnalysis[];
+      score: number;
+    }[],
     config: EvidenceScoringConfig
   ): Omit<EvidenceGap, 'id' | 'assessmentId'>[] {
     const gaps: Omit<EvidenceGap, 'id' | 'assessmentId'>[] = [];
@@ -800,7 +886,7 @@ export class EvidenceConfidenceHeatmapService {
             recommendedSources: this.suggestSources(claim),
             confidenceScore: 0.9,
             gapScore: 1.0,
-            status: 'open'
+            status: 'open',
           });
         } else if (claim.strength === 'weak') {
           gaps.push({
@@ -814,7 +900,7 @@ export class EvidenceConfidenceHeatmapService {
             recommendedSources: this.suggestSources(claim),
             confidenceScore: 0.8,
             gapScore: 0.6,
-            status: 'open'
+            status: 'open',
           });
         }
       }
@@ -916,9 +1002,12 @@ export class EvidenceConfidenceHeatmapService {
     assessment: EvidenceConfidenceAssessment;
     gaps: EvidenceGap[];
   }> {
-    const assessmentResult = await this.pool.query(`
+    const assessmentResult = await this.pool.query(
+      `
       SELECT * FROM innovation.evidence_confidence_assessments WHERE id = $1
-    `, [assessmentId]);
+    `,
+      [assessmentId]
+    );
 
     if (assessmentResult.rows.length === 0) {
       const cached = EvidenceConfidenceHeatmapService.assessments.find(a => a.id === assessmentId);
@@ -928,17 +1017,20 @@ export class EvidenceConfidenceHeatmapService {
       throw new Error('Assessment not found');
     }
 
-    const gapsResult = await this.pool.query(`
+    const gapsResult = await this.pool.query(
+      `
       SELECT * FROM innovation.evidence_gaps
       WHERE assessment_id = $1
-      ORDER BY 
+      ORDER BY
         CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
         gap_score DESC
-    `, [assessmentId]);
+    `,
+      [assessmentId]
+    );
 
     return {
       assessment: this.mapAssessment(assessmentResult.rows[0]),
-      gaps: gapsResult.rows.map(this.mapGap)
+      gaps: gapsResult.rows.map(this.mapGap),
     };
   }
 
@@ -949,27 +1041,30 @@ export class EvidenceConfidenceHeatmapService {
     const { assessment, gaps } = await this.getAssessmentWithGaps(assessmentId);
 
     // Group gaps by section
-    const sectionData = new Map<string, {
-      title: string;
-      gaps: EvidenceGap[];
-      score: number;
-    }>();
+    const sectionData = new Map<
+      string,
+      {
+        title: string;
+        gaps: EvidenceGap[];
+        score: number;
+      }
+    >();
 
     for (const gap of gaps) {
       const existing = sectionData.get(gap.sectionPath) || {
         title: gap.sectionTitle || gap.sectionPath,
         gaps: [],
-        score: 1
+        score: 1,
       };
       existing.gaps.push(gap);
       // Lower score for more/worse gaps
-      existing.score = Math.max(0, existing.score - (gap.gapScore * 0.1));
+      existing.score = Math.max(0, existing.score - gap.gapScore * 0.1);
       sectionData.set(gap.sectionPath, existing);
     }
 
     // Convert to heatmap cells
     const cells: HeatmapCell[] = [];
-    
+
     for (const [path, data] of sectionData) {
       const cell: HeatmapCell = {
         sectionPath: path,
@@ -978,7 +1073,7 @@ export class EvidenceConfidenceHeatmapService {
         severity: this.scoreTotSeverity(data.score),
         gapCount: data.gaps.length,
         claimCount: data.gaps.reduce((sum, g) => sum + 1, 0),
-        citationCount: data.gaps.reduce((sum, g) => sum + (g.existingCitations?.length || 0), 0)
+        citationCount: data.gaps.reduce((sum, g) => sum + (g.existingCitations?.length || 0), 0),
       };
       cells.push(cell);
     }
@@ -1002,13 +1097,19 @@ export class EvidenceConfidenceHeatmapService {
   /**
    * Get program assessment history
    */
-  async getAssessmentHistory(programId: string, limit: number = 10): Promise<EvidenceConfidenceAssessment[]> {
-    const result = await this.pool.query(`
+  async getAssessmentHistory(
+    programId: string,
+    limit: number = 10
+  ): Promise<EvidenceConfidenceAssessment[]> {
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.evidence_confidence_assessments
       WHERE program_id = $1
       ORDER BY assessed_at DESC
       LIMIT $2
-    `, [programId, limit]);
+    `,
+      [programId, limit]
+    );
 
     return result.rows.map(this.mapAssessment);
   }
@@ -1021,14 +1122,17 @@ export class EvidenceConfidenceHeatmapService {
     status: 'open' | 'addressed' | 'dismissed',
     notes?: string
   ): Promise<EvidenceGap> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       UPDATE innovation.evidence_gaps
       SET status = $2,
           resolution_notes = COALESCE($3, resolution_notes),
           resolved_at = CASE WHEN $2 != 'open' THEN NOW() ELSE NULL END
       WHERE id = $1
       RETURNING *
-    `, [gapId, status, notes]);
+    `,
+      [gapId, status, notes]
+    );
 
     return this.mapGap(result.rows[0]);
   }
@@ -1050,7 +1154,7 @@ export class EvidenceConfidenceHeatmapService {
       criticalThreshold: parseFloat(row.critical_threshold),
       warningThreshold: parseFloat(row.warning_threshold),
       isDefault: row.is_default,
-      isActive: row.is_active
+      isActive: row.is_active,
     };
   }
 
@@ -1065,10 +1169,16 @@ export class EvidenceConfidenceHeatmapService {
       assessmentType: row.assessment_type,
       sectionPath: row.section_path,
       overallScore: parseFloat(row.overall_score),
-      citationDensityScore: row.citation_density_score ? parseFloat(row.citation_density_score) : undefined,
-      citationQualityScore: row.citation_quality_score ? parseFloat(row.citation_quality_score) : undefined,
+      citationDensityScore: row.citation_density_score
+        ? parseFloat(row.citation_density_score)
+        : undefined,
+      citationQualityScore: row.citation_quality_score
+        ? parseFloat(row.citation_quality_score)
+        : undefined,
       dataRecencyScore: row.data_recency_score ? parseFloat(row.data_recency_score) : undefined,
-      sourceAuthorityScore: row.source_authority_score ? parseFloat(row.source_authority_score) : undefined,
+      sourceAuthorityScore: row.source_authority_score
+        ? parseFloat(row.source_authority_score)
+        : undefined,
       consistencyScore: row.consistency_score ? parseFloat(row.consistency_score) : undefined,
       totalClaims: parseInt(row.total_claims),
       supportedClaims: parseInt(row.supported_claims),
@@ -1079,7 +1189,7 @@ export class EvidenceConfidenceHeatmapService {
       moderateCitations: parseInt(row.moderate_citations),
       weakCitations: parseInt(row.weak_citations),
       status: row.status,
-      assessedAt: row.assessed_at
+      assessedAt: row.assessed_at,
     };
   }
 
@@ -1102,7 +1212,7 @@ export class EvidenceConfidenceHeatmapService {
       recommendedSources: row.recommended_sources,
       confidenceScore: parseFloat(row.confidence_score),
       gapScore: parseFloat(row.gap_score),
-      status: row.status
+      status: row.status,
     };
   }
 
@@ -1130,14 +1240,18 @@ export class EvidenceConfidenceHeatmapService {
 
   private async resolveProgramId(): Promise<string | undefined> {
     try {
-      const result = await this.pool.query('SELECT id FROM programs ORDER BY created_at DESC LIMIT 1');
+      const result = await this.pool.query(
+        'SELECT id FROM programs ORDER BY created_at DESC LIMIT 1'
+      );
       if (result.rows.length > 0) return result.rows[0].id;
     } catch {
       // Ignore
     }
 
     try {
-      const result = await this.pool.query('SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1');
+      const result = await this.pool.query(
+        'SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1'
+      );
       return result.rows[0]?.id;
     } catch {
       return undefined;

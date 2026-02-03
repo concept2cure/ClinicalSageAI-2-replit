@@ -1,15 +1,15 @@
 /**
  * Regulatory Delta Radar Service
- * 
+ *
  * Enterprise-grade service for detecting and managing regulatory deltas
  * between submission content and agency guidance documents.
- * 
+ *
  * Features:
  * - Real-time guidance document monitoring
  * - Semantic similarity analysis for change detection
  * - Automated delta classification and prioritization
  * - Resolution workflow tracking
- * 
+ *
  * Part 11 Compliance: Full audit trail for all delta operations
  */
 
@@ -105,11 +105,18 @@ export class RegulatoryDeltaRadarService {
     this.defaultConfig = {
       semanticThreshold: 0.75,
       criticalKeywords: [
-        'must', 'shall', 'required', 'mandatory', 'prohibited',
-        'safety', 'efficacy', 'clinical hold', 'refuse to file'
+        'must',
+        'shall',
+        'required',
+        'mandatory',
+        'prohibited',
+        'safety',
+        'efficacy',
+        'clinical hold',
+        'refuse to file',
       ],
       agencies: ['FDA', 'EMA', 'ICH', 'PMDA', 'Health Canada'],
-      submissionTypes: ['IND', 'NDA', 'BLA', '510k', 'PMA']
+      submissionTypes: ['IND', 'NDA', 'BLA', '510k', 'PMA'],
     };
   }
 
@@ -134,7 +141,7 @@ export class RegulatoryDeltaRadarService {
     doc: Partial<GuidanceDocument> & { content?: string; organizationId?: string; status?: string }
   ): Promise<GuidanceDocument> {
     const client = await this.pool.connect();
-    
+
     try {
       await client.query("SET app.bypass_rls = 'true'");
       await client.query("SET app.is_admin = 'true'");
@@ -168,7 +175,7 @@ export class RegulatoryDeltaRadarService {
         'therapeutic_area',
         'submission_types',
         'document_type',
-        'source_url'
+        'source_url',
       ];
 
       const values: any[] = [
@@ -184,7 +191,7 @@ export class RegulatoryDeltaRadarService {
         doc.therapeuticArea,
         doc.submissionTypes,
         doc.documentType || 'guidance',
-        doc.sourceUrl
+        doc.sourceUrl,
       ];
 
       if (orgColumn) {
@@ -199,7 +206,8 @@ export class RegulatoryDeltaRadarService {
 
       const placeholders = values.map((_, idx) => `$${idx + 1}`).join(', ');
 
-      const result = await client.query(`
+      const result = await client.query(
+        `
         INSERT INTO innovation.guidance_documents (
           ${columns.join(', ')}
         ) VALUES (${placeholders})
@@ -209,7 +217,9 @@ export class RegulatoryDeltaRadarService {
           content_embedding = EXCLUDED.content_embedding,
           updated_at = NOW()
         RETURNING *
-      `, values);
+      `,
+        values
+      );
 
       await client.query('COMMIT');
 
@@ -246,12 +256,15 @@ export class RegulatoryDeltaRadarService {
           submissionTypes: doc.submissionTypes,
           documentType: doc.documentType || 'guidance',
           sourceUrl: doc.sourceUrl,
-          status: doc.status || 'active'
+          status: doc.status || 'active',
         };
 
         RegulatoryDeltaRadarService.guidanceCache.push(fallbackDoc);
         if (fallbackDoc.organizationId) {
-          RegulatoryDeltaRadarService.guidanceOrgIndex.set(fallbackDoc.id, fallbackDoc.organizationId);
+          RegulatoryDeltaRadarService.guidanceOrgIndex.set(
+            fallbackDoc.id,
+            fallbackDoc.organizationId
+          );
         }
         return fallbackDoc;
       }
@@ -313,9 +326,10 @@ export class RegulatoryDeltaRadarService {
     if (docs.length === 0 && RegulatoryDeltaRadarService.guidanceCache.length > 0) {
       const cached = RegulatoryDeltaRadarService.guidanceCache;
       if (organizationId) {
-        return cached.filter(doc =>
-          doc.organizationId === organizationId ||
-          RegulatoryDeltaRadarService.guidanceOrgIndex.get(doc.id) === organizationId
+        return cached.filter(
+          doc =>
+            doc.organizationId === organizationId ||
+            RegulatoryDeltaRadarService.guidanceOrgIndex.get(doc.id) === organizationId
         );
       }
       return cached;
@@ -329,7 +343,7 @@ export class RegulatoryDeltaRadarService {
         documentNumber: undefined,
         title: 'Placeholder Guidance',
         version: undefined,
-        contentHash: undefined,
+        contentHash: '',
         contentText: 'No guidance content available.',
         effectiveDate: undefined,
         publicationDate: new Date(),
@@ -337,7 +351,7 @@ export class RegulatoryDeltaRadarService {
         submissionTypes: undefined,
         documentType: 'guidance',
         sourceUrl: undefined,
-        status: 'active'
+        status: 'active',
       };
       RegulatoryDeltaRadarService.guidanceCache.push(fallbackDoc);
       if (organizationId) {
@@ -352,7 +366,10 @@ export class RegulatoryDeltaRadarService {
   /**
    * Update guidance document fields
    */
-  async updateGuidanceDocument(id: string, updates: { status?: string }): Promise<GuidanceDocument> {
+  async updateGuidanceDocument(
+    id: string,
+    updates: { status?: string }
+  ): Promise<GuidanceDocument> {
     const { statusColumn } = await this.getGuidanceColumns();
 
     if (statusColumn && updates.status) {
@@ -376,7 +393,7 @@ export class RegulatoryDeltaRadarService {
         documentNumber: undefined,
         title: 'Guidance',
         version: undefined,
-        contentHash: undefined,
+        contentHash: '',
         contentText: undefined,
         effectiveDate: undefined,
         publicationDate: new Date(),
@@ -384,7 +401,7 @@ export class RegulatoryDeltaRadarService {
         submissionTypes: undefined,
         documentType: 'guidance',
         sourceUrl: undefined,
-        status: updates.status || 'active'
+        status: updates.status || 'active',
       } as GuidanceDocument;
     }
 
@@ -408,7 +425,7 @@ export class RegulatoryDeltaRadarService {
       documentNumber: undefined,
       title: 'Guidance',
       version: undefined,
-      contentHash: undefined,
+      contentHash: '',
       contentText: undefined,
       effectiveDate: undefined,
       publicationDate: new Date(),
@@ -416,7 +433,7 @@ export class RegulatoryDeltaRadarService {
       submissionTypes: undefined,
       documentType: 'guidance',
       sourceUrl: undefined,
-      status: updates.status || 'active'
+      status: updates.status || 'active',
     } as GuidanceDocument;
   }
 
@@ -424,27 +441,29 @@ export class RegulatoryDeltaRadarService {
    * Run a delta radar scan for a program
    */
   async runDeltaScan(
-    context: ScanContext | {
-      organizationId?: string;
-      orgId?: string;
-      programId?: string;
-      documentId?: string;
-      scanScope?: 'full' | 'incremental' | 'targeted';
-      submissionType?: string;
-      therapeuticArea?: string;
-      includeArchived?: boolean;
-    },
+    context:
+      | ScanContext
+      | {
+          organizationId?: string;
+          orgId?: string;
+          programId?: string;
+          documentId?: string;
+          scanScope?: 'full' | 'incremental' | 'targeted';
+          submissionType?: string;
+          therapeuticArea?: string;
+          includeArchived?: boolean;
+        },
     config?: Partial<DeltaRadarConfig>
   ): Promise<any> {
     if ('organizationId' in context || 'documentId' in context || 'scanScope' in context) {
       const orgId = context.organizationId || context.orgId;
-      const programId = context.programId || await this.resolveProgramId(orgId);
+      const programId = context.programId || (await this.resolveProgramId(orgId));
       const scan = await this.runDeltaScanInternal(
         {
           programId: programId || '',
           orgId: orgId || '',
           submissionType: context.submissionType,
-          therapeuticArea: context.therapeuticArea
+          therapeuticArea: context.therapeuticArea,
         },
         config
       );
@@ -468,12 +487,15 @@ export class RegulatoryDeltaRadarService {
       await client.query('BEGIN');
 
       // Create scan record
-      const scanResult = await client.query(`
+      const scanResult = await client.query(
+        `
         INSERT INTO innovation.delta_radar_scans (
           program_id, org_id, scan_type, status, started_at
         ) VALUES ($1, $2, 'full', 'running', NOW())
         RETURNING *
-      `, [context.programId, context.orgId]);
+      `,
+        [context.programId, context.orgId]
+      );
 
       let scan = scanResult?.rows?.[0];
       if (!scan) {
@@ -495,7 +517,7 @@ export class RegulatoryDeltaRadarService {
           critical_deltas: 0,
           high_deltas: 0,
           medium_deltas: 0,
-          low_deltas: 0
+          low_deltas: 0,
         };
       }
 
@@ -505,27 +527,34 @@ export class RegulatoryDeltaRadarService {
         // Get relevant guidance documents
         let guidanceRows: any[] = [];
         try {
-          const guidanceResult = await client.query(`
+          const guidanceResult = await client.query(
+            `
             SELECT * FROM innovation.guidance_documents
             WHERE ($1::varchar[] IS NULL OR submission_types && $1)
               AND ($2::varchar[] IS NULL OR therapeutic_area && $2)
             ORDER BY publication_date DESC
-          `, [
-            context.submissionType ? [context.submissionType] : null,
-            context.therapeuticArea ? [context.therapeuticArea] : null
-          ]);
+          `,
+            [
+              context.submissionType ? [context.submissionType] : null,
+              context.therapeuticArea ? [context.therapeuticArea] : null,
+            ]
+          );
           guidanceRows = guidanceResult?.rows || [];
         } catch (error) {
-          console.warn('[DeltaRadar] Failed to load guidance documents for scan, using cache:', error);
+          console.warn(
+            '[DeltaRadar] Failed to load guidance documents for scan, using cache:',
+            error
+          );
           guidanceRows = [];
         }
 
         if (guidanceRows.length === 0 && RegulatoryDeltaRadarService.guidanceCache.length > 0) {
           const cached = RegulatoryDeltaRadarService.guidanceCache;
           const filtered = context.orgId
-            ? cached.filter(doc =>
-                doc.organizationId === context.orgId ||
-                RegulatoryDeltaRadarService.guidanceOrgIndex.get(doc.id) === context.orgId
+            ? cached.filter(
+                doc =>
+                  doc.organizationId === context.orgId ||
+                  RegulatoryDeltaRadarService.guidanceOrgIndex.get(doc.id) === context.orgId
               )
             : cached;
           guidanceRows = filtered.map(doc => ({
@@ -536,7 +565,7 @@ export class RegulatoryDeltaRadarService {
             document_type: doc.documentType,
             submission_types: doc.submissionTypes,
             therapeutic_area: doc.therapeuticArea,
-            title: doc.title
+            title: doc.title,
           }));
         }
 
@@ -555,29 +584,32 @@ export class RegulatoryDeltaRadarService {
 
         // Insert findings
         for (const finding of findings) {
-          await client.query(`
+          await client.query(
+            `
             INSERT INTO innovation.delta_findings (
               scan_id, program_id, guidance_document_id, affected_document_id,
               affected_section_path, delta_type, severity, title, description,
               guidance_text, current_state, recommended_action, confidence_score,
               semantic_similarity, status
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'open')
-          `, [
-            finding.scanId,
-            finding.programId,
-            finding.guidanceDocumentId,
-            finding.affectedDocumentId,
-            finding.affectedSectionPath,
-            finding.deltaType,
-            finding.severity,
-            finding.title,
-            finding.description,
-            finding.guidanceText,
-            finding.currentState,
-            finding.recommendedAction,
-            finding.confidenceScore,
-            finding.semanticSimilarity
-          ]);
+          `,
+            [
+              finding.scanId,
+              finding.programId,
+              finding.guidanceDocumentId,
+              finding.affectedDocumentId,
+              finding.affectedSectionPath,
+              finding.deltaType,
+              finding.severity,
+              finding.title,
+              finding.description,
+              finding.guidanceText,
+              finding.currentState,
+              finding.recommendedAction,
+              finding.confidenceScore,
+              finding.semanticSimilarity,
+            ]
+          );
         }
 
         // Count findings by severity
@@ -587,7 +619,8 @@ export class RegulatoryDeltaRadarService {
         const lowCount = findings.filter(f => f.severity === 'low').length;
 
         // Update scan with results
-        const finalResult = await client.query(`
+        const finalResult = await client.query(
+          `
           UPDATE innovation.delta_radar_scans
           SET status = 'completed',
               completed_at = NOW(),
@@ -598,7 +631,9 @@ export class RegulatoryDeltaRadarService {
               low_deltas = $6
           WHERE id = $1
           RETURNING *
-        `, [scanId, findings.length, criticalCount, highCount, mediumCount, lowCount]);
+        `,
+          [scanId, findings.length, criticalCount, highCount, mediumCount, lowCount]
+        );
 
         await client.query('COMMIT');
 
@@ -617,7 +652,7 @@ export class RegulatoryDeltaRadarService {
             lowDeltas: 0,
             status: 'completed',
             startedAt: new Date(),
-            completedAt: new Date()
+            completedAt: new Date(),
           };
           RegulatoryDeltaRadarService.scanCache.push({ ...fallbackScan, findings: [] });
           return fallbackScan;
@@ -630,19 +665,21 @@ export class RegulatoryDeltaRadarService {
           critical_deltas: criticalCount,
           high_deltas: highCount,
           medium_deltas: mediumCount,
-          low_deltas: lowCount
+          low_deltas: lowCount,
         };
         const mapped = this.mapScan(sourceRow);
         RegulatoryDeltaRadarService.scanCache.push({ ...mapped, findings: [] });
         return mapped;
-
       } catch (analysisError) {
         // Update scan with error
-        await client.query(`
+        await client.query(
+          `
           UPDATE innovation.delta_radar_scans
           SET status = 'failed', error_message = $2, completed_at = NOW()
           WHERE id = $1
-        `, [scanId, String(analysisError)]);
+        `,
+          [scanId, String(analysisError)]
+        );
         throw analysisError;
       }
     } catch (error) {
@@ -657,7 +694,10 @@ export class RegulatoryDeltaRadarService {
   /**
    * Retrieve scan history for an organization
    */
-  async getScanHistory(orgId: string, options: { limit?: number } = {}): Promise<Array<DeltaRadarScan & { findings?: DeltaFinding[] }>> {
+  async getScanHistory(
+    orgId: string,
+    options: { limit?: number } = {}
+  ): Promise<Array<DeltaRadarScan & { findings?: DeltaFinding[] }>> {
     const result = await this.pool.query(
       `SELECT * FROM innovation.delta_radar_scans WHERE org_id = $1 ORDER BY created_at DESC LIMIT $2`,
       [orgId, options.limit || 10]
@@ -712,11 +752,11 @@ export class RegulatoryDeltaRadarService {
 
       if (context.existingContent) {
         const reqEmbedding = await this.generateEmbedding(req.text);
-        
+
         for (const [section, content] of context.existingContent) {
           const contentEmbedding = await this.generateEmbedding(content);
           const sim = this.cosineSimilarity(reqEmbedding, contentEmbedding);
-          
+
           if (sim > similarity) {
             similarity = sim;
             matchedContent = content;
@@ -727,7 +767,7 @@ export class RegulatoryDeltaRadarService {
       // If similarity below threshold, this is a potential gap
       if (similarity < config.semanticThreshold) {
         const severity = this.determineSeverity(req.text, config.criticalKeywords);
-        
+
         findings.push({
           id: '', // Will be assigned by DB
           scanId,
@@ -742,7 +782,7 @@ export class RegulatoryDeltaRadarService {
           recommendedAction: this.generateRecommendation(req.text, severity),
           confidenceScore: 1 - similarity, // Higher confidence when less similar
           semanticSimilarity: similarity,
-          status: 'open'
+          status: 'open',
         });
       }
     }
@@ -755,26 +795,33 @@ export class RegulatoryDeltaRadarService {
    */
   private extractRequirements(text: string): { text: string; type: string }[] {
     const requirements: { text: string; type: string }[] = [];
-    
+
     // Split into sentences
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-    
+
     // Keywords that indicate requirements
     const requirementIndicators = [
-      'must', 'shall', 'should', 'required', 'recommended',
-      'essential', 'necessary', 'mandatory', 'important'
+      'must',
+      'shall',
+      'should',
+      'required',
+      'recommended',
+      'essential',
+      'necessary',
+      'mandatory',
+      'important',
     ];
 
     for (const sentence of sentences) {
       const lower = sentence.toLowerCase();
       const isRequirement = requirementIndicators.some(ind => lower.includes(ind));
-      
+
       if (isRequirement) {
         let type = 'recommended';
         if (lower.includes('must') || lower.includes('shall') || lower.includes('required')) {
           type = 'mandatory';
         }
-        
+
         requirements.push({ text: sentence.trim(), type });
       }
     }
@@ -790,21 +837,21 @@ export class RegulatoryDeltaRadarService {
     criticalKeywords: string[]
   ): 'critical' | 'high' | 'medium' | 'low' {
     const lower = text.toLowerCase();
-    
+
     // Critical if contains critical keywords
     const hasCritical = criticalKeywords.some(kw => lower.includes(kw.toLowerCase()));
     if (hasCritical && (lower.includes('safety') || lower.includes('efficacy'))) {
       return 'critical';
     }
-    
+
     if (hasCritical) {
       return 'high';
     }
-    
+
     if (lower.includes('should') || lower.includes('recommended')) {
       return 'medium';
     }
-    
+
     return 'low';
   }
 
@@ -813,19 +860,19 @@ export class RegulatoryDeltaRadarService {
    */
   private generateRecommendation(text: string, severity: string): string {
     const lower = text.toLowerCase();
-    
+
     if (severity === 'critical') {
       return 'IMMEDIATE ACTION REQUIRED: Review this critical requirement and ensure your submission explicitly addresses it. Consider consulting with regulatory affairs.';
     }
-    
+
     if (severity === 'high') {
       return 'HIGH PRIORITY: Add content addressing this requirement before submission. Document how your submission meets this guidance.';
     }
-    
+
     if (lower.includes('document') || lower.includes('include')) {
       return 'Ensure the required documentation is included in the appropriate module of your submission.';
     }
-    
+
     return 'Review this guidance recommendation and consider incorporating it into your submission.';
   }
 
@@ -833,20 +880,23 @@ export class RegulatoryDeltaRadarService {
    * Get findings for a scan
    */
   async getScanFindings(scanId: string): Promise<DeltaFinding[]> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT df.*, gd.title as guidance_title, gd.agency
       FROM innovation.delta_findings df
       JOIN innovation.guidance_documents gd ON gd.id = df.guidance_document_id
       WHERE df.scan_id = $1
-      ORDER BY 
-        CASE df.severity 
-          WHEN 'critical' THEN 1 
-          WHEN 'high' THEN 2 
-          WHEN 'medium' THEN 3 
-          ELSE 4 
+      ORDER BY
+        CASE df.severity
+          WHEN 'critical' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'medium' THEN 3
+          ELSE 4
         END,
         df.confidence_score DESC
-    `, [scanId]);
+    `,
+      [scanId]
+    );
 
     return result.rows.map(this.mapFinding);
   }
@@ -855,12 +905,15 @@ export class RegulatoryDeltaRadarService {
    * Get recent scans for a program
    */
   async getProgramScans(programId: string, limit: number = 10): Promise<DeltaRadarScan[]> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.delta_radar_scans
       WHERE program_id = $1
       ORDER BY created_at DESC
       LIMIT $2
-    `, [programId, limit]);
+    `,
+      [programId, limit]
+    );
 
     return result.rows.map(this.mapScan);
   }
@@ -874,7 +927,8 @@ export class RegulatoryDeltaRadarService {
     resolutionNotes?: string,
     resolvedBy?: string
   ): Promise<DeltaFinding> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       UPDATE innovation.delta_findings
       SET status = $2,
           resolution_notes = COALESCE($3, resolution_notes),
@@ -882,7 +936,9 @@ export class RegulatoryDeltaRadarService {
           resolved_by = COALESCE($4, resolved_by)
       WHERE id = $1
       RETURNING *
-    `, [findingId, status, resolutionNotes, resolvedBy]);
+    `,
+      [findingId, status, resolutionNotes, resolvedBy]
+    );
 
     return this.mapFinding(result.rows[0]);
   }
@@ -899,9 +955,10 @@ export class RegulatoryDeltaRadarService {
     avgFindingsPerScan: number;
     trendData: { date: string; count: number }[];
   }> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       WITH scan_stats AS (
-        SELECT 
+        SELECT
           COUNT(*) as total_scans,
           SUM(total_deltas_found) as total_findings,
           AVG(total_deltas_found) as avg_findings
@@ -909,17 +966,17 @@ export class RegulatoryDeltaRadarService {
         WHERE org_id = $1 AND status = 'completed'
       ),
       finding_stats AS (
-        SELECT 
+        SELECT
           COUNT(*) FILTER (WHERE status = 'open' AND severity = 'critical') as open_critical,
           COUNT(*) FILTER (WHERE status = 'open' AND severity = 'high') as open_high,
-          COUNT(*) FILTER (WHERE status IN ('resolved', 'dismissed'))::float / 
+          COUNT(*) FILTER (WHERE status IN ('resolved', 'dismissed'))::float /
             NULLIF(COUNT(*), 0) as resolution_rate
         FROM innovation.delta_findings df
         JOIN innovation.delta_radar_scans ds ON ds.id = df.scan_id
         WHERE ds.org_id = $1
       ),
       trend_data AS (
-        SELECT 
+        SELECT
           DATE_TRUNC('day', created_at)::date as scan_date,
           SUM(total_deltas_found) as daily_count
         FROM innovation.delta_radar_scans
@@ -928,7 +985,7 @@ export class RegulatoryDeltaRadarService {
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY scan_date
       )
-      SELECT 
+      SELECT
         ss.total_scans,
         ss.total_findings,
         fs.open_critical,
@@ -939,12 +996,14 @@ export class RegulatoryDeltaRadarService {
           FILTER (WHERE td.scan_date IS NOT NULL), '[]') as trend_data
       FROM scan_stats ss, finding_stats fs
       LEFT JOIN trend_data td ON TRUE
-      GROUP BY ss.total_scans, ss.total_findings, fs.open_critical, 
+      GROUP BY ss.total_scans, ss.total_findings, fs.open_critical,
                fs.open_high, fs.resolution_rate, ss.avg_findings
-    `, [orgId]);
+    `,
+      [orgId]
+    );
 
     const row = result.rows[0] || {};
-    
+
     return {
       totalScans: parseInt(row.total_scans) || 0,
       totalFindings: parseInt(row.total_findings) || 0,
@@ -952,7 +1011,7 @@ export class RegulatoryDeltaRadarService {
       openHigh: parseInt(row.open_high) || 0,
       resolutionRate: parseFloat(row.resolution_rate) || 0,
       avgFindingsPerScan: parseFloat(row.avg_findings) || 0,
-      trendData: row.trend_data || []
+      trendData: row.trend_data || [],
     };
   }
 
@@ -987,17 +1046,17 @@ export class RegulatoryDeltaRadarService {
    */
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;
-    
+
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
-    
+
     for (let i = 0; i < a.length; i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    
+
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
     return denominator === 0 ? 0 : dotProduct / denominator;
   }
@@ -1021,7 +1080,7 @@ export class RegulatoryDeltaRadarService {
       submissionTypes: row.submission_types,
       documentType: row.document_type,
       sourceUrl: row.source_url,
-      status: row.status || row.document_status
+      status: row.status || row.document_status,
     };
   }
 
@@ -1056,10 +1115,14 @@ export class RegulatoryDeltaRadarService {
 
   private async resolveProgramId(orgId?: string): Promise<string | undefined> {
     if (!orgId) {
-      const fallback = await this.pool.query('SELECT id FROM programs ORDER BY created_at DESC LIMIT 1');
+      const fallback = await this.pool.query(
+        'SELECT id FROM programs ORDER BY created_at DESC LIMIT 1'
+      );
       if (fallback.rows.length > 0) return fallback.rows[0].id;
       try {
-        const coreFallback = await this.pool.query('SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1');
+        const coreFallback = await this.pool.query(
+          'SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1'
+        );
         return coreFallback.rows[0]?.id;
       } catch {
         return undefined;
@@ -1105,7 +1168,7 @@ export class RegulatoryDeltaRadarService {
       status: row.status,
       startedAt: row.started_at,
       completedAt: row.completed_at,
-      errorMessage: row.error_message
+      errorMessage: row.error_message,
     };
   }
 
@@ -1130,7 +1193,7 @@ export class RegulatoryDeltaRadarService {
       confidenceScore: row.confidence_score,
       semanticSimilarity: row.semantic_similarity,
       status: row.status,
-      resolutionNotes: row.resolution_notes
+      resolutionNotes: row.resolution_notes,
     };
   }
 }

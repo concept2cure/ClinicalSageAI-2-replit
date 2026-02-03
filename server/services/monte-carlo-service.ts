@@ -243,6 +243,9 @@ export class MonteCarloService {
       if (bestN === null) {
         throw new Error(`Could not find sample size to achieve ${targetPower * 100}% power`);
       }
+      if (!bestResult) {
+        throw new Error('No simulation result available for calculated sample size');
+      }
 
       return {
         calculated_sample_size: bestN,
@@ -788,7 +791,7 @@ export class MonteCarloService {
   /**
    * Gamma function approximation
    */
-  private gamma(z: number) {
+  private gamma(z: number): number {
     if (z < 0.5) {
       return Math.PI / (Math.sin(Math.PI * z) * this.gamma(1 - z));
     }
@@ -843,7 +846,7 @@ export class MonteCarloService {
   /**
    * Incomplete beta function for beta CDF
    */
-  private betaCDF(x: number, a: number, b: number) {
+  private betaCDF(x: number, a: number, b: number): number {
     if (x <= 0) return 0;
     if (x >= 1) return 1;
 

@@ -16,7 +16,7 @@ export function calendarEnabled() {
   return !!(process.env.GOOGLE_CALENDAR_ID && process.env.GOOGLE_SERVICE_ACCOUNT);
 }
 
-export async function insertAllDayEvent(evt: EventInput) {
+export async function insertAllDayEvent(evt: EventInput): Promise<{ id?: string }> {
   const svc = envJSON('GOOGLE_SERVICE_ACCOUNT'); // {client_email, private_key, ...}
   if (!svc) throw new Error('GOOGLE_SERVICE_ACCOUNT missing/invalid');
   const calId = process.env.GOOGLE_CALENDAR_ID!;

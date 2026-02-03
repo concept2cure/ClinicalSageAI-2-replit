@@ -22,7 +22,7 @@ router.get('/list', async (req, res) => {
       // Try to get from database first
       obligations = (
         await q(`
-        SELECT task_id, title, description, priority, status, assigned_to, due_date, 
+        SELECT task_id, title, description, priority, status, assigned_to, due_date,
                CASE WHEN due_date IS NULL THEN 'No Due Date'
                     WHEN due_date < CURRENT_DATE THEN 'Overdue'
                     WHEN due_date = CURRENT_DATE THEN 'Due Today'
@@ -32,11 +32,11 @@ router.get('/list', async (req, res) => {
                     WHEN priority = 'Critical' THEN 'Critical'
                     ELSE 'Medium'
                END as priority
-        FROM reg_tasks 
+        FROM reg_tasks
         WHERE task_type = 'OBLIGATION' OR title ILIKE '%obligation%' OR title ILIKE '%module%' OR title ILIKE '%submit%'
-        ORDER BY 
+        ORDER BY
           CASE WHEN status = 'Pending' THEN 1
-               WHEN status = 'In Progress' THEN 2 
+               WHEN status = 'In Progress' THEN 2
                ELSE 3 END,
           due_date ASC NULLS LAST
       `)
@@ -166,7 +166,7 @@ router.put('/:id/status', async (req, res) => {
     try {
       const result = await q(
         `
-        UPDATE reg_tasks 
+        UPDATE reg_tasks
         SET status = $1, updated_at = NOW()
         WHERE task_id = $2 AND (task_type = 'OBLIGATION' OR title ILIKE '%obligation%' OR title ILIKE '%module%' OR title ILIKE '%submit%')
         RETURNING task_id, title, description, priority, due_date, status, agency, assigned_to
@@ -213,7 +213,7 @@ router.put('/:id/assign', async (req, res) => {
     try {
       const result = await q(
         `
-        UPDATE reg_tasks 
+        UPDATE reg_tasks
         SET assigned_to = $1, updated_at = NOW()
         WHERE task_id = $2 AND (task_type = 'OBLIGATION' OR title ILIKE '%obligation%' OR title ILIKE '%module%' OR title ILIKE '%submit%')
         RETURNING task_id, title, description, priority, due_date, status, agency, assigned_to
@@ -253,7 +253,7 @@ router.get('/:id/details', async (req, res) => {
         `
         SELECT task_id, title, description, priority, due_date, status, agency, assigned_to,
                created_at, updated_at
-        FROM reg_tasks 
+        FROM reg_tasks
         WHERE task_id = $1 AND (task_type = 'OBLIGATION' OR title ILIKE '%obligation%' OR title ILIKE '%module%' OR title ILIKE '%submit%')
       `,
         [id]
@@ -268,7 +268,20 @@ router.get('/:id/details', async (req, res) => {
 
     // Fallback details if database unavailable
     if (!obligation) {
-      const detailsMap = {
+      type ObligationDetail = {
+        task_id: string;
+        title: string;
+        description: string;
+        status: string;
+        priority: string;
+        due_date: string;
+        agency: string;
+        assigned_to: null;
+        created_at: string;
+        updated_at: string;
+      };
+
+      const detailsMap: Record<string, ObligationDetail> = {
         '1': {
           task_id: '1',
           title: 'Complete Module 3 Quality Review',

@@ -193,7 +193,7 @@ async function testDatabaseIndexing(): Promise<TestStats[]> {
     }
 
     await db.execute(sql`
-      SELECT * FROM ctq_factors 
+      SELECT * FROM ctq_factors
       WHERE organization_id = ${TEST_TENANT_ID}
       AND section_code = 'test-section'
       AND risk_level = 'high'
@@ -307,10 +307,13 @@ async function testQueryBatching(): Promise<TestStats[]> {
     await runTest(
       'Batched queries',
       async () => {
+        if (!db) {
+          throw new Error('Database connection not available');
+        }
         const queryPromises = [];
 
         for (let i = 0; i < TEST_BATCH_SIZE; i++) {
-          queryPromises.push(queryBatcher.batchQuery(sampleQuery));
+          queryPromises.push(queryBatcher.batchQuery(db, 'SELECT 1'));
         }
 
         // Wait for all batched queries to complete

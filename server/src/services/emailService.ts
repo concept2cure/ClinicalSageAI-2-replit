@@ -4,7 +4,7 @@ let nodemailerLoaded = false;
 
 async function loadNodemailer() {
   if (nodemailerLoaded) return nodemailer;
-  
+
   try {
     const module = await import('nodemailer');
     nodemailer = module.default;
@@ -22,12 +22,12 @@ let cachedTransporter: any = null;
 
 export async function createTransporter(): Promise<any> {
   const nm = await loadNodemailer();
-  
+
   // If nodemailer not available, return null
   if (!nm) {
     return null;
   }
-  
+
   // Return cached transporter if available
   if (cachedTransporter) {
     return cachedTransporter;
@@ -59,7 +59,7 @@ export async function createTransporter(): Promise<any> {
 
     // Verify connection configuration
     if (cachedTransporter) {
-      cachedTransporter.verify(error => {
+      cachedTransporter.verify((error: Error | null) => {
         if (error) {
           console.error('[EMAIL] SMTP verification failed:', error);
           cachedTransporter = null;
@@ -83,7 +83,7 @@ export async function sendEmail(options: {
   html?: string;
   priority?: 'high' | 'normal' | 'low';
 }): Promise<boolean> {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   if (!transporter) {
     console.log('[EMAIL] Transporter not available, skipping email');
     return false;

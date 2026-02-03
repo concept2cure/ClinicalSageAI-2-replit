@@ -1,5 +1,8 @@
 import OpenAI from 'openai';
-import { ThreadMessage, Assistant, Run, Thread } from 'openai/resources';
+import type { Assistant } from 'openai/resources/beta/assistants';
+import type { Message as ThreadMessage } from 'openai/resources/beta/threads/messages';
+import type { Run } from 'openai/resources/beta/threads/runs/runs';
+import type { Thread } from 'openai/resources/beta/threads/threads';
 
 // Initialize OpenAI client
 if (!process.env.OPENAI_API_KEY) {
@@ -108,8 +111,8 @@ export async function listMessages(threadId: string): Promise<{
     const messages = await openai.beta.threads.messages.list(threadId);
     return {
       data: messages.data,
-      firstId: messages.first_id || null,
-      lastId: messages.last_id || null,
+      firstId: messages.data[0]?.id || null,
+      lastId: messages.data[messages.data.length - 1]?.id || null,
       hasMore: messages.has_more,
     };
   } catch (error) {
@@ -130,7 +133,7 @@ export async function generateStructuredResponse<T>(
     // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
     const response = await openai.responses.create({
       model: 'gpt-4o',
-      messages: [
+      input: [
         {
           role: 'system',
           content: systemPrompt,
@@ -163,7 +166,7 @@ export async function generateWithWebSearch(prompt: string): Promise<string> {
   try {
     const response = await openai.responses.create({
       model: 'gpt-4o',
-      messages: [
+      input: [
         {
           role: 'user',
           content: prompt,
@@ -191,7 +194,7 @@ export async function generateImage(prompt: string): Promise<string> {
       size: '1024x1024',
     });
 
-    return response.data[0].url || '';
+    return response.data?.[0]?.url || '';
   } catch (error) {
     console.error('Error generating image:', error);
     throw error;

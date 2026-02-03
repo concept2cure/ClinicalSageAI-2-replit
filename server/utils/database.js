@@ -1,21 +1,7 @@
 // server/utils/database.js
-import pg from 'pg';
-const { Pool } = pg;
+import { pool as dbPool, query as baseQuery, transaction as baseTransaction } from '../db';
 
-// Create a connection pool to the PostgreSQL database
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
-// Test the database connection on startup
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('🚨 Database connection error:', err.message);
-  } else {
-    console.log('✅ Database connected successfully at', res.rows[0].now);
-  }
-});
+const pool = dbPool;
 
 /**
  * Execute a database query with parameters
@@ -25,20 +11,7 @@ pool.query('SELECT NOW()', (err, res) => {
  * @returns {Promise<any>} Query result
  */
 export async function query(text, params) {
-  try {
-    const start = Date.now();
-    const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-
-    if (duration > 1000) {
-      console.warn(`Slow query (${duration}ms): ${text}`);
-    }
-
-    return res;
-  } catch (error) {
-    console.error('Database query error:', error);
-    throw error;
-  }
+  return baseQuery(text, params);
 }
 
 /**
@@ -47,6 +20,10 @@ export async function query(text, params) {
  * @returns {Promise<pg.PoolClient>} Database client
  */
 export async function getClient() {
+  if (!pool) {
+    throw new Error('Database connection not available');
+  }
+
   const client = await pool.connect();
   const originalRelease = client.release;
 
@@ -65,20 +42,7 @@ export async function getClient() {
  * @returns {Promise<any>} Transaction result
  */
 export async function transaction(callback) {
-  const client = await getClient();
-
-  try {
-    await client.query('BEGIN');
-    const result = await callback(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Transaction error:', error);
-    throw error;
-  } finally {
-    client.release();
-  }
+  return baseTransaction(callback);
 }
 
 /**
@@ -142,8 +106,11 @@ export async function initializeTables() {
 initializeTables().catch(console.error);
 
 export default {
+  pool,
   query,
   getClient,
   transaction,
   initializeTables,
 };
+
+export { pool };

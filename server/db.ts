@@ -79,6 +79,17 @@ try {
 export const db = pool ? drizzle(pool, { schema }) : null;
 
 /**
+ * Get the database pool, throwing an error if not available.
+ * Use this for direct pg access when needed.
+ */
+export function getPool(): Pool {
+  if (!pool) {
+    throw new Error('Database connection not available');
+  }
+  return pool;
+}
+
+/**
  * Get the database connection, throwing an error if not available.
  * Use this in routes/services that require database access.
  */

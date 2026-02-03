@@ -1,8 +1,11 @@
 import { db } from '../db';
 import { eq, like, and, or, not, isNull } from 'drizzle-orm';
-import { csr_reports, csr_details } from 'shared/schema';
+import { csrReports, csrDetails } from 'shared/schema';
 import type { IntelligenceSummary, WeeklyBrief } from 'shared/types/intelligence';
-import type { HuggingFaceService } from './huggingface-service';
+
+type HuggingFaceService = {
+  generateContentWithContext(prompt: string, context: string): Promise<string>;
+};
 
 /**
  * Strategic Intelligence Service
@@ -10,6 +13,13 @@ import type { HuggingFaceService } from './huggingface-service';
  */
 export class StrategicIntelligenceService {
   private huggingfaceService: HuggingFaceService;
+
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
 
   constructor(huggingfaceService: HuggingFaceService) {
     this.huggingfaceService = huggingfaceService;
@@ -52,15 +62,16 @@ export class StrategicIntelligenceService {
    */
   async getIntelligenceSummary(indication: string): Promise<IntelligenceSummary> {
     try {
+      const dbInstance = this.getDb();
       // Get all reports for the indication
-      const reports = await db
+      const reports = await dbInstance
         .select()
-        .from(csr_reports)
+        .from(csrReports)
         .where(
           and(
-            like(csr_reports.indication, `%${indication}%`),
-            not(eq(csr_reports.status, 'Withdrawn')),
-            isNull(csr_reports.deletedAt)
+            like(csrReports.indication, `%${indication}%`),
+            not(eq(csrReports.status, 'Withdrawn')),
+            isNull(csrReports.deletedAt)
           )
         );
 
@@ -72,10 +83,10 @@ export class StrategicIntelligenceService {
       const reportIds = reports.map(report => report.id);
 
       // Get details for all reports
-      const details = await db
+      const details = await dbInstance
         .select()
-        .from(csr_details)
-        .where(or(...reportIds.map(id => eq(csr_details.reportId, id))));
+        .from(csrDetails)
+        .where(or(...reportIds.map(id => eq(csrDetails.reportId, id))));
 
       // Aggregate data
       const adverseEvents: Record<string, any> = {};
@@ -155,8 +166,8 @@ export class StrategicIntelligenceService {
         }
 
         // Process dropout rate
-        if (detail.dropoutRate) {
-          const dropoutRate = parseFloat(detail.dropoutRate);
+        if (detail.dropoutRate !== null && detail.dropoutRate !== undefined) {
+          const dropoutRate = Number(detail.dropoutRate);
           if (!isNaN(dropoutRate)) {
             totalDropoutRate += dropoutRate;
             dropoutCount += 1;
@@ -179,7 +190,7 @@ export class StrategicIntelligenceService {
       // Count trials by phase
       const phaseCounts: Record<string, number> = {};
       reports.forEach(report => {
-        const phase = report.phase;
+        const phase = report.phase ?? 'Unknown';
         phaseCounts[phase] = (phaseCounts[phase] || 0) + 1;
       });
 
@@ -213,7 +224,7 @@ export class StrategicIntelligenceService {
     const adverseEventsText = summary.topAdverseEvents
       .slice(0, 10)
       .map(
-        ae =>
+        (ae: (typeof summary.topAdverseEvents)[number]) =>
           `- ${ae.name}: ${(ae.avgFrequency * 100).toFixed(1)}% frequency, observed in ${ae.occurrences} trials`
       )
       .join('\n');
@@ -222,13 +233,15 @@ export class StrategicIntelligenceService {
     const endpointsText = summary.endpointTrends
       .slice(0, 10)
       .map(
-        ep =>
+        (ep: (typeof summary.endpointTrends)[number]) =>
           `- ${ep.name}: Used in ${ep.occurrences} trials (${ep.primaryUseCount} primary, ${ep.secondaryUseCount} secondary)`
       )
       .join('\n');
 
     // Format the phase distribution
-    const phasesText = summary.phases.map(p => `- Phase ${p.name}: ${p.count} trials`).join('\n');
+    const phasesText = summary.phases
+      .map((p: (typeof summary.phases)[number]) => `- Phase ${p.name}: ${p.count} trials`)
+      .join('\n');
 
     // Build the complete prompt
     return `

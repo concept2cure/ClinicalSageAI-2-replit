@@ -168,8 +168,12 @@ export function initializeSocketServer(server: Server) {
     },
     path: '/socket.io/',
   });
+  const ioInstance = io;
+  if (!ioInstance) {
+    return;
+  }
 
-  io.on('connection', (socket: Socket) => {
+  ioInstance.on('connection', (socket: Socket) => {
     console.log('New WebSocket connection:', socket.id);
 
     // Join room based on organization/project
@@ -180,33 +184,33 @@ export function initializeSocketServer(server: Server) {
     });
 
     // ========== Collaboration Events for eCTD Co-Author ==========
-    
+
     // Join document collaboration room
-    socket.on('join-document', (data: { 
-      documentId: string; 
-      user: { id: string; name: string; email?: string; avatar?: string } 
+    socket.on('join-document', (data: {
+      documentId: string;
+      user: { id: string; name: string; email?: string; avatar?: string }
     }) => {
       const { documentId, user } = data;
       const roomName = `doc_${documentId}`;
-      
+
       // Leave any previous document rooms
       const previousRoom = socketToUser.get(socket.id);
       if (previousRoom) {
         socket.leave(`doc_${previousRoom.documentId}`);
         handleUserLeaveDocument(socket, previousRoom.documentId, previousRoom.userId);
       }
-      
+
       // Join new document room
       socket.join(roomName);
-      
+
       // Get or create collaborators map for this document
       if (!documentRooms.has(documentId)) {
         documentRooms.set(documentId, new Map());
       }
-      
+
       const collaborators = documentRooms.get(documentId)!;
       const userIndex = collaborators.size;
-      
+
       // Create collaborator info
       const collaborator: CollaboratorInfo = {
         id: user.id,
@@ -218,10 +222,10 @@ export function initializeSocketServer(server: Server) {
         status: 'online',
         lastActivity: new Date()
       };
-      
+
       collaborators.set(user.id, collaborator);
       socketToUser.set(socket.id, { userId: user.id, documentId });
-      
+
       // Add join activity
       const activity: Activity = {
         id: generateActivityId(),
@@ -233,19 +237,19 @@ export function initializeSocketServer(server: Server) {
         details: { message: `${user.name} joined the document` },
         timestamp: new Date()
       };
-      
+
       if (!documentActivities.has(documentId)) {
         documentActivities.set(documentId, []);
       }
       documentActivities.get(documentId)!.push(activity);
-      
+
       // Notify other collaborators
       socket.to(roomName).emit('collaborator-joined', {
         collaborator,
         activity,
         collaborators: Array.from(collaborators.values())
       });
-      
+
       // Send current state to the joining user
       socket.emit('document-state', {
         collaborators: Array.from(collaborators.values()),
@@ -255,41 +259,41 @@ export function initializeSocketServer(server: Server) {
           .filter(([key]) => key.startsWith(`${documentId}_`))
           .map(([, lock]) => lock)
       });
-      
+
       console.log(`User ${user.name} joined document ${documentId}`);
     });
-    
+
     // Handle cursor movement
     socket.on('cursor-move', (data: { documentId: string; position: Omit<CursorPosition, 'timestamp'> }) => {
       const userInfo = socketToUser.get(socket.id);
       if (!userInfo) return;
-      
+
       const cursor: CursorPosition = {
         ...data.position,
         timestamp: Date.now()
       };
-      
+
       socket.to(`doc_${data.documentId}`).emit('cursor-update', cursor);
     });
-    
+
     // Handle text selection
     socket.on('selection-change', (data: { documentId: string; selection: Omit<SelectionRange, 'timestamp'> }) => {
       const userInfo = socketToUser.get(socket.id);
       if (!userInfo) return;
-      
+
       const selection: SelectionRange = {
         ...data.selection,
         timestamp: Date.now()
       };
-      
+
       socket.to(`doc_${data.documentId}`).emit('selection-update', selection);
     });
-    
+
     // Handle document changes (for real-time sync)
     socket.on('document-change', (data: DocumentChange) => {
       const userInfo = socketToUser.get(socket.id);
       if (!userInfo) return;
-      
+
       // Add edit activity
       const activity: Activity = {
         id: generateActivityId(),
@@ -300,18 +304,18 @@ export function initializeSocketServer(server: Server) {
         details: { section: data.section, operation: data.operation },
         timestamp: new Date()
       };
-      
+
       if (!documentActivities.has(data.documentId)) {
         documentActivities.set(data.documentId, []);
       }
       documentActivities.get(data.documentId)!.push(activity);
-      
+
       // Broadcast change to other collaborators
       socket.to(`doc_${data.documentId}`).emit('document-updated', {
         change: data,
         activity
       });
-      
+
       // Update user's last activity
       const collaborators = documentRooms.get(data.documentId);
       if (collaborators && collaborators.has(data.userId)) {
@@ -321,7 +325,7 @@ export function initializeSocketServer(server: Server) {
         collaborator.currentSection = data.section;
       }
     });
-    
+
     // Handle typing indicator
     socket.on('typing-start', (data: { documentId: string; userId: string; userName: string; section?: string }) => {
       socket.to(`doc_${data.documentId}`).emit('user-typing', {
@@ -331,18 +335,18 @@ export function initializeSocketServer(server: Server) {
         isTyping: true
       });
     });
-    
+
     socket.on('typing-stop', (data: { documentId: string; userId: string }) => {
       socket.to(`doc_${data.documentId}`).emit('user-typing', {
         userId: data.userId,
         isTyping: false
       });
     });
-    
+
     // Handle section locking
     socket.on('lock-section', (data: { documentId: string; sectionId: string; userId: string; userName: string }) => {
       const lockKey = `${data.documentId}_${data.sectionId}`;
-      
+
       // Check if section is already locked
       if (sectionLocks.has(lockKey)) {
         const existingLock = sectionLocks.get(lockKey)!;
@@ -355,7 +359,7 @@ export function initializeSocketServer(server: Server) {
           return;
         }
       }
-      
+
       // Create lock
       const lock: SectionLock = {
         sectionId: data.sectionId,
@@ -364,9 +368,9 @@ export function initializeSocketServer(server: Server) {
         lockedAt: new Date(),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minute expiry
       };
-      
+
       sectionLocks.set(lockKey, lock);
-      
+
       // Add lock activity
       const activity: Activity = {
         id: generateActivityId(),
@@ -377,27 +381,27 @@ export function initializeSocketServer(server: Server) {
         details: { section: data.sectionId },
         timestamp: new Date()
       };
-      
+
       if (!documentActivities.has(data.documentId)) {
         documentActivities.set(data.documentId, []);
       }
       documentActivities.get(data.documentId)!.push(activity);
-      
+
       // Notify all collaborators
-      io.to(`doc_${data.documentId}`).emit('section-locked', {
+      ioInstance.to(`doc_${data.documentId}`).emit('section-locked', {
         lock,
         activity
       });
     });
-    
+
     socket.on('unlock-section', (data: { documentId: string; sectionId: string; userId: string; userName: string }) => {
       const lockKey = `${data.documentId}_${data.sectionId}`;
-      
+
       if (sectionLocks.has(lockKey)) {
         const lock = sectionLocks.get(lockKey)!;
         if (lock.userId === data.userId) {
           sectionLocks.delete(lockKey);
-          
+
           // Add unlock activity
           const activity: Activity = {
             id: generateActivityId(),
@@ -408,21 +412,21 @@ export function initializeSocketServer(server: Server) {
             details: { section: data.sectionId },
             timestamp: new Date()
           };
-          
+
           if (!documentActivities.has(data.documentId)) {
             documentActivities.set(data.documentId, []);
           }
           documentActivities.get(data.documentId)!.push(activity);
-          
+
           // Notify all collaborators
-          io.to(`doc_${data.documentId}`).emit('section-unlocked', {
+          ioInstance.to(`doc_${data.documentId}`).emit('section-unlocked', {
             sectionId: data.sectionId,
             activity
           });
         }
       }
     });
-    
+
     // Handle comments
     socket.on('add-comment', (data: { documentId: string; comment: Omit<Comment, 'id' | 'timestamp'> }) => {
       const comment: Comment = {
@@ -430,12 +434,12 @@ export function initializeSocketServer(server: Server) {
         id: generateCommentId(),
         timestamp: new Date()
       };
-      
+
       if (!documentComments.has(data.documentId)) {
         documentComments.set(data.documentId, []);
       }
       documentComments.get(data.documentId)!.push(comment);
-      
+
       // Add comment activity
       const activity: Activity = {
         id: generateActivityId(),
@@ -444,32 +448,32 @@ export function initializeSocketServer(server: Server) {
         userName: comment.userName,
         userAvatar: comment.userAvatar,
         action: 'comment',
-        details: { 
+        details: {
           commentId: comment.id,
           content: comment.content.substring(0, 100),
-          mentions: comment.mentions 
+          mentions: comment.mentions
         },
         timestamp: new Date()
       };
-      
+
       if (!documentActivities.has(data.documentId)) {
         documentActivities.set(data.documentId, []);
       }
       documentActivities.get(data.documentId)!.push(activity);
-      
+
       // Notify all collaborators
-      io.to(`doc_${data.documentId}`).emit('comment-added', {
+      ioInstance.to(`doc_${data.documentId}`).emit('comment-added', {
         comment,
         activity
       });
-      
+
       // Send notifications to mentioned users
       if (comment.mentions && comment.mentions.length > 0) {
         comment.mentions.forEach(mentionedUserId => {
           const collaborators = documentRooms.get(data.documentId);
           if (collaborators && collaborators.has(mentionedUserId)) {
             const mentionedUser = collaborators.get(mentionedUserId)!;
-            io.to(mentionedUser.socketId).emit('mention-notification', {
+            ioInstance.to(mentionedUser.socketId).emit('mention-notification', {
               comment,
               mentionedBy: comment.userName
             });
@@ -477,25 +481,25 @@ export function initializeSocketServer(server: Server) {
         });
       }
     });
-    
+
     socket.on('resolve-comment', (data: { documentId: string; commentId: string; userId: string; userName: string }) => {
       const comments = documentComments.get(data.documentId);
       if (comments) {
         const comment = comments.find(c => c.id === data.commentId);
         if (comment) {
           comment.resolved = true;
-          
-          io.to(`doc_${data.documentId}`).emit('comment-resolved', {
+
+          ioInstance.to(`doc_${data.documentId}`).emit('comment-resolved', {
             commentId: data.commentId,
             resolvedBy: data.userName
           });
         }
       }
     });
-    
+
     // Handle document status changes
-    socket.on('document-status-change', (data: { 
-      documentId: string; 
+    socket.on('document-status-change', (data: {
+      documentId: string;
       userId: string;
       userName: string;
       oldStatus: string;
@@ -507,25 +511,25 @@ export function initializeSocketServer(server: Server) {
         userId: data.userId,
         userName: data.userName,
         action: 'status_change',
-        details: { 
+        details: {
           from: data.oldStatus,
-          to: data.newStatus 
+          to: data.newStatus
         },
         timestamp: new Date()
       };
-      
+
       if (!documentActivities.has(data.documentId)) {
         documentActivities.set(data.documentId, []);
       }
       documentActivities.get(data.documentId)!.push(activity);
-      
+
       // Notify all collaborators
-      io.to(`doc_${data.documentId}`).emit('status-changed', {
+      ioInstance.to(`doc_${data.documentId}`).emit('status-changed', {
         newStatus: data.newStatus,
         activity
       });
     });
-    
+
     // Handle user presence updates
     socket.on('presence-update', (data: { documentId: string; userId: string; status: 'online' | 'idle' | 'editing' }) => {
       const collaborators = documentRooms.get(data.documentId);
@@ -533,7 +537,7 @@ export function initializeSocketServer(server: Server) {
         const collaborator = collaborators.get(data.userId)!;
         collaborator.status = data.status;
         collaborator.lastActivity = new Date();
-        
+
         socket.to(`doc_${data.documentId}`).emit('collaborator-status-update', {
           userId: data.userId,
           status: data.status
@@ -542,7 +546,7 @@ export function initializeSocketServer(server: Server) {
     });
 
     // ========== Original Task Management Events ==========
-    
+
     // Handle task events
     socket.on('task-created', (task: TaskData) => {
       console.log('Broadcasting task-created:', task);
@@ -605,57 +609,58 @@ export function initializeSocketServer(server: Server) {
     });
 
     // ========== Field Synchronization Events for FDA 510(k) ==========
-    
+
     // Subscribe to field updates for a project
     socket.on('subscribe-fields', (data: { projectId: string; userId: string; userName?: string; fields?: string[] }) => {
       const { projectId, userId, userName, fields } = data;
       const roomName = `project_fields_${projectId}`;
-      
+
       // Join project field room
       socket.join(roomName);
-      
+
       // Store subscription
       if (!fieldSubscriptions.has(projectId)) {
         fieldSubscriptions.set(projectId, new Set());
       }
-      
+
       const subscription: FieldSubscription = {
         projectId,
         userId,
         socketId: socket.id,
         fields
       };
-      
+
       fieldSubscriptions.get(projectId)!.add(subscription);
       socketToProject.set(socket.id, projectId);
-      
+
       console.log(`User ${userName || userId} subscribed to fields for project ${projectId}`);
       socket.emit('field-subscription-confirmed', { projectId, fields });
     });
-    
+
     // Handle field update
     socket.on('update-field', async (data: FieldUpdate) => {
       const { projectId, source, field, value, previousValue, userId, userName } = data;
       const roomName = `project_fields_${projectId}`;
-      
+
       // Log the field update
       console.log(`Field update: ${field} in project ${projectId} by ${userName || userId}`);
-      
+
       // Import SmartFieldLinking service
       const { smartFieldLinking } = await import('./services/SmartFieldLinking.js');
-      
+
       // Process field update through SmartFieldLinking
       try {
+        const numericUserId = Number(userId);
         await smartFieldLinking.updateField({
           source,
           field,
           value,
           previousValue,
-          userId,
+          userId: Number.isFinite(numericUserId) ? numericUserId : undefined,
           timestamp: new Date(),
           metadata: { projectId }
         });
-        
+
         // Broadcast field update to all subscribers in the project
         io?.to(roomName).emit('field-updated', {
           projectId,
@@ -667,46 +672,46 @@ export function initializeSocketServer(server: Server) {
           userName,
           timestamp: new Date()
         });
-        
+
         // Send confirmation to the sender
         socket.emit('field-update-success', { field, value });
       } catch (error) {
         console.error('Field update error:', error);
-        socket.emit('field-update-error', { 
-          field, 
-          error: error instanceof Error ? error.message : 'Failed to update field' 
+        socket.emit('field-update-error', {
+          field,
+          error: error instanceof Error ? error.message : 'Failed to update field'
         });
       }
     });
-    
+
     // Get field completeness
     socket.on('get-field-completeness', async (data: { projectId: string }) => {
       const { projectId } = data;
-      
+
       try {
         const { smartFieldLinking } = await import('./services/SmartFieldLinking.js');
         const completeness = await smartFieldLinking.checkFieldCompleteness(parseInt(projectId));
-        
+
         socket.emit('field-completeness', {
           projectId,
           ...completeness
         });
       } catch (error) {
         console.error('Error checking field completeness:', error);
-        socket.emit('field-completeness-error', { 
+        socket.emit('field-completeness-error', {
           projectId,
-          error: error instanceof Error ? error.message : 'Failed to check completeness' 
+          error: error instanceof Error ? error.message : 'Failed to check completeness'
         });
       }
     });
-    
+
     // Unsubscribe from field updates
     socket.on('unsubscribe-fields', (data: { projectId: string }) => {
       const { projectId } = data;
       const roomName = `project_fields_${projectId}`;
-      
+
       socket.leave(roomName);
-      
+
       // Remove subscription
       const subscriptions = fieldSubscriptions.get(projectId);
       if (subscriptions) {
@@ -716,21 +721,21 @@ export function initializeSocketServer(server: Server) {
           }
         });
       }
-      
+
       socketToProject.delete(socket.id);
       console.log(`Socket ${socket.id} unsubscribed from project ${projectId} fields`);
     });
 
     socket.on('disconnect', () => {
       console.log('WebSocket disconnected:', socket.id);
-      
+
       // Handle document collaboration cleanup
       const userInfo = socketToUser.get(socket.id);
       if (userInfo) {
         handleUserLeaveDocument(socket, userInfo.documentId, userInfo.userId);
         socketToUser.delete(socket.id);
       }
-      
+
       // Handle field subscription cleanup
       const projectId = socketToProject.get(socket.id);
       if (projectId) {
@@ -758,11 +763,11 @@ export function initializeSocketServer(server: Server) {
 
 function handleUserLeaveDocument(socket: Socket, documentId: string, userId: string) {
   const collaborators = documentRooms.get(documentId);
-  
+
   if (collaborators && collaborators.has(userId)) {
     const user = collaborators.get(userId)!;
     collaborators.delete(userId);
-    
+
     // Remove user's locks
     const userLocks: string[] = [];
     sectionLocks.forEach((lock, key) => {
@@ -771,7 +776,7 @@ function handleUserLeaveDocument(socket: Socket, documentId: string, userId: str
       }
     });
     userLocks.forEach(key => sectionLocks.delete(key));
-    
+
     // Add leave activity
     const activity: Activity = {
       id: generateActivityId(),
@@ -783,12 +788,12 @@ function handleUserLeaveDocument(socket: Socket, documentId: string, userId: str
       details: { message: `${user.name} left the document` },
       timestamp: new Date()
     };
-    
+
     if (!documentActivities.has(documentId)) {
       documentActivities.set(documentId, []);
     }
     documentActivities.get(documentId)!.push(activity);
-    
+
     // Notify other collaborators
     socket.to(`doc_${documentId}`).emit('collaborator-left', {
       userId,
@@ -797,7 +802,7 @@ function handleUserLeaveDocument(socket: Socket, documentId: string, userId: str
       unlockedSections: userLocks.map(key => key.split('_')[1]),
       collaborators: Array.from(collaborators.values())
     });
-    
+
     // Clean up empty rooms
     if (collaborators.size === 0) {
       documentRooms.delete(documentId);
