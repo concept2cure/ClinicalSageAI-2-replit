@@ -147,8 +147,9 @@ async function mountSubRouters() {
   // Main Cortex routes
   try {
     const cortexModule = await import('./cortexRoutes');
+    router.use('/', cortexModule.default); // Legacy-compatible root mount
     router.use('/main', cortexModule.default);
-    logger.info('Mounted: /main (core Cortex)');
+    logger.info('Mounted: / (legacy) and /main (core Cortex)');
   } catch (error) {
     logger.error('Failed to mount core Cortex routes:', error);
   }
@@ -190,6 +191,33 @@ async function mountSubRouters() {
     logger.info('Mounted: /lumen (Lumen integration)');
   } catch (error) {
     logger.error('Failed to mount Lumen routes:', error);
+  }
+
+  // Clinical intelligence (Foresight capabilities under Cortex gateway)
+  try {
+    const foresightAdvancedModule = await import('./foresight-ai-advanced');
+    router.use('/clinical', foresightAdvancedModule.default);
+    logger.info('Mounted: /clinical (Foresight advanced capabilities)');
+  } catch (error) {
+    logger.error('Failed to mount clinical routes:', error);
+  }
+
+  // Feedback orchestration (Foresight feedback under Cortex gateway)
+  try {
+    const foresightFeedbackModule = await import('./foresight-feedback');
+    router.use('/feedback', foresightFeedbackModule.default);
+    logger.info('Mounted: /feedback (Foresight feedback)');
+  } catch (error) {
+    logger.error('Failed to mount feedback routes:', error);
+  }
+
+  // Legacy foresight core (exposed under Cortex gateway)
+  try {
+    const foresightCoreModule = await import('./foresight-api');
+    router.use('/foresight', foresightCoreModule.default);
+    logger.info('Mounted: /foresight (Foresight core)');
+  } catch (error) {
+    logger.error('Failed to mount foresight core routes:', error);
   }
 }
 

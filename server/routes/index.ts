@@ -46,7 +46,7 @@ router.use('/tenant-traceability', tenantTraceabilityRoutes);
 router.use('/documents', documentRoutes);
 router.use('/regulatory-submissions', regulatorySubmissionsRoutes);
 router.use('/foresight-ai', foresightAIAdvancedRoutes);
-router.use('/foresight-ai', foresightFeedbackRoutes);
+router.use('/foresight-feedback', foresightFeedbackRoutes);
 
 // Phase 52 Sherpa System Routes
 router.use('/regulatory-intelligence', regulatoryIntelligenceRoutes);

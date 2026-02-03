@@ -1,4 +1,4 @@
-// import { google } from "googleapis";
+import { google } from 'googleapis';
 import { Pool } from 'pg';
 
 // Database connection
@@ -116,7 +116,11 @@ export async function gmailIngestToReg(): Promise<{
     const looksIR = /information request|deficiency|additional information|clarify/i.test(
       m.subject + ' ' + m.body
     );
-    let extracted = { questions: [], obligations: [], region: undefined as any };
+    let extracted: {
+      questions: Array<{ raw: string }>;
+      obligations: any[];
+      region?: any;
+    } = { questions: [], obligations: [], region: undefined };
 
     if (looksIR) {
       // Extremely light extractor (your Questions Hub likely has a richer AI route already)

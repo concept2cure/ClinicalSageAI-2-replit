@@ -5,12 +5,9 @@
  * including storing reports and retrieving cached analyses.
  */
 
-const { Pool } = require('pg');
-
-// Create a PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+import fs from 'fs';
+import path from 'path';
+import { pool } from '../utils/database.js';
 
 /**
  * Save FAERS reports to the database
@@ -77,8 +74,8 @@ async function saveCachedAnalysis(analysis) {
       risk_score, severity_assessment, top_reactions,
       demographics, report_summary, cache_expires_at
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    ON CONFLICT (product_name) 
-    DO UPDATE SET 
+    ON CONFLICT (product_name)
+    DO UPDATE SET
       total_reports = $2,
       serious_events = $3,
       risk_score = $4,
@@ -122,7 +119,7 @@ async function getReportsByProduct(productName, options = {}) {
   const { limit = 100, includeSerious = true } = options;
 
   let query = `
-    SELECT * FROM faers_reports 
+    SELECT * FROM faers_reports
     WHERE product_name ILIKE $1
   `;
 
@@ -147,8 +144,8 @@ async function getReportsByProduct(productName, options = {}) {
  */
 async function getCachedAnalysis(productName) {
   const query = `
-    SELECT * FROM faers_cached_analyses 
-    WHERE product_name = $1 
+    SELECT * FROM faers_cached_analyses
+    WHERE product_name = $1
     AND cache_expires_at > CURRENT_TIMESTAMP
   `;
 
@@ -174,7 +171,7 @@ async function initializeTables() {
     // Check if tables exist
     const checkResult = await client.query(`
       SELECT EXISTS (
-        SELECT FROM information_schema.tables 
+        SELECT FROM information_schema.tables
         WHERE table_name = 'faers_reports'
       );
     `);
@@ -185,9 +182,10 @@ async function initializeTables() {
       console.log('FAERS tables do not exist. Creating schema...');
 
       // Read and execute the schema SQL
-      const fs = require('fs');
-      const path = require('path');
-      const schemaPath = path.join(__dirname, '../../sql/faers_schema.sql');
+      const schemaPath = path.join(
+        new URL('.', import.meta.url).pathname,
+        '../../sql/faers_schema.sql'
+      );
 
       if (fs.existsSync(schemaPath)) {
         const schemaSQL = fs.readFileSync(schemaPath, 'utf8');

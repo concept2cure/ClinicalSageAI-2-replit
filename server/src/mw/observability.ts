@@ -15,8 +15,8 @@ function pinoHttp(options?: any) {
 export const httpLogger = pinoHttp({
   logger,
   genReqId: (req: any) => req.headers['x-request-id'] || randomUUID(),
-  customSuccessMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
-  customErrorMessage: (req, res, err) =>
+  customSuccessMessage: (req: any, res: any) => `${req.method} ${req.url} ${res.statusCode}`,
+  customErrorMessage: (req: any, res: any, err: any) =>
     `ERR ${req.method} ${req.url} ${res.statusCode}: ${err?.message}`,
 });
 

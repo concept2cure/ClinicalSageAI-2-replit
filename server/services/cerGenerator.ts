@@ -6,7 +6,8 @@ import { Cluster } from 'puppeteer-cluster';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
+import { pool as sharedPool } from '../db';
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -26,8 +27,9 @@ async function initCluster() {
 // Generate each section based on template
 export async function generateCerSections(userId: string, templateId: string) {
   // Fetch template from DB
-  const pool = new Pool();
-  const { rows } = await pool.query('SELECT sections FROM templates WHERE id = $1', [templateId]);
+  const { rows } = await sharedPool.query('SELECT sections FROM templates WHERE id = $1', [
+    templateId,
+  ]);
   const sections = rows[0].sections as Array<{ name: string; prompt: string }>;
   return sections.map(sec => ({
     name: sec.name,

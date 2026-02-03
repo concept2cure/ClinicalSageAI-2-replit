@@ -1,8 +1,5 @@
-
-import OpenAI from 'openai';
-import { retrieveContext } from '../brain/vaultRetriever.js';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { getPool } from '../db/pool';
+import { getRAGPipeline } from './advancedRAGPipeline.js';
 
 export interface RAGQuery {
   query: string;
@@ -34,55 +31,33 @@ export class ForesightRAGService {
     const { query, context = '', maxTokens = 1000, temperature = 0.3 } = params;
 
     try {
-      // Step 1: Retrieve relevant documents using vector similarity
-      const retrievedDocs = await retrieveContext(query, 5);
+      const pool = getPool();
+      const ragPipeline = getRAGPipeline(pool);
 
-      if (!retrievedDocs || retrievedDocs.length === 0) {
-        throw new Error('No relevant documents found');
-      }
-
-      // Step 2: Format context for GPT-4
-      const contextText = retrievedDocs
-        .map((doc, idx) => `[Source ${idx + 1}] ${doc.text}`)
-        .join('\n\n');
-
-      // Step 3: Generate answer using GPT-4 with retrieved context
-      const systemPrompt = `You are ForesightAI, a regulatory intelligence assistant for biotech startups. 
-You provide accurate, context-aware answers based on regulatory documents (CTD dossiers, guidelines, CSRs).
-Use the provided sources to answer questions. Always cite which source number you're using.
-If the sources don't contain enough information, say so clearly.`;
-
-      const userPrompt = `Context from regulatory documents:
-${contextText}
-
-${context ? `Additional context: ${context}\n` : ''}
-Question: ${query}
-
-Please provide a detailed answer based on the sources above. Cite specific source numbers.`;
-
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: maxTokens,
-        temperature,
+      const result = await ragPipeline.queryWithGeneration(query, {
+        strategy: 'advanced',
+        limit: 5,
+        useReranking: true,
+        useMmr: true,
       });
 
-      const answer = completion.choices[0].message.content || 'No answer generated';
+      const sources = result.sources.map(source => ({
+        docId: source.documentId || source.id,
+        docTitle: source.title,
+        text: source.compressedContent || source.content,
+        score: source.finalScore,
+      }));
 
-      // Calculate confidence based on retrieval scores
-      const avgScore = retrievedDocs.reduce((sum, doc) => sum + doc.score, 0) / retrievedDocs.length;
+      const avgScore = sources.length
+        ? sources.reduce((sum, doc) => sum + doc.score, 0) / sources.length
+        : 0;
+
+      const contextPrefix = context ? `${context}\n\n` : '';
+      const answer = contextPrefix ? `${contextPrefix}${result.answer}` : result.answer;
 
       return {
         answer,
-        sources: retrievedDocs.map(doc => ({
-          docId: doc.docId,
-          docTitle: doc.docTitle || 'Unknown Document',
-          text: doc.text,
-          score: doc.score,
-        })),
+        sources,
         confidence: avgScore,
       };
     } catch (error) {
@@ -96,7 +71,7 @@ Please provide a detailed answer based on the sources above. Cite specific sourc
    */
   async generateReport(topic: string, docType: string = 'CTD'): Promise<string> {
     const query = `Provide a comprehensive regulatory intelligence report on: ${topic}`;
-    
+
     const result = await this.query({
       query,
       maxTokens: 2000,

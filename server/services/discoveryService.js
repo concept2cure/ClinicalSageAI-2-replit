@@ -6,18 +6,13 @@
  */
 
 import OpenAI from 'openai';
-import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
+import { pool } from '../utils/database.js';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Initialize database connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 // Setup IEEE API connection
@@ -903,9 +898,9 @@ const discoveryService = {
         messages: [
           {
             role: 'system',
-            content: `You are a senior medical device regulatory expert specializing in 510(k) submissions and FDA compliance. 
+            content: `You are a senior medical device regulatory expert specializing in 510(k) submissions and FDA compliance.
             Your task is to create a comprehensive predicate device comparison that demonstrates substantial equivalence according to FDA requirements.
-            
+
             Include these specific sections in your analysis:
             1. Tabular Comparison - A detailed table comparing key characteristics
             2. Intended Use Comparison - Analysis of intended use similarities/differences
@@ -914,19 +909,19 @@ const discoveryService = {
             5. Safety Considerations - Safety-related comparison points
             6. Risk Analysis - Any differential risks between subject and predicate devices
             7. Substantial Equivalence Conclusion - Summary determination with regulatory rationale
-            
+
             Use proper FDA regulatory terminology and focus on the aspects most critical for FDA reviewers.`,
           },
           {
             role: 'user',
             content: `Generate an enhanced predicate device comparison report for the following medical device:
-            
+
             SUBJECT DEVICE INFORMATION:
             ${JSON.stringify(deviceDescription, null, 2)}
-            
+
             PREDICATE DEVICE INFORMATION:
             ${predicateDetails}
-            
+
             REQUIREMENTS:
             1. Create a comprehensive HTML comparison table with these columns: Feature/Characteristic, Subject Device, Predicate Device(s), Substantial Equivalence
             2. For multiple predicates, include each predicate in its own column
@@ -985,13 +980,13 @@ const discoveryService = {
               {
                 role: 'user',
                 content: `Enhance this predicate device comparison with relevant scientific literature references:
-                
+
                 COMPARISON DOCUMENT:
                 ${comparison}
-                
+
                 AVAILABLE LITERATURE REFERENCES:
                 ${JSON.stringify(literatureResults.slice(0, 5), null, 2)}
-                
+
                 Add a "Scientific Literature Support" section at the end with proper citations to these references where they support the comparison points. Only reference literature that is directly relevant to the devices being compared.`,
               },
             ],
@@ -1049,7 +1044,7 @@ const discoveryService = {
   async getSavedReviews() {
     try {
       const query = `
-        SELECT id, device_description, context, articles_count, 
+        SELECT id, device_description, context, articles_count,
                created_at, LEFT(content, 200) as preview
         FROM literature_reviews
         ORDER BY created_at DESC;

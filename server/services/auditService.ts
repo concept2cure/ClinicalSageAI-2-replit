@@ -20,7 +20,7 @@ const ACTIONS = {
   USER_LOGOUT: 'user_logout',
   DATA_ACCESS: 'data_access',
   DATA_MODIFY: 'data_modify',
-  SIGNATURE_APPLY: 'signature_apply'
+  SIGNATURE_APPLY: 'signature_apply',
 };
 
 const RESOURCE_TYPES = {
@@ -28,21 +28,39 @@ const RESOURCE_TYPES = {
   DOCUMENT: 'document',
   USER: 'user',
   PROJECT: 'project',
-  SUBMISSION: 'submission'
+  SUBMISSION: 'submission',
 };
 
 class AuditService {
   static ACTIONS = ACTIONS;
   static RESOURCE_TYPES = RESOURCE_TYPES;
-  
+
   constructor() {
     // Stub constructor
   }
-  
-  async logAction(entry: AuditLogEntry): Promise<void> {
+
+  async logAction(
+    entryOrTenantId: AuditLogEntry | string | number,
+    userId?: string | number,
+    action?: string,
+    resourceType?: string,
+    resourceId?: string | number,
+    details?: Record<string, any>
+  ): Promise<void> {
+    const entry: AuditLogEntry =
+      typeof entryOrTenantId === 'object'
+        ? entryOrTenantId
+        : {
+            tenantId: entryOrTenantId,
+            userId,
+            action: action || 'unknown',
+            resourceType: resourceType || 'unknown',
+            details: details || { resourceId },
+          };
+
     console.log('[AUDIT]', entry.action, entry.resourceType, entry.details || {});
   }
-  
+
   async getAuditLog(filters?: any): Promise<any[]> {
     return [];
   }

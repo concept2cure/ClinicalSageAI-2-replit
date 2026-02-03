@@ -6,7 +6,7 @@
  */
 import { createScopedLogger } from './utils/logger';
 import { pool, query, transaction, db } from './db';
-import { eq, desc, and, or, like, isNull, not } from 'drizzle-orm';
+import { eq, desc, and, or, like, isNull, not, gte } from 'drizzle-orm';
 import * as schema from '../shared/schema';
 import * as qcSchema from '../shared/schema/qc-schemas';
 import { generateUUID } from './utils/id-generator';
@@ -223,7 +223,7 @@ export interface IStorage {
     moduleData: Partial<schema.InsertAvailableModule>
   ): Promise<schema.AvailableModule | undefined>;
   deleteAvailableModule(moduleId: string): Promise<boolean>;
-  
+
   getModuleSubscriptions(organizationId: number): Promise<schema.ModuleSubscription[]>;
   getModuleSubscription(
     organizationId: number,
@@ -380,14 +380,20 @@ export interface IStorage {
     search?: string;
   }): Promise<schema.Section[]>;
   createSection(section: schema.InsertSection): Promise<schema.Section>;
-  updateSection(id: number, sectionData: Partial<schema.InsertSection>): Promise<schema.Section | undefined>;
+  updateSection(
+    id: number,
+    sectionData: Partial<schema.InsertSection>
+  ): Promise<schema.Section | undefined>;
   deleteSection(id: number): Promise<boolean>;
 
   // Document Section methods
   getDocumentSection(id: number): Promise<schema.DocumentSection | undefined>;
   getDocumentSections(documentId: number): Promise<schema.DocumentSection[]>;
   createDocumentSection(docSection: schema.InsertDocumentSection): Promise<schema.DocumentSection>;
-  updateDocumentSection(id: number, data: Partial<schema.InsertDocumentSection>): Promise<schema.DocumentSection | undefined>;
+  updateDocumentSection(
+    id: number,
+    data: Partial<schema.InsertDocumentSection>
+  ): Promise<schema.DocumentSection | undefined>;
   deleteDocumentSection(id: number): Promise<boolean>;
   reorderDocumentSections(documentId: number, sectionIds: number[]): Promise<boolean>;
 
@@ -399,7 +405,10 @@ export interface IStorage {
     status?: string;
   }): Promise<schema.SectionLeaf[]>;
   createSectionLeaf(leaf: schema.InsertSectionLeaf): Promise<schema.SectionLeaf>;
-  updateSectionLeaf(id: number, leafData: Partial<schema.InsertSectionLeaf>): Promise<schema.SectionLeaf | undefined>;
+  updateSectionLeaf(
+    id: number,
+    leafData: Partial<schema.InsertSectionLeaf>
+  ): Promise<schema.SectionLeaf | undefined>;
   deleteSectionLeaf(id: number): Promise<boolean>;
 
   // Patch methods
@@ -411,9 +420,15 @@ export interface IStorage {
 
   // Link Edge methods
   getLinkEdge(id: number): Promise<schema.LinkEdge | undefined>;
-  getLinkEdges(sectionId: number, direction?: 'source' | 'target' | 'both'): Promise<schema.LinkEdge[]>;
+  getLinkEdges(
+    sectionId: number,
+    direction?: 'source' | 'target' | 'both'
+  ): Promise<schema.LinkEdge[]>;
   createLinkEdge(edge: schema.InsertLinkEdge): Promise<schema.LinkEdge>;
-  updateLinkEdge(id: number, edgeData: Partial<schema.InsertLinkEdge>): Promise<schema.LinkEdge | undefined>;
+  updateLinkEdge(
+    id: number,
+    edgeData: Partial<schema.InsertLinkEdge>
+  ): Promise<schema.LinkEdge | undefined>;
   deleteLinkEdge(id: number): Promise<boolean>;
   getSectionGraph(sectionId: number, depth?: number): Promise<any>; // Returns graph structure
 
@@ -425,7 +440,10 @@ export interface IStorage {
     organizationId?: number;
   }): Promise<schema.SyncStatus[]>;
   createSyncStatus(status: schema.InsertSyncStatus): Promise<schema.SyncStatus>;
-  updateSyncStatus(id: number, statusData: Partial<schema.InsertSyncStatus>): Promise<schema.SyncStatus | undefined>;
+  updateSyncStatus(
+    id: number,
+    statusData: Partial<schema.InsertSyncStatus>
+  ): Promise<schema.SyncStatus | undefined>;
   clearSyncStatus(entityType: string, entityId: number): Promise<boolean>;
 
   // Staff Assignment methods
@@ -438,7 +456,10 @@ export interface IStorage {
     isActive?: boolean;
   }): Promise<schema.StaffAssignment[]>;
   createStaffAssignment(assignment: schema.InsertStaffAssignment): Promise<schema.StaffAssignment>;
-  updateStaffAssignment(id: number, data: Partial<schema.InsertStaffAssignment>): Promise<schema.StaffAssignment | undefined>;
+  updateStaffAssignment(
+    id: number,
+    data: Partial<schema.InsertStaffAssignment>
+  ): Promise<schema.StaffAssignment | undefined>;
   deleteStaffAssignment(id: number): Promise<boolean>;
   getEntityPermissions(entityType: string, entityId: number, userId: number): Promise<any>;
 
@@ -466,7 +487,7 @@ export interface IStorage {
     projectData: Partial<schema.InsertIndProject>
   ): Promise<schema.IndProject | undefined>;
   deleteIndProject(projectId: string): Promise<boolean>;
-  
+
   // IND Template methods
   getIndTemplate(templateId: string): Promise<schema.IndTemplate | undefined>;
   getIndTemplates(options?: {
@@ -484,7 +505,7 @@ export interface IStorage {
   ): Promise<schema.IndTemplate | undefined>;
   deleteIndTemplate(templateId: string): Promise<boolean>;
   incrementTemplateUsage(templateId: string): Promise<void>;
-  
+
   // Workflow Progress methods
   getWorkflowProgress(workflowId: string): Promise<schema.WorkflowProgress | undefined>;
   getWorkflowProgressByEntity(
@@ -499,11 +520,14 @@ export interface IStorage {
   ): Promise<schema.WorkflowProgress | undefined>;
   completeWorkflow(workflowId: string): Promise<boolean>;
   abandonWorkflow(workflowId: string): Promise<boolean>;
-  
+
   // IND Submission methods
   getIndSubmission(submissionId: string): Promise<schema.IndSubmission | undefined>;
   getIndSubmissionBySession(sessionId: string): Promise<schema.IndSubmission | undefined>;
-  getActiveIndSubmission(organizationId: number, userId: number): Promise<schema.IndSubmission | undefined>;
+  getActiveIndSubmission(
+    organizationId: number,
+    userId: number
+  ): Promise<schema.IndSubmission | undefined>;
   getIndSubmissions(options?: {
     organizationId?: number;
     clientWorkspaceId?: number;
@@ -518,11 +542,11 @@ export interface IStorage {
     submissionData: Partial<schema.InsertIndSubmission>
   ): Promise<schema.IndSubmission | undefined>;
   deleteIndSubmission(submissionId: string): Promise<boolean>;
-  
+
   // ============================================================================
   // CDISC Integration Methods
   // ============================================================================
-  
+
   // CDISC PRM (Protocol Representation Model) methods
   getCdiscPrmStudy(studyId: string): Promise<schema.CdiscPrmStudy | undefined>;
   getCdiscPrmStudies(options?: {
@@ -538,7 +562,7 @@ export interface IStorage {
     studyData: Partial<schema.InsertCdiscPrmStudy>
   ): Promise<schema.CdiscPrmStudy | undefined>;
   deleteCdiscPrmStudy(studyId: string): Promise<boolean>;
-  
+
   // CDISC CDASH (Clinical Data Acquisition Standards Harmonization) methods
   getCdiscCdashForm(formId: string): Promise<schema.CdiscCdashForm | undefined>;
   getCdiscCdashForms(options?: {
@@ -555,7 +579,7 @@ export interface IStorage {
     formData: Partial<schema.InsertCdiscCdashForm>
   ): Promise<schema.CdiscCdashForm | undefined>;
   deleteCdiscCdashForm(formId: string): Promise<boolean>;
-  
+
   // CDISC CSR (Clinical Study Report) methods
   getCdiscCsrTemplate(templateId: string): Promise<schema.CdiscCsrTemplate | undefined>;
   getCdiscCsrTemplates(options?: {
@@ -571,7 +595,7 @@ export interface IStorage {
     templateData: Partial<schema.InsertCdiscCsrTemplate>
   ): Promise<schema.CdiscCsrTemplate | undefined>;
   deleteCdiscCsrTemplate(templateId: string): Promise<boolean>;
-  
+
   // CDISC ADaM (Analysis Data Model) methods
   getCdiscAdamSpec(datasetName: string, studyId: string): Promise<schema.CdiscAdamSpec | undefined>;
   getCdiscAdamSpecs(options?: {
@@ -591,7 +615,7 @@ export interface IStorage {
   // ============================================================================
   // 510(k) Workflow Methods
   // ============================================================================
-  
+
   // FDA 510(k) Submission methods
   getFda510kSubmission(id: number): Promise<any | undefined>;
   getFda510kSubmissions(options?: {
@@ -602,13 +626,10 @@ export interface IStorage {
     offset?: number;
   }): Promise<any[]>;
   createFda510kSubmission(submission: any): Promise<any>;
-  updateFda510kSubmission(
-    id: number,
-    submissionData: any
-  ): Promise<any | undefined>;
+  updateFda510kSubmission(id: number, submissionData: any): Promise<any | undefined>;
   deleteFda510kSubmission(id: number): Promise<boolean>;
 
-  // Device Submission Workflow methods  
+  // Device Submission Workflow methods
   getDeviceSubmissionWorkflow(id: number): Promise<any | undefined>;
   getDeviceSubmissionWorkflows(options?: {
     organizationId: number;
@@ -619,10 +640,7 @@ export interface IStorage {
     offset?: number;
   }): Promise<any[]>;
   createDeviceSubmissionWorkflow(workflow: any): Promise<any>;
-  updateDeviceSubmissionWorkflow(
-    id: number,
-    workflowData: any
-  ): Promise<any | undefined>;
+  updateDeviceSubmissionWorkflow(id: number, workflowData: any): Promise<any | undefined>;
   deleteDeviceSubmissionWorkflow(id: number): Promise<boolean>;
 
   // CERV2 510(k) Section methods
@@ -635,10 +653,7 @@ export interface IStorage {
     offset?: number;
   }): Promise<any[]>;
   createCerv2510kSection(section: any): Promise<any>;
-  updateCerv2510kSection(
-    id: number,
-    sectionData: any
-  ): Promise<any | undefined>;
+  updateCerv2510kSection(id: number, sectionData: any): Promise<any | undefined>;
   deleteCerv2510kSection(id: number): Promise<boolean>;
 }
 
@@ -860,11 +875,12 @@ export class MemStorage {
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = folderData as any;
     const newFolder = {
       ...folderData,
       id,
-      createdAt: folderData.createdAt || now,
-      updatedAt: folderData.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.DocumentFolder;
 
     this.folders.push(newFolder);
@@ -949,11 +965,12 @@ export class MemStorage {
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = cerReport as any;
     const newReport = {
       ...cerReport,
       id,
-      createdAt: cerReport.createdAt || now,
-      updatedAt: cerReport.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.CerReport;
 
     this.cerReports.push(newReport);
@@ -1018,11 +1035,12 @@ export class MemStorage {
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = section as any;
     const newSection = {
       ...section,
       id,
-      createdAt: section.createdAt || now,
-      updatedAt: section.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.CerSection;
 
     this.cerSections.push(newSection);
@@ -1068,11 +1086,12 @@ export class MemStorage {
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = faersData as any;
     const newFaersData = {
       ...faersData,
       id,
-      createdAt: faersData.createdAt || now,
-      updatedAt: faersData.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.CerFaersData;
 
     this.cerFaersData.push(newFaersData);
@@ -1132,15 +1151,17 @@ export class MemStorage {
 
   async createCerLiterature(literature: schema.InsertCerLiterature): Promise<schema.CerLiterature> {
     // Generate numeric id for literature
-    const id = this.cerLiterature.length > 0 ? Math.max(...this.cerLiterature.map(l => l.id)) + 1 : 1;
+    const id =
+      this.cerLiterature.length > 0 ? Math.max(...this.cerLiterature.map(l => l.id)) + 1 : 1;
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = literature as any;
     const newLiterature = {
       ...literature,
       id,
-      createdAt: literature.createdAt || now,
-      updatedAt: literature.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.CerLiterature;
 
     this.cerLiterature.push(newLiterature);
@@ -1185,16 +1206,20 @@ export class MemStorage {
     check: schema.InsertCerComplianceCheck
   ): Promise<schema.CerComplianceCheck> {
     // Generate numeric id for compliance check
-    const id = this.cerComplianceChecks.length > 0 ? Math.max(...this.cerComplianceChecks.map(c => c.id)) + 1 : 1;
+    const id =
+      this.cerComplianceChecks.length > 0
+        ? Math.max(...this.cerComplianceChecks.map(c => c.id)) + 1
+        : 1;
 
     // Set timestamps if not provided
     const now = new Date();
+    const checkPayload = check as Partial<schema.CerComplianceCheck>;
     const newCheck = {
       ...check,
       id,
-      checkedAt: check.checkedAt || now,
-      createdAt: check.createdAt || now,
-      updatedAt: check.updatedAt || now,
+      checkedAt: checkPayload.checkedAt || now,
+      createdAt: checkPayload.createdAt || now,
+      updatedAt: checkPayload.updatedAt || now,
     } as schema.CerComplianceCheck;
 
     this.cerComplianceChecks.push(newCheck);
@@ -1234,11 +1259,12 @@ export class MemStorage {
 
     // Set timestamps if not provided
     const now = new Date();
+    const input = workflow as any;
     const newWorkflow = {
       ...workflow,
       id,
-      createdAt: workflow.createdAt || now,
-      updatedAt: workflow.updatedAt || now,
+      createdAt: input.createdAt || now,
+      updatedAt: input.updatedAt || now,
     } as schema.CerWorkflow;
 
     this.cerWorkflows.push(newWorkflow);
@@ -1285,10 +1311,11 @@ export class MemStorage {
 
     // Set export date if not provided
     const now = new Date();
+    const input = export_ as any;
     const newExport = {
       ...export_,
       id,
-      createdAt: export_.createdAt || now,
+      createdAt: input.createdAt || now,
     } as schema.CerExport;
 
     this.cerExports.push(newExport);
@@ -1517,32 +1544,35 @@ export class MemStorage {
     return this.sections.find(s => s.id === id);
   }
 
-  async getSections(options: {
-    organizationId?: number;
-    clientWorkspaceId?: number;
-    canonical?: boolean;
-    regionScope?: string;
-    search?: string;
-  } = {}): Promise<schema.Section[]> {
+  async getSections(
+    options: {
+      organizationId?: number;
+      clientWorkspaceId?: number;
+      canonical?: boolean;
+      regionScope?: string;
+      search?: string;
+    } = {}
+  ): Promise<schema.Section[]> {
     let result = this.sections;
-    
+
     if (options.organizationId) {
       result = result.filter(s => s.organizationId === options.organizationId);
     }
     if (options.canonical !== undefined) {
-      result = result.filter(s => s.canonical === options.canonical);
+      result = result.filter(s => (s as any).canonical === options.canonical);
     }
     if (options.regionScope) {
-      result = result.filter(s => s.regionScope === options.regionScope);
+      result = result.filter(s => (s as any).regionScope === options.regionScope);
     }
     if (options.search) {
       const searchLower = options.search.toLowerCase();
-      result = result.filter(s => 
-        s.title.toLowerCase().includes(searchLower) ||
-        s.slug.toLowerCase().includes(searchLower)
-      );
+      result = result.filter(s => {
+        const title = (s.title ?? '').toLowerCase();
+        const slug = String((s as any).slug ?? '').toLowerCase();
+        return title.includes(searchLower) || slug.includes(searchLower);
+      });
     }
-    
+
     return result;
   }
 
@@ -1558,10 +1588,13 @@ export class MemStorage {
     return newSection;
   }
 
-  async updateSection(id: number, sectionData: Partial<schema.InsertSection>): Promise<schema.Section | undefined> {
+  async updateSection(
+    id: number,
+    sectionData: Partial<schema.InsertSection>
+  ): Promise<schema.Section | undefined> {
     const index = this.sections.findIndex(s => s.id === id);
     if (index === -1) return undefined;
-    
+
     this.sections[index] = {
       ...this.sections[index],
       ...sectionData,
@@ -1587,9 +1620,13 @@ export class MemStorage {
       .sort((a, b) => a.position - b.position);
   }
 
-  async createDocumentSection(docSection: schema.InsertDocumentSection): Promise<schema.DocumentSection> {
-    const id = this.documentSections.length > 0 ? 
-      Math.max(...this.documentSections.map(ds => ds.id)) + 1 : 1;
+  async createDocumentSection(
+    docSection: schema.InsertDocumentSection
+  ): Promise<schema.DocumentSection> {
+    const id =
+      this.documentSections.length > 0
+        ? Math.max(...this.documentSections.map(ds => ds.id)) + 1
+        : 1;
     const newDocSection = {
       ...docSection,
       id,
@@ -1600,10 +1637,13 @@ export class MemStorage {
     return newDocSection;
   }
 
-  async updateDocumentSection(id: number, data: Partial<schema.InsertDocumentSection>): Promise<schema.DocumentSection | undefined> {
+  async updateDocumentSection(
+    id: number,
+    data: Partial<schema.InsertDocumentSection>
+  ): Promise<schema.DocumentSection | undefined> {
     const index = this.documentSections.findIndex(ds => ds.id === id);
     if (index === -1) return undefined;
-    
+
     this.documentSections[index] = {
       ...this.documentSections[index],
       ...data,
@@ -1634,26 +1674,28 @@ export class MemStorage {
     return this.sectionLeaves.find(sl => sl.id === id);
   }
 
-  async getSectionLeaves(options: {
-    organizationId?: number;
-    clientWorkspaceId?: number;
-    status?: string;
-  } = {}): Promise<schema.SectionLeaf[]> {
+  async getSectionLeaves(
+    options: {
+      organizationId?: number;
+      clientWorkspaceId?: number;
+      status?: string;
+    } = {}
+  ): Promise<schema.SectionLeaf[]> {
     let result = this.sectionLeaves;
-    
+
     if (options.organizationId) {
       result = result.filter(sl => sl.organizationId === options.organizationId);
     }
     if (options.status) {
       result = result.filter(sl => sl.status === options.status);
     }
-    
+
     return result;
   }
 
   async createSectionLeaf(leaf: schema.InsertSectionLeaf): Promise<schema.SectionLeaf> {
-    const id = this.sectionLeaves.length > 0 ? 
-      Math.max(...this.sectionLeaves.map(sl => sl.id)) + 1 : 1;
+    const id =
+      this.sectionLeaves.length > 0 ? Math.max(...this.sectionLeaves.map(sl => sl.id)) + 1 : 1;
     const newLeaf = {
       ...leaf,
       id,
@@ -1664,10 +1706,13 @@ export class MemStorage {
     return newLeaf;
   }
 
-  async updateSectionLeaf(id: number, leafData: Partial<schema.InsertSectionLeaf>): Promise<schema.SectionLeaf | undefined> {
+  async updateSectionLeaf(
+    id: number,
+    leafData: Partial<schema.InsertSectionLeaf>
+  ): Promise<schema.SectionLeaf | undefined> {
     const index = this.sectionLeaves.findIndex(sl => sl.id === id);
     if (index === -1) return undefined;
-    
+
     this.sectionLeaves[index] = {
       ...this.sectionLeaves[index],
       ...leafData,
@@ -1691,7 +1736,7 @@ export class MemStorage {
     const patches = this.patches
       .filter(p => p.leafId === leafId)
       .sort((a, b) => b.version - a.version);
-    
+
     if (options.limit) {
       return patches.slice(0, options.limit);
     }
@@ -1699,8 +1744,7 @@ export class MemStorage {
   }
 
   async createPatch(patch: schema.InsertPatch): Promise<schema.Patch> {
-    const id = this.patches.length > 0 ? 
-      Math.max(...this.patches.map(p => p.id)) + 1 : 1;
+    const id = this.patches.length > 0 ? Math.max(...this.patches.map(p => p.id)) + 1 : 1;
     const newPatch = {
       ...patch,
       id,
@@ -1713,10 +1757,10 @@ export class MemStorage {
   async applyPatch(patchId: number): Promise<boolean> {
     const patch = this.patches.find(p => p.id === patchId);
     if (!patch) return false;
-    
+
     const leaf = this.sectionLeaves.find(sl => sl.id === patch.leafId);
     if (!leaf) return false;
-    
+
     leaf.latestPatchId = patchId;
     leaf.updatedAt = new Date();
     return true;
@@ -1725,17 +1769,17 @@ export class MemStorage {
   async revertPatch(patchId: number): Promise<boolean> {
     const patch = this.patches.find(p => p.id === patchId);
     if (!patch) return false;
-    
+
     // Find the previous patch
     const previousPatch = this.patches
       .filter(p => p.leafId === patch.leafId && p.version < patch.version)
       .sort((a, b) => b.version - a.version)[0];
-    
+
     if (!previousPatch) return false;
-    
+
     const leaf = this.sectionLeaves.find(sl => sl.id === patch.leafId);
     if (!leaf) return false;
-    
+
     leaf.latestPatchId = previousPatch.id;
     leaf.updatedAt = new Date();
     return true;
@@ -1746,21 +1790,23 @@ export class MemStorage {
     return this.linkEdges.find(le => le.id === id);
   }
 
-  async getLinkEdges(sectionId: number, direction: 'source' | 'target' | 'both' = 'both'): Promise<schema.LinkEdge[]> {
+  async getLinkEdges(
+    sectionId: number,
+    direction: 'source' | 'target' | 'both' = 'both'
+  ): Promise<schema.LinkEdge[]> {
     if (direction === 'source') {
       return this.linkEdges.filter(le => le.sourceSectionId === sectionId);
     }
     if (direction === 'target') {
       return this.linkEdges.filter(le => le.targetSectionId === sectionId);
     }
-    return this.linkEdges.filter(le => 
-      le.sourceSectionId === sectionId || le.targetSectionId === sectionId
+    return this.linkEdges.filter(
+      le => le.sourceSectionId === sectionId || le.targetSectionId === sectionId
     );
   }
 
   async createLinkEdge(edge: schema.InsertLinkEdge): Promise<schema.LinkEdge> {
-    const id = this.linkEdges.length > 0 ? 
-      Math.max(...this.linkEdges.map(le => le.id)) + 1 : 1;
+    const id = this.linkEdges.length > 0 ? Math.max(...this.linkEdges.map(le => le.id)) + 1 : 1;
     const newEdge = {
       ...edge,
       id,
@@ -1771,10 +1817,13 @@ export class MemStorage {
     return newEdge;
   }
 
-  async updateLinkEdge(id: number, edgeData: Partial<schema.InsertLinkEdge>): Promise<schema.LinkEdge | undefined> {
+  async updateLinkEdge(
+    id: number,
+    edgeData: Partial<schema.InsertLinkEdge>
+  ): Promise<schema.LinkEdge | undefined> {
     const index = this.linkEdges.findIndex(le => le.id === id);
     if (index === -1) return undefined;
-    
+
     this.linkEdges[index] = {
       ...this.linkEdges[index],
       ...edgeData,
@@ -1794,36 +1843,41 @@ export class MemStorage {
     const buildGraph = (id: number, currentDepth: number): any => {
       if (currentDepth === 0 || visited.has(id)) return null;
       visited.add(id);
-      
+
       const section = this.sections.find(s => s.id === id);
       if (!section) return null;
-      
+
       const edges = this.linkEdges.filter(le => le.sourceSectionId === id);
-      const connections = edges.map(edge => {
-        const target = buildGraph(edge.targetSectionId, currentDepth - 1);
-        return { edge, target };
-      }).filter(c => c.target !== null);
-      
+      const connections = edges
+        .map(edge => {
+          const target = buildGraph(edge.targetSectionId, currentDepth - 1);
+          return { edge, target };
+        })
+        .filter(c => c.target !== null);
+
       return { section, connections };
     };
-    
+
     return buildGraph(sectionId, depth);
   }
 
   // Sync Status methods
-  async getSyncStatus(entityType: string, entityId: number): Promise<schema.SyncStatus | undefined> {
-    return this.syncStatuses.find(ss => 
-      ss.entityType === entityType && ss.entityId === entityId
-    );
+  async getSyncStatus(
+    entityType: string,
+    entityId: number
+  ): Promise<schema.SyncStatus | undefined> {
+    return this.syncStatuses.find(ss => ss.entityType === entityType && ss.entityId === entityId);
   }
 
-  async getSyncStatuses(options: {
-    status?: string;
-    entityType?: string;
-    organizationId?: number;
-  } = {}): Promise<schema.SyncStatus[]> {
+  async getSyncStatuses(
+    options: {
+      status?: string;
+      entityType?: string;
+      organizationId?: number;
+    } = {}
+  ): Promise<schema.SyncStatus[]> {
     let result = this.syncStatuses;
-    
+
     if (options.status) {
       result = result.filter(ss => ss.status === options.status);
     }
@@ -1833,13 +1887,13 @@ export class MemStorage {
     if (options.organizationId) {
       result = result.filter(ss => ss.organizationId === options.organizationId);
     }
-    
+
     return result;
   }
 
   async createSyncStatus(status: schema.InsertSyncStatus): Promise<schema.SyncStatus> {
-    const id = this.syncStatuses.length > 0 ? 
-      Math.max(...this.syncStatuses.map(ss => ss.id)) + 1 : 1;
+    const id =
+      this.syncStatuses.length > 0 ? Math.max(...this.syncStatuses.map(ss => ss.id)) + 1 : 1;
     const newStatus = {
       ...status,
       id,
@@ -1850,10 +1904,13 @@ export class MemStorage {
     return newStatus;
   }
 
-  async updateSyncStatus(id: number, statusData: Partial<schema.InsertSyncStatus>): Promise<schema.SyncStatus | undefined> {
+  async updateSyncStatus(
+    id: number,
+    statusData: Partial<schema.InsertSyncStatus>
+  ): Promise<schema.SyncStatus | undefined> {
     const index = this.syncStatuses.findIndex(ss => ss.id === id);
     if (index === -1) return undefined;
-    
+
     this.syncStatuses[index] = {
       ...this.syncStatuses[index],
       ...statusData,
@@ -1864,8 +1921,8 @@ export class MemStorage {
 
   async clearSyncStatus(entityType: string, entityId: number): Promise<boolean> {
     const initialLength = this.syncStatuses.length;
-    this.syncStatuses = this.syncStatuses.filter(ss => 
-      !(ss.entityType === entityType && ss.entityId === entityId)
+    this.syncStatuses = this.syncStatuses.filter(
+      ss => !(ss.entityType === entityType && ss.entityId === entityId)
     );
     return initialLength > this.syncStatuses.length;
   }
@@ -1875,15 +1932,17 @@ export class MemStorage {
     return this.staffAssignments.find(sa => sa.id === id);
   }
 
-  async getStaffAssignments(options: {
-    entityType?: string;
-    entityId?: number;
-    userId?: number;
-    role?: string;
-    isActive?: boolean;
-  } = {}): Promise<schema.StaffAssignment[]> {
+  async getStaffAssignments(
+    options: {
+      entityType?: string;
+      entityId?: number;
+      userId?: number;
+      role?: string;
+      isActive?: boolean;
+    } = {}
+  ): Promise<schema.StaffAssignment[]> {
     let result = this.staffAssignments;
-    
+
     if (options.entityType) {
       result = result.filter(sa => sa.entityType === options.entityType);
     }
@@ -1899,13 +1958,17 @@ export class MemStorage {
     if (options.isActive !== undefined) {
       result = result.filter(sa => sa.isActive === options.isActive);
     }
-    
+
     return result;
   }
 
-  async createStaffAssignment(assignment: schema.InsertStaffAssignment): Promise<schema.StaffAssignment> {
-    const id = this.staffAssignments.length > 0 ? 
-      Math.max(...this.staffAssignments.map(sa => sa.id)) + 1 : 1;
+  async createStaffAssignment(
+    assignment: schema.InsertStaffAssignment
+  ): Promise<schema.StaffAssignment> {
+    const id =
+      this.staffAssignments.length > 0
+        ? Math.max(...this.staffAssignments.map(sa => sa.id)) + 1
+        : 1;
     const newAssignment = {
       ...assignment,
       id,
@@ -1916,10 +1979,13 @@ export class MemStorage {
     return newAssignment;
   }
 
-  async updateStaffAssignment(id: number, data: Partial<schema.InsertStaffAssignment>): Promise<schema.StaffAssignment | undefined> {
+  async updateStaffAssignment(
+    id: number,
+    data: Partial<schema.InsertStaffAssignment>
+  ): Promise<schema.StaffAssignment | undefined> {
     const index = this.staffAssignments.findIndex(sa => sa.id === id);
     if (index === -1) return undefined;
-    
+
     this.staffAssignments[index] = {
       ...this.staffAssignments[index],
       ...data,
@@ -1935,13 +2001,14 @@ export class MemStorage {
   }
 
   async getEntityPermissions(entityType: string, entityId: number, userId: number): Promise<any> {
-    const assignments = this.staffAssignments.filter(sa => 
-      sa.entityType === entityType && 
-      sa.entityId === entityId && 
-      sa.userId === userId &&
-      sa.isActive
+    const assignments = this.staffAssignments.filter(
+      sa =>
+        sa.entityType === entityType &&
+        sa.entityId === entityId &&
+        sa.userId === userId &&
+        sa.isActive
     );
-    
+
     const permissions = new Set<string>();
     assignments.forEach(a => {
       // Add role-based permissions
@@ -1968,7 +2035,7 @@ export class MemStorage {
           permissions.add('read');
           break;
       }
-      
+
       // Add custom permissions
       if (a.permissions) {
         Object.entries(a.permissions as any).forEach(([key, value]) => {
@@ -1978,7 +2045,7 @@ export class MemStorage {
         });
       }
     });
-    
+
     return {
       entityType,
       entityId,
@@ -2002,7 +2069,7 @@ export class MemStorage {
 /**
  * Database storage implementation
  */
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     if (!pool) return undefined;
@@ -2200,7 +2267,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
-      const documents = await db.select().from(schema.documents).where(eq(schema.documents.id, id));
+      const numericId = Number(id);
+      const documents = await db
+        .select()
+        .from(schema.documents)
+        .where(eq(schema.documents.id, numericId));
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document', { id, error });
@@ -2215,7 +2286,7 @@ export class DatabaseStorage implements IStorage {
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.name, name));
+        .where(eq(schema.documents.title, name));
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document by name', { name, error });
@@ -2235,37 +2306,36 @@ export class DatabaseStorage implements IStorage {
   ): Promise<schema.Document[]> {
     if (!db) return [];
 
-    const { limit = 20, offset = 0, folderId, status, type, search } = options;
+    const { limit = 20, offset = 0, status, type, search } = options;
 
     try {
-      let query = db.select().from(schema.documents);
-
-      // Apply filters
-      if (folderId) {
-        query = query.where(eq(schema.documents.folderId, folderId));
-      }
+      const conditions = [] as any[];
 
       if (status) {
-        query = query.where(eq(schema.documents.status, status));
+        conditions.push(eq(schema.documents.status, status));
       }
 
       if (type) {
-        query = query.where(eq(schema.documents.type, type));
+        conditions.push(eq(schema.documents.documentType, type));
       }
 
       if (search) {
-        query = query.where(
+        conditions.push(
           or(
-            like(schema.documents.name, `%${search}%`),
-            like(schema.documents.description || '', `%${search}%`)
+            like(schema.documents.title, `%${search}%`),
+            like(schema.documents.description, `%${search}%`),
+            like(schema.documents.documentCode, `%${search}%`)
           )
         );
       }
 
-      // Apply sorting, limit, and offset
-      query = query.orderBy(desc(schema.documents.modifiedAt)).limit(limit).offset(offset);
-
-      const documents = await query;
+      const documents = await db
+        .select()
+        .from(schema.documents)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(schema.documents.updatedAt))
+        .limit(limit)
+        .offset(offset);
       return documents;
     } catch (error) {
       logger.error('Failed to get documents', { options, error });
@@ -2279,17 +2349,21 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
+      const input = documentData as any;
       // Add creation timestamp if not provided
-      if (!documentData.createdAt) {
-        documentData.createdAt = new Date();
+      if (!input.createdAt) {
+        input.createdAt = new Date();
       }
 
-      // Add modified timestamp if not provided
-      if (!documentData.modifiedAt) {
-        documentData.modifiedAt = new Date();
+      // Add updated timestamp if not provided
+      if (!input.updatedAt) {
+        input.updatedAt = new Date();
       }
 
-      const results = await db.insert(schema.documents).values(documentData).returning();
+      const results = (await db
+        .insert(schema.documents)
+        .values(input as any)
+        .returning()) as any[];
       return results[0];
     } catch (error) {
       logger.error('Failed to create document', { documentData, error });
@@ -2304,13 +2378,13 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
-      // Always update the modified timestamp
-      documentData.modifiedAt = new Date();
+      const numericId = Number(id);
+      const data = { ...(documentData as any), updatedAt: new Date() } as any;
 
       const results = await db
         .update(schema.documents)
-        .set(documentData)
-        .where(eq(schema.documents.id, id))
+        .set(data)
+        .where(eq(schema.documents.id, numericId))
         .returning();
 
       return results[0];
@@ -2324,9 +2398,10 @@ export class DatabaseStorage implements IStorage {
     if (!db) return false;
 
     try {
+      const numericId = Number(id);
       const results = await db
         .delete(schema.documents)
-        .where(eq(schema.documents.id, id))
+        .where(eq(schema.documents.id, numericId))
         .returning({ id: schema.documents.id });
 
       return results.length > 0;
@@ -2341,17 +2416,19 @@ export class DatabaseStorage implements IStorage {
     if (!db) return [];
 
     try {
-      let query = db.select().from(schema.documentFolders);
+      const conditions = [] as any[];
 
       if (options.parentId === null) {
-        // Get root folders (where parentId is null)
-        query = query.where(isNull(schema.documentFolders.parentId));
+        conditions.push(isNull(schema.documentFolders.parentId));
       } else if (options.parentId) {
-        // Get child folders of a specific parent
-        query = query.where(eq(schema.documentFolders.parentId, options.parentId));
+        conditions.push(eq(schema.documentFolders.parentId, options.parentId));
       }
 
-      return await query.orderBy(schema.documentFolders.name);
+      return await db
+        .select()
+        .from(schema.documentFolders)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(schema.documentFolders.name);
     } catch (error) {
       logger.error('Failed to get folders', { options, error });
       return [];
@@ -2362,10 +2439,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const folders = await db
         .select()
         .from(schema.documentFolders)
-        .where(eq(schema.documentFolders.id, id));
+        .where(eq(schema.documentFolders.id, numericId));
 
       return folders[0];
     } catch (error) {
@@ -2380,16 +2458,20 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
+      const data = { ...(folderData as any) } as any;
       // Add timestamps if not provided
-      if (!folderData.createdAt) {
-        folderData.createdAt = new Date();
+      if (!data.createdAt) {
+        data.createdAt = new Date();
       }
 
-      if (!folderData.updatedAt) {
-        folderData.updatedAt = new Date();
+      if (!data.updatedAt) {
+        data.updatedAt = new Date();
       }
 
-      const results = await db.insert(schema.documentFolders).values(folderData).returning();
+      const results = (await db
+        .insert(schema.documentFolders)
+        .values(data as any)
+        .returning()) as any[];
 
       return results[0];
     } catch (error) {
@@ -2406,15 +2488,16 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Always update the updatedAt timestamp
-      folderData.updatedAt = new Date();
+      const data = { ...(folderData as any), updatedAt: new Date() } as any;
+      const numericId = Number(id);
 
-      const results = await db
+      const [updated] = await db
         .update(schema.documentFolders)
-        .set(folderData)
-        .where(eq(schema.documentFolders.id, id))
+        .set(data)
+        .where(eq(schema.documentFolders.id, numericId))
         .returning();
 
-      return results[0];
+      return updated;
     } catch (error) {
       logger.error('Failed to update folder', { id, folderData, error });
       return undefined;
@@ -2426,9 +2509,10 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Delete the folder
+      const numericId = Number(id);
       const results = await db
         .delete(schema.documentFolders)
-        .where(eq(schema.documentFolders.id, id))
+        .where(eq(schema.documentFolders.id, numericId))
         .returning({ id: schema.documentFolders.id });
 
       return results.length > 0;
@@ -2443,7 +2527,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
-      const reports = await db.select().from(schema.cerReports).where(eq(schema.cerReports.id, id));
+      const numericId = Number(id);
+      const reports = await db
+        .select()
+        .from(schema.cerReports)
+        .where(eq(schema.cerReports.id, numericId));
       return reports[0];
     } catch (error) {
       logger.error('Failed to get CER report', { id, error });
@@ -2465,29 +2553,30 @@ export class DatabaseStorage implements IStorage {
     const { limit = 20, offset = 0, status, deviceName, search } = options;
 
     try {
-      let query = db.select().from(schema.cerReports);
+      const conditions = [] as any[];
 
-      // Apply filters
       if (status) {
-        query = query.where(eq(schema.cerReports.status, status));
+        conditions.push(eq(schema.cerReports.status, status));
       }
 
       if (deviceName) {
-        query = query.where(like(schema.cerReports.deviceName, `%${deviceName}%`));
+        conditions.push(like(schema.cerReports.deviceName, `%${deviceName}%`));
       }
 
       if (search) {
-        query = query.where(
+        conditions.push(
           or(
-            like(schema.cerReports.title, `%${search}%`),
             like(schema.cerReports.deviceName, `%${search}%`),
-            like(schema.cerReports.manufacturer, `%${search}%`)
+            like(schema.cerReports.deviceManufacturer, `%${search}%`),
+            like(schema.cerReports.cerNumber, `%${search}%`)
           )
         );
       }
 
-      // Apply sorting and pagination
-      const reports = await query
+      const reports = await db
+        .select()
+        .from(schema.cerReports)
+        .where(conditions.length ? and(...conditions) : undefined)
         .orderBy(desc(schema.cerReports.updatedAt))
         .limit(limit)
         .offset(offset);
@@ -2507,13 +2596,17 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set timestamps if not provided
       const now = new Date();
+      const input = cerReport as any;
       const reportData = {
         ...cerReport,
-        createdAt: cerReport.createdAt || now,
-        updatedAt: cerReport.updatedAt || now,
+        createdAt: input.createdAt || now,
+        updatedAt: input.updatedAt || now,
       };
 
-      const [newReport] = await db.insert(schema.cerReports).values(reportData).returning();
+      const [newReport] = await db
+        .insert(schema.cerReports)
+        .values(reportData as any)
+        .returning();
       return newReport;
     } catch (error) {
       logger.error('Failed to create CER report', { cerReport, error });
@@ -2528,6 +2621,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       // Update timestamp
       const now = new Date();
       const updatedData = {
@@ -2538,7 +2632,7 @@ export class DatabaseStorage implements IStorage {
       const [updatedReport] = await db
         .update(schema.cerReports)
         .set(updatedData)
-        .where(eq(schema.cerReports.id, id))
+        .where(eq(schema.cerReports.id, numericId))
         .returning();
 
       return updatedReport;
@@ -2552,7 +2646,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) return false;
 
     try {
-      await db.delete(schema.cerReports).where(eq(schema.cerReports.id, id));
+      const numericId = Number(id);
+      await db.delete(schema.cerReports).where(eq(schema.cerReports.id, numericId));
 
       return true;
     } catch (error) {
@@ -2566,10 +2661,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const sections = await db
         .select()
         .from(schema.cerSections)
-        .where(eq(schema.cerSections.id, id));
+        .where(eq(schema.cerSections.id, numericId));
       return sections[0];
     } catch (error) {
       logger.error('Failed to get CER section', { id, error });
@@ -2584,21 +2680,18 @@ export class DatabaseStorage implements IStorage {
     if (!db) return [];
 
     try {
-      let query = db
+      const orderByClause =
+        !options.orderBy || options.orderBy === 'order'
+          ? schema.cerSections.order
+          : options.orderBy === 'title'
+            ? schema.cerSections.title
+            : desc(schema.cerSections.updatedAt);
+
+      const sections = await db
         .select()
         .from(schema.cerSections)
-        .where(eq(schema.cerSections.reportId, reportId));
-
-      // Apply sorting
-      if (!options.orderBy || options.orderBy === 'order') {
-        query = query.orderBy(schema.cerSections.order);
-      } else if (options.orderBy === 'title') {
-        query = query.orderBy(schema.cerSections.title);
-      } else if (options.orderBy === 'updatedAt') {
-        query = query.orderBy(desc(schema.cerSections.updatedAt));
-      }
-
-      const sections = await query;
+        .where(eq(schema.cerSections.reportId, reportId))
+        .orderBy(orderByClause);
       return sections;
     } catch (error) {
       logger.error('Failed to get CER sections', { reportId, options, error });
@@ -2614,13 +2707,17 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set timestamps if not provided
       const now = new Date();
+      const input = section as any;
       const sectionData = {
         ...section,
-        createdAt: section.createdAt || now,
-        updatedAt: section.updatedAt || now,
+        createdAt: input.createdAt || now,
+        updatedAt: input.updatedAt || now,
       };
 
-      const [newSection] = await db.insert(schema.cerSections).values(sectionData).returning();
+      const [newSection] = await db
+        .insert(schema.cerSections)
+        .values(sectionData as any)
+        .returning();
       return newSection;
     } catch (error) {
       logger.error('Failed to create CER section', { section, error });
@@ -2635,6 +2732,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       // Update timestamp
       const now = new Date();
       const updatedData = {
@@ -2645,7 +2743,7 @@ export class DatabaseStorage implements IStorage {
       const [updatedSection] = await db
         .update(schema.cerSections)
         .set(updatedData)
-        .where(eq(schema.cerSections.id, id))
+        .where(eq(schema.cerSections.id, numericId))
         .returning();
 
       return updatedSection;
@@ -2659,7 +2757,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) return false;
 
     try {
-      await db.delete(schema.cerSections).where(eq(schema.cerSections.id, id));
+      const numericId = Number(id);
+      await db.delete(schema.cerSections).where(eq(schema.cerSections.id, numericId));
 
       return true;
     } catch (error) {
@@ -2673,10 +2772,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const data = await db
         .select()
         .from(schema.cerFaersData)
-        .where(eq(schema.cerFaersData.id, id));
+        .where(eq(schema.cerFaersData.id, numericId));
       return data[0];
     } catch (error) {
       logger.error('Failed to get CER FAERS data', { id, error });
@@ -2708,13 +2808,17 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set timestamps if not provided
       const now = new Date();
+      const input = faersData as any;
       const data = {
         ...faersData,
-        createdAt: faersData.createdAt || now,
-        updatedAt: faersData.updatedAt || now,
+        createdAt: input.createdAt || now,
+        updatedAt: input.updatedAt || now,
       };
 
-      const [newData] = await db.insert(schema.cerFaersData).values(data).returning();
+      const [newData] = await db
+        .insert(schema.cerFaersData)
+        .values(data as any)
+        .returning();
       return newData;
     } catch (error) {
       logger.error('Failed to create CER FAERS data', { faersData, error });
@@ -2729,6 +2833,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       // Update timestamp
       const now = new Date();
       const updatedData = {
@@ -2739,7 +2844,7 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db
         .update(schema.cerFaersData)
         .set(updatedData)
-        .where(eq(schema.cerFaersData.id, id))
+        .where(eq(schema.cerFaersData.id, numericId))
         .returning();
 
       return updated;
@@ -2754,10 +2859,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const literature = await db
         .select()
         .from(schema.cerLiterature)
-        .where(eq(schema.cerLiterature.id, id));
+        .where(eq(schema.cerLiterature.id, numericId));
       return literature[0];
     } catch (error) {
       logger.error('Failed to get CER literature', { id, error });
@@ -2779,25 +2885,25 @@ export class DatabaseStorage implements IStorage {
     const { limit = 50, offset = 0, relevanceThreshold = 0, includedOnly = false } = options;
 
     try {
-      let query = db
-        .select()
-        .from(schema.cerLiterature)
-        .where(eq(schema.cerLiterature.reportId, reportId));
+      const conditions = [eq(schema.cerLiterature.reportId, reportId)];
 
       if (relevanceThreshold > 0) {
-        query = query.where(
+        conditions.push(
           or(
             isNull(schema.cerLiterature.relevanceScore),
             gte(schema.cerLiterature.relevanceScore, relevanceThreshold)
-          )
+          ) as any
         );
       }
 
       if (includedOnly) {
-        query = query.where(eq(schema.cerLiterature.includedInReport, true));
+        conditions.push(eq(schema.cerLiterature.included, true));
       }
 
-      const literature = await query
+      const literature = await db
+        .select()
+        .from(schema.cerLiterature)
+        .where(and(...conditions))
         .orderBy(desc(schema.cerLiterature.relevanceScore))
         .limit(limit)
         .offset(offset);
@@ -2817,13 +2923,17 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set timestamps if not provided
       const now = new Date();
+      const input = literature as any;
       const data = {
         ...literature,
-        createdAt: literature.createdAt || now,
-        updatedAt: literature.updatedAt || now,
+        createdAt: input.createdAt || now,
+        updatedAt: input.updatedAt || now,
       };
 
-      const [newLiterature] = await db.insert(schema.cerLiterature).values(data).returning();
+      const [newLiterature] = await db
+        .insert(schema.cerLiterature)
+        .values(data as any)
+        .returning();
       return newLiterature;
     } catch (error) {
       logger.error('Failed to create CER literature', { literature, error });
@@ -2838,6 +2948,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       // Update timestamp
       const now = new Date();
       const updatedData = {
@@ -2848,7 +2959,7 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db
         .update(schema.cerLiterature)
         .set(updatedData)
-        .where(eq(schema.cerLiterature.id, id))
+        .where(eq(schema.cerLiterature.id, numericId))
         .returning();
 
       return updated;
@@ -2863,10 +2974,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const checks = await db
         .select()
         .from(schema.cerComplianceChecks)
-        .where(eq(schema.cerComplianceChecks.id, id));
+        .where(eq(schema.cerComplianceChecks.id, numericId));
       return checks[0];
     } catch (error) {
       logger.error('Failed to get CER compliance check', { id, error });
@@ -2882,7 +2994,7 @@ export class DatabaseStorage implements IStorage {
         .select()
         .from(schema.cerComplianceChecks)
         .where(eq(schema.cerComplianceChecks.reportId, reportId))
-        .orderBy(desc(schema.cerComplianceChecks.checkDate));
+        .orderBy(desc(schema.cerComplianceChecks.checkedAt));
 
       return checks;
     } catch (error) {
@@ -2901,14 +3013,18 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set timestamps if not provided
       const now = new Date();
+      const input = check as any;
       const data = {
         ...check,
-        checkDate: check.checkDate || now,
-        createdAt: check.createdAt || now,
-        updatedAt: check.updatedAt || now,
+        checkedAt: input.checkedAt || now,
+        createdAt: input.createdAt || now,
+        updatedAt: input.updatedAt || now,
       };
 
-      const [newCheck] = await db.insert(schema.cerComplianceChecks).values(data).returning();
+      const [newCheck] = await db
+        .insert(schema.cerComplianceChecks)
+        .values(data as any)
+        .returning();
       return newCheck;
     } catch (error) {
       logger.error('Failed to create CER compliance check', { check, error });
@@ -2930,10 +3046,11 @@ export class DatabaseStorage implements IStorage {
         updatedAt: now,
       };
 
+      const numericId = Number(id);
       const [updated] = await db
         .update(schema.cerComplianceChecks)
         .set(updatedData)
-        .where(eq(schema.cerComplianceChecks.id, id))
+        .where(eq(schema.cerComplianceChecks.id, numericId))
         .returning();
 
       return updated;
@@ -2948,10 +3065,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
+      const numericId = Number(id);
       const workflows = await db
         .select()
         .from(schema.cerWorkflows)
-        .where(eq(schema.cerWorkflows.id, id));
+        .where(eq(schema.cerWorkflows.id, numericId));
       return workflows[0];
     } catch (error) {
       logger.error('Failed to get CER workflow', { id, error });
@@ -2982,14 +3100,14 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Set timestamps if not provided
-      const now = new Date();
       const data = {
         ...workflow,
-        startedAt: workflow.startedAt || now,
-        lastUpdated: workflow.lastUpdated || now,
       };
 
-      const [newWorkflow] = await db.insert(schema.cerWorkflows).values(data).returning();
+      const [newWorkflow] = await db
+        .insert(schema.cerWorkflows)
+        .values(data as any)
+        .returning();
       return newWorkflow;
     } catch (error) {
       logger.error('Failed to create CER workflow', { workflow, error });
@@ -3005,16 +3123,16 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Update timestamp
-      const now = new Date();
       const updatedData = {
         ...workflow,
-        lastUpdated: now,
+        updatedAt: new Date(),
       };
 
+      const numericId = Number(id);
       const [updated] = await db
         .update(schema.cerWorkflows)
         .set(updatedData)
-        .where(eq(schema.cerWorkflows.id, id))
+        .where(eq(schema.cerWorkflows.id, numericId))
         .returning();
 
       return updated;
@@ -3029,7 +3147,11 @@ export class DatabaseStorage implements IStorage {
     if (!db) return undefined;
 
     try {
-      const exports = await db.select().from(schema.cerExports).where(eq(schema.cerExports.id, id));
+      const numericId = Number(id);
+      const exports = await db
+        .select()
+        .from(schema.cerExports)
+        .where(eq(schema.cerExports.id, numericId));
       return exports[0];
     } catch (error) {
       logger.error('Failed to get CER export', { id, error });
@@ -3062,12 +3184,16 @@ export class DatabaseStorage implements IStorage {
     try {
       // Set export date if not provided
       const now = new Date();
+      const input = export_ as any;
       const data = {
         ...export_,
-        exportedAt: export_.exportedAt || now,
+        exportedAt: input.exportedAt || now,
       };
 
-      const [newExport] = await db.insert(schema.cerExports).values(data).returning();
+      const [newExport] = await db
+        .insert(schema.cerExports)
+        .values(data as any)
+        .returning();
       return newExport;
     } catch (error) {
       logger.error('Failed to create CER export', { export_, error });
@@ -3106,13 +3232,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createAvailableModule(module: schema.InsertAvailableModule): Promise<schema.AvailableModule> {
+  async createAvailableModule(
+    module: schema.InsertAvailableModule
+  ): Promise<schema.AvailableModule> {
     if (!db) {
       throw new Error('Database connection not available');
     }
 
     try {
-      const [newModule] = await db.insert(schema.availableModules).values(module).returning();
+      const [newModule] = await db
+        .insert(schema.availableModules)
+        .values(module as any)
+        .returning();
       return newModule;
     } catch (error) {
       logger.error('Failed to create available module', { module, error });
@@ -3143,7 +3274,9 @@ export class DatabaseStorage implements IStorage {
     if (!db) return false;
 
     try {
-      await db.delete(schema.availableModules).where(eq(schema.availableModules.moduleId, moduleId));
+      await db
+        .delete(schema.availableModules)
+        .where(eq(schema.availableModules.moduleId, moduleId));
       return true;
     } catch (error) {
       logger.error('Failed to delete available module', { moduleId, error });
@@ -3199,7 +3332,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const [newSubscription] = await db
         .insert(schema.moduleSubscriptions)
-        .values(subscription)
+        .values(subscription as any)
         .returning();
       return newSubscription;
     } catch (error) {
@@ -3294,7 +3427,11 @@ export class DatabaseStorage implements IStorage {
 
       return results;
     } catch (error) {
-      logger.error('Failed to bulk update module subscriptions', { organizationId, modules, error });
+      logger.error('Failed to bulk update module subscriptions', {
+        organizationId,
+        modules,
+        error,
+      });
       return [];
     }
   }
@@ -3532,11 +3669,11 @@ export class DatabaseStorage implements IStorage {
   // ============================================================================
   // 510(k) Workflow Methods - Using in-memory storage until database tables exist
   // ============================================================================
-  
+
   private workflowStorage = new Map<number, any>();
   private submissionStorage = new Map<number, any>();
   private sectionStorage = new Map<number, any>();
-  
+
   // FDA 510(k) Submission methods
   async getFda510kSubmission(id: number): Promise<any | undefined> {
     return this.submissionStorage.get(id);
@@ -3551,7 +3688,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<any[]> {
     const submissions = Array.from(this.submissionStorage.values());
     let filtered = submissions;
-    
+
     if (options?.organizationId) {
       filtered = filtered.filter(s => s.organizationId === options.organizationId);
     }
@@ -3561,7 +3698,7 @@ export class DatabaseStorage implements IStorage {
     if (options?.submissionStatus) {
       filtered = filtered.filter(s => s.submissionStatus === options.submissionStatus);
     }
-    
+
     const offset = options?.offset || 0;
     const limit = options?.limit || filtered.length;
     return filtered.slice(offset, offset + limit);
@@ -3577,7 +3714,7 @@ export class DatabaseStorage implements IStorage {
   async updateFda510kSubmission(id: number, submissionData: any): Promise<any | undefined> {
     const existing = this.submissionStorage.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...submissionData, updatedAt: new Date() };
     this.submissionStorage.set(id, updated);
     return updated;
@@ -3587,7 +3724,7 @@ export class DatabaseStorage implements IStorage {
     return this.submissionStorage.delete(id);
   }
 
-  // Device Submission Workflow methods  
+  // Device Submission Workflow methods
   async getDeviceSubmissionWorkflow(id: number): Promise<any | undefined> {
     return this.workflowStorage.get(id);
   }
@@ -3602,7 +3739,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<any[]> {
     const workflows = Array.from(this.workflowStorage.values());
     let filtered = workflows;
-    
+
     if (options?.organizationId) {
       filtered = filtered.filter(w => w.organizationId === options.organizationId);
     }
@@ -3615,7 +3752,7 @@ export class DatabaseStorage implements IStorage {
     if (options?.workflowStatus) {
       filtered = filtered.filter(w => w.workflowStatus === options.workflowStatus);
     }
-    
+
     const offset = options?.offset || 0;
     const limit = options?.limit || filtered.length;
     return filtered.slice(offset, offset + limit);
@@ -3632,7 +3769,7 @@ export class DatabaseStorage implements IStorage {
   async updateDeviceSubmissionWorkflow(id: number, workflowData: any): Promise<any | undefined> {
     const existing = this.workflowStorage.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...workflowData, updatedAt: new Date() };
     this.workflowStorage.set(id, updated);
     logger.info('Updated workflow', { id });
@@ -3657,7 +3794,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<any[]> {
     const sections = Array.from(this.sectionStorage.values());
     let filtered = sections;
-    
+
     if (options?.organizationId) {
       filtered = filtered.filter(s => s.organizationId === options.organizationId);
     }
@@ -3667,7 +3804,7 @@ export class DatabaseStorage implements IStorage {
     if (options?.parentSectionId) {
       filtered = filtered.filter(s => s.parentSectionId === options.parentSectionId);
     }
-    
+
     const offset = options?.offset || 0;
     const limit = options?.limit || filtered.length;
     return filtered.slice(offset, offset + limit);
@@ -3683,7 +3820,7 @@ export class DatabaseStorage implements IStorage {
   async updateCerv2510kSection(id: number, sectionData: any): Promise<any | undefined> {
     const existing = this.sectionStorage.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...sectionData, updatedAt: new Date() };
     this.sectionStorage.set(id, updated);
     return updated;
@@ -3699,10 +3836,10 @@ let storage: IStorage;
 
 if (pool) {
   logger.info('Using database storage implementation');
-  storage = new DatabaseStorage();
+  storage = new DatabaseStorage() as unknown as IStorage;
 } else {
   logger.warn('Database not available, using in-memory storage');
-  storage = new MemStorage();
+  storage = new MemStorage() as unknown as IStorage;
 }
 
 export { storage };

@@ -53,21 +53,62 @@ export interface LiteratureSummary {
  */
 export class UnifiedLiteratureService {
   async search(params: LiteratureSearchParams): Promise<LiteratureArticle[]> {
-    const { LiteratureService } = await import('../LiteratureService');
-    const service = new LiteratureService();
-    return service.search(params);
+    const { default: literatureService } = await import('../LiteratureService');
+    const results = await literatureService.searchLiterature(params);
+    return results.map(article => ({
+      id: article.pmid,
+      title: article.title,
+      authors: article.authors,
+      journal: article.journal,
+      publicationDate: new Date(article.publicationDate),
+      abstract: article.abstract,
+      doi: article.doi,
+      pmid: article.pmid,
+      relevanceScore: 1,
+      source: 'pubmed',
+    }));
   }
 
-  async aggregate(articleIds: string[]): Promise<LiteratureArticle[]> {
-    const { LiteratureAggregatorService } = await import('../LiteratureAggregatorService');
-    const service = new LiteratureAggregatorService();
-    return service.aggregate(articleIds);
+  async aggregate(
+    articleIds: string[],
+    organizationId: string = 'default'
+  ): Promise<LiteratureArticle[]> {
+    const { default: literatureAggregator } = await import('../LiteratureAggregatorService');
+    const results = await Promise.all(
+      articleIds.map(id => literatureAggregator.getLiteratureById(id, organizationId))
+    );
+    return results
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .map(entry => ({
+        id: entry.id,
+        title: entry.title,
+        authors: entry.authors || [],
+        journal: entry.journal || 'Unknown',
+        publicationDate: entry.publication_date ? new Date(entry.publication_date) : new Date(),
+        abstract: entry.abstract || '',
+        doi: entry.doi,
+        pmid: entry.pmid,
+        relevanceScore: entry.relevance_score || 0,
+        source: entry.source_name,
+      }));
   }
 
-  async summarize(articleId: string): Promise<LiteratureSummary> {
-    const { LiteratureSummarizerService } = await import('../LiteratureSummarizerService');
-    const service = new LiteratureSummarizerService();
-    return service.summarize(articleId);
+  async summarize(
+    articleId: string,
+    organizationId: string = 'default'
+  ): Promise<LiteratureSummary> {
+    const { default: literatureSummarizer } = await import('../LiteratureSummarizerService');
+    const result = await literatureSummarizer.generateSummary({
+      literatureIds: [articleId],
+      summaryType: 'general',
+      organizationId,
+    });
+    return {
+      articleId,
+      summary: result.summary,
+      keyFindings: [],
+      generatedAt: new Date(),
+    };
   }
 }
 

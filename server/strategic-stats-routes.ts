@@ -404,9 +404,9 @@ strategicStatsRouter.post('/mams-trial-simulation', async (req, res) => {
     }
 
     // Step 1: Get historical CSR data for this indication and phase (if comparison is enabled)
-    const statisticsService = new StatisticsService();
-    let historicalData = {};
-    let endpointData = {};
+    const statisticsService = statsService.statisticsService;
+    let historicalData: any = {};
+    let endpointData: any = {};
 
     if (enableCsrLibraryComparison) {
       historicalData = await statisticsService.getCombinedStatistics({

@@ -4,19 +4,14 @@
  */
 
 import express from 'express';
-import { Pool } from 'pg';
 import OpenAI from 'openai';
+import { pool as dbPool } from '../utils/database.js';
 
 const router = express.Router();
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Database connection
-const dbPool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
 });
 
 /**
@@ -41,11 +36,11 @@ router.post('/api/vector-search', async (req, res) => {
     // Perform vector similarity search with enhanced metadata
     const result = await dbPool.query(
       `
-      SELECT 
+      SELECT
         id, doc_id, doc_title, chunk_index, content,
         ectd_section, page_number, doc_type, region_tag,
         embedding <=> $1::vector as similarity_score
-      FROM document_chunks 
+      FROM document_chunks
       ORDER BY embedding <=> $1::vector
       LIMIT 5
     `,

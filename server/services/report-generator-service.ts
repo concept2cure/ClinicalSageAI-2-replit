@@ -8,8 +8,8 @@
 import fs from 'fs';
 import path from 'path';
 import { db } from '../db';
-import { csr_reports, csr_details } from '../../shared/schema';
-import { statisticsService } from './statistics-service';
+import { csrReports, csrDetails } from '../../shared/schema';
+import { statisticsService } from '../statistics-service';
 import { researchCompanionService } from '../research-companion-service';
 
 interface ReportGenerationParams {
@@ -208,11 +208,11 @@ class InvestorReportGenerator extends BaseReportGenerator {
       // If we have indication, we would customize the probabilities based on
       // historical data for this specific indication
       try {
-        const indicationStats = await statisticsService.getSuccessProbabilities(indication);
-        if (indicationStats) {
+        const indicationStats = await statisticsService.getIndication(indication);
+        if (indicationStats?.success_rate !== null && indicationStats?.success_rate !== undefined) {
           phaseTransitionProbabilities = {
             ...phaseTransitionProbabilities,
-            ...indicationStats,
+            overallSuccess: indicationStats.success_rate,
           };
         }
       } catch (error) {

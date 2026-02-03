@@ -4,13 +4,8 @@
  */
 
 import express from 'express';
-import { Pool } from 'pg';
+import { pool as db } from '../utils/database.js';
 const router = express.Router();
-
-// Create database connection pool
-const db = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
 
 // Get content plan for a project
 router.get('/:projectId', async (req, res) => {
@@ -89,8 +84,9 @@ router.get('/:projectId', async (req, res) => {
     // Fetch section status from database if project exists
     let sectionStatus = {};
     if (projectId !== 'default') {
-      const statusQuery = await db.query(`
-        SELECT 
+      const statusQuery = await db.query(
+        `
+        SELECT
           section_id,
           status,
           owner,
@@ -99,7 +95,9 @@ router.get('/:projectId', async (req, res) => {
           last_updated
         FROM content_plan_sections
         WHERE project_id = $1 AND organization_id = $2
-      `, [projectId, organizationId]);
+      `,
+        [projectId, organizationId]
+      );
 
       statusQuery.rows.forEach(row => {
         sectionStatus[row.section_id] = row;
@@ -107,8 +105,9 @@ router.get('/:projectId', async (req, res) => {
     }
 
     // Fetch evidence counts for each section
-    const evidenceQuery = await db.query(`
-      SELECT 
+    const evidenceQuery = await db.query(
+      `
+      SELECT
         section_id,
         COUNT(*) as evidence_count,
         MAX(created_at) as latest_evidence
@@ -116,7 +115,9 @@ router.get('/:projectId', async (req, res) => {
       WHERE organization_id = $1
         AND (project_id = $2 OR project_id IS NULL)
       GROUP BY section_id
-    `, [organizationId, projectId]);
+    `,
+      [organizationId, projectId]
+    );
 
     const evidenceCounts = {};
     evidenceQuery.rows.forEach(row => {
@@ -130,11 +131,12 @@ router.get('/:projectId', async (req, res) => {
     const sections = defaultSections.map(section => {
       const status = sectionStatus[section.id] || {};
       const evidence = evidenceCounts[section.id] || { count: 0 };
-      
+
       // Determine completeness and gaps
       const hasEvidence = evidence.count > 0;
       const isComplete = status.status === 'complete' || status.completion_percentage === 100;
-      const isStale = evidence.latestDate && 
+      const isStale =
+        evidence.latestDate &&
         new Date(evidence.latestDate) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days old
 
       const gaps = [];
@@ -185,9 +187,9 @@ router.get('/:projectId', async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to get content plan:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve content plan' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve content plan',
     });
   }
 });
@@ -200,8 +202,9 @@ router.put('/:projectId/section/:sectionId', async (req, res) => {
     const organizationId = req.headers['x-organization-id'] || '7';
 
     // Upsert section status
-    await db.query(`
-      INSERT INTO content_plan_sections 
+    await db.query(
+      `
+      INSERT INTO content_plan_sections
         (project_id, section_id, organization_id, owner, due_date, status, completion_percentage, last_updated)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       ON CONFLICT (project_id, section_id, organization_id)
@@ -211,7 +214,9 @@ router.put('/:projectId/section/:sectionId', async (req, res) => {
         status = EXCLUDED.status,
         completion_percentage = EXCLUDED.completion_percentage,
         last_updated = NOW()
-    `, [projectId, sectionId, organizationId, owner, dueDate, status, completionPercentage]);
+    `,
+      [projectId, sectionId, organizationId, owner, dueDate, status, completionPercentage]
+    );
 
     res.json({
       success: true,
@@ -219,9 +224,9 @@ router.put('/:projectId/section/:sectionId', async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to update section status:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to update section status' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update section status',
     });
   }
 });
@@ -233,12 +238,15 @@ router.post('/:projectId/section/:sectionId/evidence', async (req, res) => {
     const { evidenceId, evidenceType, source } = req.body;
     const organizationId = req.headers['x-organization-id'] || '7';
 
-    await db.query(`
-      INSERT INTO section_evidence_links 
+    await db.query(
+      `
+      INSERT INTO section_evidence_links
         (project_id, section_id, evidence_id, evidence_type, source, organization_id, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
       ON CONFLICT DO NOTHING
-    `, [projectId, sectionId, evidenceId, evidenceType, source, organizationId]);
+    `,
+      [projectId, sectionId, evidenceId, evidenceType, source, organizationId]
+    );
 
     res.json({
       success: true,
@@ -246,9 +254,9 @@ router.post('/:projectId/section/:sectionId/evidence', async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to link evidence:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to link evidence to section' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to link evidence to section',
     });
   }
 });

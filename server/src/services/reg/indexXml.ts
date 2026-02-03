@@ -1,4 +1,4 @@
-// import { create } from "xmlbuilder2"; // Temporarily disabled for development
+import { create } from 'xmlbuilder2';
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { findPath } from './ectdMap';
@@ -48,9 +48,7 @@ export async function buildIndexXml(seqId: string, region: string) {
     },
   };
 
-  // Temporarily disabled for development
-  throw new Error('XML builder temporarily disabled for development');
-  // return create(root).end({ prettyPrint:true, indent:'  ', newline:'\n' });
+  return create(root).end({ prettyPrint: true, indent: '  ', newline: '\n' });
 }
 
 /** Stage sequence files from current leaves; compute path & checksums for authoring content (markdown to HTML/PDF later). */

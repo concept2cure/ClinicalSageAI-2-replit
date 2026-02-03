@@ -36,8 +36,8 @@ r.get('/overview/:programId/summary', async (req, res) => {
       submissions = (
         await q(`select * from reg_submissions where product_id=$1 order by created_at desc`, [pid])
       ).rows;
-    } catch (e) {
-      console.log('Could not fetch submissions:', e.message);
+    } catch (e: any) {
+      console.log('Could not fetch submissions:', e?.message ?? String(e));
       // Fallback submissions data
       submissions = [
         {
@@ -120,9 +120,9 @@ r.get('/portfolio/list', async (req, res) => {
     // Get all programs with submission counts
     const programs = (
       await q(`
-      select p.*, 
+      select p.*,
              (select count(*) from reg_submissions s where s.product_id = p.program_id) as sub_count
-      from reg_programs p 
+      from reg_programs p
       order by created_at desc
     `)
     ).rows;
