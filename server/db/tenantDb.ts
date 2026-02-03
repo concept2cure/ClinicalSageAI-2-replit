@@ -175,6 +175,12 @@ export class TenantDb {
    * @param params - The parameters for the query
    * @returns Query results
    */
+  async execute<T = any>(query: SQL<unknown>): Promise<T[]> {
+    const result = await db.execute(query);
+    const rows = (result as any).rows ?? result;
+    return rows as T[];
+  }
+
   async rawQuery(sql: string, params: any[] = []): Promise<any[]> {
     // Add tenant context parameters to the query
     const tenantSql = `

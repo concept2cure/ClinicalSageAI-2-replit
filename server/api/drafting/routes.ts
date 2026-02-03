@@ -1,26 +1,36 @@
 /**
  * Defensible Drafting Service - Chain of Verification AI Generation
- * 
+ *
  * GxP-compliant AI drafting service that:
  * 1. Uses Hybrid Search (Vector + Entity) for context retrieval
  * 2. Prioritizes TABLE atoms for data-driven queries
  * 3. Returns reasoning_trace for audit logging (21 CFR Part 11)
  * 4. Generates citations with confidence scores
- * 
+ *
  * This is the "Cognitive Fabric" that transforms raw evidence into
  * defensible regulatory content.
  */
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
+import { getRequestDbClient } from '../../middleware/tenantContext';
 
 // Types
 interface DraftingRequest {
   prompt: string;
-  promptType: 'section_draft' | 'table_summary' | 'safety_analysis' | 'efficacy_summary' |
-              'pk_analysis' | 'clinical_overview' | 'nonclinical_summary' | 'cmc_summary' |
-              'regulatory_response' | 'label_update' | 'custom';
+  promptType:
+    | 'section_draft'
+    | 'table_summary'
+    | 'safety_analysis'
+    | 'efficacy_summary'
+    | 'pk_analysis'
+    | 'clinical_overview'
+    | 'nonclinical_summary'
+    | 'cmc_summary'
+    | 'regulatory_response'
+    | 'label_update'
+    | 'custom';
   documentId?: string;
   programId?: string;
   projectId?: string;
@@ -85,11 +95,7 @@ const CONFIG = {
   tableBoost: 1.5,
 };
 
-// Database pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('neon') ? { rejectUnauthorized: false } : undefined,
-});
+type Queryable = Pool | PoolClient;
 
 // OpenAI client
 const openai = new OpenAI({
@@ -144,6 +150,7 @@ async function generateQueryEmbedding(text: string): Promise<number[]> {
  */
 async function hybridSearch(
   queryEmbedding: number[],
+  db: Queryable,
   options: {
     documentId?: string;
     entityFilters?: Record<string, string>;
@@ -155,15 +162,12 @@ async function hybridSearch(
 
   if (prioritizeTables) {
     // Use table-priority search
-    const result = await pool.query(
-      `SELECT * FROM vault.table_priority_search($1, $2, $3, $4)`,
-      [
-        JSON.stringify(queryEmbedding),
-        documentId || null,
-        limit,
-        CONFIG.tableBoost,
-      ]
-    );
+    const result = await db.query(`SELECT * FROM vault.table_priority_search($1, $2, $3, $4)`, [
+      JSON.stringify(queryEmbedding),
+      documentId || null,
+      limit,
+      CONFIG.tableBoost,
+    ]);
     return result.rows.map(row => ({
       ...row,
       vector_score: row.similarity_score,
@@ -174,16 +178,13 @@ async function hybridSearch(
   }
 
   // Use full hybrid search
-  const result = await pool.query(
-    `SELECT * FROM vault.hybrid_search($1, $2, $3, $4, $5)`,
-    [
-      JSON.stringify(queryEmbedding),
-      entityFilters ? JSON.stringify(entityFilters) : null,
-      documentId || null,
-      ['TEXT', 'TABLE', 'FIGURE'],
-      limit,
-    ]
-  );
+  const result = await db.query(`SELECT * FROM vault.hybrid_search($1, $2, $3, $4, $5)`, [
+    JSON.stringify(queryEmbedding),
+    entityFilters ? JSON.stringify(entityFilters) : null,
+    documentId || null,
+    ['TEXT', 'TABLE', 'FIGURE'],
+    limit,
+  ]);
   return result.rows;
 }
 
@@ -191,31 +192,34 @@ async function hybridSearch(
  * Format evidence for the AI prompt
  */
 function formatEvidenceForPrompt(chunks: SearchResult[]): string {
-  return chunks.map((chunk, i) => {
-    const typeTag = `[${chunk.content_type || 'TEXT'}]`;
-    const score = chunk.combined_score?.toFixed(2) || chunk.vector_score?.toFixed(2) || '0.00';
-    
-    let content = chunk.chunk_text;
-    
-    // For tables, include structured content if available
-    if (chunk.content_type === 'TABLE' && chunk.structured_content) {
-      try {
-        const structured = typeof chunk.structured_content === 'string' 
-          ? JSON.parse(chunk.structured_content) 
-          : chunk.structured_content;
-        if (structured.markdown) {
-          content = structured.markdown;
+  return chunks
+    .map((chunk, i) => {
+      const typeTag = `[${chunk.content_type || 'TEXT'}]`;
+      const score = chunk.combined_score?.toFixed(2) || chunk.vector_score?.toFixed(2) || '0.00';
+
+      let content = chunk.chunk_text;
+
+      // For tables, include structured content if available
+      if (chunk.content_type === 'TABLE' && chunk.structured_content) {
+        try {
+          const structured =
+            typeof chunk.structured_content === 'string'
+              ? JSON.parse(chunk.structured_content)
+              : chunk.structured_content;
+          if (structured.markdown) {
+            content = structured.markdown;
+          }
+        } catch (e) {
+          // Use raw text
         }
-      } catch (e) {
-        // Use raw text
       }
-    }
-    
-    return `--- Evidence Atom ${i + 1} ${typeTag} (Score: ${score}, Page: ${chunk.page_number || 'N/A'}) ---
+
+      return `--- Evidence Atom ${i + 1} ${typeTag} (Score: ${score}, Page: ${chunk.page_number || 'N/A'}) ---
 Source ID: ${chunk.chunk_id}
 ${content}
 ---`;
-  }).join('\n\n');
+    })
+    .join('\n\n');
 }
 
 /**
@@ -245,7 +249,7 @@ function parseAIResponse(content: string): {
   } catch (e) {
     console.warn('[Drafting] Failed to parse JSON response, using raw text');
   }
-  
+
   // Fallback: return raw content
   return {
     draftText: content,
@@ -258,6 +262,7 @@ function parseAIResponse(content: string): {
  * Log drafting session for audit trail
  */
 async function logDraftingSession(
+  db: Queryable,
   sessionId: string,
   request: DraftingRequest,
   response: DraftingResponse,
@@ -265,7 +270,8 @@ async function logDraftingSession(
   userId?: string
 ): Promise<void> {
   try {
-    await pool.query(`
+    await db.query(
+      `
       INSERT INTO vault.drafting_sessions (
         id, program_id, project_id, user_id,
         prompt_text, prompt_type, context_chunks,
@@ -281,26 +287,28 @@ async function logDraftingSession(
         $15, $16, $17, $18,
         'completed', NOW()
       )
-    `, [
-      sessionId,
-      request.programId || null,
-      request.projectId || null,
-      userId || null,
-      request.prompt,
-      request.promptType,
-      chunkIds,
-      response.draftText,
-      response.reasoningTrace,
-      JSON.stringify(response.citations),
-      response.metadata.model,
-      request.options?.temperature || CONFIG.defaultTemperature,
-      response.metadata.promptTokens,
-      response.metadata.completionTokens,
-      response.metadata.generationTimeMs,
-      response.citations.length,
-      response.metadata.tablesReferenced,
-      response.metadata.confidenceScore,
-    ]);
+    `,
+      [
+        sessionId,
+        request.programId || null,
+        request.projectId || null,
+        userId || null,
+        request.prompt,
+        request.promptType,
+        chunkIds,
+        response.draftText,
+        response.reasoningTrace,
+        JSON.stringify(response.citations),
+        response.metadata.model,
+        request.options?.temperature || CONFIG.defaultTemperature,
+        response.metadata.promptTokens,
+        response.metadata.completionTokens,
+        response.metadata.generationTimeMs,
+        response.citations.length,
+        response.metadata.tablesReferenced,
+        response.metadata.confidenceScore,
+      ]
+    );
   } catch (error) {
     console.error('[Drafting] Failed to log session:', error);
     // Don't throw - logging failure shouldn't break the response
@@ -319,11 +327,12 @@ router.post('/generate', async (req: Request, res: Response) => {
   const sessionId = uuidv4();
 
   try {
+    const dbClient = getRequestDbClient(req);
     const request: DraftingRequest = req.body;
 
     if (!request.prompt || !request.promptType) {
       return res.status(400).json({
-        error: 'Missing required fields: prompt, promptType'
+        error: 'Missing required fields: prompt, promptType',
       });
     }
 
@@ -333,10 +342,11 @@ router.post('/generate', async (req: Request, res: Response) => {
     const queryEmbedding = await generateQueryEmbedding(request.prompt);
 
     // Step 2: Hybrid search for relevant evidence
-    const searchResults = await hybridSearch(queryEmbedding, {
+    const searchResults = await hybridSearch(queryEmbedding, dbClient, {
       documentId: request.documentId,
       entityFilters: request.entityFilters,
-      prioritizeTables: request.options?.prioritizeTables ?? 
+      prioritizeTables:
+        request.options?.prioritizeTables ??
         ['table_summary', 'pk_analysis', 'safety_analysis'].includes(request.promptType),
       limit: request.options?.maxChunks || CONFIG.maxChunks,
     });
@@ -381,16 +391,19 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
       const matchingChunk = searchResults.find(r => r.chunk_id === c.sourceId);
       return {
         ...c,
-        documentTitle: matchingChunk?.document_id ? `Document ${matchingChunk.document_id}` : undefined,
+        documentTitle: matchingChunk?.document_id
+          ? `Document ${matchingChunk.document_id}`
+          : undefined,
         contentType: matchingChunk?.content_type || 'TEXT',
         page: c.page || matchingChunk?.page_number || 0,
       };
     });
 
     // Step 6: Calculate confidence score
-    const avgVectorScore = searchResults.reduce((sum, r) => sum + (r.vector_score || 0), 0) / searchResults.length;
+    const avgVectorScore =
+      searchResults.reduce((sum, r) => sum + (r.vector_score || 0), 0) / searchResults.length;
     const citationCoverage = enrichedCitations.length / Math.max(1, searchResults.length);
-    const confidenceScore = Math.min(1, (avgVectorScore * 0.6) + (citationCoverage * 0.4));
+    const confidenceScore = Math.min(1, avgVectorScore * 0.6 + citationCoverage * 0.4);
 
     // Step 7: Build response
     const response: DraftingResponse = {
@@ -411,12 +424,13 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
 
     // Step 8: Log for audit trail (async, don't block response)
     const chunkIds = searchResults.map(r => r.chunk_id);
-    logDraftingSession(sessionId, request, response, chunkIds, req.body.userId);
+    logDraftingSession(dbClient, sessionId, request, response, chunkIds, req.body.userId);
 
-    console.log(`[Drafting] Session ${sessionId} complete: ${response.metadata.generationTimeMs}ms, ${enrichedCitations.length} citations`);
-    
+    console.log(
+      `[Drafting] Session ${sessionId} complete: ${response.metadata.generationTimeMs}ms, ${enrichedCitations.length} citations`
+    );
+
     return res.json(response);
-
   } catch (error: any) {
     console.error(`[Drafting] Session ${sessionId} failed:`, error.message);
     return res.status(500).json({
@@ -434,11 +448,13 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
 router.get('/sessions', async (req: Request, res: Response) => {
   try {
     const { programId, limit = 50, offset = 0 } = req.query;
+    const dbClient = getRequestDbClient(req);
 
-    const result = await pool.query(`
-      SELECT 
+    const result = await dbClient.query(
+      `
+      SELECT
         id, program_id, project_id, user_id,
-        prompt_type, 
+        prompt_type,
         LEFT(prompt_text, 200) as prompt_preview,
         LEFT(draft_text, 500) as draft_preview,
         citation_count, table_references, confidence_score,
@@ -448,13 +464,14 @@ router.get('/sessions', async (req: Request, res: Response) => {
       WHERE ($1::UUID IS NULL OR program_id = $1)
       ORDER BY created_at DESC
       LIMIT $2 OFFSET $3
-    `, [programId || null, limit, offset]);
+    `,
+      [programId || null, limit, offset]
+    );
 
     return res.json({
       sessions: result.rows,
       count: result.rowCount,
     });
-
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -467,17 +484,20 @@ router.get('/sessions', async (req: Request, res: Response) => {
 router.get('/sessions/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const dbClient = getRequestDbClient(req);
 
-    const result = await pool.query(`
+    const result = await dbClient.query(
+      `
       SELECT * FROM vault.drafting_sessions WHERE id = $1
-    `, [id]);
+    `,
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
     return res.json({ session: result.rows[0] });
-
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -490,6 +510,7 @@ router.get('/sessions/:id', async (req: Request, res: Response) => {
 router.post('/extract-entities', async (req: Request, res: Response) => {
   try {
     const { text, chunkId } = req.body;
+    const dbClient = getRequestDbClient(req);
 
     if (!text) {
       return res.status(400).json({ error: 'text is required' });
@@ -513,7 +534,7 @@ Only extract entities you're confident about.`,
 
     const content = extraction.choices[0]?.message?.content || '[]';
     let entities = [];
-    
+
     try {
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -526,23 +547,25 @@ Only extract entities you're confident about.`,
     // Store entities if chunkId provided
     if (chunkId && entities.length > 0) {
       for (const entity of entities) {
-        await pool.query(`
+        await dbClient.query(
+          `
           INSERT INTO vault.extracted_entities (
             chunk_id, entity_type, entity_value, entity_normalized, confidence
           ) VALUES ($1, $2, $3, $4, $5)
           ON CONFLICT DO NOTHING
-        `, [
-          chunkId,
-          entity.type,
-          entity.value,
-          entity.value.toLowerCase().replace(/[^a-z0-9]/g, ''),
-          entity.confidence || 0.8,
-        ]);
+        `,
+          [
+            chunkId,
+            entity.type,
+            entity.value,
+            entity.value.toLowerCase().replace(/[^a-z0-9]/g, ''),
+            entity.confidence || 0.8,
+          ]
+        );
       }
     }
 
     return res.json({ entities, stored: chunkId ? entities.length : 0 });
-
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -554,8 +577,9 @@ Only extract entities you're confident about.`,
  */
 router.get('/stats', async (req: Request, res: Response) => {
   try {
-    const result = await pool.query(`
-      SELECT 
+    const dbClient = getRequestDbClient(req);
+    const result = await dbClient.query(`
+      SELECT
         COUNT(*) as total_sessions,
         COUNT(DISTINCT program_id) as programs_served,
         AVG(generation_time_ms)::INT as avg_generation_time_ms,
@@ -570,7 +594,7 @@ router.get('/stats', async (req: Request, res: Response) => {
       FROM vault.drafting_sessions
     `);
 
-    const entityResult = await pool.query(`
+    const entityResult = await dbClient.query(`
       SELECT entity_type, COUNT(*) as count
       FROM vault.extracted_entities
       GROUP BY entity_type
@@ -581,7 +605,6 @@ router.get('/stats', async (req: Request, res: Response) => {
       stats: result.rows[0],
       entityDistribution: entityResult.rows,
     });
-
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
