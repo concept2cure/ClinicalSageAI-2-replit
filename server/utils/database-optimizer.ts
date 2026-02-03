@@ -6,12 +6,10 @@
  * and ensuring query performance.
  */
 
-import { Pool } from 'pg';
+import { getPool } from '../db';
 import logger from './logger';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 /**
  * Create necessary indexes for 510(k) workflow tables

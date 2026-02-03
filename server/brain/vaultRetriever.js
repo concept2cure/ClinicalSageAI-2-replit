@@ -84,15 +84,15 @@ export async function retrieveContext(query, k = 5) {
   try {
     // Import OpenAI for embeddings
     const OpenAI = (await import('openai')).default;
-    const { Pool } = await import('pg');
-    
+    const { getPool } = await import('../db.ts');
+
     if (!process.env.OPENAI_API_KEY) {
       console.warn('No OpenAI API key found, using fallback');
       return mockRetrieveContext(query, k);
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const pool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
+    const pool = getPool();
 
     try {
       // Generate embedding for query using OpenAI
@@ -100,12 +100,13 @@ export async function retrieveContext(query, k = 5) {
         model: 'text-embedding-ada-002',
         input: query,
       });
-      
+
       const queryEmbedding = embeddingResponse.data[0].embedding;
 
       // Use PostgreSQL with pgvector for similarity search
-      const result = await pool.query(`
-        SELECT 
+      const result = await pool.query(
+        `
+        SELECT
           doc_id as "docId",
           doc_title as "docTitle",
           content as text,
@@ -116,9 +117,9 @@ export async function retrieveContext(query, k = 5) {
         FROM document_chunks
         ORDER BY embedding <=> $1::vector
         LIMIT $2
-      `, [JSON.stringify(queryEmbedding), k]);
-
-      await pool.end();
+      `,
+        [JSON.stringify(queryEmbedding), k]
+      );
 
       return result.rows.map(row => ({
         docId: row.docId,
@@ -131,7 +132,6 @@ export async function retrieveContext(query, k = 5) {
       }));
     } catch (dbError) {
       console.error('Database query error:', dbError);
-      await pool.end();
       return mockRetrieveContext(query, k);
     }
   } catch (err) {

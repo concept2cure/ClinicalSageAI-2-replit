@@ -1,19 +1,14 @@
 /**
  * eCTD API Routes
- * 
+ *
  * Endpoints for eCTD module structure and project folder management.
  * Includes the seeder service for auto-instantiating M1-M5 hierarchy.
  */
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
+import { getPool } from '../../db';
 
 const router = Router();
-
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+const pool = getPool();
 
 /**
  * GET /api/ectd/module-structure
@@ -22,9 +17,10 @@ const pool = new Pool({
 router.get('/module-structure', async (req: Request, res: Response) => {
   try {
     const { agency = 'FDA' } = req.query;
-    
-    const result = await pool.query(`
-      SELECT 
+
+    const result = await pool.query(
+      `
+      SELECT
         id,
         module_code,
         module_name,
@@ -40,18 +36,20 @@ router.get('/module-structure', async (req: Request, res: Response) => {
         description,
         guidance_reference
       FROM ectd.module_structure
-      WHERE 
+      WHERE
         (fda_specific = FALSE OR fda_specific = ($1 = 'FDA'))
         AND (ema_specific = FALSE OR ema_specific = ($1 = 'EMA'))
         AND (pmda_specific = FALSE OR pmda_specific = ($1 = 'PMDA'))
       ORDER BY module_code
-    `, [agency]);
-    
+    `,
+      [agency]
+    );
+
     res.json({
       success: true,
       count: result.rowCount,
       agency,
-      modules: result.rows
+      modules: result.rows,
     });
   } catch (error: any) {
     console.error('Error fetching module structure:', error);
@@ -66,11 +64,12 @@ router.get('/module-structure', async (req: Request, res: Response) => {
 router.get('/module-structure/tree', async (req: Request, res: Response) => {
   try {
     const { agency = 'FDA' } = req.query;
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       WITH RECURSIVE module_tree AS (
-        SELECT 
-          id, module_code, module_name, parent_module_code, 
+        SELECT
+          id, module_code, module_name, parent_module_code,
           module_level, content_type, is_required,
           ARRAY[module_code] as path,
           1 as depth
@@ -79,10 +78,10 @@ router.get('/module-structure/tree', async (req: Request, res: Response) => {
           AND (fda_specific = FALSE OR fda_specific = ($1 = 'FDA'))
           AND (ema_specific = FALSE OR ema_specific = ($1 = 'EMA'))
           AND (pmda_specific = FALSE OR pmda_specific = ($1 = 'PMDA'))
-        
+
         UNION ALL
-        
-        SELECT 
+
+        SELECT
           ms.id, ms.module_code, ms.module_name, ms.parent_module_code,
           ms.module_level, ms.content_type, ms.is_required,
           mt.path || ms.module_code,
@@ -94,25 +93,27 @@ router.get('/module-structure/tree', async (req: Request, res: Response) => {
           AND (ms.pmda_specific = FALSE OR ms.pmda_specific = ($1 = 'PMDA'))
       )
       SELECT * FROM module_tree ORDER BY path
-    `, [agency]);
-    
+    `,
+      [agency]
+    );
+
     // Build nested tree structure
     const buildTree = (items: any[], parentCode: string | null = null): any[] => {
       return items
         .filter(item => item.parent_module_code === parentCode)
         .map(item => ({
           ...item,
-          children: buildTree(items, item.module_code)
+          children: buildTree(items, item.module_code),
         }));
     };
-    
+
     const tree = buildTree(result.rows);
-    
+
     res.json({
       success: true,
       count: result.rowCount,
       agency,
-      tree
+      tree,
     });
   } catch (error: any) {
     console.error('Error building module tree:', error);
@@ -128,20 +129,23 @@ router.post('/projects/:projectId/seed', async (req: Request, res: Response) => 
   try {
     const { projectId } = req.params;
     const { projectName, agency = 'FDA', userId } = req.body;
-    
+
     if (!projectName) {
       return res.status(400).json({
         success: false,
-        error: 'projectName is required'
+        error: 'projectName is required',
       });
     }
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       SELECT * FROM ectd.seed_project_hierarchy($1::uuid, $2, $3::uuid)
-    `, [projectId, projectName, userId || null]);
-    
+    `,
+      [projectId, projectName, userId || null]
+    );
+
     const { folders_created, execution_ms } = result.rows[0];
-    
+
     res.json({
       success: true,
       projectId,
@@ -150,7 +154,7 @@ router.post('/projects/:projectId/seed', async (req: Request, res: Response) => 
       foldersCreated: folders_created,
       executionMs: parseFloat(execution_ms),
       performance: execution_ms < 2000 ? 'PASS' : 'FAIL',
-      message: `Successfully seeded ${folders_created} folders in ${execution_ms}ms`
+      message: `Successfully seeded ${folders_created} folders in ${execution_ms}ms`,
     });
   } catch (error: any) {
     console.error('Error seeding project:', error);
@@ -166,9 +170,10 @@ router.get('/projects/:projectId/folders', async (req: Request, res: Response) =
   try {
     const { projectId } = req.params;
     const { includeStats = 'true' } = req.query;
-    
-    const result = await pool.query(`
-      SELECT 
+
+    const result = await pool.query(
+      `
+      SELECT
         pf.id,
         pf.module_code,
         pf.folder_path,
@@ -186,22 +191,27 @@ router.get('/projects/:projectId/folders', async (req: Request, res: Response) =
       JOIN ectd.module_structure ms ON ms.module_code = pf.module_code
       WHERE pf.project_id = $1
       ORDER BY pf.module_code
-    `, [projectId]);
-    
+    `,
+      [projectId]
+    );
+
     let stats = null;
     if (includeStats === 'true') {
-      const statsResult = await pool.query(`
+      const statsResult = await pool.query(
+        `
         SELECT * FROM ectd.get_project_folder_stats($1::uuid)
-      `, [projectId]);
+      `,
+        [projectId]
+      );
       stats = statsResult.rows[0];
     }
-    
+
     res.json({
       success: true,
       projectId,
       folderCount: result.rowCount,
       stats,
-      folders: result.rows
+      folders: result.rows,
     });
   } catch (error: any) {
     console.error('Error fetching project folders:', error);
@@ -217,11 +227,11 @@ router.patch('/projects/:projectId/folders/:folderId', async (req: Request, res:
   try {
     const { projectId, folderId } = req.params;
     const { status, documentCount } = req.body;
-    
+
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
-    
+
     if (status) {
       updates.push(`status = $${paramIndex++}`);
       values.push(status);
@@ -232,34 +242,37 @@ router.patch('/projects/:projectId/folders/:folderId', async (req: Request, res:
       updates.push(`is_placeholder = $${paramIndex++}`);
       values.push(documentCount === 0);
     }
-    
+
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No valid updates provided'
+        error: 'No valid updates provided',
       });
     }
-    
+
     updates.push(`updated_at = NOW()`);
     values.push(folderId, projectId);
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       UPDATE ectd.project_folders
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex++} AND project_id = $${paramIndex}
       RETURNING *
-    `, values);
-    
+    `,
+      values
+    );
+
     if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Folder not found'
+        error: 'Folder not found',
       });
     }
-    
+
     res.json({
       success: true,
-      folder: result.rows[0]
+      folder: result.rows[0],
     });
   } catch (error: any) {
     console.error('Error updating folder:', error);
@@ -274,7 +287,7 @@ router.patch('/projects/:projectId/folders/:folderId', async (req: Request, res:
 router.get('/stats', async (req: Request, res: Response) => {
   try {
     const result = await pool.query(`
-      SELECT 
+      SELECT
         (SELECT COUNT(*) FROM ectd.module_structure) as total_modules,
         (SELECT COUNT(*) FROM ectd.module_structure WHERE fda_specific = true) as fda_specific,
         (SELECT COUNT(*) FROM ectd.module_structure WHERE ema_specific = true) as ema_specific,
@@ -283,10 +296,10 @@ router.get('/stats', async (req: Request, res: Response) => {
         (SELECT COUNT(*) FROM ectd.project_folders) as total_folders,
         (SELECT COUNT(*) FROM ectd.project_folders WHERE is_placeholder = false) as populated_folders
     `);
-    
+
     res.json({
       success: true,
-      stats: result.rows[0]
+      stats: result.rows[0],
     });
   } catch (error: any) {
     console.error('Error fetching eCTD stats:', error);

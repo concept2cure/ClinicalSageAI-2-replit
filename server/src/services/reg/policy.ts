@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
+import { getPool } from '../../../db';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   if (!pool) throw new Error('Database pool not initialized');

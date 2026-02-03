@@ -1,8 +1,6 @@
-import { Pool } from 'pg';
+import { getPool } from '../../../db';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   if (!pool) throw new Error('Database pool not initialized');
@@ -119,11 +117,11 @@ export async function dailyQCDigest() {
   // Get QC batch summary
   const batches = (
     await q<any>(
-      `select count(*)::int as total, 
+      `select count(*)::int as total,
         sum(case when status='RELEASED' then 1 else 0 end)::int as released,
         sum(case when status='HOLD' then 1 else 0 end)::int as hold,
         sum(case when status='PENDING' then 1 else 0 end)::int as pending
-       from qc_batches 
+       from qc_batches
        where created_at >= now() - interval '24 hours'`
     )
   ).rows[0];
@@ -133,7 +131,7 @@ export async function dailyQCDigest() {
       `select count(*)::int as total,
         sum(case when status='PASS' then 1 else 0 end)::int as passed,
         sum(case when status='FAIL' then 1 else 0 end)::int as failed
-       from qc_tests 
+       from qc_tests
        where created_at >= now() - interval '24 hours'`
     )
   ).rows[0];
