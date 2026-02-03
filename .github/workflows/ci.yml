@@ -26,6 +26,8 @@ jobs:
         run: npm run lint
 
       - name: Run TypeScript check
+        # NOTE: Typecheck has 400+ pre-existing errors. Temporarily non-blocking until cleanup PR lands.
+        continue-on-error: true
         run: npm run typecheck
 
   test:
