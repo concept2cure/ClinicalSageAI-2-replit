@@ -30,7 +30,7 @@ async function validateSponsorInfo(sponsorInfo) {
   try {
     const prompt = `
       Validate the following Sponsor Info Form for IND filing compliance under 21 CFR 312.23:
-      
+
       Sponsor Name: ${sponsorInfo.sponsorName || '[Not Provided]'}
       Address: ${sponsorInfo.address || '[Not Provided]'}
       Contact Person: ${sponsorInfo.contactPerson || '[Not Provided]'}
@@ -55,7 +55,7 @@ async function validateSponsorInfo(sponsorInfo) {
       }
     `;
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -72,7 +72,7 @@ async function validateSponsorInfo(sponsorInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.data.choices[0].message.content;
+    const responseText = response.choices[0].message.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error validating sponsor info:', error);
@@ -106,7 +106,7 @@ async function validateProtocolInfo(protocolInfo) {
   try {
     const prompt = `
       Validate the following Protocol Information for IND filing compliance under 21 CFR 312.23:
-      
+
       Protocol Title: ${protocolInfo.title || '[Not Provided]'}
       Phase: ${protocolInfo.phase || '[Not Provided]'}
       Study Design: ${protocolInfo.studyDesign || '[Not Provided]'}
@@ -117,7 +117,7 @@ async function validateProtocolInfo(protocolInfo) {
       Respond in JSON format with severity levels for each finding.
     `;
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -134,7 +134,7 @@ async function validateProtocolInfo(protocolInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.data.choices[0].message.content;
+    const responseText = response.choices[0].message.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error validating protocol info:', error);
@@ -171,7 +171,7 @@ async function predictClinicalHoldRisk(indInfo) {
 
     const prompt = `
       Analyze the following IND submission information and predict the risk of receiving a clinical hold:
-      
+
       ${indSummary}
 
       Based on your regulatory expertise and analysis of historical FDA clinical hold patterns,
@@ -183,7 +183,7 @@ async function predictClinicalHoldRisk(indInfo) {
       Respond in JSON format.
     `;
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -200,7 +200,7 @@ async function predictClinicalHoldRisk(indInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.data.choices[0].message.content;
+    const responseText = response.choices[0].message.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error predicting clinical hold risk:', error);

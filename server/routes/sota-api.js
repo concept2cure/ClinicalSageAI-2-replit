@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 const logger = require('../utils/logger');
 
 /**
@@ -12,10 +12,9 @@ const logger = require('../utils/logger');
  */
 
 // Configure OpenAI
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 /**
  * Generate a State of the Art section based on provided medical and device information
@@ -50,7 +49,7 @@ router.post('/generate-sota', async (req, res) => {
 
     // Build a comprehensive prompt that follows MEDDEV 2.7/1 Rev 4 requirements
     const prompt = `
-You are a medical device regulatory expert specialized in Clinical Evaluation Reports under EU MDR. 
+You are a medical device regulatory expert specialized in Clinical Evaluation Reports under EU MDR.
 Create a comprehensive "State of the Art" section for a Clinical Evaluation Report following MEDDEV 2.7/1 Rev 4 requirements.
 
 Device Information:
@@ -114,7 +113,7 @@ Important requirements:
 The output should be a complete, well-structured State of the Art section ready for inclusion in an EU MDR-compliant Clinical Evaluation Report.
 `;
 
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
@@ -132,7 +131,7 @@ The output should be a complete, well-structured State of the Art section ready 
     });
 
     // Get the generated content
-    const generatedContent = response.data.choices[0].message.content;
+    const generatedContent = response.choices[0].message.content;
 
     // Return the generated SOTA section
     res.json({

@@ -72,7 +72,9 @@ const vector = (name: string, config: { dimensions: number }) =>
  */
 export const organizations = pgTable('organizations', {
   id: serial('id').primaryKey(),
-  uuid: uuid('uuid').default(sql`gen_random_uuid()`).notNull(),
+  uuid: uuid('uuid')
+    .default(sql`gen_random_uuid()`)
+    .notNull(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   domain: text('domain'),
@@ -1005,10 +1007,10 @@ export const clientWorkspaceSettings = pgTable(
 
 // Client Workspace Settings Insert Schema
 export const insertClientWorkspaceSettingsSchema = createInsertSchemaOmit(clientWorkspaceSettings, {
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  });
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 // Client Workspace Settings Types
 export type ClientWorkspaceSettings = InferSelectModel<typeof clientWorkspaceSettings>;
@@ -2093,9 +2095,9 @@ export const insertUserFollowingSchema = createInsertSchemaOmit(userFollowing, {
 });
 
 export const insertNotificationPreferencesSchema = createInsertSchemaOmit(notificationPreferences, {
-    id: true,
-    updatedAt: true,
-  });
+  id: true,
+  updatedAt: true,
+});
 
 export const insertUserPresenceSchema = createInsertSchemaOmit(userPresence, {
   id: true,
@@ -3394,13 +3396,34 @@ export const cerReports = pgTable('cer_reports', {
     .references(() => organizations.id),
   cerProjectId: integer('cer_project_id').references(() => cerProjects.id),
   reportId: text('report_id').notNull().unique(),
+  deviceId: integer('device_id'),
   deviceName: text('device_name').notNull(),
   deviceManufacturer: text('device_manufacturer'),
   deviceType: text('device_type'),
+  deviceClass: text('device_class'),
+  cerNumber: text('cer_number'),
+  cerVersion: text('cer_version'),
+  cerStatus: text('cer_status'),
+  regulatoryFramework: text('regulatory_framework'),
+  notifiedBodyId: text('notified_body_id'),
+  executiveSummary: json('executive_summary'),
+  deviceDescription: json('device_description'),
+  essentialRequirements: json('essential_requirements'),
+  clinicalBackground: json('clinical_background'),
+  clinicalEvidence: json('clinical_evidence'),
+  literatureReview: json('literature_review'),
+  riskBenefitAnalysis: json('risk_benefit_analysis'),
+  conclusions: json('conclusions'),
+  templateId: text('template_id'),
+  templateVersion: text('template_version'),
+  templateChecksum: text('template_checksum'),
   status: text('status').default('draft').notNull(),
   version: text('version').default('1.0.0'),
   content: json('content'),
   metadata: json('metadata'),
+  changeLog: json('change_log'),
+  createdBy: integer('created_by'),
+  updatedBy: integer('updated_by'),
   createdById: integer('created_by_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -3414,6 +3437,117 @@ export const insertCerReportSchema = createInsertSchemaOmit(cerReports, {
 
 export type CerReport = InferSelectModel<typeof cerReports>;
 export type InsertCerReport = z.infer<typeof insertCerReportSchema>;
+export type NewCerReport = z.infer<typeof insertCerReportSchema>;
+
+// CER Templates
+export const cerTemplates = pgTable('cer_templates', {
+  id: serial('id').primaryKey(),
+  templateId: text('template_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  name: text('name').notNull(),
+  version: text('version').default('1.0.0'),
+  content: json('content'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertCerTemplateSchema = createInsertSchemaOmit(cerTemplates, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CerTemplate = InferSelectModel<typeof cerTemplates>;
+export type InsertCerTemplate = z.infer<typeof insertCerTemplateSchema>;
+
+// CER Clinical Evidence
+export const cerClinicalEvidence = pgTable('cer_clinical_evidence', {
+  id: serial('id').primaryKey(),
+  cerReportId: integer('cer_report_id')
+    .notNull()
+    .references(() => cerReports.id),
+  evidenceType: text('evidence_type'),
+  title: text('title'),
+  authors: text('authors'),
+  year: integer('year'),
+  patients: integer('patients'),
+  findings: text('findings'),
+  relevance: real('relevance'),
+  quality: real('quality'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertCerClinicalEvidenceSchema = createInsertSchemaOmit(cerClinicalEvidence, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CerClinicalEvidence = InferSelectModel<typeof cerClinicalEvidence>;
+export type NewCerClinicalEvidence = z.infer<typeof insertCerClinicalEvidenceSchema>;
+
+// CER Essential Requirements
+export const cerEssentialRequirements = pgTable('cer_essential_requirements', {
+  id: serial('id').primaryKey(),
+  cerReportId: integer('cer_report_id')
+    .notNull()
+    .references(() => cerReports.id),
+  requirement: text('requirement'),
+  evidence: text('evidence'),
+  status: text('status'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// CER Version History
+export const cerVersionHistory = pgTable('cer_version_history', {
+  id: serial('id').primaryKey(),
+  cerReportId: integer('cer_report_id')
+    .notNull()
+    .references(() => cerReports.id),
+  version: text('version').notNull(),
+  changeLog: json('change_log'),
+  createdBy: integer('created_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Device Profiles
+export const deviceProfiles = pgTable('device_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  name: text('name'),
+  deviceName: text('device_name'),
+  classification: text('classification'),
+  manufacturer: text('manufacturer'),
+  deviceType: text('device_type'),
+  productCode: text('product_code'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Device Submissions
+export const deviceSubmissions = pgTable('device_submissions', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  deviceId: integer('device_id').references(() => deviceProfiles.id),
+  submissionType: text('submission_type'),
+  status: text('status'),
+  submittedAt: timestamp('submitted_at'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 /**
  * CER Sections Table
@@ -3999,11 +4133,14 @@ export const croRegulatorySubmissions = pgTable('cro_regulatory_submissions', {
 });
 
 // CRO Regulatory Submissions Insert Schema
-export const insertCroRegulatorySubmissionSchema = createInsertSchemaOmit(croRegulatorySubmissions, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertCroRegulatorySubmissionSchema = createInsertSchemaOmit(
+  croRegulatorySubmissions,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 // CRO Regulatory Submissions Types
 export type CroRegulatorySubmission = InferSelectModel<typeof croRegulatorySubmissions>;
@@ -4450,8 +4587,7 @@ export const concept2cureArtifacts = pgTable(
     projectId: integer('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
-    conversationId: integer('conversation_id')
-      .references(() => concept2cureConversations.id),
+    conversationId: integer('conversation_id').references(() => concept2cureConversations.id),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
@@ -4558,11 +4694,14 @@ export const concept2cureSignatures = pgTable(
 );
 
 // Insert Schemas
-export const insertConcept2cureConversationSchema = createInsertSchemaOmit(concept2cureConversations, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
+  concept2cureConversations,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 export const insertConcept2cureMessageSchema = createInsertSchemaOmit(concept2cureMessages, {
   id: true,
@@ -4575,10 +4714,13 @@ export const insertConcept2cureArtifactSchema = createInsertSchemaOmit(concept2c
   updatedAt: true,
 });
 
-export const insertConcept2cureArtifactVersionSchema = createInsertSchemaOmit(concept2cureArtifactVersions, {
-  id: true,
-  createdAt: true,
-});
+export const insertConcept2cureArtifactVersionSchema = createInsertSchemaOmit(
+  concept2cureArtifactVersions,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 
 export const insertConcept2cureSignatureSchema = createInsertSchemaOmit(concept2cureSignatures, {
   id: true,
@@ -4596,7 +4738,9 @@ export type Concept2cureArtifact = InferSelectModel<typeof concept2cureArtifacts
 export type InsertConcept2cureArtifact = z.infer<typeof insertConcept2cureArtifactSchema>;
 
 export type Concept2cureArtifactVersion = InferSelectModel<typeof concept2cureArtifactVersions>;
-export type InsertConcept2cureArtifactVersion = z.infer<typeof insertConcept2cureArtifactVersionSchema>;
+export type InsertConcept2cureArtifactVersion = z.infer<
+  typeof insertConcept2cureArtifactVersionSchema
+>;
 
 export type Concept2cureSignature = InferSelectModel<typeof concept2cureSignatures>;
 export type InsertConcept2cureSignature = z.infer<typeof insertConcept2cureSignatureSchema>;
@@ -5567,11 +5711,14 @@ export const validationHarmonizationOpportunities = pgTable(
 );
 
 // Insert schemas for multi-agency validation tables
-export const insertMultiAgencyValidationSessionSchema = createInsertSchemaOmit(multiAgencyValidationSessions, {
-  sessionId: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertMultiAgencyValidationSessionSchema = createInsertSchemaOmit(
+  multiAgencyValidationSessions,
+  {
+    sessionId: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 export const insertAgencyValidationResultSchema = createInsertSchemaOmit(agencyValidationResults, {
   id: true,
@@ -5583,10 +5730,13 @@ export const insertValidationIssueSchema = createInsertSchemaOmit(validationIssu
   createdAt: true,
 });
 
-export const insertValidationHarmonizationOpportunitySchema = createInsertSchemaOmit(validationHarmonizationOpportunities, {
-  opportunityId: true,
-  createdAt: true,
-});
+export const insertValidationHarmonizationOpportunitySchema = createInsertSchemaOmit(
+  validationHarmonizationOpportunities,
+  {
+    opportunityId: true,
+    createdAt: true,
+  }
+);
 
 // Types for multi-agency validation
 export type MultiAgencyValidationSession = InferSelectModel<typeof multiAgencyValidationSessions>;
@@ -6145,11 +6295,14 @@ export const structuredObservationTerms = pgTable('structured_observation_terms'
 });
 
 // Structured Observation Terms Insert Schema
-export const insertStructuredObservationTermSchema = createInsertSchemaOmit(structuredObservationTerms, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertStructuredObservationTermSchema = createInsertSchemaOmit(
+  structuredObservationTerms,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 // Structured Observation Terms Types
 export type StructuredObservationTerm = InferSelectModel<typeof structuredObservationTerms>;
@@ -6642,11 +6795,14 @@ export const supplyChainOrganizations = pgTable(
 );
 
 // Supply Chain Organization Insert Schema
-export const insertSupplyChainOrganizationSchema = createInsertSchemaOmit(supplyChainOrganizations, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertSupplyChainOrganizationSchema = createInsertSchemaOmit(
+  supplyChainOrganizations,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 // Supply Chain Organization Types
 export type SupplyChainOrganization = InferSelectModel<typeof supplyChainOrganizations>;
@@ -7914,16 +8070,19 @@ export const insertIndPackagePlanRegionSchema = createInsertSchemaOmit(indPackag
 });
 
 export const insertIndPackagePlanModalitySchema = createInsertSchemaOmit(indPackagePlanModalities, {
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  });
-
-export const insertIndPackagePlanRequirementSchema = createInsertSchemaOmit(indPackagePlanRequirements, {
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+
+export const insertIndPackagePlanRequirementSchema = createInsertSchemaOmit(
+  indPackagePlanRequirements,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 export const insertIndPackagePlanTimelineSchema = createInsertSchemaOmit(indPackagePlanTimelines, {
   id: true,
@@ -9071,11 +9230,14 @@ export const componentSequenceReferences = pgTable(
 );
 
 // Component Sequence References Insert Schema
-export const insertComponentSequenceReferenceSchema = createInsertSchemaOmit(componentSequenceReferences, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertComponentSequenceReferenceSchema = createInsertSchemaOmit(
+  componentSequenceReferences,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 // Component Sequence References Types
 export type ComponentSequenceReference = InferSelectModel<typeof componentSequenceReferences>;
@@ -9356,10 +9518,13 @@ export const insertCoauthorValidationRuleSchema = createInsertSchemaOmit(coautho
   updatedAt: true,
 });
 
-export const insertCoauthorValidationHistorySchema = createInsertSchemaOmit(coauthorValidationHistory, {
-  id: true,
-  performedAt: true,
-});
+export const insertCoauthorValidationHistorySchema = createInsertSchemaOmit(
+  coauthorValidationHistory,
+  {
+    id: true,
+    performedAt: true,
+  }
+);
 
 // Types for validation system
 export type CoauthorValidationRule = InferSelectModel<typeof coauthorValidationRules>;
@@ -9622,7 +9787,7 @@ export const gateApprovals = pgTable(
 
 /**
  * Proof Audit Logs Table
- * 
+ *
  * 21 CFR Part 11 compliant audit trail for the Proof System (Phase 4.1).
  * Immutable hash-chained audit entries for:
  * - Graph compilation and transitions
@@ -9635,26 +9800,25 @@ export const proofAuditLogs = pgTable(
   {
     id: serial('id').primaryKey(),
     entryId: text('entry_id').notNull().unique(),
-    organizationId: integer('organization_id')
-      .references(() => organizations.id),
+    organizationId: integer('organization_id').references(() => organizations.id),
     workflowRunId: text('workflow_run_id'),
-    
+
     // Event Details
     eventType: text('event_type').notNull(), // GRAPH_COMPILE, ZK_PROOF_GENERATED, CERTIFICATE_GENERATED, etc.
     actorId: text('actor_id'),
     actorRole: text('actor_role'),
-    
+
     // Proof Data (redacted for compliance)
     details: json('details').notNull(),
-    
+
     // Hash Chain Integrity (required for 21 CFR Part 11 § 11.10(e))
     previousHash: text('previous_hash'),
     hashChain: text('hash_chain').notNull(),
-    
+
     // Trusted Timestamp (NTP-verified)
     timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
     timestampSource: text('timestamp_source').default('server').notNull(), // server, ntp, tsa
-    
+
     // Immutability marker - row cannot be updated after insert
     immutable: boolean('immutable').default(true).notNull(),
   },
@@ -10189,16 +10353,121 @@ export const csrReports = pgTable('csr_reports', {
   clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
   reportId: text('report_id').notNull().unique(),
   reportTitle: text('report_title').notNull(),
+  title: text('title'),
+  sponsor: text('sponsor'),
+  indication: text('indication'),
+  phase: text('phase'),
+  reportDate: date('report_date'),
   reportType: text('report_type'), // periodic, expedited, annual
   studyId: text('study_id'),
   status: text('status').default('draft').notNull(), // draft, in_review, submitted, approved
   submissionDate: timestamp('submission_date'),
   dueDate: timestamp('due_date'),
   uploadDate: timestamp('upload_date').defaultNow().notNull(),
+  sampleSize: integer('sample_size'),
+  durationWeeks: integer('duration_weeks'),
+  studyDesign: text('study_design'),
+  primaryEndpoint: text('primary_endpoint'),
+  secondaryEndpoints: text('secondary_endpoints'),
+  deletedAt: timestamp('deleted_at'),
   content: json('content'),
   metadata: json('metadata'),
   complianceStatus: text('compliance_status'),
   regulatoryAgency: text('regulatory_agency'), // FDA, EMA, PMDA, etc.
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// CSR Details - Study-level details for protocol/design analytics
+export const csrDetails = pgTable('csr_details', {
+  id: serial('id').primaryKey(),
+  reportId: integer('report_id')
+    .notNull()
+    .references(() => csrReports.id),
+  studyDesign: text('study_design'),
+  primaryObjective: text('primary_objective'),
+  secondaryObjective: text('secondary_objective'),
+  primaryEndpoint: text('primary_endpoint'),
+  secondaryEndpoints: text('secondary_endpoints'),
+  inclusionCriteria: text('inclusion_criteria'),
+  exclusionCriteria: text('exclusion_criteria'),
+  sampleSize: integer('sample_size'),
+  dropoutRate: real('dropout_rate'),
+  blinding: text('blinding'),
+  randomization: text('randomization'),
+  statisticalMethods: text('statistical_methods'),
+  efficacyResults: text('efficacy_results'),
+  safetyResults: text('safety_results'),
+  adverseEvents: text('adverse_events'),
+  seriousEvents: text('serious_events'),
+  patientReportedOutcome: text('patient_reported_outcome'),
+  biomarkerUsed: text('biomarker_used'),
+  endpoints: json('endpoints'),
+  results: json('results'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Protocols - high-level protocol records used by strategy services
+export const protocols = pgTable('protocols', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
+  title: text('title').notNull(),
+  indication: text('indication'),
+  phase: text('phase'),
+  status: text('status').default('draft').notNull(),
+  version: text('version'),
+  content: json('content'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Strategic Reports - portfolio/strategy analysis outputs
+export const strategicReports = pgTable('strategic_reports', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
+  reportId: text('report_id').notNull().unique(),
+  title: text('title').notNull(),
+  summary: text('summary'),
+  content: json('content'),
+  status: text('status').default('draft').notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Generic Reports - used by intelligence and analytics services
+export const reports = pgTable('reports', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
+  reportType: text('report_type').notNull(),
+  title: text('title').notNull(),
+  status: text('status').default('draft').notNull(),
+  content: json('content'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Report Details - supplemental data linked to reports
+export const reportDetails = pgTable('report_details', {
+  id: serial('id').primaryKey(),
+  reportId: integer('report_id')
+    .notNull()
+    .references(() => reports.id),
+  section: text('section'),
+  details: json('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -12247,10 +12516,13 @@ export type CoauthorDocument = InferSelectModel<typeof coauthorDocuments>;
 export type InsertCoauthorDocument = z.infer<typeof insertCoauthorDocumentSchema>;
 
 // CoAuthor Document Versions insert schemas and types
-export const insertCoauthorDocumentVersionSchema = createInsertSchemaOmit(coauthorDocumentVersions, {
-  id: true,
-  createdAt: true,
-});
+export const insertCoauthorDocumentVersionSchema = createInsertSchemaOmit(
+  coauthorDocumentVersions,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 
 export type CoauthorDocumentVersion = InferSelectModel<typeof coauthorDocumentVersions>;
 export type InsertCoauthorDocumentVersion = z.infer<typeof insertCoauthorDocumentVersionSchema>;
@@ -13000,11 +13272,14 @@ export const insertFda510kStageProgressSchema = createInsertSchemaOmit(fda510kSt
   updatedAt: true,
 });
 
-export const insertFda510kSubmissionPackageSchema = createInsertSchemaOmit(fda510kSubmissionPackages, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertFda510kSubmissionPackageSchema = createInsertSchemaOmit(
+  fda510kSubmissionPackages,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 export const insertFda510kDataMappingSchema = createInsertSchemaOmit(fda510kDataMappings, {
   id: true,
