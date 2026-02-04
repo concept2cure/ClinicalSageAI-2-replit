@@ -147,7 +147,7 @@ for migration in $MIGRATION_FILES; do
         -f "$migration" \
         2>&1; then
         echo -e "${GREEN}✓ Applied: ${NC}$MIGRATION_NAME"
-        ((APPLIED++))
+        APPLIED=$((APPLIED + 1))
     else
         echo -e "${RED}✗ FAILED: ${NC}$MIGRATION_NAME"
         FAILED=1
