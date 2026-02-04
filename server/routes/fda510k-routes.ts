@@ -737,7 +737,7 @@ const filterFields = (data: any, fields?: string[]): any => {
         const nestedField = rest.join('.');
         filtered[parent] = filterFields(data[parent], [nestedField]);
       }
-    } else if (Object.prototype.hasOwnProperty.call(data, field)) {
+    } else if (data.hasOwnProperty(field)) {
       filtered[field] = data[field];
     }
   });

@@ -215,7 +215,7 @@ export async function generateSubmissionPdf(submissionId, options = {}) {
  * @param {Object} submission - Submission details
  */
 async function addCoverPage(pdfDoc, submission) {
-  let page = pdfDoc.addPage(STYLING.pageSize);
+  const page = pdfDoc.addPage(STYLING.pageSize);
   const { width, height } = page.getSize();
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -307,7 +307,7 @@ async function addCoverPage(pdfDoc, submission) {
  * @param {Object} sectionNames - Map of section codes to names
  */
 async function addTableOfContents(pdfDoc, sectionBlocks, sectionNames) {
-  let page = pdfDoc.addPage(STYLING.pageSize);
+  const page = pdfDoc.addPage(STYLING.pageSize);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
