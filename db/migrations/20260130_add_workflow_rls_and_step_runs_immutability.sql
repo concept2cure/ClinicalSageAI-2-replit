@@ -25,7 +25,7 @@ BEGIN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_workflow_run ON step_runs(workflow_run_id)';
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_tenant ON step_runs(tenant_id)';
   END IF;
-END$$;
+END $$;
 
 -- Create immutability trigger for step_runs if not present
 -- This prevents UPDATE or DELETE on step_runs (append-only audit)
@@ -33,14 +33,14 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'trg_no_update_delete') THEN
     CREATE OR REPLACE FUNCTION trg_no_update_delete()
-    RETURNS trigger AS $$
+    RETURNS trigger AS $fn$
     BEGIN
       RAISE EXCEPTION 'Attempt to modify audit record % on table %; audit tables are immutable', OLD.id, TG_TABLE_NAME;
       RETURN NULL;
     END;
-    $$ LANGUAGE plpgsql;
+    $fn$ LANGUAGE plpgsql;
   END IF;
-END$$;
+END $$;
 
 DO $$
 BEGIN
@@ -50,6 +50,6 @@ BEGIN
       BEFORE UPDATE OR DELETE ON step_runs
       FOR EACH ROW EXECUTE FUNCTION trg_no_update_delete()';
   END IF;
-END$$;
+END $$;
 
 COMMIT;
