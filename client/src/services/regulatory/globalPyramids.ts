@@ -1,6 +1,16 @@
 /**
- * Global Submission Pyramids
- * Placeholder service for global regulatory pyramids
+ * Global Submission Pyramids Service
+ * 
+ * This is a placeholder service for global regulatory pyramids.
+ * Currently exports empty data structures as stubs.
+ * 
+ * TODO: Implement actual data population when global submission features are developed.
+ * This service should eventually:
+ * - Load pyramid configurations from database or configuration files
+ * - Provide filtering and querying capabilities for different regulatory regions
+ * - Support CRUD operations for pyramid management
+ * 
+ * For now, it exists to satisfy import requirements in the codebase.
  */
 
 export type GlobalSubmissionType = 
@@ -17,7 +27,7 @@ export interface GlobalPyramidConfig {
   description?: string;
 }
 
-// Placeholder data
+// Placeholder data - will be populated when global submission features are implemented
 export const GLOBAL_PYRAMIDS: GlobalPyramidConfig[] = [];
 
 export function getGlobalPyramid(id: string): GlobalPyramidConfig | undefined {
