@@ -81,8 +81,9 @@ class NeonBatchStore:
             INSERT INTO vault.review_batches (
                 batch_id, program_id, status, mode, ruleset_version,
                 extractor_version, response_mode, idempotency_key,
-                request_digest, documents_total, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                request_digest, documents_total, created_at,
+                queued_at, docs_total, docs_processed, docs_succeeded, docs_failed
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $10, 0, 0, 0)
             ON CONFLICT (batch_id) DO NOTHING
             RETURNING *
         """
@@ -133,6 +134,8 @@ class NeonBatchStore:
     async def mark_batch_running(
         self,
         batch_id: str,
+        program_id: str,
+        worker_id: str | None = None,
         started_at: datetime | None = None,
     ) -> None:
         """
@@ -140,17 +143,160 @@ class NeonBatchStore:
 
         Args:
             batch_id: Batch UUID
+            program_id: Program UUID for RLS filtering
+            worker_id: Worker identifier
             started_at: Optional timestamp (defaults to now)
+        """
+        now = started_at or datetime.now(timezone.utc)
+        query = """
+            UPDATE vault.review_batches
+            SET status = 'running',
+                started_at = $2,
+                heartbeat_at = $2,
+                worker_id = $3,
+                attempt_count = attempt_count + 1
+            WHERE batch_id = $1 AND program_id = $4 AND status = 'queued'
+        """
+        await self._execute(query, (batch_id, now, worker_id, program_id))
+
+    async def heartbeat(
+        self,
+        batch_id: str,
+        program_id: str,
+        docs_processed: int,
+        docs_succeeded: int,
+        docs_failed: int,
+    ) -> None:
+        """
+        Update heartbeat timestamp and progress counters.
+
+        Called periodically during processing to indicate liveness.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID for RLS filtering
+            docs_total: Total documents to process
+            docs_processed: Total documents processed so far
+            docs_succeeded: Documents that succeeded
+            docs_failed: Documents that failed
         """
         query = """
             UPDATE vault.review_batches
-            SET status = 'running', started_at = $2
-            WHERE batch_id = $1 AND status = 'queued'
+            SET heartbeat_at = $2,
+                docs_processed = $3,
+                docs_succeeded = $4,
+                docs_failed = $5
+            WHERE batch_id = $1 AND program_id = $6
         """
         await self._execute(
             query,
-            (batch_id, started_at or datetime.now(timezone.utc)),
+            (batch_id, datetime.now(timezone.utc), docs_processed, docs_succeeded, docs_failed, program_id),
         )
+
+    async def claim_next_queued_batch(
+        self,
+        program_id: str,
+        worker_id: str,
+    ) -> str | None:
+        """
+        Atomically claim the next queued batch for processing.
+
+        Args:
+            program_id: Program UUID for RLS filtering
+            worker_id: Worker identifier
+
+        Returns:
+            Claimed batch_id or None if none available
+        """
+        query = """
+            WITH next_batch AS (
+                SELECT batch_id
+                FROM vault.review_batches
+                WHERE program_id = $1
+                  AND status = 'queued'
+                ORDER BY queued_at, batch_id
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            UPDATE vault.review_batches
+            SET status = 'running',
+                started_at = COALESCE(started_at, now()),
+                heartbeat_at = now(),
+                worker_id = $2,
+                attempt_count = attempt_count + 1
+            WHERE program_id = $1
+              AND batch_id IN (SELECT batch_id FROM next_batch)
+            RETURNING batch_id
+        """
+        rows = await self._execute(query, (program_id, worker_id))
+        return str(rows[0]["batch_id"]) if rows else None
+
+    async def sweep_stalled_batches(
+        self,
+        program_id: str,
+        stall_seconds: int,
+        max_attempts: int,
+    ) -> dict[str, Any]:
+        """
+        Find and handle stalled batches.
+
+        For batches with attempts remaining: requeue them.
+        For batches at max attempts: mark as failed.
+
+        Args:
+            program_id: Program UUID to scope sweep
+            stall_seconds: Seconds after which heartbeat is considered stale
+            max_attempts: Maximum retry attempts before permanent failure
+            worker_id: Optional worker ID for logging
+
+        Returns:
+            List of affected batch_ids
+        """
+        query = """
+            WITH stalled AS (
+                SELECT batch_id, attempt_count
+                FROM vault.review_batches
+                WHERE program_id = $1
+                  AND status = 'running'
+                  AND (
+                    heartbeat_at < now() - ($2 || ' seconds')::interval
+                    OR (heartbeat_at IS NULL AND started_at < now() - ($2 || ' seconds')::interval)
+                  )
+            ),
+            requeued AS (
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    started_at = NULL,
+                    heartbeat_at = NULL,
+                    worker_id = NULL,
+                    last_error = 'requeued_due_to_stall'
+                WHERE program_id = $1
+                  AND batch_id IN (SELECT batch_id FROM stalled WHERE attempt_count < $3)
+                RETURNING batch_id
+            ),
+            failed AS (
+                UPDATE vault.review_batches
+                SET status = 'failed',
+                    completed_at = now(),
+                    last_error = 'stalled_exceeded_attempts'
+                WHERE program_id = $1
+                  AND batch_id IN (SELECT batch_id FROM stalled WHERE attempt_count >= $3)
+                RETURNING batch_id
+            )
+            SELECT
+                COALESCE((SELECT array_agg(batch_id) FROM requeued), ARRAY[]::uuid[]) AS requeued_ids,
+                COALESCE((SELECT array_agg(batch_id) FROM failed), ARRAY[]::uuid[]) AS failed_ids
+        """
+        rows = await self._execute(query, (program_id, str(stall_seconds), max_attempts))
+        row = rows[0] if rows else {"requeued_ids": [], "failed_ids": []}
+        requeued_ids = [str(bid) for bid in (row.get("requeued_ids") or [])]
+        failed_ids = [str(bid) for bid in (row.get("failed_ids") or [])]
+        return {
+            "requeued": len(requeued_ids),
+            "failed": len(failed_ids),
+            "requeued_ids": requeued_ids,
+            "failed_ids": failed_ids,
+        }
 
     async def upsert_doc_result(
         self,
@@ -219,22 +365,37 @@ class NeonBatchStore:
     async def finalize_batch(
         self,
         batch_id: str,
+        program_id: str,
         summary: BatchSummaryUpdate,
         status: str = "completed",
         completed_at: datetime | None = None,
+        last_error: str | None = None,
+        docs_total: int | None = None,
+        docs_succeeded: int | None = None,
+        docs_failed: int | None = None,
     ) -> BatchRow:
         """
         Finalize batch with summary statistics.
 
         Args:
             batch_id: Batch UUID
+            program_id: Program UUID for RLS filtering
             summary: Aggregated summary data
             status: Final status ('completed' or 'failed')
             completed_at: Completion timestamp (defaults to now)
+            last_error: Error message if failed
+            docs_total: Total number of documents
+            docs_succeeded: Number of successfully processed documents
+            docs_failed: Number of failed documents
 
         Returns:
             Updated BatchRow
         """
+        # Use summary values if not explicitly provided
+        final_docs_succeeded = docs_succeeded if docs_succeeded is not None else summary.documents_succeeded
+        final_docs_failed = docs_failed if docs_failed is not None else summary.documents_failed
+        final_docs_total = docs_total if docs_total is not None else (final_docs_succeeded + final_docs_failed)
+
         query = """
             UPDATE vault.review_batches SET
                 status = $2,
@@ -243,8 +404,13 @@ class NeonBatchStore:
                 findings_total = $5,
                 by_severity = $6,
                 error_summary = $7,
-                completed_at = $8
-            WHERE batch_id = $1
+                completed_at = $8,
+                last_error = $9,
+                docs_total = $10,
+                docs_succeeded = $3,
+                docs_failed = $4,
+                docs_processed = $3 + $4
+            WHERE batch_id = $1 AND program_id = $11
             RETURNING *
         """
         rows = await self._execute(
@@ -252,46 +418,63 @@ class NeonBatchStore:
             (
                 batch_id,
                 status,
-                summary.documents_succeeded,
-                summary.documents_failed,
+                final_docs_succeeded,
+                final_docs_failed,
                 summary.findings_total,
                 json.dumps(summary.by_severity),
                 json.dumps(summary.error_summary),
                 completed_at or datetime.now(timezone.utc),
+                last_error,
+                final_docs_total,
+                program_id,
             ),
         )
-        return self._row_to_batch(rows[0])
+        return self._row_to_batch(rows[0]) if rows else None
 
-    async def get_batch(self, batch_id: str) -> BatchRow | None:
+    async def get_batch(self, batch_id: str, program_id: str | None = None) -> BatchRow | None:
         """
         Get batch by ID.
 
         Args:
             batch_id: Batch UUID
+            program_id: Optional program UUID for RLS filtering
 
         Returns:
             BatchRow or None if not found
         """
-        query = "SELECT * FROM vault.review_batches WHERE batch_id = $1"
-        rows = await self._execute(query, (batch_id,))
+        if program_id:
+            query = "SELECT * FROM vault.review_batches WHERE batch_id = $1 AND program_id = $2"
+            rows = await self._execute(query, (batch_id, program_id))
+        else:
+            query = "SELECT * FROM vault.review_batches WHERE batch_id = $1"
+            rows = await self._execute(query, (batch_id,))
         return self._row_to_batch(rows[0]) if rows else None
 
-    async def get_batch_docs(self, batch_id: str) -> list[DocRow]:
+    async def get_batch_docs(self, batch_id: str, program_id: str | None = None) -> list[DocRow]:
         """
         Get all document results for a batch.
 
         Args:
             batch_id: Batch UUID
+            program_id: Optional program UUID for RLS filtering
 
         Returns:
             List of DocRow (may be empty)
         """
-        query = """
-            SELECT * FROM vault.review_batch_docs
-            WHERE batch_id = $1
-            ORDER BY created_at, doc_id
-        """
-        rows = await self._execute(query, (batch_id,))
+        if program_id:
+            query = """
+                SELECT * FROM vault.review_batch_docs
+                WHERE batch_id = $1 AND program_id = $2
+                ORDER BY created_at, doc_id
+            """
+            rows = await self._execute(query, (batch_id, program_id))
+        else:
+            query = """
+                SELECT * FROM vault.review_batch_docs
+                WHERE batch_id = $1
+                ORDER BY created_at, doc_id
+            """
+            rows = await self._execute(query, (batch_id,))
         return [self._row_to_doc(r) for r in rows]
 
     def _row_to_batch(self, row: dict[str, Any]) -> BatchRow:
@@ -323,6 +506,16 @@ class NeonBatchStore:
             started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
             error_summary=error_summary,
+            # A7-6: Job runner hardening fields
+            queued_at=row.get("queued_at"),
+            heartbeat_at=row.get("heartbeat_at"),
+            attempt_count=row.get("attempt_count", 0),
+            worker_id=row.get("worker_id"),
+            last_error=row.get("last_error"),
+            docs_total=row.get("docs_total", 0),
+            docs_processed=row.get("docs_processed", 0),
+            docs_succeeded=row.get("docs_succeeded", 0),
+            docs_failed=row.get("docs_failed", 0),
         )
 
     def _row_to_doc(self, row: dict[str, Any]) -> DocRow:

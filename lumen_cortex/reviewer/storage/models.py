@@ -29,6 +29,16 @@ class BatchRow:
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error_summary: list[dict[str, Any]] = field(default_factory=list)
+    # A7-6: Job runner hardening fields
+    queued_at: datetime | None = None
+    heartbeat_at: datetime | None = None
+    attempt_count: int = 0
+    worker_id: str | None = None
+    last_error: str | None = None
+    docs_total: int = 0
+    docs_processed: int = 0
+    docs_succeeded: int = 0
+    docs_failed: int = 0
 
 
 @dataclass

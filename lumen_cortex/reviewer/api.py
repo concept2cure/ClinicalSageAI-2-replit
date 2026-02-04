@@ -35,6 +35,7 @@ from lumen_cortex.core.extractors.text_extract import (
 from lumen_cortex.core.events import (
     EventStoreAdapter,
     derive_error_content_hash,
+    derive_batch_id,
     BatchQueuedPayload,
     BatchPersistedPayload,
 )
@@ -189,10 +190,17 @@ class BatchStatusResponse(BaseModel):
     mode: Literal["sync", "async"]
     documents_total: int
     documents_processed: int
+    docs_succeeded: int = 0
+    docs_failed: int = 0
     findings_total: Optional[int] = None
     by_severity: Optional[Dict[str, int]] = None
-    created_at: str
-    updated_at: str
+    attempt_count: int = 0
+    worker_id: Optional[str] = None
+    last_error: Optional[str] = None
+    queued_at: Optional[str] = None
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    heartbeat_at: Optional[str] = None
     documents: Optional[List[BatchDocumentResponse]] = None
 
 
@@ -202,6 +210,19 @@ class BatchQueuedResponse(BaseModel):
     status: Literal["queued"] = "queued"
     poll_url: str
     message: str = "Batch queued for processing"
+
+
+class SweepRequest(BaseModel):
+    """Request body for sweeper endpoint."""
+    program_id: UUID = Field(..., description="Program ID to sweep batches for")
+
+
+class SweepResponse(BaseModel):
+    """Response from sweeper endpoint."""
+    requeued: int
+    failed: int
+    requeued_ids: List[str]
+    failed_ids: List[str]
 
 
 def _build_canonical_document(
@@ -317,21 +338,34 @@ async def _process_batch_async(
     Background task to process a batch asynchronously.
 
     Updates batch status in database as processing progresses.
+    Emits heartbeats every 3 documents to prevent stall detection.
+    Tracks progress counters (docs_processed, docs_succeeded, docs_failed).
     """
     store = get_batch_store()
     if not store:
         return
 
+    # Progress counters
+    docs_total = len(file_bytes_list)
+    docs_processed = 0
+    docs_succeeded = 0
+    docs_failed = 0
+    heartbeat_interval = 3  # Heartbeat every N documents
+
     try:
-        # Mark batch as running
-        await store.mark_batch_running(batch_id, str(program_id))
+        # Mark batch as running with worker_id and initial counts
+        await store.mark_batch_running(
+            batch_id,
+            str(program_id),
+            worker_id=REVIEW_CONFIG.worker_id,
+        )
 
         # Process documents
         canonical_docs: List[CanonicalDocument] = []
         content_hashes_all: List[str] = []
         errored_docs_info: List[Dict[str, Any]] = []
 
-        for filename, file_bytes in file_bytes_list:
+        for idx, (filename, file_bytes) in enumerate(file_bytes_list):
             source_type = _infer_source_type_from_filename(filename)
             file_size = len(file_bytes)
 
@@ -355,6 +389,18 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
+                docs_processed += 1
+                docs_failed += 1
+
+                # Heartbeat every N documents
+                if docs_processed % heartbeat_interval == 0:
+                    await store.heartbeat(
+                        batch_id,
+                        str(program_id),
+                        docs_processed=docs_processed,
+                        docs_succeeded=docs_succeeded,
+                        docs_failed=docs_failed,
+                    )
                 continue
 
             if file_size > REVIEW_CONFIG.max_file_bytes:
@@ -377,6 +423,18 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
+                docs_processed += 1
+                docs_failed += 1
+
+                # Heartbeat every N documents
+                if docs_processed % heartbeat_interval == 0:
+                    await store.heartbeat(
+                        batch_id,
+                        str(program_id),
+                        docs_processed=docs_processed,
+                        docs_succeeded=docs_succeeded,
+                        docs_failed=docs_failed,
+                    )
                 continue
 
             try:
@@ -409,7 +467,28 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
+                docs_processed += 1
+                docs_failed += 1
+
+                # Heartbeat every N documents
+                if docs_processed % heartbeat_interval == 0:
+                    await store.heartbeat(
+                        batch_id,
+                        str(program_id),
+                        docs_processed=docs_processed,
+                        docs_succeeded=docs_succeeded,
+                        docs_failed=docs_failed,
+                    )
                 continue
+
+        # Heartbeat before review phase (long-running)
+        await store.heartbeat(
+            batch_id,
+            str(program_id),
+            docs_processed=docs_processed,
+            docs_succeeded=docs_succeeded,
+            docs_failed=docs_failed,
+        )
 
         # Run review
         event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
@@ -427,7 +506,7 @@ async def _process_batch_async(
             errored_docs=errored_docs_info,
         )
 
-        # Persist document results
+        # Persist document results and update counters
         for doc_result in result.documents:
             findings_preview = [
                 {
@@ -448,18 +527,208 @@ async def _process_batch_async(
                 findings_preview=findings_preview,
             )
 
+            # Track successful docs (those not in errored_docs_info)
+            if not any(e["doc_id"] == doc_result.doc_id for e in errored_docs_info):
+                docs_processed += 1
+                docs_succeeded += 1
+
+                # Heartbeat every N documents
+                if docs_processed % heartbeat_interval == 0:
+                    await store.heartbeat(
+                        batch_id,
+                        str(program_id),
+                        docs_processed=docs_processed,
+                        docs_succeeded=docs_succeeded,
+                        docs_failed=docs_failed,
+                    )
+
         # Finalize batch with summary
         from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
         summary = BatchSummaryUpdate(
+            documents_succeeded=docs_succeeded,
+            documents_failed=docs_failed,
             findings_total=result.total_findings,
             by_severity=result.findings_by_severity,
         )
-        await store.finalize_batch(batch_id, str(program_id), summary)
+        await store.finalize_batch(
+            batch_id,
+            str(program_id),
+            summary,
+            docs_total=docs_total,
+            docs_succeeded=docs_succeeded,
+            docs_failed=docs_failed,
+        )
 
     except Exception as e:
-        # Mark batch as failed on error
-        # Note: In production, would log the error
-        pass
+        # Mark batch as failed on error with error message
+        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
+        summary = BatchSummaryUpdate(
+            documents_succeeded=docs_succeeded,
+            documents_failed=docs_failed,
+            findings_total=0,
+            by_severity={},
+        )
+        try:
+            await store.finalize_batch(
+                batch_id,
+                str(program_id),
+                summary,
+                status="failed",
+                last_error=str(e)[:500],
+                docs_total=docs_total,
+                docs_succeeded=docs_succeeded,
+                docs_failed=docs_failed,
+            )
+        except Exception:
+            # If finalize fails, best effort - log in production
+            pass
+
+
+async def _process_batch_async_json(
+    batch_id: str,
+    program_id: UUID,
+    canonical_docs: List[CanonicalDocument],
+    content_hashes_all: List[str],
+    errored_docs_info: List[Dict[str, Any]],
+    ruleset_version: str,
+    extractor_version: str,
+    max_findings_per_doc: int,
+    docs_total: int,
+) -> None:
+    """
+    Background task to process a JSON batch asynchronously.
+
+    Reuses pre-built canonical documents and errored doc metadata.
+    Emits heartbeats every 2 documents to prevent stall detection.
+    """
+    store = get_batch_store()
+    if not store:
+        return
+
+    docs_processed = 0
+    docs_succeeded = 0
+    docs_failed = 0
+    heartbeat_interval = 2
+
+    try:
+        await store.mark_batch_running(
+            batch_id,
+            str(program_id),
+            worker_id=REVIEW_CONFIG.worker_id,
+        )
+
+        # Persist errored docs immediately
+        for err in errored_docs_info:
+            await store.upsert_doc_result(
+                batch_id=batch_id,
+                program_id=str(program_id),
+                doc_id=err["doc_id"],
+                content_hash=err["content_hash"],
+                status="failed",
+                findings_count=0,
+                findings_preview=[],
+            )
+            docs_processed += 1
+            docs_failed += 1
+            if docs_processed % heartbeat_interval == 0:
+                await store.heartbeat(
+                    batch_id,
+                    str(program_id),
+                    docs_processed=docs_processed,
+                    docs_succeeded=docs_succeeded,
+                    docs_failed=docs_failed,
+                )
+
+        # Heartbeat before review phase
+        await store.heartbeat(
+            batch_id,
+            str(program_id),
+            docs_processed=docs_processed,
+            docs_succeeded=docs_succeeded,
+            docs_failed=docs_failed,
+        )
+
+        event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
+        runner = ReviewRunner(
+            program_id=program_id,
+            event_store=event_store,
+            extractor_version=extractor_version,
+        )
+        result = runner.review_batch(
+            docs=canonical_docs,
+            program_id=program_id,
+            extractor_version=extractor_version,
+            ruleset_version=ruleset_version,
+            content_hashes=content_hashes_all,
+            errored_docs=errored_docs_info,
+        )
+
+        for doc_result in result.documents:
+            findings_preview = [
+                {
+                    "finding_id": str(f.finding_id),
+                    "rule_id": f.rule_id,
+                    "severity": f.severity,
+                    "description": f.description[:200],
+                }
+                for f in doc_result.findings[:max_findings_per_doc]
+            ]
+            await store.upsert_doc_result(
+                batch_id=batch_id,
+                program_id=str(program_id),
+                doc_id=doc_result.doc_id,
+                content_hash=doc_result.content_hash,
+                status="completed",
+                findings_count=doc_result.findings_count,
+                findings_preview=findings_preview,
+            )
+            docs_processed += 1
+            docs_succeeded += 1
+            if docs_processed % heartbeat_interval == 0:
+                await store.heartbeat(
+                    batch_id,
+                    str(program_id),
+                    docs_processed=docs_processed,
+                    docs_succeeded=docs_succeeded,
+                    docs_failed=docs_failed,
+                )
+
+        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
+        summary = BatchSummaryUpdate(
+            documents_succeeded=docs_succeeded,
+            documents_failed=docs_failed,
+            findings_total=result.total_findings,
+            by_severity=result.findings_by_severity,
+        )
+        await store.finalize_batch(
+            batch_id,
+            str(program_id),
+            summary,
+            docs_total=docs_total,
+            docs_succeeded=docs_succeeded,
+            docs_failed=docs_failed,
+        )
+    except Exception as e:
+        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
+        summary = BatchSummaryUpdate(
+            documents_succeeded=docs_succeeded,
+            documents_failed=docs_failed,
+            findings_total=0,
+            by_severity={},
+        )
+        try:
+            await store.finalize_batch(
+                batch_id,
+                str(program_id),
+                summary,
+                status="failed",
+                last_error=str(e)[:500],
+                docs_total=docs_total,
+                docs_succeeded=docs_succeeded,
+                docs_failed=docs_failed,
+            )
+        except Exception:
+            pass
 
 
 def _raise_limit_violation(
@@ -673,18 +942,27 @@ async def review_batch_file_endpoint(
     # Idempotency and persistence logic
     store = get_batch_store() if BATCH_PERSISTENCE_ENABLED else None
     existing_batch: Optional[BatchRow] = None
+    batch_id = derive_batch_id(
+        program_id=program_id,
+        ruleset_version=ruleset_version,
+        extractor_version=extractor_version,
+        content_hashes=sorted_file_hashes,
+    )
 
     if store and idempotency_key:
-        # Check for existing batch with same idempotency key
-        existing_batch = await store.create_or_get_batch(
+        existing_batch, _ = await store.create_or_get_batch(
+            batch_id=batch_id,
             program_id=str(program_id),
-            documents_total=len(file_bytes_list),
             mode=mode,
-            idempotency_key=idempotency_key,
+            ruleset_version=ruleset_version,
+            extractor_version=extractor_version,
+            response_mode=response_mode,
             request_digest=request_digest,
+            documents_total=len(file_bytes_list),
+            idempotency_key=idempotency_key,
         )
-        # If batch exists and is completed, return cached result
         if existing_batch.status == "completed":
+            preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
             doc_rows = await store.get_batch_docs(existing_batch.batch_id, str(program_id))
             return BatchReviewResponse(
                 batch_id=existing_batch.batch_id,
@@ -696,11 +974,11 @@ async def review_batch_file_endpoint(
                         content_hash=doc.content_hash,
                         findings_count=doc.findings_count,
                         findings_digest="",
-                        findings_truncated=False,
-                        findings_preview=doc.findings_preview or [],
+                        findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
+                        findings_preview=(doc.findings_preview or [])[:preview_cap],
                         errors=[],
                     )
-                    for doc in doc_rows
+                    for doc in (doc_rows if response_mode == "full" else [])
                 ],
                 summary=BatchSummary(
                     documents=existing_batch.documents_total,
@@ -708,27 +986,37 @@ async def review_batch_file_endpoint(
                     by_severity=existing_batch.by_severity or {},
                 ),
             )
-        # If batch is queued or running, return status for polling
         if existing_batch.status in ("queued", "running"):
             return JSONResponse(
                 status_code=202,
-                content=BatchQueuedResponse(
-                    batch_id=existing_batch.batch_id,
-                    status="queued",
-                    poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
-                    message="Batch already in progress",
-                ).model_dump(),
+                content={
+                    "batch_id": existing_batch.batch_id,
+                    "status": existing_batch.status,
+                },
+            )
+        if existing_batch.status == "failed":
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "batch_id": existing_batch.batch_id,
+                    "status": existing_batch.status,
+                    "last_error": existing_batch.last_error,
+                },
             )
 
     # For async mode with persistence, create batch and return immediately
     if mode == "async" and store:
         if not existing_batch:
-            existing_batch = await store.create_or_get_batch(
+            existing_batch, _ = await store.create_or_get_batch(
+                batch_id=batch_id,
                 program_id=str(program_id),
-                documents_total=len(file_bytes_list),
                 mode=mode,
-                idempotency_key=idempotency_key,
+                ruleset_version=ruleset_version,
+                extractor_version=extractor_version,
+                response_mode=response_mode,
                 request_digest=request_digest,
+                documents_total=len(file_bytes_list),
+                idempotency_key=idempotency_key,
             )
         # Queue background task for processing
         background_tasks.add_task(
@@ -742,12 +1030,10 @@ async def review_batch_file_endpoint(
         )
         return JSONResponse(
             status_code=202,
-            content=BatchQueuedResponse(
-                batch_id=existing_batch.batch_id,
-                status="queued",
-                poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
-                message="Batch queued for processing",
-            ).model_dump(),
+            content={
+                "batch_id": existing_batch.batch_id,
+                "status": existing_batch.status,
+            },
         )
 
     # Limit: number of files (use already-read file_bytes_list)
@@ -992,6 +1278,9 @@ async def review_batch_file_endpoint(
 @router.post("/batch", response_model=BatchReviewResponse)
 async def review_batch_endpoint(
     request: BatchReviewRequest,
+    background_tasks: BackgroundTasks,
+    mode: Literal["sync", "async"] = Query(default="sync", description="Processing mode: sync (wait) or async (return immediately)"),
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key", description="Idempotency key for deduplication"),
 ) -> BatchReviewResponse:
     """
     Review multiple documents in a deterministic batch.
@@ -1110,6 +1399,108 @@ async def review_batch_endpoint(
             )
             doc_timings[str(canonical_doc.doc_id)] = (time.perf_counter() - doc_start) * 1000
             canonical_docs.append(canonical_doc)
+
+        # Compute deterministic batch_id + request_digest
+        request_digest = hashlib.sha256(
+            "|".join(sorted(content_hashes_all)).encode()
+        ).hexdigest()[:32]
+        batch_id = derive_batch_id(
+            program_id=request.program_id,
+            ruleset_version=request.ruleset_version,
+            extractor_version=request.extractor_version,
+            content_hashes=content_hashes_all,
+        )
+
+        # Idempotency and persistence logic for async
+        store = get_batch_store() if BATCH_PERSISTENCE_ENABLED else None
+        existing_batch: Optional[BatchRow] = None
+        if store and idempotency_key:
+            existing_batch, _ = await store.create_or_get_batch(
+                batch_id=batch_id,
+                program_id=str(request.program_id),
+                mode=mode,
+                ruleset_version=request.ruleset_version,
+                extractor_version=request.extractor_version,
+                response_mode=request.response_mode,
+                request_digest=request_digest,
+                documents_total=len(request.documents),
+                idempotency_key=idempotency_key,
+            )
+            if existing_batch.status == "completed":
+                preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
+                doc_rows = await store.get_batch_docs(existing_batch.batch_id, str(request.program_id))
+                return BatchReviewResponse(
+                    batch_id=existing_batch.batch_id,
+                    program_id=existing_batch.program_id,
+                    documents=[
+                        BatchDocumentResponse(
+                            filename=None,
+                            doc_id=doc.doc_id,
+                            content_hash=doc.content_hash,
+                            findings_count=doc.findings_count,
+                            findings_digest="",
+                            findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
+                            findings_preview=(doc.findings_preview or [])[:preview_cap],
+                            errors=[],
+                        )
+                        for doc in (doc_rows if request.response_mode == "full" else [])
+                    ],
+                    summary=BatchSummary(
+                        documents=existing_batch.documents_total,
+                        findings_total=existing_batch.findings_total or 0,
+                        by_severity=existing_batch.by_severity or {},
+                    ),
+                )
+            if existing_batch.status in ("queued", "running"):
+                return JSONResponse(
+                    status_code=202,
+                    content={
+                        "batch_id": existing_batch.batch_id,
+                        "status": existing_batch.status,
+                    },
+                )
+            if existing_batch.status == "failed":
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "batch_id": existing_batch.batch_id,
+                        "status": existing_batch.status,
+                        "last_error": existing_batch.last_error,
+                    },
+                )
+
+        if mode == "async" and store:
+            if not existing_batch:
+                existing_batch, _ = await store.create_or_get_batch(
+                    batch_id=batch_id,
+                    program_id=str(request.program_id),
+                    mode=mode,
+                    ruleset_version=request.ruleset_version,
+                    extractor_version=request.extractor_version,
+                    response_mode=request.response_mode,
+                    request_digest=request_digest,
+                    documents_total=len(request.documents),
+                    idempotency_key=idempotency_key,
+                )
+            background_tasks.add_task(
+                _process_batch_async_json,
+                batch_id=existing_batch.batch_id,
+                program_id=request.program_id,
+                canonical_docs=canonical_docs,
+                content_hashes_all=content_hashes_all,
+                errored_docs_info=errored_docs_info,
+                ruleset_version=request.ruleset_version,
+                extractor_version=request.extractor_version,
+                max_findings_per_doc=request.max_findings_per_doc,
+                docs_total=len(request.documents),
+            )
+            return JSONResponse(
+                status_code=202,
+                content={
+                    "batch_id": existing_batch.batch_id,
+                    "status": existing_batch.status,
+                },
+            )
 
         # Create event store adapter if enabled
         event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
@@ -1248,17 +1639,25 @@ async def get_batch_status(
         program_id=batch_row.program_id,
         status=batch_row.status,
         mode=batch_row.mode,
-        documents_total=batch_row.documents_total,
-        documents_processed=batch_row.documents_total if batch_row.status == "completed" else 0,
+        documents_total=batch_row.documents_total or batch_row.docs_total,
+        documents_processed=batch_row.docs_processed,
+        docs_succeeded=batch_row.docs_succeeded,
+        docs_failed=batch_row.docs_failed,
         findings_total=batch_row.findings_total,
         by_severity=batch_row.by_severity,
-        created_at=batch_row.created_at.isoformat() if batch_row.created_at else "",
-        updated_at=batch_row.updated_at.isoformat() if batch_row.updated_at else "",
+        attempt_count=batch_row.attempt_count,
+        worker_id=batch_row.worker_id,
+        last_error=batch_row.last_error,
+        queued_at=batch_row.queued_at.isoformat() if batch_row.queued_at else None,
+        started_at=batch_row.started_at.isoformat() if batch_row.started_at else None,
+        completed_at=batch_row.completed_at.isoformat() if batch_row.completed_at else None,
+        heartbeat_at=batch_row.heartbeat_at.isoformat() if batch_row.heartbeat_at else None,
     )
 
     # Include documents if requested and batch is completed
     if include_documents and batch_row.status == "completed":
         doc_rows = await store.get_batch_docs(batch_id, str(program_id))
+        preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
         response.documents = [
             BatchDocumentResponse(
                 filename=None,
@@ -1266,8 +1665,8 @@ async def get_batch_status(
                 content_hash=doc.content_hash,
                 findings_count=doc.findings_count,
                 findings_digest="",  # Not stored in doc row
-                findings_truncated=False,
-                findings_preview=doc.findings_preview or [],
+                findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
+                findings_preview=(doc.findings_preview or [])[:preview_cap],
                 errors=[],
             )
             for doc in doc_rows
@@ -1276,3 +1675,63 @@ async def get_batch_status(
 
     return response
 
+
+@router.post("/batch/sweep", response_model=SweepResponse)
+async def sweep_stalled_batches(
+    request: SweepRequest,
+    x_admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> SweepResponse:
+    """
+    Sweep and requeue stalled batch jobs.
+
+    Admin-only endpoint. Requires:
+    - REVIEW_SWEEPER_ENABLED=true
+    - Valid X-Admin-Token header matching REVIEW_ADMIN_TOKEN
+
+    Finds batches in 'running' status with stale heartbeat and either:
+    - Requeues them if attempts remaining
+    - Marks as failed if max attempts exceeded
+
+    Args:
+        request: SweepRequest with program_id
+        x_admin_token: Admin authentication token
+
+    Returns:
+        SweepResponse with affected batch IDs and counts
+    """
+    # Check if sweeper is enabled and configured - return 404 to not leak existence
+    if not REVIEW_CONFIG.sweeper_enabled or not REVIEW_CONFIG.admin_token:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if x_admin_token != REVIEW_CONFIG.admin_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid admin token",
+        )
+
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Batch store not configured",
+        )
+
+    # Run sweep
+    sweep_result = await store.sweep_stalled_batches(
+        program_id=str(request.program_id),
+        stall_seconds=REVIEW_CONFIG.batch_stall_seconds,
+        max_attempts=REVIEW_CONFIG.batch_max_attempts,
+    )
+
+    return SweepResponse(
+        requeued=sweep_result["requeued"],
+        failed=sweep_result["failed"],
+        requeued_ids=sweep_result["requeued_ids"],
+        failed_ids=sweep_result["failed_ids"],
+    )

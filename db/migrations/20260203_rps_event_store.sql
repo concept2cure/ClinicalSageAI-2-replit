@@ -192,6 +192,8 @@ ALTER TABLE vault.uuid_lifecycle ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vault.uuid_edges ENABLE ROW LEVEL SECURITY;
 
 -- RPS Events policies
+DROP POLICY IF EXISTS rps_events_select_policy ON vault.rps_events;
+DROP POLICY IF EXISTS rps_events_insert_policy ON vault.rps_events;
 CREATE POLICY rps_events_select_policy ON vault.rps_events
     FOR SELECT USING (core.can_access_program(program_id));
 
@@ -199,6 +201,9 @@ CREATE POLICY rps_events_insert_policy ON vault.rps_events
     FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
 -- UUID Lifecycle policies
+DROP POLICY IF EXISTS uuid_lifecycle_select_policy ON vault.uuid_lifecycle;
+DROP POLICY IF EXISTS uuid_lifecycle_insert_policy ON vault.uuid_lifecycle;
+DROP POLICY IF EXISTS uuid_lifecycle_update_policy ON vault.uuid_lifecycle;
 CREATE POLICY uuid_lifecycle_select_policy ON vault.uuid_lifecycle
     FOR SELECT USING (core.can_access_program(program_id));
 
@@ -209,6 +214,9 @@ CREATE POLICY uuid_lifecycle_update_policy ON vault.uuid_lifecycle
     FOR UPDATE USING (core.can_write_program(program_id));
 
 -- UUID Edges policies
+DROP POLICY IF EXISTS uuid_edges_select_policy ON vault.uuid_edges;
+DROP POLICY IF EXISTS uuid_edges_insert_policy ON vault.uuid_edges;
+DROP POLICY IF EXISTS uuid_edges_update_policy ON vault.uuid_edges;
 CREATE POLICY uuid_edges_select_policy ON vault.uuid_edges
     FOR SELECT USING (core.can_access_program(program_id));
 
