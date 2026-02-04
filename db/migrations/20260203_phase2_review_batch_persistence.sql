@@ -1,3 +1,21 @@
+-- ================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Persist deterministic batch review state for async processing and auditability.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 / Module 5
+--   - Integrity Risk Addressed: idempotent batch persistence, traceable results
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- ================================================================
 -- ============================================================================
 -- Migration: Phase 2 Review Batch Persistence
 -- ============================================================================

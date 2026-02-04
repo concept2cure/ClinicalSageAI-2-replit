@@ -27,7 +27,7 @@ import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 // import PDFParser from 'pdf-parse';
 // import mammoth from 'mammoth';
-// import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { exec } from 'child_process';
@@ -415,18 +415,19 @@ export class UnifiedDocumentIngestion {
           break;
 
         case 'application/vnd.ms-excel':
-        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-          let workbook;
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+          const workbook = new ExcelJS.Workbook();
           if (fileBuffer) {
-            workbook = XLSX.read(fileBuffer);
+            await workbook.xlsx.load(fileBuffer);
           } else if (filePath && fs.existsSync(filePath)) {
-            workbook = XLSX.readFile(filePath);
+            await workbook.xlsx.readFile(filePath);
           } else {
             throw new Error('No file source available for Excel extraction');
           }
           text = this.extractExcelText(workbook);
-          metadata = { sheets: workbook.SheetNames };
+          metadata = { sheets: workbook.worksheets.map(sheet => sheet.name) };
           break;
+        }
 
         case 'text/plain':
         case 'text/csv':
@@ -503,10 +504,16 @@ export class UnifiedDocumentIngestion {
    */
   extractExcelText(workbook) {
     let text = '';
-    workbook.SheetNames.forEach(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      const sheetData = XLSX.utils.sheet_to_csv(worksheet);
-      text += `--- Sheet: ${sheetName} ---\n${sheetData}\n\n`;
+    workbook.worksheets.forEach(worksheet => {
+      const rows = [];
+      worksheet.eachRow({ includeEmpty: true }, row => {
+        const values = row.values
+          .slice(1)
+          .map(value => (value === null || value === undefined ? '' : String(value)));
+        rows.push(values.join(','));
+      });
+      const sheetData = rows.join('\n');
+      text += `--- Sheet: ${worksheet.name} ---\n${sheetData}\n\n`;
     });
     return text;
   }

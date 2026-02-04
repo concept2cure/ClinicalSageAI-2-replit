@@ -19,7 +19,7 @@ import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';
 import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize OpenAI
@@ -194,13 +194,20 @@ export class DocumentIngestionWorkflow {
    * Extract text from Excel files
    */
   async extractFromExcel(filePath) {
-    const workbook = XLSX.readFile(filePath);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
     let text = '';
 
-    workbook.SheetNames.forEach(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      const sheetData = XLSX.utils.sheet_to_csv(worksheet);
-      text += `Sheet: ${sheetName}\n${sheetData}\n\n`;
+    workbook.worksheets.forEach(worksheet => {
+      const rows = [];
+      worksheet.eachRow({ includeEmpty: true }, row => {
+        const values = row.values
+          .slice(1)
+          .map(value => (value === null || value === undefined ? '' : String(value)));
+        rows.push(values.join(','));
+      });
+      const sheetData = rows.join('\n');
+      text += `Sheet: ${worksheet.name}\n${sheetData}\n\n`;
     });
 
     return text;
