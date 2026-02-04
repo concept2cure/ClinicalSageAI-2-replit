@@ -7,6 +7,7 @@ Endpoints:
 - POST /review/document - Review a single document
 - POST /review/document/file - Review uploaded file
 - POST /review/batch - Review multiple documents (JSON batch)
+- POST /review/batch/file - Review multiple uploaded files (DOCX/PDF)
 - GET /review/health - Health check
 """
 
@@ -17,13 +18,17 @@ import io
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 from pydantic import BaseModel, Field
 
 from lumen_cortex.core.canonical import CanonicalDocument, EvidencePointer
 from lumen_cortex.core.canonical.document import CanonicalParagraph
+from lumen_cortex.core.extractors.text_extract import (
+    extract_text_from_docx_bytes,
+    extract_text_from_pdf_bytes,
+)
 from lumen_cortex.core.events import EventStoreAdapter
 from lumen_cortex.reviewer import ReviewRunner, review_document
 
@@ -131,6 +136,9 @@ class BatchReviewResponse(BaseModel):
 
 
 MAX_FINDINGS_PREVIEW = 10
+MAX_BATCH_FILES = 25
+MAX_FILE_BYTES = 25 * 1024 * 1024
+MAX_TOTAL_BYTES = 100 * 1024 * 1024
 
 
 def _build_canonical_document(
@@ -159,6 +167,65 @@ def _build_canonical_document(
         extractor_version=extractor_version,
         title=input_text.title,
     )
+
+
+def _derive_upload_doc_id(program_id: UUID, content_hash: str) -> UUID:
+    """Derive deterministic doc_id for uploaded file bytes."""
+    return uuid5(NAMESPACE_URL, f"doc|{program_id}|{content_hash}")
+
+
+def _build_canonical_document_from_bytes(
+    program_id: UUID,
+    file_bytes: bytes,
+    source_type: Literal["docx", "pdf"],
+    extractor_version: str,
+    title: Optional[str] = None,
+) -> CanonicalDocument:
+    """Convert file bytes into a CanonicalDocument with deterministic doc_id."""
+    content_hash = hashlib.sha256(file_bytes).hexdigest()
+    doc_id = _derive_upload_doc_id(program_id, content_hash)
+
+    if source_type == "docx":
+        extracted_text = extract_text_from_docx_bytes(file_bytes)
+    else:
+        extracted_text = extract_text_from_pdf_bytes(file_bytes)
+
+    raw_paragraphs = [p.strip() for p in extracted_text.split("\n\n") if p.strip()]
+    if not raw_paragraphs:
+        raw_paragraphs = [extracted_text]
+
+    paragraphs = [
+        CanonicalParagraph(index=i, text=text)
+        for i, text in enumerate(raw_paragraphs)
+    ]
+
+    return CanonicalDocument(
+        doc_id=doc_id,
+        content_hash=content_hash,
+        source_type=source_type,
+        paragraphs=paragraphs,
+        extraction_timestamp=datetime.now(timezone.utc),
+        extractor_version=extractor_version,
+        title=title,
+    )
+
+
+def _infer_source_type(file: UploadFile) -> Optional[Literal["docx", "pdf"]]:
+    """Infer source type from filename or content_type."""
+    filename = (file.filename or "").lower()
+    content_type = (file.content_type or "").lower()
+
+    if filename.endswith(".pdf") or content_type == "application/pdf":
+        return "pdf"
+
+    docx_types = {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+    }
+    if filename.endswith(".docx") or content_type in docx_types or "word" in content_type:
+        return "docx"
+
+    return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -284,6 +351,104 @@ async def review_document_file(
     )
 
     return await review_document_endpoint(request)
+
+
+@router.post("/batch/file", response_model=BatchReviewResponse)
+async def review_batch_file_endpoint(
+    files: List[UploadFile] = File(...),
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    ruleset_version: str = Query(default="0.1", description="Ruleset version"),
+    extractor_version: str = Query(..., description="Extractor version (required)"),
+    response_mode: Literal["summary", "full"] = Query(default="summary", description="Response mode"),
+) -> BatchReviewResponse:
+    """
+    Review a batch of uploaded files (DOCX/PDF).
+
+    Enforces hard limits on file count and size.
+    Produces deterministic batch_id and doc_id for stable event lineage.
+    """
+    if len(files) > MAX_BATCH_FILES:
+        raise HTTPException(status_code=413, detail="Too many files in batch")
+
+    total_bytes = 0
+    canonical_docs: List[CanonicalDocument] = []
+
+    for upload in files:
+        if not upload.filename:
+            raise HTTPException(status_code=400, detail="Filename required")
+
+        source_type = _infer_source_type(upload)
+        if source_type is None:
+            raise HTTPException(status_code=415, detail="Unsupported file type")
+
+        file_bytes = await upload.read()
+        file_size = len(file_bytes)
+
+        if file_size > MAX_FILE_BYTES:
+            raise HTTPException(status_code=413, detail="File too large")
+
+        total_bytes += file_size
+        if total_bytes > MAX_TOTAL_BYTES:
+            raise HTTPException(status_code=413, detail="Batch too large")
+
+        canonical_doc = _build_canonical_document_from_bytes(
+            program_id=program_id,
+            file_bytes=file_bytes,
+            source_type=source_type,
+            extractor_version=extractor_version,
+            title=upload.filename,
+        )
+        canonical_docs.append(canonical_doc)
+
+    event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
+
+    runner = ReviewRunner(
+        program_id=program_id,
+        event_store=event_store,
+        extractor_version=extractor_version,
+    )
+
+    result = runner.review_batch(
+        docs=canonical_docs,
+        program_id=program_id,
+        extractor_version=extractor_version,
+        ruleset_version=ruleset_version,
+    )
+
+    summary_mode = response_mode == "summary"
+
+    return BatchReviewResponse(
+        batch_id=result.batch_id,
+        program_id=result.program_id,
+        documents=[
+            BatchDocumentResponse(
+                doc_id=d.doc_id,
+                content_hash=d.content_hash,
+                findings_count=d.findings_count,
+                findings_digest=d.findings_digest,
+                findings=[
+                    FindingSummary(
+                        finding_id=str(f.finding_id),
+                        rule_id=f.rule_id,
+                        rule_name=f.rule_name,
+                        severity=f.severity,
+                        confidence=f.confidence,
+                        description=f.description,
+                        remediation=f.remediation,
+                        paragraph_index=f.evidence.paragraph_index,
+                        fingerprint=f.fingerprint,
+                    )
+                    for f in (d.findings if not summary_mode else d.findings[:MAX_FINDINGS_PREVIEW])
+                ],
+            )
+            for d in result.documents
+        ],
+        summary=BatchSummary(
+            documents=result.total_documents,
+            findings_total=result.total_findings,
+            by_severity=result.findings_by_severity,
+        ),
+    )
 
 
 @router.post("/batch", response_model=BatchReviewResponse)
