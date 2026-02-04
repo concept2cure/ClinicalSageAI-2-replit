@@ -54,7 +54,7 @@ export async function initializeAssistant() {
 /**
  * Create a conversation with the Concept2Cure assistant
  */
-export async function createAssistantThread() {
+export async function createAssistantThread(): Promise<string> {
   try {
     const thread = await createThread();
     return thread.id;
@@ -703,8 +703,11 @@ export async function generateIndSection(
   threadId?: string
 ): Promise<{ section: string; content: string }> {
   // Create new thread if one isn't provided
+  let activeThreadId: string;
   if (!threadId) {
-    threadId = await createAssistantThread();
+    activeThreadId = await createAssistantThread();
+  } else {
+    activeThreadId = threadId;
   }
 
   const prompt = `
@@ -718,7 +721,7 @@ export async function generateIndSection(
 
   try {
     // Use the assistant's thread persistence capability
-    const response = await getAssistantResponse(threadId, prompt);
+    const response = await getAssistantResponse(activeThreadId, prompt);
 
     return {
       section,

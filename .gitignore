@@ -38,3 +38,14 @@ npm-debug.log*
 
 # OS
 Thumbs.db
+
+# Temporary/build marker files
+.buildcomplete
+Used
+
+# Accidental shell output files
+ole.log*
+t"
+*"
+*.log(*)
+pool.end*
