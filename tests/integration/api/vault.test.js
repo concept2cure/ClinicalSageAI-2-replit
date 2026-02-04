@@ -36,15 +36,18 @@ const testDir = dirname(testFilePath);
 const serverDir = join(testDir, '../../server');
 
 // Import API routes
-const vaultApiModule = await import(join(serverDir, 'routes/vaultApi.js'));
+let vaultApiModule;
 
 // Setup test app
 let app;
 
 beforeAll(async () => {
+  const module = await import(join(serverDir, 'routes/vaultApi.js'));
+  vaultApiModule = module.default;
+
   app = express();
   app.use(express.json());
-  app.use('/api/vault', vaultApiModule.default);
+  app.use('/api/vault', vaultApiModule);
 });
 
 afterAll(() => {
