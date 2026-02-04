@@ -18,25 +18,6 @@ Concept2Cure is a **Project-centric workspace OS**. All planning documentation i
 
 ---
 
-## ✅ Current Focus (Phase 5 — Intelligent Document System)
-
-**Source of truth:** [docs/roadmap/CONCEPT2CURE_MASTER_ROADMAP.md](docs/roadmap/CONCEPT2CURE_MASTER_ROADMAP.md)
-
-**Primary surface:** Artifact Editor
-**Supporting panels:** Artifacts (versions), Audit (change trail), Tasks (pending reviews)
-
-**Phase 5 Objectives**
-- Unified doc editor (Tiptap) wired to artifacts
-- Traceability linking UI for anchors/xrefs
-- Change propagation engine for downstream artifacts
-- Compliance rules engine for document checks
-
-**Acceptance Criteria**
-- Artifact editor loads with version history and audit trail
-- Traceability links render and resolve to evidence pointers
-- Change propagation flags impacted sections deterministically
-- Compliance rules produce findings with stable hashes
-
 ## 📚 Master Documents
 
 | Document | Purpose | Status |

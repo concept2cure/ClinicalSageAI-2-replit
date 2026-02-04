@@ -17,10 +17,9 @@ set -e  # Exit on error
 
 # === TERMINAL SAFETY ===
 # Prevent pager from hijacking terminal (alternate screen buffer issues)
-export TERM="${TERM:-dumb}"
 export PAGER="${PAGER:-cat}"
 export LESS="${LESS:--FRSX}"
-export PSQL_PAGER="${PSQL_PAGER:-off}"
+export PSQL_PAGER="${PSQL_PAGER:-cat}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -57,24 +56,6 @@ elif [ -z "$DATABASE_URL" ]; then
         exit 1
     fi
 fi
-
-# Sanitize connection string (strip accidental leading 'psql ' and quotes)
-sanitize_conn() {
-    local s="$1"
-
-    if [[ "$s" =~ ^psql[[:space:]]+ ]]; then
-        s="${s#psql }"
-    fi
-
-    s="${s#\'}"
-    s="${s%\'}"
-
-    s="$(echo "$s" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
-
-    echo "$s"
-}
-
-DATABASE_URL="$(sanitize_conn "$DATABASE_URL")"
 
 # Mask password in URL for display
 DISPLAY_URL=$(echo "$DATABASE_URL" | sed 's/:[^:@]*@/:***@/')
@@ -142,12 +123,12 @@ for migration in $MIGRATION_FILES; do
 
     # Run migration with safe psql settings (no pager, no .psqlrc, fail fast)
     # -X: skip .psqlrc, --no-psqlrc: extra safety, ON_ERROR_STOP: fail on errors
-    if PAGER=cat psql -X --no-psqlrc -P pager=off "$DATABASE_URL" \
+    if PAGER=cat psql -X --no-psqlrc "$DATABASE_URL" \
         -v ON_ERROR_STOP=1 \
         -f "$migration" \
         2>&1; then
         echo -e "${GREEN}✓ Applied: ${NC}$MIGRATION_NAME"
-        APPLIED=$((APPLIED + 1))
+        ((APPLIED++))
     else
         echo -e "${RED}✗ FAILED: ${NC}$MIGRATION_NAME"
         FAILED=1

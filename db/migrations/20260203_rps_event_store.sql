@@ -191,73 +191,32 @@ ALTER TABLE vault.rps_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vault.uuid_lifecycle ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vault.uuid_edges ENABLE ROW LEVEL SECURITY;
 
--- RLS policies (idempotent)
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'rps_events' AND policyname = 'rps_events_select_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY rps_events_select_policy ON vault.rps_events
-            FOR SELECT USING (core.can_access_program(program_id))';
-    END IF;
+-- RPS Events policies
+CREATE POLICY rps_events_select_policy ON vault.rps_events
+    FOR SELECT USING (core.can_access_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'rps_events' AND policyname = 'rps_events_insert_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY rps_events_insert_policy ON vault.rps_events
-            FOR INSERT WITH CHECK (core.can_write_program(program_id))';
-    END IF;
+CREATE POLICY rps_events_insert_policy ON vault.rps_events
+    FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_lifecycle' AND policyname = 'uuid_lifecycle_select_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_lifecycle_select_policy ON vault.uuid_lifecycle
-            FOR SELECT USING (core.can_access_program(program_id))';
-    END IF;
+-- UUID Lifecycle policies
+CREATE POLICY uuid_lifecycle_select_policy ON vault.uuid_lifecycle
+    FOR SELECT USING (core.can_access_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_lifecycle' AND policyname = 'uuid_lifecycle_insert_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_lifecycle_insert_policy ON vault.uuid_lifecycle
-            FOR INSERT WITH CHECK (core.can_write_program(program_id))';
-    END IF;
+CREATE POLICY uuid_lifecycle_insert_policy ON vault.uuid_lifecycle
+    FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_lifecycle' AND policyname = 'uuid_lifecycle_update_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_lifecycle_update_policy ON vault.uuid_lifecycle
-            FOR UPDATE USING (core.can_write_program(program_id))';
-    END IF;
+CREATE POLICY uuid_lifecycle_update_policy ON vault.uuid_lifecycle
+    FOR UPDATE USING (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_edges' AND policyname = 'uuid_edges_select_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_edges_select_policy ON vault.uuid_edges
-            FOR SELECT USING (core.can_access_program(program_id))';
-    END IF;
+-- UUID Edges policies
+CREATE POLICY uuid_edges_select_policy ON vault.uuid_edges
+    FOR SELECT USING (core.can_access_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_edges' AND policyname = 'uuid_edges_insert_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_edges_insert_policy ON vault.uuid_edges
-            FOR INSERT WITH CHECK (core.can_write_program(program_id))';
-    END IF;
+CREATE POLICY uuid_edges_insert_policy ON vault.uuid_edges
+    FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'uuid_edges' AND policyname = 'uuid_edges_update_policy'
-    ) THEN
-        EXECUTE 'CREATE POLICY uuid_edges_update_policy ON vault.uuid_edges
-            FOR UPDATE USING (core.can_write_program(program_id))';
-    END IF;
-END $$;
+CREATE POLICY uuid_edges_update_policy ON vault.uuid_edges
+    FOR UPDATE USING (core.can_write_program(program_id));
 
 -- ============================================================================
 -- HELPER FUNCTIONS (Stubs for future use)

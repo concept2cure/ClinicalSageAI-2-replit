@@ -1,6 +1,6 @@
 """Storage layer for batch persistence."""
 
-from .models import BatchRow, BatchSummaryUpdate, DocRow, BatchInputRow
+from .models import BatchRow, BatchSummaryUpdate, DocRow
 from .neon_batch_store import (
     NeonBatchStore,
     get_batch_store,
@@ -11,7 +11,6 @@ __all__ = [
     "BatchRow",
     "BatchSummaryUpdate",
     "DocRow",
-    "BatchInputRow",
     "NeonBatchStore",
     "get_batch_store",
     "set_batch_store",

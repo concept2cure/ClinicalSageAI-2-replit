@@ -19,7 +19,7 @@ import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';
 import mammoth from 'mammoth';
-import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize OpenAI
@@ -194,48 +194,15 @@ export class DocumentIngestionWorkflow {
    * Extract text from Excel files
    */
   async extractFromExcel(filePath) {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(filePath);
-
+    const workbook = XLSX.readFile(filePath);
     let text = '';
-    workbook.eachSheet(worksheet => {
-      const sheetData = this.worksheetToCsv(worksheet);
-      text += `Sheet: ${worksheet.name}\n${sheetData}\n\n`;
+
+    workbook.SheetNames.forEach(sheetName => {
+      const worksheet = workbook.Sheets[sheetName];
+      const sheetData = XLSX.utils.sheet_to_csv(worksheet);
+      text += `Sheet: ${sheetName}\n${sheetData}\n\n`;
     });
 
-    return text;
-  }
-
-  worksheetToCsv(worksheet) {
-    const rows = [];
-    worksheet.eachRow({ includeEmpty: true }, row => {
-      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
-      const serialized = values.map(value => this.escapeCsv(this.excelCellToString(value)));
-      rows.push(serialized.join(','));
-    });
-    return rows.join('\n');
-  }
-
-  excelCellToString(value) {
-    if (value === null || value === undefined) return '';
-    if (value instanceof Date) return value.toISOString();
-    if (typeof value === 'object') {
-      if ('text' in value && typeof value.text === 'string') return value.text;
-      if ('richText' in value && Array.isArray(value.richText)) {
-        return value.richText.map(part => part.text || '').join('');
-      }
-      if ('result' in value && value.result !== undefined) return String(value.result);
-      if ('formula' in value && value.formula !== undefined)
-        return String(value.result ?? value.formula);
-    }
-    return String(value);
-  }
-
-  escapeCsv(value) {
-    const text = value ?? '';
-    if (/[",\n]/.test(text)) {
-      return `"${text.replace(/"/g, '""')}"`;
-    }
     return text;
   }
 
