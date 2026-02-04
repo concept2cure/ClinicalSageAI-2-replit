@@ -1,17 +1,23 @@
--- ============================================================================
--- Migration: Phase 2 Review Batch Persistence
--- ============================================================================
--- eCTD Module 1 Regional Administrative Information
--- Application Type: NDA/BLA
--- Submission Type: Original Application
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Persist review batch requests + per-document results for deterministic
+--          async processing, idempotency, and audit trail continuity.
 --
--- Document: Technical Specification - Database Schema
--- Version: 1.0
--- Date: 2026-02-03
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (Administrative) / Module 5 (Clinical Review)
+--   - Integrity Risk Addressed: orphaned async batches, missing audit trail,
+--     non-deterministic reprocessing
 --
--- Purpose: Persist batch review requests and per-document results for
---          idempotency, async processing, and audit trail.
--- ============================================================================
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 
 -- Ensure vault schema exists
 CREATE SCHEMA IF NOT EXISTS vault;
