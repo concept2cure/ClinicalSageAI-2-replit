@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CLIENT_SRC = '/workspaces/ClinicalSageAI-2-replit/client/src';
+const CLIENT_SRC = path.join(process.cwd(), 'client', 'src');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FILE EXISTENCE TESTS

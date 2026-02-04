@@ -14,7 +14,7 @@
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { TextProcessor } from '../utils/textProcessing.js';
+import { TextProcessor } from '../utils/textProcessing.ts';
 import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';

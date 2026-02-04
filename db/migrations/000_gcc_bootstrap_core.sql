@@ -9,7 +9,14 @@ CREATE SCHEMA IF NOT EXISTS core;
 
 -- UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "vector";
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'vector') THEN
+    CREATE EXTENSION IF NOT EXISTS "vector";
+  ELSE
+    RAISE NOTICE 'Extension "vector" not available, skipping.';
+  END IF;
+END $$;
 
 -- Entity type enum
 DO $$
