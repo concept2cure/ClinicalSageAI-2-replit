@@ -30,7 +30,10 @@ from lumen_cortex.core.extractors.text_extract import (
     extract_text_from_pdf_bytes,
     normalize_text,
 )
-from lumen_cortex.core.events import EventStoreAdapter
+from lumen_cortex.core.events import (
+    EventStoreAdapter,
+    derive_error_content_hash,
+)
 from lumen_cortex.reviewer import ReviewRunner, review_document
 
 
@@ -401,6 +404,7 @@ async def review_batch_file_endpoint(
 
     Enforces hard limits on file count and size.
     Produces deterministic batch_id and doc_id for stable event lineage.
+    Errored docs get distinct content_hash via derive_error_content_hash.
     """
     if len(files) > MAX_BATCH_FILES:
         raise HTTPException(status_code=413, detail="Too many files in batch")
@@ -410,6 +414,8 @@ async def review_batch_file_endpoint(
     filenames_by_doc_id: Dict[str, List[str]] = {}
     error_entries: List[BatchDocumentResponse] = []
     content_hashes_all: List[str] = []
+    # Track errored docs for document_failed events
+    errored_docs_info: List[Dict[str, Any]] = []
 
     for upload in files:
         if not upload.filename:
@@ -417,16 +423,18 @@ async def review_batch_file_endpoint(
 
         file_bytes = await upload.read()
         file_size = len(file_bytes)
-        content_hash = hashlib.sha256(file_bytes).hexdigest()
-        doc_id = _derive_upload_doc_id(program_id, content_hash)
+        raw_content_hash = hashlib.sha256(file_bytes).hexdigest()
 
         source_type = _infer_source_type(upload)
         if source_type is None:
+            error_codes = ["unsupported_type"]
+            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
                     doc_id=str(doc_id),
-                    content_hash=content_hash,
+                    content_hash=error_content_hash,
                     findings_count=0,
                     findings_digest=hashlib.sha256(b"").hexdigest(),
                     findings_truncated=False,
@@ -440,15 +448,24 @@ async def review_batch_file_endpoint(
                     ],
                 )
             )
-            content_hashes_all.append(content_hash)
+            content_hashes_all.append(error_content_hash)
+            errored_docs_info.append({
+                "doc_id": str(doc_id),
+                "content_hash": error_content_hash,
+                "filename": upload.filename,
+                "error_codes": error_codes,
+            })
             continue
 
         if file_size > MAX_FILE_BYTES:
+            error_codes = ["too_large"]
+            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
                     doc_id=str(doc_id),
-                    content_hash=content_hash,
+                    content_hash=error_content_hash,
                     findings_count=0,
                     findings_digest=hashlib.sha256(b"").hexdigest(),
                     findings_truncated=False,
@@ -462,7 +479,13 @@ async def review_batch_file_endpoint(
                     ],
                 )
             )
-            content_hashes_all.append(content_hash)
+            content_hashes_all.append(error_content_hash)
+            errored_docs_info.append({
+                "doc_id": str(doc_id),
+                "content_hash": error_content_hash,
+                "filename": upload.filename,
+                "error_codes": error_codes,
+            })
             continue
 
         total_bytes += file_size
@@ -478,13 +501,14 @@ async def review_batch_file_endpoint(
                 title=upload.filename,
             )
         except Exception as exc:
-            content_hash = hashlib.sha256(file_bytes).hexdigest()
-            doc_id = _derive_upload_doc_id(program_id, content_hash)
+            error_codes = ["extract_failed"]
+            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
                     doc_id=str(doc_id),
-                    content_hash=content_hash,
+                    content_hash=error_content_hash,
                     findings_count=0,
                     findings_digest=hashlib.sha256(b"").hexdigest(),
                     findings_truncated=False,
@@ -498,15 +522,24 @@ async def review_batch_file_endpoint(
                     ],
                 )
             )
-            content_hashes_all.append(content_hash)
+            content_hashes_all.append(error_content_hash)
+            errored_docs_info.append({
+                "doc_id": str(doc_id),
+                "content_hash": error_content_hash,
+                "filename": upload.filename,
+                "error_codes": error_codes,
+            })
             continue
 
         if not canonical_doc.paragraphs or all(not p.text.strip() for p in canonical_doc.paragraphs):
+            error_codes = ["empty_text"]
+            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
-                    doc_id=str(canonical_doc.doc_id),
-                    content_hash=canonical_doc.content_hash,
+                    doc_id=str(doc_id),
+                    content_hash=error_content_hash,
                     findings_count=0,
                     findings_digest=hashlib.sha256(b"").hexdigest(),
                     findings_truncated=False,
@@ -520,7 +553,13 @@ async def review_batch_file_endpoint(
                     ],
                 )
             )
-            content_hashes_all.append(canonical_doc.content_hash)
+            content_hashes_all.append(error_content_hash)
+            errored_docs_info.append({
+                "doc_id": str(doc_id),
+                "content_hash": error_content_hash,
+                "filename": upload.filename,
+                "error_codes": error_codes,
+            })
             continue
 
         canonical_docs.append(canonical_doc)
@@ -541,6 +580,7 @@ async def review_batch_file_endpoint(
         extractor_version=extractor_version,
         ruleset_version=ruleset_version,
         content_hashes=content_hashes_all,
+        errored_docs=errored_docs_info,
     )
 
     return BatchReviewResponse(
@@ -616,19 +656,23 @@ async def review_batch_endpoint(
         canonical_docs: List[CanonicalDocument] = []
         error_entries: List[BatchDocumentResponse] = []
         content_hashes_all: List[str] = []
+        errored_docs_info: List[Dict[str, Any]] = []
 
-        for doc_input in request.documents:
+        for idx, doc_input in enumerate(request.documents):
             normalized_text = normalize_text(doc_input.text.content)
-            content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
-            content_hashes_all.append(content_hash)
-            doc_id = doc_input.text.doc_id or _derive_upload_doc_id(request.program_id, content_hash)
 
             if not normalized_text:
+                # Use index as pseudo-filename for JSON input
+                pseudo_filename = f"doc_{idx}"
+                error_codes = ["empty_text"]
+                error_content_hash = derive_error_content_hash(pseudo_filename, error_codes)
+                doc_id = doc_input.text.doc_id or _derive_upload_doc_id(request.program_id, error_content_hash)
+                content_hashes_all.append(error_content_hash)
                 error_entries.append(
                     BatchDocumentResponse(
                         filename=None,
                         doc_id=str(doc_id),
-                        content_hash=content_hash,
+                        content_hash=error_content_hash,
                         findings_count=0,
                         findings_digest=hashlib.sha256(b"").hexdigest(),
                         findings_truncated=False,
@@ -642,7 +686,17 @@ async def review_batch_endpoint(
                         ],
                     )
                 )
+                errored_docs_info.append({
+                    "doc_id": str(doc_id),
+                    "content_hash": error_content_hash,
+                    "filename": None,
+                    "error_codes": error_codes,
+                })
                 continue
+
+            content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
+            content_hashes_all.append(content_hash)
+            doc_id = doc_input.text.doc_id or _derive_upload_doc_id(request.program_id, content_hash)
 
             canonical_doc = _build_canonical_document(
                 input_text=ReviewTextInput(
@@ -669,6 +723,7 @@ async def review_batch_endpoint(
             extractor_version=request.extractor_version,
             ruleset_version=request.ruleset_version,
             content_hashes=content_hashes_all,
+            errored_docs=errored_docs_info,
         )
 
         max_findings = request.max_findings_per_doc

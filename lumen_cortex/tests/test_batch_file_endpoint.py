@@ -215,3 +215,53 @@ class TestBatchFileEndpoint:
         errors = resp.json()["documents"][0]["errors"]
         assert errors
         assert errors[0]["code"] in {"empty_text", "extract_failed"}
+    def test_error_content_hash_is_distinct(self, client):
+        """Errored docs get distinct content_hash values derived from filename+error."""
+        program_id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        extractor_version = "v1"
+
+        # Two different corrupt files should get different content_hash values
+        bad_file_1 = _make_file_tuple("bad1.exe", b"NOTPDF1", "application/octet-stream")
+        bad_file_2 = _make_file_tuple("bad2.exe", b"NOTPDF2", "application/octet-stream")
+
+        resp = client.post(
+            "/review/batch/file",
+            params={"program_id": str(program_id), "extractor_version": extractor_version},
+            files=[bad_file_1, bad_file_2],
+        )
+
+        assert resp.status_code == 200
+        docs = resp.json()["documents"]
+        assert len(docs) == 2
+
+        # Both should have errors
+        assert docs[0]["errors"]
+        assert docs[1]["errors"]
+
+        # Content hashes should be different (derived from filename)
+        assert docs[0]["content_hash"] != docs[1]["content_hash"]
+
+        # doc_ids should also be different
+        assert docs[0]["doc_id"] != docs[1]["doc_id"]
+
+    def test_same_error_same_filename_produces_same_hash(self, client):
+        """Same filename + same error = same content_hash (deterministic)."""
+        program_id = UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        extractor_version = "v1"
+
+        bad_file = _make_file_tuple("same.exe", b"GARBAGE", "application/octet-stream")
+
+        resp_1 = client.post(
+            "/review/batch/file",
+            params={"program_id": str(program_id), "extractor_version": extractor_version},
+            files=[bad_file],
+        )
+        resp_2 = client.post(
+            "/review/batch/file",
+            params={"program_id": str(program_id), "extractor_version": extractor_version},
+            files=[bad_file],
+        )
+
+        assert resp_1.status_code == 200
+        assert resp_2.status_code == 200
+        assert resp_1.json()["documents"][0]["content_hash"] == resp_2.json()["documents"][0]["content_hash"]

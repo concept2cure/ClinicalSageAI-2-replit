@@ -537,3 +537,87 @@ class TestBatchResponseMode:
 
         assert exc.value.status_code == 413
 
+
+class TestDocumentFailedEvent:
+    """Test review.document_failed event emission."""
+
+    def test_document_failed_event_emitted_for_errored_docs(self):
+        """Errored docs emit document_failed events."""
+        program_id = UUID("11111111-1111-1111-1111-111111111111")
+
+        # Create one valid doc
+        docs = [make_doc("Valid document content")]
+
+        # Simulate errored doc info (as would come from API layer)
+        errored_docs = [
+            {
+                "doc_id": "22222222-2222-2222-2222-222222222222",
+                "content_hash": "abc123",
+                "filename": "bad_file.exe",
+                "error_codes": ["unsupported_type"],
+            },
+        ]
+
+        event_store = FakeEventStore()
+        runner = ReviewRunner(
+            program_id=program_id,
+            event_store=event_store,
+            timestamp_factory=fixed_ts,
+        )
+
+        result = runner.review_batch(
+            docs=docs,
+            program_id=program_id,
+            errored_docs=errored_docs,
+        )
+
+        # Should have: 1 findings_created + 1 document_failed + 1 batch_completed = 3 events
+        events = event_store.collected_events
+        assert len(events) == 3, f"Expected 3 events, got {len(events)}"
+
+        failed_events = [e for e in events if e.event_type == EventType.REVIEW_DOCUMENT_FAILED]
+        assert len(failed_events) == 1, f"Expected 1 document_failed, got {len(failed_events)}"
+
+        # Check payload
+        payload = failed_events[0].payload
+        assert payload["doc_id"] == "22222222-2222-2222-2222-222222222222"
+        assert payload["filename"] == "bad_file.exe"
+        assert payload["error_codes"] == ["unsupported_type"]
+
+    def test_document_failed_event_id_is_deterministic(self):
+        """Same errored doc with same timestamp → same event_id."""
+        program_id = UUID("33333333-3333-3333-3333-333333333333")
+
+        errored_docs = [
+            {
+                "doc_id": "44444444-4444-4444-4444-444444444444",
+                "content_hash": "hashXYZ",
+                "filename": "corrupt.pdf",
+                "error_codes": ["extract_failed"],
+            },
+        ]
+
+        # First run
+        event_store_1 = FakeEventStore()
+        runner_1 = ReviewRunner(
+            program_id=program_id,
+            event_store=event_store_1,
+            timestamp_factory=fixed_ts,
+        )
+        runner_1.review_batch(docs=[], program_id=program_id, errored_docs=errored_docs)
+
+        # Second run
+        event_store_2 = FakeEventStore()
+        runner_2 = ReviewRunner(
+            program_id=program_id,
+            event_store=event_store_2,
+            timestamp_factory=fixed_ts,
+        )
+        runner_2.review_batch(docs=[], program_id=program_id, errored_docs=errored_docs)
+
+        failed_event_1 = [e for e in event_store_1.collected_events
+                         if e.event_type == EventType.REVIEW_DOCUMENT_FAILED][0]
+        failed_event_2 = [e for e in event_store_2.collected_events
+                         if e.event_type == EventType.REVIEW_DOCUMENT_FAILED][0]
+
+        assert failed_event_1.event_id == failed_event_2.event_id

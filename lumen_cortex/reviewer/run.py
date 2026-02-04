@@ -22,7 +22,7 @@ import hashlib
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from uuid import UUID
 import subprocess
 
@@ -35,10 +35,12 @@ from lumen_cortex.core.events import (
     ReviewFindingsPayload,
     BatchCompletedPayload,
     BatchDocumentSummary,
+    DocumentFailedPayload,
     derive_submission_uuid,
     derive_review_event_id,
     derive_batch_id,
     derive_batch_event_id,
+    derive_document_failed_event_id,
     compute_content_hash,
 )
 from lumen_cortex.graph import GraphValidator, ValidationResult
@@ -451,24 +453,28 @@ class ReviewRunner:
         extractor_version: Optional[str] = None,
         ruleset_version: Optional[str] = None,
         content_hashes: Optional[List[str]] = None,
+        errored_docs: Optional[List[Dict[str, Any]]] = None,
     ) -> BatchReviewResult:
         """
         Review multiple documents in a deterministic batch.
 
         Documents are sorted by (content_hash, doc_id) before processing.
-        Emits N review.findings_created events + 1 review.batch_completed event.
+        Emits N review.findings_created events + M review.document_failed events + 1 review.batch_completed event.
 
         Args:
             docs: List of CanonicalDocuments to review
             program_id: Program/tenant isolation key (required)
             extractor_version: Override extractor version
             ruleset_version: Override ruleset version (for contract)
+            content_hashes: All content hashes (including errored docs)
+            errored_docs: List of dicts with doc_id, content_hash, filename, error_codes
 
         Returns:
             BatchReviewResult with deterministic ordering
         """
         ext_version = extractor_version or self._extractor_version
         rule_version = ruleset_version or self._registry.version
+        errored = errored_docs or []
 
         # Determinism Contract:
         # - Documents are sorted by (content_hash, doc_id)
@@ -485,7 +491,20 @@ class ReviewRunner:
             content_hashes=batch_hashes,
         )
 
-        # Step 3: Review each document (emits findings_created per doc)
+        # Step 3: Emit document_failed events for errored docs
+        if self._event_store is not None:
+            for err_doc in errored:
+                self._emit_document_failed_event(
+                    program_id=program_id,
+                    doc_id=err_doc["doc_id"],
+                    content_hash=err_doc["content_hash"],
+                    filename=err_doc.get("filename"),
+                    error_codes=err_doc["error_codes"],
+                    ext_version=ext_version,
+                    rule_version=rule_version,
+                )
+
+        # Step 4: Review each document (emits findings_created per doc)
         doc_results: List[BatchDocumentResult] = []
         for doc in sorted_docs:
             # Run review (which may emit findings_created event)
@@ -510,7 +529,7 @@ class ReviewRunner:
                 findings_digest=findings_digest,
             ))
 
-        # Step 4: Emit batch_completed event
+        # Step 5: Emit batch_completed event
         if self._event_store is not None:
             self._emit_batch_completed_event(
                 batch_id=batch_id,
@@ -520,7 +539,7 @@ class ReviewRunner:
                 rule_version=rule_version,
             )
 
-        # Step 5: Return deterministic result
+        # Step 6: Return deterministic result
         return BatchReviewResult(
             batch_id=str(batch_id),
             program_id=str(program_id),
@@ -528,6 +547,61 @@ class ReviewRunner:
             ruleset_version=rule_version,
             documents=tuple(doc_results),
         )
+
+    def _emit_document_failed_event(
+        self,
+        program_id: UUID,
+        doc_id: str,
+        content_hash: str,
+        filename: Optional[str],
+        error_codes: List[str],
+        ext_version: str,
+        rule_version: str,
+    ) -> None:
+        """
+        Emit review.document_failed event for a document with errors.
+
+        Creates a deterministic event with:
+        - event_id derived from program_id, doc_id, content_hash, error_codes, timestamp
+        - Payload containing error details for telemetry
+        """
+        timestamp = self._timestamp_factory()
+        timestamp_iso = timestamp.isoformat()
+
+        payload = DocumentFailedPayload(
+            program_id=str(program_id),
+            doc_id=doc_id,
+            content_hash=content_hash,
+            filename=filename,
+            error_codes=sorted(error_codes),
+            extractor_version=ext_version,
+            ruleset_version=rule_version,
+            occurred_at=timestamp_iso,
+        )
+
+        # Derive deterministic event_id
+        event_id = derive_document_failed_event_id(
+            program_id=program_id,
+            doc_id=UUID(doc_id),
+            content_hash=content_hash,
+            error_codes=error_codes,
+            timestamp_iso=timestamp_iso,
+        )
+
+        # Use doc_id as submission context for failed docs
+        event = RPSEvent(
+            event_id=event_id,
+            program_id=program_id,
+            submission_uuid=UUID(doc_id),
+            event_type=EventType.REVIEW_DOCUMENT_FAILED,
+            event_timestamp=timestamp,
+            actor_id="shadow-reviewer-batch",
+            content_hash=compute_content_hash(payload.to_dict()),
+            payload=payload.to_dict(),
+            ordinal=0,
+        )
+
+        self._event_store.queue_event(event)
 
     def _emit_batch_completed_event(
         self,

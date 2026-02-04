@@ -44,6 +44,7 @@ class EventType(str, Enum):
     REVIEW_COMPLETED = "review.completed"
     REVIEW_FINDINGS_CREATED = "review.findings_created"
     REVIEW_BATCH_COMPLETED = "review.batch_completed"
+    REVIEW_DOCUMENT_FAILED = "review.document_failed"
 
     # Submission events
     SUBMISSION_CREATED = "submission.created"
@@ -190,6 +191,56 @@ def derive_batch_event_id(
         Deterministic UUID5-based event identifier
     """
     seed = f"{program_id}|{batch_id}|{payload_hash}|review.batch_completed"
+    return uuid5(NAMESPACE_URL, seed)
+
+
+def derive_error_content_hash(filename: str, error_codes: List[str]) -> str:
+    """
+    Derive a deterministic content_hash for errored documents.
+
+    This ensures errored docs produce distinct hashes that:
+    - Are stable across runs (same file + same errors = same hash)
+    - Don't collide with successful doc hashes
+    - Don't collapse multiple failures into identical hashes
+
+    Formula: sha256(f"ERROR|{filename}|{sorted(error_codes) joined by ,}")
+
+    Args:
+        filename: Original filename (for uniqueness)
+        error_codes: List of error codes that occurred
+
+    Returns:
+        Deterministic SHA-256 hash
+    """
+    sorted_codes = ",".join(sorted(error_codes))
+    seed = f"ERROR|{filename}|{sorted_codes}"
+    return hashlib.sha256(seed.encode("utf-8")).hexdigest()
+
+
+def derive_document_failed_event_id(
+    program_id: UUID,
+    doc_id: UUID,
+    content_hash: str,
+    error_codes: List[str],
+    timestamp_iso: str,
+) -> UUID:
+    """
+    Derive a deterministic event_id for review.document_failed events.
+
+    Formula: uuid5(NAMESPACE_URL, f"doc_failed|{program_id}|{doc_id}|{content_hash}|{sorted_codes}|{timestamp}")
+
+    Args:
+        program_id: Program/tenant isolation key
+        doc_id: The document's UUID
+        content_hash: Hash of the document content (or error hash)
+        error_codes: List of error codes
+        timestamp_iso: ISO-formatted timestamp for uniqueness
+
+    Returns:
+        Deterministic UUID5-based event identifier
+    """
+    sorted_codes = ",".join(sorted(error_codes))
+    seed = f"doc_failed|{program_id}|{doc_id}|{content_hash}|{sorted_codes}|{timestamp_iso}"
     return uuid5(NAMESPACE_URL, seed)
 
 
@@ -443,4 +494,36 @@ class BatchCompletedPayload(BaseModel):
             "findings_by_severity": self.findings_by_severity,
             "ruleset_version": self.ruleset_version,
             "extractor_version": self.extractor_version,
+        }
+
+class DocumentFailedPayload(BaseModel):
+    """
+    Typed payload for review.document_failed events.
+
+    Emitted when a document in a batch has errors (extraction failure,
+    unsupported type, empty text, etc.).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    program_id: str = Field(description="Program/tenant isolation key")
+    doc_id: str = Field(description="Document ID")
+    content_hash: str = Field(description="Content hash (error-derived if extraction failed)")
+    filename: Optional[str] = Field(default=None, description="Original filename")
+    error_codes: List[str] = Field(description="List of error codes")
+    extractor_version: str = Field(description="Extractor version used")
+    ruleset_version: str = Field(description="Ruleset version used")
+    occurred_at: str = Field(description="ISO timestamp when failure occurred")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for event payload."""
+        return {
+            "program_id": self.program_id,
+            "doc_id": self.doc_id,
+            "content_hash": self.content_hash,
+            "filename": self.filename,
+            "error_codes": self.error_codes,
+            "extractor_version": self.extractor_version,
+            "ruleset_version": self.ruleset_version,
+            "occurred_at": self.occurred_at,
         }
