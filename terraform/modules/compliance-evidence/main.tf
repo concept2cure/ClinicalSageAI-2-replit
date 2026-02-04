@@ -41,7 +41,6 @@ resource "aws_cloudtrail" "part11_audit" {
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_logging                = true
-  enable_log_file_validation    = true
   kms_key_id                    = aws_kms_key.cloudtrail_encryption.arn
 
   event_selector {
@@ -56,15 +55,6 @@ resource "aws_cloudtrail" "part11_audit" {
   }
 
   tags = merge(var.tags, { ComplianceFramework = "21CFR11", RetentionRequirement = "7Years" })
-}
-
-resource "aws_s3_bucket_public_access_block" "evidence" {
-  bucket = aws_s3_bucket.evidence.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
 }
 
 output "evidence_bucket" {

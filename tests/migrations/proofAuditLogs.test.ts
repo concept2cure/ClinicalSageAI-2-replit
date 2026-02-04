@@ -5,14 +5,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import postgres from 'postgres';
 
 const dbSecret = process.env.DATABASE_NEON_NEW_SECRET || '';
-const url = dbSecret ? dbSecret.replace(/^psql '/, '').replace(/'$/, '') : '';
-const describeWithDb = dbSecret ? describe : describe.skip;
+const url = dbSecret.replace(/^psql '/, '').replace(/'$/, '');
 
-describeWithDb('Proof Audit Logs Migration', () => {
-  let sql: ReturnType<typeof postgres> | undefined;
+describe('Proof Audit Logs Migration', () => {
+  let sql: ReturnType<typeof postgres>;
 
   beforeAll(() => {
-    if (!url) return;
+    if (!url) {
+      throw new Error('DATABASE_NEON_NEW_SECRET not set');
+    }
     sql = postgres(url, { ssl: 'require' });
   });
 

@@ -27,11 +27,6 @@ COPY services/ich_ingest /app/services/ich_ingest
 # Create necessary directories
 RUN mkdir -p /data /data/guidelines /data/csr_uploads
 
-RUN addgroup --system app && adduser --system --ingroup app app
-RUN chown -R app:app /app /data
-
-USER app
-
 # Set default environment variables
 ENV ICH_SERVICE_NAME="ich-specialist" \
     ICH_LOG_LEVEL="INFO" \
