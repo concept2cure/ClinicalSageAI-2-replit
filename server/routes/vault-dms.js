@@ -37,12 +37,11 @@ const authenticate = (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'AUTH_REQUIRED',
-  
+
         message: 'Authorization header with Bearer token required',
       });
     }
 
-  
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -71,8 +70,7 @@ const authenticate = (req, res, next) => {
 router.use(authenticate);
 
 const normalizeDocumentInput = (payload = {}) => {
-  co
-    nst title = payload.title || payload.name;
+  const title = payload.title || payload.name;
   return {
     ...payload,
     title,

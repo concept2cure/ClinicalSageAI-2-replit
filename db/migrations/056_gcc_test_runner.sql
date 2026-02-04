@@ -82,13 +82,13 @@ END $$;
 \echo ''
 \echo '  Medical Device/IVD Support Check:'
 SELECT 
-    authority_code,
-    display_name,
-    supports_medical_devices,
+    id,
+    region_name,
+    supports_medical_device,
     supports_ivd
 FROM common_standards.global_regulatory_authorities
-WHERE supports_medical_devices = TRUE
-ORDER BY authority_code
+WHERE supports_medical_device = TRUE
+ORDER BY id
 LIMIT 5;
 
 -- =============================================================================

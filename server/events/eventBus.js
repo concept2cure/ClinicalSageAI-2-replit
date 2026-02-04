@@ -43,7 +43,7 @@ class EventBus {
           processed BOOLEAN DEFAULT FALSE
         )
       `);
-      
+
       this.initialized = true;
       logger.info('Event bus initialized successfully');
     } catch (error) {
@@ -73,10 +73,10 @@ class EventBus {
       // Notify in-memory subscribers
       this.notifySubscribers(event);
 
-      logger.info(\`Event published: \${eventType}\`, { id: result.rows[0].id });
+      logger.info('Event published: ' + eventType, { id: result.rows[0].id });
       return result.rows[0];
     } catch (error) {
-      logger.error(\`Failed to publish event: \${eventType}\`, error);
+      logger.error('Failed to publish event: ' + eventType, error);
       throw error;
     }
   }
@@ -97,14 +97,14 @@ class EventBus {
     };
 
     subscribers.push(subscriber);
-    logger.info(\`Subscribed to events: \${types.join(', ')}\`);
+    logger.info('Subscribed to events: ' + types.join(', '));
 
     // Return unsubscribe function
     return () => {
       const index = subscribers.indexOf(subscriber);
       if (index > -1) {
         subscribers.splice(index, 1);
-        logger.info(\`Unsubscribed from events: \${types.join(', ')}\`);
+        logger.info('Unsubscribed from events: ' + types.join(', '));
       }
     };
   }
@@ -117,7 +117,10 @@ class EventBus {
     for (const subscriber of subscribers) {
       try {
         // Check if subscriber is interested in this event type
-        if (!subscriber.eventTypes.includes('*') && !subscriber.eventTypes.includes(event.eventType)) {
+        if (
+          !subscriber.eventTypes.includes('*') &&
+          !subscriber.eventTypes.includes(event.eventType)
+        ) {
           continue;
         }
 
@@ -129,7 +132,7 @@ class EventBus {
         // Call subscriber callback
         subscriber.callback(event);
       } catch (error) {
-        logger.error(\`Error in event subscriber for \${event.eventType}:\`, error);
+        logger.error('Error in event subscriber for ' + event.eventType + ':', error);
       }
     }
   }
@@ -159,12 +162,12 @@ class EventBus {
     try {
       let sql = 'SELECT * FROM ind_events';
       const params = [];
-      
+
       if (eventType) {
         sql += ' WHERE event_type = $1';
         params.push(eventType);
       }
-      
+
       sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1);
       params.push(limit);
 
