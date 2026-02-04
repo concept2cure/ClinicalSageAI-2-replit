@@ -15,64 +15,29 @@
 | 3     | Predictive AI       | ✅ Complete     | Passed       | -                      |
 | 3.5   | Multi-Agent         | ✅ Complete     | Passed       | -                      |
 | **4** | **Workflow Engine** | **✅ Complete** | **Passed**   | -                      |
-| 5     | Intelligent Docs    | ⏳ Blocked      | -            | Phase 4 completion     |
-| 6     | eCTD Export         | ⏳ Blocked      | -            | Phase 4 completion     |
-| 7     | Mission Control     | ⏳ Blocked      | -            | Phase 4 completion     |
-| 8     | HAQ Manager         | ⏳ Blocked      | -            | Phase 4 completion     |
+| 5     | Intelligent Docs    | ⏳ Pending      | -            | -                      |
+| 6     | eCTD Export         | ⏳ Blocked      | -            | Phase 5 completion     |
+| 7     | Mission Control     | ⏳ Blocked      | -            | Phase 5 completion     |
+| 8     | HAQ Manager         | ⏳ Blocked      | -            | Phase 5 completion     |
 | 9     | Data Ingestion      | ⏳ Blocked      | -            | Vendor APIs            |
 | 10    | Validation          | ⏳ Blocked      | -            | All prior phases       |
 | 11    | Marketplace         | 🔮 Future       | -            | Post-GA                |
 
-## 🎯 Current Sprint Goals (Weeks 6-8)
+## 🎯 Current Sprint Goals (Phase 5 — Intelligent Document System)
 
-### Week 6: Security & Performance
+### Phase 5 Objectives (Week 7)
 
-- [ ] Implement API rate limiting (Redis-backed)
-- [ ] Add database indexes for workflow queries
-- [ ] Integrate DOMPurify XSS protection
-- [ ] Implement connection pooling
+- [ ] Unified doc editor (Tiptap) wired to artifacts
+- [ ] Traceability linking UI for anchors/xrefs
+- [ ] Change propagation engine for downstream artifacts
+- [ ] Compliance rules engine for document checks
 
-### Phase 4.1 Enhancement: Proof System (Weeks 6-9)
+### Acceptance Criteria
 
-- [ ] Formal Compliance Graph compiler (DAG + invariants)
-- [ ] Zero-Knowledge authorization proofs (privacy-preserving)
-- [ ] Delta Verification Engine (compliance drift detection)
-- [ ] Compliance Certificate generator (SNARK-ready proof object)
-- [ ] Proof Explorer UI for certificate visualization
-
-#### Phase 4.1 Completion Gate (Enterprise Grade, Audited)
-
-**Rule:** Phase 4.2 is blocked until all Phase 4.1 acceptance criteria pass.
-
-**Component Acceptance Criteria (must pass):**
-
-- **Formal Compliance Graph**: deterministic DAG compilation, invariants validated, cycle detection, stable hashes; negative tests for malformed/partial workflows.
-- **ZK Authorization Proofs**: role-scoped authorization statements, privacy-preserving public signals, failure on missing/invalid signatures, deterministic verification.
-- **Delta Verification Engine**: baseline snapshot hashing, drift detection on workflow/state changes, explicit diff report, false-positive rate <1% in regression suite.
-- **Compliance Certificate Generator**: immutable certificate schema, cryptographic binding to workflow run, reproducible proof bundle, verification round-trip succeeds.
-- **Proof Explorer UI**: renders certificate + verification status, handles empty/error/loading, displays failure reasons, access controlled.
-
-**Milestone Acceptance Criteria (must pass):**
-
-- **M1 Graph Integrity**: DAG compiles from workflow definition, invariants + hashes validated, audit log entries created.
-- **M2 Auth Proofs**: ZK auth proof emitted per approval/signature gate; negative tests for revoked/expired permissions.
-- **M3 Drift Detection**: delta verification flags unauthorized step edits or data changes; audit trail includes diff summary.
-- **M4 Certificate**: certificate generated on workflow completion; verification endpoint validates and times within SLA.
-- **M5 UI + Ops**: Proof Explorer + dashboard entry points show verification; redacted logs; performance budgets met.
-
-### Week 7: Accessibility & UI Polish (🔴 CRITICAL)
-
-- [ ] WCAG 2.1 AA audit remediation
-- [ ] Keyboard navigation for WorkflowTimeline
-- [ ] Screen reader testing (NVDA, JAWS, VoiceOver)
-- [ ] Color contrast validation (4.5:1 minimum)
-
-### Week 8: Testing & Validation
-
-- [ ] Playwright E2E suite (IND golden path)
-- [ ] Unit test coverage >90% (workflow services)
-- [ ] IQ/OQ/PQ documentation structure
-- [ ] OpenTelemetry tracing implementation
+- [ ] Artifact editor loads with version history and audit trail
+- [ ] Traceability links render and resolve to evidence pointers
+- [ ] Change propagation flags impacted sections deterministically
+- [ ] Compliance rules produce findings with stable hashes
 
 ## ⚠️ Technical Debt Register
 
@@ -127,5 +92,5 @@
 
 ---
 
-_Last Updated: 2026-01-29 by Kimi Agent_
+_Last Updated: 2026-02-04 by Copilot_
 _Next Review: Weekly Sprint Planning_
