@@ -464,11 +464,14 @@ class ReviewRunner:
         ext_version = extractor_version or self._extractor_version
         rule_version = ruleset_version or self._registry.version
 
+        # Determinism Contract:
+        # - Documents are sorted by (content_hash, doc_id)
+        # - Findings are sorted by registry order (severity rank → rule_id → evidence tuple)
         # Step 1: Sort documents by content_hash, then doc_id for determinism
         sorted_docs = sorted(docs, key=lambda d: (d.content_hash, str(d.doc_id)))
 
-        # Step 2: Compute batch_id from sorted content hashes
-        content_hashes = [d.content_hash for d in sorted_docs]
+        # Step 2: Compute batch_id from content hashes (order independent, doc_id agnostic)
+        content_hashes = [d.content_hash for d in docs]
         batch_id = derive_batch_id(
             program_id=program_id,
             ruleset_version=rule_version,

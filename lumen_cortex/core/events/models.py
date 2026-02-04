@@ -154,18 +154,19 @@ def derive_batch_id(
 
     Formula: uuid5(NAMESPACE_URL, f"batch|{program_id}|{ruleset_version}|{extractor_version}|{hash1}|...|{hashN}")
 
-    Content hashes must be pre-sorted (lexicographically) before calling.
+    Content hashes are sorted lexicographically inside this function to ensure
+    batch_id is invariant to input order and doc_id differences.
 
     Args:
         program_id: Program/tenant isolation key
         ruleset_version: Version of the rule registry
         extractor_version: Git SHA or version of the extractor
-        content_hashes: Sorted list of document content hashes
+        content_hashes: List of document content hashes (order independent)
 
     Returns:
         Deterministic UUID5-based batch identifier
     """
-    hashes_joined = "|".join(content_hashes)
+    hashes_joined = "|".join(sorted(content_hashes))
     seed = f"batch|{program_id}|{ruleset_version}|{extractor_version}|{hashes_joined}"
     return uuid5(NAMESPACE_URL, seed)
 

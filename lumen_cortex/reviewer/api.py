@@ -15,13 +15,15 @@ from __future__ import annotations
 import hashlib
 import io
 import os
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, Query
 from pydantic import BaseModel, Field
 
 from lumen_cortex.core.canonical import CanonicalDocument, EvidencePointer
+from lumen_cortex.core.canonical.document import CanonicalParagraph
 from lumen_cortex.core.events import EventStoreAdapter
 from lumen_cortex.reviewer import ReviewRunner, review_document
 
@@ -36,12 +38,19 @@ LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").l
 # Request/Response Models
 # ─────────────────────────────────────────────────────────────────────────────
 
+class ReviewTextInput(BaseModel):
+    """API-friendly input DTO for text-based document review."""
+    doc_id: Optional[UUID] = Field(default=None, description="Document ID (auto-generated if not provided)")
+    title: Optional[str] = Field(default=None, description="Optional document title")
+    content: str = Field(..., description="Document content (plain text or markdown)")
+    source_type: Literal["docx", "pdf"] = Field(default="docx", description="Source type")
+
+
 class ReviewRequest(BaseModel):
     """Request body for document review (JSON mode)."""
-    doc_id: Optional[UUID] = Field(default=None, description="Document ID (auto-generated if not provided)")
-    document_type: str = Field(default="IND", description="Document type: IND, BLA, 510K, PMA")
-    content: str = Field(..., description="Document content (plain text or markdown)")
     program_id: UUID = Field(..., description="Program ID for RLS (required)")
+    text: ReviewTextInput = Field(..., description="Document text input")
+    extractor_version: Optional[str] = Field(default=None, description="Extractor version override")
 
 
 
@@ -85,9 +94,7 @@ class ReviewResponse(BaseModel):
 
 class BatchDocumentInput(BaseModel):
     """A single document in a batch request."""
-    doc_id: Optional[UUID] = Field(default=None, description="Document ID (auto-generated if not provided)")
-    document_type: str = Field(default="IND", description="Document type: IND, BLA, 510K, PMA")
-    content: str = Field(..., description="Document content (plain text or markdown)")
+    text: ReviewTextInput = Field(..., description="Document text input")
 
 
 class BatchReviewRequest(BaseModel):
@@ -96,12 +103,15 @@ class BatchReviewRequest(BaseModel):
     documents: List[BatchDocumentInput] = Field(..., min_length=1, description="Documents to review")
     ruleset_version: str = Field(default="0.1", description="Ruleset version")
     extractor_version: str = Field(default="gitsha-or-version", description="Extractor version")
+    response_mode: Literal["summary", "full"] = Field(default="summary", description="Response mode")
 
 
 class BatchDocumentResponse(BaseModel):
     """Response for a single document in batch review."""
     doc_id: str
     content_hash: str
+    findings_count: int
+    findings_digest: str
     findings: List[FindingSummary]
 
 
@@ -118,6 +128,37 @@ class BatchReviewResponse(BaseModel):
     program_id: str
     documents: List[BatchDocumentResponse]
     summary: BatchSummary
+
+
+MAX_FINDINGS_PREVIEW = 10
+
+
+def _build_canonical_document(
+    input_text: ReviewTextInput,
+    extractor_version: str,
+) -> CanonicalDocument:
+    """Convert API text input into a CanonicalDocument."""
+    doc_id = input_text.doc_id or uuid4()
+    content_hash = hashlib.sha256(input_text.content.encode("utf-8")).hexdigest()
+
+    raw_paragraphs = [p.strip() for p in input_text.content.split("\n\n") if p.strip()]
+    if not raw_paragraphs:
+        raw_paragraphs = [input_text.content]
+
+    paragraphs = [
+        CanonicalParagraph(index=i, text=text)
+        for i, text in enumerate(raw_paragraphs)
+    ]
+
+    return CanonicalDocument(
+        doc_id=doc_id,
+        content_hash=content_hash,
+        source_type=input_text.source_type,
+        paragraphs=paragraphs,
+        extraction_timestamp=datetime.now(timezone.utc),
+        extractor_version=extractor_version,
+        title=input_text.title,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -142,36 +183,23 @@ async def review_document_endpoint(
     to vault.rps_events for audit purposes.
     """
     try:
-        # Create canonical document from request
-        doc_id = request.doc_id or uuid4()
-        content_hash = hashlib.sha256(request.content.encode("utf-8")).hexdigest()
-
-        # Split content into paragraphs for evidence pointers
-        paragraphs = [p.strip() for p in request.content.split("\n\n") if p.strip()]
-        if not paragraphs:
-            paragraphs = [request.content]
-
-        # Create canonical document
-        canonical_doc = CanonicalDocument(
-            doc_id=doc_id,
-            program_id=request.program_id,
-            content_hash=content_hash,
-            document_type=request.document_type,
-            filename="api_submission",
-            paragraphs=tuple(paragraphs),
-            tables=tuple(),
-            headings=tuple(),
-            bookmarks=tuple(),
-        )
-
         # Create event store adapter if enabled
         event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
 
-        # Run review with program_id and optional event_store
+        # Initialize runner (determines extractor_version when not provided)
         runner = ReviewRunner(
             program_id=request.program_id,
             event_store=event_store,
+            extractor_version=request.extractor_version,
         )
+
+        # Create canonical document from request DTO
+        canonical_doc = _build_canonical_document(
+            input_text=request.text,
+            extractor_version=runner.extractor_version,
+        )
+
+        # Run review with program_id and optional event_store
         result = runner.review(canonical_doc)
 
         # Flush events to database if event store is enabled
@@ -219,7 +247,7 @@ async def review_document_endpoint(
 async def review_document_file(
     file: UploadFile = File(...),
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
-    document_type: str = Query(default="IND", description="Document type: IND, BLA, 510K, PMA"),
+    source_type: Literal["docx", "pdf"] = Query(default="docx", description="Source type"),
 ) -> ReviewResponse:
     """
     Review an uploaded document file.
@@ -248,9 +276,11 @@ async def review_document_file(
 
     # Create request and delegate
     request = ReviewRequest(
-        document_type=document_type,
-        content=text_content,
         program_id=program_id,
+        text=ReviewTextInput(
+            content=text_content,
+            source_type=source_type,
+        ),
     )
 
     return await review_document_endpoint(request)
@@ -283,24 +313,9 @@ async def review_batch_endpoint(
         canonical_docs: List[CanonicalDocument] = []
 
         for doc_input in request.documents:
-            doc_id = doc_input.doc_id or uuid4()
-            content_hash = hashlib.sha256(doc_input.content.encode("utf-8")).hexdigest()
-
-            # Split content into paragraphs
-            paragraphs = [p.strip() for p in doc_input.content.split("\n\n") if p.strip()]
-            if not paragraphs:
-                paragraphs = [doc_input.content]
-
-            canonical_doc = CanonicalDocument(
-                doc_id=doc_id,
-                program_id=request.program_id,
-                content_hash=content_hash,
-                document_type=doc_input.document_type,
-                filename="batch_submission",
-                paragraphs=tuple(paragraphs),
-                tables=tuple(),
-                headings=tuple(),
-                bookmarks=tuple(),
+            canonical_doc = _build_canonical_document(
+                input_text=doc_input.text,
+                extractor_version=request.extractor_version,
             )
             canonical_docs.append(canonical_doc)
 
@@ -319,6 +334,8 @@ async def review_batch_endpoint(
             ruleset_version=request.ruleset_version,
         )
 
+        summary_mode = request.response_mode == "summary"
+
         # Convert to response
         return BatchReviewResponse(
             batch_id=result.batch_id,
@@ -327,6 +344,8 @@ async def review_batch_endpoint(
                 BatchDocumentResponse(
                     doc_id=d.doc_id,
                     content_hash=d.content_hash,
+                    findings_count=d.findings_count,
+                    findings_digest=d.findings_digest,
                     findings=[
                         FindingSummary(
                             finding_id=str(f.finding_id),
@@ -339,7 +358,7 @@ async def review_batch_endpoint(
                             paragraph_index=f.evidence.paragraph_index,
                             fingerprint=f.fingerprint,
                         )
-                        for f in d.findings
+                        for f in (d.findings if not summary_mode else d.findings[:MAX_FINDINGS_PREVIEW])
                     ],
                 )
                 for d in result.documents
