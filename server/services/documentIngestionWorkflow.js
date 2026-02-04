@@ -14,7 +14,7 @@
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { TextProcessor } from '../utils/textProcessing.ts';
+import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 import PDFParser from 'pdf-parse';
@@ -196,20 +196,46 @@ export class DocumentIngestionWorkflow {
   async extractFromExcel(filePath) {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
-    let text = '';
 
-    workbook.worksheets.forEach(worksheet => {
-      const rows = [];
-      worksheet.eachRow({ includeEmpty: true }, row => {
-        const values = row.values
-          .slice(1)
-          .map(value => (value === null || value === undefined ? '' : String(value)));
-        rows.push(values.join(','));
-      });
-      const sheetData = rows.join('\n');
+    let text = '';
+    workbook.eachSheet(worksheet => {
+      const sheetData = this.worksheetToCsv(worksheet);
       text += `Sheet: ${worksheet.name}\n${sheetData}\n\n`;
     });
 
+    return text;
+  }
+
+  worksheetToCsv(worksheet) {
+    const rows = [];
+    worksheet.eachRow({ includeEmpty: true }, row => {
+      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+      const serialized = values.map(value => this.escapeCsv(this.excelCellToString(value)));
+      rows.push(serialized.join(','));
+    });
+    return rows.join('\n');
+  }
+
+  excelCellToString(value) {
+    if (value === null || value === undefined) return '';
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === 'object') {
+      if ('text' in value && typeof value.text === 'string') return value.text;
+      if ('richText' in value && Array.isArray(value.richText)) {
+        return value.richText.map(part => part.text || '').join('');
+      }
+      if ('result' in value && value.result !== undefined) return String(value.result);
+      if ('formula' in value && value.formula !== undefined)
+        return String(value.result ?? value.formula);
+    }
+    return String(value);
+  }
+
+  escapeCsv(value) {
+    const text = value ?? '';
+    if (/[",\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
     return text;
   }
 

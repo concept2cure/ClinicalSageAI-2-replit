@@ -22,11 +22,11 @@
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { TextProcessor } from '../utils/textProcessing.ts';
+import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
-import PDFParser from 'pdf-parse';
-import mammoth from 'mammoth';
+// import PDFParser from 'pdf-parse';
+// import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
@@ -415,19 +415,11 @@ export class UnifiedDocumentIngestion {
           break;
 
         case 'application/vnd.ms-excel':
-        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
-          const workbook = new ExcelJS.Workbook();
-          if (fileBuffer) {
-            await workbook.xlsx.load(fileBuffer);
-          } else if (filePath && fs.existsSync(filePath)) {
-            await workbook.xlsx.readFile(filePath);
-          } else {
-            throw new Error('No file source available for Excel extraction');
-          }
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+          const workbook = await this.loadExcelWorkbook({ fileBuffer, filePath });
           text = this.extractExcelText(workbook);
           metadata = { sheets: workbook.worksheets.map(sheet => sheet.name) };
           break;
-        }
 
         case 'text/plain':
         case 'text/csv':
@@ -504,17 +496,55 @@ export class UnifiedDocumentIngestion {
    */
   extractExcelText(workbook) {
     let text = '';
-    workbook.worksheets.forEach(worksheet => {
-      const rows = [];
-      worksheet.eachRow({ includeEmpty: true }, row => {
-        const values = row.values
-          .slice(1)
-          .map(value => (value === null || value === undefined ? '' : String(value)));
-        rows.push(values.join(','));
-      });
-      const sheetData = rows.join('\n');
+    workbook.eachSheet(worksheet => {
+      const sheetData = this.worksheetToCsv(worksheet);
       text += `--- Sheet: ${worksheet.name} ---\n${sheetData}\n\n`;
     });
+    return text;
+  }
+
+  async loadExcelWorkbook({ fileBuffer, filePath }) {
+    const workbook = new ExcelJS.Workbook();
+    if (fileBuffer) {
+      await workbook.xlsx.load(fileBuffer);
+    } else if (filePath && fs.existsSync(filePath)) {
+      await workbook.xlsx.readFile(filePath);
+    } else {
+      throw new Error('No file source available for Excel extraction');
+    }
+    return workbook;
+  }
+
+  worksheetToCsv(worksheet) {
+    const rows = [];
+    worksheet.eachRow({ includeEmpty: true }, row => {
+      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+      const serialized = values.map(value => this.escapeCsv(this.excelCellToString(value)));
+      rows.push(serialized.join(','));
+    });
+    return rows.join('\n');
+  }
+
+  excelCellToString(value) {
+    if (value === null || value === undefined) return '';
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === 'object') {
+      if ('text' in value && typeof value.text === 'string') return value.text;
+      if ('richText' in value && Array.isArray(value.richText)) {
+        return value.richText.map(part => part.text || '').join('');
+      }
+      if ('result' in value && value.result !== undefined) return String(value.result);
+      if ('formula' in value && value.formula !== undefined)
+        return String(value.result ?? value.formula);
+    }
+    return String(value);
+  }
+
+  escapeCsv(value) {
+    const text = value ?? '';
+    if (/[",\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
     return text;
   }
 

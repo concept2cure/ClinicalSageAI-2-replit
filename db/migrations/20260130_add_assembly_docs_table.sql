@@ -1,4 +1,4 @@
-CREATE TABLE assembly_docs (
+CREATE TABLE IF NOT EXISTS assembly_docs (
   id TEXT PRIMARY KEY,
   status TEXT,
   content TEXT,
