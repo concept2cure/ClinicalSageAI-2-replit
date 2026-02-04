@@ -4,28 +4,53 @@
 BEGIN;
 
 -- Workflow runs indexes
-CREATE INDEX IF NOT EXISTS idx_workflow_runs_tenant_status_created_at
-  ON workflow_runs (tenant_id, status, created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_workflow_runs_project_status
-  ON workflow_runs (project_id, status);
-
-CREATE INDEX IF NOT EXISTS idx_workflow_runs_current_step
-  ON workflow_runs (current_step_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'workflow_runs'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_tenant_status_created_at ON workflow_runs (tenant_id, status, created_at DESC)';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_project_status ON workflow_runs (project_id, status)';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_current_step ON workflow_runs (current_step_id)';
+  ELSE
+    RAISE NOTICE 'Skipping workflow_runs indexes; table does not exist.';
+  END IF;
+END $$;
 
 -- Workflow steps indexes
-CREATE INDEX IF NOT EXISTS idx_workflow_steps_run_status_order
-  ON workflow_steps (workflow_run_id, status, "order");
-
-CREATE INDEX IF NOT EXISTS idx_workflow_steps_assignee
-  ON workflow_steps (assignee_user_id, status);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'workflow_steps'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_steps_run_status_order ON workflow_steps (workflow_run_id, status, "order")';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_steps_assignee ON workflow_steps (assignee_user_id, status)';
+  ELSE
+    RAISE NOTICE 'Skipping workflow_steps indexes; table does not exist.';
+  END IF;
+END $$;
 
 -- Step runs indexes
-CREATE INDEX IF NOT EXISTS idx_step_runs_run_performed_at
-  ON step_runs (workflow_run_id, performed_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_step_runs_tenant_time
-  ON step_runs (tenant_id, performed_at DESC);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'step_runs'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_run_performed_at ON step_runs (workflow_run_id, performed_at DESC)';
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_tenant_time ON step_runs (tenant_id, performed_at DESC)';
+  ELSE
+    RAISE NOTICE 'Skipping step_runs indexes; table does not exist.';
+  END IF;
+END $$;
 
 -- Dead Letter Queue table for workflow failures
 CREATE TABLE IF NOT EXISTS workflow_step_dead_letter (
