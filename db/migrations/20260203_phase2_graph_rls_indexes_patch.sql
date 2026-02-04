@@ -1,8 +1,20 @@
+-- ============================================================================
 -- Phase 2 Graph RLS + Indexes Patch
 -- Migration: 20260203_phase2_graph_rls_indexes_patch.sql
--- Purpose: Add program_id RLS enforcement + performance indexes to anchors/cross_references
+-- Purpose: Add program_id RLS enforcement + performance indexes
 -- Author: Copilot Agent A4
 -- Date: 2026-02-03
+-- ============================================================================
+--
+-- eCTD MODULE CONTEXT:
+--   Module 1 (Administrative): Program-level data isolation for sponsors
+--   Module 5 (Clinical Study Reports): Blinded/unblinded data separation
+--
+-- REGULATORY AUDIT TRAIL:
+--   Row-Level Security (RLS) via program_id ensures:
+--   - IND-enabling study data isolation between sponsors
+--   - Blinded vs unblinded CSR data separation
+--   - 21 CFR Part 11 compliant access control audit logging
 
 BEGIN;
 

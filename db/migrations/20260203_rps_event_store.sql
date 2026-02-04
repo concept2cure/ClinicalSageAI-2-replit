@@ -1,6 +1,21 @@
+-- ============================================================================
 -- Phase 3+: eCTD 4.0 Event Store Skeleton
 -- Migration: vault.rps_events + vault.uuid_lifecycle + vault.uuid_edges
 -- Date: 2026-02-03
+-- ============================================================================
+--
+-- eCTD MODULE CONTEXT:
+--   Module 1 (Administrative): Submission lifecycle tracking via HL7 RPS
+--   Module 5 (Clinical Study Reports): Event-sourced document provenance
+--
+-- REGULATORY AUDIT TRAIL:
+--   - vault.rps_events: Append-only immutable event log (21 CFR Part 11)
+--   - vault.uuid_lifecycle: Materialized current state for point-in-time queries
+--   - vault.uuid_edges: Graph adjacency for submission hierarchy traversal
+--
+-- IND SUBMISSION ALIGNMENT:
+--   Date-based migration naming (20YYMMDD_*) enables exact system state
+--   reconstruction at any regulatory submission point in the IND timeline.
 --
 -- This is a SKELETON implementation - tables created but not yet used.
 -- Provides foundation for HL7 RPS lifecycle management without blocking

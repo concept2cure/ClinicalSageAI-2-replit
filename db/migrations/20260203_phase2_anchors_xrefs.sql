@@ -1,6 +1,17 @@
+-- ============================================================================
 -- Phase 2: Document Identity + Cross-Reference Graph
 -- Migration: vault.anchors + vault.cross_references
 -- Date: 2026-02-03
+-- ============================================================================
+--
+-- eCTD MODULE CONTEXT:
+--   Module 5 (Clinical Study Reports): Cross-reference integrity for CSRs
+--   Module 2.7 (Clinical Summary): Anchor-based navigation for summaries
+--
+-- REGULATORY AUDIT TRAIL:
+--   - vault.anchors: Deterministic bookmark/heading extraction for 21 CFR 11
+--   - vault.cross_references: Validated internal/external document links
+--   - Program isolation via RLS ensures blinded/unblinded data separation
 --
 -- These tables support deterministic anchor extraction and cross-reference
 -- validation for the Shadow FDA Reviewer system.
