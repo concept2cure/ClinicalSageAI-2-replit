@@ -89,6 +89,59 @@ def compute_content_hash(data: Dict[str, Any]) -> str:
     return hashlib.sha256(serialized.encode()).hexdigest()
 
 
+# ============================================================================
+# SUBMISSION + EVENT ID DERIVATION HELPERS (A5)
+# ============================================================================
+
+# Namespace for submission UUIDs - derived from doc_id
+SUBMISSION_NAMESPACE = UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # URL namespace variant
+
+
+def derive_submission_uuid(doc_id: UUID) -> UUID:
+    """
+    Derive a deterministic submission_uuid from a document ID.
+
+    Formula: uuid5(SUBMISSION_NAMESPACE, str(doc_id))
+
+    This ensures the same document always maps to the same submission,
+    enabling idempotent event emission without requiring explicit
+    submission tracking in the reviewer workflow.
+
+    Args:
+        doc_id: The document's UUID (from CanonicalDocument.doc_id)
+
+    Returns:
+        Deterministic UUID5-based submission identifier
+    """
+    return uuid5(SUBMISSION_NAMESPACE, str(doc_id))
+
+
+def derive_review_event_id(
+    program_id: UUID,
+    doc_id: UUID,
+    payload_hash: str,
+) -> UUID:
+    """
+    Derive a deterministic event_id for review.findings_created events.
+
+    Formula: uuid5(NAMESPACE_URL, f"{program_id}|{doc_id}|{payload_hash}|review.findings_created")
+
+    This ensures:
+    - Same document + same findings = same event_id (idempotent)
+    - Different findings = different event_id (audit trail)
+
+    Args:
+        program_id: Program/tenant isolation key
+        doc_id: The document's UUID
+        payload_hash: SHA-256 hash of the ReviewFindingsPayload
+
+    Returns:
+        Deterministic UUID5-based event identifier
+    """
+    seed = f"{program_id}|{doc_id}|{payload_hash}|review.findings_created"
+    return uuid5(NAMESPACE_URL, seed)
+
+
 class RPSEvent(BaseModel):
     """
     Event record for vault.rps_events.

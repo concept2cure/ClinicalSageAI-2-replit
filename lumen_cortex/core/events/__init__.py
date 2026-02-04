@@ -9,6 +9,11 @@ from lumen_cortex.core.events.models import (
     RPSEvent,
     UUIDEdge,
     EventType,
+    ReviewFindingsPayload,
+    derive_submission_uuid,
+    derive_review_event_id,
+    compute_content_hash,
+    deterministic_event_id,
 )
 from lumen_cortex.core.events.neon_adapter import (
     EventStoreAdapter,
@@ -19,4 +24,9 @@ __all__ = [
     "UUIDEdge",
     "EventType",
     "EventStoreAdapter",
+    "ReviewFindingsPayload",
+    "derive_submission_uuid",
+    "derive_review_event_id",
+    "compute_content_hash",
+    "deterministic_event_id",
 ]

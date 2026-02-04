@@ -1,25 +1,41 @@
 """
-Review Runner - Phase 3
+Review Runner - Phase 3 + A5 Event Emission
 
 Orchestrates Shadow FDA Reviewer evaluation pipeline.
 
 Workflow:
 1. Validate document graph (anchors + xrefs)
 2. Run all registered rules
-3. Return deterministic, sorted findings
+3. Emit review.findings_created event (if event_store provided)
+4. Return deterministic, sorted findings
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
-from typing import List, Optional
+from datetime import datetime, timezone
+from typing import Callable, List, Optional, Tuple
+from uuid import UUID
 import subprocess
 
 from lumen_cortex.core.canonical import CanonicalDocument, Finding
 from lumen_cortex.core.canonical.finding import sort_findings
+from lumen_cortex.core.events import (
+    EventStoreAdapter,
+    EventType,
+    RPSEvent,
+    ReviewFindingsPayload,
+    derive_submission_uuid,
+    derive_review_event_id,
+    compute_content_hash,
+)
 from lumen_cortex.graph import GraphValidator, ValidationResult
 
 from .rules import RULE_REGISTRY, RuleRegistry
+
+# Type alias for timestamp factory (enables deterministic testing)
+TimestampFactory = Callable[[], datetime]
 
 
 def _get_git_sha() -> str:
@@ -38,8 +54,17 @@ def _get_git_sha() -> str:
     return "unknown"
 
 
+def _default_timestamp_factory() -> datetime:
+    """Default timestamp factory: returns current UTC time."""
+    return datetime.now(timezone.utc)
+
+
 # Cache git SHA at module load time for determinism
 _EXTRACTOR_VERSION: str = _get_git_sha()
+
+# Environment variable to enable/disable event emission
+LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").lower() == "true"
+
 
 
 @dataclass(frozen=True)
@@ -187,25 +212,42 @@ class ReviewRunner:
     Orchestrates Shadow FDA Reviewer evaluation.
 
     Usage:
-        runner = ReviewRunner()
+        runner = ReviewRunner(program_id=uuid)
         result = runner.review(canonical_doc)
         print(result.to_markdown())
+
+    With event emission:
+        runner = ReviewRunner(
+            program_id=uuid,
+            event_store=adapter,
+        )
+        result = runner.review(canonical_doc)
+        # Event emitted to vault.rps_events
     """
 
     def __init__(
         self,
+        program_id: Optional[UUID] = None,
         registry: Optional[RuleRegistry] = None,
         extractor_version: Optional[str] = None,
+        event_store: Optional[EventStoreAdapter] = None,
+        timestamp_factory: Optional[TimestampFactory] = None,
     ):
         """
         Initialize reviewer.
 
         Args:
+            program_id: Program/tenant isolation key (required for event emission)
             registry: Rule registry (default: RULE_REGISTRY)
             extractor_version: Override version (default: git SHA)
+            event_store: Optional adapter for event emission to vault.rps_events
+            timestamp_factory: Optional factory for timestamps (for deterministic tests)
         """
+        self._program_id = program_id
         self._registry = registry or RULE_REGISTRY
         self._extractor_version = extractor_version or _EXTRACTOR_VERSION
+        self._event_store = event_store
+        self._timestamp_factory = timestamp_factory or _default_timestamp_factory
         self._validator = GraphValidator()
 
     def review(self, doc: CanonicalDocument) -> ReviewResult:
@@ -213,6 +255,7 @@ class ReviewRunner:
         Run full Shadow FDA Reviewer evaluation.
 
         Returns deterministic ReviewResult with sorted findings.
+        Emits review.findings_created event if event_store is configured.
         """
         # Step 1: Validate document graph
         validation = self._validator.validate(doc)
@@ -224,7 +267,11 @@ class ReviewRunner:
             extractor_version=self._extractor_version,
         )
 
-        # Step 3: Build result (findings already sorted by registry)
+        # Step 3: Emit event if event_store is provided and program_id is set
+        if self._event_store is not None and self._program_id is not None:
+            self._emit_findings_event(doc, findings)
+
+        # Step 4: Build result (findings already sorted by registry)
         return ReviewResult(
             doc_id=str(doc.doc_id),
             content_hash=doc.content_hash,
@@ -237,6 +284,59 @@ class ReviewRunner:
             findings=tuple(findings),
         )
 
+    def _emit_findings_event(
+        self,
+        doc: CanonicalDocument,
+        findings: List[Finding],
+    ) -> None:
+        """
+        Emit a single review.findings_created event to the event store.
+
+        Creates a deterministic event with:
+        - submission_uuid derived from doc_id
+        - event_id derived from program_id + doc_id + payload_hash
+        - Payload containing finding count, rule_ids, severity breakdown, fingerprints
+        """
+        # Build typed payload
+        findings_by_severity = {}
+        for f in findings:
+            findings_by_severity[f.severity] = findings_by_severity.get(f.severity, 0) + 1
+
+        payload = ReviewFindingsPayload(
+            document_id=str(doc.doc_id),
+            rule_ids=sorted(set(f.rule_id for f in findings)),
+            finding_count=len(findings),
+            findings_by_severity=findings_by_severity,
+            fingerprints=[f.fingerprint for f in findings],
+            registry_version=self._registry.version,
+        )
+
+        # Derive deterministic identifiers
+        submission_uuid = derive_submission_uuid(doc.doc_id)
+        payload_dict = payload.to_dict()
+        payload_hash = compute_content_hash(payload_dict)
+        event_id = derive_review_event_id(
+            program_id=self._program_id,
+            doc_id=doc.doc_id,
+            payload_hash=payload_hash,
+        )
+
+        # Create event with deterministic event_id
+        event = RPSEvent(
+            event_id=event_id,
+            program_id=self._program_id,
+            submission_uuid=submission_uuid,
+            event_type=EventType.REVIEW_FINDINGS_CREATED,
+            event_timestamp=self._timestamp_factory(),
+            actor_id="shadow-reviewer",
+            content_hash=payload_hash,
+            payload=payload_dict,
+            ordinal=0,
+        )
+
+        # Queue for emission (caller must flush)
+        self._event_store.queue_event(event)
+
     @property
     def extractor_version(self) -> str:
         return self._extractor_version
@@ -244,6 +344,10 @@ class ReviewRunner:
     @property
     def ruleset_version(self) -> str:
         return self._registry.version
+
+    @property
+    def program_id(self) -> Optional[UUID]:
+        return self._program_id
 
 
 def review_document(doc: CanonicalDocument) -> ReviewResult:

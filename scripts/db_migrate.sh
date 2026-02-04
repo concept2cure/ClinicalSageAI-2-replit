@@ -68,8 +68,39 @@ if [ ! -d "$MIGRATIONS_DIR" ]; then
     exit 1
 fi
 
-# Find GCC migration files (001-009 prefixes) and sort them
-MIGRATION_FILES=$(find "$MIGRATIONS_DIR" -name "00[1-9]_gcc_*.sql" -type f | sort)
+# ============================================================================
+# MIGRATION FILE DISCOVERY
+# ============================================================================
+# Find all migration files in proper order:
+# 1. Bootstrap (000_gcc_bootstrap_core.sql) - MUST run first
+# 2. Numbered GCC migrations (00X_gcc_*.sql where X is 0-9)
+# 3. Higher numbered migrations (0XX_*.sql where XX >= 10)
+# 4. Date-prefixed migrations (20YYMMDD_*.sql)
+#
+# Excludes: _legacy/, _consolidated/, *.md files
+# ============================================================================
+
+# Phase 1: Bootstrap core (must run first for core schema + auth stubs)
+BOOTSTRAP_FILE="$MIGRATIONS_DIR/000_gcc_bootstrap_core.sql"
+
+# Phase 2: Numbered migrations (001-099) - sorted numerically
+NUMBERED_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "0[0-9][0-9]_*.sql" -type f ! -name "000_gcc_bootstrap_core.sql" | sort)
+
+# Phase 3: Three-digit migrations (100+) - sorted numerically
+THREE_DIGIT_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "1[0-9][0-9]_*.sql" -type f | sort)
+
+# Phase 4: Date-prefixed migrations (YYYYMMDD_*.sql) - sorted by date
+DATE_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "20[0-9][0-9][0-9][0-9][0-9][0-9]_*.sql" -type f | sort)
+
+# Combine all in order
+MIGRATION_FILES=""
+if [ -f "$BOOTSTRAP_FILE" ]; then
+    MIGRATION_FILES="$BOOTSTRAP_FILE"
+fi
+MIGRATION_FILES="$MIGRATION_FILES $NUMBERED_MIGRATIONS $THREE_DIGIT_MIGRATIONS $DATE_MIGRATIONS"
+
+# Trim whitespace and check if empty
+MIGRATION_FILES=$(echo "$MIGRATION_FILES" | xargs)
 
 if [ -z "$MIGRATION_FILES" ]; then
     echo -e "${YELLOW}No migration files found in $MIGRATIONS_DIR${NC}"
@@ -89,7 +120,7 @@ APPLIED=0
 for migration in $MIGRATION_FILES; do
     MIGRATION_NAME=$(basename "$migration")
     echo -e "${YELLOW}Applying: ${NC}$MIGRATION_NAME"
-    
+
     # Run migration with safe psql settings (no pager, no .psqlrc, fail fast)
     # -X: skip .psqlrc, --no-psqlrc: extra safety, ON_ERROR_STOP: fail on errors
     if PAGER=cat psql -X --no-psqlrc "$DATABASE_URL" \
