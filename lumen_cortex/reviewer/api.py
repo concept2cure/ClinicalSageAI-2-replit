@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import io
 import os
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
@@ -35,6 +36,8 @@ from lumen_cortex.core.events import (
     derive_error_content_hash,
 )
 from lumen_cortex.reviewer import ReviewRunner, review_document
+from lumen_cortex.reviewer.config import REVIEW_CONFIG, LimitViolation
+from lumen_cortex.reviewer.ratelimit import get_rate_limiter
 
 
 router = APIRouter(prefix="/review", tags=["review"])
@@ -144,6 +147,7 @@ class BatchDocumentResponse(BaseModel):
     findings_truncated: bool
     findings_preview: List[FindingSummary]
     errors: List[DocumentError]
+    processing_ms: Optional[float] = Field(default=None, description="Processing time in milliseconds")
 
 
 class BatchSummary(BaseModel):
@@ -151,6 +155,7 @@ class BatchSummary(BaseModel):
     documents: int
     findings_total: int
     by_severity: Dict[str, int]
+    batch_processing_ms: Optional[float] = Field(default=None, description="Total batch processing time in ms")
 
 
 class BatchReviewResponse(BaseModel):
@@ -161,12 +166,13 @@ class BatchReviewResponse(BaseModel):
     summary: BatchSummary
 
 
-MAX_FINDINGS_PREVIEW = 10
-MAX_BATCH_FILES = 25
-MAX_FILE_BYTES = 25 * 1024 * 1024
-MAX_TOTAL_BYTES = 100 * 1024 * 1024
-DEFAULT_MAX_FINDINGS_PER_DOC = 25
-MAX_FINDINGS_PER_DOC = 200
+# Legacy constants (use REVIEW_CONFIG instead)
+MAX_FINDINGS_PREVIEW = REVIEW_CONFIG.max_findings_preview
+MAX_BATCH_FILES = REVIEW_CONFIG.max_batch_docs
+MAX_FILE_BYTES = REVIEW_CONFIG.max_file_bytes
+MAX_TOTAL_BYTES = REVIEW_CONFIG.max_total_bytes
+DEFAULT_MAX_FINDINGS_PER_DOC = REVIEW_CONFIG.max_findings_per_doc
+MAX_FINDINGS_PER_DOC = 200  # Hard cap
 
 
 def _build_canonical_document(
@@ -258,6 +264,38 @@ def _infer_source_type(file: UploadFile) -> Optional[Literal["docx", "pdf"]]:
         return "docx"
 
     return None
+
+
+def _raise_limit_violation(
+    error_code: str,
+    detail: str,
+    limit: int,
+    observed: int,
+) -> None:
+    """Raise HTTPException 413 with structured limit violation."""
+    violation = LimitViolation(
+        error_code=error_code,
+        detail=detail,
+        limit=limit,
+        observed=observed,
+    )
+    raise HTTPException(status_code=413, detail=violation.to_dict())
+
+
+def _check_rate_limit(program_id: UUID) -> None:
+    """Check rate limit and raise 429 if exceeded."""
+    limiter = get_rate_limiter()
+    if not limiter.allow(program_id):
+        retry_after = limiter.retry_after(program_id)
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error_code": "rate_limit_exceeded",
+                "detail": "Too many requests",
+                "retry_after_seconds": round(retry_after, 2),
+            },
+            headers={"Retry-After": str(int(retry_after) + 1)},
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -406,8 +444,19 @@ async def review_batch_file_endpoint(
     Produces deterministic batch_id and doc_id for stable event lineage.
     Errored docs get distinct content_hash via derive_error_content_hash.
     """
-    if len(files) > MAX_BATCH_FILES:
-        raise HTTPException(status_code=413, detail="Too many files in batch")
+    batch_start = time.perf_counter()
+
+    # Rate limit check
+    _check_rate_limit(program_id)
+
+    # Limit: number of files
+    if len(files) > REVIEW_CONFIG.max_batch_docs:
+        _raise_limit_violation(
+            error_code="too_many_files",
+            detail="Batch exceeds maximum file count",
+            limit=REVIEW_CONFIG.max_batch_docs,
+            observed=len(files),
+        )
 
     total_bytes = 0
     canonical_docs: List[CanonicalDocument] = []
@@ -416,11 +465,14 @@ async def review_batch_file_endpoint(
     content_hashes_all: List[str] = []
     # Track errored docs for document_failed events
     errored_docs_info: List[Dict[str, Any]] = []
+    # Track per-doc timing
+    doc_timings: Dict[str, float] = {}
 
     for upload in files:
         if not upload.filename:
             raise HTTPException(status_code=400, detail="Filename required")
 
+        doc_start = time.perf_counter()
         file_bytes = await upload.read()
         file_size = len(file_bytes)
         raw_content_hash = hashlib.sha256(file_bytes).hexdigest()
@@ -430,6 +482,7 @@ async def review_batch_file_endpoint(
             error_codes = ["unsupported_type"]
             error_content_hash = derive_error_content_hash(upload.filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+            doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
@@ -457,10 +510,11 @@ async def review_batch_file_endpoint(
             })
             continue
 
-        if file_size > MAX_FILE_BYTES:
+        if file_size > REVIEW_CONFIG.max_file_bytes:
             error_codes = ["too_large"]
             error_content_hash = derive_error_content_hash(upload.filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+            doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
@@ -489,8 +543,13 @@ async def review_batch_file_endpoint(
             continue
 
         total_bytes += file_size
-        if total_bytes > MAX_TOTAL_BYTES:
-            raise HTTPException(status_code=413, detail="Batch too large")
+        if total_bytes > REVIEW_CONFIG.max_total_bytes:
+            _raise_limit_violation(
+                error_code="batch_too_large",
+                detail="Batch total bytes exceeds limit",
+                limit=REVIEW_CONFIG.max_total_bytes,
+                observed=total_bytes,
+            )
 
         try:
             canonical_doc = _build_canonical_document_from_bytes(
@@ -504,6 +563,7 @@ async def review_batch_file_endpoint(
             error_codes = ["extract_failed"]
             error_content_hash = derive_error_content_hash(upload.filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+            doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
@@ -535,6 +595,7 @@ async def review_batch_file_endpoint(
             error_codes = ["empty_text"]
             error_content_hash = derive_error_content_hash(upload.filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+            doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
                     filename=upload.filename,
@@ -562,6 +623,7 @@ async def review_batch_file_endpoint(
             })
             continue
 
+        doc_timings[str(canonical_doc.doc_id)] = (time.perf_counter() - doc_start) * 1000
         canonical_docs.append(canonical_doc)
         filenames_by_doc_id.setdefault(str(canonical_doc.doc_id), []).append(upload.filename)
         content_hashes_all.append(canonical_doc.content_hash)
@@ -582,6 +644,12 @@ async def review_batch_file_endpoint(
         content_hashes=content_hashes_all,
         errored_docs=errored_docs_info,
     )
+
+    batch_processing_ms = (time.perf_counter() - batch_start) * 1000
+
+    # Add timing to error entries
+    for entry in error_entries:
+        entry.processing_ms = doc_timings.get(entry.doc_id, 0.0)
 
     return BatchReviewResponse(
         batch_id=result.batch_id,
@@ -610,6 +678,7 @@ async def review_batch_file_endpoint(
                         for f in d.findings[:max_findings_per_doc]
                     ],
                     errors=[],
+                    processing_ms=doc_timings.get(d.doc_id, 0.0),
                 )
                 for d in result.documents
             ] + error_entries,
@@ -619,6 +688,7 @@ async def review_batch_file_endpoint(
             documents=len(result.documents) + len(error_entries),
             findings_total=result.total_findings,
             by_severity=result.findings_by_severity,
+            batch_processing_ms=batch_processing_ms,
         ),
     )
 
@@ -646,8 +716,19 @@ async def review_batch_endpoint(
         BatchReviewResponse with batch_id, sorted documents, and summary
     """
     try:
-        if len(request.documents) > request.max_docs:
-            raise HTTPException(status_code=413, detail="Too many documents in batch")
+        batch_start = time.perf_counter()
+
+        # Rate limit check
+        _check_rate_limit(request.program_id)
+
+        # Limit: number of documents
+        if len(request.documents) > REVIEW_CONFIG.max_batch_docs:
+            _raise_limit_violation(
+                error_code="too_many_documents",
+                detail="Batch exceeds maximum document count",
+                limit=REVIEW_CONFIG.max_batch_docs,
+                observed=len(request.documents),
+            )
 
         if request.max_findings_per_doc > MAX_FINDINGS_PER_DOC:
             raise HTTPException(status_code=400, detail="max_findings_per_doc too large")
@@ -657,9 +738,32 @@ async def review_batch_endpoint(
         error_entries: List[BatchDocumentResponse] = []
         content_hashes_all: List[str] = []
         errored_docs_info: List[Dict[str, Any]] = []
+        doc_timings: Dict[str, float] = {}
+        total_chars = 0
 
         for idx, doc_input in enumerate(request.documents):
+            doc_start = time.perf_counter()
             normalized_text = normalize_text(doc_input.text.content)
+            text_len = len(normalized_text)
+
+            # Limit: per-doc character count
+            if text_len > REVIEW_CONFIG.max_text_chars_per_doc:
+                _raise_limit_violation(
+                    error_code="doc_too_large",
+                    detail=f"Document {idx} exceeds character limit",
+                    limit=REVIEW_CONFIG.max_text_chars_per_doc,
+                    observed=text_len,
+                )
+
+            total_chars += text_len
+            # Limit: total character count
+            if total_chars > REVIEW_CONFIG.max_text_chars_total:
+                _raise_limit_violation(
+                    error_code="batch_text_too_large",
+                    detail="Batch total characters exceeds limit",
+                    limit=REVIEW_CONFIG.max_text_chars_total,
+                    observed=total_chars,
+                )
 
             if not normalized_text:
                 # Use index as pseudo-filename for JSON input
@@ -667,6 +771,7 @@ async def review_batch_endpoint(
                 error_codes = ["empty_text"]
                 error_content_hash = derive_error_content_hash(pseudo_filename, error_codes)
                 doc_id = doc_input.text.doc_id or _derive_upload_doc_id(request.program_id, error_content_hash)
+                doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
                 content_hashes_all.append(error_content_hash)
                 error_entries.append(
                     BatchDocumentResponse(
@@ -707,6 +812,7 @@ async def review_batch_endpoint(
                 ),
                 extractor_version=request.extractor_version,
             )
+            doc_timings[str(canonical_doc.doc_id)] = (time.perf_counter() - doc_start) * 1000
             canonical_docs.append(canonical_doc)
 
         # Create event store adapter if enabled
@@ -725,6 +831,12 @@ async def review_batch_endpoint(
             content_hashes=content_hashes_all,
             errored_docs=errored_docs_info,
         )
+
+        batch_processing_ms = (time.perf_counter() - batch_start) * 1000
+
+        # Add timing to error entries
+        for entry in error_entries:
+            entry.processing_ms = doc_timings.get(entry.doc_id, 0.0)
 
         max_findings = request.max_findings_per_doc
 
@@ -751,6 +863,7 @@ async def review_batch_endpoint(
                     for f in d.findings[:max_findings]
                 ],
                 errors=[],
+                processing_ms=doc_timings.get(d.doc_id, 0.0),
             )
             for d in result.documents
         ]
@@ -767,6 +880,7 @@ async def review_batch_endpoint(
                 documents=len(combined_sorted),
                 findings_total=result.total_findings,
                 by_severity=result.findings_by_severity,
+                batch_processing_ms=batch_processing_ms,
             ),
         )
 
