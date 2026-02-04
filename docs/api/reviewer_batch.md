@@ -174,6 +174,34 @@ curl -X POST http://localhost:8000/api/v1/reviewer/batch \
   -F "files=@/tmp/test.pdf"
 ```
 
+## Running the Worker
+
+Use the worker loop to process queued async batches without external infra.
+
+### Local CLI
+
+```bash
+python scripts/worker/reviewer_batch_worker.py --program-id 00000000-0000-0000-0000-000000000000 --seconds 30
+```
+
+### Admin API
+
+```bash
+curl -X POST http://localhost:8000/review/batch/worker/run-once \
+  -H "X-Admin-Token: $REVIEW_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"program_id":"00000000-0000-0000-0000-000000000000"}'
+
+curl -X POST "http://localhost:8000/review/batch/worker/run-loop?seconds=60" \
+  -H "X-Admin-Token: $REVIEW_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"program_id":"00000000-0000-0000-0000-000000000000"}'
+```
+
+### Expected Statuses
+
+Queued batches transition: `queued` → `running` → `completed` or `failed`.
+
 ## Rate Limiting
 
 When `REVIEW_RATE_LIMIT_ENABLED=true`, requests are throttled per-program using a token bucket algorithm:
