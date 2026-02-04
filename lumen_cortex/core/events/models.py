@@ -45,6 +45,8 @@ class EventType(str, Enum):
     REVIEW_FINDINGS_CREATED = "review.findings_created"
     REVIEW_BATCH_COMPLETED = "review.batch_completed"
     REVIEW_DOCUMENT_FAILED = "review.document_failed"
+    REVIEW_BATCH_QUEUED = "review.batch_queued"
+    REVIEW_BATCH_PERSISTED = "review.batch_persisted"
 
     # Submission events
     SUBMISSION_CREATED = "submission.created"
@@ -526,4 +528,66 @@ class DocumentFailedPayload(BaseModel):
             "extractor_version": self.extractor_version,
             "ruleset_version": self.ruleset_version,
             "occurred_at": self.occurred_at,
+        }
+
+
+class BatchQueuedPayload(BaseModel):
+    """
+    Typed payload for review.batch_queued events.
+
+    Emitted when async batch is queued for processing.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    batch_id: str = Field(description="Batch identifier")
+    program_id: str = Field(description="Program/tenant isolation key")
+    documents_total: int = Field(description="Number of documents queued")
+    mode: str = Field(description="Processing mode (always 'async' for this event)")
+    idempotency_key: Optional[str] = Field(default=None, description="Client-provided idempotency key")
+    request_digest: str = Field(description="SHA-256 of normalized request")
+    queued_at: str = Field(description="ISO timestamp when batch was queued")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for event payload."""
+        return {
+            "batch_id": self.batch_id,
+            "program_id": self.program_id,
+            "documents_total": self.documents_total,
+            "mode": self.mode,
+            "idempotency_key": self.idempotency_key,
+            "request_digest": self.request_digest,
+            "queued_at": self.queued_at,
+        }
+
+
+class BatchPersistedPayload(BaseModel):
+    """
+    Typed payload for review.batch_persisted events.
+
+    Emitted after batch results are persisted to database.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    batch_id: str = Field(description="Batch identifier")
+    program_id: str = Field(description="Program/tenant isolation key")
+    status: str = Field(description="Final batch status (completed/failed)")
+    documents_total: int = Field(description="Total documents in batch")
+    documents_succeeded: int = Field(description="Documents that succeeded")
+    documents_failed: int = Field(description="Documents that failed")
+    findings_total: int = Field(description="Total findings across all documents")
+    persisted_at: str = Field(description="ISO timestamp when batch was persisted")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for event payload."""
+        return {
+            "batch_id": self.batch_id,
+            "program_id": self.program_id,
+            "status": self.status,
+            "documents_total": self.documents_total,
+            "documents_succeeded": self.documents_succeeded,
+            "documents_failed": self.documents_failed,
+            "findings_total": self.findings_total,
+            "persisted_at": self.persisted_at,
         }
