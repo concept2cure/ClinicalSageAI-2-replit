@@ -122,8 +122,10 @@ BEGIN
   EXCEPTION
     WHEN insufficient_privilege THEN
       RAISE NOTICE 'Cannot create auth.can_access_program - using core.can_access_program instead';
-    WHEN undefined_schema THEN
+    WHEN invalid_schema_name THEN
       RAISE NOTICE 'Schema "auth" does not exist - using core.can_access_program instead';
+    WHEN OTHERS THEN
+      RAISE NOTICE 'Cannot create auth.can_access_program (SQLSTATE %): % - using core.can_access_program instead', SQLSTATE, SQLERRM;
   END;
 END $$;
 
