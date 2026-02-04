@@ -1,10 +1,16 @@
 """
-Lumen Cortex Reviewer Package - Phase 3
+Lumen Cortex Reviewer Package - Phase 3 + A7 Batch
 
 Shadow FDA Reviewer: Rule-based deficiency detection
 """
 
-from .run import ReviewRunner, ReviewResult, review_document
+from .run import (
+    ReviewRunner,
+    ReviewResult,
+    BatchReviewResult,
+    BatchDocumentResult,
+    review_document,
+)
 from .rules import RuleRegistry, RULE_REGISTRY
 
 # Optional API router (requires FastAPI)
@@ -13,6 +19,8 @@ try:
     __all__ = [
         "ReviewRunner",
         "ReviewResult",
+        "BatchReviewResult",
+        "BatchDocumentResult",
         "review_document",
         "RuleRegistry",
         "RULE_REGISTRY",
@@ -24,6 +32,8 @@ except ImportError:
     __all__ = [
         "ReviewRunner",
         "ReviewResult",
+        "BatchReviewResult",
+        "BatchDocumentResult",
         "review_document",
         "RuleRegistry",
         "RULE_REGISTRY",

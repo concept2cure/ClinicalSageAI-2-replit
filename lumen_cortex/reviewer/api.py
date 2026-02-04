@@ -1,11 +1,12 @@
 """
-Review API - Phase 3 + A5 Event Emission
+Review API - Phase 3 + A5 Event Emission + A7 Batch
 
 FastAPI endpoints for Shadow FDA Reviewer.
 
 Endpoints:
 - POST /review/document - Review a single document
 - POST /review/document/file - Review uploaded file
+- POST /review/batch - Review multiple documents (JSON batch)
 - GET /review/health - Health check
 """
 
@@ -76,6 +77,47 @@ class ReviewResponse(BaseModel):
 
     # Findings
     findings: List[FindingSummary]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Batch Request/Response Models
+# ─────────────────────────────────────────────────────────────────────────────
+
+class BatchDocumentInput(BaseModel):
+    """A single document in a batch request."""
+    doc_id: Optional[UUID] = Field(default=None, description="Document ID (auto-generated if not provided)")
+    document_type: str = Field(default="IND", description="Document type: IND, BLA, 510K, PMA")
+    content: str = Field(..., description="Document content (plain text or markdown)")
+
+
+class BatchReviewRequest(BaseModel):
+    """Request body for batch document review."""
+    program_id: UUID = Field(..., description="Program ID for RLS (required)")
+    documents: List[BatchDocumentInput] = Field(..., min_length=1, description="Documents to review")
+    ruleset_version: str = Field(default="0.1", description="Ruleset version")
+    extractor_version: str = Field(default="gitsha-or-version", description="Extractor version")
+
+
+class BatchDocumentResponse(BaseModel):
+    """Response for a single document in batch review."""
+    doc_id: str
+    content_hash: str
+    findings: List[FindingSummary]
+
+
+class BatchSummary(BaseModel):
+    """Summary statistics for batch review."""
+    documents: int
+    findings_total: int
+    by_severity: Dict[str, int]
+
+
+class BatchReviewResponse(BaseModel):
+    """Response from batch document review."""
+    batch_id: str
+    program_id: str
+    documents: List[BatchDocumentResponse]
+    summary: BatchSummary
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -214,6 +256,105 @@ async def review_document_file(
     return await review_document_endpoint(request)
 
 
+@router.post("/batch", response_model=BatchReviewResponse)
+async def review_batch_endpoint(
+    request: BatchReviewRequest,
+) -> BatchReviewResponse:
+    """
+    Review multiple documents in a deterministic batch.
+
+    Documents are sorted by content_hash before processing for determinism.
+    Emits N review.findings_created events + 1 review.batch_completed event.
+
+    Same inputs (same bytes → same canonical JSON) produce:
+    - Same document ordering
+    - Same findings ordering
+    - Same event payload hashes
+    - Same event IDs (when timestamp_factory fixed)
+
+    Args:
+        request: BatchReviewRequest with program_id and documents list
+
+    Returns:
+        BatchReviewResponse with batch_id, sorted documents, and summary
+    """
+    try:
+        # Convert input documents to CanonicalDocument
+        canonical_docs: List[CanonicalDocument] = []
+
+        for doc_input in request.documents:
+            doc_id = doc_input.doc_id or uuid4()
+            content_hash = hashlib.sha256(doc_input.content.encode("utf-8")).hexdigest()
+
+            # Split content into paragraphs
+            paragraphs = [p.strip() for p in doc_input.content.split("\n\n") if p.strip()]
+            if not paragraphs:
+                paragraphs = [doc_input.content]
+
+            canonical_doc = CanonicalDocument(
+                doc_id=doc_id,
+                program_id=request.program_id,
+                content_hash=content_hash,
+                document_type=doc_input.document_type,
+                filename="batch_submission",
+                paragraphs=tuple(paragraphs),
+                tables=tuple(),
+                headings=tuple(),
+                bookmarks=tuple(),
+            )
+            canonical_docs.append(canonical_doc)
+
+        # Create event store adapter if enabled
+        event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
+
+        # Run batch review
+        runner = ReviewRunner(
+            program_id=request.program_id,
+            event_store=event_store,
+        )
+        result = runner.review_batch(
+            docs=canonical_docs,
+            program_id=request.program_id,
+            extractor_version=request.extractor_version,
+            ruleset_version=request.ruleset_version,
+        )
+
+        # Convert to response
+        return BatchReviewResponse(
+            batch_id=result.batch_id,
+            program_id=result.program_id,
+            documents=[
+                BatchDocumentResponse(
+                    doc_id=d.doc_id,
+                    content_hash=d.content_hash,
+                    findings=[
+                        FindingSummary(
+                            finding_id=str(f.finding_id),
+                            rule_id=f.rule_id,
+                            rule_name=f.rule_name,
+                            severity=f.severity,
+                            confidence=f.confidence,
+                            description=f.description,
+                            remediation=f.remediation,
+                            paragraph_index=f.evidence.paragraph_index,
+                            fingerprint=f.fingerprint,
+                        )
+                        for f in d.findings
+                    ],
+                )
+                for d in result.documents
+            ],
+            summary=BatchSummary(
+                documents=result.total_documents,
+                findings_total=result.total_findings,
+                by_severity=result.findings_by_severity,
+            ),
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Batch review failed: {str(e)}")
+
+
 @router.get("/health")
 async def review_health() -> Dict[str, Any]:
     """Health check for review service."""
@@ -224,3 +365,4 @@ async def review_health() -> Dict[str, Any]:
         "ruleset_version": runner.ruleset_version,
         "rules_registered": 3,  # R001, R002, R003
     }
+

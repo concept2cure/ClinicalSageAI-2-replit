@@ -43,6 +43,7 @@ class EventType(str, Enum):
     REVIEW_STARTED = "review.started"
     REVIEW_COMPLETED = "review.completed"
     REVIEW_FINDINGS_CREATED = "review.findings_created"
+    REVIEW_BATCH_COMPLETED = "review.batch_completed"
 
     # Submission events
     SUBMISSION_CREATED = "submission.created"
@@ -139,6 +140,55 @@ def derive_review_event_id(
         Deterministic UUID5-based event identifier
     """
     seed = f"{program_id}|{doc_id}|{payload_hash}|review.findings_created"
+    return uuid5(NAMESPACE_URL, seed)
+
+
+def derive_batch_id(
+    program_id: UUID,
+    ruleset_version: str,
+    extractor_version: str,
+    content_hashes: List[str],
+) -> UUID:
+    """
+    Derive a deterministic batch_id from batch inputs.
+
+    Formula: uuid5(NAMESPACE_URL, f"batch|{program_id}|{ruleset_version}|{extractor_version}|{hash1}|...|{hashN}")
+
+    Content hashes must be pre-sorted (lexicographically) before calling.
+
+    Args:
+        program_id: Program/tenant isolation key
+        ruleset_version: Version of the rule registry
+        extractor_version: Git SHA or version of the extractor
+        content_hashes: Sorted list of document content hashes
+
+    Returns:
+        Deterministic UUID5-based batch identifier
+    """
+    hashes_joined = "|".join(content_hashes)
+    seed = f"batch|{program_id}|{ruleset_version}|{extractor_version}|{hashes_joined}"
+    return uuid5(NAMESPACE_URL, seed)
+
+
+def derive_batch_event_id(
+    program_id: UUID,
+    batch_id: UUID,
+    payload_hash: str,
+) -> UUID:
+    """
+    Derive a deterministic event_id for review.batch_completed events.
+
+    Formula: uuid5(NAMESPACE_URL, f"{program_id}|{batch_id}|{payload_hash}|review.batch_completed")
+
+    Args:
+        program_id: Program/tenant isolation key
+        batch_id: The batch's UUID
+        payload_hash: SHA-256 hash of the BatchCompletedPayload
+
+    Returns:
+        Deterministic UUID5-based event identifier
+    """
+    seed = f"{program_id}|{batch_id}|{payload_hash}|review.batch_completed"
     return uuid5(NAMESPACE_URL, seed)
 
 
@@ -334,4 +384,62 @@ class ReviewFindingsPayload(BaseModel):
             "findings_by_severity": self.findings_by_severity,
             "fingerprints": self.fingerprints,
             "registry_version": self.registry_version,
+        }
+
+
+class BatchDocumentSummary(BaseModel):
+    """
+    Summary of a single document in a batch review.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    doc_id: str = Field(description="Document ID")
+    content_hash: str = Field(description="SHA-256 hash of document content")
+    findings_count: int = Field(description="Number of findings for this document")
+    findings_digest: str = Field(
+        description="SHA-256 of |-joined finding fingerprints (sorted)"
+    )
+
+
+class BatchCompletedPayload(BaseModel):
+    """
+    Typed payload for review.batch_completed events.
+
+    Compact + deterministic format for batch review audit trails.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    batch_id: str = Field(description="Deterministic batch identifier")
+    documents: List[BatchDocumentSummary] = Field(
+        description="Summary per document (ordered by content_hash)"
+    )
+    total_documents: int = Field(description="Total documents in batch")
+    total_findings: int = Field(description="Total findings across all documents")
+    findings_by_severity: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Aggregate count by severity"
+    )
+    ruleset_version: str = Field(description="Version of rule registry used")
+    extractor_version: str = Field(description="Extractor version used")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for event payload."""
+        return {
+            "batch_id": self.batch_id,
+            "documents": [
+                {
+                    "doc_id": d.doc_id,
+                    "content_hash": d.content_hash,
+                    "findings_count": d.findings_count,
+                    "findings_digest": d.findings_digest,
+                }
+                for d in self.documents
+            ],
+            "total_documents": self.total_documents,
+            "total_findings": self.total_findings,
+            "findings_by_severity": self.findings_by_severity,
+            "ruleset_version": self.ruleset_version,
+            "extractor_version": self.extractor_version,
         }

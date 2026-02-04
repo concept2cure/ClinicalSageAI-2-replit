@@ -1,5 +1,5 @@
 """
-Review Runner - Phase 3 + A5 Event Emission
+Review Runner - Phase 3 + A5 Event Emission + A7 Batch Review
 
 Orchestrates Shadow FDA Reviewer evaluation pipeline.
 
@@ -8,14 +8,21 @@ Workflow:
 2. Run all registered rules
 3. Emit review.findings_created event (if event_store provided)
 4. Return deterministic, sorted findings
+
+Batch Workflow:
+1. Sort documents by content_hash (then doc_id as tiebreaker)
+2. Review each document (emitting findings_created per doc)
+3. Emit review.batch_completed summary event
+4. Return deterministic BatchReviewResult
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from uuid import UUID
 import subprocess
 
@@ -26,8 +33,12 @@ from lumen_cortex.core.events import (
     EventType,
     RPSEvent,
     ReviewFindingsPayload,
+    BatchCompletedPayload,
+    BatchDocumentSummary,
     derive_submission_uuid,
     derive_review_event_id,
+    derive_batch_id,
+    derive_batch_event_id,
     compute_content_hash,
 )
 from lumen_cortex.graph import GraphValidator, ValidationResult
@@ -207,6 +218,97 @@ class ReviewResult:
         return "\n".join(lines)
 
 
+@dataclass(frozen=True)
+class BatchDocumentResult:
+    """Result for a single document in a batch review."""
+    doc_id: str
+    content_hash: str
+    findings: tuple
+    findings_digest: str
+
+    @property
+    def findings_count(self) -> int:
+        return len(self.findings)
+
+
+@dataclass(frozen=True)
+class BatchReviewResult:
+    """
+    Immutable result of batch Shadow FDA Reviewer evaluation.
+
+    Documents are sorted by content_hash, then doc_id for determinism.
+    """
+    batch_id: str
+    program_id: str
+    extractor_version: str
+    ruleset_version: str
+    documents: tuple  # Tuple[BatchDocumentResult, ...]
+
+    @property
+    def total_documents(self) -> int:
+        return len(self.documents)
+
+    @property
+    def total_findings(self) -> int:
+        return sum(d.findings_count for d in self.documents)
+
+    @property
+    def findings_by_severity(self) -> Dict[str, int]:
+        """Aggregate severity counts across all documents."""
+        counts: Dict[str, int] = {"Critical": 0, "Major": 0, "Minor": 0, "Informational": 0}
+        for doc_result in self.documents:
+            for finding in doc_result.findings:
+                counts[finding.severity] = counts.get(finding.severity, 0) + 1
+        return counts
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "batch_id": self.batch_id,
+            "program_id": self.program_id,
+            "documents": [
+                {
+                    "doc_id": d.doc_id,
+                    "content_hash": d.content_hash,
+                    "findings": [
+                        {
+                            "finding_id": str(f.finding_id),
+                            "rule_id": f.rule_id,
+                            "rule_name": f.rule_name,
+                            "severity": f.severity,
+                            "confidence": f.confidence,
+                            "description": f.description,
+                            "remediation": f.remediation,
+                            "evidence": {
+                                "paragraph_index": f.evidence.paragraph_index,
+                                "text_hash": f.evidence.text_hash,
+                            },
+                            "fingerprint": f.fingerprint,
+                        }
+                        for f in d.findings
+                    ],
+                }
+                for d in self.documents
+            ],
+            "summary": {
+                "documents": self.total_documents,
+                "findings_total": self.total_findings,
+                "by_severity": self.findings_by_severity,
+            },
+        }
+
+
+def _compute_findings_digest(findings: List[Finding]) -> str:
+    """
+    Compute deterministic digest of findings.
+
+    Digest = SHA-256 of |-joined fingerprints (sorted).
+    """
+    sorted_fingerprints = sorted(f.fingerprint for f in findings)
+    joined = "|".join(sorted_fingerprints)
+    return hashlib.sha256(joined.encode()).hexdigest()
+
+
 class ReviewRunner:
     """
     Orchestrates Shadow FDA Reviewer evaluation.
@@ -335,6 +437,153 @@ class ReviewRunner:
         )
 
         # Queue for emission (caller must flush)
+        self._event_store.queue_event(event)
+
+    def review_batch(
+        self,
+        docs: List[CanonicalDocument],
+        program_id: UUID,
+        extractor_version: Optional[str] = None,
+        ruleset_version: Optional[str] = None,
+    ) -> BatchReviewResult:
+        """
+        Review multiple documents in a deterministic batch.
+
+        Documents are sorted by (content_hash, doc_id) before processing.
+        Emits N review.findings_created events + 1 review.batch_completed event.
+
+        Args:
+            docs: List of CanonicalDocuments to review
+            program_id: Program/tenant isolation key (required)
+            extractor_version: Override extractor version
+            ruleset_version: Override ruleset version (for contract)
+
+        Returns:
+            BatchReviewResult with deterministic ordering
+        """
+        ext_version = extractor_version or self._extractor_version
+        rule_version = ruleset_version or self._registry.version
+
+        # Step 1: Sort documents by content_hash, then doc_id for determinism
+        sorted_docs = sorted(docs, key=lambda d: (d.content_hash, str(d.doc_id)))
+
+        # Step 2: Compute batch_id from sorted content hashes
+        content_hashes = [d.content_hash for d in sorted_docs]
+        batch_id = derive_batch_id(
+            program_id=program_id,
+            ruleset_version=rule_version,
+            extractor_version=ext_version,
+            content_hashes=content_hashes,
+        )
+
+        # Step 3: Review each document (emits findings_created per doc)
+        doc_results: List[BatchDocumentResult] = []
+        for doc in sorted_docs:
+            # Run review (which may emit findings_created event)
+            validation = self._validator.validate(doc)
+            findings = self._registry.evaluate_all(
+                doc=doc,
+                validation_result=validation,
+                extractor_version=ext_version,
+            )
+
+            # Emit findings_created event if event_store configured
+            if self._event_store is not None:
+                self._emit_findings_event(doc, findings)
+
+            # Compute deterministic findings digest
+            findings_digest = _compute_findings_digest(findings)
+
+            doc_results.append(BatchDocumentResult(
+                doc_id=str(doc.doc_id),
+                content_hash=doc.content_hash,
+                findings=tuple(findings),
+                findings_digest=findings_digest,
+            ))
+
+        # Step 4: Emit batch_completed event
+        if self._event_store is not None:
+            self._emit_batch_completed_event(
+                batch_id=batch_id,
+                program_id=program_id,
+                doc_results=doc_results,
+                ext_version=ext_version,
+                rule_version=rule_version,
+            )
+
+        # Step 5: Return deterministic result
+        return BatchReviewResult(
+            batch_id=str(batch_id),
+            program_id=str(program_id),
+            extractor_version=ext_version,
+            ruleset_version=rule_version,
+            documents=tuple(doc_results),
+        )
+
+    def _emit_batch_completed_event(
+        self,
+        batch_id: UUID,
+        program_id: UUID,
+        doc_results: List[BatchDocumentResult],
+        ext_version: str,
+        rule_version: str,
+    ) -> None:
+        """
+        Emit review.batch_completed summary event.
+
+        Creates a compact, deterministic event with:
+        - Per-doc: doc_id, content_hash, findings_count, findings_digest
+        - Totals: total_documents, total_findings, by_severity
+        """
+        # Build document summaries
+        doc_summaries = [
+            BatchDocumentSummary(
+                doc_id=d.doc_id,
+                content_hash=d.content_hash,
+                findings_count=d.findings_count,
+                findings_digest=d.findings_digest,
+            )
+            for d in doc_results
+        ]
+
+        # Aggregate severity counts
+        severity_counts: Dict[str, int] = {"Critical": 0, "Major": 0, "Minor": 0, "Informational": 0}
+        for d in doc_results:
+            for f in d.findings:
+                severity_counts[f.severity] = severity_counts.get(f.severity, 0) + 1
+
+        payload = BatchCompletedPayload(
+            batch_id=str(batch_id),
+            documents=doc_summaries,
+            total_documents=len(doc_results),
+            total_findings=sum(d.findings_count for d in doc_results),
+            findings_by_severity=severity_counts,
+            ruleset_version=rule_version,
+            extractor_version=ext_version,
+        )
+
+        # Derive deterministic event_id
+        payload_dict = payload.to_dict()
+        payload_hash = compute_content_hash(payload_dict)
+        event_id = derive_batch_event_id(
+            program_id=program_id,
+            batch_id=batch_id,
+            payload_hash=payload_hash,
+        )
+
+        # Use batch_id as submission_uuid for batch events
+        event = RPSEvent(
+            event_id=event_id,
+            program_id=program_id,
+            submission_uuid=batch_id,  # batch_id serves as submission context
+            event_type=EventType.REVIEW_BATCH_COMPLETED,
+            event_timestamp=self._timestamp_factory(),
+            actor_id="shadow-reviewer-batch",
+            content_hash=payload_hash,
+            payload=payload_dict,
+            ordinal=0,
+        )
+
         self._event_store.queue_event(event)
 
     @property
