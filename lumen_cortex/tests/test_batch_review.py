@@ -503,7 +503,7 @@ class TestBatchResponseMode:
         assert len(response_full.documents[0].findings_preview) >= len(response_summary.documents[0].findings_preview)
 
     def test_max_docs_enforced(self):
-        """Batch request rejects when documents exceed max_docs."""
+        """Batch request rejects when documents exceed REVIEW_CONFIG.max_batch_docs."""
         pytest.importorskip("fastapi")
         from lumen_cortex.reviewer.api import (
             review_batch_endpoint,
@@ -511,27 +511,27 @@ class TestBatchResponseMode:
             BatchDocumentInput,
             ReviewTextInput,
         )
+        from lumen_cortex.reviewer.config import REVIEW_CONFIG
         program_id = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
+
+        # Create more documents than max_batch_docs allows
+        # Default is 50, so create 51
+        documents = [
+            BatchDocumentInput(
+                text=ReviewTextInput(
+                    content=f"Doc {i}",
+                    source_type="docx",
+                )
+            )
+            for i in range(REVIEW_CONFIG.max_batch_docs + 1)
+        ]
 
         request = BatchReviewRequest(
             program_id=program_id,
-            documents=[
-                BatchDocumentInput(
-                    text=ReviewTextInput(
-                        content="Doc A",
-                        source_type="docx",
-                    )
-                ),
-                BatchDocumentInput(
-                    text=ReviewTextInput(
-                        content="Doc B",
-                        source_type="docx",
-                    )
-                ),
-            ],
-            max_docs=1,
+            documents=documents,
         )
 
+        from fastapi import HTTPException
         with pytest.raises(HTTPException) as exc:
             asyncio.run(review_batch_endpoint(request))
 

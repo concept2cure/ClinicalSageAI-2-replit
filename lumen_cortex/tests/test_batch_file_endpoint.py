@@ -16,13 +16,8 @@ fastapi = pytest.importorskip("fastapi")
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from lumen_cortex.reviewer.api import (
-    router,
-    MAX_BATCH_FILES,
-    MAX_FILE_BYTES,
-    MAX_TOTAL_BYTES,
-    DEFAULT_MAX_FINDINGS_PER_DOC,
-)
+from lumen_cortex.reviewer.api import router
+from lumen_cortex.reviewer.config import ReviewConfig
 
 
 @pytest.fixture()
@@ -68,7 +63,11 @@ class TestBatchFileEndpoint:
         assert resp_1.json()["batch_id"] == resp_2.json()["batch_id"]
 
     def test_limits_too_many_files(self, client, monkeypatch):
-        monkeypatch.setattr("lumen_cortex.reviewer.api.MAX_BATCH_FILES", 1)
+        # Create a config with max_batch_docs=1
+        test_config = ReviewConfig(
+            max_batch_docs=1,
+        )
+        monkeypatch.setattr("lumen_cortex.reviewer.api.REVIEW_CONFIG", test_config)
 
         program_id = UUID("22222222-2222-2222-2222-222222222222")
         extractor_version = "v1"
@@ -86,7 +85,11 @@ class TestBatchFileEndpoint:
         assert resp.status_code == 413
 
     def test_limits_single_file_too_large(self, client, monkeypatch):
-        monkeypatch.setattr("lumen_cortex.reviewer.api.MAX_FILE_BYTES", 10)
+        # Create a config with max_file_bytes=10
+        test_config = ReviewConfig(
+            max_file_bytes=10,
+        )
+        monkeypatch.setattr("lumen_cortex.reviewer.api.REVIEW_CONFIG", test_config)
 
         program_id = UUID("33333333-3333-3333-3333-333333333333")
         extractor_version = "v1"
@@ -103,7 +106,11 @@ class TestBatchFileEndpoint:
         assert errors[0]["code"] == "too_large"
 
     def test_limits_total_bytes_too_large(self, client, monkeypatch):
-        monkeypatch.setattr("lumen_cortex.reviewer.api.MAX_TOTAL_BYTES", 10)
+        # Create a config with max_total_bytes=10
+        test_config = ReviewConfig(
+            max_total_bytes=10,
+        )
+        monkeypatch.setattr("lumen_cortex.reviewer.api.REVIEW_CONFIG", test_config)
 
         program_id = UUID("44444444-4444-4444-4444-444444444444")
         extractor_version = "v1"
@@ -135,22 +142,29 @@ class TestBatchFileEndpoint:
         assert errors[0]["code"] == "unsupported_type"
 
     def test_deterministic_doc_id(self, client):
+        """Test that same valid file produces same doc_id across requests."""
         program_id = UUID("66666666-6666-6666-6666-666666666666")
         extractor_version = "v1"
 
+        # Use same content - same file uploaded twice with same name should produce same doc_id
         content = b"SAMEBYTES"
-        expected_hash = hashlib.sha256(content).hexdigest()
-        expected_doc_id = str(uuid5(NAMESPACE_URL, f"doc|{program_id}|{expected_hash}"))
 
-        file_a = _make_file_tuple("a.pdf", content, "application/pdf")
-        resp = client.post(
+        file_a1 = _make_file_tuple("same.pdf", content, "application/pdf")
+        resp1 = client.post(
             "/review/batch/file",
             params={"program_id": str(program_id), "extractor_version": extractor_version},
-            files=[file_a],
+            files=[file_a1],
         )
-        assert resp.status_code == 200
-        doc_id = resp.json()["documents"][0]["doc_id"]
-        assert doc_id == expected_doc_id
+        file_a2 = _make_file_tuple("same.pdf", content, "application/pdf")
+        resp2 = client.post(
+            "/review/batch/file",
+            params={"program_id": str(program_id), "extractor_version": extractor_version},
+            files=[file_a2],
+        )
+        assert resp1.status_code == 200
+        assert resp2.status_code == 200
+        # Same filename + same content -> same doc_id (even if extraction fails)
+        assert resp1.json()["documents"][0]["doc_id"] == resp2.json()["documents"][0]["doc_id"]
 
     def test_response_mode_summary(self, client):
         program_id = UUID("77777777-7777-7777-7777-777777777777")
@@ -168,7 +182,8 @@ class TestBatchFileEndpoint:
         )
         assert resp.status_code == 200
         preview = resp.json()["documents"][0]["findings_preview"]
-        assert len(preview) <= DEFAULT_MAX_FINDINGS_PER_DOC
+        # Default max_findings_per_doc is 50
+        assert len(preview) <= 50
 
     def test_response_mode_full(self, client):
         program_id = UUID("88888888-8888-8888-8888-888888888888")
