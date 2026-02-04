@@ -186,6 +186,16 @@ When `REVIEW_RATE_LIMIT_ENABLED=true`, requests are throttled per-program using 
 
 This prevents any single program from monopolizing batch processing resources.
 
+> **⚠️ Limitation: In-memory, single-process**
+>
+> Rate limit state is stored in process memory. Each worker/instance maintains independent buckets.
+> This means:
+>
+> - Worker restarts reset all buckets
+> - Multiple instances = no global enforcement
+>
+> **Future:** For multi-instance deployments, migrate to Redis-backed buckets or Postgres advisory locks.
+
 ## Determinism
 
 The batch endpoint produces deterministic output when:
