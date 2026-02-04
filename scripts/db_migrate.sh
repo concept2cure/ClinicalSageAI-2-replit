@@ -59,12 +59,22 @@ elif [ -z "$DATABASE_URL" ]; then
 fi
 
 # Sanitize connection string (strip accidental leading 'psql ' and quotes)
-DATABASE_URL="${DATABASE_URL#psql }"
-DATABASE_URL="$(echo "$DATABASE_URL" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
-DATABASE_URL="${DATABASE_URL#\"}"
-DATABASE_URL="${DATABASE_URL%\"}"
-DATABASE_URL="${DATABASE_URL#\'}"
-DATABASE_URL="${DATABASE_URL%\'}"
+sanitize_conn() {
+    local s="$1"
+
+    if [[ "$s" =~ ^psql[[:space:]]+ ]]; then
+        s="${s#psql }"
+    fi
+
+    s="${s#\'}"
+    s="${s%\'}"
+
+    s="$(echo "$s" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+    echo "$s"
+}
+
+DATABASE_URL="$(sanitize_conn "$DATABASE_URL")"
 
 # Mask password in URL for display
 DISPLAY_URL=$(echo "$DATABASE_URL" | sed 's/:[^:@]*@/:***@/')
