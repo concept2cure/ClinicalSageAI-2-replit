@@ -65,40 +65,21 @@ CREATE INDEX IF NOT EXISTS idx_anchors_program_id ON vault.anchors(program_id);
 -- RLS
 ALTER TABLE vault.anchors ENABLE ROW LEVEL SECURITY;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'anchors' AND policyname = 'rls_anchors_select'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_anchors_select ON vault.anchors
-            FOR SELECT USING (core.can_access_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_anchors_select ON vault.anchors;
+CREATE POLICY rls_anchors_select ON vault.anchors
+    FOR SELECT USING (core.can_access_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'anchors' AND policyname = 'rls_anchors_insert'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_anchors_insert ON vault.anchors
-            FOR INSERT WITH CHECK (core.can_write_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_anchors_insert ON vault.anchors;
+CREATE POLICY rls_anchors_insert ON vault.anchors
+    FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'anchors' AND policyname = 'rls_anchors_update'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_anchors_update ON vault.anchors
-            FOR UPDATE USING (core.can_write_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_anchors_update ON vault.anchors;
+CREATE POLICY rls_anchors_update ON vault.anchors
+    FOR UPDATE USING (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'anchors' AND policyname = 'rls_anchors_delete'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_anchors_delete ON vault.anchors
-            FOR DELETE USING (core.can_write_program(program_id))';
-    END IF;
-END $$;
+DROP POLICY IF EXISTS rls_anchors_delete ON vault.anchors;
+CREATE POLICY rls_anchors_delete ON vault.anchors
+    FOR DELETE USING (core.can_write_program(program_id));
 
 -- ============================================================================
 -- TABLE: vault.cross_references
@@ -152,40 +133,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_xrefs_idempotent
 -- RLS
 ALTER TABLE vault.cross_references ENABLE ROW LEVEL SECURITY;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'cross_references' AND policyname = 'rls_xrefs_select'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_xrefs_select ON vault.cross_references
-            FOR SELECT USING (core.can_access_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_xrefs_select ON vault.cross_references;
+CREATE POLICY rls_xrefs_select ON vault.cross_references
+    FOR SELECT USING (core.can_access_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'cross_references' AND policyname = 'rls_xrefs_insert'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_xrefs_insert ON vault.cross_references
-            FOR INSERT WITH CHECK (core.can_write_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_xrefs_insert ON vault.cross_references;
+CREATE POLICY rls_xrefs_insert ON vault.cross_references
+    FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'cross_references' AND policyname = 'rls_xrefs_update'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_xrefs_update ON vault.cross_references
-            FOR UPDATE USING (core.can_write_program(program_id))';
-    END IF;
+DROP POLICY IF EXISTS rls_xrefs_update ON vault.cross_references;
+CREATE POLICY rls_xrefs_update ON vault.cross_references
+    FOR UPDATE USING (core.can_write_program(program_id));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'vault' AND tablename = 'cross_references' AND policyname = 'rls_xrefs_delete'
-    ) THEN
-        EXECUTE 'CREATE POLICY rls_xrefs_delete ON vault.cross_references
-            FOR DELETE USING (core.can_write_program(program_id))';
-    END IF;
-END $$;
+DROP POLICY IF EXISTS rls_xrefs_delete ON vault.cross_references;
+CREATE POLICY rls_xrefs_delete ON vault.cross_references
+    FOR DELETE USING (core.can_write_program(program_id));
 
 -- ============================================================================
 -- Comments for documentation

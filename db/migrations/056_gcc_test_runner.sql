@@ -82,8 +82,8 @@ END $$;
 \echo ''
 \echo '  Medical Device/IVD Support Check:'
 SELECT
-    id AS authority_code,
-    region_name AS display_name,
+    id,
+    region_name,
     supports_medical_device,
     supports_ivd
 FROM common_standards.global_regulatory_authorities
@@ -383,7 +383,7 @@ SELECT
     sponsor.org_name as sponsor,
     cro.org_name as cro,
     rel.relationship_type,
-    rel.is_active::TEXT as contract_status,
+    rel.is_active,
     rel.can_view_submissions,
     rel.can_edit_submissions,
     rel.can_upload_documents

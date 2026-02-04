@@ -1,14 +1,12 @@
--- =============================================================================
+-- ================================================================
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
--- Purpose: Persist review batch requests + per-document results for deterministic
---          async processing, idempotency, and audit trail continuity.
+-- Purpose: Persist deterministic batch review state for async processing and auditability.
 --
 -- eCTD/CTD Context:
---   - Module(s): Module 1 (Administrative) / Module 5 (Clinical Review)
---   - Integrity Risk Addressed: orphaned async batches, missing audit trail,
---     non-deterministic reprocessing
+--   - Module(s): Module 1 / Module 5
+--   - Integrity Risk Addressed: idempotent batch persistence, traceable results
 --
 -- Determinism Contract:
 --   - Schema changes must not undermine deterministic evidence pointers.
@@ -17,7 +15,21 @@
 -- Notes:
 --   - RLS policies must enforce program_id isolation where applicable.
 --   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
--- =============================================================================
+-- ================================================================
+-- ============================================================================
+-- Migration: Phase 2 Review Batch Persistence
+-- ============================================================================
+-- eCTD Module 1 Regional Administrative Information
+-- Application Type: NDA/BLA
+-- Submission Type: Original Application
+--
+-- Document: Technical Specification - Database Schema
+-- Version: 1.0
+-- Date: 2026-02-03
+--
+-- Purpose: Persist batch review requests and per-document results for
+--          idempotency, async processing, and audit trail.
+-- ============================================================================
 
 -- Ensure vault schema exists
 CREATE SCHEMA IF NOT EXISTS vault;

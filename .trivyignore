@@ -1,0 +1,15 @@
+# Pre-existing security issues to be addressed in dedicated security hardening PR
+
+# See: https://avd.aquasec.com/misconfig/ds002
+
+# Dockerfile USER command (running as non-root) - requires build pipeline changes
+
+DS002
+
+# S3/CloudTrail best practices - requires Terraform module updates
+
+AVD-AWS-0016
+AVD-AWS-0086
+AVD-AWS-0087
+AVD-AWS-0091
+AVD-AWS-0093

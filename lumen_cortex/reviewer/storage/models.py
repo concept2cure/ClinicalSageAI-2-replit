@@ -28,10 +28,6 @@ class BatchRow:
     by_severity: dict[str, int] = field(default_factory=dict)
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    locked_at: datetime | None = None
-    heartbeat_at: datetime | None = None
-    attempts: int = 0
-    last_error: str | None = None
     error_summary: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -49,21 +45,6 @@ class DocRow:
     findings_count: int = 0
     findings_digest: str = "0" * 64
     findings_preview: list[dict[str, Any]] = field(default_factory=list)
-    created_at: datetime | None = None
-
-
-@dataclass
-class BatchInputRow:
-    """Database row representation for vault.review_batch_inputs."""
-
-    program_id: str
-    batch_id: str
-    seq: int
-    filename: str | None = None
-    source_type: str = "text"
-    doc_id: str = ""
-    content_hash: str = ""
-    text_content: str = ""
     created_at: datetime | None = None
 
 
