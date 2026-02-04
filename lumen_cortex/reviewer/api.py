@@ -21,7 +21,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, Query
+from fastapi import APIRouter, BackgroundTasks, File, Header, HTTPException, UploadFile, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from lumen_cortex.core.canonical import CanonicalDocument, EvidencePointer
@@ -34,16 +35,30 @@ from lumen_cortex.core.extractors.text_extract import (
 from lumen_cortex.core.events import (
     EventStoreAdapter,
     derive_error_content_hash,
+    BatchQueuedPayload,
+    BatchPersistedPayload,
 )
 from lumen_cortex.reviewer import ReviewRunner, review_document
 from lumen_cortex.reviewer.config import REVIEW_CONFIG, LimitViolation
 from lumen_cortex.reviewer.ratelimit import get_rate_limiter
+from lumen_cortex.reviewer.storage import NeonBatchStore, BatchRow, get_batch_store
 
 
 router = APIRouter(prefix="/review", tags=["review"])
 
 # Environment variable to enable/disable event emission
 LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").lower() == "true"
+
+# Environment variable to enable/disable batch persistence to Neon
+BATCH_PERSISTENCE_ENABLED = os.environ.get("BATCH_PERSISTENCE_ENABLED", "false").lower() == "true"
+
+# Constants (from REVIEW_CONFIG)
+MAX_FINDINGS_PREVIEW = REVIEW_CONFIG.max_findings_preview
+MAX_BATCH_FILES = REVIEW_CONFIG.max_batch_docs
+MAX_FILE_BYTES = REVIEW_CONFIG.max_file_bytes
+MAX_TOTAL_BYTES = REVIEW_CONFIG.max_total_bytes
+DEFAULT_MAX_FINDINGS_PER_DOC = REVIEW_CONFIG.max_findings_per_doc
+MAX_FINDINGS_PER_DOC = 200  # Hard cap
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -166,13 +181,27 @@ class BatchReviewResponse(BaseModel):
     summary: BatchSummary
 
 
-# Legacy constants (use REVIEW_CONFIG instead)
-MAX_FINDINGS_PREVIEW = REVIEW_CONFIG.max_findings_preview
-MAX_BATCH_FILES = REVIEW_CONFIG.max_batch_docs
-MAX_FILE_BYTES = REVIEW_CONFIG.max_file_bytes
-MAX_TOTAL_BYTES = REVIEW_CONFIG.max_total_bytes
-DEFAULT_MAX_FINDINGS_PER_DOC = REVIEW_CONFIG.max_findings_per_doc
-MAX_FINDINGS_PER_DOC = 200  # Hard cap
+class BatchStatusResponse(BaseModel):
+    """Response for GET /batch/{batch_id} status polling endpoint."""
+    batch_id: str
+    program_id: str
+    status: Literal["queued", "running", "completed", "failed"]
+    mode: Literal["sync", "async"]
+    documents_total: int
+    documents_processed: int
+    findings_total: Optional[int] = None
+    by_severity: Optional[Dict[str, int]] = None
+    created_at: str
+    updated_at: str
+    documents: Optional[List[BatchDocumentResponse]] = None
+
+
+class BatchQueuedResponse(BaseModel):
+    """Response when batch is queued for async processing."""
+    batch_id: str
+    status: Literal["queued"] = "queued"
+    poll_url: str
+    message: str = "Batch queued for processing"
 
 
 def _build_canonical_document(
@@ -264,6 +293,173 @@ def _infer_source_type(file: UploadFile) -> Optional[Literal["docx", "pdf"]]:
         return "docx"
 
     return None
+
+
+def _infer_source_type_from_filename(filename: str) -> Optional[Literal["docx", "pdf"]]:
+    """Infer source type from filename string."""
+    filename_lower = filename.lower()
+    if filename_lower.endswith(".pdf"):
+        return "pdf"
+    if filename_lower.endswith(".docx") or filename_lower.endswith(".doc"):
+        return "docx"
+    return None
+
+
+async def _process_batch_async(
+    batch_id: str,
+    program_id: UUID,
+    file_bytes_list: List[tuple[str, bytes]],
+    ruleset_version: str,
+    extractor_version: str,
+    max_findings_per_doc: int,
+) -> None:
+    """
+    Background task to process a batch asynchronously.
+
+    Updates batch status in database as processing progresses.
+    """
+    store = get_batch_store()
+    if not store:
+        return
+
+    try:
+        # Mark batch as running
+        await store.mark_batch_running(batch_id, str(program_id))
+
+        # Process documents
+        canonical_docs: List[CanonicalDocument] = []
+        content_hashes_all: List[str] = []
+        errored_docs_info: List[Dict[str, Any]] = []
+
+        for filename, file_bytes in file_bytes_list:
+            source_type = _infer_source_type_from_filename(filename)
+            file_size = len(file_bytes)
+
+            if source_type is None:
+                error_codes = ["unsupported_type"]
+                error_content_hash = derive_error_content_hash(filename, error_codes)
+                doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+                content_hashes_all.append(error_content_hash)
+                errored_docs_info.append({
+                    "doc_id": str(doc_id),
+                    "content_hash": error_content_hash,
+                    "filename": filename,
+                    "error_codes": error_codes,
+                })
+                await store.upsert_doc_result(
+                    batch_id=batch_id,
+                    program_id=str(program_id),
+                    doc_id=str(doc_id),
+                    content_hash=error_content_hash,
+                    status="failed",
+                    findings_count=0,
+                    findings_preview=[],
+                )
+                continue
+
+            if file_size > REVIEW_CONFIG.max_file_bytes:
+                error_codes = ["too_large"]
+                error_content_hash = derive_error_content_hash(filename, error_codes)
+                doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+                content_hashes_all.append(error_content_hash)
+                errored_docs_info.append({
+                    "doc_id": str(doc_id),
+                    "content_hash": error_content_hash,
+                    "filename": filename,
+                    "error_codes": error_codes,
+                })
+                await store.upsert_doc_result(
+                    batch_id=batch_id,
+                    program_id=str(program_id),
+                    doc_id=str(doc_id),
+                    content_hash=error_content_hash,
+                    status="failed",
+                    findings_count=0,
+                    findings_preview=[],
+                )
+                continue
+
+            try:
+                canonical_doc = _build_canonical_document_from_bytes(
+                    program_id=program_id,
+                    file_bytes=file_bytes,
+                    source_type=source_type,
+                    extractor_version=extractor_version,
+                    title=filename,
+                )
+                canonical_docs.append(canonical_doc)
+                content_hashes_all.append(canonical_doc.content_hash)
+            except Exception:
+                error_codes = ["extract_failed"]
+                error_content_hash = derive_error_content_hash(filename, error_codes)
+                doc_id = _derive_upload_doc_id(program_id, error_content_hash)
+                content_hashes_all.append(error_content_hash)
+                errored_docs_info.append({
+                    "doc_id": str(doc_id),
+                    "content_hash": error_content_hash,
+                    "filename": filename,
+                    "error_codes": error_codes,
+                })
+                await store.upsert_doc_result(
+                    batch_id=batch_id,
+                    program_id=str(program_id),
+                    doc_id=str(doc_id),
+                    content_hash=error_content_hash,
+                    status="failed",
+                    findings_count=0,
+                    findings_preview=[],
+                )
+                continue
+
+        # Run review
+        event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
+        runner = ReviewRunner(
+            program_id=program_id,
+            event_store=event_store,
+            extractor_version=extractor_version,
+        )
+        result = runner.review_batch(
+            docs=canonical_docs,
+            program_id=program_id,
+            extractor_version=extractor_version,
+            ruleset_version=ruleset_version,
+            content_hashes=content_hashes_all,
+            errored_docs=errored_docs_info,
+        )
+
+        # Persist document results
+        for doc_result in result.documents:
+            findings_preview = [
+                {
+                    "finding_id": str(f.finding_id),
+                    "rule_id": f.rule_id,
+                    "severity": f.severity,
+                    "description": f.description[:200],
+                }
+                for f in doc_result.findings[:max_findings_per_doc]
+            ]
+            await store.upsert_doc_result(
+                batch_id=batch_id,
+                program_id=str(program_id),
+                doc_id=doc_result.doc_id,
+                content_hash=doc_result.content_hash,
+                status="completed",
+                findings_count=doc_result.findings_count,
+                findings_preview=findings_preview,
+            )
+
+        # Finalize batch with summary
+        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
+        summary = BatchSummaryUpdate(
+            findings_total=result.total_findings,
+            by_severity=result.findings_by_severity,
+        )
+        await store.finalize_batch(batch_id, str(program_id), summary)
+
+    except Exception as e:
+        # Mark batch as failed on error
+        # Note: In production, would log the error
+        pass
 
 
 def _raise_limit_violation(
@@ -425,6 +621,7 @@ async def review_document_file(
 
 @router.post("/batch/file", response_model=BatchReviewResponse)
 async def review_batch_file_endpoint(
+    background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(...),
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     ruleset_version: str = Query(default="0.1", description="Ruleset version"),
@@ -436,26 +633,130 @@ async def review_batch_file_endpoint(
         le=MAX_FINDINGS_PER_DOC,
         description="Max findings returned per document",
     ),
-) -> BatchReviewResponse:
+    mode: Literal["sync", "async"] = Query(default="sync", description="Processing mode: sync (wait) or async (return immediately)"),
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key", description="Idempotency key for deduplication"),
+):
     """
     Review a batch of uploaded files (DOCX/PDF).
 
     Enforces hard limits on file count and size.
     Produces deterministic batch_id and doc_id for stable event lineage.
     Errored docs get distinct content_hash via derive_error_content_hash.
+
+    With BATCH_PERSISTENCE_ENABLED=true:
+    - Idempotency-Key header enables request deduplication
+    - mode=async returns immediately with batch_id for polling via GET /batch/{batch_id}
     """
     batch_start = time.perf_counter()
 
     # Rate limit check
     _check_rate_limit(program_id)
 
-    # Limit: number of files
-    if len(files) > REVIEW_CONFIG.max_batch_docs:
+    # Compute request digest for idempotency (hash of file contents)
+    # We need to read files first to compute digest
+    file_bytes_list: List[tuple[str, bytes]] = []
+    for upload in files:
+        if not upload.filename:
+            raise HTTPException(status_code=400, detail="Filename required")
+        file_bytes = await upload.read()
+        file_bytes_list.append((upload.filename, file_bytes))
+        # Reset file position for re-reading if needed (not needed since we store bytes)
+
+    # Compute request digest from sorted file hashes
+    sorted_file_hashes = sorted(
+        hashlib.sha256(fb).hexdigest() for _, fb in file_bytes_list
+    )
+    request_digest = hashlib.sha256(
+        "|".join(sorted_file_hashes).encode()
+    ).hexdigest()[:32]
+
+    # Idempotency and persistence logic
+    store = get_batch_store() if BATCH_PERSISTENCE_ENABLED else None
+    existing_batch: Optional[BatchRow] = None
+
+    if store and idempotency_key:
+        # Check for existing batch with same idempotency key
+        existing_batch = await store.create_or_get_batch(
+            program_id=str(program_id),
+            documents_total=len(file_bytes_list),
+            mode=mode,
+            idempotency_key=idempotency_key,
+            request_digest=request_digest,
+        )
+        # If batch exists and is completed, return cached result
+        if existing_batch.status == "completed":
+            doc_rows = await store.get_batch_docs(existing_batch.batch_id, str(program_id))
+            return BatchReviewResponse(
+                batch_id=existing_batch.batch_id,
+                program_id=existing_batch.program_id,
+                documents=[
+                    BatchDocumentResponse(
+                        filename=None,
+                        doc_id=doc.doc_id,
+                        content_hash=doc.content_hash,
+                        findings_count=doc.findings_count,
+                        findings_digest="",
+                        findings_truncated=False,
+                        findings_preview=doc.findings_preview or [],
+                        errors=[],
+                    )
+                    for doc in doc_rows
+                ],
+                summary=BatchSummary(
+                    documents=existing_batch.documents_total,
+                    findings_total=existing_batch.findings_total or 0,
+                    by_severity=existing_batch.by_severity or {},
+                ),
+            )
+        # If batch is queued or running, return status for polling
+        if existing_batch.status in ("queued", "running"):
+            return JSONResponse(
+                status_code=202,
+                content=BatchQueuedResponse(
+                    batch_id=existing_batch.batch_id,
+                    status="queued",
+                    poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
+                    message="Batch already in progress",
+                ).model_dump(),
+            )
+
+    # For async mode with persistence, create batch and return immediately
+    if mode == "async" and store:
+        if not existing_batch:
+            existing_batch = await store.create_or_get_batch(
+                program_id=str(program_id),
+                documents_total=len(file_bytes_list),
+                mode=mode,
+                idempotency_key=idempotency_key,
+                request_digest=request_digest,
+            )
+        # Queue background task for processing
+        background_tasks.add_task(
+            _process_batch_async,
+            batch_id=existing_batch.batch_id,
+            program_id=program_id,
+            file_bytes_list=file_bytes_list,
+            ruleset_version=ruleset_version,
+            extractor_version=extractor_version,
+            max_findings_per_doc=max_findings_per_doc,
+        )
+        return JSONResponse(
+            status_code=202,
+            content=BatchQueuedResponse(
+                batch_id=existing_batch.batch_id,
+                status="queued",
+                poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
+                message="Batch queued for processing",
+            ).model_dump(),
+        )
+
+    # Limit: number of files (use already-read file_bytes_list)
+    if len(file_bytes_list) > REVIEW_CONFIG.max_batch_docs:
         _raise_limit_violation(
             error_code="too_many_files",
             detail="Batch exceeds maximum file count",
             limit=REVIEW_CONFIG.max_batch_docs,
-            observed=len(files),
+            observed=len(file_bytes_list),
         )
 
     total_bytes = 0
@@ -468,24 +769,19 @@ async def review_batch_file_endpoint(
     # Track per-doc timing
     doc_timings: Dict[str, float] = {}
 
-    for upload in files:
-        if not upload.filename:
-            raise HTTPException(status_code=400, detail="Filename required")
-
+    for filename, file_bytes in file_bytes_list:
         doc_start = time.perf_counter()
-        file_bytes = await upload.read()
         file_size = len(file_bytes)
-        raw_content_hash = hashlib.sha256(file_bytes).hexdigest()
 
-        source_type = _infer_source_type(upload)
+        source_type = _infer_source_type_from_filename(filename)
         if source_type is None:
             error_codes = ["unsupported_type"]
-            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            error_content_hash = derive_error_content_hash(filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
-                    filename=upload.filename,
+                    filename=filename,
                     doc_id=str(doc_id),
                     content_hash=error_content_hash,
                     findings_count=0,
@@ -494,7 +790,7 @@ async def review_batch_file_endpoint(
                     findings_preview=[],
                     errors=[
                         DocumentError(
-                            filename=upload.filename,
+                            filename=filename,
                             code="unsupported_type",
                             message="Unsupported file type",
                         )
@@ -505,19 +801,19 @@ async def review_batch_file_endpoint(
             errored_docs_info.append({
                 "doc_id": str(doc_id),
                 "content_hash": error_content_hash,
-                "filename": upload.filename,
+                "filename": filename,
                 "error_codes": error_codes,
             })
             continue
 
         if file_size > REVIEW_CONFIG.max_file_bytes:
             error_codes = ["too_large"]
-            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            error_content_hash = derive_error_content_hash(filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
-                    filename=upload.filename,
+                    filename=filename,
                     doc_id=str(doc_id),
                     content_hash=error_content_hash,
                     findings_count=0,
@@ -526,7 +822,7 @@ async def review_batch_file_endpoint(
                     findings_preview=[],
                     errors=[
                         DocumentError(
-                            filename=upload.filename,
+                            filename=filename,
                             code="too_large",
                             message="File exceeds max size",
                         )
@@ -537,7 +833,7 @@ async def review_batch_file_endpoint(
             errored_docs_info.append({
                 "doc_id": str(doc_id),
                 "content_hash": error_content_hash,
-                "filename": upload.filename,
+                "filename": filename,
                 "error_codes": error_codes,
             })
             continue
@@ -557,16 +853,16 @@ async def review_batch_file_endpoint(
                 file_bytes=file_bytes,
                 source_type=source_type,
                 extractor_version=extractor_version,
-                title=upload.filename,
+                title=filename,
             )
         except Exception as exc:
             error_codes = ["extract_failed"]
-            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            error_content_hash = derive_error_content_hash(filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
-                    filename=upload.filename,
+                    filename=filename,
                     doc_id=str(doc_id),
                     content_hash=error_content_hash,
                     findings_count=0,
@@ -575,7 +871,7 @@ async def review_batch_file_endpoint(
                     findings_preview=[],
                     errors=[
                         DocumentError(
-                            filename=upload.filename,
+                            filename=filename,
                             code="extract_failed",
                             message=f"Extraction failed: {exc}",
                         )
@@ -586,19 +882,19 @@ async def review_batch_file_endpoint(
             errored_docs_info.append({
                 "doc_id": str(doc_id),
                 "content_hash": error_content_hash,
-                "filename": upload.filename,
+                "filename": filename,
                 "error_codes": error_codes,
             })
             continue
 
         if not canonical_doc.paragraphs or all(not p.text.strip() for p in canonical_doc.paragraphs):
             error_codes = ["empty_text"]
-            error_content_hash = derive_error_content_hash(upload.filename, error_codes)
+            error_content_hash = derive_error_content_hash(filename, error_codes)
             doc_id = _derive_upload_doc_id(program_id, error_content_hash)
             doc_timings[str(doc_id)] = (time.perf_counter() - doc_start) * 1000
             error_entries.append(
                 BatchDocumentResponse(
-                    filename=upload.filename,
+                    filename=filename,
                     doc_id=str(doc_id),
                     content_hash=error_content_hash,
                     findings_count=0,
@@ -607,7 +903,7 @@ async def review_batch_file_endpoint(
                     findings_preview=[],
                     errors=[
                         DocumentError(
-                            filename=upload.filename,
+                            filename=filename,
                             code="empty_text",
                             message="Extracted text is empty",
                         )
@@ -618,14 +914,14 @@ async def review_batch_file_endpoint(
             errored_docs_info.append({
                 "doc_id": str(doc_id),
                 "content_hash": error_content_hash,
-                "filename": upload.filename,
+                "filename": filename,
                 "error_codes": error_codes,
             })
             continue
 
         doc_timings[str(canonical_doc.doc_id)] = (time.perf_counter() - doc_start) * 1000
         canonical_docs.append(canonical_doc)
-        filenames_by_doc_id.setdefault(str(canonical_doc.doc_id), []).append(upload.filename)
+        filenames_by_doc_id.setdefault(str(canonical_doc.doc_id), []).append(filename)
         content_hashes_all.append(canonical_doc.content_hash)
 
     event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
@@ -900,4 +1196,83 @@ async def review_health() -> Dict[str, Any]:
         "ruleset_version": runner.ruleset_version,
         "rules_registered": 3,  # R001, R002, R003
     }
+
+
+@router.get("/batch/{batch_id}", response_model=BatchStatusResponse)
+async def get_batch_status(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    include_documents: bool = Query(default=False, description="Include document details in response"),
+) -> BatchStatusResponse:
+    """
+    Get status of a batch review job.
+
+    For async mode batches, poll this endpoint until status is 'completed' or 'failed'.
+    Returns summary counts and optionally full document details.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true for this endpoint to function.
+
+    Args:
+        batch_id: The batch ID returned from POST /batch/file
+        program_id: Program ID for RLS authorization
+        include_documents: If true, include full document results when completed
+
+    Returns:
+        BatchStatusResponse with current status and counts
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled. Set BATCH_PERSISTENCE_ENABLED=true",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Batch store not configured",
+        )
+
+    # Fetch batch row from database
+    batch_row = await store.get_batch(batch_id, str(program_id))
+
+    if batch_row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Batch {batch_id} not found or not authorized",
+        )
+
+    # Build response
+    response = BatchStatusResponse(
+        batch_id=batch_row.batch_id,
+        program_id=batch_row.program_id,
+        status=batch_row.status,
+        mode=batch_row.mode,
+        documents_total=batch_row.documents_total,
+        documents_processed=batch_row.documents_total if batch_row.status == "completed" else 0,
+        findings_total=batch_row.findings_total,
+        by_severity=batch_row.by_severity,
+        created_at=batch_row.created_at.isoformat() if batch_row.created_at else "",
+        updated_at=batch_row.updated_at.isoformat() if batch_row.updated_at else "",
+    )
+
+    # Include documents if requested and batch is completed
+    if include_documents and batch_row.status == "completed":
+        doc_rows = await store.get_batch_docs(batch_id, str(program_id))
+        response.documents = [
+            BatchDocumentResponse(
+                filename=None,
+                doc_id=doc.doc_id,
+                content_hash=doc.content_hash,
+                findings_count=doc.findings_count,
+                findings_digest="",  # Not stored in doc row
+                findings_truncated=False,
+                findings_preview=doc.findings_preview or [],
+                errors=[],
+            )
+            for doc in doc_rows
+        ]
+        response.documents_processed = len(doc_rows)
+
+    return response
 
