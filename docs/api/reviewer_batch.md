@@ -205,3 +205,63 @@ The batch endpoint produces deterministic output when:
 3. Underlying LLM responses are cached/mocked
 
 This enables reliable integration testing and snapshot comparisons.
+
+## Batch Worker (Async Processing)
+
+For async batch requests, a separate worker process can be run to claim and process queued batches:
+
+### Running the Worker
+
+```bash
+PYTHONPATH=. python -m lumen_cortex.reviewer.batch_worker \
+  --program-id <UUID> \
+  --worker-id worker-1 \
+  --poll-interval 5 \
+  --log-level INFO
+```
+
+**Environment Variables:**
+- `BATCH_PERSISTENCE_ENABLED=true` - Enable batch persistence to Neon
+- `DATABASE_URL=postgresql://...` - Database connection string
+- `REVIEW_WORKER_ID` - Worker identifier (defaults to hostname)
+- `REVIEW_BATCH_STALL_SECONDS=300` - Heartbeat timeout (5 minutes)
+- `REVIEW_BATCH_MAX_ATTEMPTS=3` - Max retry attempts
+
+### Worker Behavior
+
+1. **Claim**: Atomically claims next queued batch (FIFO order)
+2. **Process**: Processes documents with periodic heartbeats
+3. **Finalize**: Updates batch status with summary statistics
+4. **Repeat**: Polls for next batch after completion
+
+### Heartbeat Mechanism
+
+Workers send heartbeat updates every N documents to prevent stall detection:
+- Default heartbeat interval: 2 documents
+- Stall timeout: 300 seconds (configurable)
+- Stalled batches are requeued automatically (up to max attempts)
+
+### Admin Endpoints
+
+**Sweep Stalled Batches:**
+```bash
+POST /review/batch/sweep
+Headers:
+  X-Admin-Token: <admin_token>
+Body:
+  { "program_id": "<UUID>" }
+```
+
+Returns:
+```json
+{
+  "requeued": 2,
+  "failed": 1,
+  "requeued_ids": ["batch-1", "batch-2"],
+  "failed_ids": ["batch-3"]
+}
+```
+
+**Configuration:**
+- `REVIEW_SWEEPER_ENABLED=true` - Enable sweeper endpoint
+- `REVIEW_ADMIN_TOKEN=<secret>` - Admin authentication token
