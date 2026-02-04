@@ -28,6 +28,7 @@ from lumen_cortex.core.canonical.document import CanonicalParagraph
 from lumen_cortex.core.extractors.text_extract import (
     extract_text_from_docx_bytes,
     extract_text_from_pdf_bytes,
+    normalize_text,
 )
 from lumen_cortex.core.events import EventStoreAdapter
 from lumen_cortex.reviewer import ReviewRunner, review_document
@@ -109,15 +110,37 @@ class BatchReviewRequest(BaseModel):
     ruleset_version: str = Field(default="0.1", description="Ruleset version")
     extractor_version: str = Field(default="gitsha-or-version", description="Extractor version")
     response_mode: Literal["summary", "full"] = Field(default="summary", description="Response mode")
+    max_findings_per_doc: int = Field(
+        default=DEFAULT_MAX_FINDINGS_PER_DOC,
+        ge=1,
+        le=MAX_FINDINGS_PER_DOC,
+        description="Max findings returned per document",
+    )
+    max_docs: int = Field(
+        default=MAX_BATCH_FILES,
+        ge=1,
+        le=MAX_FINDINGS_PER_DOC,
+        description="Max documents allowed in batch",
+    )
+
+
+class DocumentError(BaseModel):
+    """Per-document error detail."""
+    filename: Optional[str] = Field(default=None)
+    code: str = Field(..., description="Error code")
+    message: str = Field(..., description="Human-readable error")
 
 
 class BatchDocumentResponse(BaseModel):
     """Response for a single document in batch review."""
+    filename: Optional[str] = None
     doc_id: str
     content_hash: str
     findings_count: int
     findings_digest: str
-    findings: List[FindingSummary]
+    findings_truncated: bool
+    findings_preview: List[FindingSummary]
+    errors: List[DocumentError]
 
 
 class BatchSummary(BaseModel):
@@ -139,6 +162,8 @@ MAX_FINDINGS_PREVIEW = 10
 MAX_BATCH_FILES = 25
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_TOTAL_BYTES = 100 * 1024 * 1024
+DEFAULT_MAX_FINDINGS_PER_DOC = 25
+MAX_FINDINGS_PER_DOC = 200
 
 
 def _build_canonical_document(
@@ -147,11 +172,12 @@ def _build_canonical_document(
 ) -> CanonicalDocument:
     """Convert API text input into a CanonicalDocument."""
     doc_id = input_text.doc_id or uuid4()
-    content_hash = hashlib.sha256(input_text.content.encode("utf-8")).hexdigest()
+    normalized_text = normalize_text(input_text.content)
+    content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
 
-    raw_paragraphs = [p.strip() for p in input_text.content.split("\n\n") if p.strip()]
+    raw_paragraphs = [p.strip() for p in normalized_text.split("\n\n") if p.strip()]
     if not raw_paragraphs:
-        raw_paragraphs = [input_text.content]
+        raw_paragraphs = [normalized_text]
 
     paragraphs = [
         CanonicalParagraph(index=i, text=text)
@@ -182,17 +208,20 @@ def _build_canonical_document_from_bytes(
     title: Optional[str] = None,
 ) -> CanonicalDocument:
     """Convert file bytes into a CanonicalDocument with deterministic doc_id."""
-    content_hash = hashlib.sha256(file_bytes).hexdigest()
-    doc_id = _derive_upload_doc_id(program_id, content_hash)
+    raw_bytes_hash = hashlib.sha256(file_bytes).hexdigest()
 
     if source_type == "docx":
         extracted_text = extract_text_from_docx_bytes(file_bytes)
     else:
         extracted_text = extract_text_from_pdf_bytes(file_bytes)
 
-    raw_paragraphs = [p.strip() for p in extracted_text.split("\n\n") if p.strip()]
+    normalized_text = normalize_text(extracted_text)
+    content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest() if normalized_text else raw_bytes_hash
+    doc_id = _derive_upload_doc_id(program_id, content_hash)
+
+    raw_paragraphs = [p.strip() for p in normalized_text.split("\n\n") if p.strip()]
     if not raw_paragraphs:
-        raw_paragraphs = [extracted_text]
+        raw_paragraphs = [normalized_text]
 
     paragraphs = [
         CanonicalParagraph(index=i, text=text)
@@ -360,6 +389,12 @@ async def review_batch_file_endpoint(
     ruleset_version: str = Query(default="0.1", description="Ruleset version"),
     extractor_version: str = Query(..., description="Extractor version (required)"),
     response_mode: Literal["summary", "full"] = Query(default="summary", description="Response mode"),
+    max_findings_per_doc: int = Query(
+        default=DEFAULT_MAX_FINDINGS_PER_DOC,
+        ge=1,
+        le=MAX_FINDINGS_PER_DOC,
+        description="Max findings returned per document",
+    ),
 ) -> BatchReviewResponse:
     """
     Review a batch of uploaded files (DOCX/PDF).
@@ -372,33 +407,125 @@ async def review_batch_file_endpoint(
 
     total_bytes = 0
     canonical_docs: List[CanonicalDocument] = []
+    filenames_by_doc_id: Dict[str, List[str]] = {}
+    error_entries: List[BatchDocumentResponse] = []
+    content_hashes_all: List[str] = []
 
     for upload in files:
         if not upload.filename:
             raise HTTPException(status_code=400, detail="Filename required")
 
-        source_type = _infer_source_type(upload)
-        if source_type is None:
-            raise HTTPException(status_code=415, detail="Unsupported file type")
-
         file_bytes = await upload.read()
         file_size = len(file_bytes)
+        content_hash = hashlib.sha256(file_bytes).hexdigest()
+        doc_id = _derive_upload_doc_id(program_id, content_hash)
+
+        source_type = _infer_source_type(upload)
+        if source_type is None:
+            error_entries.append(
+                BatchDocumentResponse(
+                    filename=upload.filename,
+                    doc_id=str(doc_id),
+                    content_hash=content_hash,
+                    findings_count=0,
+                    findings_digest=hashlib.sha256(b"").hexdigest(),
+                    findings_truncated=False,
+                    findings_preview=[],
+                    errors=[
+                        DocumentError(
+                            filename=upload.filename,
+                            code="unsupported_type",
+                            message="Unsupported file type",
+                        )
+                    ],
+                )
+            )
+            content_hashes_all.append(content_hash)
+            continue
 
         if file_size > MAX_FILE_BYTES:
-            raise HTTPException(status_code=413, detail="File too large")
+            error_entries.append(
+                BatchDocumentResponse(
+                    filename=upload.filename,
+                    doc_id=str(doc_id),
+                    content_hash=content_hash,
+                    findings_count=0,
+                    findings_digest=hashlib.sha256(b"").hexdigest(),
+                    findings_truncated=False,
+                    findings_preview=[],
+                    errors=[
+                        DocumentError(
+                            filename=upload.filename,
+                            code="too_large",
+                            message="File exceeds max size",
+                        )
+                    ],
+                )
+            )
+            content_hashes_all.append(content_hash)
+            continue
 
         total_bytes += file_size
         if total_bytes > MAX_TOTAL_BYTES:
             raise HTTPException(status_code=413, detail="Batch too large")
 
-        canonical_doc = _build_canonical_document_from_bytes(
-            program_id=program_id,
-            file_bytes=file_bytes,
-            source_type=source_type,
-            extractor_version=extractor_version,
-            title=upload.filename,
-        )
+        try:
+            canonical_doc = _build_canonical_document_from_bytes(
+                program_id=program_id,
+                file_bytes=file_bytes,
+                source_type=source_type,
+                extractor_version=extractor_version,
+                title=upload.filename,
+            )
+        except Exception as exc:
+            content_hash = hashlib.sha256(file_bytes).hexdigest()
+            doc_id = _derive_upload_doc_id(program_id, content_hash)
+            error_entries.append(
+                BatchDocumentResponse(
+                    filename=upload.filename,
+                    doc_id=str(doc_id),
+                    content_hash=content_hash,
+                    findings_count=0,
+                    findings_digest=hashlib.sha256(b"").hexdigest(),
+                    findings_truncated=False,
+                    findings_preview=[],
+                    errors=[
+                        DocumentError(
+                            filename=upload.filename,
+                            code="extract_failed",
+                            message=f"Extraction failed: {exc}",
+                        )
+                    ],
+                )
+            )
+            content_hashes_all.append(content_hash)
+            continue
+
+        if not canonical_doc.paragraphs or all(not p.text.strip() for p in canonical_doc.paragraphs):
+            error_entries.append(
+                BatchDocumentResponse(
+                    filename=upload.filename,
+                    doc_id=str(canonical_doc.doc_id),
+                    content_hash=canonical_doc.content_hash,
+                    findings_count=0,
+                    findings_digest=hashlib.sha256(b"").hexdigest(),
+                    findings_truncated=False,
+                    findings_preview=[],
+                    errors=[
+                        DocumentError(
+                            filename=upload.filename,
+                            code="empty_text",
+                            message="Extracted text is empty",
+                        )
+                    ],
+                )
+            )
+            content_hashes_all.append(canonical_doc.content_hash)
+            continue
+
         canonical_docs.append(canonical_doc)
+        filenames_by_doc_id.setdefault(str(canonical_doc.doc_id), []).append(upload.filename)
+        content_hashes_all.append(canonical_doc.content_hash)
 
     event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
 
@@ -413,38 +540,43 @@ async def review_batch_file_endpoint(
         program_id=program_id,
         extractor_version=extractor_version,
         ruleset_version=ruleset_version,
+        content_hashes=content_hashes_all,
     )
-
-    summary_mode = response_mode == "summary"
 
     return BatchReviewResponse(
         batch_id=result.batch_id,
         program_id=result.program_id,
-        documents=[
-            BatchDocumentResponse(
-                doc_id=d.doc_id,
-                content_hash=d.content_hash,
-                findings_count=d.findings_count,
-                findings_digest=d.findings_digest,
-                findings=[
-                    FindingSummary(
-                        finding_id=str(f.finding_id),
-                        rule_id=f.rule_id,
-                        rule_name=f.rule_name,
-                        severity=f.severity,
-                        confidence=f.confidence,
-                        description=f.description,
-                        remediation=f.remediation,
-                        paragraph_index=f.evidence.paragraph_index,
-                        fingerprint=f.fingerprint,
-                    )
-                    for f in (d.findings if not summary_mode else d.findings[:MAX_FINDINGS_PREVIEW])
-                ],
-            )
-            for d in result.documents
-        ],
+        documents=sorted(
+            [
+                BatchDocumentResponse(
+                    filename=(filenames_by_doc_id.get(d.doc_id, [None]).pop(0)),
+                    doc_id=d.doc_id,
+                    content_hash=d.content_hash,
+                    findings_count=d.findings_count,
+                    findings_digest=d.findings_digest,
+                    findings_truncated=d.findings_count > max_findings_per_doc,
+                    findings_preview=[
+                        FindingSummary(
+                            finding_id=str(f.finding_id),
+                            rule_id=f.rule_id,
+                            rule_name=f.rule_name,
+                            severity=f.severity,
+                            confidence=f.confidence,
+                            description=f.description,
+                            remediation=f.remediation,
+                            paragraph_index=f.evidence.paragraph_index,
+                            fingerprint=f.fingerprint,
+                        )
+                        for f in d.findings[:max_findings_per_doc]
+                    ],
+                    errors=[],
+                )
+                for d in result.documents
+            ] + error_entries,
+            key=lambda d: (d.content_hash, d.doc_id),
+        ),
         summary=BatchSummary(
-            documents=result.total_documents,
+            documents=len(result.documents) + len(error_entries),
             findings_total=result.total_findings,
             by_severity=result.findings_by_severity,
         ),
@@ -474,12 +606,51 @@ async def review_batch_endpoint(
         BatchReviewResponse with batch_id, sorted documents, and summary
     """
     try:
+        if len(request.documents) > request.max_docs:
+            raise HTTPException(status_code=413, detail="Too many documents in batch")
+
+        if request.max_findings_per_doc > MAX_FINDINGS_PER_DOC:
+            raise HTTPException(status_code=400, detail="max_findings_per_doc too large")
+
         # Convert input documents to CanonicalDocument
         canonical_docs: List[CanonicalDocument] = []
+        error_entries: List[BatchDocumentResponse] = []
+        content_hashes_all: List[str] = []
 
         for doc_input in request.documents:
+            normalized_text = normalize_text(doc_input.text.content)
+            content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()
+            content_hashes_all.append(content_hash)
+            doc_id = doc_input.text.doc_id or _derive_upload_doc_id(request.program_id, content_hash)
+
+            if not normalized_text:
+                error_entries.append(
+                    BatchDocumentResponse(
+                        filename=None,
+                        doc_id=str(doc_id),
+                        content_hash=content_hash,
+                        findings_count=0,
+                        findings_digest=hashlib.sha256(b"").hexdigest(),
+                        findings_truncated=False,
+                        findings_preview=[],
+                        errors=[
+                            DocumentError(
+                                filename=None,
+                                code="empty_text",
+                                message="Extracted text is empty",
+                            )
+                        ],
+                    )
+                )
+                continue
+
             canonical_doc = _build_canonical_document(
-                input_text=doc_input.text,
+                input_text=ReviewTextInput(
+                    doc_id=doc_id,
+                    title=doc_input.text.title,
+                    content=normalized_text,
+                    source_type=doc_input.text.source_type,
+                ),
                 extractor_version=request.extractor_version,
             )
             canonical_docs.append(canonical_doc)
@@ -497,44 +668,55 @@ async def review_batch_endpoint(
             program_id=request.program_id,
             extractor_version=request.extractor_version,
             ruleset_version=request.ruleset_version,
+            content_hashes=content_hashes_all,
         )
 
-        summary_mode = request.response_mode == "summary"
+        max_findings = request.max_findings_per_doc
+
+        reviewed_entries = [
+            BatchDocumentResponse(
+                filename=None,
+                doc_id=d.doc_id,
+                content_hash=d.content_hash,
+                findings_count=d.findings_count,
+                findings_digest=d.findings_digest,
+                findings_truncated=d.findings_count > max_findings,
+                findings_preview=[
+                    FindingSummary(
+                        finding_id=str(f.finding_id),
+                        rule_id=f.rule_id,
+                        rule_name=f.rule_name,
+                        severity=f.severity,
+                        confidence=f.confidence,
+                        description=f.description,
+                        remediation=f.remediation,
+                        paragraph_index=f.evidence.paragraph_index,
+                        fingerprint=f.fingerprint,
+                    )
+                    for f in d.findings[:max_findings]
+                ],
+                errors=[],
+            )
+            for d in result.documents
+        ]
+
+        combined = reviewed_entries + error_entries
+        combined_sorted = sorted(combined, key=lambda d: (d.content_hash, d.doc_id))
 
         # Convert to response
         return BatchReviewResponse(
             batch_id=result.batch_id,
             program_id=result.program_id,
-            documents=[
-                BatchDocumentResponse(
-                    doc_id=d.doc_id,
-                    content_hash=d.content_hash,
-                    findings_count=d.findings_count,
-                    findings_digest=d.findings_digest,
-                    findings=[
-                        FindingSummary(
-                            finding_id=str(f.finding_id),
-                            rule_id=f.rule_id,
-                            rule_name=f.rule_name,
-                            severity=f.severity,
-                            confidence=f.confidence,
-                            description=f.description,
-                            remediation=f.remediation,
-                            paragraph_index=f.evidence.paragraph_index,
-                            fingerprint=f.fingerprint,
-                        )
-                        for f in (d.findings if not summary_mode else d.findings[:MAX_FINDINGS_PREVIEW])
-                    ],
-                )
-                for d in result.documents
-            ],
+            documents=combined_sorted,
             summary=BatchSummary(
-                documents=result.total_documents,
+                documents=len(combined_sorted),
                 findings_total=result.total_findings,
                 by_severity=result.findings_by_severity,
             ),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Batch review failed: {str(e)}")
 

@@ -268,9 +268,13 @@ class BatchReviewResult:
             "program_id": self.program_id,
             "documents": [
                 {
+                    "filename": None,
                     "doc_id": d.doc_id,
                     "content_hash": d.content_hash,
-                    "findings": [
+                    "findings_count": d.findings_count,
+                    "findings_digest": d.findings_digest,
+                    "findings_truncated": False,
+                    "findings_preview": [
                         {
                             "finding_id": str(f.finding_id),
                             "rule_id": f.rule_id,
@@ -287,6 +291,7 @@ class BatchReviewResult:
                         }
                         for f in d.findings
                     ],
+                    "errors": [],
                 }
                 for d in self.documents
             ],
@@ -445,6 +450,7 @@ class ReviewRunner:
         program_id: UUID,
         extractor_version: Optional[str] = None,
         ruleset_version: Optional[str] = None,
+        content_hashes: Optional[List[str]] = None,
     ) -> BatchReviewResult:
         """
         Review multiple documents in a deterministic batch.
@@ -471,12 +477,12 @@ class ReviewRunner:
         sorted_docs = sorted(docs, key=lambda d: (d.content_hash, str(d.doc_id)))
 
         # Step 2: Compute batch_id from content hashes (order independent, doc_id agnostic)
-        content_hashes = [d.content_hash for d in docs]
+        batch_hashes = content_hashes or [d.content_hash for d in docs]
         batch_id = derive_batch_id(
             program_id=program_id,
             ruleset_version=rule_version,
             extractor_version=ext_version,
-            content_hashes=content_hashes,
+            content_hashes=batch_hashes,
         )
 
         # Step 3: Review each document (emits findings_created per doc)

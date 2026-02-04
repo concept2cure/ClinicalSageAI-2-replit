@@ -362,7 +362,11 @@ class TestBatchAPIContract:
         for doc in response["documents"]:
             assert "doc_id" in doc
             assert "content_hash" in doc
-            assert "findings" in doc
+            assert "findings_count" in doc
+            assert "findings_digest" in doc
+            assert "findings_truncated" in doc
+            assert "findings_preview" in doc
+            assert "errors" in doc
 
 
 class TestBatchIdDerivation:
@@ -426,14 +430,14 @@ class TestBatchResponseMode:
     """Test response_mode behavior for batch endpoint."""
 
     def test_summary_mode_limits_findings(self):
-        """Summary mode returns no more than MAX_FINDINGS_PREVIEW findings per doc."""
+        """Summary mode returns no more than max_findings_per_doc per doc."""
         pytest.importorskip("fastapi")
+        from fastapi import HTTPException
         from lumen_cortex.reviewer.api import (
             review_batch_endpoint,
             BatchReviewRequest,
             BatchDocumentInput,
             ReviewTextInput,
-            MAX_FINDINGS_PREVIEW,
         )
         program_id = UUID("dddddddd-dddd-dddd-dddd-dddddddddddd")
 
@@ -448,11 +452,12 @@ class TestBatchResponseMode:
                 )
             ],
             response_mode="summary",
+            max_findings_per_doc=1,
         )
 
         response = asyncio.run(review_batch_endpoint(request))
         assert response.documents[0].findings_count >= 0
-        assert len(response.documents[0].findings) <= MAX_FINDINGS_PREVIEW
+        assert len(response.documents[0].findings_preview) <= 1
 
     def test_full_mode_returns_all_findings(self):
         """Full mode returns all findings (>= summary findings)."""
@@ -489,10 +494,46 @@ class TestBatchResponseMode:
                 )
             ],
             response_mode="full",
+            max_findings_per_doc=10,
         )
 
         response_summary = asyncio.run(review_batch_endpoint(request_summary))
         response_full = asyncio.run(review_batch_endpoint(request_full))
 
-        assert len(response_full.documents[0].findings) >= len(response_summary.documents[0].findings)
+        assert len(response_full.documents[0].findings_preview) >= len(response_summary.documents[0].findings_preview)
+
+    def test_max_docs_enforced(self):
+        """Batch request rejects when documents exceed max_docs."""
+        pytest.importorskip("fastapi")
+        from lumen_cortex.reviewer.api import (
+            review_batch_endpoint,
+            BatchReviewRequest,
+            BatchDocumentInput,
+            ReviewTextInput,
+        )
+        program_id = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
+
+        request = BatchReviewRequest(
+            program_id=program_id,
+            documents=[
+                BatchDocumentInput(
+                    text=ReviewTextInput(
+                        content="Doc A",
+                        source_type="docx",
+                    )
+                ),
+                BatchDocumentInput(
+                    text=ReviewTextInput(
+                        content="Doc B",
+                        source_type="docx",
+                    )
+                ),
+            ],
+            max_docs=1,
+        )
+
+        with pytest.raises(HTTPException) as exc:
+            asyncio.run(review_batch_endpoint(request))
+
+        assert exc.value.status_code == 413
 

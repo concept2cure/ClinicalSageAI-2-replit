@@ -21,7 +21,7 @@ from lumen_cortex.reviewer.api import (
     MAX_BATCH_FILES,
     MAX_FILE_BYTES,
     MAX_TOTAL_BYTES,
-    MAX_FINDINGS_PREVIEW,
+    DEFAULT_MAX_FINDINGS_PER_DOC,
 )
 
 
@@ -97,7 +97,10 @@ class TestBatchFileEndpoint:
             params={"program_id": str(program_id), "extractor_version": extractor_version},
             files=[big_file],
         )
-        assert resp.status_code == 413
+        assert resp.status_code == 200
+        errors = resp.json()["documents"][0]["errors"]
+        assert errors
+        assert errors[0]["code"] == "too_large"
 
     def test_limits_total_bytes_too_large(self, client, monkeypatch):
         monkeypatch.setattr("lumen_cortex.reviewer.api.MAX_TOTAL_BYTES", 10)
@@ -126,7 +129,10 @@ class TestBatchFileEndpoint:
             params={"program_id": str(program_id), "extractor_version": extractor_version},
             files=[bad_file],
         )
-        assert resp.status_code == 415
+        assert resp.status_code == 200
+        errors = resp.json()["documents"][0]["errors"]
+        assert errors
+        assert errors[0]["code"] == "unsupported_type"
 
     def test_deterministic_doc_id(self, client):
         program_id = UUID("66666666-6666-6666-6666-666666666666")
@@ -161,8 +167,8 @@ class TestBatchFileEndpoint:
             files=[file_a],
         )
         assert resp.status_code == 200
-        findings = resp.json()["documents"][0]["findings"]
-        assert len(findings) <= MAX_FINDINGS_PREVIEW
+        preview = resp.json()["documents"][0]["findings_preview"]
+        assert len(preview) <= DEFAULT_MAX_FINDINGS_PER_DOC
 
     def test_response_mode_full(self, client):
         program_id = UUID("88888888-8888-8888-8888-888888888888")
@@ -190,6 +196,22 @@ class TestBatchFileEndpoint:
 
         assert resp_summary.status_code == 200
         assert resp_full.status_code == 200
-        assert len(resp_full.json()["documents"][0]["findings"]) >= len(
-            resp_summary.json()["documents"][0]["findings"]
+        assert len(resp_full.json()["documents"][0]["findings_preview"]) >= len(
+            resp_summary.json()["documents"][0]["findings_preview"]
         )
+
+    def test_corrupt_file_returns_error(self, client):
+        program_id = UUID("99999999-9999-9999-9999-999999999999")
+        extractor_version = "v1"
+
+        bad_file = _make_file_tuple("bad.pdf", b"NOTPDF", "application/pdf")
+        resp = client.post(
+            "/review/batch/file",
+            params={"program_id": str(program_id), "extractor_version": extractor_version},
+            files=[bad_file],
+        )
+
+        assert resp.status_code == 200
+        errors = resp.json()["documents"][0]["errors"]
+        assert errors
+        assert errors[0]["code"] in {"empty_text", "extract_failed"}

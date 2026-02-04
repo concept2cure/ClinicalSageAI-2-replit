@@ -7,8 +7,19 @@ libraries are unavailable to keep the batch pipeline stable.
 
 from __future__ import annotations
 
+import re
 from io import BytesIO
 from typing import Optional
+
+
+def normalize_text(text: str) -> str:
+    """Normalize text for stable hashing across extractors."""
+    if not text:
+        return ""
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    normalized = re.sub(r"\s+", " ", normalized)
+    normalized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", normalized)
+    return normalized.strip()
 
 
 def extract_text_from_docx_bytes(data: bytes) -> str:
