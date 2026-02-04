@@ -1,33 +1,25 @@
--- ============================================================================
--- Phase 3+: eCTD 4.0 Event Store Skeleton
--- Migration: vault.rps_events + vault.uuid_lifecycle + vault.uuid_edges
--- Date: 2026-02-03
--- ============================================================================
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: HL7 RPS lifecycle event store + UUID lineage for audit reconstruction
 --
--- eCTD MODULE CONTEXT:
---   Module 1 (Administrative): Submission lifecycle tracking via HL7 RPS
---   Module 5 (Clinical Study Reports): Event-sourced document provenance
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (Administrative), Module 5 (Clinical Study Reports)
+--   - Integrity Risk Addressed: UUID lineage, submission timeline, event sourcing
 --
--- REGULATORY AUDIT TRAIL:
---   - vault.rps_events: Append-only immutable event log (21 CFR Part 11)
+-- Determinism Contract:
+--   - Schema changes here must not undermine deterministic evidence pointers/fingerprints.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+--   - vault.rps_events: Append-only immutable event log
 --   - vault.uuid_lifecycle: Materialized current state for point-in-time queries
 --   - vault.uuid_edges: Graph adjacency for submission hierarchy traversal
---
--- IND SUBMISSION ALIGNMENT:
---   Date-based migration naming (20YYMMDD_*) enables exact system state
---   reconstruction at any regulatory submission point in the IND timeline.
---
--- This is a SKELETON implementation - tables created but not yet used.
--- Provides foundation for HL7 RPS lifecycle management without blocking
--- the Phase 3 Shadow Reviewer MVP.
---
--- Design decisions:
--- 1. Using uuid_edges adjacency table instead of UUID[] for predictable perf
--- 2. Append-only rps_events for audit trail
--- 3. uuid_lifecycle for materialized current state
---
--- NOTE: This schema is parallel to existing vault.anchors/cross_references.
--- Migration to event-sourced model is deferred until Phase 4+.
+--   - SKELETON implementation - foundation for Phase 4+ event-sourced model
+-- =============================================================================
 
 BEGIN;
 

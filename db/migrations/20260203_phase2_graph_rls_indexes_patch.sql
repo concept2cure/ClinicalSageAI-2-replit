@@ -1,20 +1,23 @@
--- ============================================================================
--- Phase 2 Graph RLS + Indexes Patch
--- Migration: 20260203_phase2_graph_rls_indexes_patch.sql
--- Purpose: Add program_id RLS enforcement + performance indexes
--- Author: Copilot Agent A4
--- Date: 2026-02-03
--- ============================================================================
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Tenant isolation + performance indexes for graph validation at scale
 --
--- eCTD MODULE CONTEXT:
---   Module 1 (Administrative): Program-level data isolation for sponsors
---   Module 5 (Clinical Study Reports): Blinded/unblinded data separation
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (Administrative), Module 5 (Clinical Study Reports)
+--   - Integrity Risk Addressed: tenant isolation, blinded/unblinded separation, RLS
 --
--- REGULATORY AUDIT TRAIL:
---   Row-Level Security (RLS) via program_id ensures:
---   - IND-enabling study data isolation between sponsors
---   - Blinded vs unblinded CSR data separation
---   - 21 CFR Part 11 compliant access control audit logging
+-- Determinism Contract:
+--   - Schema changes here must not undermine deterministic evidence pointers/fingerprints.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+--   - Row-Level Security via program_id ensures IND study data isolation
+--   - Performance indexes enable graph validation at regulatory audit scale
+-- =============================================================================
 
 BEGIN;
 

@@ -1,24 +1,22 @@
--- ============================================================================
--- 044c_gcc_vault_schema.sql
--- Prerequisites for Phase 2+ migrations: vault schema + documents table
--- ============================================================================
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Bootstrap vault schema with documents table and program_id RLS stub
 --
--- eCTD MODULE CONTEXT:
---   Module 1 (Administrative): Supports submission lifecycle tracking
---   Module 5 (Clinical Study Reports): Document integrity for CSR co-authoring
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (Administrative), Module 5 (Clinical Study Reports)
+--   - Integrity Risk Addressed: tenant isolation, document provenance, submission lifecycle
 --
--- REGULATORY AUDIT TRAIL:
---   This migration establishes the vault schema which provides:
---   - Row-Level Security (RLS) isolation for blinded/unblinded data
---   - Document provenance tracking for 21 CFR Part 11 compliance
---   - Immutable event log (rps_events) for submission timeline reconstruction
+-- Determinism Contract:
+--   - Schema changes here must not undermine deterministic evidence pointers/fingerprints.
+--   - Any change impacting canonical schemas requires spec version bump.
 --
--- IND SUBMISSION ALIGNMENT:
---   Date-based migrations (20YYMMDD_*) align with IND chronological timeline,
---   enabling exact system state reconstruction at any regulatory submission point.
---
--- NOTE: Uses 044c prefix to run after 044b_gcc_lumen_schema_prerequisite.sql
---       but before Phase 2 date-prefixed migrations (20260203_*)
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+--   - Uses 044c prefix to run after 044b but before Phase 2 date-prefixed migrations.
+-- =============================================================================
 
 BEGIN;
 

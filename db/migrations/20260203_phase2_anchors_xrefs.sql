@@ -1,20 +1,23 @@
--- ============================================================================
--- Phase 2: Document Identity + Cross-Reference Graph
--- Migration: vault.anchors + vault.cross_references
--- Date: 2026-02-03
--- ============================================================================
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Anchor + cross-reference tables for Module 2/5 navigation traceability
 --
--- eCTD MODULE CONTEXT:
---   Module 5 (Clinical Study Reports): Cross-reference integrity for CSRs
---   Module 2.7 (Clinical Summary): Anchor-based navigation for summaries
+-- eCTD/CTD Context:
+--   - Module(s): Module 2.7 (Clinical Summary), Module 5 (Clinical Study Reports)
+--   - Integrity Risk Addressed: broken cross-refs, orphaned anchors, navigation integrity
 --
--- REGULATORY AUDIT TRAIL:
+-- Determinism Contract:
+--   - Schema changes here must not undermine deterministic evidence pointers/fingerprints.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
 --   - vault.anchors: Deterministic bookmark/heading extraction for 21 CFR 11
 --   - vault.cross_references: Validated internal/external document links
---   - Program isolation via RLS ensures blinded/unblinded data separation
---
--- These tables support deterministic anchor extraction and cross-reference
--- validation for the Shadow FDA Reviewer system.
+-- =============================================================================
 
 BEGIN;
 
