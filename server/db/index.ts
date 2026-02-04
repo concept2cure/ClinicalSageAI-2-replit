@@ -4,6 +4,7 @@
  * This file sets up the database connection using DATABASE_NEON_NEW_SECRET or DATABASE_URL from environment variables.
  */
 import { drizzle } from 'drizzle-orm/postgres-js';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { createScopedLogger } from '../utils/logger';
 import { getSslConfig } from './ssl';
@@ -53,8 +54,8 @@ if (!connectionString) {
   }
 }
 
-let client = null;
-let db = null;
+let client: ReturnType<typeof postgres> | null = null;
+let db: PostgresJsDatabase | null = null;
 
 if (connectionString) {
   client = postgres(connectionString, {

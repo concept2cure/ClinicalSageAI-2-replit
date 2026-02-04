@@ -1,9 +1,9 @@
 /**
  * 21 CFR Part 11 Compliance Service
- * 
+ *
  * Ensures electronic records and signatures meet FDA requirements
  * for medical device submissions and regulatory documentation
- * 
+ *
  * Features:
  * - Electronic signature generation and validation
  * - Audit trail for all electronic records
@@ -14,17 +14,43 @@
  */
 
 import { db } from '../db/index';
-import { 
-  deviceAuditTrail,
-  electronicSignatures,
-  users,
-  organizations
-} from '../../shared/schema';
+import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
+import { documentVersions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
 
+interface AuditTrailInput {
+  organizationId: number;
+  userId: number | string;
+  action: string;
+  entityType: string;
+  entityId: number | string | null;
+  details: {
+    ipAddress?: string;
+    userAgent?: string;
+    sessionId?: string;
+    userName?: string;
+    userRole?: string;
+    changedFields?: string[];
+    changeReason?: string;
+    [key: string]: any;
+  };
+  previousValue?: any;
+  newValue?: any;
+}
+
 class Part11ComplianceService {
+  private signatureAlgorithm: string;
+  private hashAlgorithm: string;
+
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
+
   constructor() {
     this.signatureAlgorithm = 'RSA-SHA256';
     this.hashAlgorithm = 'sha256';
@@ -40,57 +66,74 @@ class Part11ComplianceService {
     documentType,
     signatureReason,
     signatureMeaning,
-    password
+    password,
+  }: {
+    userId: number;
+    organizationId: number;
+    documentId: number;
+    documentType: string;
+    signatureReason: string;
+    signatureMeaning: string;
+    password: string;
   }) {
     try {
-      // Verify user credentials
+      const dbInstance = this.getDb();
       const userVerified = await this.verifyUserCredentials(userId, password);
       if (!userVerified) {
         throw new Error('User authentication failed for electronic signature');
       }
 
-      // Get user details
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+      const [user] = await dbInstance.select().from(users).where(eq(users.id, userId)).limit(1);
 
       if (!user) {
         throw new Error('User not found');
       }
 
-      // Generate signature components
       const timestamp = new Date();
       const signatureData = {
         userId,
-        userName: `${user.firstName} ${user.lastName}`,
+        userName: user.name,
         documentId,
         documentType,
         timestamp: timestamp.toISOString(),
         reason: signatureReason,
-        meaning: signatureMeaning
+        meaning: signatureMeaning,
       };
 
-      // Create cryptographic signature
       const signature = this.generateCryptographicSignature(signatureData, userId);
 
-      // Store electronic signature
-      const [electronicSig] = await db.insert(electronicSignatures).values({
-        userId,
-        organizationId,
-        documentId,
-        documentType,
-        signatureHash: signature.hash,
-        signatureData: signature.data,
-        signedAt: timestamp,
-        signatureReason,
-        signatureMeaning,
-        ipAddress: signature.ipAddress || null,
-        systemValidation: await this.getSystemValidationStatus()
-      }).returning();
+      const versionRows = await dbInstance
+        .select({ id: documentVersions.id })
+        .from(documentVersions)
+        .where(eq(documentVersions.documentId, documentId))
+        .orderBy(desc(documentVersions.createdAt))
+        .limit(1);
+      const versionId = versionRows[0]?.id ?? documentId;
 
-      // Create audit trail entry
+      const [electronicSig] = await dbInstance
+        .insert(electronicSignatures)
+        .values({
+          documentId,
+          versionId,
+          signatureType: documentType,
+          signaturePurpose: signatureReason,
+          signatureLevel: 1,
+          signerId: userId,
+          signerName: user.name,
+          signerTitle: user.title,
+          signerEmail: user.email,
+          authenticationMethod: 'password',
+          authenticationTimestamp: timestamp,
+          secondFactorVerified: false,
+          signatureHash: signature.hash,
+          signatureMeaning,
+          signatureManifest: signatureData,
+          signedAt: timestamp,
+          complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
+          verificationStatus: 'valid',
+        })
+        .returning();
+
       await this.createAuditTrail({
         organizationId,
         userId,
@@ -100,8 +143,9 @@ class Part11ComplianceService {
         details: {
           signatureId: electronicSig.id,
           reason: signatureReason,
-          meaning: signatureMeaning
-        }
+          meaning: signatureMeaning,
+          userName: user.name,
+        },
       });
 
       return {
@@ -110,7 +154,7 @@ class Part11ComplianceService {
         signedBy: signatureData.userName,
         signedAt: timestamp,
         signatureHash: signature.hash,
-        verificationCode: signature.verificationCode
+        verificationCode: signature.verificationCode,
       };
     } catch (error) {
       console.error('Error creating electronic signature:', error);
@@ -121,9 +165,10 @@ class Part11ComplianceService {
   /**
    * Validate electronic signature
    */
-  async validateElectronicSignature(signatureId, documentId) {
+  async validateElectronicSignature(signatureId: number, documentId: number) {
     try {
-      const [signature] = await db
+      const dbInstance = this.getDb();
+      const [signature] = await dbInstance
         .select()
         .from(electronicSignatures)
         .where(eq(electronicSignatures.id, signatureId))
@@ -132,52 +177,50 @@ class Part11ComplianceService {
       if (!signature) {
         return {
           valid: false,
-          reason: 'Signature not found'
+          reason: 'Signature not found',
         };
       }
 
-      // Verify document match
       if (signature.documentId !== documentId) {
         return {
           valid: false,
-          reason: 'Signature does not match document'
+          reason: 'Signature does not match document',
         };
       }
 
-      // Verify signature integrity
+      const manifest = signature.signatureManifest ?? {};
       const integrityCheck = this.verifySignatureIntegrity(
-        signature.signatureData,
+        JSON.stringify(manifest),
         signature.signatureHash
       );
 
       if (!integrityCheck.valid) {
         return {
           valid: false,
-          reason: 'Signature integrity compromised'
+          reason: 'Signature integrity compromised',
         };
       }
 
-      // Check signature expiry (optional, based on policy)
       const expiryCheck = this.checkSignatureExpiry(signature.signedAt);
       if (!expiryCheck.valid) {
         return {
           valid: false,
-          reason: 'Signature has expired'
+          reason: 'Signature has expired',
         };
       }
 
       return {
         valid: true,
-        signedBy: signature.userId,
+        signedBy: signature.signerId,
         signedAt: signature.signedAt,
-        reason: signature.signatureReason,
-        meaning: signature.signatureMeaning
+        reason: signature.signaturePurpose,
+        meaning: signature.signatureMeaning,
       };
     } catch (error) {
       console.error('Error validating electronic signature:', error);
       return {
         valid: false,
-        reason: 'Validation error'
+        reason: 'Validation error',
       };
     }
   }
@@ -193,34 +236,43 @@ class Part11ComplianceService {
     entityId,
     details,
     previousValue = null,
-    newValue = null
-  }) {
+    newValue = null,
+  }: AuditTrailInput) {
     try {
-      const auditEntry = await db.insert(deviceAuditTrail).values({
-        organizationId,
-        userId,
-        action,
-        entityType,
-        entityId,
-        previousValue,
-        newValue,
-        ipAddress: details.ipAddress || null,
-        userAgent: details.userAgent || null,
-        sessionId: details.sessionId || null,
-        timestamp: new Date()
-      }).returning();
+      const dbInstance = this.getDb();
+      const resolvedUserId = typeof userId === 'number' ? userId : 0;
+      const resolvedEntityId = typeof entityId === 'number' ? entityId : 0;
+
+      const auditEntry = await dbInstance
+        .insert(deviceAuditTrail)
+        .values({
+          organizationId,
+          userId: resolvedUserId,
+          action,
+          entityType,
+          entityId: resolvedEntityId,
+          previousValues: previousValue,
+          newValues: newValue,
+          changedFields: details.changedFields || null,
+          changeReason: details.changeReason || null,
+          userName: details.userName || 'Unknown',
+          userRole: details.userRole || null,
+          ipAddress: details.ipAddress || null,
+          userAgent: details.userAgent || null,
+          sessionId: details.sessionId || null,
+        })
+        .returning();
 
       // Also log to general audit service
-      await auditService.logActivity({
-        userId,
+      await auditService.logAction({
+        userId: resolvedUserId,
         action,
-        resource: entityType,
-        resourceId: entityId,
+        resourceType: entityType,
         details: {
           ...details,
           part11Compliance: true,
-          auditTrailId: auditEntry[0].id
-        }
+          auditTrailId: auditEntry[0].id,
+        },
       });
 
       return auditEntry[0];
@@ -233,22 +285,25 @@ class Part11ComplianceService {
   /**
    * Get audit trail for an entity
    */
-  async getAuditTrail(entityType, entityId, organizationId) {
+  async getAuditTrail(entityType: string, entityId: number, organizationId: number) {
     try {
-      const auditEntries = await db
+      const dbInstance = this.getDb();
+      const auditEntries = await dbInstance
         .select()
         .from(deviceAuditTrail)
-        .where(and(
-          eq(deviceAuditTrail.entityType, entityType),
-          eq(deviceAuditTrail.entityId, entityId),
-          eq(deviceAuditTrail.organizationId, organizationId)
-        ))
-        .orderBy(desc(deviceAuditTrail.timestamp));
+        .where(
+          and(
+            eq(deviceAuditTrail.entityType, entityType),
+            eq(deviceAuditTrail.entityId, entityId),
+            eq(deviceAuditTrail.organizationId, organizationId)
+          )
+        )
+        .orderBy(desc(deviceAuditTrail.createdAt));
 
       return {
         success: true,
         count: auditEntries.length,
-        entries: auditEntries
+        entries: auditEntries,
       };
     } catch (error) {
       console.error('Error retrieving audit trail:', error);
@@ -259,22 +314,25 @@ class Part11ComplianceService {
   /**
    * Implement access controls for Part 11
    */
-  async checkAccessControl(userId, resource, action, organizationId) {
+  async checkAccessControl(
+    userId: number,
+    resource: string,
+    action: string,
+    organizationId: number
+  ) {
     try {
+      const dbInstance = this.getDb();
       // Get user role and permissions
-      const [user] = await db
+      const [user] = await dbInstance
         .select()
         .from(users)
-        .where(and(
-          eq(users.id, userId),
-          eq(users.organizationId, organizationId)
-        ))
+        .where(and(eq(users.id, userId), eq(users.defaultOrganizationId, organizationId)))
         .limit(1);
 
       if (!user) {
         return {
           allowed: false,
-          reason: 'User not found'
+          reason: 'User not found',
         };
       }
 
@@ -282,13 +340,14 @@ class Part11ComplianceService {
       if (user.status !== 'active') {
         return {
           allowed: false,
-          reason: 'User account is not active'
+          reason: 'User account is not active',
         };
       }
 
       // Check role-based permissions
-      const permissions = this.getRolePermissions(user.role);
-      const resourcePermissions = permissions[resource] || [];
+      const userRole = (user as any).role || 'viewer';
+      const permissions = this.getRolePermissions(userRole);
+      const resourcePermissions = (permissions as Record<string, string[]>)[resource] || [];
 
       if (!resourcePermissions.includes(action)) {
         await this.createAuditTrail({
@@ -299,13 +358,14 @@ class Part11ComplianceService {
           entityId: null,
           details: {
             attemptedAction: action,
-            userRole: user.role
-          }
+            userRole: userRole,
+            userName: user.name,
+          },
         });
 
         return {
           allowed: false,
-          reason: 'Insufficient permissions'
+          reason: 'Insufficient permissions',
         };
       }
 
@@ -313,15 +373,15 @@ class Part11ComplianceService {
         allowed: true,
         user: {
           id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          role: user.role
-        }
+          name: user.name,
+          role: userRole,
+        },
       };
     } catch (error) {
       console.error('Error checking access control:', error);
       return {
         allowed: false,
-        reason: 'Access control check failed'
+        reason: 'Access control check failed',
       };
     }
   }
@@ -329,7 +389,7 @@ class Part11ComplianceService {
   /**
    * Verify data integrity for Part 11 compliance
    */
-  async verifyDataIntegrity(entityType, entityId, expectedHash) {
+  async verifyDataIntegrity(entityType: string, entityId: number, expectedHash: string) {
     try {
       // Get the current data
       let currentData;
@@ -355,28 +415,28 @@ class Part11ComplianceService {
       // Log integrity check
       await this.createAuditTrail({
         organizationId: currentData.organizationId,
-        userId: 'system',
+        userId: 0,
         action: 'INTEGRITY_CHECK',
         entityType,
         entityId,
         details: {
           isValid,
           expectedHash,
-          currentHash: isValid ? currentHash : 'MISMATCH'
-        }
+          currentHash: isValid ? currentHash : 'MISMATCH',
+        },
       });
 
       return {
         valid: isValid,
         entityType,
         entityId,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
       console.error('Error verifying data integrity:', error);
       return {
         valid: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -384,7 +444,7 @@ class Part11ComplianceService {
   /**
    * Generate system validation report
    */
-  async generateSystemValidationReport(organizationId) {
+  async generateSystemValidationReport(organizationId: number) {
     try {
       const report = {
         timestamp: new Date(),
@@ -395,56 +455,56 @@ class Part11ComplianceService {
           electronicSignatures: {
             status: 'OPERATIONAL',
             algorithm: this.signatureAlgorithm,
-            lastValidated: new Date()
+            lastValidated: new Date(),
           },
           auditTrail: {
             status: 'OPERATIONAL',
             retention: 'INDEFINITE',
-            tamperProof: true
+            tamperProof: true,
           },
           accessControl: {
             status: 'OPERATIONAL',
             authenticationMethod: 'USERNAME_PASSWORD',
-            sessionTimeout: 3600
+            sessionTimeout: 3600,
           },
           dataIntegrity: {
             status: 'OPERATIONAL',
             hashAlgorithm: this.hashAlgorithm,
-            checksumVerification: true
-          }
+            checksumVerification: true,
+          },
         },
         validationTests: [
           {
             test: 'Electronic Signature Generation',
             result: 'PASS',
-            executedAt: new Date()
+            executedAt: new Date(),
           },
           {
             test: 'Audit Trail Completeness',
             result: 'PASS',
-            executedAt: new Date()
+            executedAt: new Date(),
           },
           {
             test: 'Access Control Enforcement',
             result: 'PASS',
-            executedAt: new Date()
+            executedAt: new Date(),
           },
           {
             test: 'Data Integrity Verification',
             result: 'PASS',
-            executedAt: new Date()
-          }
-        ]
+            executedAt: new Date(),
+          },
+        ],
       };
 
       // Store validation report
       await this.createAuditTrail({
         organizationId,
-        userId: 'system',
+        userId: 0,
         action: 'SYSTEM_VALIDATION_REPORT',
         entityType: 'system',
         entityId: 'validation',
-        details: report
+        details: report,
       });
 
       return report;
@@ -459,7 +519,7 @@ class Part11ComplianceService {
   /**
    * Verify user credentials
    */
-  async verifyUserCredentials(userId, password) {
+  async verifyUserCredentials(userId: number, password: string) {
     // In production, verify against secure password storage
     // For now, return true for demonstration
     return true;
@@ -468,12 +528,9 @@ class Part11ComplianceService {
   /**
    * Generate cryptographic signature
    */
-  generateCryptographicSignature(data, userId) {
+  generateCryptographicSignature(data: Record<string, any>, userId: number) {
     const dataString = JSON.stringify(data);
-    const hash = crypto
-      .createHash(this.hashAlgorithm)
-      .update(dataString)
-      .digest('hex');
+    const hash = crypto.createHash(this.hashAlgorithm).update(dataString).digest('hex');
 
     const verificationCode = crypto
       .createHash('md5')
@@ -486,28 +543,28 @@ class Part11ComplianceService {
       hash,
       data: dataString,
       verificationCode,
-      ipAddress: '127.0.0.1' // In production, get actual IP
+      ipAddress: '127.0.0.1', // In production, get actual IP
     };
   }
 
   /**
    * Verify signature integrity
    */
-  verifySignatureIntegrity(signatureData, expectedHash) {
+  verifySignatureIntegrity(signatureData: string, expectedHash: string) {
     const calculatedHash = crypto
       .createHash(this.hashAlgorithm)
       .update(signatureData)
       .digest('hex');
 
     return {
-      valid: calculatedHash === expectedHash
+      valid: calculatedHash === expectedHash,
     };
   }
 
   /**
    * Check signature expiry
    */
-  checkSignatureExpiry(signedAt) {
+  checkSignatureExpiry(signedAt: string | Date) {
     // Signatures valid for 10 years by default
     const expiryYears = 10;
     const expiryDate = new Date(signedAt);
@@ -515,42 +572,43 @@ class Part11ComplianceService {
 
     return {
       valid: new Date() < expiryDate,
-      expiryDate
+      expiryDate,
     };
   }
 
   /**
    * Get role permissions
    */
-  getRolePermissions(role) {
+  getRolePermissions(role: string) {
     const permissions = {
       admin: {
         submission: ['create', 'read', 'update', 'delete', 'sign', 'approve'],
         document: ['create', 'read', 'update', 'delete', 'sign'],
         device: ['create', 'read', 'update', 'delete'],
-        audit: ['read']
+        audit: ['read'],
       },
       manager: {
         submission: ['create', 'read', 'update', 'sign', 'approve'],
         document: ['create', 'read', 'update', 'sign'],
         device: ['create', 'read', 'update'],
-        audit: ['read']
+        audit: ['read'],
       },
       user: {
         submission: ['create', 'read', 'update'],
         document: ['create', 'read', 'update'],
         device: ['read'],
-        audit: ['read']
+        audit: ['read'],
       },
       viewer: {
         submission: ['read'],
         document: ['read'],
         device: ['read'],
-        audit: ['read']
-      }
+        audit: ['read'],
+      },
     };
 
-    return permissions[role] || permissions.viewer;
+    const roleKey = role as keyof typeof permissions;
+    return permissions[roleKey] || permissions.viewer;
   }
 
   /**
@@ -561,41 +619,38 @@ class Part11ComplianceService {
       validated: true,
       version: '1.0.0',
       lastValidated: new Date(),
-      nextValidation: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
+      nextValidation: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
     };
   }
 
   /**
    * Calculate hash for data
    */
-  calculateHash(data) {
-    return crypto
-      .createHash(this.hashAlgorithm)
-      .update(JSON.stringify(data))
-      .digest('hex');
+  calculateHash(data: any) {
+    return crypto.createHash(this.hashAlgorithm).update(JSON.stringify(data)).digest('hex');
   }
 
   /**
    * Get submission data for integrity check
    */
-  async getSubmissionData(submissionId) {
+  async getSubmissionData(submissionId: number) {
     // Implementation would fetch actual submission data
     return {
       id: submissionId,
       organizationId: 1,
-      data: 'submission_data'
+      data: 'submission_data',
     };
   }
 
   /**
    * Get document data for integrity check
    */
-  async getDocumentData(documentId) {
+  async getDocumentData(documentId: number) {
     // Implementation would fetch actual document data
     return {
       id: documentId,
       organizationId: 1,
-      data: 'document_data'
+      data: 'document_data',
     };
   }
 }

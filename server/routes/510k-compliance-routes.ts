@@ -13,9 +13,9 @@
  */
 
 import express, { Request, Response } from 'express';
-import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
+import { pool } from '../db';
 
 // Load environment variables
 dotenv.config();
@@ -25,12 +25,6 @@ const router = express.Router();
 
 // Apply deprecation notice to all routes in this file
 router.use(create510kDeprecationNotice('/compliance'));
-
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
 
 // Multi-tenancy middleware to extract and validate organization context
 const extractTenantContext = (req: Request, res: Response, next: Function) => {

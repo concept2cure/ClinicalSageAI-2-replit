@@ -212,7 +212,7 @@ export function generateQualityReportSummary(sectionResults: any[]): any {
   // Count sections by status
   const sectionsPassing = sectionResults.filter(s => s.valid).length;
   const sectionsWithWarnings = sectionResults.filter(
-    s => s.valid && s.validations.some(v => !v.passed)
+    s => s.valid && s.validations.some((v: { passed?: boolean }) => !v.passed)
   ).length;
   const sectionsWithCriticalIssues = sectionResults.filter(s => !s.valid).length;
 

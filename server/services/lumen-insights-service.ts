@@ -1,4 +1,3 @@
-
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import OpenAI from 'openai';
@@ -6,7 +5,7 @@ import OpenAI from 'openai';
 /**
  * Lumen Insights Service
  * Enterprise-grade RAG administration and AI experience management
- * 
+ *
  * Provides clients with:
  * - Document knowledge base management
  * - AI interaction customization
@@ -48,6 +47,12 @@ interface RAGQueryResult {
 }
 
 export class LumenInsightsService {
+  private getDb() {
+    if (!db) {
+      throw new Error('Database not available');
+    }
+    return db;
+  }
   private openai: OpenAI;
   private config: LumenInsightsConfig;
 
@@ -75,7 +80,7 @@ export class LumenInsightsService {
     try {
       // 1. Extract text from document
       const text = await this.extractTextFromFile(file, fileName);
-      
+
       if (!text || text.trim().length === 0) {
         throw new Error('No text content could be extracted from document');
       }
@@ -127,7 +132,7 @@ export class LumenInsightsService {
       };
     } catch (error) {
       errors.push(error instanceof Error ? error.message : 'Unknown error');
-      
+
       // Log failed ingestion for troubleshooting
       await this.logIngestion({
         documentId: null,
@@ -158,11 +163,14 @@ export class LumenInsightsService {
   /**
    * Query the RAG system with advanced retrieval
    */
-  async query(question: string, options: {
-    topK?: number;
-    minRelevanceScore?: number;
-    contextWindow?: number;
-  } = {}): Promise<RAGQueryResult> {
+  async query(
+    question: string,
+    options: {
+      topK?: number;
+      minRelevanceScore?: number;
+      contextWindow?: number;
+    } = {}
+  ): Promise<RAGQueryResult> {
     const startTime = Date.now();
     const topK = options.topK || 5;
     const minRelevanceScore = options.minRelevanceScore || 0.7;
@@ -185,7 +193,8 @@ export class LumenInsightsService {
 
       if (relevantChunks.length === 0) {
         return {
-          answer: "I couldn't find relevant information in your knowledge base to answer this question.",
+          answer:
+            "I couldn't find relevant information in your knowledge base to answer this question.",
           sources: [],
           confidence: 0,
           tokensUsed: 0,
@@ -218,7 +227,8 @@ export class LumenInsightsService {
       const tokensUsed = completion.usage?.total_tokens || 0;
 
       // 5. Calculate confidence based on relevance scores
-      const avgRelevance = relevantChunks.reduce((sum, chunk) => sum + chunk.score, 0) / relevantChunks.length;
+      const avgRelevance =
+        relevantChunks.reduce((sum, chunk) => sum + chunk.score, 0) / relevantChunks.length;
       const confidence = Math.round(avgRelevance * 100);
 
       // 6. Log query for analytics
@@ -282,7 +292,8 @@ export class LumenInsightsService {
     modelPreference?: 'gpt-4o' | 'gpt-4o-mini';
   }) {
     // Store settings in database for this organization
-    await db.execute(sql`
+    const dbInstance = this.getDb();
+    await dbInstance.execute(sql`
       INSERT INTO lumen_insights_settings (
         organization_id,
         temperature,
@@ -298,7 +309,7 @@ export class LumenInsightsService {
         ${settings.modelPreference || 'gpt-4o'},
         NOW()
       )
-      ON CONFLICT (organization_id) 
+      ON CONFLICT (organization_id)
       DO UPDATE SET
         temperature = EXCLUDED.temperature,
         response_style = EXCLUDED.response_style,
@@ -324,7 +335,7 @@ export class LumenInsightsService {
     const chunks: string[] = [];
     const maxChunkSize = 1000;
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-    
+
     let currentChunk = '';
     for (const sentence of sentences) {
       if ((currentChunk + sentence).length > maxChunkSize && currentChunk) {
@@ -334,11 +345,11 @@ export class LumenInsightsService {
         currentChunk += ' ' + sentence;
       }
     }
-    
+
     if (currentChunk) {
       chunks.push(currentChunk.trim());
     }
-    
+
     return chunks;
   }
 

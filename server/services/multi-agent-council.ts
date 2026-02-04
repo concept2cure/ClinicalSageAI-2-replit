@@ -1,11 +1,11 @@
 /**
  * Multi-Agent Council Service - Enterprise Edition
- * 
+ *
  * FDA 21 CFR Part 11 Compliant Implementation
- * 
+ *
  * Implements the sequential multi-agent workflow for regulatory document drafting:
  *   Agent A (Drafter) → Agent B (Statistician) → Agent C (Critic) → Agent D (Synthesizer)
- * 
+ *
  * Compliance Features:
  * - Complete audit trail with immutable logs
  * - Input validation and sanitization
@@ -14,14 +14,14 @@
  * - Correlation ID tracking for traceability
  * - Retry logic with exponential backoff
  * - Role-based access control hooks
- * 
+ *
  * System Survivability Features:
  * - Multi-provider LLM with automatic failover (Kimi AI primary, OpenAI secondary)
  * - Circuit breaker for LLM resilience
  * - Prompt injection protection
  * - Tamper-proof audit logging
  * - Graceful degradation when LLM providers unavailable
- * 
+ *
  * @module MultiAgentCouncilService
  * @version 3.1.0
  * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
@@ -32,32 +32,32 @@ import { v4 as uuidv4 } from 'uuid';
 import { createHash, randomBytes } from 'crypto';
 
 // Survivability imports - Multi-provider LLM (Kimi primary, OpenAI secondary)
-import { 
-  MultiProviderLLMService,
-  LLMResponse 
-} from '../lib/multi-provider-llm';
-import { 
+import { MultiProviderLLMService, LLMResponse } from '../lib/multi-provider-llm';
+import {
   getKimiCircuitBreaker,
-  getOpenAICircuitBreaker, 
+  getOpenAICircuitBreaker,
   getBestAvailableLLMBreaker,
-  CircuitBreakerError 
+  CircuitBreakerError,
 } from '../lib/circuit-breaker';
-import { 
-  getPromptInjectionProtection, 
-  PromptInjectionError 
+import {
+  getPromptInjectionProtection,
+  PromptInjectionError,
 } from '../lib/prompt-injection-protection';
-import { 
-  getTamperProofAuditLog 
-} from '../lib/tamper-proof-audit';
-import { 
-  getGracefulDegradationService 
-} from '../lib/graceful-degradation';
+import { getTamperProofAuditLog } from '../lib/tamper-proof-audit';
+import { getGracefulDegradationService } from '../lib/graceful-degradation';
 
 // Types
 export type AgentRole = 'DRAFTER' | 'STATISTICIAN' | 'CRITIC' | 'SYNTHESIZER';
-export type CouncilStatus = 
-  | 'INITIALIZED' | 'DRAFTING' | 'VERIFYING' | 'REVIEWING' 
-  | 'SYNTHESIZING' | 'AWAITING_APPROVAL' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type CouncilStatus =
+  | 'INITIALIZED'
+  | 'DRAFTING'
+  | 'VERIFYING'
+  | 'REVIEWING'
+  | 'SYNTHESIZING'
+  | 'AWAITING_APPROVAL'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
 
 export interface AgentConfig {
   agentId: string;
@@ -135,7 +135,11 @@ export class ValidationError extends CouncilError {
 }
 
 export class AgentExecutionError extends CouncilError {
-  constructor(message: string, public agentRole: AgentRole, sessionId?: string) {
+  constructor(
+    message: string,
+    public agentRole: AgentRole,
+    sessionId?: string
+  ) {
     super(message, 'AGENT_EXECUTION_ERROR', sessionId, undefined, true);
     this.name = 'AgentExecutionError';
   }
@@ -147,7 +151,7 @@ export class MultiAgentCouncilService {
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
   private readonly DEFAULT_TIMEOUT_MS = 120000;
-  
+
   // Survivability components
   private readonly kimiCircuitBreaker = getKimiCircuitBreaker();
   private readonly openaiCircuitBreaker = getOpenAICircuitBreaker();
@@ -156,13 +160,15 @@ export class MultiAgentCouncilService {
 
   constructor(pool: Pool) {
     this.pool = pool;
-    
+
     // Initialize multi-provider LLM service (Kimi primary, OpenAI secondary)
     this.llmService = new MultiProviderLLMService(pool, {
-      providerPriority: ['KIMI', 'OPENAI']  // Kimi AI is PRIMARY
+      providerPriority: ['KIMI', 'OPENAI'], // Kimi AI is PRIMARY
     });
-    
-    console.log('[MultiAgentCouncil] Initialized with multi-provider LLM (Kimi AI primary, OpenAI secondary)');
+
+    console.log(
+      '[MultiAgentCouncil] Initialized with multi-provider LLM (Kimi AI primary, OpenAI secondary)'
+    );
   }
 
   // ==========================================================================
@@ -198,7 +204,7 @@ export class MultiAgentCouncilService {
         temperature: options?.temperature ?? 0.3,
         maxTokens: options?.maxTokens ?? 4096,
         responseFormat: options?.responseFormat ?? 'text',
-        provider: 'AUTO'  // Let the service choose (Kimi first, then OpenAI)
+        provider: 'AUTO', // Let the service choose (Kimi first, then OpenAI)
       });
 
       // Log provider usage for monitoring
@@ -206,16 +212,16 @@ export class MultiAgentCouncilService {
         console.warn(
           `[Council:${correlationId}] ${operation}: Used fallback provider ${response.provider}`
         );
-        
+
         const auditLog = getTamperProofAuditLog(this.pool);
         await auditLog.log(
           'LLM_FALLBACK_USED',
           `Operation ${operation} used fallback provider ${response.provider}`,
-          { 
-            operation, 
+          {
+            operation,
             provider: response.provider,
             fallbackUsed: true,
-            latencyMs: response.latencyMs
+            latencyMs: response.latencyMs,
           },
           { correlationId }
         );
@@ -225,17 +231,17 @@ export class MultiAgentCouncilService {
     } catch (error) {
       if (error instanceof CircuitBreakerError) {
         console.error(`[Council:${correlationId}] All LLM providers unavailable: ${error.message}`);
-        
+
         // Log to tamper-proof audit
         const auditLog = getTamperProofAuditLog(this.pool);
         await auditLog.log(
           'CIRCUIT_BREAKER_OPENED',
           `All LLM providers unavailable during ${operation}`,
-          { 
-            operation, 
+          {
+            operation,
             errorCode: error.code,
             kimiMetrics: this.kimiCircuitBreaker.getMetrics(),
-            openaiMetrics: this.openaiCircuitBreaker.getMetrics()
+            openaiMetrics: this.openaiCircuitBreaker.getMetrics(),
           },
           { correlationId }
         );
@@ -257,32 +263,34 @@ export class MultiAgentCouncilService {
    */
   private sanitizeForPrompt(content: string, context: string, correlationId: string): string {
     const result = this.promptProtection.analyze(content);
-    
+
     if (result.detected.length > 0) {
       console.warn(
         `[Council:${correlationId}] Prompt injection patterns detected in ${context}: ` +
-        `${result.detected.length} patterns, risk score ${result.riskScore}`
+          `${result.detected.length} patterns, risk score ${result.riskScore}`
       );
-      
+
       // Log security event
       const auditLog = getTamperProofAuditLog(this.pool);
-      auditLog.log(
-        result.blocked ? 'PROMPT_INJECTION_BLOCKED' : 'PROMPT_INJECTION_BLOCKED',
-        `Potential prompt injection in ${context}`,
-        {
-          detected: result.detected,
-          riskScore: result.riskScore,
-          blocked: result.blocked,
-          context
-        },
-        { correlationId }
-      ).catch(err => console.error('Failed to log security event:', err));
+      auditLog
+        .log(
+          result.blocked ? 'PROMPT_INJECTION_BLOCKED' : 'PROMPT_INJECTION_BLOCKED',
+          `Potential prompt injection in ${context}`,
+          {
+            detected: result.detected,
+            riskScore: result.riskScore,
+            blocked: result.blocked,
+            context,
+          },
+          { correlationId }
+        )
+        .catch(err => console.error('Failed to log security event:', err));
     }
 
     if (result.blocked) {
       throw new ValidationError(
         `Input contains potentially malicious content that cannot be processed. ` +
-        `Please review your input and remove any instruction-like patterns.`
+          `Please review your input and remove any instruction-like patterns.`
       );
     }
 
@@ -302,24 +310,24 @@ export class MultiAgentCouncilService {
     maxRetries: number = this.MAX_RETRIES
   ): Promise<T> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempt < maxRetries) {
           const delay = this.RETRY_DELAY_MS * Math.pow(2, attempt - 1);
           console.warn(
             `[Council] ${operation} attempt ${attempt} failed, ` +
-            `retrying in ${delay}ms: ${lastError.message}`
+              `retrying in ${delay}ms: ${lastError.message}`
           );
           await this.sleep(delay);
         }
       }
     }
-    
+
     throw lastError;
   }
 
@@ -374,7 +382,7 @@ export class MultiAgentCouncilService {
         agents.drafter?.agentId,
         agents.statistician?.agentId,
         agents.critic?.agentId,
-        agents.synthesizer?.agentId
+        agents.synthesizer?.agentId,
       ]
     );
 
@@ -410,14 +418,22 @@ export class MultiAgentCouncilService {
         temperature: row.temperature,
         maxTokens: row.max_tokens,
         systemPromptTemplate: row.system_prompt_template,
-        dataBindings: row.data_bindings
+        dataBindings: row.data_bindings,
       };
 
       switch (row.agent_role) {
-        case 'DRAFTER': agents.drafter = config; break;
-        case 'STATISTICIAN': agents.statistician = config; break;
-        case 'CRITIC': agents.critic = config; break;
-        case 'SYNTHESIZER': agents.synthesizer = config; break;
+        case 'DRAFTER':
+          agents.drafter = config;
+          break;
+        case 'STATISTICIAN':
+          agents.statistician = config;
+          break;
+        case 'CRITIC':
+          agents.critic = config;
+          break;
+        case 'SYNTHESIZER':
+          agents.synthesizer = config;
+          break;
       }
     }
 
@@ -430,7 +446,7 @@ export class MultiAgentCouncilService {
 
   /**
    * Execute the full council workflow with comprehensive error handling
-   * 
+   *
    * @param sessionId - The session ID to execute
    * @param userId - Optional user ID for audit trail
    * @returns CouncilSession with all results and audit information
@@ -439,17 +455,17 @@ export class MultiAgentCouncilService {
   async executeCouncil(sessionId: string, userId?: string): Promise<CouncilSession> {
     const correlationId = this.generateCorrelationId();
     const startTime = Date.now();
-    
+
     // Input validation
     if (!sessionId || typeof sessionId !== 'string') {
       throw new ValidationError('sessionId is required and must be a string');
     }
-    
+
     const session = await this.getSession(sessionId);
     if (!session) {
       throw new ValidationError(`Session ${sessionId} not found`, sessionId);
     }
-    
+
     if (session.status !== 'INITIALIZED') {
       throw new ValidationError(
         `Session ${sessionId} is in status ${session.status}, expected INITIALIZED`,
@@ -465,13 +481,12 @@ export class MultiAgentCouncilService {
 
       // Step 1: Drafter with retry
       console.log(`[Council:${correlationId}] Step 1: Drafter Agent starting...`);
-      const draftText = await this.withRetry(
-        () => this.executeDrafter(sessionId),
-        'DRAFTER'
-      );
+      const draftText = await this.withRetry(() => this.executeDrafter(sessionId), 'DRAFTER');
       const draftHash = this.computeHash(draftText);
-      console.log(`[Council:${correlationId}] Draft completed: ${draftText.length} chars, hash=${draftHash.substring(0, 16)}...`);
-      
+      console.log(
+        `[Council:${correlationId}] Draft completed: ${draftText.length} chars, hash=${draftHash.substring(0, 16)}...`
+      );
+
       // Update status: VERIFYING
       await this.updateSessionStatus(sessionId, 'VERIFYING', 'STATISTICIAN');
 
@@ -483,9 +498,9 @@ export class MultiAgentCouncilService {
       );
       console.log(
         `[Council:${correlationId}] Statistician completed: ` +
-        `${statisticianResult.totalClaims} claims, ${statisticianResult.discrepancyCount} discrepancies`
+          `${statisticianResult.totalClaims} claims, ${statisticianResult.discrepancyCount} discrepancies`
       );
-      
+
       // Update status: REVIEWING
       await this.updateSessionStatus(sessionId, 'REVIEWING', 'CRITIC');
 
@@ -497,9 +512,9 @@ export class MultiAgentCouncilService {
       );
       console.log(
         `[Council:${correlationId}] Critic completed: ` +
-        `${criticResult.issues.length} issues, assessment=${criticResult.overallAssessment}`
+          `${criticResult.issues.length} issues, assessment=${criticResult.overallAssessment}`
       );
-      
+
       // Update status: SYNTHESIZING
       await this.updateSessionStatus(sessionId, 'SYNTHESIZING', 'SYNTHESIZER');
 
@@ -510,13 +525,17 @@ export class MultiAgentCouncilService {
         'SYNTHESIZER'
       );
       const finalHash = this.computeHash(finalText);
-      console.log(`[Council:${correlationId}] Synthesis completed: ${finalText.length} chars, hash=${finalHash.substring(0, 16)}...`);
+      console.log(
+        `[Council:${correlationId}] Synthesis completed: ${finalText.length} chars, hash=${finalHash.substring(0, 16)}...`
+      );
 
       // Complete session
       const totalDurationMs = Date.now() - startTime;
       await this.completeSession(sessionId, finalText, statisticianResult, criticResult);
-      
-      console.log(`[Council:${correlationId}] Session ${sessionId} completed in ${totalDurationMs}ms`);
+
+      console.log(
+        `[Council:${correlationId}] Session ${sessionId} completed in ${totalDurationMs}ms`
+      );
 
       return {
         id: sessionId,
@@ -527,9 +546,8 @@ export class MultiAgentCouncilService {
         criticResult,
         finalText,
         corrections: statisticianResult.discrepancyCount,
-        issues: criticResult.issues.length
+        issues: criticResult.issues.length,
       };
-
     } catch (error) {
       await this.failSession(sessionId, error instanceof Error ? error.message : 'Unknown error');
       throw error;
@@ -547,31 +565,33 @@ export class MultiAgentCouncilService {
     const correlationId = this.generateCorrelationId();
     const session = await this.getSession(sessionId);
     const agent = await this.getAgentConfig(session.drafter_agent_id);
-    
+
     // Get context documents
     const contextDocs = await this.getContextDocuments(session.context_atom_ids);
 
     // Sanitize context documents for prompt injection
     const sanitizedContextDocs = contextDocs.map(d => ({
       ...d,
-      content: this.sanitizeForPrompt(d.content, 'context_document', correlationId)
+      content: this.sanitizeForPrompt(d.content, 'context_document', correlationId),
     }));
 
     // Build prompt with sanitized content
     const prompt = this.renderTemplate(agent.systemPromptTemplate, {
-      context_documents: sanitizedContextDocs.map(d => `[${d.atomId}] ${d.title}:\n${d.content}`).join('\n\n'),
+      context_documents: sanitizedContextDocs
+        .map(d => `[${d.atomId}] ${d.title}:\n${d.content}`)
+        .join('\n\n'),
       requirements: JSON.stringify(session.requirements, null, 2),
-      section_path: session.section_path
+      section_path: session.section_path,
     });
 
     const startTime = Date.now();
-    
+
     // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
     const llmResponse = await this.executeLLMWithFailover(
       'DRAFTER',
       [
         { role: 'system', content: prompt },
-        { role: 'user', content: `Draft the ${session.section_path} section.` }
+        { role: 'user', content: `Draft the ${session.section_path} section.` },
       ],
       correlationId,
       { temperature: agent.temperature, maxTokens: agent.maxTokens }
@@ -592,7 +612,7 @@ export class MultiAgentCouncilService {
         fallbackUsed: llmResponse.fallbackUsed,
         outputLength: draftText.length,
         tokensUsed: llmResponse.tokensUsed.total,
-        latencyMs: llmResponse.latencyMs
+        latencyMs: llmResponse.latencyMs,
       },
       { correlationId, resourceType: 'council_session', resourceId: sessionId }
     );
@@ -605,7 +625,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs: llmResponse.latencyMs,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
     });
 
     return draftText;
@@ -615,7 +635,7 @@ export class MultiAgentCouncilService {
    * Execute Statistician Agent (with LIVE DATA BINDING and circuit breaker)
    */
   private async executeStatistician(
-    sessionId: string, 
+    sessionId: string,
     draftText: string
   ): Promise<StatisticianResult> {
     const correlationId = this.generateCorrelationId();
@@ -628,21 +648,25 @@ export class MultiAgentCouncilService {
     // Build prompt for claim extraction and verification
     const prompt = this.renderTemplate(agent.systemPromptTemplate, {
       draft_text: draftText,
-      data_bindings: JSON.stringify(dataBindings.map(b => ({
-        code: b.binding_code,
-        name: b.binding_name,
-        queries: b.query_templates
-      })), null, 2)
+      data_bindings: JSON.stringify(
+        dataBindings.map(b => ({
+          code: b.binding_code,
+          name: b.binding_name,
+          queries: b.query_templates,
+        })),
+        null,
+        2
+      ),
     });
 
     const startTime = Date.now();
-    
+
     // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
     const llmResponse = await this.executeLLMWithFailover(
       'STATISTICIAN',
       [
         { role: 'system', content: prompt },
-        { role: 'user', content: 'Extract and verify all numerical claims in the draft.' }
+        { role: 'user', content: 'Extract and verify all numerical claims in the draft.' },
       ],
       correlationId,
       { temperature: 0, maxTokens: agent.maxTokens, responseFormat: 'json' } // Statistician needs determinism
@@ -650,7 +674,7 @@ export class MultiAgentCouncilService {
 
     const latencyMs = llmResponse.latencyMs;
     const outputText = llmResponse.content || '{}';
-    
+
     let result: StatisticianResult;
     try {
       const parsed = JSON.parse(outputText);
@@ -659,18 +683,22 @@ export class MultiAgentCouncilService {
         totalClaims: parsed.verifications?.length || 0,
         discrepancyCount: (parsed.verifications || []).filter(
           (v: { status: string }) => v.status === 'DISCREPANCY'
-        ).length
+        ).length,
       };
 
       // Execute actual data queries for each verification
       for (const verification of result.verifications) {
-        const actualValue = await this.executeDataQuery(verification.source, verification.claim);
-        if (actualValue !== null) {
+        const actualValueResult = await this.executeDataQuery(
+          verification.source,
+          verification.claim
+        );
+        if (actualValueResult !== null) {
+          const actualValue = actualValueResult.value;
           verification.actualValue = actualValue;
           if (verification.claimedValue !== actualValue) {
             verification.status = 'DISCREPANCY';
             verification.correction = actualValue;
-            
+
             // Log data discrepancy to tamper-proof audit
             const auditLog = getTamperProofAuditLog(this.pool);
             await auditLog.log(
@@ -680,12 +708,14 @@ export class MultiAgentCouncilService {
                 claim: verification.claim,
                 claimedValue: verification.claimedValue,
                 actualValue: actualValue,
-                source: verification.source
+                source: verification.source,
               },
               { correlationId, resourceType: 'council_session', resourceId: sessionId }
             );
-            
-            console.log(`[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`);
+
+            console.log(
+              `[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`
+            );
           } else {
             verification.status = 'VERIFIED';
           }
@@ -694,7 +724,6 @@ export class MultiAgentCouncilService {
 
       // Recalculate discrepancy count after live queries
       result.discrepancyCount = result.verifications.filter(v => v.status === 'DISCREPANCY').length;
-
     } catch (e) {
       result = { verifications: [], totalClaims: 0, discrepancyCount: 0 };
     }
@@ -705,10 +734,10 @@ export class MultiAgentCouncilService {
       outputData: result,
       verifications: result.verifications,
       correctionsApplied: result.discrepancyCount,
-      tokensInput: response.usage?.prompt_tokens,
-      tokensOutput: response.usage?.completion_tokens,
+      tokensInput: llmResponse.tokensUsed.prompt,
+      tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
     });
 
     // Store immutable verification records
@@ -721,21 +750,22 @@ export class MultiAgentCouncilService {
 
   /**
    * Execute live data query against actual data bindings
-   * 
+   *
    * Queries configured data sources (database, API, atoms) to verify claims
    * Returns null if no matching binding found or query fails
    */
   private async executeDataQuery(
-    source: string, 
+    source: string,
     claim: string,
     sessionId?: string
   ): Promise<{ value: string; query: string; metadata: Record<string, unknown> } | null> {
     const bindings = await this.getDataBindings();
-    
+
     // Find matching binding by source reference
-    const matchedBinding = bindings.find(b => 
-      source.toLowerCase().includes(b.binding_code.toLowerCase()) ||
-      source.toLowerCase().includes(b.binding_name.toLowerCase())
+    const matchedBinding = bindings.find(
+      b =>
+        source.toLowerCase().includes(b.binding_code.toLowerCase()) ||
+        source.toLowerCase().includes(b.binding_name.toLowerCase())
     );
 
     if (!matchedBinding) {
@@ -746,8 +776,8 @@ export class MultiAgentCouncilService {
         for (const [queryName, queryTemplate] of Object.entries(templates)) {
           if (claimLower.includes(queryName.replace(/_/g, ' '))) {
             return this.executeBindingQueryInternal(
-              binding, 
-              queryName, 
+              binding,
+              queryName,
               queryTemplate as string,
               sessionId
             );
@@ -761,7 +791,7 @@ export class MultiAgentCouncilService {
     const claimLower = claim.toLowerCase();
     const templates = matchedBinding.query_templates || {};
     let bestMatch: { name: string; template: string; score: number } | null = null;
-    
+
     for (const [queryName, queryTemplate] of Object.entries(templates)) {
       const normalizedName = queryName.replace(/_/g, ' ').toLowerCase();
       if (claimLower.includes(normalizedName)) {
@@ -774,8 +804,8 @@ export class MultiAgentCouncilService {
 
     if (bestMatch) {
       return this.executeBindingQueryInternal(
-        matchedBinding, 
-        bestMatch.name, 
+        matchedBinding,
+        bestMatch.name,
         bestMatch.template,
         sessionId
       );
@@ -807,8 +837,8 @@ export class MultiAgentCouncilService {
           bindingCode: binding.binding_code,
           queryName,
           rowCount: result.rows.length,
-          executedAt: new Date().toISOString()
-        }
+          executedAt: new Date().toISOString(),
+        },
       };
     }
 
@@ -823,23 +853,21 @@ export class MultiAgentCouncilService {
         metadata: {
           bindingId: binding.id,
           atomMetadata: result.rows[0]?.metadata,
-          executedAt: new Date().toISOString()
-        }
+          executedAt: new Date().toISOString(),
+        },
       };
     }
 
     // API bindings require HTTP implementation
-    console.warn(
-      `[Council] API data binding ${binding.binding_code} not yet implemented`
-    );
+    console.warn(`[Council] API data binding ${binding.binding_code} not yet implemented`);
     return {
       value: '',
       query: `api:${queryName}`,
       metadata: {
         bindingId: binding.id,
         error: 'API bindings require HTTP client implementation',
-        executedAt: new Date().toISOString()
-      }
+        executedAt: new Date().toISOString(),
+      },
     };
   }
 
@@ -856,18 +884,18 @@ export class MultiAgentCouncilService {
 
     const prompt = this.renderTemplate(agent.systemPromptTemplate, {
       draft_text: draftText,
-      statistician_report: JSON.stringify(statisticianResult, null, 2)
+      statistician_report: JSON.stringify(statisticianResult, null, 2),
     });
 
     const correlationId = this.generateCorrelationId();
     const startTime = Date.now();
-    
+
     // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
     const llmResponse = await this.executeLLMWithFailover(
       'CRITIC',
       [
         { role: 'system', content: prompt },
-        { role: 'user', content: 'Perform critical review of the draft.' }
+        { role: 'user', content: 'Perform critical review of the draft.' },
       ],
       correlationId,
       { temperature: agent.temperature, maxTokens: agent.maxTokens, responseFormat: 'json' }
@@ -881,7 +909,7 @@ export class MultiAgentCouncilService {
       const parsed = JSON.parse(outputText);
       result = {
         issues: parsed.issues || [],
-        overallAssessment: parsed.overall_assessment || 'REVISE'
+        overallAssessment: parsed.overall_assessment || 'REVISE',
       };
     } catch (e) {
       result = { issues: [], overallAssessment: 'REVISE' };
@@ -897,7 +925,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
     });
 
     return result;
@@ -928,22 +956,22 @@ export class MultiAgentCouncilService {
 
     const prompt = this.renderTemplate(agent.systemPromptTemplate, {
       draft_text: draftText,
-      statistician_corrections: corrections.length > 0 
-        ? corrections.join('\n') 
-        : 'No corrections needed.',
-      critic_feedback: feedback.length > 0 
-        ? feedback.join('\n') 
-        : 'No significant issues found.'
+      statistician_corrections:
+        corrections.length > 0 ? corrections.join('\n') : 'No corrections needed.',
+      critic_feedback: feedback.length > 0 ? feedback.join('\n') : 'No significant issues found.',
     });
 
     const startTime = Date.now();
-    
+
     // Execute with multi-provider LLM failover (Kimi primary, OpenAI secondary)
     const llmResponse = await this.executeLLMWithFailover(
       'SYNTHESIZER',
       [
         { role: 'system', content: prompt },
-        { role: 'user', content: 'Produce the final polished text incorporating all corrections and feedback.' }
+        {
+          role: 'user',
+          content: 'Produce the final polished text incorporating all corrections and feedback.',
+        },
       ],
       correlationId,
       { temperature: agent.temperature, maxTokens: agent.maxTokens }
@@ -964,7 +992,7 @@ export class MultiAgentCouncilService {
         correctionsApplied: corrections.length,
         issuesAddressed: feedback.length,
         finalTextLength: finalText.length,
-        totalLatencyMs: latencyMs
+        totalLatencyMs: latencyMs,
       },
       { correlationId, resourceType: 'council_session', resourceId: sessionId }
     );
@@ -977,7 +1005,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
     });
 
     return finalText;
@@ -988,18 +1016,16 @@ export class MultiAgentCouncilService {
   // ==========================================================================
 
   private async getSession(sessionId: string): Promise<any> {
-    const result = await this.pool.query(
-      `SELECT * FROM lumen.council_sessions WHERE id = $1`,
-      [sessionId]
-    );
+    const result = await this.pool.query(`SELECT * FROM lumen.council_sessions WHERE id = $1`, [
+      sessionId,
+    ]);
     return result.rows[0];
   }
 
   private async getAgentConfig(agentId: string): Promise<AgentConfig> {
-    const result = await this.pool.query(
-      `SELECT * FROM lumen.agent_registry WHERE id = $1`,
-      [agentId]
-    );
+    const result = await this.pool.query(`SELECT * FROM lumen.agent_registry WHERE id = $1`, [
+      agentId,
+    ]);
     const row = result.rows[0];
     return {
       agentId: row.id,
@@ -1010,15 +1036,17 @@ export class MultiAgentCouncilService {
       temperature: row.temperature,
       maxTokens: row.max_tokens,
       systemPromptTemplate: row.system_prompt_template,
-      dataBindings: row.data_bindings
+      dataBindings: row.data_bindings,
     };
   }
 
-  private async getContextDocuments(atomIds: string[]): Promise<Array<{
-    atomId: string;
-    title: string;
-    content: string;
-  }>> {
+  private async getContextDocuments(atomIds: string[]): Promise<
+    Array<{
+      atomId: string;
+      title: string;
+      content: string;
+    }>
+  > {
     if (!atomIds || atomIds.length === 0) return [];
 
     const result = await this.pool.query(
@@ -1029,7 +1057,7 @@ export class MultiAgentCouncilService {
     return result.rows.map(r => ({
       atomId: r.id,
       title: r.title,
-      content: r.content?.substring(0, 10000) || '' // Limit context size
+      content: r.content?.substring(0, 10000) || '', // Limit context size
     }));
   }
 
@@ -1049,12 +1077,12 @@ export class MultiAgentCouncilService {
   }
 
   private async updateSessionStatus(
-    sessionId: string, 
-    status: CouncilStatus, 
+    sessionId: string,
+    status: CouncilStatus,
     currentRole?: AgentRole
   ): Promise<void> {
     await this.pool.query(
-      `UPDATE lumen.council_sessions 
+      `UPDATE lumen.council_sessions
        SET status = $2, current_agent_role = $3, started_at = COALESCE(started_at, NOW())
        WHERE id = $1`,
       [sessionId, status, currentRole || null]
@@ -1068,7 +1096,7 @@ export class MultiAgentCouncilService {
     criticResult: CriticResult
   ): Promise<void> {
     await this.pool.query(
-      `UPDATE lumen.council_sessions 
+      `UPDATE lumen.council_sessions
        SET status = 'COMPLETED',
            completed_at = NOW(),
            duration_seconds = EXTRACT(EPOCH FROM (NOW() - started_at))::INT,
@@ -1080,14 +1108,14 @@ export class MultiAgentCouncilService {
         sessionId,
         statisticianResult.discrepancyCount,
         criticResult.issues.length,
-        criticResult.issues.filter(i => i.severity !== 'HIGH').length
+        criticResult.issues.filter(i => i.severity !== 'HIGH').length,
       ]
     );
   }
 
   private async failSession(sessionId: string, errorMessage: string): Promise<void> {
     await this.pool.query(
-      `UPDATE lumen.council_sessions 
+      `UPDATE lumen.council_sessions
        SET status = 'FAILED', completed_at = NOW()
        WHERE id = $1`,
       [sessionId]
@@ -1127,13 +1155,13 @@ export class MultiAgentCouncilService {
         data.tokensInput,
         data.tokensOutput,
         data.latencyMs,
-        data.status
+        data.status,
       ]
     );
   }
 
   private async storeVerification(
-    sessionId: string, 
+    sessionId: string,
     verification: {
       claim: string;
       claimedValue: string;
@@ -1144,8 +1172,8 @@ export class MultiAgentCouncilService {
   ): Promise<void> {
     // Get the latest execution ID for this session
     const execResult = await this.pool.query(
-      `SELECT id FROM lumen.agent_executions 
-       WHERE session_id = $1 AND agent_role = 'STATISTICIAN' 
+      `SELECT id FROM lumen.agent_executions
+       WHERE session_id = $1 AND agent_role = 'STATISTICIAN'
        ORDER BY created_at DESC LIMIT 1`,
       [sessionId]
     );
@@ -1155,7 +1183,7 @@ export class MultiAgentCouncilService {
     await this.pool.query(
       `INSERT INTO lumen.data_verifications (
         execution_id, session_id, claim_text, claimed_value,
-        actual_value, status, discrepancy_type, 
+        actual_value, status, discrepancy_type,
         correction_applied, corrected_value
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
@@ -1167,7 +1195,7 @@ export class MultiAgentCouncilService {
         verification.status,
         verification.status === 'DISCREPANCY' ? 'NUMERIC_MISMATCH' : null,
         verification.status === 'DISCREPANCY',
-        verification.correction
+        verification.correction,
       ]
     );
   }

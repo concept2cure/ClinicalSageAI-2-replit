@@ -1,5 +1,5 @@
-// Database connection setup
-import { Pool } from 'pg';
+// Database connection setup - re-exports canonical pool
+import { getPool, db as drizzleDb } from './db.ts';
 import 'dotenv/config';
 import EventEmitter from 'events';
 
@@ -14,17 +14,8 @@ export const dbStatus = {
   events: new EventEmitter(),
 };
 
-// Create a new database pool with the connection string from environment variables
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  // Add connection timeout and retry settings
-  connectionTimeoutMillis: 5000, // 5 seconds (reduced for faster failure detection)
-  idleTimeoutMillis: 30000, // 30 seconds
-  max: 10, // Maximum number of clients
-  allowExitOnIdle: true, // Allow the pool to exit if idle
-  maxUses: 500, // Maximum number of uses before client is replaced
-});
+// Use canonical pool
+const pool = getPool();
 
 // Add error handler for the pool
 pool.on('error', (err, client) => {

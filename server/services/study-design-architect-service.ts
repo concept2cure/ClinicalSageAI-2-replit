@@ -13,6 +13,13 @@ import { classifyTherapeuticArea } from '../../shared/utils/therapeutic-area-cla
  * - CSR-informed design element suggestions
  */
 export class StudyDesignArchitectService {
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
+
   /**
    * Get available study design types with descriptions
    */
@@ -211,8 +218,9 @@ export class StudyDesignArchitectService {
    */
   async getDesignRecommendations(indication: string, phase: string) {
     try {
+      const dbInstance = this.getDb();
       // Get historical CSR data for similar trials
-      const similarTrials = await db
+      const similarTrials = await dbInstance
         .select({
           studyDesign: csrDetails.studyDesign,
           primaryObjective: csrDetails.primaryObjective,
@@ -511,33 +519,24 @@ export class StudyDesignArchitectService {
       // Add more therapeutic areas based on common indications
     };
 
-    // Find the most relevant therapeutic area
-    // Use the centralized therapeutic area classifier instead of simple substring matching
-    // Import the classifier to ensure consistent therapeutic area classification across services
-    import { classifyTherapeuticArea } from '../../shared/utils/therapeutic-area-classifier';
-
-    // Get the therapeutic area classification with confidence score
-    const classificationResult = classifyTherapeuticArea(indication, {
-      confidenceThreshold: 0.3, // Lower threshold to capture more matches
-      enableLogging: true,
-    });
-
-    const therapeuticArea = classificationResult.area.toLowerCase();
+    // Get the therapeutic area classification
+    const classificationResult = classifyTherapeuticArea(indication);
+    const therapeuticArea = classificationResult.toLowerCase();
 
     // If we have a match in our therapeutic areas dictionary, return it
     if (therapeuticAreas[therapeuticArea]) {
       return {
         therapeuticArea: therapeuticArea.charAt(0).toUpperCase() + therapeuticArea.slice(1), // Capitalize
         ...therapeuticAreas[therapeuticArea],
-        confidenceScore: classificationResult.confidence,
-        matchedKeywords: classificationResult.matchedKeywords,
+        confidenceScore: undefined,
+        matchedKeywords: undefined,
       };
     }
 
     // Log if we got a classification but don't have specific guidance for it
-    if (classificationResult.area !== 'Unknown' && classificationResult.confidence > 0.5) {
+    if (classificationResult !== 'Other') {
       console.log(
-        `StudyDesignArchitect: Classified as "${classificationResult.area}" but no specific considerations available`
+        `StudyDesignArchitect: Classified as "${classificationResult}" but no specific considerations available`
       );
     }
 
@@ -609,7 +608,7 @@ export class StudyDesignArchitectService {
 
     return `This is a ${phase.toLowerCase()}, randomized, ${arms > 2 ? `${arms}-arm, ` : ''}${this.getBlindingText(params)}, parallel-group study to evaluate the efficacy and safety of ${this.getInterventionName(params)} in patients with ${indication}.
 
-${sampleSize ? `Approximately ${sampleSize} patients` : 'Patients'} will be enrolled. ${allocation} to ${this.formatArmsList(armNames)}. 
+${sampleSize ? `Approximately ${sampleSize} patients` : 'Patients'} will be enrolled. ${allocation} to ${this.formatArmsList(armNames)}.
 
 The study will consist of a screening period of up to 28 days, followed by a treatment period of ${treatmentDuration || '12'} weeks, and a follow-up period of 4 weeks after the last dose of study treatment.
 

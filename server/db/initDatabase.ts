@@ -8,43 +8,10 @@
 import { Pool } from 'pg';
 import setupLiterature from './setupLiterature';
 import setupLumenCortex from './setupLumenCortex';
-import { getSslConfig } from './ssl';
+import { getPool } from '../db';
 
-/**
- * Clean a database URL by removing common wrapper artifacts
- * like `psql '...'` that can be accidentally copied from terminal commands
- */
-function cleanDatabaseUrl(url: string | undefined): string | undefined {
-  if (!url) return url;
-  let cleaned = url;
-
-  // Remove psql command wrapper if present: psql 'postgresql://...' or psql "postgresql://..."
-  if (cleaned.startsWith('psql ')) {
-    cleaned = cleaned.substring(5); // Remove 'psql '
-  }
-
-  // Remove surrounding quotes (single or double)
-  if (
-    (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
-    (cleaned.startsWith('"') && cleaned.endsWith('"'))
-  ) {
-    cleaned = cleaned.slice(1, -1);
-  }
-
-  // Remove any leading/trailing whitespace
-  cleaned = cleaned.trim();
-
-  return cleaned;
-}
-
-// Initialize database connection pool with cleaned URL
-const rawUrl = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET;
-const connectionString = cleanDatabaseUrl(rawUrl);
-
-const pool = new Pool({
-  connectionString,
-  ssl: getSslConfig(connectionString),
-});
+// Re-export the canonical pool for backward compatibility
+export const pool = getPool();
 
 /**
  * Initialize all database components and tables

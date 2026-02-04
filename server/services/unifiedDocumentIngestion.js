@@ -23,7 +23,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
-import { Pool } from 'pg';
+import { pool as dbPool } from '../utils/database.js';
 import OpenAI from 'openai';
 // import PDFParser from 'pdf-parse';
 // import mammoth from 'mammoth';
@@ -108,7 +108,6 @@ const REGULATORY_CONFIG = {
 
 // Initialize services
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const dbPool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
 const textProcessor = new TextProcessor();
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -136,7 +135,7 @@ const MAGIC_SIGNATURES = [
   { mime: 'application/zip', magic: Buffer.from([0x50, 0x4b, 0x03, 0x04]) },
 ];
 
-const isLikelyText = (buffer) => {
+const isLikelyText = buffer => {
   const sample = buffer.subarray(0, 2048);
   if (sample.includes(0)) return false;
   let printable = 0;
@@ -165,13 +164,17 @@ const validateFileSignature = (buffer, mimeType) => {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   ]);
 
-  const magicMatch = MAGIC_SIGNATURES.find((sig) => matchesMagic(buffer, sig.magic));
+  const magicMatch = MAGIC_SIGNATURES.find(sig => matchesMagic(buffer, sig.magic));
 
   if (zipBasedMimes.has(mimeType)) {
     if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
       throw new Error('Invalid ZIP-based file signature');
     }
-  } else if (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml')) {
+  } else if (
+    mimeType.startsWith('text/') ||
+    mimeType.includes('json') ||
+    mimeType.includes('xml')
+  ) {
     if (!isLikelyText(buffer)) {
       throw new Error('Invalid text file content');
     }
@@ -628,15 +631,15 @@ export class UnifiedDocumentIngestion {
     try {
       const analysisPrompt = `
         COMPREHENSIVE DOCUMENT ANALYSIS
-        
+
         Document Context:
         - Module: ${options.module || 'general'}
         - Context: ${options.context || 'unknown'}
         - Purpose: ${options.purpose || 'document processing'}
-        
+
         Document Content (first 4000 chars):
         ${text.substring(0, 4000)}...
-        
+
         Provide comprehensive analysis including:
         1. Document classification (CSR, Protocol, IND, BLA, NDA, 510K, etc.)
         2. Key regulatory information extracted
@@ -644,7 +647,7 @@ export class UnifiedDocumentIngestion {
         4. Risk analysis
         5. Recommended actions
         6. Integration suggestions for the specified module
-        
+
         Format as structured JSON with clear categories.
       `;
 
@@ -1066,14 +1069,14 @@ export class UnifiedDocumentIngestion {
       // Using existing columns: doc_id, content, embedding (requires vector generation)
       const chunkInsertQuery = `
         INSERT INTO document_chunks (
-          doc_id, 
-          doc_title, 
-          chunk_index, 
-          content, 
+          doc_id,
+          doc_title,
+          chunk_index,
+          content,
           chunk_text,
-          embedding, 
-          document_version_id, 
-          created_at, 
+          embedding,
+          document_version_id,
+          created_at,
           tenant_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -1373,7 +1376,7 @@ export class UnifiedDocumentIngestion {
   async searchDocuments(query, filters = {}) {
     try {
       let searchQuery = `
-        SELECT * FROM unified_documents 
+        SELECT * FROM unified_documents
         WHERE text_content ILIKE $1
       `;
 

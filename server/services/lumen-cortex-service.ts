@@ -14,8 +14,7 @@ const SEC_BASE_URL = 'https://data.sec.gov';
 const SEC_ARCHIVE_URL = 'https://www.sec.gov/Archives/edgar/data';
 
 const DEFAULT_USER_AGENT =
-  process.env.SEC_USER_AGENT ||
-  'LumenCortexHarvester/1.0 (contact: compliance@c2c.ai)';
+  process.env.SEC_USER_AGENT || 'LumenCortexHarvester/1.0 (contact: compliance@c2c.ai)';
 
 const REJECTION_SIGNAL_PATTERNS = [
   /complete response letter/gi,
@@ -47,10 +46,18 @@ export interface Harvest10KOptions {
 }
 
 export class LumenCortexService {
+  private getDb() {
+    if (!db) {
+      throw new Error('Database not available');
+    }
+    return db;
+  }
+
   async verifyNeonConnection() {
     const connectionString = process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL || '';
     const isNeon = /neon\.tech|neondb/i.test(connectionString);
-    await db.execute(sql`SELECT 1`);
+    const dbInstance = this.getDb();
+    await dbInstance.execute(sql`SELECT 1`);
     return {
       connected: true,
       neonDetected: isNeon,
@@ -108,7 +115,8 @@ export class LumenCortexService {
       };
     }
 
-    const existing = await db
+    const dbInstance = this.getDb();
+    const existing = await dbInstance
       .select({ accessionNo: lumenFilingDocuments.accessionNo })
       .from(lumenFilingDocuments)
       .where(
@@ -139,7 +147,7 @@ export class LumenCortexService {
       const parsedText = this.extractReadableText(filingContent);
       const extractedSignals = this.extractSignals(parsedText);
 
-      await db
+      await dbInstance
         .insert(lumenFilingDocuments)
         .values({
           organizationId: options.organizationId,
@@ -166,7 +174,7 @@ export class LumenCortexService {
       });
 
       if (dataAtoms.length > 0) {
-        await db.insert(lumenDataAtoms).values(dataAtoms).onConflictDoNothing();
+        await dbInstance.insert(lumenDataAtoms).values(dataAtoms).onConflictDoNothing();
         atomsCreated += dataAtoms.length;
       }
 
@@ -182,7 +190,8 @@ export class LumenCortexService {
   }
 
   async syncObservationTermsFromCSR(organizationId: number, limit = 100) {
-    const csrRows = await db
+    const dbInstance = this.getDb();
+    const csrRows = await dbInstance
       .select()
       .from(csrReports)
       .where(eq(csrReports.organizationId, organizationId))
@@ -220,7 +229,7 @@ export class LumenCortexService {
     }
 
     if (terms.length > 0) {
-      await db.insert(lumenObservationTerms).values(terms).onConflictDoNothing();
+      await dbInstance.insert(lumenObservationTerms).values(terms).onConflictDoNothing();
     }
 
     return {
@@ -285,10 +294,7 @@ export class LumenCortexService {
         rejectionCount: rejectionSignals.length,
         subjectiveCount: subjectiveSignals.length,
         objectiveCount: objectiveSignals.length,
-        fingerprint: crypto
-          .createHash('sha256')
-          .update(text.slice(0, 10000))
-          .digest('hex'),
+        fingerprint: crypto.createHash('sha256').update(text.slice(0, 10000)).digest('hex'),
       },
     };
   }
@@ -407,11 +413,36 @@ export class LumenCortexService {
       });
     };
 
-    addTerms(this.extractTextList(content, ['endpoints', 'primary_endpoints', 'secondary_endpoints']), 'objective', 'endpoint', 1.1);
-    addTerms(this.extractTextList(content, ['adverse_events', 'safety', 'safety_signals']), 'objective', 'safety', 1.2);
-    addTerms(this.extractTextList(content, ['biomarkers', 'lab_values']), 'objective', 'biomarker', 1.1);
-    addTerms(this.extractTextList(content, ['patient_reported_outcomes', 'quality_of_life']), 'subjective', 'patient_reported', 0.9);
-    addTerms(this.extractTextList(content, ['protocol_deviations', 'enrollment', 'dropout_reasons']), 'objective', 'operations', 0.9);
+    addTerms(
+      this.extractTextList(content, ['endpoints', 'primary_endpoints', 'secondary_endpoints']),
+      'objective',
+      'endpoint',
+      1.1
+    );
+    addTerms(
+      this.extractTextList(content, ['adverse_events', 'safety', 'safety_signals']),
+      'objective',
+      'safety',
+      1.2
+    );
+    addTerms(
+      this.extractTextList(content, ['biomarkers', 'lab_values']),
+      'objective',
+      'biomarker',
+      1.1
+    );
+    addTerms(
+      this.extractTextList(content, ['patient_reported_outcomes', 'quality_of_life']),
+      'subjective',
+      'patient_reported',
+      0.9
+    );
+    addTerms(
+      this.extractTextList(content, ['protocol_deviations', 'enrollment', 'dropout_reasons']),
+      'objective',
+      'operations',
+      0.9
+    );
 
     return Array.from(bucket.entries()).map(([term, meta]) => ({
       term,

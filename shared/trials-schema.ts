@@ -27,7 +27,7 @@ export const insertTrialSchema = createInsertSchema(trials).omit({
   id: true,
   imported_date: true,
   last_updated: true,
-});
+} as any);
 
 // Types
 export type Trial = typeof trials.$inferSelect;

@@ -1,6 +1,6 @@
 /**
  * Supply Chain Storage Interface
- * 
+ *
  * Enterprise-ready storage interface for pharmaceutical supply chain management
  * Supports GxP compliance, multi-tenant architecture, and 21 CFR Part 11 requirements
  */
@@ -112,7 +112,15 @@ export const BatchSchema = z.object({
   batchNumber: z.string(),
   lotNumber: z.string().optional(),
   materialId: z.number(),
-  batchStatus: z.enum(['in_process', 'testing', 'quarantine', 'approved', 'rejected', 'released', 'recalled']),
+  batchStatus: z.enum([
+    'in_process',
+    'testing',
+    'quarantine',
+    'approved',
+    'rejected',
+    'released',
+    'recalled',
+  ]),
   manufacturingStatus: z.enum(['planned', 'in_progress', 'completed', 'failed']),
   manufacturingDate: z.string().optional(),
   expiryDate: z.string().optional(),
@@ -154,6 +162,29 @@ export const CreateBatchSchema = BatchSchema.omit({
 export type Batch = z.infer<typeof BatchSchema>;
 export type CreateBatch = z.infer<typeof CreateBatchSchema>;
 
+type SupplierFilters = {
+  supplierType?: Supplier['supplierType'];
+  qualificationStatus?: Supplier['qualificationStatus'];
+  riskLevel?: Supplier['riskLevel'];
+  search?: string;
+};
+
+type MaterialFilters = {
+  materialType?: Material['materialType'];
+  materialCategory?: Material['materialCategory'];
+  regulatoryStatus?: Material['regulatoryStatus'];
+  search?: string;
+};
+
+type BatchFilters = {
+  batchStatus?: Batch['batchStatus'];
+  manufacturingStatus?: Batch['manufacturingStatus'];
+  qcStatus?: Batch['qcStatus'];
+  releaseStatus?: Batch['releaseStatus'];
+  materialId?: number;
+  search?: string;
+};
+
 // ============================================================================
 // STORAGE INTERFACE
 // ============================================================================
@@ -161,55 +192,101 @@ export type CreateBatch = z.infer<typeof CreateBatchSchema>;
 export interface ISupplyChainStorage {
   // Supplier Operations
   createSupplier(data: CreateSupplier): Promise<Supplier>;
-  getSupplier(id: number, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null>;
-  updateSupplier(id: number, data: Partial<CreateSupplier>, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null>;
+  getSupplier(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null>;
+  updateSupplier(
+    id: number,
+    data: Partial<CreateSupplier>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null>;
   deleteSupplier(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean>;
-  listSuppliers(organizationId: number, clientWorkspaceId: number, filters?: {
-    supplierType?: string;
-    qualificationStatus?: string;
-    riskLevel?: string;
-    search?: string;
-  }): Promise<Supplier[]>;
+  listSuppliers(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters?: SupplierFilters
+  ): Promise<Supplier[]>;
 
   // Material Operations
   createMaterial(data: CreateMaterial): Promise<Material>;
-  getMaterial(id: number, organizationId: number, clientWorkspaceId: number): Promise<Material | null>;
-  updateMaterial(id: number, data: Partial<CreateMaterial>, organizationId: number, clientWorkspaceId: number): Promise<Material | null>;
+  getMaterial(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Material | null>;
+  updateMaterial(
+    id: number,
+    data: Partial<CreateMaterial>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Material | null>;
   deleteMaterial(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean>;
-  listMaterials(organizationId: number, clientWorkspaceId: number, filters?: {
-    materialType?: string;
-    materialCategory?: string;
-    regulatoryStatus?: string;
-    search?: string;
-  }): Promise<Material[]>;
+  listMaterials(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters?: MaterialFilters
+  ): Promise<Material[]>;
 
   // Batch Operations
   createBatch(data: CreateBatch): Promise<Batch>;
   getBatch(id: number, organizationId: number, clientWorkspaceId: number): Promise<Batch | null>;
-  updateBatch(id: number, data: Partial<CreateBatch>, organizationId: number, clientWorkspaceId: number): Promise<Batch | null>;
+  updateBatch(
+    id: number,
+    data: Partial<CreateBatch>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null>;
   deleteBatch(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean>;
-  listBatches(organizationId: number, clientWorkspaceId: number, filters?: {
-    batchStatus?: string;
-    manufacturingStatus?: string;
-    qcStatus?: string;
-    releaseStatus?: string;
-    materialId?: number;
-    search?: string;
-  }): Promise<Batch[]>;
+  listBatches(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters?: BatchFilters
+  ): Promise<Batch[]>;
 
   // Batch Release Operations (QP Workflow)
-  approveBatchForRelease(batchId: number, qpUserId: string, notes: string, organizationId: number, clientWorkspaceId: number): Promise<Batch | null>;
-  rejectBatchRelease(batchId: number, qpUserId: string, reason: string, organizationId: number, clientWorkspaceId: number): Promise<Batch | null>;
-  
+  approveBatchForRelease(
+    batchId: number,
+    qpUserId: string,
+    notes: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null>;
+  rejectBatchRelease(
+    batchId: number,
+    qpUserId: string,
+    reason: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null>;
+
   // Batch Genealogy
-  getBatchGenealogy(batchId: number, organizationId: number, clientWorkspaceId: number): Promise<{
+  getBatchGenealogy(
+    batchId: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<{
     parents: Batch[];
     children: Batch[];
   }>;
 
   // Supplier Qualification Workflow
-  qualifySupplier(supplierId: number, auditScore: number, qualifiedBy: string, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null>;
-  suspendSupplier(supplierId: number, reason: string, suspendedBy: string, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null>;
+  qualifySupplier(
+    supplierId: number,
+    auditScore: number,
+    qualifiedBy: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null>;
+  suspendSupplier(
+    supplierId: number,
+    reason: string,
+    suspendedBy: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null>;
 }
 
 // ============================================================================
@@ -228,7 +305,11 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
   }
 
   // Helper method to check tenant access
-  private checkTenantAccess(item: { organizationId: number; clientWorkspaceId: number }, organizationId: number, clientWorkspaceId: number): boolean {
+  private checkTenantAccess(
+    item: { organizationId: number; clientWorkspaceId: number },
+    organizationId: number,
+    clientWorkspaceId: number
+  ): boolean {
     return item.organizationId === organizationId && item.clientWorkspaceId === clientWorkspaceId;
   }
 
@@ -244,7 +325,11 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return supplier;
   }
 
-  async getSupplier(id: number, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null> {
+  async getSupplier(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null> {
     const supplier = this.suppliers.get(id);
     if (!supplier || !this.checkTenantAccess(supplier, organizationId, clientWorkspaceId)) {
       return null;
@@ -252,7 +337,12 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return supplier;
   }
 
-  async updateSupplier(id: number, data: Partial<CreateSupplier>, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null> {
+  async updateSupplier(
+    id: number,
+    data: Partial<CreateSupplier>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null> {
     const supplier = await this.getSupplier(id, organizationId, clientWorkspaceId);
     if (!supplier) return null;
 
@@ -265,15 +355,24 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return updated;
   }
 
-  async deleteSupplier(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean> {
+  async deleteSupplier(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<boolean> {
     const supplier = await this.getSupplier(id, organizationId, clientWorkspaceId);
     if (!supplier) return false;
     return this.suppliers.delete(id);
   }
 
-  async listSuppliers(organizationId: number, clientWorkspaceId: number, filters = {}): Promise<Supplier[]> {
-    let suppliers = Array.from(this.suppliers.values())
-      .filter(s => this.checkTenantAccess(s, organizationId, clientWorkspaceId));
+  async listSuppliers(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters: SupplierFilters = {}
+  ): Promise<Supplier[]> {
+    let suppliers = Array.from(this.suppliers.values()).filter(s =>
+      this.checkTenantAccess(s, organizationId, clientWorkspaceId)
+    );
 
     if (filters.supplierType) {
       suppliers = suppliers.filter(s => s.supplierType === filters.supplierType);
@@ -286,9 +385,8 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     }
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      suppliers = suppliers.filter(s => 
-        s.name.toLowerCase().includes(search) ||
-        s.supplierCode.toLowerCase().includes(search)
+      suppliers = suppliers.filter(
+        s => s.name.toLowerCase().includes(search) || s.supplierCode.toLowerCase().includes(search)
       );
     }
 
@@ -307,7 +405,11 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return material;
   }
 
-  async getMaterial(id: number, organizationId: number, clientWorkspaceId: number): Promise<Material | null> {
+  async getMaterial(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Material | null> {
     const material = this.materials.get(id);
     if (!material || !this.checkTenantAccess(material, organizationId, clientWorkspaceId)) {
       return null;
@@ -315,7 +417,12 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return material;
   }
 
-  async updateMaterial(id: number, data: Partial<CreateMaterial>, organizationId: number, clientWorkspaceId: number): Promise<Material | null> {
+  async updateMaterial(
+    id: number,
+    data: Partial<CreateMaterial>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Material | null> {
     const material = await this.getMaterial(id, organizationId, clientWorkspaceId);
     if (!material) return null;
 
@@ -328,15 +435,24 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return updated;
   }
 
-  async deleteMaterial(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean> {
+  async deleteMaterial(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<boolean> {
     const material = await this.getMaterial(id, organizationId, clientWorkspaceId);
     if (!material) return false;
     return this.materials.delete(id);
   }
 
-  async listMaterials(organizationId: number, clientWorkspaceId: number, filters = {}): Promise<Material[]> {
-    let materials = Array.from(this.materials.values())
-      .filter(m => this.checkTenantAccess(m, organizationId, clientWorkspaceId));
+  async listMaterials(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters: MaterialFilters = {}
+  ): Promise<Material[]> {
+    let materials = Array.from(this.materials.values()).filter(m =>
+      this.checkTenantAccess(m, organizationId, clientWorkspaceId)
+    );
 
     if (filters.materialType) {
       materials = materials.filter(m => m.materialType === filters.materialType);
@@ -349,9 +465,8 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     }
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      materials = materials.filter(m => 
-        m.name.toLowerCase().includes(search) ||
-        m.materialCode.toLowerCase().includes(search)
+      materials = materials.filter(
+        m => m.name.toLowerCase().includes(search) || m.materialCode.toLowerCase().includes(search)
       );
     }
 
@@ -370,7 +485,11 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return batch;
   }
 
-  async getBatch(id: number, organizationId: number, clientWorkspaceId: number): Promise<Batch | null> {
+  async getBatch(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null> {
     const batch = this.batches.get(id);
     if (!batch || !this.checkTenantAccess(batch, organizationId, clientWorkspaceId)) {
       return null;
@@ -378,7 +497,12 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return batch;
   }
 
-  async updateBatch(id: number, data: Partial<CreateBatch>, organizationId: number, clientWorkspaceId: number): Promise<Batch | null> {
+  async updateBatch(
+    id: number,
+    data: Partial<CreateBatch>,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null> {
     const batch = await this.getBatch(id, organizationId, clientWorkspaceId);
     if (!batch) return null;
 
@@ -391,15 +515,24 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     return updated;
   }
 
-  async deleteBatch(id: number, organizationId: number, clientWorkspaceId: number): Promise<boolean> {
+  async deleteBatch(
+    id: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<boolean> {
     const batch = await this.getBatch(id, organizationId, clientWorkspaceId);
     if (!batch) return false;
     return this.batches.delete(id);
   }
 
-  async listBatches(organizationId: number, clientWorkspaceId: number, filters = {}): Promise<Batch[]> {
-    let batches = Array.from(this.batches.values())
-      .filter(b => this.checkTenantAccess(b, organizationId, clientWorkspaceId));
+  async listBatches(
+    organizationId: number,
+    clientWorkspaceId: number,
+    filters: BatchFilters = {}
+  ): Promise<Batch[]> {
+    let batches = Array.from(this.batches.values()).filter(b =>
+      this.checkTenantAccess(b, organizationId, clientWorkspaceId)
+    );
 
     if (filters.batchStatus) {
       batches = batches.filter(b => b.batchStatus === filters.batchStatus);
@@ -418,9 +551,10 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
     }
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      batches = batches.filter(b => 
-        b.batchNumber.toLowerCase().includes(search) ||
-        (b.lotNumber && b.lotNumber.toLowerCase().includes(search))
+      batches = batches.filter(
+        b =>
+          b.batchNumber.toLowerCase().includes(search) ||
+          (b.lotNumber && b.lotNumber.toLowerCase().includes(search))
       );
     }
 
@@ -428,24 +562,50 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
   }
 
   // QP Release Workflow
-  async approveBatchForRelease(batchId: number, qpUserId: string, notes: string, organizationId: number, clientWorkspaceId: number): Promise<Batch | null> {
-    return await this.updateBatch(batchId, {
-      releaseStatus: 'released',
-      qpReleaseDate: new Date().toISOString(),
-      qpReleasedBy: qpUserId,
-      releaseNotes: notes,
-    }, organizationId, clientWorkspaceId);
+  async approveBatchForRelease(
+    batchId: number,
+    qpUserId: string,
+    notes: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null> {
+    return await this.updateBatch(
+      batchId,
+      {
+        releaseStatus: 'released',
+        qpReleaseDate: new Date().toISOString(),
+        qpReleasedBy: qpUserId,
+        releaseNotes: notes,
+      },
+      organizationId,
+      clientWorkspaceId
+    );
   }
 
-  async rejectBatchRelease(batchId: number, qpUserId: string, reason: string, organizationId: number, clientWorkspaceId: number): Promise<Batch | null> {
-    return await this.updateBatch(batchId, {
-      releaseStatus: 'not_released',
-      releaseNotes: reason,
-    }, organizationId, clientWorkspaceId);
+  async rejectBatchRelease(
+    batchId: number,
+    qpUserId: string,
+    reason: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Batch | null> {
+    return await this.updateBatch(
+      batchId,
+      {
+        releaseStatus: 'not_released',
+        releaseNotes: reason,
+      },
+      organizationId,
+      clientWorkspaceId
+    );
   }
 
   // Batch Genealogy (simplified for memory storage)
-  async getBatchGenealogy(batchId: number, organizationId: number, clientWorkspaceId: number): Promise<{ parents: Batch[]; children: Batch[]; }> {
+  async getBatchGenealogy(
+    batchId: number,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<{ parents: Batch[]; children: Batch[] }> {
     // In a real implementation, this would use the junction table
     // For now, return empty arrays as placeholder
     return {
@@ -455,18 +615,40 @@ export class MemSupplyChainStorage implements ISupplyChainStorage {
   }
 
   // Supplier Qualification
-  async qualifySupplier(supplierId: number, auditScore: number, qualifiedBy: string, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null> {
-    return await this.updateSupplier(supplierId, {
-      qualificationStatus: 'qualified',
-      qualificationDate: new Date().toISOString(),
-      auditScore,
-    }, organizationId, clientWorkspaceId);
+  async qualifySupplier(
+    supplierId: number,
+    auditScore: number,
+    qualifiedBy: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null> {
+    return await this.updateSupplier(
+      supplierId,
+      {
+        qualificationStatus: 'qualified',
+        qualificationDate: new Date().toISOString(),
+        auditScore,
+      },
+      organizationId,
+      clientWorkspaceId
+    );
   }
 
-  async suspendSupplier(supplierId: number, reason: string, suspendedBy: string, organizationId: number, clientWorkspaceId: number): Promise<Supplier | null> {
-    return await this.updateSupplier(supplierId, {
-      qualificationStatus: 'suspended',
-      notes: reason,
-    }, organizationId, clientWorkspaceId);
+  async suspendSupplier(
+    supplierId: number,
+    reason: string,
+    suspendedBy: string,
+    organizationId: number,
+    clientWorkspaceId: number
+  ): Promise<Supplier | null> {
+    return await this.updateSupplier(
+      supplierId,
+      {
+        qualificationStatus: 'suspended',
+        notes: reason,
+      },
+      organizationId,
+      clientWorkspaceId
+    );
   }
 }

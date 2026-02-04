@@ -1,10 +1,8 @@
-// import { google } from "googleapis";
-import { Pool } from 'pg';
+import { google } from 'googleapis';
+import { getPool } from '../../../db';
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+// Database connection - use canonical pool
+const pool = getPool();
 
 // Helper function for database queries
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {

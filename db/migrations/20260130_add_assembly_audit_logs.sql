@@ -1,4 +1,4 @@
-CREATE TABLE assembly_audit_logs (
+CREATE TABLE IF NOT EXISTS assembly_audit_logs (
   id TEXT PRIMARY KEY,
   doc_id TEXT NOT NULL,
   provider TEXT,

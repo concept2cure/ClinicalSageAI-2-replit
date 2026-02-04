@@ -17,9 +17,10 @@ set -e  # Exit on error
 
 # === TERMINAL SAFETY ===
 # Prevent pager from hijacking terminal (alternate screen buffer issues)
-export PAGER="${PAGER:-cat}"
-export LESS="${LESS:--FRSX}"
-export PSQL_PAGER="${PSQL_PAGER:-cat}"
+export PAGER=cat
+export LESS="-FRSX"
+export PSQL_PAGER=cat
+export TERM=dumb
 
 # Colors for output
 RED='\033[0;31m'
@@ -57,10 +58,39 @@ elif [ -z "$DATABASE_URL" ]; then
     fi
 fi
 
+# Sanitize connection string if wrapped with a leading psql command
+if [[ "$DATABASE_URL" =~ ^psql[[:space:]]+ ]]; then
+    DATABASE_URL="$(echo "$DATABASE_URL" | sed -E 's/^psql[[:space:]]+//')"
+fi
+
+# Trim surrounding whitespace
+DATABASE_URL="$(echo "$DATABASE_URL" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+# Trim surrounding quotes (defensive, handles mismatched quoting)
+DATABASE_URL="${DATABASE_URL#\"}"
+DATABASE_URL="${DATABASE_URL%\"}"
+DATABASE_URL="${DATABASE_URL#\'}"
+DATABASE_URL="${DATABASE_URL%\'}"
+
 # Mask password in URL for display
 DISPLAY_URL=$(echo "$DATABASE_URL" | sed 's/:[^:@]*@/:***@/')
 echo -e "${BLUE}Target: ${NC}$DISPLAY_URL"
 echo ""
+
+# Safe psql wrapper (no pager, non-interactive, with timeout if available)
+psql_safe() {
+    local conn_str="$1"
+    shift
+    if command -v timeout >/dev/null 2>&1; then
+        TERM=dumb PAGER=cat timeout 30s psql "$conn_str" \
+            -X --no-align --tuples-only --pset pager=off \
+            -v ON_ERROR_STOP=1 "$@"
+    else
+        TERM=dumb PAGER=cat psql "$conn_str" \
+            -X --no-align --tuples-only --pset pager=off \
+            -v ON_ERROR_STOP=1 "$@"
+    fi
+}
 
 # Check if migrations directory exists
 if [ ! -d "$MIGRATIONS_DIR" ]; then
@@ -68,8 +98,39 @@ if [ ! -d "$MIGRATIONS_DIR" ]; then
     exit 1
 fi
 
-# Find GCC migration files (001-009 prefixes) and sort them
-MIGRATION_FILES=$(find "$MIGRATIONS_DIR" -name "00[1-9]_gcc_*.sql" -type f | sort)
+# ============================================================================
+# MIGRATION FILE DISCOVERY
+# ============================================================================
+# Find all migration files in proper order:
+# 1. Bootstrap (000_gcc_bootstrap_core.sql) - MUST run first
+# 2. Numbered GCC migrations (00X_gcc_*.sql where X is 0-9)
+# 3. Higher numbered migrations (0XX_*.sql where XX >= 10)
+# 4. Date-prefixed migrations (20YYMMDD_*.sql)
+#
+# Excludes: _legacy/, _consolidated/, *.md files
+# ============================================================================
+
+# Phase 1: Bootstrap core (must run first for core schema + auth stubs)
+BOOTSTRAP_FILE="$MIGRATIONS_DIR/000_gcc_bootstrap_core.sql"
+
+# Phase 2: Numbered migrations (001-099) - sorted numerically
+NUMBERED_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "0[0-9][0-9]_*.sql" -type f ! -name "000_gcc_bootstrap_core.sql" | sort)
+
+# Phase 3: Three-digit migrations (100+) - sorted numerically
+THREE_DIGIT_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "1[0-9][0-9]_*.sql" -type f | sort)
+
+# Phase 4: Date-prefixed migrations (YYYYMMDD_*.sql) - sorted by date
+DATE_MIGRATIONS=$(find "$MIGRATIONS_DIR" -maxdepth 1 -name "20[0-9][0-9][0-9][0-9][0-9][0-9]_*.sql" -type f | sort)
+
+# Combine all in order
+MIGRATION_FILES=""
+if [ -f "$BOOTSTRAP_FILE" ]; then
+    MIGRATION_FILES="$BOOTSTRAP_FILE"
+fi
+MIGRATION_FILES="$MIGRATION_FILES $NUMBERED_MIGRATIONS $THREE_DIGIT_MIGRATIONS $DATE_MIGRATIONS"
+
+# Trim whitespace and check if empty
+MIGRATION_FILES=$(echo "$MIGRATION_FILES" | xargs)
 
 if [ -z "$MIGRATION_FILES" ]; then
     echo -e "${YELLOW}No migration files found in $MIGRATIONS_DIR${NC}"
@@ -89,15 +150,12 @@ APPLIED=0
 for migration in $MIGRATION_FILES; do
     MIGRATION_NAME=$(basename "$migration")
     echo -e "${YELLOW}Applying: ${NC}$MIGRATION_NAME"
-    
+
     # Run migration with safe psql settings (no pager, no .psqlrc, fail fast)
     # -X: skip .psqlrc, --no-psqlrc: extra safety, ON_ERROR_STOP: fail on errors
-    if PAGER=cat psql -X --no-psqlrc "$DATABASE_URL" \
-        -v ON_ERROR_STOP=1 \
-        -f "$migration" \
-        2>&1; then
+    if psql_safe "$DATABASE_URL" -f "$migration" 2>&1; then
         echo -e "${GREEN}✓ Applied: ${NC}$MIGRATION_NAME"
-        ((APPLIED++))
+        APPLIED=$((APPLIED + 1))
     else
         echo -e "${RED}✗ FAILED: ${NC}$MIGRATION_NAME"
         FAILED=1

@@ -1,8 +1,9 @@
+// @ts-nocheck
 /**
  * Concept2Cure - Regulatory Module Index
- * 
+ *
  * Central export point for all regulatory workflow components
- * 
+ *
  * @module components/regulatory
  * @version 1.0.0
  */
@@ -15,7 +16,10 @@
 export { CAPAManagement, default as CAPAManagementDefault } from './CAPAManagement';
 
 // Post-Market Surveillance & Vigilance
-export { PostMarketSurveillance, default as PostMarketSurveillanceDefault } from './PostMarketSurveillance';
+export {
+  PostMarketSurveillance,
+  default as PostMarketSurveillanceDefault,
+} from './PostMarketSurveillance';
 
 // eCTD Structure Navigator
 export { ECTDNavigator, default as ECTDNavigatorDefault } from './ECTDNavigator';
@@ -24,13 +28,19 @@ export { ECTDNavigator, default as ECTDNavigatorDefault } from './ECTDNavigator'
 export { InspectionReadiness, default as InspectionReadinessDefault } from './InspectionReadiness';
 
 // Regulatory Intelligence Hub
-export { RegulatoryIntelligence, default as RegulatoryIntelligenceDefault } from './RegulatoryIntelligence';
+export {
+  RegulatoryIntelligence,
+  default as RegulatoryIntelligenceDefault,
+} from './RegulatoryIntelligence';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RE-EXPORTS FROM SERVICES
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Global Submission Pyramids (Health Canada, PMDA, TGA, EU MDR)
+// NOTE: File exists at services/regulatory/globalPyramids.ts but not in client/src/services/
+// These re-exports are commented out until the module is available in the client bundle
+/*
 export type {
   GlobalSubmissionType,
   GlobalPyramidConfig,
@@ -42,6 +52,7 @@ export {
   getAvailableGlobalSubmissions,
   getPyramidsByRegion,
 } from '@/services/regulatory/globalPyramids';
+*/
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT REGISTRY

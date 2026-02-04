@@ -1,6 +1,9 @@
 {
   "github.copilot.enable": {
-    "*": true
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false
   },
   "github.copilot.chat.enabled": true,
   "github.copilot.chat.confirmations": "onNewFileOnly",

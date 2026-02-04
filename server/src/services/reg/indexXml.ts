@@ -1,11 +1,9 @@
-// import { create } from "xmlbuilder2"; // Temporarily disabled for development
-import { Pool } from 'pg';
+import { create } from 'xmlbuilder2';
+import { getPool } from '../../../db';
 import crypto from 'crypto';
 import { findPath } from './ectdMap';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   if (!pool) throw new Error('Database pool not initialized');
@@ -48,9 +46,7 @@ export async function buildIndexXml(seqId: string, region: string) {
     },
   };
 
-  // Temporarily disabled for development
-  throw new Error('XML builder temporarily disabled for development');
-  // return create(root).end({ prettyPrint:true, indent:'  ', newline:'\n' });
+  return create(root).end({ prettyPrint: true, indent: '  ', newline: '\n' });
 }
 
 /** Stage sequence files from current leaves; compute path & checksums for authoring content (markdown to HTML/PDF later). */

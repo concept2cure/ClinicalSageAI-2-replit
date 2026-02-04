@@ -232,7 +232,7 @@ export class InterimAnalysisService {
 
         case 'hwang-shih-decani':
           // Hwang-Shih-DeCani with gamma = -4 (similar to O'Brien-Fleming)
-          const gamma = -4;
+          const gamma: number = -4;
           if (gamma === 0) {
             spent = alpha * t;
           } else {
@@ -605,7 +605,12 @@ export class InterimAnalysisService {
         const alphaFunctions = ['obrien-fleming', 'pocock', 'hwang-shih-decani'];
         for (const alphaFn of alphaFunctions) {
           // Try different beta spending functions
-          const betaFunctions = [null, 'obrien-fleming-beta', 'pocock-beta', 'conditional-power'];
+          const betaFunctions: Array<string | undefined> = [
+            undefined,
+            'obrien-fleming-beta',
+            'pocock-beta',
+            'conditional-power',
+          ];
           for (const betaFn of betaFunctions) {
             // Create the design
             const design = this.designInterimAnalysis(

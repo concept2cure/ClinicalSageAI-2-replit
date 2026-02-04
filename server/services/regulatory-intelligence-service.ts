@@ -40,7 +40,8 @@ export class RegulatoryIntelligenceService {
   private initialized: boolean = false;
 
   constructor(hfApiKey?: string) {
-    this.huggingFaceService = new HuggingFaceService(hfApiKey);
+    const resolvedKey = hfApiKey ?? process.env.HUGGINGFACE_API_KEY ?? '';
+    this.huggingFaceService = new HuggingFaceService(resolvedKey);
     this.regulatoryKnowledgeBase = new Map();
     this.regulatoryRequirements = [];
     this.regulatoryGuidance = [];

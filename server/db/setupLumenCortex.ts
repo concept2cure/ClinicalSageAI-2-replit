@@ -6,14 +6,10 @@
 
 import { Pool } from 'pg';
 import fs from 'fs';
-import { getSslConfig } from './ssl';
-import { getDatabaseUrl } from './getDatabaseUrl';
+import { getPool } from '../db';
 
-const connectionString = getDatabaseUrl();
-const pool = new Pool({
-  connectionString,
-  ssl: getSslConfig(connectionString || ''),
-});
+// Re-export the canonical pool for backward compatibility
+export const pool = getPool();
 
 export async function initializeLumenCortexDatabase() {
   console.log('Initializing Lumen Cortex database tables...');
