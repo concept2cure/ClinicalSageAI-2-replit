@@ -1,8 +1,6 @@
-import { Pool } from 'pg';
+import { getPool } from '../../../db';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   if (!pool) throw new Error('Database pool not initialized');
@@ -19,7 +17,7 @@ type GK = { status: 'PASS' | 'HOLD' | 'REJECT'; blockers: any[]; flags: any; inp
 
 export async function evalGatekeeperV2(subId: string): Promise<GK> {
   let sub: any = null;
-  
+
   // Try to fetch submission, but handle errors gracefully
   try {
     const result = await q<any>(`select * from reg_submissions where sub_id=$1`, [subId]);
@@ -28,16 +26,18 @@ export async function evalGatekeeperV2(subId: string): Promise<GK> {
     console.warn('Failed to fetch regulatory submission:', error.message);
     // Continue with null sub - will be handled below
   }
-  
+
   // Handle missing submission gracefully instead of throwing
   if (!sub) {
     return {
       status: 'HOLD',
-      blockers: [{
-        id: 'NO-SUBMISSION',
-        severity: 'INFO',
-        msg: 'No regulatory submission linked to this batch yet'
-      }],
+      blockers: [
+        {
+          id: 'NO-SUBMISSION',
+          severity: 'INFO',
+          msg: 'No regulatory submission linked to this batch yet',
+        },
+      ],
       flags: {
         region: 'FDA',
         m3Missing: [],
@@ -50,11 +50,11 @@ export async function evalGatekeeperV2(subId: string): Promise<GK> {
         changesHi: 0,
         qcAlertsOpen: 0,
       },
-      inputs: { 
+      inputs: {
         batch_id: subId,
         computedAt: new Date().toISOString(),
-        message: 'Awaiting regulatory submission creation'
-      }
+        message: 'Awaiting regulatory submission creation',
+      },
     };
   }
 

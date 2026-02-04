@@ -67,21 +67,21 @@ export function registerSmartProtocolRoutes(app: any) {
               metrics: null,
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error parsing benchmark results:', error);
           return res.status(500).json({
             success: false,
             message: 'Failed to parse benchmark results',
-            error: error.toString(),
+            error: error?.toString?.() ?? String(error),
           });
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in CSR benchmark endpoint:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        error: error.toString(),
+        error: error?.toString?.() ?? String(error),
       });
     }
   });
@@ -143,21 +143,21 @@ export function registerSmartProtocolRoutes(app: any) {
             protocol_draft: result.protocol_draft,
             protocol_id: result.protocol_id,
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error parsing protocol draft results:', error);
           return res.status(500).json({
             success: false,
             message: 'Failed to parse protocol draft results',
-            error: error.toString(),
+            error: error?.toString?.() ?? String(error),
           });
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in smart protocol draft endpoint:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        error: error.toString(),
+        error: error?.toString?.() ?? String(error),
       });
     }
   });
@@ -223,12 +223,12 @@ export function registerSmartProtocolRoutes(app: any) {
           });
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in protocol PDF export endpoint:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        error: error.toString(),
+        error: error?.toString?.() ?? String(error),
       });
     }
   });
@@ -302,12 +302,12 @@ export function registerSmartProtocolRoutes(app: any) {
           });
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in bundle export endpoint:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        error: error.toString(),
+        error: error?.toString?.() ?? String(error),
       });
     }
   });

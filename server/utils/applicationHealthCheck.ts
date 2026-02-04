@@ -178,13 +178,13 @@ export async function attemptServiceRecovery(dbPool: Pool): Promise<boolean> {
 
   // Try to restart DB connection pool
   try {
-    const newPool = new Pool();
-    const client = await newPool.connect();
+    // Use the passed pool rather than creating new one
+    const client = await dbPool.connect();
     await client.query('SELECT 1');
     client.release();
-    console.log('Database pool successfully recreated');
+    console.log('Database pool connection verified');
   } catch (error) {
-    console.error('Failed to recreate database pool:', error);
+    console.error('Failed to verify database pool:', error);
     return false;
   }
 

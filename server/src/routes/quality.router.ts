@@ -93,11 +93,19 @@ const validateUploadedFile = (req: any, res: any, next: any) => {
     if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
       return res.status(415).json({ error: 'Invalid ZIP-based file signature' });
     }
-  } else if (file.mimetype.startsWith('text/') || file.mimetype.includes('json') || file.mimetype.includes('xml')) {
+  } else if (
+    file.mimetype.startsWith('text/') ||
+    file.mimetype.includes('json') ||
+    file.mimetype.includes('xml')
+  ) {
     if (!isLikelyText(buffer)) {
       return res.status(415).json({ error: 'Invalid text file content' });
     }
-  } else if (magicMatch && magicMatch.mime !== file.mimetype && file.mimetype !== 'application/zip') {
+  } else if (
+    magicMatch &&
+    magicMatch.mime !== file.mimetype &&
+    file.mimetype !== 'application/zip'
+  ) {
     return res.status(415).json({ error: 'File signature does not match MIME type' });
   }
 
@@ -166,7 +174,14 @@ r.post('/batches', async (req, res) => {
       `INSERT INTO qc_batches (batch_id, lot_no, product_id, mfg_date, exp_date, batch_size, status)
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [lot_no, product_id, mfg_date || null, exp_date || null, batch_size || null, status || 'PENDING']
+      [
+        lot_no,
+        product_id,
+        mfg_date || null,
+        exp_date || null,
+        batch_size || null,
+        status || 'PENDING',
+      ]
     );
 
     res.status(201).json(rows[0]);
@@ -227,10 +242,9 @@ r.post('/tests', async (req, res) => {
     }
 
     // Validate batch_id exists
-    const { rows: batchCheck } = await q(
-      'SELECT batch_id FROM qc_batches WHERE batch_id = $1',
-      [batch_id]
-    );
+    const { rows: batchCheck } = await q('SELECT batch_id FROM qc_batches WHERE batch_id = $1', [
+      batch_id,
+    ]);
 
     if (batchCheck.length === 0) {
       return res.status(404).json({ error: 'Batch not found' });
@@ -240,7 +254,15 @@ r.post('/tests', async (req, res) => {
       `INSERT INTO qc_tests (test_id, batch_id, test_name, test_type, spec_low, spec_high, unit, status)
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [batch_id, test_name, test_type || null, spec_low || null, spec_high || null, unit || null, status || 'PENDING']
+      [
+        batch_id,
+        test_name,
+        test_type || null,
+        spec_low || null,
+        spec_high || null,
+        unit || null,
+        status || 'PENDING',
+      ]
     );
 
     res.status(201).json(rows[0]);
@@ -274,52 +296,57 @@ r.post('/rules/import-text', async (req, res) => {
 });
 
 // POST /api/quality/tests/:testId/instrument/upload  multipart file=csv
-r.post('/tests/:testId/instrument/upload', upload.single('file'), validateUploadedFile, async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'file missing' });
-  const tid = req.params.testId;
-  const { rows: t } = await q(`select * from qc_tests where test_id=$1`, [tid]);
-  if (!t[0]) return res.status(404).json({ error: 'test not found' });
+r.post(
+  '/tests/:testId/instrument/upload',
+  upload.single('file'),
+  validateUploadedFile,
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'file missing' });
+    const tid = req.params.testId;
+    const { rows: t } = await q(`select * from qc_tests where test_id=$1`, [tid]);
+    if (!t[0]) return res.status(404).json({ error: 'test not found' });
 
-  const text = req.file.buffer.toString('utf-8');
-  const lines = text
-    .split('\n')
-    .map(l => l.trim())
-    .filter(Boolean);
-  if (lines.length < 2) return res.status(400).json({ error: 'CSV needs ≥2 lines' });
+    const text = req.file.buffer.toString('utf-8');
+    const lines = text
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+    if (lines.length < 2) return res.status(400).json({ error: 'CSV needs ≥2 lines' });
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  const { valueCol, unitCol } = await aiMapInstrumentCSV(headers);
-  if (!valueCol) return res.status(400).json({ error: 'No value column found' });
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    const { valueCol, unitCol } = await aiMapInstrumentCSV(headers);
+    if (!valueCol) return res.status(400).json({ error: 'No value column found' });
 
-  const valueIdx = headers.indexOf(valueCol);
-  const unitIdx = unitCol ? headers.indexOf(unitCol) : -1;
-  const data = lines.slice(1);
+    const valueIdx = headers.indexOf(valueCol);
+    const unitIdx = unitCol ? headers.indexOf(unitCol) : -1;
+    const data = lines.slice(1);
 
-  const inserts: any[] = [];
-  for (const row of data.slice(0, 50)) {
-    // limit 50 rows
-    const cells = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-    const value = cells[valueIdx];
-    const unit = unitIdx >= 0 ? cells[unitIdx] : t[0].unit;
-    if (!value || isNaN(Number(value))) continue;
+    const inserts: any[] = [];
+    for (const row of data.slice(0, 50)) {
+      // limit 50 rows
+      const cells = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      const value = cells[valueIdx];
+      const unit = unitIdx >= 0 ? cells[unitIdx] : t[0].unit;
+      if (!value || isNaN(Number(value))) continue;
 
-    const { rows } = await q(
-      `insert into qc_results (test_id,value,unit,operator,instrument_file_url,raw_json)
+      const { rows } = await q(
+        `insert into qc_results (test_id,value,unit,operator,instrument_file_url,raw_json)
        values ($1,$2,$3,$4,$5,$6) returning *`,
-      [
-        tid,
-        value,
-        unit,
-        req.body?.operator || 'System',
-        req.file.originalname,
-        { headers, row: cells },
-      ]
-    );
-    inserts.push(rows[0]);
-  }
+        [
+          tid,
+          value,
+          unit,
+          req.body?.operator || 'System',
+          req.file.originalname,
+          { headers, row: cells },
+        ]
+      );
+      inserts.push(rows[0]);
+    }
 
-  res.json({ imported: inserts.length, mapping: { valueCol, unitCol }, results: inserts });
-});
+    res.json({ imported: inserts.length, mapping: { valueCol, unitCol }, results: inserts });
+  }
+);
 
 // POST /api/quality/tests/:testId/spc/analyze  → CUSUM + Nelson rules
 r.post('/tests/:testId/spc/analyze', async (req, res) => {
@@ -356,7 +383,10 @@ r.post('/tests/:testId/spc/analyze', async (req, res) => {
     const { rows: batch } = await q(`select batch_id from qc_tests where test_id=$1`, [tid]);
     const batchId = batch[0]?.batch_id;
     if (batchId) {
-      const alertMsg = [...cusumData.breaches, ...nelsonRules.map(r => `Nelson-${r}`)].join(', ');
+      const alertMsg = [
+        ...cusumData.breaches,
+        ...nelsonRules.map((r: number) => `Nelson-${r}`),
+      ].join(', ');
       await q(
         `insert into qc_alerts (batch_id, test_id, alert_type, message, severity)
          values ($1,$2,$3,$4,$5)`,
@@ -380,9 +410,9 @@ r.post('/batches/:batchId/release/decision', async (req, res) => {
       json_build_object('value',r.value,'unit',r.unit,'pass',r.pass,'tested_at',r.tested_at)
       order by r.tested_at desc
     ) as results
-    from qc_tests t 
+    from qc_tests t
     left join qc_results r on t.test_id=r.test_id
-    where t.batch_id=$1 
+    where t.batch_id=$1
     group by t.test_id
   `,
     [bid]
@@ -470,19 +500,19 @@ r.get('/batches/:batchId/deviation/suggest', async (req, res) => {
 // GET /api/quality/dashboard  → Enhanced QC dashboard
 r.get('/dashboard', async (req, res) => {
   const { rows: stats } = await q(`
-    select 
+    select
       count(*) filter (where status='Released') as released,
       count(*) filter (where status='In Progress') as in_progress,
       count(*) filter (where status='Hold') as on_hold,
       count(*) as total
-    from qc_batches 
+    from qc_batches
     where created_at >= now() - interval '30 days'
   `);
 
   const { rows: alerts } = await q(`
     select severity, count(*) as count
-    from qc_alerts 
-    where resolved=false 
+    from qc_alerts
+    where resolved=false
     group by severity
   `);
 
@@ -724,7 +754,10 @@ r.post('/batches/:id/ectd/export', async (req, res) => {
   ).json();
   const pdfkit = (await import('pdfkit')).default;
   const PDFDocument = pdfkit;
-  const doc = new PDFDocument({ size: 'A4', margins: { top: 54, left: 54, bottom: 54, right: 54 } });
+  const doc = new PDFDocument({
+    size: 'A4',
+    margins: { top: 54, left: 54, bottom: 54, right: 54 },
+  });
   const chunks: Buffer[] = [];
   doc.on('data', (c: any) => chunks.push(c));
   const done = new Promise<Buffer>(r => doc.on('end', () => r(Buffer.concat(chunks))));
@@ -1168,7 +1201,7 @@ r.get('/batches/:id/auto-release/status', async (req, res) => {
 r.post('/batches/:id/auto-release/enable', async (req, res) => {
   const id = req.params.id;
   await q(
-    `insert into qc_auto_release_status (batch_id,enabled) values ($1,true) 
+    `insert into qc_auto_release_status (batch_id,enabled) values ($1,true)
            on conflict (batch_id) do update set enabled=true`,
     [id]
   );
@@ -1219,8 +1252,8 @@ r.post('/batches/:id/predictive/run', async (req, res) => {
   const { rows: tests } = await q<any>(
     `
     select t.test_id, t.name, array_agg(r.value::float order by r.created_at desc) as values
-    from qc_tests t 
-    join qc_results r on r.test_id = t.test_id 
+    from qc_tests t
+    join qc_results r on r.test_id = t.test_id
     where t.batch_id = $1 and r.value ~ '^[0-9.]+$'
     group by t.test_id, t.name
     having count(r.value) >= 3`,
@@ -1390,18 +1423,24 @@ r.post('/batches/:id/regulatory/report', async (req, res) => {
 r.get('/batches/:id/gatekeeper/evaluate', async (req, res) => {
   const id = req.params.id;
   const out = await gateEvaluate(id);
-  
+
   // Try to persist run, but don't fail if batch doesn't exist
   try {
     await q(
       `insert into qc_gatekeeper_runs (batch_id,status,blockers,inputs,created_by) values ($1,$2,$3::jsonb,$4::jsonb,$5)`,
-      [id, out.status, JSON.stringify(out.blockers), JSON.stringify(out.inputs), (req.headers['x-user-name'] || 'user').toString()]
+      [
+        id,
+        out.status,
+        JSON.stringify(out.blockers),
+        JSON.stringify(out.inputs),
+        (req.headers['x-user-name'] || 'user').toString(),
+      ]
     );
   } catch (error: any) {
     // Log but don't fail - batch might not exist in qc_batches
     console.warn(`Could not persist gatekeeper run for batch ${id}:`, error.message);
   }
-  
+
   res.json(out);
 });
 
@@ -1413,7 +1452,7 @@ r.post('/batches/:id/gatekeeper/apply-fixes', async (req, res) => {
     (b: any) => !req.body?.blocker_ids || req.body.blocker_ids.includes(b.id)
   );
   const fixes = await gateApplySafeFixes(id, blockers, 'system');
-  
+
   // Try to persist run, but don't fail if batch doesn't exist
   try {
     await q(
@@ -1430,7 +1469,7 @@ r.post('/batches/:id/gatekeeper/apply-fixes', async (req, res) => {
   } catch (error: any) {
     console.warn(`Could not persist gatekeeper run for batch ${id}:`, error.message);
   }
-  
+
   res.json({ applied: fixes.created || 0, fixes, after: await gateEvaluate(id) });
 });
 
@@ -1506,7 +1545,7 @@ r.post('/batches/:id/ectd/push', async (req, res) => {
     if (!batch[0]) return res.status(404).json({ error: 'Batch not found' });
 
     const coaContent = `Certificate of Analysis
-    
+
 Batch Number: ${batch[0].batch_number || 'N/A'}
 Product: ${batch[0].product_name || 'N/A'}
 Analysis Complete: ${new Date().toISOString()}

@@ -10,6 +10,10 @@
  * 2. Non-destructive - never modifies existing tables
  * 3. Diagnostic - clearly reports what's missing
  * 4. Startup-friendly - doesn't block on optional tables
+ *
+ * POOL MANAGEMENT:
+ * - When called from main app: uses the canonical pool from getPool()
+ * - When run as CLI tool: creates a standalone pool (auto-detected via process.argv)
  */
 
 import { Pool } from 'pg';
@@ -17,6 +21,9 @@ import dns from 'dns';
 
 // Force IPv4 to prevent ENETUNREACH errors in environments without IPv6
 dns.setDefaultResultOrder('ipv4first');
+
+// Detect if running as CLI
+const isCliMode = process.argv[1]?.includes('ensureCoreTables');
 
 /**
  * Tables required for absolute minimum application functionality.
@@ -123,15 +130,28 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
   // Neon database detection (cloud PostgreSQL)
   const isNeonDb = dbUrl.includes('neon.tech') || dbUrl.includes('sslmode=require');
 
-  const pool = new Pool({
-    connectionString: dbUrl,
-    ssl: isNeonDb ? { rejectUnauthorized: false } : false,
-    connectionTimeoutMillis: 10000,
-  });
+  // Use standalone pool for CLI mode (will be .end()ed), or shared pool from getPool() for app mode
+  let pool: Pool;
+  let shouldEndPool = false;
+
+  if (isCliMode || connectionString) {
+    // CLI mode or explicit connectionString: create standalone pool
+    pool = new Pool({
+      connectionString: dbUrl,
+      ssl: isNeonDb ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 10000,
+    });
+    shouldEndPool = true;
+  } else {
+    // App mode: use canonical pool (import dynamically to avoid circular deps)
+    const { getPool } = await import('../db');
+    pool = getPool();
+  }
 
   try {
     console.log('[ensureCoreTables] Starting table verification...');
     console.log(`[ensureCoreTables] Database: ${isNeonDb ? 'Neon Cloud' : 'Local'}`);
+    console.log(`[ensureCoreTables] Pool mode: ${shouldEndPool ? 'standalone' : 'shared'}`);
 
     // Get list of existing tables
     const tablesResult = await pool.query(`
@@ -190,7 +210,10 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     result.errors.push(errorMsg);
     console.error('[ensureCoreTables] Error:', errorMsg);
   } finally {
-    await pool.end();
+    // Only end pool if we created a standalone one (CLI mode or explicit connectionString)
+    if (shouldEndPool) {
+      await pool.end();
+    }
   }
 
   return result;

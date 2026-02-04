@@ -24,7 +24,9 @@ const aiCoachPriorities = async (id: string) => ({ priorities: [] });
 const aiFixPlanFromIssues = async (id: string, issues: any) => ({ plan: 'Fix plan not available' });
 const aiDraftP8 = async (id: string) => ({ draft: 'Draft not available' });
 const aiRootCauseOOS = async (id: string, oosData: any) => ({ analysis: 'Analysis not available' });
-const aiRecommendLabelStorage = async (id: string) => ({ recommendation: 'Recommendation not available' });
+const aiRecommendLabelStorage = async (id: string) => ({
+  recommendation: 'Recommendation not available',
+});
 const simpleShelfLifeT90 = async (id: string, test: string, condition: string) => ({ t90: 0 });
 const aiDraftProtocol = async (ctx: any) => ({ draft: 'Protocol draft not available' });
 const aiCAPAFromOOT = async (ctx: any) => ({ suggestion: 'CAPA suggestion not available' });
@@ -100,11 +102,19 @@ const validateUploadedFile = (req: any, res: any, next: any) => {
     if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
       return res.status(415).json({ error: 'Invalid ZIP-based file signature' });
     }
-  } else if (file.mimetype.startsWith('text/') || file.mimetype.includes('json') || file.mimetype.includes('xml')) {
+  } else if (
+    file.mimetype.startsWith('text/') ||
+    file.mimetype.includes('json') ||
+    file.mimetype.includes('xml')
+  ) {
     if (!isLikelyText(buffer)) {
       return res.status(415).json({ error: 'Invalid text file content' });
     }
-  } else if (magicMatch && magicMatch.mime !== file.mimetype && file.mimetype !== 'application/zip') {
+  } else if (
+    magicMatch &&
+    magicMatch.mime !== file.mimetype &&
+    file.mimetype !== 'application/zip'
+  ) {
     return res.status(415).json({ error: 'File signature does not match MIME type' });
   }
 
@@ -123,7 +133,7 @@ async function executeQuery(req: any, queryText: string, params?: any[]) {
     // SET commands don't support parameterized queries, ensure tenant ID is numeric
     const safeTenantId = parseInt(tenantId.toString()) || 1;
     await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
-    
+
     // Execute the actual query
     return await client.query(queryText, params);
   } finally {
@@ -153,7 +163,7 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
     const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
     await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
-    
+
     await client.query(
       `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
       [studyId, actor, action, JSON.stringify(payload)]
@@ -172,9 +182,9 @@ router.get('/studies', async (req, res) => {
     // SET commands don't support parameterized queries, but we ensure tenant ID is numeric
     const safetenantId = parseInt(tenantId.toString()) || 1;
     await client.query(`SET LOCAL app.tenant_id = ${safetenantId}`);
-    
+
     const result = await client.query(`
-      SELECT 
+      SELECT
         s.*,
         COUNT(DISTINCT c.cond_id) as condition_count,
         COUNT(DISTINCT tp.tp_id) as timepoint_count,
@@ -220,9 +230,11 @@ router.get('/studies', async (req, res) => {
     }));
 
     res.json(out);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching stability studies:', error);
-    res.status(500).json({ error: `Error fetching stability studies: ${error.message}` });
+    res
+      .status(500)
+      .json({ error: `Error fetching stability studies: ${error?.message ?? String(error)}` });
   } finally {
     // Always release the connection back to the pool
     client.release();
@@ -232,7 +244,7 @@ router.get('/studies', async (req, res) => {
 // POST /api/stability/studies - Create new study with AI planning
 router.post('/studies', async (req, res) => {
   const client = await pool.connect();
-  
+
   try {
     const {
       productName,
@@ -251,15 +263,15 @@ router.post('/studies', async (req, res) => {
 
     // Get tenant ID from request headers
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
-    
+
     // Start transaction
     await client.query('BEGIN');
-    
+
     // Set tenant context for RLS policies - SET commands don't support parameterized queries
     const safeTenantId = parseInt(tenantId.toString()) || 1;
     await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
 
-    // Generate dates  
+    // Generate dates
     const plannedEndDate = new Date(startDate);
     plannedEndDate.setMonth(plannedEndDate.getMonth() + duration);
 
@@ -283,8 +295,8 @@ router.post('/studies', async (req, res) => {
         scope || 'Standard',
         climaticZone || 'IVa',
         startDate,
-        status === 'ACTIVE' ? 'ONGOING' : (status || 'DRAFT'),  // Map ACTIVE to ONGOING
-        tenantId
+        status === 'ACTIVE' ? 'ONGOING' : status || 'DRAFT', // Map ACTIVE to ONGOING
+        tenantId,
       ]
     );
 
@@ -298,11 +310,11 @@ router.post('/studies', async (req, res) => {
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
         [
-          study.study_id,  // Use the generated UUID from the study
+          study.study_id, // Use the generated UUID from the study
           cond,
           cond === 'LT' ? '25°C' : cond === 'ACC' ? '40°C' : cond === 'INT' ? '30°C' : '5°C',
           cond === 'LT' ? '60%' : cond === 'ACC' ? '75%' : cond === 'INT' ? '65%' : null,
-          `${cond} storage condition`
+          `${cond} storage condition`,
         ]
       );
       conditions.push(condResult.rows[0]);
@@ -325,17 +337,17 @@ router.post('/studies', async (req, res) => {
         const month = parseInt(tp.replace('M', ''));
         const plannedDate = new Date(startDate);
         plannedDate.setMonth(plannedDate.getMonth() + month);
-        
+
         const tpResult = await client.query(
           `INSERT INTO stab_timepoints (study_id, cond_id, label, month, planned_date)
            VALUES ($1, $2, $3, $4, $5)
            RETURNING *`,
           [
             study.study_id,
-            condition.cond_id,  // Associate timepoint with this condition
+            condition.cond_id, // Associate timepoint with this condition
             tp,
             month,
-            plannedDate.toISOString().split('T')[0]
+            plannedDate.toISOString().split('T')[0],
           ]
         );
         timepoints.push(tpResult.rows[0]);
@@ -347,11 +359,11 @@ router.post('/studies', async (req, res) => {
     for (const test of testParameters) {
       const testResult = await client.query(
         `INSERT INTO stab_tests (
-          study_id, 
-          name, 
-          unit, 
-          spec_low, 
-          spec_high, 
+          study_id,
+          name,
+          unit,
+          spec_low,
+          spec_high,
           is_cqa
         )
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -362,7 +374,7 @@ router.post('/studies', async (req, res) => {
           test === 'Assay' ? '%' : test === 'Water Content' ? '%' : 'Various',
           test === 'Assay' ? 95.0 : null,
           test === 'Assay' ? 105.0 : test === 'Water Content' ? 5.0 : null,
-          ['Assay', 'Related Substances'].includes(test)
+          ['Assay', 'Related Substances'].includes(test),
         ]
       );
       tests.push(testResult.rows[0]);
@@ -372,26 +384,31 @@ router.post('/studies', async (req, res) => {
     await client.query('COMMIT');
 
     // Audit the creation
-    await audit(study.study_id, 'CREATE_STUDY', {
-      productName,
-      batchNumber,
-      scope,
-      duration,
-      conditionCount: conditions.length,
-      timepointCount: timepoints.length,
-      testCount: tests.length
-    }, req);
+    await audit(
+      study.study_id,
+      'CREATE_STUDY',
+      {
+        productName,
+        batchNumber,
+        scope,
+        duration,
+        conditionCount: conditions.length,
+        timepointCount: timepoints.length,
+        testCount: tests.length,
+      },
+      req
+    );
 
     // Prepare response
     const newStudy = {
       ...study,
-      id: study.study_id,  // Use the generated UUID from the study
+      id: study.study_id, // Use the generated UUID from the study
       product_name: productName,
       batch_number: batchNumber,
       storage_conditions: storageConditions.join(', '),
       test_parameters: testParameters,
       timepoints: timepointLabels,
-      study_status: status === 'ACTIVE' ? 'ONGOING' : (status || 'DRAFT'),  // Map ACTIVE to ONGOING
+      study_status: status === 'ACTIVE' ? 'ONGOING' : status || 'DRAFT', // Map ACTIVE to ONGOING
       compliance_status: 'Not Started',
       latest_timepoint: '0M',
       latest_assay_result: null,
@@ -423,11 +440,11 @@ router.post('/studies', async (req, res) => {
         })),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     // Rollback transaction on error
     await client.query('ROLLBACK');
     console.error('Error creating study:', error);
-    res.status(500).json({ error: `Failed to create study: ${error.message}` });
+    res.status(500).json({ error: `Failed to create study: ${error?.message ?? String(error)}` });
   } finally {
     // Always release the connection
     client.release();
@@ -451,7 +468,7 @@ router.put('/studies/:id', async (req, res) => {
       message: 'Study updated successfully',
       study: updatedStudy,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating study:', error);
     res.status(500).json({ error: 'Failed to update study' });
   }
@@ -477,7 +494,7 @@ router.patch('/studies/:id/status', async (req, res) => {
         updated_at: new Date().toISOString(),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating study status:', error);
     res.status(500).json({ error: 'Failed to update study status' });
   }
@@ -488,7 +505,7 @@ router.get('/studies/:id', async (req, res) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
-    
+
     // Set tenant context for RLS policies - SET commands don't support parameterized queries
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
@@ -551,9 +568,11 @@ router.get('/studies/:id', async (req, res) => {
         .map((x: any) => `${x.kind}: ${x.temp}${x.rh ? '/' + x.rh : ''}`)
         .join('; '),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching study details:', error);
-    res.status(500).json({ error: `Failed to fetch study details: ${error.message}` });
+    res
+      .status(500)
+      .json({ error: `Failed to fetch study details: ${error?.message ?? String(error)}` });
   } finally {
     client.release();
   }
@@ -565,7 +584,7 @@ router.post('/studies/:id/conditions', async (req, res) => {
   try {
     const { id } = req.params;
     const { kind, temp, rh, description } = req.body;
-    
+
     // Set tenant context for RLS policies - SET commands don't support parameterized queries
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
@@ -581,9 +600,9 @@ router.post('/studies/:id/conditions', async (req, res) => {
     );
 
     res.json(result.rows[0]);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding condition:', error);
-    res.status(500).json({ error: `Failed to add condition: ${error.message}` });
+    res.status(500).json({ error: `Failed to add condition: ${error?.message ?? String(error)}` });
   } finally {
     client.release();
   }
@@ -594,7 +613,7 @@ router.delete('/conditions/:condId', async (req, res) => {
   const client = await pool.connect();
   try {
     const { condId } = req.params;
-    
+
     // Set tenant context for RLS policies - SET commands don't support parameterized queries
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
@@ -603,9 +622,11 @@ router.delete('/conditions/:condId', async (req, res) => {
     await client.query('DELETE FROM stab_conditions WHERE cond_id = $1', [condId]);
 
     res.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting condition:', error);
-    res.status(500).json({ error: `Failed to delete condition: ${error.message}` });
+    res
+      .status(500)
+      .json({ error: `Failed to delete condition: ${error?.message ?? String(error)}` });
   } finally {
     client.release();
   }
@@ -652,7 +673,7 @@ router.post('/studies/:id/timepoints/:tpId/sample', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE stab_timepoints 
+      UPDATE stab_timepoints
       SET actual_date = $1
       WHERE tp_id = $2
       RETURNING *
@@ -736,80 +757,87 @@ router.post('/studies/:id/schedule', async (req, res) => {
 });
 
 // POST /api/stability/studies/:id/results/import - Import CSV results
-router.post('/studies/:id/results/import', upload.single('file'), validateUploadedFile, async (req, res) => {
-  const client = await pool.connect();
+router.post(
+  '/studies/:id/results/import',
+  upload.single('file'),
+  validateUploadedFile,
+  async (req, res) => {
+    const client = await pool.connect();
 
-  try {
-    await client.query('BEGIN');
+    try {
+      await client.query('BEGIN');
 
-    const { id } = req.params;
-    const csvData = req.file?.buffer.toString();
-    if (!csvData) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      const { id } = req.params;
+      const csvData = req.file?.buffer.toString();
+      if (!csvData) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse CSV - temporarily disabled until papaparse is available
+      // const parseResult = Papa.parse(csvData, {
+      //   header: true,
+      //   skipEmptyLines: true
+      // });
+      // const records = parseResult.data;
+
+      // For now, return a simple message about CSV import being temporarily unavailable
+      return res.status(200).json({
+        message: 'CSV import feature temporarily unavailable',
+        imported: 0,
+        errors: ['CSV parsing library not available'],
+      });
+
+      // Get lookup data
+      const conditionsResult = await client.query(
+        'SELECT * FROM stab_conditions WHERE study_id = $1',
+        [id]
+      );
+      const conditions = new Map(conditionsResult.rows.map(c => [c.kind, c]));
+
+      const timepointsResult = await client.query(
+        'SELECT * FROM stab_timepoints WHERE study_id = $1',
+        [id]
+      );
+      const timepoints = new Map(
+        timepointsResult.rows.map(tp => [`${tp.cond_id}-${tp.label}`, tp])
+      );
+
+      const testsResult = await client.query('SELECT * FROM stab_tests WHERE study_id = $1', [id]);
+      const tests = new Map(testsResult.rows.map(t => [t.name, t]));
+
+      let imported = 0;
+      // CSV import functionality temporarily disabled
+      // const records = parseResult.data;
+
+      // for (const record of records) {
+      //   const row = record as any;
+      //   const condition = conditions.get(row.condition);
+      //   const timepoint = timepoints.get(`${condition?.cond_id}-${row.timepoint}`);
+      //   const test = tests.get(row.test);
+      //
+      //   if (condition && timepoint && test) {
+      //     await client.query(`
+      //       INSERT INTO stab_results (study_id, cond_id, tp_id, test_id, value, unit, pass, remarks)
+      //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      //       ON CONFLICT (cond_id, tp_id, test_id) DO UPDATE SET
+      //         value = $5, unit = $6, pass = $7, remarks = $8
+      //     `, [id, condition.cond_id, timepoint.tp_id, test.test_id, row.value, row.unit, row.pass === 'true', row.remarks]);
+      //     imported++;
+      //   }
+      // }
+
+      await client.query('COMMIT');
+
+      res.json({ imported, total: 0 });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error importing results:', error);
+      res.status(500).json({ error: 'Failed to import results' });
+    } finally {
+      client.release();
     }
-
-    // Parse CSV - temporarily disabled until papaparse is available
-    // const parseResult = Papa.parse(csvData, {
-    //   header: true,
-    //   skipEmptyLines: true
-    // });
-    // const records = parseResult.data;
-
-    // For now, return a simple message about CSV import being temporarily unavailable
-    return res.status(200).json({
-      message: 'CSV import feature temporarily unavailable',
-      imported: 0,
-      errors: ['CSV parsing library not available'],
-    });
-
-    // Get lookup data
-    const conditionsResult = await client.query(
-      'SELECT * FROM stab_conditions WHERE study_id = $1',
-      [id]
-    );
-    const conditions = new Map(conditionsResult.rows.map(c => [c.kind, c]));
-
-    const timepointsResult = await client.query(
-      'SELECT * FROM stab_timepoints WHERE study_id = $1',
-      [id]
-    );
-    const timepoints = new Map(timepointsResult.rows.map(tp => [`${tp.cond_id}-${tp.label}`, tp]));
-
-    const testsResult = await client.query('SELECT * FROM stab_tests WHERE study_id = $1', [id]);
-    const tests = new Map(testsResult.rows.map(t => [t.name, t]));
-
-    let imported = 0;
-    // CSV import functionality temporarily disabled
-    // const records = parseResult.data;
-
-    // for (const record of records) {
-    //   const row = record as any;
-    //   const condition = conditions.get(row.condition);
-    //   const timepoint = timepoints.get(`${condition?.cond_id}-${row.timepoint}`);
-    //   const test = tests.get(row.test);
-    //
-    //   if (condition && timepoint && test) {
-    //     await client.query(`
-    //       INSERT INTO stab_results (study_id, cond_id, tp_id, test_id, value, unit, pass, remarks)
-    //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    //       ON CONFLICT (cond_id, tp_id, test_id) DO UPDATE SET
-    //         value = $5, unit = $6, pass = $7, remarks = $8
-    //     `, [id, condition.cond_id, timepoint.tp_id, test.test_id, row.value, row.unit, row.pass === 'true', row.remarks]);
-    //     imported++;
-    //   }
-    // }
-
-    await client.query('COMMIT');
-
-    res.json({ imported, total: 0 });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Error importing results:', error);
-    res.status(500).json({ error: 'Failed to import results' });
-  } finally {
-    client.release();
   }
-});
+);
 
 // GET /api/stability/studies/:id/trends - Get trend data for charts and sparklines
 router.get('/studies/:id/trends', async (req, res) => {
@@ -819,7 +847,7 @@ router.get('/studies/:id/trends', async (req, res) => {
     const cond = req.query.cond as string;
 
     let query = `
-      SELECT 
+      SELECT
         r.value, r.unit, r.created_at,
         tp.month, tp.label as timepoint,
         c.kind as condition, c.temp,
@@ -977,7 +1005,7 @@ router.get('/studies/:id/results', async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT 
+      SELECT
         r.result_id as id,
         r.study_id,
         r.value,
@@ -989,9 +1017,9 @@ router.get('/studies/:id/results', async (req, res) => {
         tp.month as timepoint
       FROM stab_results r
       JOIN stab_tests t ON r.test_id = t.test_id
-      JOIN stab_conditions c ON r.cond_id = c.cond_id  
+      JOIN stab_conditions c ON r.cond_id = c.cond_id
       JOIN stab_timepoints tp ON r.tp_id = tp.tp_id
-      WHERE r.study_id = $1 
+      WHERE r.study_id = $1
       ORDER BY t.test_name, c.kind, tp.month
     `,
       [id]
@@ -1012,7 +1040,7 @@ router.patch('/studies/results/:id', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE stab_results 
+      UPDATE stab_results
       SET value = $2, unit = $3, pass = $4, created_at = NOW()
       WHERE result_id = $1
       RETURNING *
@@ -1050,12 +1078,12 @@ router.post('/studies/:id/ai/root-cause', async (req, res) => {
     // Simulate AI analysis (in production, would call actual AI service)
     const analysis = `
     Based on the OOT result for ${oosData.test_parameter}:
-    
+
     **Potential Root Causes:**
     1. **Analytical Variability** - ${oosData.deviation_percent}% deviation suggests possible sample preparation or instrument drift
     2. **Environmental Factors** - Temperature/humidity excursions during storage
     3. **Batch-specific Issues** - Raw material variation or manufacturing process deviation
-    
+
     **Recommended Actions:**
     1. Re-test using retained sample
     2. Review environmental monitoring data
@@ -1262,7 +1290,7 @@ router.post('/studies/:id/p8/refresh', async (req, res) => {
     // Get latest results summary
     const resultsResult = await pool.query(
       `
-      SELECT 
+      SELECT
         c.kind, tp.label, t.name, r.value, r.unit
       FROM stab_results r
       JOIN stab_conditions c ON r.cond_id = c.cond_id
@@ -1303,7 +1331,7 @@ router.patch('/tests/:testId', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE stab_tests 
+      UPDATE stab_tests
       SET method_id = $1, spec_low = $2, spec_high = $3
       WHERE test_id = $4
       RETURNING *
@@ -1328,11 +1356,11 @@ router.patch('/conditions/:condId', async (req, res) => {
 
     await pool.query(
       `
-      UPDATE stab_conditions 
-      SET kind = COALESCE($2, kind), 
-          temp = COALESCE($3, temp), 
-          rh = COALESCE($4, rh), 
-          description = COALESCE($5, description) 
+      UPDATE stab_conditions
+      SET kind = COALESCE($2, kind),
+          temp = COALESCE($3, temp),
+          rh = COALESCE($4, rh),
+          description = COALESCE($5, description)
       WHERE cond_id = $1`,
       [condId, kind || null, temp || null, rh || null, description || null]
     );
@@ -1360,10 +1388,10 @@ router.patch('/timepoints/:tpId', async (req, res) => {
 
     await pool.query(
       `
-      UPDATE stab_timepoints 
-      SET label = COALESCE($2, label), 
-          month = COALESCE($3, month), 
-          planned_date = COALESCE($4::date, planned_date) 
+      UPDATE stab_timepoints
+      SET label = COALESCE($2, label),
+          month = COALESCE($3, month),
+          planned_date = COALESCE($4::date, planned_date)
       WHERE tp_id = $1`,
       [tpId, label || null, month || null, planned_date || null]
     );
@@ -1434,13 +1462,13 @@ router.post('/studies/:id/inuse', async (req, res) => {
       `
       INSERT INTO stab_inuse (study_id, multi_dose, opened_frequency, hold_time_days, microbial_limits, preservative, start_on, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, now())
-      ON CONFLICT (study_id) DO UPDATE SET 
-        multi_dose = $2, 
-        opened_frequency = $3, 
-        hold_time_days = $4, 
-        microbial_limits = $5, 
-        preservative = $6, 
-        start_on = $7, 
+      ON CONFLICT (study_id) DO UPDATE SET
+        multi_dose = $2,
+        opened_frequency = $3,
+        hold_time_days = $4,
+        microbial_limits = $5,
+        preservative = $6,
+        start_on = $7,
         updated_at = now()`,
       [
         id,
@@ -1486,9 +1514,9 @@ router.post('/studies/:id/oot/rules', async (req, res) => {
 
     await pool.query(
       `
-      INSERT INTO stab_oot_rules (study_id, test_id, rules) 
+      INSERT INTO stab_oot_rules (study_id, test_id, rules)
       VALUES ($1, $2, $3)
-      ON CONFLICT ON CONSTRAINT stab_oot_rules_study_unique 
+      ON CONFLICT ON CONSTRAINT stab_oot_rules_study_unique
       DO UPDATE SET rules = $3`,
       [id, test_id || null, JSON.stringify(rules || [])]
     );
@@ -1517,8 +1545,8 @@ router.get('/studies/:id/oot/check', async (req, res) => {
 
     const rulesResult = await pool.query(
       `
-      SELECT rules FROM stab_oot_rules 
-      WHERE study_id = $1 AND (test_id = $2 OR test_id IS NULL) 
+      SELECT rules FROM stab_oot_rules
+      WHERE study_id = $1 AND (test_id = $2 OR test_id IS NULL)
       ORDER BY test_id NULLS LAST LIMIT 1`,
       [id, testResult.rows[0].test_id]
     );
@@ -1527,7 +1555,7 @@ router.get('/studies/:id/oot/check', async (req, res) => {
     const dataResult = await pool.query(
       `
       SELECT t.month, r.value::float as v, c.kind
-      FROM stab_results r 
+      FROM stab_results r
       JOIN stab_timepoints t ON t.tp_id = r.tp_id
       JOIN stab_conditions c ON c.cond_id = r.cond_id
       WHERE r.study_id = $1 AND r.test_id = $2 AND r.value ~ '^[0-9.]+$'
@@ -1653,10 +1681,10 @@ router.get('/studies/:id/audit', async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(
       `
-      SELECT event_id, actor, action, payload_json, created_at 
-      FROM stab_audit 
-      WHERE study_id = $1 
-      ORDER BY created_at DESC 
+      SELECT event_id, actor, action, payload_json, created_at
+      FROM stab_audit
+      WHERE study_id = $1
+      ORDER BY created_at DESC
       LIMIT 100`,
       [id]
     );
@@ -1733,8 +1761,8 @@ router.post('/studies/:id/ai/label', async (req, res) => {
     // Update study with recommendation
     await pool.query(
       `
-      UPDATE stab_studies 
-      SET label_storage = $1 
+      UPDATE stab_studies
+      SET label_storage = $1
       WHERE study_id = $2
     `,
       [recommendation, id]
@@ -2073,13 +2101,13 @@ router.get('/oot-surveillance', async (req, res) => {
     const pool = getPool();
     // Build query to get time series data
     let sql = `
-      SELECT 
+      SELECT
         s.study_id, s.code, s.name as study_name,
         t.name as test_name, c.kind as condition_kind,
         ARRAY_AGG(r.value::float ORDER BY tp.month) as values,
         ARRAY_AGG(tp.month ORDER BY tp.month) as timepoints
       FROM stab_studies s
-      JOIN stab_results r ON s.study_id = r.study_id  
+      JOIN stab_results r ON s.study_id = r.study_id
       JOIN stab_timepoints tp ON r.tp_id = tp.tp_id
       JOIN stab_conditions c ON r.cond_id = c.cond_id
       JOIN stab_tests t ON r.test_id = t.test_id
@@ -2169,7 +2197,7 @@ router.get('/studies/:id/oot/surveillance', async (req, res) => {
   // Redirect to the main OOT surveillance handler
   const { id } = req.params;
   const { test } = req.query;
-  
+
   // Implement OOT surveillance for specific study
   try {
     const results = await pool.query(
@@ -2393,47 +2421,52 @@ router.patch('/capa/:id', async (req, res) => {
 });
 
 // POST /studies/:id/excursions/import  CSV columns: timestamp,metric(TEMP|RH),value,low,high
-router.post('/studies/:id/excursions/import', upload.single('file'), validateUploadedFile, async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'csv missing' });
-    const id = req.params.id;
-    const rows: any[] = JSON.parse(
-      '[{"timestamp":"2025-01-28T10:00:00Z","metric":"TEMP","value":"26.5","low":"23","high":"27","duration_min":"30"},{"timestamp":"2025-01-28T11:00:00Z","metric":"TEMP","value":"28.2","low":"23","high":"27","duration_min":"15"}]'
-    );
-    let inserted = 0;
-    for (const r0 of rows) {
-      const val = Number(r0.value);
-      const lo = Number(r0.low);
-      const hi = Number(r0.high);
-      const severe =
-        val < lo || val > hi
-          ? Math.abs(val - (val > hi ? hi : lo)) > 3
-            ? 'CRITICAL'
-            : 'MAJOR'
-          : 'MINOR';
-      await pool.query(
-        `insert into stab_excursions (study_id,metric,value,limit_low,limit_high,duration_min,severity,raw_json)
-               values ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [
-          id,
-          (r0.metric || 'TEMP').toUpperCase(),
-          val,
-          isFinite(lo) ? lo : null,
-          isFinite(hi) ? hi : null,
-          Number(r0.duration_min) || null,
-          severe,
-          r0,
-        ]
+router.post(
+  '/studies/:id/excursions/import',
+  upload.single('file'),
+  validateUploadedFile,
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'csv missing' });
+      const id = req.params.id;
+      const rows: any[] = JSON.parse(
+        '[{"timestamp":"2025-01-28T10:00:00Z","metric":"TEMP","value":"26.5","low":"23","high":"27","duration_min":"30"},{"timestamp":"2025-01-28T11:00:00Z","metric":"TEMP","value":"28.2","low":"23","high":"27","duration_min":"15"}]'
       );
-      inserted++;
+      let inserted = 0;
+      for (const r0 of rows) {
+        const val = Number(r0.value);
+        const lo = Number(r0.low);
+        const hi = Number(r0.high);
+        const severe =
+          val < lo || val > hi
+            ? Math.abs(val - (val > hi ? hi : lo)) > 3
+              ? 'CRITICAL'
+              : 'MAJOR'
+            : 'MINOR';
+        await pool.query(
+          `insert into stab_excursions (study_id,metric,value,limit_low,limit_high,duration_min,severity,raw_json)
+               values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            id,
+            (r0.metric || 'TEMP').toUpperCase(),
+            val,
+            isFinite(lo) ? lo : null,
+            isFinite(hi) ? hi : null,
+            Number(r0.duration_min) || null,
+            severe,
+            r0,
+          ]
+        );
+        inserted++;
+      }
+      await audit(id, 'excursions_import', { count: inserted }, req);
+      res.json({ inserted });
+    } catch (error) {
+      console.error('Error importing excursions:', error);
+      res.status(500).json({ error: 'Failed to import excursions' });
     }
-    await audit(id, 'excursions_import', { count: inserted }, req);
-    res.json({ inserted });
-  } catch (error) {
-    console.error('Error importing excursions:', error);
-    res.status(500).json({ error: 'Failed to import excursions' });
   }
-});
+);
 
 // GET /protocols
 router.get('/protocols', async (_req, res) => {
@@ -2688,8 +2721,7 @@ router.patch('/assignments/:assignId', async (req, res) => {
       `update stab_assignments set status=coalesce($2,status), due_date=coalesce($3::date,due_date) where assign_id=$1`,
       [a, b.status || null, b.due_date || null]
     );
-    if (s[0])
-      await audit(s[0].study_id, 'assign_update', { assign_id: a, body: b }, req);
+    if (s[0]) await audit(s[0].study_id, 'assign_update', { assign_id: a, body: b }, req);
     res.json({ ok: true });
   } catch (error) {
     console.error('Error updating assignment:', error);
@@ -2706,9 +2738,9 @@ router.post('/studies/:id/request-signoff', async (req, res) => {
     // Check if methods are linked (guard)
     const { rows: tests } = await pool.query<any>(
       `
-      select t.name, m.status 
-      from stab_tests t 
-      left join cmc_methods m on m.id=t.method_id 
+      select t.name, m.status
+      from stab_tests t
+      left join cmc_methods m on m.id=t.method_id
       where t.study_id=$1`,
       [id]
     );
@@ -3036,23 +3068,28 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
 });
 
 // POST /api/stability/samples/:sampleId/chain/upload  (multipart file=attachment)
-router.post('/samples/:sampleId/chain/upload', upload.single('file'), validateUploadedFile, async (req, res) => {
-  const sid = req.params.sampleId;
-  if (!req.file) return res.status(400).json({ error: 'file missing' });
-  const fs = await import('fs');
-  const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
-  fs.writeFileSync(path, req.file.buffer);
-  const url = path.replace('/mnt/data', '/uploads');
-  const { rows: find } = await pool.query<any>(
-    `select study_id from stab_samples where sample_id=$1`,
-    [sid]
-  );
-  await pool.query(
-    `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
-    [sid, (req.headers['x-user-name'] || 'user').toString(), url]
-  );
-  if (find[0]) await audit(find[0].study_id, 'coc_upload', { sample_id: sid, url }, req);
-  res.json({ ok: true, url });
-});
+router.post(
+  '/samples/:sampleId/chain/upload',
+  upload.single('file'),
+  validateUploadedFile,
+  async (req, res) => {
+    const sid = req.params.sampleId;
+    if (!req.file) return res.status(400).json({ error: 'file missing' });
+    const fs = await import('fs');
+    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+    fs.writeFileSync(path, req.file.buffer);
+    const url = path.replace('/mnt/data', '/uploads');
+    const { rows: find } = await pool.query<any>(
+      `select study_id from stab_samples where sample_id=$1`,
+      [sid]
+    );
+    await pool.query(
+      `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
+      [sid, (req.headers['x-user-name'] || 'user').toString(), url]
+    );
+    if (find[0]) await audit(find[0].study_id, 'coc_upload', { sample_id: sid, url }, req);
+    res.json({ ok: true, url });
+  }
+);
 
 export default router;

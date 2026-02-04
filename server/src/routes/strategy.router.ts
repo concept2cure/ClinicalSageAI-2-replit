@@ -238,7 +238,7 @@ r.post('/ai/propose', async (req, res) => {
   if (!processId) return res.status(400).json({ error: 'process_id required' });
   const [{ rows: proc }, { rows: cpp }, { rows: cqas }] = await Promise.all([
     q<any>(`select * from cmc_stage_gates where process_id=$1 limit 1`, [processId]).catch(() => ({
-      rows: [{ process_id }] as any,
+      rows: [{ process_id: processId }] as any,
     })),
     q<any>(
       `select p.param_id as param_id, p.name as param_name, u.name as unit_name from cmc_parameters p join cmc_unit_ops u on u.unit_id=p.unit_id where p.kind='CPP' and u.process_id=$1`,
@@ -493,7 +493,7 @@ r.post('/p34/push', async (req, res) => {
 
 ## Overview
 Total CPPs controlled: ${tokens['STRAT.P34.CPP_COUNT']}
-- IPC controls: ${tokens['STRAT.P34.IPC_COUNT']}  
+- IPC controls: ${tokens['STRAT.P34.IPC_COUNT']}
 - Release controls: ${tokens['STRAT.P34.REL_COUNT']}
 
 ## Control Details

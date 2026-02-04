@@ -6,10 +6,10 @@
  */
 
 import OpenAI from 'openai';
-import { Pool } from 'pg';
+import { getPool } from '../db.ts';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const pool = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
+const pool = getPool();
 
 const SAMPLE_REGULATORY_DOCUMENTS = [
   {
@@ -130,7 +130,7 @@ async function initializeVectorTable() {
 
     // Create indexes
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_vector_chunks_embedding 
+      CREATE INDEX IF NOT EXISTS idx_vector_chunks_embedding
       ON vector_chunks USING ivfflat (embedding vector_cosine_ops)
       WITH (lists = 100)
     `);
@@ -180,7 +180,7 @@ async function populateVectorDatabase() {
       await client.query(
         `
         INSERT INTO vector_chunks (
-          doc_id, doc_title, content, embedding, ectd_section, 
+          doc_id, doc_title, content, embedding, ectd_section,
           doc_type, region_tag, page_number, chunk_index, compliance_score
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       `,

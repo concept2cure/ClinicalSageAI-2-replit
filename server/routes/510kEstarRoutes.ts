@@ -12,19 +12,17 @@
  */
 
 import { Router } from 'express';
-import { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger.ts';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import { z } from 'zod';
+import { pool } from '../db';
 
 const logger = createScopedLogger('estar-routes');
 export const router = Router();
-const db = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const db = pool;
 
 // Apply deprecation notice to all routes in this file
 router.use(create510kDeprecationNotice('/estar'));

@@ -25,6 +25,7 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
+import { randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { AIProviderRouter, getAIRouter } from './aiProviderRouter.js';
 
@@ -40,6 +41,8 @@ export interface RetrievalOptions {
   useMmr?: boolean;
   mmrLambda?: number; // 0 = max diversity, 1 = max relevance
   useCompression?: boolean;
+  organizationUuid?: string;
+  persistCitations?: boolean;
   filters?: {
     atomType?: string;
     domain?: string;
@@ -50,6 +53,8 @@ export interface RetrievalOptions {
 
 export interface RetrievedDocument {
   id: string;
+  documentId?: string;
+  chunkId?: string;
   content: string;
   title: string;
   atomType: string;
@@ -58,6 +63,9 @@ export interface RetrievedDocument {
   rerankScore?: number; // From cross-encoder
   finalScore: number; // Combined score
   compressedContent?: string; // Extracted relevant passage
+  pageNumber?: number;
+  sectionTitle?: string | null;
+  locator?: string;
 }
 
 export interface RAGContext {
@@ -66,6 +74,52 @@ export interface RAGContext {
   retrievalStrategy: string;
   processingTimeMs: number;
   tokensUsed: number;
+}
+
+type VaultChunkRow = {
+  chunk_id: string;
+  document_id: string;
+  title: string | null;
+  content: string | null;
+  page_number: number | null;
+  section_title: string | null;
+  similarity: number;
+};
+
+function buildLocator(row: VaultChunkRow): string | undefined {
+  if (row.section_title && row.section_title.trim()) {
+    return row.section_title.trim();
+  }
+  if (row.page_number !== null && row.page_number !== undefined) {
+    return `p.${row.page_number}`;
+  }
+  return undefined;
+}
+
+async function withTenantContext<T>(
+  pool: pg.Pool,
+  organizationUuid: string | undefined,
+  fn: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    if (organizationUuid) {
+      await client.query("SELECT set_config('app.current_org_id', $1, true)", [organizationUuid]);
+    }
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // ignore rollback errors
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -109,7 +163,13 @@ export class AdvancedRAGPipeline {
     // Step 1: Initial retrieval based on strategy
     switch (options.strategy) {
       case 'hyde':
-        const hydeResult = await this.hydeRetrieval(query, limit * 3, threshold, options.filters);
+        const hydeResult = await this.hydeRetrieval(
+          query,
+          limit * 3,
+          threshold,
+          options.filters,
+          options.organizationUuid
+        );
         candidates = hydeResult.documents;
         tokensUsed += hydeResult.tokensUsed;
         break;
@@ -119,7 +179,8 @@ export class AdvancedRAGPipeline {
           query,
           limit * 3,
           threshold,
-          options.filters
+          options.filters,
+          options.organizationUuid
         );
         candidates = multiResult.documents;
         tokensUsed += multiResult.tokensUsed;
@@ -128,8 +189,20 @@ export class AdvancedRAGPipeline {
       case 'advanced':
         // Combine HyDE + Multi-Query
         const [hydeAdvanced, multiAdvanced] = await Promise.all([
-          this.hydeRetrieval(query, limit * 2, threshold, options.filters),
-          this.multiQueryRetrieval(query, limit * 2, threshold, options.filters),
+          this.hydeRetrieval(
+            query,
+            limit * 2,
+            threshold,
+            options.filters,
+            options.organizationUuid
+          ),
+          this.multiQueryRetrieval(
+            query,
+            limit * 2,
+            threshold,
+            options.filters,
+            options.organizationUuid
+          ),
         ]);
 
         // Merge and deduplicate
@@ -143,7 +216,13 @@ export class AdvancedRAGPipeline {
 
       case 'basic':
       default:
-        candidates = await this.basicRetrieval(query, limit * 3, threshold, options.filters);
+        candidates = await this.basicRetrieval(
+          query,
+          limit * 3,
+          threshold,
+          options.filters,
+          options.organizationUuid
+        );
         break;
     }
 
@@ -187,18 +266,10 @@ export class AdvancedRAGPipeline {
     query: string,
     limit: number,
     threshold: number,
-    filters?: RetrievalOptions['filters']
+    _filters?: RetrievalOptions['filters'],
+    organizationUuid?: string
   ): Promise<RetrievedDocument[]> {
-    const results = await this.embeddingService.searchSimilar(query, limit, threshold, filters);
-
-    return results.map(r => ({
-      id: r.id,
-      content: r.content,
-      title: r.title,
-      atomType: r.atomType,
-      initialScore: r.similarity,
-      finalScore: r.similarity,
-    }));
+    return this.searchVaultSimilar(query, limit, threshold, organizationUuid);
   }
 
   /**
@@ -209,7 +280,8 @@ export class AdvancedRAGPipeline {
     query: string,
     limit: number,
     threshold: number,
-    filters?: RetrievalOptions['filters']
+    _filters?: RetrievalOptions['filters'],
+    organizationUuid?: string
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate hypothetical answer using Claude for better reasoning
     const hydeResponse = await this.aiRouter.route({
@@ -231,22 +303,15 @@ export class AdvancedRAGPipeline {
     const hypotheticalDoc = hydeResponse.content;
 
     // Search using the hypothetical document
-    const results = await this.embeddingService.searchSimilar(
+    const results = await this.searchVaultSimilar(
       hypotheticalDoc,
       limit,
       threshold,
-      filters
+      organizationUuid
     );
 
     return {
-      documents: results.map(r => ({
-        id: r.id,
-        content: r.content,
-        title: r.title,
-        atomType: r.atomType,
-        initialScore: r.similarity,
-        finalScore: r.similarity,
-      })),
+      documents: results,
       tokensUsed: hydeResponse.usage.totalTokens,
     };
   }
@@ -258,7 +323,8 @@ export class AdvancedRAGPipeline {
     query: string,
     limit: number,
     threshold: number,
-    filters?: RetrievalOptions['filters']
+    _filters?: RetrievalOptions['filters'],
+    organizationUuid?: string
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     // Generate alternative queries
     const queryExpansionResponse = await this.aiRouter.route({
@@ -291,27 +357,13 @@ export class AdvancedRAGPipeline {
 
     // Search with all queries in parallel
     const searchPromises = allQueries.map(q =>
-      this.embeddingService.searchSimilar(
-        q,
-        Math.ceil(limit / allQueries.length),
-        threshold,
-        filters
-      )
+      this.searchVaultSimilar(q, Math.ceil(limit / allQueries.length), threshold, organizationUuid)
     );
 
     const allResults = await Promise.all(searchPromises);
 
     // Merge results
-    const merged = this.mergeAndDeduplicate(
-      allResults.flat().map(r => ({
-        id: r.id,
-        content: r.content,
-        title: r.title,
-        atomType: r.atomType,
-        initialScore: r.similarity,
-        finalScore: r.similarity,
-      }))
-    );
+    const merged = this.mergeAndDeduplicate(allResults.flat());
 
     return {
       documents: merged,
@@ -485,6 +537,113 @@ Example: {"1": 95, "2": 72, "3": 45}`,
     };
   }
 
+  private async searchVaultSimilar(
+    query: string,
+    limit: number,
+    threshold: number,
+    organizationUuid?: string
+  ): Promise<RetrievedDocument[]> {
+    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+    const vector = `[${queryResult.embedding.join(',')}]`;
+
+    return withTenantContext(this.pool, organizationUuid, async client => {
+      const { rows } = await client.query<VaultChunkRow>(
+        `
+        SELECT
+          c.id AS chunk_id,
+          c.document_id AS document_id,
+          COALESCE(d.document_title, d.file_name, '') AS title,
+          c.chunk_text AS content,
+          c.page_number AS page_number,
+          c.section_title AS section_title,
+          1 - (c.embedding <=> $1::vector) AS similarity
+        FROM vault.document_chunks c
+        JOIN vault.documents d ON d.id = c.document_id
+        WHERE c.embedding IS NOT NULL
+          AND 1 - (c.embedding <=> $1::vector) > $2
+        ORDER BY c.embedding <=> $1::vector
+        LIMIT $3
+      `,
+        [vector, threshold, limit]
+      );
+
+      return rows.map(row => ({
+        id: row.chunk_id,
+        chunkId: row.chunk_id,
+        documentId: row.document_id,
+        content: row.content || '',
+        title: row.title || 'Untitled',
+        atomType: 'vault_chunk',
+        initialScore: Number(row.similarity),
+        finalScore: Number(row.similarity),
+        pageNumber: row.page_number ?? undefined,
+        sectionTitle: row.section_title,
+        locator: buildLocator(row),
+      }));
+    });
+  }
+
+  private async persistEvidenceCitations(
+    client: pg.PoolClient,
+    query: string,
+    citations: Array<{
+      documentId?: string;
+      chunkId?: string;
+      quote: string;
+      locator?: string;
+      confidence: number;
+    }>
+  ): Promise<void> {
+    const filtered = citations.filter(c => c.documentId && c.chunkId);
+    if (!filtered.length) {
+      return;
+    }
+
+    const quantize = (value: number) => Math.round(value * 1e6) / 1e6;
+
+    for (const citation of filtered) {
+      const citationId = randomUUID();
+      await client.query(
+        `
+        INSERT INTO vault.evidence_citations (
+          id,
+          source_document_id,
+          source_chunk_id,
+          claim_text,
+          evidence_document_id,
+          evidence_chunk_id,
+          evidence_text,
+          relevance_score,
+          support_type,
+          citation_context,
+          created_at
+        ) VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $2,
+          $3,
+          $5,
+          $6,
+          'SUPPORTS',
+          $7,
+          now()
+        )
+      `,
+        [
+          citationId,
+          citation.documentId,
+          citation.chunkId,
+          query,
+          citation.quote,
+          quantize(citation.confidence),
+          citation.locator ?? null,
+        ]
+      );
+    }
+  }
+
   /**
    * Merge and deduplicate documents from multiple sources
    */
@@ -562,6 +721,24 @@ If the sources don't contain enough information to fully answer, say so clearly.
       maxTokens: 1000,
       temperature: 0.3,
     });
+
+    if (options.persistCitations && options.organizationUuid) {
+      const citations = context.documents.map(doc => ({
+        documentId: doc.documentId,
+        chunkId: doc.chunkId,
+        quote: doc.compressedContent || doc.content,
+        locator: doc.locator,
+        confidence: doc.finalScore,
+      }));
+
+      try {
+        await withTenantContext(this.pool, options.organizationUuid, async client => {
+          await this.persistEvidenceCitations(client, query, citations);
+        });
+      } catch (error) {
+        console.warn('[RAG] Citation persistence failed:', error);
+      }
+    }
 
     return {
       answer: response.content,

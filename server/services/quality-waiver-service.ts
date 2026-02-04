@@ -9,6 +9,7 @@ import { getDb } from '../db/tenantDbHelper';
 import { eq, and, asc, desc, sql } from 'drizzle-orm';
 import { storeInCache, getFromCache, invalidateCache } from '../cache/tenantCache';
 import { qmpSectionGating, ctqFactors, qualityManagementPlans } from '../../shared/schema';
+import { TenantDb } from '../db/tenantDb';
 
 const logger = createScopedLogger('quality-waiver-service');
 
@@ -69,18 +70,33 @@ export async function createWaiverRequest(
       organizationId: waiver.organizationId,
     });
 
+    const dbInstance = getDb(req);
+    if (!dbInstance) {
+      throw new Error('Database not available');
+    }
+
     // Check if the section gating rule exists
-    const gatingRules = await getDb(req)
-      .select()
-      .from(qmpSectionGating)
-      .where(
-        and(
-          eq(qmpSectionGating.organizationId, waiver.organizationId),
-          eq(qmpSectionGating.qmpId, waiver.qmpId),
-          eq(qmpSectionGating.sectionKey, waiver.sectionCode)
-        )
-      )
-      .limit(1);
+    const gatingRules =
+      dbInstance instanceof TenantDb
+        ? await dbInstance.select(
+            qmpSectionGating,
+            and(
+              eq(qmpSectionGating.organizationId, waiver.organizationId),
+              eq(qmpSectionGating.qmpId, waiver.qmpId),
+              eq(qmpSectionGating.sectionKey, waiver.sectionCode)
+            )
+          )
+        : await dbInstance
+            .select()
+            .from(qmpSectionGating)
+            .where(
+              and(
+                eq(qmpSectionGating.organizationId, waiver.organizationId),
+                eq(qmpSectionGating.qmpId, waiver.qmpId),
+                eq(qmpSectionGating.sectionKey, waiver.sectionCode)
+              )
+            )
+            .limit(1);
 
     if (gatingRules.length === 0) {
       throw new Error('No quality gating rule found for this section');
@@ -94,16 +110,25 @@ export async function createWaiverRequest(
     }
 
     // Check if the QMP allows waivers
-    const qmps = await getDb(req)
-      .select()
-      .from(qualityManagementPlans)
-      .where(
-        and(
-          eq(qualityManagementPlans.organizationId, waiver.organizationId),
-          eq(qualityManagementPlans.id, waiver.qmpId)
-        )
-      )
-      .limit(1);
+    const qmps =
+      dbInstance instanceof TenantDb
+        ? await dbInstance.select(
+            qualityManagementPlans,
+            and(
+              eq(qualityManagementPlans.organizationId, waiver.organizationId),
+              eq(qualityManagementPlans.id, waiver.qmpId)
+            )
+          )
+        : await dbInstance
+            .select()
+            .from(qualityManagementPlans)
+            .where(
+              and(
+                eq(qualityManagementPlans.organizationId, waiver.organizationId),
+                eq(qualityManagementPlans.id, waiver.qmpId)
+              )
+            )
+            .limit(1);
 
     if (qmps.length === 0) {
       throw new Error('Quality Management Plan not found');
@@ -117,15 +142,24 @@ export async function createWaiverRequest(
 
     // Verify that the factor IDs are valid
     if (waiver.factorIds && waiver.factorIds.length > 0) {
-      const factors = await getDb(req)
-        .select()
-        .from(ctqFactors)
-        .where(
-          and(
-            eq(ctqFactors.organizationId, waiver.organizationId),
-            sql`${ctqFactors.id} = ANY(${waiver.factorIds})`
-          )
-        );
+      const factors =
+        dbInstance instanceof TenantDb
+          ? await dbInstance.select(
+              ctqFactors,
+              and(
+                eq(ctqFactors.organizationId, waiver.organizationId),
+                sql`${ctqFactors.id} = ANY(${waiver.factorIds})`
+              )
+            )
+          : await dbInstance
+              .select()
+              .from(ctqFactors)
+              .where(
+                and(
+                  eq(ctqFactors.organizationId, waiver.organizationId),
+                  sql`${ctqFactors.id} = ANY(${waiver.factorIds})`
+                )
+              );
 
       if (factors.length !== waiver.factorIds.length) {
         throw new Error('One or more factor IDs are invalid');

@@ -1,12 +1,10 @@
-// import archiver from "archiver"; // Temporarily disabled for development
-import { Pool } from 'pg';
+import archiver from 'archiver';
+import { getPool } from '../../../db';
 import fs from 'fs';
 import path from 'path';
 import { md5, buildIndexXml } from './indexXml';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   if (!pool) throw new Error('Database pool not initialized');
@@ -40,9 +38,7 @@ export async function packageSequenceZip(seqId: string, region: string) {
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `${String(seq.seq_no).padStart(4, '0')}.zip`);
   const output = fs.createWriteStream(outPath);
-  // Temporarily disabled for development
-  throw new Error('Package sequence ZIP temporarily disabled for development');
-  // const archive = archiver("zip", { zlib: { level: 9 } });
+  const archive = archiver('zip', { zlib: { level: 9 } });
 
   archive.pipe(output);
 

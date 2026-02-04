@@ -11,7 +11,7 @@ import csvParser from 'csv-parser';
 import { pool, query } from './db';
 import { createContextLogger } from './utils/logger';
 
-const logger = createContextLogger({ module: 'simplified-data-importer' });
+const logger = createContextLogger('simplified-data-importer');
 
 // Directory paths
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
@@ -231,7 +231,7 @@ export async function importTrialsFromCsv(
               }
 
               // Check if this trial is already in the database (by NCT ID)
-              let existingReport = { rows: [] };
+              let existingReport: { rows: Array<{ id: number }> } = { rows: [] };
 
               if (reportData.nctrial_id) {
                 existingReport = await query(
@@ -247,9 +247,9 @@ export async function importTrialsFromCsv(
 
                 // Update the existing record
                 await query(
-                  `UPDATE csr_reports SET 
+                  `UPDATE csr_reports SET
                     title = $1, sponsor = $2, indication = $3, phase = $4, status = $5,
-                    date = $6, file_name = $7, file_size = $8, file_path = $9, 
+                    date = $6, file_name = $7, file_size = $8, file_path = $9,
                     study_id = $10, drug_name = $11, region = $12, last_updated = NOW()
                   WHERE id = $13`,
                   [
@@ -420,7 +420,7 @@ export async function importTrialsFromJson(
         }
 
         // Check if this trial is already in the database (by NCT ID)
-        let existingReport = { rows: [] };
+        let existingReport: { rows: Array<{ id: number }> } = { rows: [] };
 
         if (reportData.nctrial_id) {
           existingReport = await query('SELECT id FROM csr_reports WHERE nctrial_id = $1 LIMIT 1', [
@@ -435,9 +435,9 @@ export async function importTrialsFromJson(
 
           // Update the existing record
           await query(
-            `UPDATE csr_reports SET 
+            `UPDATE csr_reports SET
               title = $1, sponsor = $2, indication = $3, phase = $4, status = $5,
-              date = $6, file_name = $7, file_size = $8, file_path = $9, 
+              date = $6, file_name = $7, file_size = $8, file_path = $9,
               study_id = $10, drug_name = $11, region = $12, last_updated = NOW()
             WHERE id = $13`,
             [

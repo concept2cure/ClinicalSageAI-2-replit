@@ -4,13 +4,8 @@
  */
 
 import express from 'express';
-import { Pool } from 'pg';
+import { pool as db } from '../utils/database.js';
 const router = express.Router();
-
-// Create database connection pool
-const db = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
 
 // Get available smart blocks
 router.get('/', async (req, res) => {
@@ -108,9 +103,9 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to get smart blocks:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve smart blocks' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve smart blocks',
     });
   }
 });
@@ -128,8 +123,9 @@ router.post('/:blockId/render', async (req, res) => {
     switch (blockId) {
       case 'device-specs':
         // Fetch device specifications from Data Center
-        const deviceQuery = await db.query(`
-          SELECT 
+        const deviceQuery = await db.query(
+          `
+          SELECT
             name,
             description,
             metadata
@@ -138,12 +134,14 @@ router.post('/:blockId/render', async (req, res) => {
             AND category = 'device_specification'
           ORDER BY created_at DESC
           LIMIT 1
-        `, [organizationId]);
+        `,
+          [organizationId]
+        );
 
         if (deviceQuery.rows.length > 0) {
           const device = deviceQuery.rows[0];
           const specs = device.metadata?.specifications || {};
-          
+
           content = `## Device Specifications
 
 **Device Name:** ${device.name}
@@ -151,24 +149,28 @@ router.post('/:blockId/render', async (req, res) => {
 **Description:** ${device.description}
 
 ### Technical Specifications
-${Object.entries(specs).map(([key, value]) => `- **${key}:** ${value}`).join('\n')}
+${Object.entries(specs)
+  .map(([key, value]) => `- **${key}:** ${value}`)
+  .join('\n')}
 
 *Data source: Device Data Center (Last updated: ${new Date().toLocaleDateString()})*`;
-          
+
           metadata = {
             source: 'device_data_center',
             deviceId: device.id,
             timestamp: new Date().toISOString(),
           };
         } else {
-          content = '## Device Specifications\n\n*No device specification data available. Please upload device specifications to the Data Center.*';
+          content =
+            '## Device Specifications\n\n*No device specification data available. Please upload device specifications to the Data Center.*';
         }
         break;
 
       case 'predicate-comparison':
         // Fetch predicate device data
-        const predicateQuery = await db.query(`
-          SELECT 
+        const predicateQuery = await db.query(
+          `
+          SELECT
             device_name,
             k_number,
             manufacturer,
@@ -178,7 +180,9 @@ ${Object.entries(specs).map(([key, value]) => `- **${key}:** ${value}`).join('\n
           WHERE organization_id = $1
           ORDER BY created_at DESC
           LIMIT 3
-        `, [organizationId]);
+        `,
+          [organizationId]
+        );
 
         if (predicateQuery.rows.length > 0) {
           content = `## Predicate Device Comparison
@@ -197,21 +201,23 @@ ${predicateQuery.rows[0]?.similarities || '- To be determined'}
 ${predicateQuery.rows[0]?.differences || '- To be determined'}
 
 *Data source: Predicate Device Analysis (Last updated: ${new Date().toLocaleDateString()})*`;
-          
+
           metadata = {
             source: 'predicate_analysis',
             predicateCount: predicateQuery.rows.length,
             timestamp: new Date().toISOString(),
           };
         } else {
-          content = '## Predicate Device Comparison\n\n*No predicate device data available. Please complete predicate device analysis.*';
+          content =
+            '## Predicate Device Comparison\n\n*No predicate device data available. Please complete predicate device analysis.*';
         }
         break;
 
       case 'stability-summary':
         // Fetch stability data
-        const stabilityQuery = await db.query(`
-          SELECT 
+        const stabilityQuery = await db.query(
+          `
+          SELECT
             study_name,
             conditions,
             time_points,
@@ -221,32 +227,39 @@ ${predicateQuery.rows[0]?.differences || '- To be determined'}
           WHERE organization_id = $1
           ORDER BY created_at DESC
           LIMIT 5
-        `, [organizationId]);
+        `,
+          [organizationId]
+        );
 
         if (stabilityQuery.rows.length > 0) {
           content = `## Stability Summary
 
 ### Active Studies
-${stabilityQuery.rows.map(study => `
+${stabilityQuery.rows
+  .map(
+    study => `
 **${study.study_name}**
 - Conditions: ${study.conditions}
 - Time Points: ${study.time_points}
 - Status: ${study.status}
 - Results: ${study.results || 'Pending'}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 ### Conclusion
 All stability studies are progressing according to ICH Q1A(R2) guidelines.
 
 *Data source: Stability Database (Last updated: ${new Date().toLocaleDateString()})*`;
-          
+
           metadata = {
             source: 'stability_database',
             studyCount: stabilityQuery.rows.length,
             timestamp: new Date().toISOString(),
           };
         } else {
-          content = '## Stability Summary\n\n*No stability data available. Please add stability studies to the system.*';
+          content =
+            '## Stability Summary\n\n*No stability data available. Please add stability studies to the system.*';
         }
         break;
 
@@ -266,7 +279,7 @@ All stability studies are progressing according to ICH Q1A(R2) guidelines.
 All biocompatibility testing completed per ISO 10993-1 biological evaluation plan.
 
 *Data source: Biocompatibility Test Reports (Last updated: ${new Date().toLocaleDateString()})*`;
-        
+
         metadata = {
           source: 'biocompatibility_testing',
           testCount: 6,
@@ -293,7 +306,7 @@ All biocompatibility testing completed per ISO 10993-1 biological evaluation pla
 The overall residual risk is acceptable when weighed against the clinical benefits.
 
 *Data source: Risk Management File (Last updated: ${new Date().toLocaleDateString()})*`;
-        
+
         metadata = {
           source: 'risk_management',
           totalRisks: 15,
@@ -305,7 +318,7 @@ The overall residual risk is acceptable when weighed against the clinical benefi
         content = `## ${blockId}
 
 *This smart block is under development. Content will be auto-populated from relevant data sources.*`;
-        
+
         metadata = {
           source: 'placeholder',
           timestamp: new Date().toISOString(),
@@ -321,9 +334,9 @@ The overall residual risk is acceptable when weighed against the clinical benefi
     });
   } catch (error) {
     console.error('Failed to render smart block:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to render smart block' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to render smart block',
     });
   }
 });
@@ -334,12 +347,15 @@ router.post('/', async (req, res) => {
     const { name, description, category, template, dataSource } = req.body;
     const organizationId = req.headers['x-organization-id'] || '7';
 
-    const result = await db.query(`
-      INSERT INTO custom_smart_blocks 
+    const result = await db.query(
+      `
+      INSERT INTO custom_smart_blocks
         (organization_id, name, description, category, template, data_source, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
       RETURNING id
-    `, [organizationId, name, description, category, template, dataSource]);
+    `,
+      [organizationId, name, description, category, template, dataSource]
+    );
 
     res.json({
       success: true,
@@ -348,9 +364,9 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to create smart block:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to create smart block' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create smart block',
     });
   }
 });
@@ -358,21 +374,21 @@ router.post('/', async (req, res) => {
 // Generate smart block content (new endpoint for SmartBlocks component)
 router.post('/generate', async (req, res) => {
   try {
-    const { 
-      templateId, 
-      dataSource, 
-      format, 
-      fields, 
+    const {
+      templateId,
+      dataSource,
+      format,
+      fields,
       config,
       projectId,
       organizationId,
-      documentId 
+      documentId,
     } = req.body;
 
     // Validate required fields
     if (!templateId || !dataSource) {
-      return res.status(400).json({ 
-        error: 'Template ID and data source are required' 
+      return res.status(400).json({
+        error: 'Template ID and data source are required',
       });
     }
 
@@ -421,7 +437,7 @@ router.post('/generate', async (req, res) => {
     // Get generator or use generic
     const generator = generateMockData[templateId];
     let generatedContent;
-    
+
     if (generator) {
       generatedContent = generator();
     } else {
@@ -438,7 +454,8 @@ router.post('/generate', async (req, res) => {
     if (db) {
       try {
         // Try to log usage if table exists
-        await db.query(`
+        await db.query(
+          `
           INSERT INTO smart_block_usage (
             template_id,
             document_id,
@@ -448,15 +465,17 @@ router.post('/generate', async (req, res) => {
             data_source,
             version
           ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `, [
-          templateId,
-          documentId || null,
-          projectId || null,
-          organizationId || '7',
-          new Date(),
-          dataSource,
-          generatedContent.version
-        ]);
+        `,
+          [
+            templateId,
+            documentId || null,
+            projectId || null,
+            organizationId || '7',
+            new Date(),
+            dataSource,
+            generatedContent.version,
+          ]
+        );
       } catch (dbError) {
         // Table doesn't exist yet, continue without logging
         console.log('Smart block usage tracking not available yet');
@@ -466,8 +485,8 @@ router.post('/generate', async (req, res) => {
     res.json(generatedContent);
   } catch (error) {
     console.error('Error generating smart block:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate smart block content' 
+    res.status(500).json({
+      error: 'Failed to generate smart block content',
     });
   }
 });

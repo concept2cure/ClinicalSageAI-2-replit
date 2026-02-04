@@ -1,40 +1,17 @@
 /**
  * Neon Database Connection Helper
- * 
- * This module provides a PostgreSQL connection pool for the Neon database.
+ *
+ * This module re-exports the canonical database pool.
  * All database operations should use this connection pool.
  */
 
-import pg from 'pg';
-import dotenv from 'dotenv';
+import { getPool } from '../db.ts';
 
-// Load environment variables
-dotenv.config();
-
-const { Pool } = pg;
-
-// Validate required environment variable
-if (!process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL && !process.env.NEON_DATABASE_URL) {
-  console.error('Missing DATABASE_URL or NEON_DATABASE_URL environment variable');
-  throw new Error('Database configuration error: No connection string provided');
-}
-
-// Use NEON_DATABASE_URL if available, otherwise fall back to DATABASE_URL
-const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
-
-// Create connection pool
-const pool = new Pool({
-  connectionString,
-  ssl: {
-    rejectUnauthorized: false, // Neon requires SSL
-  },
-  max: 20, // Maximum number of connections in the pool
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  connectionTimeoutMillis: 10000, // Wait 10 seconds for a connection
-});
+// Re-export canonical pool
+const pool = getPool();
 
 // Handle pool errors
-pool.on('error', (err) => {
+pool.on('error', err => {
   console.error('Unexpected error on idle database client', err);
 });
 
@@ -58,12 +35,12 @@ export async function query(text, params) {
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    
+
     // Log slow queries (> 1 second)
     if (duration > 1000) {
       console.warn('Slow query detected:', { text, duration, rows: result.rowCount });
     }
-    
+
     return result;
   } catch (error) {
     console.error('Database query error:', { text, error: error.message });
@@ -77,11 +54,11 @@ export async function query(text, params) {
  */
 export async function getClient() {
   const client = await pool.connect();
-  
+
   // Add a release wrapper to log transaction durations
   const originalRelease = client.release.bind(client);
   const startTime = Date.now();
-  
+
   client.release = () => {
     const duration = Date.now() - startTime;
     if (duration > 5000) {
@@ -89,7 +66,7 @@ export async function getClient() {
     }
     originalRelease();
   };
-  
+
   return client;
 }
 
@@ -100,7 +77,7 @@ export async function getClient() {
  */
 export async function transaction(callback) {
   const client = await getClient();
-  
+
   try {
     await client.query('BEGIN');
     const result = await callback(client);
