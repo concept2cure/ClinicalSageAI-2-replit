@@ -17,6 +17,7 @@ import {
   boolean,
   uniqueIndex,
   varchar,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -225,7 +226,7 @@ export const documentComments = pgTable('document_comments', {
   isResolved: boolean('is_resolved').notNull().default(false),
   resolvedBy: text('resolved_by'),
   resolvedAt: timestamp('resolved_at'),
-  parentId: integer('parent_id').references(() => documentComments.id),
+  parentId: integer('parent_id').references((): AnyPgColumn => documentComments.id),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
 });
 

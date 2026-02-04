@@ -1,7 +1,6 @@
 import { db } from '../db';
-import { trials, csrReports, csrDetails, csrSegments } from 'shared/schema';
+import { csrReports, csrDetails } from 'shared/schema';
 import { eq, and, like, desc } from 'drizzle-orm';
-import type { CsrSegment, InsertCsrSegment } from 'shared/schema';
 import path from 'path';
 import fs from 'fs';
 
@@ -36,6 +35,13 @@ export interface GeneratedSapData {
 
 export class SapGeneratorService {
   private static instance: SapGeneratorService;
+
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
 
   static getInstance(): SapGeneratorService {
     if (!SapGeneratorService.instance) {
@@ -102,7 +108,7 @@ Study Information:
 1. STUDY OBJECTIVES
    1.1 Primary Objective
        To evaluate ${primary_endpoint}
-       
+
    1.2 Secondary Objectives
        ${secondary_endpoints.map((endpoint, i) => `${i + 1}. To assess ${endpoint}`).join('\n       ')}
 
@@ -110,60 +116,60 @@ Study Information:
    - ${numArms}-arm, ${randomization || 'randomized'}, ${blinding || 'blinded'} study
    - Allocation ratio: ${numArms > 1 ? `1:${numArms > 2 ? numArms - 1 : 1}` : 'N/A'}
    - Stratification factors: Disease severity, age group, previous treatment
-   
+
 3. SAMPLE SIZE JUSTIFICATION
    Based on the primary endpoint (${primary_endpoint}), a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)} at a two-sided significance level of 0.05, assuming a dropout rate of ${(dropout_rate * 100).toFixed(0)}%.
-   
+
    Per-arm sample size: ${perArmSampleSize}
-   
+
 4. STATISTICAL METHODS
    4.1 Primary Analysis
-       The primary endpoint will be analyzed using ${statisticalMethods.primaryMethod}. 
+       The primary endpoint will be analyzed using ${statisticalMethods.primaryMethod}.
        Missing data will be handled using ${statisticalMethods.missingDataMethod}.
-       
+
    4.2 Secondary Analyses
        Secondary endpoints will be analyzed using appropriate statistical methods based on the data type:
        - Continuous outcomes: ${statisticalMethods.continuousMethod}
        - Binary outcomes: ${statisticalMethods.binaryMethod}
        - Time-to-event outcomes: ${statisticalMethods.timeToEventMethod}
-       
+
    4.3 Multiplicity Adjustment
        ${statisticalMethods.multiplicityMethod}
-       
+
 5. INTERIM ANALYSES
    ${statisticalMethods.interimAnalysisText}
-   
+
 6. ANALYSIS SETS
    - Intent-to-Treat (ITT): All randomized participants
    - Per-Protocol (PP): All randomized participants without major protocol deviations
    - Safety: All participants who received at least one dose of study drug
-   
+
 7. HANDLING OF MISSING DATA
    Primary approach: ${statisticalMethods.primaryMissingDataApproach}
    Sensitivity analyses: ${statisticalMethods.sensitivityAnalyses}
-   
+
 8. SAFETY ANALYSES
    Adverse events will be coded using MedDRA and summarized by treatment group, severity, and relationship to study drug.
-   
+
    Laboratory parameters, vital signs, and ECG data will be summarized using descriptive statistics and shift tables.
-   
+
 9. EXPLORATORY ANALYSES
    Subgroup analyses will be performed for:
    - Age groups (<65, ≥65 years)
    - Sex
    - Disease severity
    - Prior treatment history
-   
+
 10. DATA HANDLING CONVENTIONS
     - Continuous variables: mean, SD, median, min, max
     - Categorical variables: counts and percentages
     - Missing data codes: explicitly defined for database
-    
+
 11. REPORTING CONVENTIONS
     - P-values will be reported to 3 decimal places
     - Percentages will be reported to 1 decimal place
     - All confidence intervals will be reported at 95% level
-    
+
 12. AMENDMENTS TO THE SAP
     Any amendments to this SAP will be documented with justification and version control.
 `;
@@ -197,10 +203,13 @@ Study Information:
    */
   private async findSimilarProtocols(indication: string, phase: string) {
     try {
-      const similarTrials = await db
+      const dbInstance = this.getDb();
+      const similarTrials = await dbInstance
         .select()
-        .from(trials)
-        .where(and(like(trials.indication, `%${indication}%`), like(trials.phase, `%${phase}%`)))
+        .from(csrReports)
+        .where(
+          and(like(csrReports.indication, `%${indication}%`), like(csrReports.phase, `%${phase}%`))
+        )
         .limit(10);
 
       return similarTrials;
@@ -218,10 +227,11 @@ Study Information:
   private async storeSapSegments(protocolId: string, sapContent: string) {
     try {
       // Find the associated report ID
-      const protocol = await db
+      const dbInstance = this.getDb();
+      const protocol = await dbInstance
         .select()
-        .from(trials)
-        .where(eq(trials.id, parseInt(protocolId)))
+        .from(csrReports)
+        .where(eq(csrReports.id, parseInt(protocolId)))
         .limit(1);
 
       if (protocol.length === 0) {
@@ -232,22 +242,10 @@ Study Information:
       // Extract sections from SAP content
       const sections = this.extractSapSections(sapContent);
 
-      // Store each section in the csrSegments table
-      for (const [section, content] of Object.entries(sections)) {
-        const segment: InsertCsrSegment = {
-          reportId: protocol[0].id,
-          segmentNumber: Object.keys(sections).indexOf(section) + 1,
-          segmentType: 'sap',
-          content: content,
-          embedding: '[]', // Empty embedding array as placeholder
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        await db.insert(csrSegments).values(segment);
-      }
-
-      console.log(`Stored SAP segments for protocol ${protocolId}`);
+      console.log(`SAP segments extracted for protocol ${protocolId}`, {
+        reportId: protocol[0].id,
+        sections: Object.keys(sections).length,
+      });
     } catch (error) {
       console.error('Error storing SAP segments:', error);
     }
@@ -428,16 +426,25 @@ Study Information:
    * @param protocolId The protocol ID
    * @returns Array of SAP segments
    */
-  async getSapSegmentsByProtocolId(protocolId: string): Promise<CsrSegment[]> {
+  async getSapSegmentsByProtocolId(protocolId: string): Promise<
+    Array<{
+      section: string;
+      content: string;
+      order: number;
+    }>
+  > {
     try {
-      const segments = await db
-        .select()
-        .from(csrSegments)
-        .innerJoin(trials, eq(csrSegments.reportId, trials.id))
-        .where(eq(trials.id, parseInt(protocolId)))
-        .orderBy(csrSegments.createdAt);
+      const sapContent = await this.getSapByProtocolId(protocolId);
+      if (!sapContent) {
+        return [];
+      }
 
-      return segments.map(row => row.csr_segments);
+      const sections = this.extractSapSections(sapContent);
+      return Object.entries(sections).map(([section, content], index) => ({
+        section,
+        content,
+        order: index + 1,
+      }));
     } catch (error) {
       console.error('Error retrieving SAP segments:', error);
       return [];
@@ -456,10 +463,11 @@ Study Information:
   ): Promise<GeneratedSapData | null> {
     try {
       // Get current protocol data
-      const protocol = await db
+      const dbInstance = this.getDb();
+      const protocol = await dbInstance
         .select()
-        .from(trials)
-        .where(eq(trials.id, parseInt(protocolId)))
+        .from(csrReports)
+        .where(eq(csrReports.id, parseInt(protocolId)))
         .limit(1);
 
       if (protocol.length === 0) {
@@ -470,8 +478,8 @@ Study Information:
       // Build updated request data
       const requestData: SapRequestData = {
         protocol_id: protocolId,
-        indication: updatedData.indication || protocol[0].indication,
-        phase: updatedData.phase || protocol[0].phase,
+        indication: updatedData.indication || protocol[0].indication || 'Unknown',
+        phase: updatedData.phase || protocol[0].phase || 'Unknown',
         sample_size: updatedData.sample_size || 100, // Default value
         primary_endpoint: updatedData.primary_endpoint || 'treatment efficacy',
         // Add other fields with sensible defaults

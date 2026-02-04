@@ -11,7 +11,10 @@ const router = Router();
  */
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const reports = await db.select().from(strategicReports).orderBy(strategicReports.created_at);
+    if (!db) {
+      return res.status(500).json({ error: 'Database connection unavailable' });
+    }
+    const reports = await db.select().from(strategicReports).orderBy(strategicReports.createdAt);
     return res.status(200).json(reports);
   } catch (error) {
     console.error('Error fetching strategic reports:', error);
@@ -25,6 +28,9 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!db) {
+      return res.status(500).json({ error: 'Database connection unavailable' });
+    }
     const [report] = await db
       .select()
       .from(strategicReports)
@@ -47,6 +53,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/generate/:protocolId', async (req: Request, res: Response) => {
   try {
     const { protocolId } = req.params;
+    if (!db) {
+      return res.status(500).json({ error: 'Database connection unavailable' });
+    }
 
     // Fetch protocol data
     const [protocol] = await db
@@ -58,11 +67,18 @@ router.post('/generate/:protocolId', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Protocol not found' });
     }
 
+    if (!protocol.indication || !protocol.phase) {
+      return res.status(400).json({
+        error: 'Protocol indication and phase are required to generate a strategic report',
+      });
+    }
+
     // Check if a strategic report already exists for this protocol
+    const protocolReportId = `protocol-${protocolId}`;
     const [existingReport] = await db
       .select()
       .from(strategicReports)
-      .where(eq(strategicReports.protocol_id, parseInt(protocolId)));
+      .where(eq(strategicReports.reportId, protocolReportId));
 
     if (existingReport) {
       return res.status(200).json({
@@ -72,16 +88,34 @@ router.post('/generate/:protocolId', async (req: Request, res: Response) => {
     }
 
     // Parse primary endpoints
+    const protocolMetadata = (protocol.metadata || {}) as Record<string, any>;
+    const protocolContent = (protocol.content || {}) as Record<string, any>;
+    const rawPrimaryEndpoints =
+      protocolMetadata.primaryEndpoints ??
+      protocolContent.primaryEndpoints ??
+      protocolMetadata.primary_endpoints ??
+      protocolContent.primary_endpoints;
+
     let primaryEndpoints: string[] = [];
-    if (protocol.primary_endpoints) {
+    if (rawPrimaryEndpoints) {
       try {
-        primaryEndpoints = Array.isArray(protocol.primary_endpoints)
-          ? protocol.primary_endpoints
-          : JSON.parse(protocol.primary_endpoints as string);
+        primaryEndpoints = Array.isArray(rawPrimaryEndpoints)
+          ? rawPrimaryEndpoints
+          : JSON.parse(rawPrimaryEndpoints as string);
       } catch (e) {
-        primaryEndpoints = [protocol.primary_endpoints as string];
+        primaryEndpoints = [rawPrimaryEndpoints as string];
       }
     }
+
+    const sampleSize =
+      Number(protocolMetadata.sampleSize ?? protocolContent.sampleSize ?? 100) || 100;
+    const duration = Number(protocolMetadata.duration ?? protocolContent.duration ?? 12) || 12;
+    const controlType = (protocolMetadata.controlType ??
+      protocolContent.controlType ??
+      'placebo') as string;
+    const blinding = (protocolMetadata.blinding ??
+      protocolContent.blinding ??
+      'double-blind') as string;
 
     // Generate strategic report
     const reportId = await strategicReportGenerator.generateReport(
@@ -89,10 +123,10 @@ router.post('/generate/:protocolId', async (req: Request, res: Response) => {
       protocol.indication,
       protocol.phase,
       primaryEndpoints,
-      protocol.sample_size || 100,
-      protocol.duration || 12,
-      protocol.control_type || 'placebo',
-      protocol.blinding || 'double-blind'
+      sampleSize,
+      duration,
+      controlType,
+      blinding
     );
 
     return res.status(201).json({
@@ -113,6 +147,9 @@ router.post('/generate/:protocolId', async (req: Request, res: Response) => {
  */
 router.post('/generate-manual', async (req: Request, res: Response) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: 'Database connection unavailable' });
+    }
     const {
       protocolId,
       indication,
@@ -157,6 +194,9 @@ router.post('/generate-manual', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!db) {
+      return res.status(500).json({ error: 'Database connection unavailable' });
+    }
 
     // Check if report exists
     const [report] = await db

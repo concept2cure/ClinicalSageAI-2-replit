@@ -49,6 +49,10 @@ export async function generateStrategyAnalysis(params: StrategyAnalysisParams) {
  * Get relevant CSR context for the strategy analysis
  */
 async function getRelevantCSRContext(params: StrategyAnalysisParams): Promise<TrialContextItem[]> {
+  const database = db;
+  if (!database) {
+    return [];
+  }
   // Query for relevant CSRs based on indication and phase (if provided)
   const filters = [];
 
@@ -65,7 +69,7 @@ async function getRelevantCSRContext(params: StrategyAnalysisParams): Promise<Tr
   }
 
   // Get matching reports - limit to 5 most relevant
-  const reports = await db
+  const reports = await database
     .select()
     .from(csrReports)
     .where(filters.length > 0 ? filters[0] : undefined)
@@ -75,18 +79,18 @@ async function getRelevantCSRContext(params: StrategyAnalysisParams): Promise<Tr
   // Get details for these reports
   const reportDetails = await Promise.all(
     reports.map(async report => {
-      const [details] = await db
+      const [details] = await database
         .select()
         .from(csrDetails)
         .where(eq(csrDetails.reportId, report.id));
 
       return {
         id: report.id,
-        title: report.title,
-        sponsor: report.sponsor,
-        indication: report.indication,
-        phase: report.phase,
-        summary: details?.studyDescription || undefined,
+        title: report.title ?? 'Untitled',
+        sponsor: report.sponsor ?? 'Unknown Sponsor',
+        indication: report.indication ?? 'Unknown Indication',
+        phase: report.phase ?? 'Unknown Phase',
+        summary: details?.studyDesign || details?.primaryObjective || undefined,
       };
     })
   );
@@ -101,6 +105,10 @@ async function getRelevantCSRContext(params: StrategyAnalysisParams): Promise<Tr
 async function getRelevantCTGovContext(
   params: StrategyAnalysisParams
 ): Promise<TrialContextItem[]> {
+  const database = db;
+  if (!database) {
+    return [];
+  }
   // Get additional trials that may not be in the CSR database but are similar
   const filters = [];
 
@@ -119,7 +127,7 @@ async function getRelevantCTGovContext(
   }
 
   // Get additional matching reports - this time focus on recent reports and different sponsors
-  const reports = await db
+  const reports = await database
     .select()
     .from(csrReports)
     .where(filters.length > 0 ? filters[0] : undefined)
@@ -128,10 +136,10 @@ async function getRelevantCTGovContext(
 
   return reports.map(report => ({
     id: report.id,
-    title: report.title,
-    sponsor: report.sponsor,
-    indication: report.indication,
-    phase: report.phase,
+    title: report.title ?? 'Untitled',
+    sponsor: report.sponsor ?? 'Unknown Sponsor',
+    indication: report.indication ?? 'Unknown Indication',
+    phase: report.phase ?? 'Unknown Phase',
   }));
 }
 
@@ -189,20 +197,20 @@ ${ctgovContextText}
 
 Based on this high-value proprietary database of clinical study reports, provide a comprehensive strategic analysis that will deliver measurable business impact across:
 
-1. R&D STRATEGY  
+1. R&D STRATEGY
 - Analyze the positioning relative to ${competitors.size} identified competitors in this space
 - Identify specific scientific and methodological advantages over competitor approaches
 - Recommend 3-5 concrete R&D focus areas with justification from precedent
 - Evaluate protocol strengths and weaknesses compared to similar trials
 
-2. CLINICAL DEVELOPMENT OPTIMIZATION  
+2. CLINICAL DEVELOPMENT OPTIMIZATION
 - Recommend concrete endpoint selection based on similar successful trials
 - Provide specific enrollment criteria optimization based on past trial success rates
 - Suggest optimal sample size and statistical power considerations
 - Identify potential protocol amendments that would increase success probability
 - Recommend specific operational efficiencies based on similar trial execution patterns
 
-3. MARKET & COMMERCIAL STRATEGY  
+3. MARKET & COMMERCIAL STRATEGY
 - Analyze market positioning in the ${Array.from(indications).join(', ')} space
 - Identify specific competitive advantages and differentiation opportunities
 - Suggest concrete pricing and market access considerations

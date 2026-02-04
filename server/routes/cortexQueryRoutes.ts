@@ -32,6 +32,7 @@ import { getRAGPipeline, RetrievalOptions } from '../services/advancedRAGPipelin
 interface CortexQueryRequest {
   query: string;
   mode?: 'search' | 'generate' | 'advisory' | 'graph';
+  persistCitations?: boolean;
   options?: {
     retrievalStrategy?: 'basic' | 'hyde' | 'multi_query' | 'advanced';
     aiStrategy?: RoutingStrategy;
@@ -59,6 +60,10 @@ interface CortexQueryResponse {
     answer?: string;
     sources?: Array<{
       id: string;
+      documentId?: string;
+      chunkId?: string;
+      locator?: string;
+      pageNumber?: number;
       title: string;
       content: string;
       score: number;
@@ -115,10 +120,22 @@ router.post('/query', async (req: Request, res: Response) => {
     }
 
     const body = req.body as CortexQueryRequest;
-    const { query, mode = 'generate', options = {}, context = {} } = body;
+    const { query, mode = 'generate', options = {}, context = {}, persistCitations } = body;
+    const organizationUuid =
+      req.tenantContext?.organizationUuid || (req.headers['x-org-uuid'] as string | undefined);
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'Query string is required' });
+    }
+
+    if (persistCitations && !organizationUuid) {
+      return res.status(400).json({
+        error: 'organizationUuid is required when persistCitations is enabled',
+      });
+    }
+
+    if (!organizationUuid) {
+      console.warn('[Cortex] Missing organizationUuid; RLS may return empty results.');
     }
 
     let response: CortexQueryResponse;
@@ -128,13 +145,19 @@ router.post('/query', async (req: Request, res: Response) => {
         response = await handleSearchMode(query, options);
         break;
       case 'generate':
-        response = await handleGenerateMode(query, options, context);
+        response = await handleGenerateMode(
+          query,
+          options,
+          context,
+          organizationUuid,
+          persistCitations
+        );
         break;
       case 'graph':
         response = await handleGraphMode(query, options);
         break;
       case 'advisory':
-        response = await handleAdvisoryMode(query, options, context);
+        response = await handleAdvisoryMode(query, options, context, organizationUuid);
         break;
       default:
         return res.status(400).json({ error: `Unknown mode: ${mode}` });
@@ -198,7 +221,9 @@ async function handleSearchMode(
 async function handleGenerateMode(
   query: string,
   options: CortexQueryRequest['options'],
-  context: CortexQueryRequest['context']
+  context: CortexQueryRequest['context'],
+  organizationUuid?: string,
+  persistCitations?: boolean
 ): Promise<CortexQueryResponse> {
   const ragPipeline = getRAGPipeline(pool!);
   const aiRouter = getAIRouter(pool!);
@@ -212,6 +237,8 @@ async function handleGenerateMode(
     useMmr: true,
     mmrLambda: 0.7,
     useCompression: true,
+    organizationUuid,
+    persistCitations: !!persistCitations,
     filters: options?.filters
       ? {
           atomType: options.filters.atomType,
@@ -230,6 +257,10 @@ async function handleGenerateMode(
       answer: result.answer,
       sources: result.sources.map(s => ({
         id: s.id,
+        documentId: s.documentId,
+        chunkId: s.chunkId,
+        locator: s.locator,
+        pageNumber: s.pageNumber,
         title: s.title,
         content: s.compressedContent || s.content,
         score: s.finalScore,
@@ -334,7 +365,8 @@ async function handleGraphMode(
 async function handleAdvisoryMode(
   query: string,
   options: CortexQueryRequest['options'],
-  context: CortexQueryRequest['context']
+  context: CortexQueryRequest['context'],
+  organizationUuid?: string
 ): Promise<CortexQueryResponse> {
   const aiRouter = getAIRouter(pool!);
   const ragPipeline = getRAGPipeline(pool!);
@@ -344,6 +376,7 @@ async function handleAdvisoryMode(
     strategy: 'advanced',
     limit: 5,
     useReranking: true,
+    organizationUuid,
   });
 
   // Build advisory prompt
@@ -407,6 +440,10 @@ Provide your regulatory advisory analysis:`,
       },
       sources: ragContext.documents.map(d => ({
         id: d.id,
+        documentId: d.documentId,
+        chunkId: d.chunkId,
+        locator: d.locator,
+        pageNumber: d.pageNumber,
         title: d.title,
         content: d.content.slice(0, 200),
         score: d.finalScore,

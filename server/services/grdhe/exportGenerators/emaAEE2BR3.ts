@@ -1,10 +1,10 @@
 /**
  * EMA E2B(R3) XML Export Generator
- * 
+ *
  * Generates EMA-compliant XML for adverse event reporting per ICH E2B(R3) guidelines.
  * This implementation follows the HL7 Version 3 Individual Case Safety Report (ICSR) format
  * as required by EudraVigilance.
- * 
+ *
  * @version 1.0.0
  * @compliance ICH E2B(R3), EudraVigilance, EU MDR 2017/745
  * @reference https://www.ema.europa.eu/en/human-regulatory-overview/post-authorisation/pharmacovigilance/eudravigilance
@@ -18,7 +18,7 @@ import {
   ValidationError,
   ValidationWarning,
   ExportResult,
-  CODE_SYSTEMS
+  CODE_SYSTEMS,
 } from '../types';
 
 // Type assertion helper for flexible data access from canonical model
@@ -35,77 +35,77 @@ const EMA_SENDER_OID = '2.16.840.1.113883.3.989.2.1.1'; // EMA EudraVigilance OI
 
 // ICH E2B(R3) code lists
 const E2B_REPORT_TYPE: Record<string, string> = {
-  'spontaneous': '1',
-  'clinical_study': '2',
-  'other': '3',
-  'not_available': '4'
+  spontaneous: '1',
+  clinical_study: '2',
+  other: '3',
+  not_available: '4',
 };
 
 const E2B_SERIOUSNESS: Record<string, string> = {
-  'death': '1',
-  'life_threatening': '2',
-  'hospitalization': '3',
-  'prolonged_hospitalization': '3',
-  'disability': '4',
-  'congenital_anomaly': '5',
-  'other_medically_important': '6'
+  death: '1',
+  life_threatening: '2',
+  hospitalization: '3',
+  prolonged_hospitalization: '3',
+  disability: '4',
+  congenital_anomaly: '5',
+  other_medically_important: '6',
 };
 
 const E2B_SEX: Record<string, string> = {
-  'male': '1',
-  'female': '2',
-  'unknown': '0'
+  male: '1',
+  female: '2',
+  unknown: '0',
 };
 
 const E2B_AGE_GROUP: Record<string, string> = {
-  'neonate': '1',
-  'infant': '2',
-  'child': '3',
-  'adolescent': '4',
-  'adult': '5',
-  'elderly': '6'
+  neonate: '1',
+  infant: '2',
+  child: '3',
+  adolescent: '4',
+  adult: '5',
+  elderly: '6',
 };
 
 const E2B_OUTCOME: Record<string, string> = {
-  'recovered': '1',
-  'recovering': '2',
-  'not_recovered': '3',
-  'recovered_with_sequelae': '4',
-  'fatal': '5',
-  'unknown': '6'
+  recovered: '1',
+  recovering: '2',
+  not_recovered: '3',
+  recovered_with_sequelae: '4',
+  fatal: '5',
+  unknown: '6',
 };
 
 const E2B_CAUSALITY: Record<string, string> = {
-  'certain': '1',
-  'probable': '2',
-  'possible': '3',
-  'unlikely': '4',
-  'conditional': '5',
-  'unassessable': '6',
-  'not_assessed': '0'
+  certain: '1',
+  probable: '2',
+  possible: '3',
+  unlikely: '4',
+  conditional: '5',
+  unassessable: '6',
+  not_assessed: '0',
 };
 
 const E2B_ACTION_TAKEN: Record<string, string> = {
-  'withdrawn': '1',
-  'dose_reduced': '2',
-  'dose_increased': '3',
-  'dose_not_changed': '4',
-  'unknown': '5',
-  'not_applicable': '6'
+  withdrawn: '1',
+  dose_reduced: '2',
+  dose_increased: '3',
+  dose_not_changed: '4',
+  unknown: '5',
+  not_applicable: '6',
 };
 
 const E2B_RECHALLENGE: Record<string, string> = {
-  'positive': '1',
-  'negative': '2',
-  'not_performed': '3',
-  'unknown': '4'
+  positive: '1',
+  negative: '2',
+  not_performed: '3',
+  unknown: '4',
 };
 
 const E2B_DRUG_ROLE: Record<string, string> = {
-  'suspect': '1',
-  'concomitant': '2',
-  'interacting': '3',
-  'not_administered': '4'
+  suspect: '1',
+  concomitant: '2',
+  interacting: '3',
+  not_administered: '4',
 };
 
 // =============================================================================
@@ -118,11 +118,11 @@ const E2B_DRUG_ROLE: Record<string, string> = {
 function formatE2BDate(date: Date | string | undefined, precision: string = 'day'): string {
   if (!date) return '';
   const d = new Date(date);
-  
+
   const year = d.getFullYear().toString();
   const month = (d.getMonth() + 1).toString().padStart(2, '0');
   const day = d.getDate().toString().padStart(2, '0');
-  
+
   switch (precision) {
     case 'year':
       return year;
@@ -140,7 +140,10 @@ function formatE2BDate(date: Date | string | undefined, precision: string = 'day
 function formatE2BDateTime(date: Date | string | undefined): string {
   if (!date) return '';
   const d = new Date(date);
-  return d.toISOString().replace(/[-:T]/g, '').replace(/\.\d{3}Z/, '');
+  return d
+    .toISOString()
+    .replace(/[-:T]/g, '')
+    .replace(/\.\d{3}Z/, '');
 }
 
 /**
@@ -171,41 +174,47 @@ function cdataWrap(value: string | undefined): string {
  * Generate UUID for message ID
  */
 function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  }).toUpperCase();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(/[xy]/g, c => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    })
+    .toUpperCase();
 }
 
 /**
  * Calculate age from birthdate
  */
-function calculateAge(birthDate: Date | string | undefined, eventDate: Date | string | undefined): { value: number; unit: string } | null {
+function calculateAge(
+  birthDate: Date | string | undefined,
+  eventDate: Date | string | undefined
+): { value: number; unit: string } | null {
   if (!birthDate || !eventDate) return null;
-  
+
   const birth = new Date(birthDate);
   const event = new Date(eventDate);
-  
+
   let years = event.getFullYear() - birth.getFullYear();
   const monthDiff = event.getMonth() - birth.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && event.getDate() < birth.getDate())) {
     years--;
   }
-  
+
   if (years >= 1) {
     return { value: years, unit: 'a' }; // years
   }
-  
+
   // Calculate months for infants
-  let months = (event.getFullYear() - birth.getFullYear()) * 12 + (event.getMonth() - birth.getMonth());
+  let months =
+    (event.getFullYear() - birth.getFullYear()) * 12 + (event.getMonth() - birth.getMonth());
   if (event.getDate() < birth.getDate()) months--;
-  
+
   if (months >= 1) {
     return { value: months, unit: 'mo' }; // months
   }
-  
+
   // Calculate days for neonates
   const days = Math.floor((event.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
   return { value: days, unit: 'd' }; // days
@@ -225,13 +234,13 @@ function mapSexCode(sex: string | undefined): string {
 function mapOutcomeCode(outcome: string | undefined): string {
   if (!outcome) return '6';
   const lower = outcome.toLowerCase().replace(/_/g, ' ');
-  
+
   if (lower.includes('recover') && lower.includes('sequelae')) return '4';
   if (lower.includes('recover') && lower.includes('ing')) return '2';
   if (lower.includes('recover')) return '1';
   if (lower.includes('fatal') || lower.includes('death')) return '5';
   if (lower.includes('not recover')) return '3';
-  
+
   return E2B_OUTCOME[outcome.toLowerCase()] || '6';
 }
 
@@ -241,13 +250,14 @@ function mapOutcomeCode(outcome: string | undefined): string {
 function mapActionTakenCode(action: string | undefined): string {
   if (!action) return '5';
   const lower = action.toLowerCase();
-  
-  if (lower.includes('withdraw') || lower.includes('discontinue') || lower.includes('stop')) return '1';
+
+  if (lower.includes('withdraw') || lower.includes('discontinue') || lower.includes('stop'))
+    return '1';
   if (lower.includes('reduc')) return '2';
   if (lower.includes('increas')) return '3';
   if (lower.includes('not change') || lower.includes('maintain')) return '4';
   if (lower.includes('not applicable')) return '6';
-  
+
   return '5';
 }
 
@@ -258,23 +268,26 @@ function mapActionTakenCode(action: string | undefined): string {
 /**
  * Validate adverse event for E2B(R3) submission
  */
-export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: ValidationError[]; warnings: ValidationWarning[] } {
+export function validateForE2BR3(event: CanonicalAdverseEvent): {
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+} {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   // Cast to any for flexible property access
   const patient = event.patient as AnyData | undefined;
   const reporter = event.reporter as AnyData | undefined;
 
   // Required fields per ICH E2B(R3)
-  
+
   // C.1.1 - Sender's Safety Report Unique Identifier
   if (!event.caseNumber) {
     errors.push({
       code: 'E2B-C.1.1',
       field: 'caseNumber',
       message: 'C.1.1 - Safety report unique identifier is required',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
@@ -284,7 +297,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-C.1.2',
       field: 'createdAt',
       message: 'C.1.2 - Date of creation is required',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
@@ -294,7 +307,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-C.1.4',
       field: 'receiveDate',
       message: 'C.1.4 - Date report was first received is required',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
@@ -304,7 +317,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-W-C.1.8.1',
       field: 'worldwideCaseId',
       message: 'C.1.8.1 - Worldwide unique case identification is recommended',
-      severity: 'warning'
+      severity: 'warning',
     });
   }
 
@@ -314,7 +327,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-D',
       field: 'patient',
       message: 'D - Patient information section is required',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // D.2 - Age Information
@@ -323,7 +336,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
         code: 'E2B-W-D.2',
         field: 'patient.age',
         message: 'D.2 - Patient age information is recommended',
-        severity: 'warning'
+        severity: 'warning',
       });
     }
 
@@ -333,7 +346,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
         code: 'E2B-W-D.5',
         field: 'patient.sex',
         message: 'D.5 - Patient sex is recommended',
-        severity: 'warning'
+        severity: 'warning',
       });
     }
   }
@@ -345,7 +358,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-E',
       field: 'reactions',
       message: 'E - At least one reaction/event is required',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // E.i.1 - Reaction/Event as Reported by Primary Source
@@ -355,7 +368,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
           code: `E2B-E.i.1[${index}]`,
           field: `reactions[${index}].reaction_term`,
           message: `E.i.1 - Reaction ${index + 1}: Reaction term as reported is required`,
-          severity: 'error'
+          severity: 'error',
         });
       }
 
@@ -365,7 +378,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
           code: `E2B-E.i.2.1b[${index}]`,
           field: `reactions[${index}].meddra_pt_code`,
           message: `E.i.2.1b - Reaction ${index + 1}: MedDRA Preferred Term code is required`,
-          severity: 'error'
+          severity: 'error',
         });
       }
     });
@@ -378,7 +391,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-G',
       field: 'suspectProducts',
       message: 'G - At least one suspect drug is required',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // G.k.1 - Characterisation of Drug Role
@@ -388,7 +401,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
           code: `E2B-G.k.2.2[${index}]`,
           field: `suspectProducts[${index}].product_name`,
           message: `G.k.2.2 - Product ${index + 1}: Medicinal product name is required`,
-          severity: 'error'
+          severity: 'error',
         });
       }
     });
@@ -400,7 +413,7 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
       code: 'E2B-C.2',
       field: 'reporter',
       message: 'C.2 - Primary source (reporter) information is required',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // C.2.r.4 - Qualification
@@ -409,27 +422,27 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): { errors: Valida
         code: 'E2B-W-C.2.r.4',
         field: 'reporter.qualification',
         message: 'C.2.r.4 - Reporter qualification is recommended',
-        severity: 'warning'
+        severity: 'warning',
       });
     }
   }
 
   // C.1.7 - Seriousness
   if (event.isSerious) {
-    const hasCriteria = 
+    const hasCriteria =
       event.seriousnessDeath ||
       event.seriousnessLifeThreatening ||
       event.seriousnessHospitalization ||
       event.seriousnessDisability ||
       event.seriousnessCongenitalAnomaly ||
       event.seriousnessOtherMedicallyImportant;
-    
+
     if (!hasCriteria) {
       errors.push({
         code: 'E2B-C.1.7',
         field: 'seriousness',
         message: 'C.1.7 - At least one seriousness criterion must be specified when serious',
-        severity: 'error'
+        severity: 'error',
       });
     }
   }
@@ -455,7 +468,7 @@ export function generateE2BR3XML(
     return {
       success: false,
       errors: validation.errors,
-      warnings: validation.warnings
+      warnings: validation.warnings,
     };
   }
 
@@ -472,7 +485,7 @@ export function generateE2BR3XML(
   Case Number: ${event.caseNumber}
 -->
 <ichicsr xmlns="${E2B_NAMESPACE}" lang="en">
-  
+
   <!-- ICH ICSR Message Header -->
   <ichicsrmessageheader>
     <messagetype>ichicsr</messagetype>
@@ -484,37 +497,37 @@ export function generateE2BR3XML(
     <messagedateformat>204</messagedateformat>
     <messagedate>${creationTime}</messagedate>
   </ichicsrmessageheader>
-  
+
   <!-- Safety Report -->
   <safetyreport>
-    
+
     <!-- C.1 - Identification of the Case Safety Report -->
 ${generateSafetyReportId(event, meddraVersion)}
-    
+
     <!-- C.2 - Primary Source(s) of Information -->
 ${generatePrimarySources(event)}
-    
+
     <!-- C.3 - Information on Sender of Case Safety Report -->
 ${generateSenderInformation(event)}
-    
+
     <!-- C.4 - Literature Reference(s) -->
 ${generateLiteratureReferences(event)}
-    
+
     <!-- D - Patient Characteristics -->
 ${generatePatientInformation(event, meddraVersion)}
-    
+
     <!-- E - Reaction(s)/Event(s) -->
 ${generateReactions(event, meddraVersion)}
-    
+
     <!-- F - Results of Tests and Procedures -->
 ${generateTestResults(event, meddraVersion)}
-    
+
     <!-- G - Drug(s) Information -->
 ${generateDrugInformation(event, meddraVersion)}
-    
+
     <!-- H - Narrative Case Summary and Further Information -->
 ${generateNarrativeSummary(event)}
-    
+
   </safetyreport>
 </ichicsr>`;
 
@@ -532,9 +545,9 @@ ${generateNarrativeSummary(event)}
       messageId,
       creationTime,
       terminologyVersions: {
-        meddra: meddraVersion
-      }
-    }
+        meddra: meddraVersion,
+      },
+    },
   };
 }
 
@@ -545,7 +558,7 @@ function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: str
   const reportTypeCode = E2B_REPORT_TYPE[event.caseType || 'spontaneous'] || '1';
   const reporter = event.reporter as AnyData | undefined;
   const patient = event.patient as AnyData | undefined;
-  
+
   // C.1.7 Seriousness
   let seriousnessSection = '';
   if (event.isSerious) {
@@ -642,12 +655,16 @@ function generateSenderInformation(event: CanonicalAdverseEvent): string {
 function generateLiteratureReferences(event: CanonicalAdverseEvent): string {
   // Literature references from medical history or case metadata
   const refs = (event.medicalHistory as any)?.literature_references || [];
-  
+
   if (refs.length === 0) return '';
 
-  return refs.map((ref: any) => `    <literaturereference>
+  return refs
+    .map(
+      (ref: any) => `    <literaturereference>
       <literaturereference>${cdataWrap(ref.citation || ref)}</literaturereference>
-    </literaturereference>`).join('\n');
+    </literaturereference>`
+    )
+    .join('\n');
 }
 
 /**
@@ -710,7 +727,8 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
   // Death information
   let deathSection = '';
   if (event.seriousnessDeath) {
-    const deathDate = patient.death_date || reactions.find((r: AnyData) => r.outcome === 'fatal')?.resolution_date;
+    const deathDate =
+      patient.death_date || reactions.find((r: AnyData) => r.outcome === 'fatal')?.resolution_date;
     deathSection = `
       <patientdeath>
         <patientdeathdate>${formatE2BDate(deathDate)}</patientdeathdate>
@@ -722,15 +740,23 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
   let medicalHistorySection = '';
   const conditions = medicalHistory.conditions || [];
   if (conditions.length > 0) {
-    medicalHistorySection = conditions.map((condition: any, idx: number) => `
+    medicalHistorySection = conditions
+      .map(
+        (condition: any, idx: number) => `
       <medicalhistoryepisode>
         <patientepisodenamemeddraversion>${meddraVersion}</patientepisodenamemeddraversion>
         <patientepisodename>${condition.meddra_code || ''}</patientepisodename>
-        ${condition.start_date ? `<patientmedicalstartdateformat>102</patientmedicalstartdateformat>
-        <patientmedicalstartdate>${formatE2BDate(condition.start_date)}</patientmedicalstartdate>` : ''}
+        ${
+          condition.start_date
+            ? `<patientmedicalstartdateformat>102</patientmedicalstartdateformat>
+        <patientmedicalstartdate>${formatE2BDate(condition.start_date)}</patientmedicalstartdate>`
+            : ''
+        }
         <patientmedicalcontinue>${condition.ongoing ? '1' : '2'}</patientmedicalcontinue>
         ${condition.comments ? `<patientmedicalcomment>${cdataWrap(condition.comments)}</patientmedicalcomment>` : ''}
-      </medicalhistoryepisode>`).join('\n');
+      </medicalhistoryepisode>`
+      )
+      .join('\n');
   }
 
   return `    <patient>
@@ -747,27 +773,41 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
  */
 function generateReactions(event: CanonicalAdverseEvent, meddraVersion: string): string {
   const reactions = (event.reactions || []) as AnyData[];
-  
-  return reactions.map((reaction: AnyData, index: number) => {
-    const outcomeCode = mapOutcomeCode(reaction.outcome);
-    
-    return `    <reaction>
+
+  return reactions
+    .map((reaction: AnyData, index: number) => {
+      const outcomeCode = mapOutcomeCode(reaction.outcome);
+
+      return `    <reaction>
       <primarysourcereaction>${cdataWrap(reaction.reaction_term || reaction.meddra_pt || '')}</primarysourcereaction>
       <reactionmeddraversionllt>${meddraVersion}</reactionmeddraversionllt>
       <reactionmeddrallt>${reaction.meddra_llt_code || reaction.meddra_pt_code || ''}</reactionmeddrallt>
       <reactionmeddraversionpt>${meddraVersion}</reactionmeddraversionpt>
       <reactionmeddrapt>${reaction.meddra_pt_code || ''}</reactionmeddrapt>
-      ${reaction.onset_date ? `<reactionstartdateformat>102</reactionstartdateformat>
-      <reactionstartdate>${formatE2BDate(reaction.onset_date)}</reactionstartdate>` : ''}
-      ${reaction.resolution_date ? `<reactionenddateformat>102</reactionenddateformat>
-      <reactionenddate>${formatE2BDate(reaction.resolution_date)}</reactionenddate>` : ''}
-      ${reaction.duration_value ? `<reactionduration>${reaction.duration_value}</reactionduration>
-      <reactiondurationunit>${CODE_SYSTEMS.ICH_AGE_UNIT[reaction.duration_unit || 'd'] || 'd'}</reactiondurationunit>` : ''}
+      ${
+        reaction.onset_date
+          ? `<reactionstartdateformat>102</reactionstartdateformat>
+      <reactionstartdate>${formatE2BDate(reaction.onset_date)}</reactionstartdate>`
+          : ''
+      }
+      ${
+        reaction.resolution_date
+          ? `<reactionenddateformat>102</reactionenddateformat>
+      <reactionenddate>${formatE2BDate(reaction.resolution_date)}</reactionenddate>`
+          : ''
+      }
+      ${
+        reaction.duration_value
+          ? `<reactionduration>${reaction.duration_value}</reactionduration>
+      <reactiondurationunit>${CODE_SYSTEMS.ICH_AGE_UNIT[reaction.duration_unit || 'd'] || 'd'}</reactiondurationunit>`
+          : ''
+      }
       <reactionfirsttime>${reaction.time_to_onset_value || ''}</reactionfirsttime>
       <reactionfirsttimeunit>${CODE_SYSTEMS.ICH_AGE_UNIT[reaction.time_to_onset_unit || 'd'] || ''}</reactionfirsttimeunit>
       <reactionoutcome>${outcomeCode}</reactionoutcome>
     </reaction>`;
-  }).join('\n');
+    })
+    .join('\n');
 }
 
 /**
@@ -775,10 +815,12 @@ function generateReactions(event: CanonicalAdverseEvent, meddraVersion: string):
  */
 function generateTestResults(event: CanonicalAdverseEvent, meddraVersion: string): string {
   const tests = (event.medicalHistory as any)?.lab_tests || [];
-  
+
   if (tests.length === 0) return '';
 
-  return tests.map((test: any) => `    <test>
+  return tests
+    .map(
+      (test: any) => `    <test>
       <testdateformat>102</testdateformat>
       <testdate>${formatE2BDate(test.test_date)}</testdate>
       <testname>${cdataWrap(test.test_name || '')}</testname>
@@ -787,7 +829,9 @@ function generateTestResults(event: CanonicalAdverseEvent, meddraVersion: string
       <lowtestrange>${test.low_range || ''}</lowtestrange>
       <hightestrange>${test.high_range || ''}</hightestrange>
       <moreinformation>${test.abnormal ? '1' : '2'}</moreinformation>
-    </test>`).join('\n');
+    </test>`
+    )
+    .join('\n');
 }
 
 /**
@@ -800,18 +844,19 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
 
   const allProducts = [
     ...suspectProducts.map((p: AnyData) => ({ ...p, role: 'suspect' })),
-    ...concomitantProducts.map((p: AnyData) => ({ ...p, role: 'concomitant' }))
+    ...concomitantProducts.map((p: AnyData) => ({ ...p, role: 'concomitant' })),
   ];
 
-  return allProducts.map((product, index) => {
-    const roleCode = E2B_DRUG_ROLE[product.role || 'suspect'] || '1';
-    const actionCode = mapActionTakenCode(product.action_taken);
-    
-    let rechallengeCode = '3'; // not performed
-    if (product.rechallenge === true) rechallengeCode = '1';
-    else if (product.rechallenge === false) rechallengeCode = '2';
+  return allProducts
+    .map((product, index) => {
+      const roleCode = E2B_DRUG_ROLE[product.role || 'suspect'] || '1';
+      const actionCode = mapActionTakenCode(product.action_taken);
 
-    return `    <drug>
+      let rechallengeCode = '3'; // not performed
+      if (product.rechallenge === true) rechallengeCode = '1';
+      else if (product.rechallenge === false) rechallengeCode = '2';
+
+      return `    <drug>
       <drugcharacterization>${roleCode}</drugcharacterization>
       <medicinalproduct>${cdataWrap(product.product_name || '')}</medicinalproduct>
       <obtaindrugcountry>${escapeXml(product.country_obtained || '')}</obtaindrugcountry>
@@ -830,11 +875,19 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
       <drugdosageform>${escapeXml(product.dosage_form || '')}</drugdosageform>
       <drugadministrationroute>${CODE_SYSTEMS.FDA_ROUTE[product.route?.toLowerCase()] || escapeXml(product.route || '')}</drugadministrationroute>
       <drugparadministration>${escapeXml(product.parent_route || '')}</drugparadministration>
-      ${product.start_date ? `<drugstartdateformat>102</drugstartdateformat>
-      <drugstartdate>${formatE2BDate(product.start_date)}</drugstartdate>` : ''}
+      ${
+        product.start_date
+          ? `<drugstartdateformat>102</drugstartdateformat>
+      <drugstartdate>${formatE2BDate(product.start_date)}</drugstartdate>`
+          : ''
+      }
       ${product.start_date_precision ? `<drugstartperiod>${product.start_date_precision}</drugstartperiod>` : ''}
-      ${product.stop_date ? `<drugenddateformat>102</drugenddateformat>
-      <drugenddate>${formatE2BDate(product.stop_date)}</drugenddate>` : ''}
+      ${
+        product.stop_date
+          ? `<drugenddateformat>102</drugenddateformat>
+      <drugenddate>${formatE2BDate(product.stop_date)}</drugenddate>`
+          : ''
+      }
       <drugtreatmentduration>${product.duration_value || ''}</drugtreatmentduration>
       <drugtreatmentdurationunit>${CODE_SYSTEMS.ICH_AGE_UNIT[product.duration_unit || 'd'] || ''}</drugtreatmentdurationunit>
       <drugindication>${cdataWrap(product.indication || '')}</drugindication>
@@ -844,7 +897,8 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
       ${generateActiveSubstances(product)}
       ${generateDrugReactionRelatedness(product, reactions, meddraVersion)}
     </drug>`;
-  }).join('\n');
+    })
+    .join('\n');
 }
 
 /**
@@ -852,38 +906,50 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
  */
 function generateActiveSubstances(product: any): string {
   const substances = product.active_substances || product.active_ingredients || [];
-  
+
   if (substances.length === 0) {
-    return product.generic_name ? `      <activesubstance>
+    return product.generic_name
+      ? `      <activesubstance>
         <activesubstancename>${escapeXml(product.generic_name)}</activesubstancename>
-      </activesubstance>` : '';
+      </activesubstance>`
+      : '';
   }
 
-  return substances.map((substance: any) => `      <activesubstance>
+  return substances
+    .map(
+      (substance: any) => `      <activesubstance>
         <activesubstancename>${escapeXml(typeof substance === 'string' ? substance : substance.name || '')}</activesubstancename>
-      </activesubstance>`).join('\n');
+      </activesubstance>`
+    )
+    .join('\n');
 }
 
 /**
  * Generate drug-reaction relatedness assessment
  */
-function generateDrugReactionRelatedness(product: any, reactions: any[], meddraVersion: string): string {
+function generateDrugReactionRelatedness(
+  product: any,
+  reactions: any[],
+  meddraVersion: string
+): string {
   const assessments = product.causality_assessments || [];
-  
+
   if (assessments.length === 0) return '';
 
-  return assessments.map((assessment: any, idx: number) => {
-    const reaction = reactions.find(r => r.meddra_pt_code === assessment.reaction_code);
-    const causalityCode = E2B_CAUSALITY[assessment.assessment?.toLowerCase()] || '0';
-    
-    return `      <drugreactionrelatedness>
+  return assessments
+    .map((assessment: any, idx: number) => {
+      const reaction = reactions.find(r => r.meddra_pt_code === assessment.reaction_code);
+      const causalityCode = E2B_CAUSALITY[assessment.assessment?.toLowerCase()] || '0';
+
+      return `      <drugreactionrelatedness>
         <drugreactionassessmeddraversion>${meddraVersion}</drugreactionassessmeddraversion>
         <drugreactionasses>${reaction?.meddra_pt_code || assessment.reaction_code || ''}</drugreactionasses>
         <drugassessmentsource>${escapeXml(assessment.source || '')}</drugassessmentsource>
         <drugassessmentmethod>${escapeXml(assessment.method || '')}</drugassessmentmethod>
         <drugresult>${escapeXml(assessment.result || assessment.assessment || '')}</drugresult>
       </drugreactionrelatedness>`;
-  }).join('\n');
+    })
+    .join('\n');
 }
 
 /**
@@ -891,15 +957,15 @@ function generateDrugReactionRelatedness(product: any, reactions: any[], meddraV
  */
 function generateNarrativeSummary(event: CanonicalAdverseEvent): string {
   const narrativeParts: string[] = [];
-  
+
   if (event.caseNarrative) {
     narrativeParts.push(event.caseNarrative);
   }
-  
+
   if (event.reporterComments) {
     narrativeParts.push(`Reporter Comments: ${event.reporterComments}`);
   }
-  
+
   if (event.senderComments) {
     narrativeParts.push(`Sender Comments: ${event.senderComments}`);
   }

@@ -1,6 +1,6 @@
 /**
  * Quota Enforcement Service
- * 
+ *
  * Real-time usage tracking and quota enforcement for license management
  * Ensures clients stay within their subscription limits for:
  * - Monthly submissions (510k, PMA, CER, AI Defense)
@@ -9,9 +9,7 @@
  * - Storage capacity
  */
 
-import { Pool } from 'pg';
-
-const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL });
+import { pool as db } from '../utils/database.js';
 
 /**
  * Get license information for an organization/client
@@ -19,14 +17,14 @@ const db = new Pool({ connectionString: process.env.DATABASE_NEON_NEW_SECRET || 
 async function getLicenseForOrganization(organizationId) {
   try {
     const result = await db.query(
-      `SELECT l.* 
+      `SELECT l.*
        FROM licenses l
        JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
        WHERE cw.organization_id = $1 AND l.status = 'active'
        LIMIT 1`,
       [organizationId]
     );
-    
+
     if (result.rows.length === 0) {
       // No license found - check if there's a direct license by client_id match
       const directResult = await db.query(
@@ -35,7 +33,7 @@ async function getLicenseForOrganization(organizationId) {
       );
       return directResult.rows[0] || null;
     }
-    
+
     return result.rows[0];
   } catch (error) {
     console.error('Error fetching license:', error);
@@ -60,7 +58,7 @@ async function getMonthlySubmissionCount(licenseId) {
          AND created_at < date_trunc('month', CURRENT_DATE) + interval '1 month'`,
       [licenseId]
     );
-    
+
     return parseInt(result.rows[0]?.count || 0);
   } catch (error) {
     console.error('Error counting submissions:', error);
@@ -82,7 +80,7 @@ async function getProjectCount(licenseId) {
        WHERE l.id = $1 AND p.status != 'deleted'`,
       [licenseId]
     );
-    
+
     return parseInt(result.rows[0]?.count || 0);
   } catch (error) {
     console.error('Error counting projects:', error);
@@ -101,7 +99,7 @@ async function getUserCount(licenseId) {
        WHERE license_id = $1 AND active = true`,
       [licenseId]
     );
-    
+
     return parseInt(result.rows[0]?.count || 0);
   } catch (error) {
     console.error('Error counting users:', error);
@@ -120,7 +118,7 @@ async function getStorageUsageGB(licenseId) {
        WHERE license_id = $1`,
       [licenseId]
     );
-    
+
     return parseFloat(result.rows[0]?.storage_gb || 0);
   } catch (error) {
     console.error('Error calculating storage:', error);
@@ -133,21 +131,22 @@ async function getStorageUsageGB(licenseId) {
  */
 export async function checkSubmissionQuota(organizationId) {
   const license = await getLicenseForOrganization(organizationId);
-  
+
   if (!license) {
     return {
       allowed: false,
       reason: 'NO_LICENSE',
-      message: 'No active license found for this organization. Please contact support to obtain a license.',
+      message:
+        'No active license found for this organization. Please contact support to obtain a license.',
       details: {
-        organizationId
-      }
+        organizationId,
+      },
     };
   }
-  
+
   const currentCount = await getMonthlySubmissionCount(license.id);
   const limit = license.max_submissions || 50;
-  
+
   if (currentCount >= limit) {
     return {
       allowed: false,
@@ -158,11 +157,11 @@ export async function checkSubmissionQuota(organizationId) {
         licenseType: license.license_type,
         currentCount,
         limit,
-        nextResetDate: getNextMonthStart()
-      }
+        nextResetDate: getNextMonthStart(),
+      },
     };
   }
-  
+
   return {
     allowed: true,
     license,
@@ -170,8 +169,8 @@ export async function checkSubmissionQuota(organizationId) {
       currentCount,
       limit,
       remaining: limit - currentCount,
-      percentUsed: Math.round((currentCount / limit) * 100)
-    }
+      percentUsed: Math.round((currentCount / limit) * 100),
+    },
   };
 }
 
@@ -180,19 +179,19 @@ export async function checkSubmissionQuota(organizationId) {
  */
 export async function checkProjectQuota(organizationId) {
   const license = await getLicenseForOrganization(organizationId);
-  
+
   if (!license) {
     return {
       allowed: false,
       reason: 'NO_LICENSE',
       message: 'No active license found for this organization.',
-      details: { organizationId }
+      details: { organizationId },
     };
   }
-  
+
   const currentCount = await getProjectCount(license.id);
   const limit = license.max_projects || 20;
-  
+
   if (currentCount >= limit) {
     return {
       allowed: false,
@@ -202,11 +201,11 @@ export async function checkProjectQuota(organizationId) {
         licenseId: license.id,
         licenseType: license.license_type,
         currentCount,
-        limit
-      }
+        limit,
+      },
     };
   }
-  
+
   return {
     allowed: true,
     license,
@@ -214,8 +213,8 @@ export async function checkProjectQuota(organizationId) {
       currentCount,
       limit,
       remaining: limit - currentCount,
-      percentUsed: Math.round((currentCount / limit) * 100)
-    }
+      percentUsed: Math.round((currentCount / limit) * 100),
+    },
   };
 }
 
@@ -224,20 +223,20 @@ export async function checkProjectQuota(organizationId) {
  */
 export async function checkStorageQuota(organizationId, fileSizeMB) {
   const license = await getLicenseForOrganization(organizationId);
-  
+
   if (!license) {
     return {
       allowed: false,
       reason: 'NO_LICENSE',
       message: 'No active license found for this organization.',
-      details: { organizationId }
+      details: { organizationId },
     };
   }
-  
+
   const currentUsageGB = await getStorageUsageGB(license.id);
   const fileSizeGB = fileSizeMB / 1024;
   const limit = license.max_storage_gb || 100;
-  
+
   if (currentUsageGB + fileSizeGB > limit) {
     return {
       allowed: false,
@@ -248,11 +247,11 @@ export async function checkStorageQuota(organizationId, fileSizeMB) {
         licenseType: license.license_type,
         currentUsageGB: currentUsageGB.toFixed(2),
         fileSizeGB: fileSizeGB.toFixed(2),
-        limit
-      }
+        limit,
+      },
     };
   }
-  
+
   return {
     allowed: true,
     license,
@@ -261,8 +260,8 @@ export async function checkStorageQuota(organizationId, fileSizeMB) {
       fileSizeGB: fileSizeGB.toFixed(2),
       limit,
       remaining: (limit - currentUsageGB).toFixed(2),
-      percentUsed: Math.round((currentUsageGB / limit) * 100)
-    }
+      percentUsed: Math.round((currentUsageGB / limit) * 100),
+    },
   };
 }
 
@@ -271,19 +270,19 @@ export async function checkStorageQuota(organizationId, fileSizeMB) {
  */
 export async function checkUserQuota(organizationId) {
   const license = await getLicenseForOrganization(organizationId);
-  
+
   if (!license) {
     return {
       allowed: false,
       reason: 'NO_LICENSE',
       message: 'No active license found for this organization.',
-      details: { organizationId }
+      details: { organizationId },
     };
   }
-  
+
   const currentCount = await getUserCount(license.id);
   const limit = license.max_users || 10;
-  
+
   if (currentCount >= limit) {
     return {
       allowed: false,
@@ -293,11 +292,11 @@ export async function checkUserQuota(organizationId) {
         licenseId: license.id,
         licenseType: license.license_type,
         currentCount,
-        limit
-      }
+        limit,
+      },
     };
   }
-  
+
   return {
     allowed: true,
     license,
@@ -305,8 +304,8 @@ export async function checkUserQuota(organizationId) {
       currentCount,
       limit,
       remaining: limit - currentCount,
-      percentUsed: Math.round((currentCount / limit) * 100)
-    }
+      percentUsed: Math.round((currentCount / limit) * 100),
+    },
   };
 }
 
@@ -321,7 +320,7 @@ export async function recordSubmission(licenseId, submissionType, fileSizeMB, cr
        RETURNING id, created_at`,
       [licenseId, submissionType, fileSizeMB || 0, createdBy || 'system']
     );
-    
+
     return result.rows[0];
   } catch (error) {
     console.error('Error recording submission:', error);
@@ -334,24 +333,24 @@ export async function recordSubmission(licenseId, submissionType, fileSizeMB, cr
  */
 export async function getUsageStatistics(organizationId) {
   const license = await getLicenseForOrganization(organizationId);
-  
+
   if (!license) {
     return null;
   }
-  
+
   const [monthlySubmissions, totalProjects, totalUsers, storageGB] = await Promise.all([
     getMonthlySubmissionCount(license.id),
     getProjectCount(license.id),
     getUserCount(license.id),
-    getStorageUsageGB(license.id)
+    getStorageUsageGB(license.id),
   ]);
-  
+
   // Safe division with null/zero protection
   const submissionsLimit = license.max_submissions || 50;
   const projectsLimit = license.max_projects || 20;
   const usersLimit = license.max_users || 10;
   const storageLimit = license.max_storage_gb || 100;
-  
+
   return {
     licenseId: license.id,
     licenseType: license.license_type,
@@ -362,28 +361,29 @@ export async function getUsageStatistics(organizationId) {
         current: monthlySubmissions,
         limit: submissionsLimit,
         remaining: Math.max(0, submissionsLimit - monthlySubmissions),
-        percentUsed: submissionsLimit > 0 ? Math.round((monthlySubmissions / submissionsLimit) * 100) : 0
+        percentUsed:
+          submissionsLimit > 0 ? Math.round((monthlySubmissions / submissionsLimit) * 100) : 0,
       },
       projects: {
         current: totalProjects,
         limit: projectsLimit,
         remaining: Math.max(0, projectsLimit - totalProjects),
-        percentUsed: projectsLimit > 0 ? Math.round((totalProjects / projectsLimit) * 100) : 0
+        percentUsed: projectsLimit > 0 ? Math.round((totalProjects / projectsLimit) * 100) : 0,
       },
       users: {
         current: totalUsers,
         limit: usersLimit,
         remaining: Math.max(0, usersLimit - totalUsers),
-        percentUsed: usersLimit > 0 ? Math.round((totalUsers / usersLimit) * 100) : 0
+        percentUsed: usersLimit > 0 ? Math.round((totalUsers / usersLimit) * 100) : 0,
       },
       storage: {
         currentGB: parseFloat(storageGB.toFixed(2)),
         limitGB: storageLimit,
         remainingGB: parseFloat((storageLimit - storageGB).toFixed(2)),
-        percentUsed: storageLimit > 0 ? Math.round((storageGB / storageLimit) * 100) : 0
-      }
+        percentUsed: storageLimit > 0 ? Math.round((storageGB / storageLimit) * 100) : 0,
+      },
     },
-    nextResetDate: getNextMonthStart()
+    nextResetDate: getNextMonthStart(),
   };
 }
 
@@ -392,14 +392,14 @@ export async function getUsageStatistics(organizationId) {
  */
 export function enforceSubmissionQuota(req, res, next) {
   const organizationId = req.organizationId || req.headers['x-organization-id'];
-  
+
   if (!organizationId) {
     return res.status(400).json({
       success: false,
-      error: 'Organization context required for quota enforcement'
+      error: 'Organization context required for quota enforcement',
     });
   }
-  
+
   checkSubmissionQuota(organizationId)
     .then(result => {
       if (!result.allowed) {
@@ -408,10 +408,10 @@ export function enforceSubmissionQuota(req, res, next) {
           error: 'Quota exceeded',
           reason: result.reason,
           message: result.message,
-          details: result.details
+          details: result.details,
         });
       }
-      
+
       // Attach license and usage info to request for downstream use
       req.license = result.license;
       req.quotaUsage = result.usage;
@@ -422,7 +422,7 @@ export function enforceSubmissionQuota(req, res, next) {
       res.status(500).json({
         success: false,
         error: 'Failed to check quota',
-        message: error.message
+        message: error.message,
       });
     });
 }
@@ -432,14 +432,14 @@ export function enforceSubmissionQuota(req, res, next) {
  */
 export function enforceProjectQuota(req, res, next) {
   const organizationId = req.organizationId || req.headers['x-organization-id'];
-  
+
   if (!organizationId) {
     return res.status(400).json({
       success: false,
-      error: 'Organization context required for quota enforcement'
+      error: 'Organization context required for quota enforcement',
     });
   }
-  
+
   checkProjectQuota(organizationId)
     .then(result => {
       if (!result.allowed) {
@@ -448,10 +448,10 @@ export function enforceProjectQuota(req, res, next) {
           error: 'Quota exceeded',
           reason: result.reason,
           message: result.message,
-          details: result.details
+          details: result.details,
         });
       }
-      
+
       req.license = result.license;
       req.quotaUsage = result.usage;
       next();
@@ -461,7 +461,7 @@ export function enforceProjectQuota(req, res, next) {
       res.status(500).json({
         success: false,
         error: 'Failed to check quota',
-        message: error.message
+        message: error.message,
       });
     });
 }
@@ -471,14 +471,14 @@ export function enforceProjectQuota(req, res, next) {
  */
 export function enforceUserQuota(req, res, next) {
   const organizationId = req.organizationId || req.headers['x-organization-id'];
-  
+
   if (!organizationId) {
     return res.status(400).json({
       success: false,
-      error: 'Organization context required for quota enforcement'
+      error: 'Organization context required for quota enforcement',
     });
   }
-  
+
   checkUserQuota(organizationId)
     .then(result => {
       if (!result.allowed) {
@@ -487,10 +487,10 @@ export function enforceUserQuota(req, res, next) {
           error: 'Quota exceeded',
           reason: result.reason,
           message: result.message,
-          details: result.details
+          details: result.details,
         });
       }
-      
+
       req.license = result.license;
       req.quotaUsage = result.usage;
       next();
@@ -500,7 +500,7 @@ export function enforceUserQuota(req, res, next) {
       res.status(500).json({
         success: false,
         error: 'Failed to check quota',
-        message: error.message
+        message: error.message,
       });
     });
 }
@@ -524,5 +524,5 @@ export default {
   enforceSubmissionQuota,
   enforceProjectQuota,
   enforceUserQuota,
-  getLicenseForOrganization
+  getLicenseForOrganization,
 };

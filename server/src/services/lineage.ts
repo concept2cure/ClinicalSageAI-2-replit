@@ -1,9 +1,7 @@
 import crypto from 'crypto';
-import { Pool } from 'pg';
+import { getPool } from '../../db';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+const pool = getPool();
 
 // Helper function for database queries
 const q = async (text: string, params: any[] = []) => {

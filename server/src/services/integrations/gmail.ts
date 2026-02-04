@@ -1,10 +1,8 @@
-// import { google } from "googleapis";
-import { Pool } from 'pg';
+import { google } from 'googleapis';
+import { getPool } from '../../../db';
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+// Database connection - use canonical pool
+const pool = getPool();
 
 // Helper function for database queries
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
@@ -116,7 +114,11 @@ export async function gmailIngestToReg(): Promise<{
     const looksIR = /information request|deficiency|additional information|clarify/i.test(
       m.subject + ' ' + m.body
     );
-    let extracted = { questions: [], obligations: [], region: undefined as any };
+    let extracted: {
+      questions: Array<{ raw: string }>;
+      obligations: any[];
+      region?: any;
+    } = { questions: [], obligations: [], region: undefined };
 
     if (looksIR) {
       // Extremely light extractor (your Questions Hub likely has a richer AI route already)

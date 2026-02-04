@@ -3,8 +3,11 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import { db } from './db';
-import { strategicReports, protocols, type InsertStrategicReport } from 'shared/schema';
+import { strategicReports, protocols } from 'shared/schema';
+import { eq } from 'drizzle-orm';
 import { StatisticsService } from './statistics-service';
+
+type InsertStrategicReport = typeof strategicReports.$inferInsert;
 
 // Create an instance of the statistics service
 const statisticsService = new StatisticsService();
@@ -37,6 +40,22 @@ export class StrategicReportGenerator {
     );
 
     try {
+      if (!db) {
+        throw new Error('Database connection unavailable');
+      }
+
+      const [protocol] = await db
+        .select({
+          organizationId: protocols.organizationId,
+          clientWorkspaceId: protocols.clientWorkspaceId,
+        })
+        .from(protocols)
+        .where(eq(protocols.id, protocolId));
+
+      if (!protocol) {
+        throw new Error(`Protocol ${protocolId} not found`);
+      }
+
       // 1. Gather historical benchmarking data
       const benchmarkData = await this.getHistoricalBenchmarks(indication, phase);
 
@@ -102,6 +121,8 @@ export class StrategicReportGenerator {
         controlType,
         blinding,
         primaryEndpoints,
+        organizationId: protocol.organizationId,
+        clientWorkspaceId: protocol.clientWorkspaceId,
       });
 
       // 8. Save to database
@@ -860,8 +881,11 @@ export class StrategicReportGenerator {
     controlType: string;
     blinding: string;
     primaryEndpoints: string[];
+    organizationId: number;
+    clientWorkspaceId: number | null;
   }): InsertStrategicReport {
     const now = new Date();
+    const reportId = `protocol-${params.protocolId}`;
 
     // Create decision matrix data
     const decisionMatrix = {
@@ -887,121 +911,116 @@ export class StrategicReportGenerator {
       mitigation: risk.mitigation,
     }));
 
-    // Create full report structure
+    const content = {
+      metadata: {
+        reportId,
+        title: `Strategic Intelligence Report: ${params.indication} Phase ${params.phase}`,
+        generatedDate: now.toISOString(),
+        version: '1.0',
+        protocolId: params.protocolId,
+        indication: params.indication,
+        phase: params.phase,
+        sponsor: 'Not Specified',
+        confidentialityLevel: 'Internal',
+      },
+      executiveSummary: {
+        overview: `This strategic intelligence report provides comprehensive analysis and recommendations for the ${params.indication} Phase ${params.phase} protocol. Based on analysis of ${params.benchmarkData.totalTrials || 'available'} historical trials and competitive intelligence, our assessment indicates ${params.successPrediction.successProbability < 0.4 ? 'significant challenges' : params.successPrediction.successProbability < 0.7 ? 'moderate potential' : 'strong potential'} for success, with strategic opportunities for optimization.`,
+        keyFindings: [
+          `Success probability is estimated at ${Math.round(params.successPrediction.successProbability * 100)}% based on statistical and machine learning analysis of similar trials`,
+          `Primary failure risks are in the areas of ${params.failureRisks.riskBreakdown
+            .slice(0, 2)
+            .map((r: any) => r.category)
+            .join(' and ')}`,
+          `${params.benchmarkData.totalTrials || 'Multiple'} historical trials provide benchmarking data for optimizing design elements`,
+          `${params.competitiveAnalysis.topSponsors.length > 0 ? `${params.competitiveAnalysis.topSponsors[0].sponsor} is the market leader with ${params.competitiveAnalysis.topSponsors[0].trialCount} trials` : 'Competitive landscape analysis shows diverse sponsor participation'}`,
+        ],
+        strategicRecommendations: [params.strategicRecommendations.recommendationSummary],
+        decisionMatrix,
+      },
+      historicalBenchmarking: {
+        sampleSizeAnalysis: {
+          historicalMean: params.benchmarkData.sampleSizeStats.mean,
+          historicalMedian: params.benchmarkData.sampleSizeStats.median,
+          historicalRange: params.benchmarkData.sampleSizeStats.range,
+          recommendation:
+            params.sampleSize < params.benchmarkData.sampleSizeStats.mean
+              ? `Consider increasing sample size (currently ${params.sampleSize})`
+              : `Current sample size (${params.sampleSize}) appears adequate based on historical data`,
+        },
+        durationAnalysis: {
+          historicalMean: params.benchmarkData.durationStats.mean,
+          historicalMedian: params.benchmarkData.durationStats.median,
+          historicalRange: params.benchmarkData.durationStats.range,
+          recommendation:
+            params.duration < params.benchmarkData.durationStats.mean
+              ? `Consider increasing study duration (currently ${params.duration} weeks)`
+              : `Current duration (${params.duration} weeks) appears adequate based on historical data`,
+        },
+        dropoutRateAnalysis: {
+          historicalMean: params.benchmarkData.dropoutRateStats.mean,
+          historicalMedian: params.benchmarkData.dropoutRateStats.median,
+          historicalRange: params.benchmarkData.dropoutRateStats.range,
+          recommendation: params.failureRisks.riskBreakdown.find(
+            (r: any) => r.category === 'Patient Retention'
+          )
+            ? 'Focus on patient retention strategies'
+            : 'No significant retention risks identified',
+        },
+      },
+      endpointAnalysis: params.endpointAnalysis,
+      successPrediction: params.successPrediction,
+      failureRisks: params.failureRisks,
+      competitiveAnalysis: params.competitiveAnalysis,
+      strategicRecommendations: params.strategicRecommendations,
+      protocolParams: {
+        indication: params.indication,
+        phase: params.phase,
+        sampleSize: params.sampleSize,
+        duration: params.duration,
+        controlType: params.controlType,
+        blinding: params.blinding,
+        primaryEndpoints: params.primaryEndpoints,
+      },
+      riskFactors,
+      designRiskPrediction: {
+        successProbability: params.successPrediction.successProbability,
+        confidence: params.successPrediction.confidence,
+        keyFactors: params.successPrediction.keyFactors,
+        riskFactors,
+        riskBreakdown: params.failureRisks.riskBreakdown,
+        mitigationStrategies: params.failureRisks.mitigationStrategies,
+      },
+      competitiveLandscape: {
+        topSponsors: params.competitiveAnalysis.topSponsors,
+        recentTrials: params.competitiveAnalysis.recentTrials,
+        emergingDesigns: params.competitiveAnalysis.emergingDesigns,
+        marketInsights: params.competitiveAnalysis.marketInsights,
+        competitorAnalysis: params.competitiveAnalysis.topSponsors
+          .map((sponsor: any) => ({
+            sponsor: sponsor.sponsor,
+            trialCount: sponsor.trialCount,
+            marketShare: sponsor.percentage / 100,
+            estimatedInvestment: sponsor.trialCount * 2500000,
+            strategicFocus: 'Standard development pathway',
+          }))
+          .slice(0, 3),
+      },
+      aiRecommendations: {
+        designRecommendations: params.strategicRecommendations.designRecommendations,
+        endpointRecommendations: params.strategicRecommendations.endpointRecommendations,
+        competitiveRecommendations: params.strategicRecommendations.competitiveRecommendations,
+        overallSummary: params.strategicRecommendations.recommendationSummary,
+      },
+    };
+
     return {
-      protocolId: params.protocolId,
+      reportId,
       title: `Strategic Intelligence Report: ${params.indication} Phase ${params.phase}`,
-      indication: params.indication,
-      phase: params.phase,
-      generatedDate: now.toISOString(),
-      version: '1.0',
-      confidentialityLevel: 'Internal',
-      content: JSON.stringify({
-        metadata: {
-          reportId: null, // Will be filled in after insertion
-          title: `Strategic Intelligence Report: ${params.indication} Phase ${params.phase}`,
-          generatedDate: now.toISOString(),
-          version: '1.0',
-          protocolId: params.protocolId,
-          indication: params.indication,
-          phase: params.phase,
-          sponsor: 'Not Specified', // This would come from protocol data
-          confidentialityLevel: 'Internal',
-        },
-        executiveSummary: {
-          overview: `This strategic intelligence report provides comprehensive analysis and recommendations for the ${params.indication} Phase ${params.phase} protocol. Based on analysis of ${params.benchmarkData.totalTrials || 'available'} historical trials and competitive intelligence, our assessment indicates ${params.successPrediction.successProbability < 0.4 ? 'significant challenges' : params.successPrediction.successProbability < 0.7 ? 'moderate potential' : 'strong potential'} for success, with strategic opportunities for optimization.`,
-          keyFindings: [
-            `Success probability is estimated at ${Math.round(params.successPrediction.successProbability * 100)}% based on statistical and machine learning analysis of similar trials`,
-            `Primary failure risks are in the areas of ${params.failureRisks.riskBreakdown
-              .slice(0, 2)
-              .map((r: any) => r.category)
-              .join(' and ')}`,
-            `${params.benchmarkData.totalTrials || 'Multiple'} historical trials provide benchmarking data for optimizing design elements`,
-            `${params.competitiveAnalysis.topSponsors.length > 0 ? `${params.competitiveAnalysis.topSponsors[0].sponsor} is the market leader with ${params.competitiveAnalysis.topSponsors[0].trialCount} trials` : 'Competitive landscape analysis shows diverse sponsor participation'}`,
-          ],
-          strategicRecommendations: [params.strategicRecommendations.recommendationSummary],
-          decisionMatrix,
-        },
-        historicalBenchmarking: {
-          sampleSizeAnalysis: {
-            historicalMean: params.benchmarkData.sampleSizeStats.mean,
-            historicalMedian: params.benchmarkData.sampleSizeStats.median,
-            historicalRange: params.benchmarkData.sampleSizeStats.range,
-            recommendation:
-              params.sampleSize < params.benchmarkData.sampleSizeStats.mean
-                ? `Consider increasing sample size (currently ${params.sampleSize})`
-                : `Current sample size (${params.sampleSize}) appears adequate based on historical data`,
-          },
-          durationAnalysis: {
-            historicalMean: params.benchmarkData.durationStats.mean,
-            historicalMedian: params.benchmarkData.durationStats.median,
-            historicalRange: params.benchmarkData.durationStats.range,
-            recommendation:
-              params.duration < params.benchmarkData.durationStats.mean
-                ? `Consider extending study duration (currently ${params.duration} weeks)`
-                : `Current duration (${params.duration} weeks) appears adequate based on historical data`,
-          },
-          designAnalysis: {
-            commonDesigns: params.benchmarkData.commonDesigns,
-            designSuccessRates: params.benchmarkData.commonDesigns.map((design: any) => ({
-              design: design.design,
-              successRate: design.design === params.controlType ? 0.65 : 0.6,
-              frequency: design.percentage,
-            })),
-          },
-          overallSuccessRate: params.benchmarkData.successRate,
-          keySuccessFactors: params.endpointAnalysis.endpointSuccessFactors || [],
-        },
-        endpointBenchmarking: {
-          primaryEndpointAnalysis: params.endpointAnalysis.endpointAnalysis.map(
-            (endpoint: any) => ({
-              endpoint: endpoint.endpoint,
-              commonality: endpoint.commonality,
-              isStandard: endpoint.isStandard,
-              historicalSuccessRate: endpoint.historicalSuccess,
-              recommendation: endpoint.isStandard
-                ? `${endpoint.endpoint} is a standard endpoint with good historical precedent`
-                : `Consider additional validation or regulatory consultation for non-standard endpoint: ${endpoint.endpoint}`,
-            })
-          ),
-          commonEndpoints: params.endpointAnalysis.mostCommonEndpoints,
-          trendingEndpoints: params.competitiveAnalysis.trendingEndpoints,
-          recommendedEndpoints: params.endpointAnalysis.mostCommonEndpoints
-            .slice(0, 3)
-            .map((e: any) => e.name),
-        },
-        designRiskPrediction: {
-          successProbability: params.successPrediction.successProbability,
-          confidence: params.successPrediction.confidence,
-          keyFactors: params.successPrediction.keyFactors,
-          riskFactors,
-          riskBreakdown: params.failureRisks.riskBreakdown,
-          mitigationStrategies: params.failureRisks.mitigationStrategies,
-        },
-        competitiveLandscape: {
-          topSponsors: params.competitiveAnalysis.topSponsors,
-          recentTrials: params.competitiveAnalysis.recentTrials,
-          emergingDesigns: params.competitiveAnalysis.emergingDesigns,
-          marketInsights: params.competitiveAnalysis.marketInsights,
-          competitorAnalysis: params.competitiveAnalysis.topSponsors
-            .map((sponsor: any) => ({
-              sponsor: sponsor.sponsor,
-              trialCount: sponsor.trialCount,
-              marketShare: sponsor.percentage / 100,
-              estimatedInvestment: sponsor.trialCount * 2500000,
-              strategicFocus: 'Standard development pathway',
-            }))
-            .slice(0, 3),
-        },
-        aiRecommendations: {
-          designRecommendations: params.strategicRecommendations.designRecommendations,
-          endpointRecommendations: params.strategicRecommendations.endpointRecommendations,
-          competitiveRecommendations: params.strategicRecommendations.competitiveRecommendations,
-          overallSummary: params.strategicRecommendations.recommendationSummary,
-        },
-      }),
-      createdAt: now,
-      updatedAt: now,
+      summary: params.strategicRecommendations.recommendationSummary,
+      content,
+      status: 'draft',
+      organizationId: params.organizationId,
+      clientWorkspaceId: params.clientWorkspaceId,
     };
   }
 }

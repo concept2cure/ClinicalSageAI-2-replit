@@ -110,23 +110,26 @@ export { default as reportGeneratorService } from './report-generator-service';
 
 export { default as harvestEngine } from './harvestEngine';
 export { default as dataHarvester } from './dataHarvester';
-export { default as enhancedFaersService } from './enhancedFaersService';
+export { EnhancedFAERSClient, fetchFaersAnalysis } from './enhancedFaersService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INFRASTRUCTURE SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { default as s3Storage } from './s3-storage';
-export { default as exportService } from './export-service';
-export { default as notify } from './notify';
-export { default as templateService } from './templateService';
+export { ExportService } from './export-service';
+export { notifyOverride } from './notify';
+export { TemplateService } from './templateService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COLLABORATION SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { default as multiAgentCouncil } from './multi-agent-council';
-export { default as foresightFeedbackOrchestrator } from './foresight-feedback-orchestrator';
+export { MultiAgentCouncilService } from './multi-agent-council';
+export {
+  ForesightFeedbackOrchestrator,
+  feedbackOrchestrator,
+} from './foresight-feedback-orchestrator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GRDHE (Global Regulatory Data Harmonization Engine)

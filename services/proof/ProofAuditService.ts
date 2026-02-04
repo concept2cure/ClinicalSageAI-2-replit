@@ -1,12 +1,17 @@
 /**
  * Proof Audit Service
- * 
+ *
  * Provides audit logging for all proof system operations.
  * Required for Phase 4.1 M1-M5 acceptance criteria compliance.
  */
 
 import * as crypto from 'crypto';
-import type { ExecutionContext, RegulatorySubmissionCertificate, TransitionProof, ZKProof } from './types';
+import type {
+  ExecutionContext,
+  RegulatorySubmissionCertificate,
+  TransitionProof,
+  ZKProof,
+} from './types';
 import type { DeltaReport, DeltaViolation } from './DeltaVerificationEngine';
 
 export type ProofEventType =
@@ -119,7 +124,7 @@ export class ProofAuditService {
   ): Promise<ProofAuditEntry> {
     const timestamp = new Date().toISOString();
     const entryId = this.generateId(eventType, timestamp);
-    
+
     const entry: ProofAuditEntry = {
       id: entryId,
       timestamp,
@@ -147,7 +152,9 @@ export class ProofAuditService {
         (entry as ProofAuditEntry & { _persisted?: boolean })._persisted = false;
       }
     } else {
-      console.warn('[ProofAuditService] WARNING: No database persister configured. Audit trail not persisted to database.');
+      console.warn(
+        '[ProofAuditService] WARNING: No database persister configured. Audit trail not persisted to database.'
+      );
     }
 
     // Keep in-memory for quick access (secondary, not primary storage)
@@ -172,7 +179,9 @@ export class ProofAuditService {
    * Get entries that failed to persist and need retry.
    */
   getUnpersistedEntries(): ProofAuditEntry[] {
-    return this.entries.filter(e => (e as ProofAuditEntry & { _persisted?: boolean })._persisted === false);
+    return this.entries.filter(
+      e => (e as ProofAuditEntry & { _persisted?: boolean })._persisted === false
+    );
   }
 
   /**
@@ -370,7 +379,11 @@ export class ProofAuditService {
     workflowRunId: string,
     context?: { organizationId?: string; actorId?: string }
   ): Promise<ProofAuditEntry> {
-    return this.logEvent('UI_VERIFICATION_REQUEST', { workflowRunId }, { ...context, workflowRunId });
+    return this.logEvent(
+      'UI_VERIFICATION_REQUEST',
+      { workflowRunId },
+      { ...context, workflowRunId }
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -395,8 +408,9 @@ export class ProofAuditService {
     if (filter?.organizationId) {
       result = result.filter(e => e.organizationId === filter.organizationId);
     }
-    if (filter?.since) {
-      result = result.filter(e => e.timestamp >= filter.since);
+    const since = filter?.since;
+    if (since) {
+      result = result.filter(e => e.timestamp >= since);
     }
     if (filter?.limit) {
       result = result.slice(-filter.limit);

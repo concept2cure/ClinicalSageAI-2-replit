@@ -9,13 +9,8 @@
  */
 
 import axios from 'axios';
-import { Pool } from 'pg';
 import { getDrugClassByName } from './drugClassService.js';
-
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+import { pool } from '../utils/database.js';
 
 /**
  * FAERS Client with enhanced pharmacological classification
@@ -434,8 +429,8 @@ async function storeFaersReportsInDatabase(cerId, reports) {
 
     for (const report of reports) {
       await client.query(
-        `INSERT INTO faers_reports 
-        (cer_id, substance_name, unii, reaction, is_serious, outcome, report_date, age, sex) 
+        `INSERT INTO faers_reports
+        (cer_id, substance_name, unii, reaction, is_serious, outcome, report_date, age, sex)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           cerId,

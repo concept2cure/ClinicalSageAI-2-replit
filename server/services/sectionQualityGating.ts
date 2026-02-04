@@ -8,8 +8,8 @@
  * - Low-risk factors (informational messages)
  */
 
-import { SQL, eq, and, inArray } from 'drizzle-orm';
-import { TenantDatabase } from '../db/tenantDb';
+import { SQL, eq, and, inArray, sql } from 'drizzle-orm';
+import { TenantDb } from '../db/tenantDb';
 import {
   qmpSectionGating,
   ctqFactors,
@@ -67,35 +67,35 @@ export type SectionGateValidationResult = {
  * @returns Validation result with detailed factor analysis
  */
 export async function validateSectionQualityGate(
-  tenantDb: TenantDatabase,
+  tenantDb: TenantDb,
   organizationId: number,
   projectId: number,
   sectionKey: string
 ): Promise<SectionGateValidationResult | null> {
   try {
     // Step 1: Get project QMP reference
-    const project = await tenantDb
-      .select()
-      .from(cerProjects)
-      .where(and(eq(cerProjects.id, projectId), eq(cerProjects.organizationId, organizationId)))
-      .then(rows => rows[0]);
+    const project = (
+      await tenantDb.select(
+        cerProjects,
+        and(eq(cerProjects.id, projectId), eq(cerProjects.organizationId, organizationId))
+      )
+    )[0];
 
     if (!project || !project.qmpId) {
       throw new Error('Project not found or no QMP associated');
     }
 
     // Step 2: Get section gate configuration
-    const sectionGate = await tenantDb
-      .select()
-      .from(qmpSectionGating)
-      .where(
+    const sectionGate = (
+      await tenantDb.select(
+        qmpSectionGating,
         and(
           eq(qmpSectionGating.organizationId, organizationId),
           eq(qmpSectionGating.qmpId, project.qmpId),
           eq(qmpSectionGating.sectionKey, sectionKey)
         )
       )
-      .then(rows => rows[0]);
+    )[0];
 
     if (!sectionGate) {
       throw new Error(`Section gate not found for section: ${sectionKey}`);
@@ -127,32 +127,28 @@ export async function validateSectionQualityGate(
     }
 
     // Step 4: Get required CTQ factors details
-    const requiredFactors = await tenantDb
-      .select()
-      .from(ctqFactors)
-      .where(
-        and(
-          eq(ctqFactors.organizationId, organizationId),
-          eq(ctqFactors.qmpId, project.qmpId),
-          inArray(ctqFactors.id, requiredFactorIds)
-        )
-      );
+    const requiredFactors = await tenantDb.select(
+      ctqFactors,
+      and(
+        eq(ctqFactors.organizationId, organizationId),
+        eq(ctqFactors.qmpId, project.qmpId),
+        inArray(ctqFactors.id, requiredFactorIds)
+      )
+    );
 
     // Step 5: Get evidence for required factors
-    const evidenceItems = await tenantDb
-      .select()
-      .from(qmpTraceabilityMatrix)
-      .where(
-        and(
-          eq(qmpTraceabilityMatrix.organizationId, organizationId),
-          eq(qmpTraceabilityMatrix.qmpId, project.qmpId),
-          inArray(qmpTraceabilityMatrix.ctqFactorId, requiredFactorIds)
-        )
-      );
+    const evidenceItems = await tenantDb.select(
+      qmpTraceabilityMatrix,
+      and(
+        eq(qmpTraceabilityMatrix.organizationId, organizationId),
+        eq(qmpTraceabilityMatrix.qmpId, project.qmpId),
+        inArray(qmpTraceabilityMatrix.ctqFactorId, requiredFactorIds)
+      )
+    );
 
     // Create evidence map by factor ID
     const evidenceMap = new Map<number, any[]>();
-    evidenceItems.forEach(item => {
+    evidenceItems.forEach((item: any) => {
       if (item.ctqFactorId) {
         if (!evidenceMap.has(item.ctqFactorId)) {
           evidenceMap.set(item.ctqFactorId, []);
@@ -166,10 +162,12 @@ export async function validateSectionQualityGate(
     const mediumRiskFactors: CtqValidationResult[] = [];
     const lowRiskFactors: CtqValidationResult[] = [];
 
-    requiredFactors.forEach(factor => {
+    requiredFactors.forEach((factor: any) => {
       // Check if factor has validated evidence
       const factorEvidence = evidenceMap.get(factor.id) || [];
-      const isValidated = factorEvidence.some(item => item.verificationStatus === 'verified');
+      const isValidated = factorEvidence.some(
+        (item: any) => item.verificationStatus === 'verified'
+      );
 
       const validationResult: CtqValidationResult = {
         factorId: factor.id,
@@ -182,7 +180,7 @@ export async function validateSectionQualityGate(
         validationMethod: factor.validationMethod,
         requirementType: factor.requirementType,
         failureAction: factor.failureAction,
-        evidenceReferences: factorEvidence.map(item => ({
+        evidenceReferences: factorEvidence.map((item: any) => ({
           id: item.id,
           status: item.verificationStatus,
           evidenceType: item.verificationMethod || 'Unknown',
@@ -203,17 +201,19 @@ export async function validateSectionQualityGate(
     });
 
     // Step 7: Compute validation metrics
-    const mandatoryFactors = requiredFactors.filter(f => f.requirementType === 'mandatory');
-    const recommendedFactors = requiredFactors.filter(f => f.requirementType === 'recommended');
+    const mandatoryFactors = requiredFactors.filter((f: any) => f.requirementType === 'mandatory');
+    const recommendedFactors = requiredFactors.filter(
+      (f: any) => f.requirementType === 'recommended'
+    );
 
-    const validatedMandatoryCount = mandatoryFactors.filter(f => {
+    const validatedMandatoryCount = mandatoryFactors.filter((f: any) => {
       const evidence = evidenceMap.get(f.id) || [];
-      return evidence.some(e => e.verificationStatus === 'verified');
+      return evidence.some((e: any) => e.verificationStatus === 'verified');
     }).length;
 
-    const validatedRecommendedCount = recommendedFactors.filter(f => {
+    const validatedRecommendedCount = recommendedFactors.filter((f: any) => {
       const evidence = evidenceMap.get(f.id) || [];
-      return evidence.some(e => e.verificationStatus === 'verified');
+      return evidence.some((e: any) => e.verificationStatus === 'verified');
     }).length;
 
     const mandatoryCompletionPercentage =
@@ -280,7 +280,7 @@ export async function validateSectionQualityGate(
  * @returns Object containing the override request status and ID if created
  */
 export async function requestSectionGateOverride(
-  tenantDb: TenantDatabase,
+  tenantDb: TenantDb,
   organizationId: number,
   projectId: number,
   sectionKey: string,
@@ -323,8 +323,8 @@ export async function requestSectionGateOverride(
 
     // Insert approval record
     const result = await tenantDb.execute(
-      SQL`INSERT INTO cer_approvals (
-        organization_id, project_id, section_key, status, 
+      sql`INSERT INTO cer_approvals (
+        organization_id, project_id, section_key, status,
         requested_by_id, requested_at, approved_by_id, approved_at,
         rejected_by_id, rejected_at, reason, validation_details
       ) VALUES (
@@ -363,14 +363,14 @@ export async function requestSectionGateOverride(
  * @returns The latest approval record for the section or null
  */
 export async function getSectionOverrideStatus(
-  tenantDb: TenantDatabase,
+  tenantDb: TenantDb,
   organizationId: number,
   projectId: number,
   sectionKey: string
 ) {
   try {
     const result = await tenantDb.execute(
-      SQL`SELECT * FROM cer_approvals 
+      sql`SELECT * FROM cer_approvals
           WHERE organization_id = ${organizationId}
           AND project_id = ${projectId}
           AND section_key = ${sectionKey}
@@ -397,7 +397,7 @@ export async function getSectionOverrideStatus(
  * @returns Updated approval record
  */
 export async function processSectionOverrideRequest(
-  tenantDb: TenantDatabase,
+  tenantDb: TenantDb,
   approvalId: number,
   organizationId: number,
   userId: number,
@@ -407,7 +407,7 @@ export async function processSectionOverrideRequest(
   try {
     // Ensure approval belongs to organization (tenant isolation)
     const approval = await tenantDb.execute(
-      SQL`SELECT * FROM cer_approvals WHERE id = ${approvalId} AND organization_id = ${organizationId}`
+      sql`SELECT * FROM cer_approvals WHERE id = ${approvalId} AND organization_id = ${organizationId}`
     );
 
     if (!approval || !approval[0]) {
@@ -423,20 +423,20 @@ export async function processSectionOverrideRequest(
     let updateQuery: SQL<unknown>;
 
     if (approved) {
-      updateQuery = SQL`
+      updateQuery = sql`
         UPDATE cer_approvals
-        SET status = 'approved', 
-            approved_by_id = ${userId}, 
+        SET status = 'approved',
+            approved_by_id = ${userId},
             approved_at = ${now},
             comments = ${comment || ''}
         WHERE id = ${approvalId}
         RETURNING *
       `;
     } else {
-      updateQuery = SQL`
+      updateQuery = sql`
         UPDATE cer_approvals
-        SET status = 'rejected', 
-            rejected_by_id = ${userId}, 
+        SET status = 'rejected',
+            rejected_by_id = ${userId},
             rejected_at = ${now},
             comments = ${comment || ''}
         WHERE id = ${approvalId}

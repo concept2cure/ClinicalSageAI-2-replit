@@ -1,6 +1,6 @@
 /**
  * Unified Task Management Service
- * 
+ *
  * Central service for managing tasks across ALL modules in the Regulatory Submission Center.
  * Provides a single source of truth for task management, connecting Protocol Design, CMC,
  * Medical Device, IND Wizard, eCTD Co-Author, and Vault.
@@ -84,6 +84,13 @@ export interface TaskLinkInput {
 class UnifiedTaskService {
   private static instance: UnifiedTaskService;
 
+  private getDb() {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+    return db;
+  }
+
   public static getInstance(): UnifiedTaskService {
     if (!UnifiedTaskService.instance) {
       UnifiedTaskService.instance = new UnifiedTaskService();
@@ -95,32 +102,36 @@ class UnifiedTaskService {
    * Create a unified task from any module
    */
   async createUnifiedTask(input: UnifiedTaskInput): Promise<schema.UnifiedTask> {
+    const dbInstance = this.getDb();
     const taskId = generateUUID();
     const moduleConfig = MODULE_CONFIG[input.moduleType];
 
-    const task = await db.insert(schema.unifiedTasks).values({
-      taskId,
-      organizationId: input.organizationId,
-      clientWorkspaceId: input.clientWorkspaceId,
-      projectId: input.projectId,
-      moduleType: input.moduleType,
-      moduleIcon: moduleConfig.icon,
-      moduleColor: moduleConfig.color,
-      title: input.title,
-      description: input.description,
-      category: input.category || moduleConfig.category,
-      taskType: input.taskType || 'action',
-      assigneeId: input.assigneeId,
-      assigneeName: input.assigneeName,
-      priority: input.priority || 'medium',
-      dueDate: input.dueDate,
-      estimatedHours: input.estimatedHours,
-      sourceEntityId: input.sourceEntityId,
-      sourceEntityType: input.sourceEntityType,
-      tags: input.tags || [],
-      metadata: input.metadata || {},
-      status: 'pending',
-    }).returning();
+    const task = await dbInstance
+      .insert(schema.unifiedTasks)
+      .values({
+        taskId,
+        organizationId: input.organizationId,
+        clientWorkspaceId: input.clientWorkspaceId,
+        projectId: input.projectId,
+        moduleType: input.moduleType,
+        moduleIcon: moduleConfig.icon,
+        moduleColor: moduleConfig.color,
+        title: input.title,
+        description: input.description,
+        category: input.category || moduleConfig.category,
+        taskType: input.taskType || 'action',
+        assigneeId: input.assigneeId,
+        assigneeName: input.assigneeName,
+        priority: input.priority || 'medium',
+        dueDate: input.dueDate,
+        estimatedHours: input.estimatedHours,
+        sourceEntityId: input.sourceEntityId,
+        sourceEntityType: input.sourceEntityType,
+        tags: input.tags || [],
+        metadata: input.metadata || {},
+        status: 'pending',
+      })
+      .returning();
 
     return task[0];
   }
@@ -138,8 +149,9 @@ class UnifiedTaskService {
     limit?: number;
     offset?: number;
   }): Promise<schema.UnifiedTask[]> {
-    let query = db.select().from(schema.unifiedTasks);
-    
+    const dbInstance = this.getDb();
+    const baseQuery = dbInstance.select().from(schema.unifiedTasks);
+
     const conditions = [];
     if (options?.organizationId) {
       conditions.push(eq(schema.unifiedTasks.organizationId, options.organizationId));
@@ -160,30 +172,28 @@ class UnifiedTaskService {
       conditions.push(eq(schema.unifiedTasks.assigneeId, options.assigneeId));
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const filteredQuery = conditions.length > 0 ? baseQuery.where(and(...conditions)) : baseQuery;
+    const orderedQuery = filteredQuery.orderBy(
+      desc(schema.unifiedTasks.priority),
+      desc(schema.unifiedTasks.dueDate)
+    );
+    const limitedQuery = options?.limit ? orderedQuery.limit(options.limit) : orderedQuery;
+    const offsetQuery = options?.offset ? limitedQuery.offset(options.offset) : limitedQuery;
 
-    query = query.orderBy(desc(schema.unifiedTasks.priority), desc(schema.unifiedTasks.dueDate));
-
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-
-    return await query;
+    return await offsetQuery;
   }
 
   /**
    * Get tasks by module type
    */
-  async getTasksByModule(moduleType: keyof typeof MODULE_CONFIG, options?: {
-    organizationId?: number;
-    status?: string;
-    limit?: number;
-  }): Promise<schema.UnifiedTask[]> {
+  async getTasksByModule(
+    moduleType: keyof typeof MODULE_CONFIG,
+    options?: {
+      organizationId?: number;
+      status?: string;
+      limit?: number;
+    }
+  ): Promise<schema.UnifiedTask[]> {
     return this.getAllUnifiedTasks({ ...options, moduleType });
   }
 
@@ -191,12 +201,21 @@ class UnifiedTaskService {
    * Link tasks across modules
    */
   async linkTasks(input: TaskLinkInput): Promise<schema.CrossModuleTaskLink> {
+    const dbInstance = this.getDb();
     const linkId = generateUUID();
-    
+
     // Get source and target tasks to determine modules
     const [sourceTask, targetTask] = await Promise.all([
-      db.select().from(schema.unifiedTasks).where(eq(schema.unifiedTasks.taskId, input.sourceTaskId)).limit(1),
-      db.select().from(schema.unifiedTasks).where(eq(schema.unifiedTasks.taskId, input.targetTaskId)).limit(1),
+      dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(eq(schema.unifiedTasks.taskId, input.sourceTaskId))
+        .limit(1),
+      dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(eq(schema.unifiedTasks.taskId, input.targetTaskId))
+        .limit(1),
     ]);
 
     if (!sourceTask[0] || !targetTask[0]) {
@@ -204,31 +223,36 @@ class UnifiedTaskService {
     }
 
     // Create the link
-    const link = await db.insert(schema.crossModuleTaskLinks).values({
-      linkId,
-      sourceTaskId: input.sourceTaskId,
-      sourceModule: sourceTask[0].moduleType,
-      targetTaskId: input.targetTaskId,
-      targetModule: targetTask[0].moduleType,
-      linkType: input.linkType,
-      dependencyType: input.dependencyType,
-      isBlocking: input.isBlocking || false,
-      impactDescription: input.impactDescription,
-      riskLevel: input.riskLevel,
-      status: 'active',
-    }).returning();
+    const link = await dbInstance
+      .insert(schema.crossModuleTaskLinks)
+      .values({
+        linkId,
+        sourceTaskId: input.sourceTaskId,
+        sourceModule: sourceTask[0].moduleType,
+        targetTaskId: input.targetTaskId,
+        targetModule: targetTask[0].moduleType,
+        linkType: input.linkType,
+        dependencyType: input.dependencyType,
+        isBlocking: input.isBlocking || false,
+        impactDescription: input.impactDescription,
+        riskLevel: input.riskLevel,
+        status: 'active',
+      })
+      .returning();
 
     // Update tasks with linkage information
     if (input.linkType === 'dependency' && input.isBlocking) {
       await Promise.all([
-        db.update(schema.unifiedTasks)
-          .set({ 
-            blockedBy: sql`array_append(${schema.unifiedTasks.blockedBy}, ${input.sourceTaskId})` 
+        dbInstance
+          .update(schema.unifiedTasks)
+          .set({
+            blockedBy: sql`array_append(${schema.unifiedTasks.blockedBy}, ${input.sourceTaskId})`,
           })
           .where(eq(schema.unifiedTasks.taskId, input.targetTaskId)),
-        db.update(schema.unifiedTasks)
-          .set({ 
-            blocks: sql`array_append(${schema.unifiedTasks.blocks}, ${input.targetTaskId})` 
+        dbInstance
+          .update(schema.unifiedTasks)
+          .set({
+            blocks: sql`array_append(${schema.unifiedTasks.blocks}, ${input.targetTaskId})`,
           })
           .where(eq(schema.unifiedTasks.taskId, input.sourceTaskId)),
       ]);
@@ -241,13 +265,14 @@ class UnifiedTaskService {
    * Get unified dashboard metrics
    */
   async getUnifiedDashboardMetrics(organizationId: number, projectId?: number) {
+    const dbInstance = this.getDb();
     const baseConditions = [eq(schema.unifiedTasks.organizationId, organizationId)];
     if (projectId) {
       baseConditions.push(eq(schema.unifiedTasks.projectId, projectId));
     }
 
     // Get task counts by module and status
-    const tasksByModule = await db
+    const tasksByModule = await dbInstance
       .select({
         moduleType: schema.unifiedTasks.moduleType,
         status: schema.unifiedTasks.status,
@@ -258,7 +283,7 @@ class UnifiedTaskService {
       .groupBy(schema.unifiedTasks.moduleType, schema.unifiedTasks.status);
 
     // Get overdue tasks
-    const overdueTasks = await db
+    const overdueTasks = await dbInstance
       .select({ count: sql<number>`count(*)` })
       .from(schema.unifiedTasks)
       .where(
@@ -270,7 +295,7 @@ class UnifiedTaskService {
       );
 
     // Get high priority tasks
-    const highPriorityTasks = await db
+    const highPriorityTasks = await dbInstance
       .select({ count: sql<number>`count(*)` })
       .from(schema.unifiedTasks)
       .where(
@@ -285,7 +310,7 @@ class UnifiedTaskService {
       );
 
     // Get tasks requiring approval
-    const approvalRequired = await db
+    const approvalRequired = await dbInstance
       .select({ count: sql<number>`count(*)` })
       .from(schema.unifiedTasks)
       .where(
@@ -299,9 +324,9 @@ class UnifiedTaskService {
     // Calculate module-wise progress
     const moduleProgress: Record<string, number> = {};
     for (const moduleKey of Object.keys(MODULE_CONFIG)) {
-      const moduleTasks = tasksByModule.filter((t) => t.moduleType === moduleKey);
+      const moduleTasks = tasksByModule.filter(t => t.moduleType === moduleKey);
       const total = moduleTasks.reduce((sum, t) => sum + t.count, 0);
-      const completed = moduleTasks.find((t) => t.status === 'completed')?.count || 0;
+      const completed = moduleTasks.find(t => t.status === 'completed')?.count || 0;
       moduleProgress[moduleKey] = total > 0 ? (completed / total) * 100 : 0;
     }
 
@@ -319,7 +344,10 @@ class UnifiedTaskService {
   /**
    * Sync tasks from specific module
    */
-  async syncTasksFromModule(moduleType: keyof typeof MODULE_CONFIG, organizationId: number): Promise<{
+  async syncTasksFromModule(
+    moduleType: keyof typeof MODULE_CONFIG,
+    organizationId: number
+  ): Promise<{
     synced: number;
     created: number;
     updated: number;
@@ -383,35 +411,42 @@ class UnifiedTaskService {
   }
 
   private async syncCMCTasks(organizationId: number) {
-    // Query existing CMC-specific tasks and convert to unified tasks
-    const tasks = await db.select().from(schema.cmcTasks)
-      .where(eq(schema.cmcTasks.organizationId, organizationId))
+    const dbInstance = this.getDb();
+
+    // Query stability studies and convert to unified tasks
+    const tasks = await dbInstance
+      .select()
+      .from(schema.stabilityStudies)
+      .where(eq(schema.stabilityStudies.organizationId, organizationId))
       .limit(100);
 
     let created = 0;
     for (const task of tasks) {
       // Check if already synced
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
-          eq(schema.unifiedTasks.moduleType, 'CMC')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
+            eq(schema.unifiedTasks.moduleType, 'CMC')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
         await this.createUnifiedTask({
           moduleType: 'CMC',
-          title: task.name,
-          description: task.description,
-          category: task.category || 'manufacturing',
-          taskType: task.type || 'action',
-          assigneeId: task.assigneeId,
-          priority: task.priority as any || 'medium',
-          dueDate: task.dueDate,
+          title: task.studyTitle || task.productName,
+          description: task.notes ?? undefined,
+          category: 'stability',
+          taskType: 'study',
+          assigneeId: task.studyDirector ?? undefined,
+          priority: 'medium',
+          dueDate: task.plannedEndDate ?? undefined,
           sourceEntityId: String(task.id),
-          sourceEntityType: 'cmc_task',
+          sourceEntityType: 'stability_study',
           organizationId,
-          projectId: task.projectId,
         });
         created++;
       }
@@ -421,35 +456,45 @@ class UnifiedTaskService {
   }
 
   private async syncINDTasks(organizationId: number) {
+    const dbInstance = this.getDb();
+
     // Query regulatory tasks for IND
-    const tasks = await db.select().from(schema.regulatoryTasks)
-      .where(and(
-        eq(schema.regulatoryTasks.organizationId, organizationId),
-        eq(schema.regulatoryTasks.category, 'regulatory')
-      ))
+    const tasks = await dbInstance
+      .select()
+      .from(schema.regulatoryTasks)
+      .where(
+        and(
+          eq(schema.regulatoryTasks.organizationId, organizationId),
+          eq(schema.regulatoryTasks.category, 'regulatory')
+        )
+      )
       .limit(100);
 
     let created = 0;
     for (const task of tasks) {
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, task.taskId),
-          eq(schema.unifiedTasks.moduleType, 'IND')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, task.taskId),
+            eq(schema.unifiedTasks.moduleType, 'IND')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
         await this.createUnifiedTask({
           moduleType: 'IND',
           title: task.title,
-          description: task.description,
+          description: task.description ?? undefined,
           category: task.category || 'regulatory',
           taskType: task.taskType,
-          assigneeId: task.assignedTo,
+          assigneeId: task.assignedTo ?? undefined,
           priority: task.priority as any,
-          dueDate: task.dueDate,
-          estimatedHours: task.estimatedHours,
-          sourceEntityId: task.taskId,
+          dueDate: task.dueDate ?? undefined,
+          estimatedHours: task.estimatedHours ?? undefined,
+          sourceEntityId: task.taskId ?? undefined,
           sourceEntityType: 'regulatory_task',
           organizationId,
         });
@@ -461,30 +506,38 @@ class UnifiedTaskService {
   }
 
   private async syncMedicalDeviceTasks(organizationId: number) {
+    const dbInstance = this.getDb();
+
     // Query medical device specific tasks
-    const tasks = await db.select().from(schema.medicalDeviceTasks)
-      .where(eq(schema.medicalDeviceTasks.organizationId, organizationId))
+    const tasks = await dbInstance
+      .select()
+      .from(schema.medicalDevices)
+      .where(eq(schema.medicalDevices.organizationId, organizationId))
       .limit(100);
 
     let created = 0;
     for (const task of tasks) {
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
-          eq(schema.unifiedTasks.moduleType, 'MedicalDevice')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
+            eq(schema.unifiedTasks.moduleType, 'MedicalDevice')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
         await this.createUnifiedTask({
           moduleType: 'MedicalDevice',
-          title: task.taskName,
-          description: task.description,
-          category: task.category || 'device',
-          priority: task.priority as any || 'medium',
-          dueDate: task.dueDate,
+          title: task.deviceName,
+          description: task.deviceType ?? undefined,
+          category: task.deviceClass || 'device',
+          priority: 'medium',
+          dueDate: undefined,
           sourceEntityId: String(task.id),
-          sourceEntityType: 'medical_device_task',
+          sourceEntityType: 'medical_device',
           organizationId,
         });
         created++;
@@ -495,32 +548,42 @@ class UnifiedTaskService {
   }
 
   private async syncECTDTasks(organizationId: number) {
+    const dbInstance = this.getDb();
+
     // Query document-related tasks
-    const documents = await db.select().from(schema.documents)
-      .where(and(
-        eq(schema.documents.organizationId, organizationId),
-        eq(schema.documents.status, 'in-progress')
-      ))
+    const documents = await dbInstance
+      .select()
+      .from(schema.documents)
+      .where(
+        and(
+          eq(schema.documents.organizationId, organizationId),
+          eq(schema.documents.status, 'in-progress')
+        )
+      )
       .limit(50);
 
     let created = 0;
     for (const doc of documents) {
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, doc.id),
-          eq(schema.unifiedTasks.moduleType, 'eCTD')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, String(doc.id)),
+            eq(schema.unifiedTasks.moduleType, 'eCTD')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
         await this.createUnifiedTask({
           moduleType: 'eCTD',
-          title: `Complete document: ${doc.name}`,
-          description: `Review and finalize eCTD document ${doc.name}`,
+          title: `Complete document: ${doc.title}`,
+          description: `Review and finalize eCTD document ${doc.title}`,
           category: 'documentation',
           taskType: 'document',
           priority: 'medium',
-          sourceEntityId: doc.id,
+          sourceEntityId: String(doc.id),
           sourceEntityType: 'document',
           organizationId,
         });
@@ -532,21 +595,34 @@ class UnifiedTaskService {
   }
 
   private async syncVaultTasks(organizationId: number) {
-    // Query vault approval tasks
-    const approvals = await db.select().from(schema.documentApprovals)
-      .where(and(
-        eq(schema.documentApprovals.organizationId, organizationId),
-        eq(schema.documentApprovals.status, 'pending')
-      ))
-      .limit(50);
+    const dbInstance = this.getDb();
+
+    // Query vault approval tasks (raw query to avoid missing schema bindings)
+    const approvalsResult = await dbInstance.execute(sql`
+      select id, approver_id as approverId, status, approval_date as approvalDate
+      from document_approvals
+      where status = 'PENDING'
+      limit 50
+    `);
+
+    const approvals = approvalsResult.rows as Array<{
+      id: string;
+      approverId: string | number | null;
+      status: string;
+      approvalDate: Date | null;
+    }>;
 
     let created = 0;
     for (const approval of approvals) {
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, String(approval.id)),
-          eq(schema.unifiedTasks.moduleType, 'Vault')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, String(approval.id)),
+            eq(schema.unifiedTasks.moduleType, 'Vault')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
@@ -556,9 +632,14 @@ class UnifiedTaskService {
           description: `Review and approve document in Trial Vault`,
           category: 'approval',
           taskType: 'approval',
-          assigneeId: approval.approverId,
+          assigneeId:
+            typeof approval.approverId === 'number'
+              ? approval.approverId
+              : Number.isFinite(Number(approval.approverId))
+                ? Number(approval.approverId)
+                : undefined,
           priority: 'high',
-          dueDate: approval.dueDate,
+          dueDate: approval.approvalDate || undefined,
           sourceEntityId: String(approval.id),
           sourceEntityType: 'document_approval',
           organizationId,
@@ -571,21 +652,31 @@ class UnifiedTaskService {
   }
 
   private async syncProtocolTasks(organizationId: number) {
+    const dbInstance = this.getDb();
+
     // Query protocol design tasks
-    const protocols = await db.select().from(schema.protocols)
-      .where(and(
-        eq(schema.protocols.organizationId, organizationId),
-        eq(schema.protocols.status, 'draft')
-      ))
+    const protocols = await dbInstance
+      .select()
+      .from(schema.protocols)
+      .where(
+        and(
+          eq(schema.protocols.organizationId, organizationId),
+          eq(schema.protocols.status, 'draft')
+        )
+      )
       .limit(50);
 
     let created = 0;
     for (const protocol of protocols) {
-      const existing = await db.select().from(schema.unifiedTasks)
-        .where(and(
-          eq(schema.unifiedTasks.sourceEntityId, String(protocol.id)),
-          eq(schema.unifiedTasks.moduleType, 'ProtocolDesign')
-        ))
+      const existing = await dbInstance
+        .select()
+        .from(schema.unifiedTasks)
+        .where(
+          and(
+            eq(schema.unifiedTasks.sourceEntityId, String(protocol.id)),
+            eq(schema.unifiedTasks.moduleType, 'ProtocolDesign')
+          )
+        )
         .limit(1);
 
       if (existing.length === 0) {
@@ -611,8 +702,9 @@ class UnifiedTaskService {
    * Update task status
    */
   async updateTaskStatus(taskId: string, status: string, userId?: number) {
+    const dbInstance = this.getDb();
     const updates: any = { status, updatedAt: new Date() };
-    
+
     if (status === 'completed') {
       updates.completedAt = new Date();
       updates.completionPercentage = 100;
@@ -623,7 +715,8 @@ class UnifiedTaskService {
       updates.lastModifiedBy = userId;
     }
 
-    const result = await db.update(schema.unifiedTasks)
+    const result = await dbInstance
+      .update(schema.unifiedTasks)
       .set(updates)
       .where(eq(schema.unifiedTasks.taskId, taskId))
       .returning();
@@ -637,28 +730,33 @@ class UnifiedTaskService {
   }
 
   private async updateDependentTasks(completedTaskId: string) {
+    const dbInstance = this.getDb();
     // Find tasks blocked by this one
-    const blockedTasks = await db.select().from(schema.unifiedTasks)
+    const blockedTasks = await dbInstance
+      .select()
+      .from(schema.unifiedTasks)
       .where(sql`${completedTaskId} = ANY(${schema.unifiedTasks.blockedBy})`);
 
     for (const task of blockedTasks) {
       // Remove from blockedBy array
-      const newBlockedBy = task.blockedBy?.filter((id) => id !== completedTaskId) || [];
-      
+      const newBlockedBy = task.blockedBy?.filter(id => id !== completedTaskId) || [];
+
       // If no more blockers, update status to in-progress
       if (newBlockedBy.length === 0 && task.status === 'blocked') {
-        await db.update(schema.unifiedTasks)
-          .set({ 
+        await dbInstance
+          .update(schema.unifiedTasks)
+          .set({
             blockedBy: newBlockedBy,
             status: 'in-progress',
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(schema.unifiedTasks.taskId, task.taskId));
       } else {
-        await db.update(schema.unifiedTasks)
-          .set({ 
+        await dbInstance
+          .update(schema.unifiedTasks)
+          .set({
             blockedBy: newBlockedBy,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(schema.unifiedTasks.taskId, task.taskId));
       }
@@ -668,4 +766,3 @@ class UnifiedTaskService {
 
 const unifiedTaskService = UnifiedTaskService.getInstance();
 export default unifiedTaskService;
-export { MODULE_CONFIG };

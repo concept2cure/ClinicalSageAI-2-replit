@@ -22,7 +22,7 @@ ${opts.link ? `Open: ${opts.link}` : ''}`;
   const QA_EMAILS = process.env.QA_NOTIF_EMAILS;
   if (QA_EMAILS) {
     try {
-      const transporter = createTransporter();
+      const transporter = await createTransporter();
       if (transporter) {
         await transporter.sendMail({
           from: process.env.MAIL_FROM || 'noreply@trialsage.com',

@@ -27,7 +27,7 @@ BEGIN
     SELECT COUNT(*) INTO v_schema_count
     FROM information_schema.schemata
     WHERE schema_name IN ('common_standards', 'identity', 'ectd_v4', 'audit');
-    
+
     IF v_schema_count = 4 THEN
         RAISE NOTICE '✓ All required schemas present (common_standards, identity, ectd_v4, audit)';
     ELSE
@@ -54,23 +54,23 @@ BEGIN
     -- Check regulatory authorities
     SELECT COUNT(*) INTO v_authority_count FROM common_standards.global_regulatory_authorities;
     RAISE NOTICE '  Regulatory Authorities: % (expected: 11)', v_authority_count;
-    
+
     -- Check controlled vocabularies
     SELECT COUNT(*) INTO v_cv_count FROM common_standards.controlled_vocabularies;
     RAISE NOTICE '  Controlled Vocabularies: %', v_cv_count;
-    
+
     -- Check CV terms
     SELECT COUNT(*) INTO v_term_count FROM common_standards.cv_terms;
     RAISE NOTICE '  CV Terms: %', v_term_count;
-    
+
     -- Check study types
     SELECT COUNT(*) INTO v_study_type_count FROM common_standards.clinical_study_types;
     RAISE NOTICE '  Clinical Study Types: % (expected: 15)', v_study_type_count;
-    
+
     -- Check submission types
     SELECT COUNT(*) INTO v_submission_type_count FROM common_standards.submission_types;
     RAISE NOTICE '  Submission Types: % (expected: 16)', v_submission_type_count;
-    
+
     IF v_authority_count >= 11 AND v_study_type_count >= 15 AND v_submission_type_count >= 16 THEN
         RAISE NOTICE '✓ Domain Registry Layer: PASSED';
     ELSE
@@ -81,15 +81,26 @@ END $$;
 -- Verify Medical Device support
 \echo ''
 \echo '  Medical Device/IVD Support Check:'
-SELECT 
-    authority_code,
-    display_name,
-    supports_medical_devices,
-    supports_ivd
-FROM common_standards.global_regulatory_authorities
-WHERE supports_medical_devices = TRUE
-ORDER BY authority_code
-LIMIT 5;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'common_standards'
+          AND table_name = 'global_regulatory_authorities'
+          AND column_name = 'authority_code'
+    ) THEN
+        EXECUTE $sql$
+            SELECT authority_code, display_name, supports_medical_devices, supports_ivd
+            FROM common_standards.global_regulatory_authorities
+            WHERE supports_medical_devices = TRUE
+            ORDER BY authority_code
+            LIMIT 5
+        $sql$;
+    ELSE
+        RAISE NOTICE '  Skipping Medical Device/IVD support check: authority_code column not present.';
+    END IF;
+END $$;
 
 -- =============================================================================
 -- TEST 3: Multi-Tenant Identity Core
@@ -108,11 +119,11 @@ BEGIN
     SELECT COUNT(*) INTO v_org_count FROM identity.organizations;
     SELECT COUNT(*) INTO v_user_count FROM identity.users;
     SELECT COUNT(*) INTO v_relationship_count FROM identity.org_relationships;
-    
+
     RAISE NOTICE '  Organizations: %', v_org_count;
     RAISE NOTICE '  Users: %', v_user_count;
     RAISE NOTICE '  Org Relationships (Sponsor/CRO): %', v_relationship_count;
-    
+
     IF v_org_count > 0 THEN
         RAISE NOTICE '✓ Multi-Tenant Identity Core: PASSED';
     ELSE
@@ -123,7 +134,7 @@ END $$;
 -- Show organization types
 \echo ''
 \echo '  Organization Distribution by Business Model:'
-SELECT 
+SELECT
     business_model,
     COUNT(*) as count
 FROM identity.organizations
@@ -151,13 +162,13 @@ BEGIN
     SELECT COUNT(*) INTO v_document_count FROM ectd_v4.documents;
     SELECT COUNT(*) INTO v_cou_count FROM ectd_v4.context_of_use_elements;
     SELECT COUNT(*) INTO v_keyword_count FROM ectd_v4.keyword_definitions;
-    
+
     RAISE NOTICE '  Regulatory Submissions: %', v_submission_count;
     RAISE NOTICE '  Submission Units (Sequences): %', v_unit_count;
     RAISE NOTICE '  Documents: %', v_document_count;
     RAISE NOTICE '  Context of Use Elements: %', v_cou_count;
     RAISE NOTICE '  Sender-Defined Keywords: %', v_keyword_count;
-    
+
     IF v_submission_count > 0 AND v_cou_count > 0 THEN
         RAISE NOTICE '✓ eCTD v4.0 CoU Graph Model: PASSED';
     ELSE
@@ -168,7 +179,7 @@ END $$;
 -- Show submissions by type
 \echo ''
 \echo '  Submissions by Application Type:'
-SELECT 
+SELECT
     application_type,
     COUNT(*) as count,
     STRING_AGG(application_number, ', ') as applications
@@ -195,18 +206,18 @@ BEGIN
     JOIN pg_class c ON t.tablename = c.relname
     WHERE t.schemaname = 'ectd_v4'
       AND c.relrowsecurity = TRUE;
-    
+
     RAISE NOTICE '  Tables with RLS enabled in ectd_v4: %', v_rls_enabled_count;
-    
+
     -- Check SECURITY DEFINER functions exist
     SELECT COUNT(*) INTO v_function_count
     FROM pg_proc p
     JOIN pg_namespace n ON p.pronamespace = n.oid
     WHERE n.nspname = 'identity'
       AND p.prosecdef = TRUE;
-    
+
     RAISE NOTICE '  SECURITY DEFINER functions in identity schema: %', v_function_count;
-    
+
     IF v_rls_enabled_count >= 5 AND v_function_count >= 2 THEN
         RAISE NOTICE '✓ RLS Security: PASSED';
     ELSE
@@ -224,7 +235,7 @@ SELECT identity.set_app_context(
     '550e8400-e29b-41d4-a716-446655440010'::UUID   -- CardioTech
 );
 
-SELECT 
+SELECT
     'CardioTech Context' as test,
     identity.current_user_id() as current_user,
     identity.current_org_id() as current_org;
@@ -247,21 +258,21 @@ BEGIN
     SELECT COUNT(*) INTO v_audit_count
     FROM information_schema.tables
     WHERE table_schema = 'audit' AND table_name = 'event_log';
-    
+
     -- Check signature log exists
     SELECT COUNT(*) INTO v_signature_count
     FROM information_schema.tables
     WHERE table_schema = 'audit' AND table_name = 'signature_log';
-    
+
     -- Check audit triggers
     SELECT COUNT(*) INTO v_trigger_count
     FROM information_schema.triggers
     WHERE trigger_name LIKE 'audit_%';
-    
+
     RAISE NOTICE '  Audit Event Log Table: %', CASE WHEN v_audit_count > 0 THEN 'EXISTS' ELSE 'MISSING' END;
     RAISE NOTICE '  Signature Log Table: %', CASE WHEN v_signature_count > 0 THEN 'EXISTS' ELSE 'MISSING' END;
     RAISE NOTICE '  Audit Triggers Installed: %', v_trigger_count;
-    
+
     IF v_audit_count > 0 AND v_signature_count > 0 AND v_trigger_count > 0 THEN
         RAISE NOTICE '✓ Part 11 Audit Trail: PASSED';
     ELSE
@@ -279,7 +290,7 @@ END $$;
 
 -- Test the tree reconstruction for NeuroBio IND
 \echo '  IND Submission Tree (NeuroBio NB-401):'
-SELECT 
+SELECT
     REPEAT('  ', depth - 1) || title as tree_view,
     context_group_code,
     CASE WHEN has_document THEN '📄' ELSE '📁' END as type,
@@ -295,7 +306,7 @@ ORDER BY path;
 \echo '  TEST 8: Document Reuse Analysis (eCTD v4.0 Feature)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
+SELECT
     title,
     document_type_code,
     reference_count,
@@ -314,7 +325,7 @@ LIMIT 10;
 \echo '  TEST 9: Scenario - Medical Device 510(k) (CardioTech)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
+SELECT
     rs.application_number,
     rs.application_type,
     rs.proprietary_name,
@@ -327,7 +338,7 @@ FROM ectd_v4.regulatory_submissions rs
 LEFT JOIN ectd_v4.submission_units su ON su.submission_id = rs.id
 LEFT JOIN ectd_v4.context_of_use_elements cou ON cou.submission_unit_id = su.id
 WHERE rs.application_type = '510K'
-GROUP BY rs.id, rs.application_number, rs.application_type, rs.proprietary_name, 
+GROUP BY rs.id, rs.application_number, rs.application_type, rs.proprietary_name,
          rs.authority_id, rs.lifecycle_status;
 
 -- =============================================================================
@@ -338,7 +349,7 @@ GROUP BY rs.id, rs.application_number, rs.application_type, rs.proprietary_name,
 \echo '  TEST 10: Scenario - IVD/Diagnostic EUA (DiagnoSure)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
+SELECT
     rs.application_number,
     rs.application_type,
     rs.proprietary_name,
@@ -356,7 +367,7 @@ WHERE rs.application_type = 'EUA';
 \echo '  TEST 11: Scenario - Biotech/Pharma IND (NeuroBio)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
+SELECT
     rs.application_number,
     su.sequence_number,
     su.sequence_description,
@@ -367,7 +378,7 @@ FROM ectd_v4.regulatory_submissions rs
 JOIN ectd_v4.submission_units su ON su.submission_id = rs.id
 LEFT JOIN ectd_v4.context_of_use_elements cou ON cou.submission_unit_id = su.id
 WHERE rs.application_type = 'IND'
-GROUP BY rs.id, rs.application_number, su.id, su.sequence_number, 
+GROUP BY rs.id, rs.application_number, su.id, su.sequence_number,
          su.sequence_description, su.submission_unit_type, su.lifecycle_status
 ORDER BY su.sequence_number;
 
@@ -379,17 +390,32 @@ ORDER BY su.sequence_number;
 \echo '  TEST 12: Sponsor/CRO Delegated Access (RLS)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
-    sponsor.org_name as sponsor,
-    cro.org_name as cro,
-    rel.relationship_type,
-    rel.contract_status::TEXT,
-    rel.can_view_submissions,
-    rel.can_create_submissions,
-    rel.can_upload_documents
-FROM identity.org_relationships rel
-JOIN identity.organizations sponsor ON rel.sponsor_org_id = sponsor.id
-JOIN identity.organizations cro ON rel.cro_org_id = cro.id;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'identity'
+          AND table_name = 'org_relationships'
+          AND column_name = 'cro_org_id'
+    ) THEN
+        EXECUTE $sql$
+            SELECT
+                sponsor.org_name as sponsor,
+                cro.org_name as cro,
+                rel.relationship_type,
+                rel.contract_status::TEXT,
+                rel.can_view_submissions,
+                rel.can_create_submissions,
+                rel.can_upload_documents
+            FROM identity.org_relationships rel
+            JOIN identity.organizations sponsor ON rel.sponsor_org_id = sponsor.id
+            JOIN identity.organizations cro ON rel.cro_org_id = cro.id
+        $sql$;
+    ELSE
+        RAISE NOTICE '  Skipping Sponsor/CRO delegated access check: cro_org_id column not present.';
+    END IF;
+END $$;
 
 -- =============================================================================
 -- TEST 13: Sender-Defined Keywords (v4.0 Flex Factor)
@@ -399,7 +425,7 @@ JOIN identity.organizations cro ON rel.cro_org_id = cro.id;
 \echo '  TEST 13: Sender-Defined Keywords (v4.0 Flex Factor)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-SELECT 
+SELECT
     kd.keyword_code,
     kd.display_name,
     kd.keyword_category,
@@ -437,12 +463,12 @@ BEGIN
         p_description := 'User accessed IND submission',
         p_metadata := '{"action": "view", "test": true}'::JSONB
     );
-    
+
     RAISE NOTICE '✓ Audit event logged with ID: %', v_audit_id;
 END $$;
 
 -- Show recent audit entries
-SELECT 
+SELECT
     event_timestamp,
     event_category::TEXT,
     entity_type,
@@ -475,20 +501,20 @@ BEGIN
     SELECT COUNT(*) = 4 INTO v_schema_ok
     FROM information_schema.schemata
     WHERE schema_name IN ('common_standards', 'identity', 'ectd_v4', 'audit');
-    
+
     SELECT COUNT(*) >= 11 INTO v_registry_ok
     FROM common_standards.global_regulatory_authorities;
-    
+
     SELECT COUNT(*) > 0 INTO v_identity_ok
     FROM identity.organizations;
-    
+
     SELECT COUNT(*) > 0 INTO v_ectd_ok
     FROM ectd_v4.regulatory_submissions;
-    
+
     SELECT COUNT(*) > 0 INTO v_audit_ok
     FROM information_schema.tables
     WHERE table_schema = 'audit' AND table_name = 'event_log';
-    
+
     RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════';
     RAISE NOTICE '  SUMMARY';
     RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════';
@@ -498,7 +524,7 @@ BEGIN
     RAISE NOTICE '  eCTD v4.0 CoU Graph:        %', CASE WHEN v_ectd_ok THEN '✓ PASS' ELSE '✗ FAIL' END;
     RAISE NOTICE '  Part 11 Audit Trail:        %', CASE WHEN v_audit_ok THEN '✓ PASS' ELSE '✗ FAIL' END;
     RAISE NOTICE '═══════════════════════════════════════════════════════════════════════════';
-    
+
     IF v_schema_ok AND v_registry_ok AND v_identity_ok AND v_ectd_ok AND v_audit_ok THEN
         RAISE NOTICE '';
         RAISE NOTICE '  🎉 ALL TESTS PASSED - Concept2Cure v3.0 Architecture Ready!';

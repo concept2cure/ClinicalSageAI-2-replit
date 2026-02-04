@@ -1,8 +1,8 @@
 /**
  * GRDHE Type Definitions
- * 
+ *
  * Type definitions for the Global Regulatory Data Harmonization Engine
- * 
+ *
  * @version 1.0.0
  * @compliance 21 CFR Part 11, EU MDR 2017/745, GDPR Article 9, ISO 13485
  */
@@ -11,15 +11,15 @@
 // DATA RESIDENCY TYPES
 // =============================================================================
 
-export type DataRegion = 
-  | 'US_EAST' 
-  | 'US_WEST' 
-  | 'EU_WEST' 
-  | 'EU_CENTRAL' 
-  | 'UK_SOUTH' 
-  | 'JP_EAST' 
-  | 'CA_CENTRAL' 
-  | 'AU_EAST' 
+export type DataRegion =
+  | 'US_EAST'
+  | 'US_WEST'
+  | 'EU_WEST'
+  | 'EU_CENTRAL'
+  | 'UK_SOUTH'
+  | 'JP_EAST'
+  | 'CA_CENTRAL'
+  | 'AU_EAST'
   | 'GLOBAL';
 
 export interface DataResidencyConfig {
@@ -28,30 +28,42 @@ export interface DataResidencyConfig {
   primaryRegion: DataRegion;
   allowedProcessingRegions: DataRegion[];
   backupRegion?: DataRegion;
-  
+
   // GDPR settings
   gdprSubject: boolean;
-  gdprLawfulBasis?: 'consent' | 'contract' | 'legal_obligation' | 'vital_interests' | 'public_task' | 'legitimate_interests' | 'research_exemption';
+  gdprLawfulBasis?:
+    | 'consent'
+    | 'contract'
+    | 'legal_obligation'
+    | 'vital_interests'
+    | 'public_task'
+    | 'legitimate_interests'
+    | 'research_exemption';
   gdprDpoContact?: string;
   gdprDataSubjectRightsUrl?: string;
-  
+
   // Cross-border transfers
-  crossBorderMechanism?: 'adequacy_decision' | 'standard_contractual_clauses' | 'binding_corporate_rules' | 'derogation_explicit_consent' | 'none_required';
+  crossBorderMechanism?:
+    | 'adequacy_decision'
+    | 'standard_contractual_clauses'
+    | 'binding_corporate_rules'
+    | 'derogation_explicit_consent'
+    | 'none_required';
   crossBorderDocumentationUrl?: string;
-  
+
   // Encryption
   encryptionAtRestRequired: boolean;
   encryptionInTransitRequired: boolean;
   fieldLevelEncryptionFields: string[];
   encryptionAlgorithm: string;
   keyRotationDays: number;
-  
+
   // Retention (in days)
   clinicalTrialRetentionDays: number;
   postMarketRetentionDays: number;
   auditLogRetentionDays: number;
   adverseEventRetentionDays: number;
-  
+
   // Audit
   createdAt: Date;
   updatedAt: Date;
@@ -62,7 +74,7 @@ export interface DataResidencyConfig {
 // TERMINOLOGY TYPES
 // =============================================================================
 
-export type TerminologySystem = 
+export type TerminologySystem =
   | 'MEDDRA'
   | 'SNOMED_CT'
   | 'SNOMED_CT_US'
@@ -110,7 +122,7 @@ export interface TerminologyVersion {
   updatedAt: Date;
 }
 
-export type TerminologyMappingType = 
+export type TerminologyMappingType =
   | 'equivalent'
   | 'broader'
   | 'narrower'
@@ -119,7 +131,7 @@ export type TerminologyMappingType =
   | 'unmapped'
   | 'deprecated_to';
 
-export type TerminologyMappingSource = 
+export type TerminologyMappingSource =
   | 'manual'
   | 'automated'
   | 'vendor_provided'
@@ -326,7 +338,15 @@ export interface MappingRuleHistory {
   ruleId: string;
   versionNumber: number;
   versionLabel?: string;
-  changeType: 'CREATE' | 'UPDATE' | 'ACTIVATE' | 'DEACTIVATE' | 'APPROVE' | 'REJECT' | 'ARCHIVE' | 'RESTORE';
+  changeType:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'ACTIVATE'
+    | 'DEACTIVATE'
+    | 'APPROVE'
+    | 'REJECT'
+    | 'ARCHIVE'
+    | 'RESTORE';
   changeSummary: string;
   changeDetails?: Record<string, any>;
   ruleSnapshot: Record<string, any>;
@@ -432,7 +452,14 @@ export interface ExportJobAuditEntry {
   id: string;
   jobId: string;
   action: string;
-  actionCategory: 'status_change' | 'validation' | 'transformation' | 'generation' | 'approval' | 'error' | 'system';
+  actionCategory:
+    | 'status_change'
+    | 'validation'
+    | 'transformation'
+    | 'generation'
+    | 'approval'
+    | 'error'
+    | 'system';
   previousState?: Record<string, any>;
   newState?: Record<string, any>;
   message: string;
@@ -508,8 +535,21 @@ export interface SignatureRequest {
 export type CaseType = 'spontaneous' | 'clinical_trial' | 'literature' | 'solicited' | 'other';
 export type ReportType = 'initial' | 'followup' | 'amendment' | 'nullification';
 export type DatePrecision = 'year' | 'month' | 'day';
-export type CaseOutcome = 'recovered' | 'recovering' | 'not_recovered' | 'recovered_with_sequelae' | 'fatal' | 'unknown';
-export type CaseStatus = 'draft' | 'pending_review' | 'under_review' | 'approved' | 'submitted' | 'closed' | 'archived';
+export type CaseOutcome =
+  | 'recovered'
+  | 'recovering'
+  | 'not_recovered'
+  | 'recovered_with_sequelae'
+  | 'fatal'
+  | 'unknown';
+export type CaseStatus =
+  | 'draft'
+  | 'pending_review'
+  | 'under_review'
+  | 'approved'
+  | 'submitted'
+  | 'closed'
+  | 'archived';
 
 export interface PatientInfo {
   age?: number;
@@ -671,7 +711,13 @@ export interface CanonicalAdverseEvent {
   updatedBy?: string;
 }
 
-export type ProductType = 'drug' | 'biologic' | 'medical_device' | 'combination_product' | 'diagnostic' | 'samd';
+export type ProductType =
+  | 'drug'
+  | 'biologic'
+  | 'medical_device'
+  | 'combination_product'
+  | 'diagnostic'
+  | 'samd';
 export type DeviceClass = 'I' | 'II' | 'III';
 
 export interface ProductIdentifiers {
@@ -751,7 +797,13 @@ export interface GDPRProcessingRecord {
   specialCategoryData?: string[];
   recipientCategories: string[];
   thirdCountryRecipients?: string[];
-  lawfulBasis: 'consent' | 'contract' | 'legal_obligation' | 'vital_interests' | 'public_task' | 'legitimate_interests';
+  lawfulBasis:
+    | 'consent'
+    | 'contract'
+    | 'legal_obligation'
+    | 'vital_interests'
+    | 'public_task'
+    | 'legitimate_interests';
   lawfulBasisJustification?: string;
   specialCategoryBasis?: string;
   specialCategoryJustification?: string;
@@ -888,11 +940,15 @@ export interface TransformDataResponse {
 export interface ExportResult {
   xml?: string;
   json?: string;
+  content?: string;
+  contentType?: string;
+  fileName?: string;
+  metadata?: Record<string, unknown>;
   warnings: ValidationWarning[];
   errors: ValidationError[];
-  terminologyVersionsUsed: Record<string, TerminologyVersionLock>;
-  exportTimestamp: string;
-  contentHash: string;
+  terminologyVersionsUsed?: Record<string, TerminologyVersionLock>;
+  exportTimestamp?: string;
+  contentHash?: string;
 }
 
 // =============================================================================
@@ -906,58 +962,58 @@ export interface CodeSystemMapping {
 
 export const CODE_SYSTEMS: Record<string, Record<string, string>> = {
   ICH_SEX: {
-    'M': '1',
-    'F': '2',
-    'U': '0'
+    M: '1',
+    F: '2',
+    U: '0',
   },
   ICH_AGE_UNIT: {
-    'years': '801',
-    'months': '802',
-    'weeks': '803',
-    'days': '804',
-    'hours': '805'
+    years: '801',
+    months: '802',
+    weeks: '803',
+    days: '804',
+    hours: '805',
   },
   ICH_QUALIFIER: {
-    'physician': '1',
-    'pharmacist': '2',
-    'other_health_professional': '3',
-    'lawyer': '4',
-    'consumer': '5'
+    physician: '1',
+    pharmacist: '2',
+    other_health_professional: '3',
+    lawyer: '4',
+    consumer: '5',
   },
   ICH_OUTCOME: {
-    'recovered': '1',
-    'recovering': '2',
-    'not_recovered': '3',
-    'recovered_with_sequelae': '4',
-    'fatal': '5',
-    'unknown': '6'
+    recovered: '1',
+    recovering: '2',
+    not_recovered: '3',
+    recovered_with_sequelae: '4',
+    fatal: '5',
+    unknown: '6',
   },
   ICH_SERIOUS: {
-    'true': '1',
-    'false': '2'
+    true: '1',
+    false: '2',
   },
   FDA_ROUTE: {
-    'oral': 'C38288',
-    'intravenous': 'C38276',
-    'intramuscular': 'C38274',
-    'subcutaneous': 'C38299',
-    'topical': 'C38304',
-    'inhalation': 'C38216',
-    'transdermal': 'C38305',
-    'rectal': 'C38295',
-    'ophthalmic': 'C38287',
-    'otic': 'C38192'
+    oral: 'C38288',
+    intravenous: 'C38276',
+    intramuscular: 'C38274',
+    subcutaneous: 'C38299',
+    topical: 'C38304',
+    inhalation: 'C38216',
+    transdermal: 'C38305',
+    rectal: 'C38295',
+    ophthalmic: 'C38287',
+    otic: 'C38192',
   },
   ISO_3166_1: {
-    'US': 'US',
-    'CA': 'CA',
-    'GB': 'GB',
-    'DE': 'DE',
-    'FR': 'FR',
-    'IT': 'IT',
-    'ES': 'ES',
-    'JP': 'JP',
-    'AU': 'AU',
-    'NZ': 'NZ'
-  }
+    US: 'US',
+    CA: 'CA',
+    GB: 'GB',
+    DE: 'DE',
+    FR: 'FR',
+    IT: 'IT',
+    ES: 'ES',
+    JP: 'JP',
+    AU: 'AU',
+    NZ: 'NZ',
+  },
 };

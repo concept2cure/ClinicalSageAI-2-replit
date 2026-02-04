@@ -5,12 +5,10 @@
  * with regulatory metadata and intelligent classification.
  */
 
-import { Pool } from 'pg';
+import { getPool } from '../db.ts';
 
-// Initialize database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
-});
+// Use canonical database connection
+const pool = getPool();
 
 /**
  * Initialize vector chunks table with proper indexes
@@ -59,18 +57,18 @@ export async function initializeVectorDatabase() {
 
     // Create index on project_id and status for faster lookups
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_drafting_tasks_project_id 
+      CREATE INDEX IF NOT EXISTS idx_drafting_tasks_project_id
       ON drafting_tasks(project_id)
     `);
 
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_drafting_tasks_status 
+      CREATE INDEX IF NOT EXISTS idx_drafting_tasks_status
       ON drafting_tasks(status)
     `);
 
     // Create indexes for optimal search performance
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_vector_chunks_embedding 
+      CREATE INDEX IF NOT EXISTS idx_vector_chunks_embedding
       ON vector_chunks USING ivfflat (embedding vector_cosine_ops)
       WITH (lists = 100)
     `);
@@ -112,8 +110,8 @@ export async function insertVectorChunks(chunks) {
   try {
     const insertQuery = `
       INSERT INTO vector_chunks (
-        doc_id, doc_title, content, embedding, ectd_section, 
-        doc_type, region_tag, page_number, chunk_index, 
+        doc_id, doc_title, content, embedding, ectd_section,
+        doc_type, region_tag, page_number, chunk_index,
         compliance_score, metadata
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id
@@ -187,13 +185,13 @@ export async function vectorSimilaritySearch(params) {
     }
 
     const searchQuery = `
-      SELECT 
-        id, doc_id, doc_title, content, ectd_section, doc_type, 
+      SELECT
+        id, doc_id, doc_title, content, ectd_section, doc_type,
         region_tag, page_number, chunk_index, compliance_score,
         ${include_metadata ? 'metadata,' : ''}
         (1 - (embedding <=> $1)) as similarity_score,
         upload_date
-      FROM vector_chunks 
+      FROM vector_chunks
       WHERE ${whereConditions.join(' AND ')}
       ORDER BY embedding <=> $1
       LIMIT $${paramIndex}
@@ -225,11 +223,11 @@ export async function getDocumentChunks(docId) {
   try {
     const result = await client.query(
       `
-      SELECT 
-        id, content, ectd_section, doc_type, region_tag, 
+      SELECT
+        id, content, ectd_section, doc_type, region_tag,
         page_number, chunk_index, compliance_score, metadata
-      FROM vector_chunks 
-      WHERE doc_id = $1 
+      FROM vector_chunks
+      WHERE doc_id = $1
       ORDER BY chunk_index
     `,
       [docId]
@@ -253,14 +251,14 @@ export async function calculateComplianceScore(docId, submissionType, region) {
   try {
     const result = await client.query(
       `
-      SELECT 
+      SELECT
         AVG(compliance_score) as overall_compliance,
         COUNT(*) as total_chunks,
         COUNT(CASE WHEN compliance_score >= 0.8 THEN 1 END) as high_compliance_chunks,
         COUNT(CASE WHEN compliance_score < 0.5 THEN 1 END) as low_compliance_chunks,
         array_agg(DISTINCT ectd_section) as sections_covered,
         array_agg(DISTINCT doc_type) as document_types
-      FROM vector_chunks 
+      FROM vector_chunks
       WHERE doc_id = $1
     `,
       [docId]
@@ -363,7 +361,7 @@ export async function updateDraftingTask(taskId, status, draftContent = null, er
   try {
     const result = await client.query(
       `
-      UPDATE drafting_tasks 
+      UPDATE drafting_tasks
       SET status = $2, draft_content = $3, error_message = $4, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
       RETURNING *

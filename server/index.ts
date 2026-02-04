@@ -86,6 +86,7 @@ import enterpriseRoutes from './api/enterprise/routes.js';
 // Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api.ts';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.ts';
+import foresightFeedbackRoutes from './routes/foresight-feedback.ts';
 
 // Import Phase 5: Intelligent Document System routes
 import intelligentDocsRoutes from './routes/intelligentDocs.ts';
@@ -491,11 +492,28 @@ try {
 // Mount Lumen Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
-  app.use('/api/foresight', foresightApiRoutes);
-  app.use('/api/foresight-ai', foresightAIAdvancedRoutes);
+  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Sunset', '2026-04-01');
+    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
+    next();
+  };
+
+  app.use('/api/foresight', markDeprecated, foresightApiRoutes);
+  app.use('/api/foresight-ai', markDeprecated, foresightAIAdvancedRoutes);
+  app.use('/api/foresight-feedback', markDeprecated, foresightFeedbackRoutes);
+  app.use(
+    '/api/foresight-ai/feedback',
+    markDeprecated,
+    (req, _res, next) => {
+      req.url = `/feedback${req.url}`;
+      next();
+    },
+    foresightFeedbackRoutes
+  );
   // New Lumen Cortex aliases
-  app.use('/api/lumen', foresightApiRoutes);
-  app.use('/api/lumen-ai', foresightAIAdvancedRoutes);
+  app.use('/api/lumen', markDeprecated, foresightApiRoutes);
+  app.use('/api/lumen-ai', markDeprecated, foresightAIAdvancedRoutes);
   console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex routes:', error);
@@ -504,8 +522,14 @@ try {
 // Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  app.use('/api/foresight/rag', foresightRagRoutes.default);
-  app.use('/api/lumen/rag', foresightRagRoutes.default); // New alias
+  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Sunset', '2026-04-01');
+    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
+    next();
+  };
+  app.use('/api/foresight/rag', markDeprecated, foresightRagRoutes.default);
+  app.use('/api/lumen/rag', markDeprecated, foresightRagRoutes.default); // New alias
   console.log('✅ Lumen Cortex RAG API routes mounted successfully');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex RAG routes:', error);
@@ -857,24 +881,20 @@ try {
 // CORTEX PRIME AI ROUTES - The Unified Intelligence Brain
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Mount Cortex Prime Core routes (atoms, edges, threads, traces)
+// Mount Cortex Unified routes (canonical public gateway)
 try {
-  const cortexRoutesModule = await import('./routes/cortexRoutes.ts');
-  const cortexRoutes = cortexRoutesModule.default;
-  app.use('/api/cortex', cortexRoutes);
-  console.log('✅ Cortex Prime Core API routes mounted (atoms, edges, threads, traces)');
-} catch (error) {
-  console.error('❌ Failed to mount Cortex Core routes:', error);
-}
+  const cortexQueryModule = await import('./routes/cortexQueryRoutes.js');
+  if (cortexQueryModule.initializeCortexAPI) {
+    cortexQueryModule.initializeCortexAPI(pool);
+    console.log('✅ Cortex Query API initialized with database pool');
+  }
 
-// Mount Cortex Advisory routes (regulatory intuition, predictions, patterns)
-try {
-  const cortexAdvisoryModule = await import('./routes/cortexAdvisoryRoutes.js');
-  const cortexAdvisoryRoutes = cortexAdvisoryModule.default;
-  app.use('/api/cortex/advisory', cortexAdvisoryRoutes);
-  console.log('✅ Cortex Advisory API routes mounted (regulatory intuition, predictions)');
+  const cortexUnifiedModule = await import('./routes/cortex-unified.ts');
+  const cortexUnifiedRoutes = cortexUnifiedModule.default;
+  app.use('/api/cortex', cortexUnifiedRoutes);
+  console.log('✅ Cortex Unified API gateway mounted at /api/cortex');
 } catch (error) {
-  console.error('❌ Failed to mount Cortex Advisory routes:', error);
+  console.error('❌ Failed to mount Cortex Unified routes:', error);
 }
 
 // Mount Cortex Management routes (graph operations, quality, conflicts, versions)
@@ -892,22 +912,7 @@ try {
   console.error('❌ Failed to mount Cortex Management routes:', error);
 }
 
-// Mount Cortex Query routes (semantic search, embeddings, multi-provider AI)
-try {
-  const cortexQueryModule = await import('./routes/cortexQueryRoutes.js');
-  const cortexQueryRoutes = cortexQueryModule.default;
-  // Initialize the Cortex API with the database pool
-  if (cortexQueryModule.initializeCortexAPI) {
-    cortexQueryModule.initializeCortexAPI(pool);
-    console.log('✅ Cortex Query API initialized with database pool');
-  }
-  app.use('/api/cortex/query', cortexQueryRoutes);
-  console.log('✅ Cortex Query API routes mounted (semantic search, embeddings)');
-} catch (error) {
-  console.error('❌ Failed to mount Cortex Query routes:', error);
-}
-
-console.log('🧠 Cortex Prime AI Brain fully initialized with 68 API endpoints');
+console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway');
 
 // Mount Unified Document Management System routes
 try {
