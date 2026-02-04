@@ -383,13 +383,13 @@ SELECT
     sponsor.org_name as sponsor,
     cro.org_name as cro,
     rel.relationship_type,
-    rel.contract_status::TEXT,
+    rel.is_active,
     rel.can_view_submissions,
-    rel.can_create_submissions,
+    rel.can_edit_submissions,
     rel.can_upload_documents
 FROM identity.org_relationships rel
 JOIN identity.organizations sponsor ON rel.sponsor_org_id = sponsor.id
-JOIN identity.organizations cro ON rel.cro_org_id = cro.id;
+JOIN identity.organizations cro ON rel.delegate_org_id = cro.id;
 
 -- =============================================================================
 -- TEST 13: Sender-Defined Keywords (v4.0 Flex Factor)
