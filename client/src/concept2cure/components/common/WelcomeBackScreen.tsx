@@ -28,8 +28,8 @@ import {
   Bell,
   Calendar,
 } from 'lucide-react';
-import { useSessionRestore } from '../hooks/useSessionRestore';
-import { useProjects } from '../hooks/useProjects';
+import { useSessionRestore } from '../../hooks/useSessionRestore';
+import { useProjects } from '../../hooks/useProjects';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

@@ -34,7 +34,6 @@ export {
 // Regulatory Intelligence Service
 export {
   regulatoryIntelligenceService,
-  regulatoryQueryKeys,
   type RegulatoryAlert,
   type MAUDEEvent,
   type FDARecall,

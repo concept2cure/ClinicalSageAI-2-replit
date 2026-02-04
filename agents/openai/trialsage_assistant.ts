@@ -251,7 +251,7 @@ export async function generateProtocolFromEvidence(
       citations = citationSection[1]
         .split(/\n/)
         .filter(line => line.trim().length > 0)
-        .map(line => line.replace(/^[•\-*\d\.]\s*/, '').trim());
+        .map(line => line.replace(/^[•\-*\d.]\s*/, '').trim());
 
       recommendation = textResponse
         .replace(/(?:Citations|References|Evidence Base):[\s\S]*/i, '')
@@ -382,7 +382,7 @@ function processAssistantResponse(response: string): { content: string; citation
     const citations = citationsMatch[1]
       .split(/\n/)
       .filter(line => line.trim().length > 0)
-      .map(line => line.replace(/^[•\-*\d\.]\s*/, '').trim());
+      .map(line => line.replace(/^[•\-*\d.]\s*/, '').trim());
 
     // Extract the main content without the citations section
     const content = response
