@@ -3,23 +3,20 @@
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
 -- Purpose: Anchor + cross-reference tables for Module 2/5 navigation traceability
+--
 -- eCTD/CTD Context:
 --   - Module(s): Module 2.7 (Clinical Summary), Module 5 (Clinical Study Reports)
 --   - Integrity Risk Addressed: broken cross-refs, orphaned anchors, navigation integrity
 --
-DROP POLICY IF EXISTS rls_anchors_select ON vault.anchors;
 -- Determinism Contract:
 --   - Schema changes here must not undermine deterministic evidence pointers/fingerprints.
 --   - Any change impacting canonical schemas requires spec version bump.
-DROP POLICY IF EXISTS rls_anchors_insert ON vault.anchors;
 --
 -- Notes:
 --   - RLS policies must enforce program_id isolation where applicable.
-DROP POLICY IF EXISTS rls_anchors_update ON vault.anchors;
 --   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
 --   - vault.anchors: Deterministic bookmark/heading extraction for 21 CFR 11
 --   - vault.cross_references: Validated internal/external document links
-DROP POLICY IF EXISTS rls_anchors_delete ON vault.anchors;
 -- =============================================================================
 
 BEGIN;
@@ -69,19 +66,18 @@ CREATE INDEX IF NOT EXISTS idx_anchors_program_id ON vault.anchors(program_id);
 ALTER TABLE vault.anchors ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS rls_anchors_select ON vault.anchors;
-DROP POLICY IF EXISTS rls_anchors_insert ON vault.anchors;
-DROP POLICY IF EXISTS rls_anchors_update ON vault.anchors;
-DROP POLICY IF EXISTS rls_anchors_delete ON vault.anchors;
-
 CREATE POLICY rls_anchors_select ON vault.anchors
     FOR SELECT USING (core.can_access_program(program_id));
 
+DROP POLICY IF EXISTS rls_anchors_insert ON vault.anchors;
 CREATE POLICY rls_anchors_insert ON vault.anchors
     FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
+DROP POLICY IF EXISTS rls_anchors_update ON vault.anchors;
 CREATE POLICY rls_anchors_update ON vault.anchors
     FOR UPDATE USING (core.can_write_program(program_id));
 
+DROP POLICY IF EXISTS rls_anchors_delete ON vault.anchors;
 CREATE POLICY rls_anchors_delete ON vault.anchors
     FOR DELETE USING (core.can_write_program(program_id));
 
@@ -138,19 +134,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_xrefs_idempotent
 ALTER TABLE vault.cross_references ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS rls_xrefs_select ON vault.cross_references;
-DROP POLICY IF EXISTS rls_xrefs_insert ON vault.cross_references;
-DROP POLICY IF EXISTS rls_xrefs_update ON vault.cross_references;
-DROP POLICY IF EXISTS rls_xrefs_delete ON vault.cross_references;
-
 CREATE POLICY rls_xrefs_select ON vault.cross_references
     FOR SELECT USING (core.can_access_program(program_id));
 
+DROP POLICY IF EXISTS rls_xrefs_insert ON vault.cross_references;
 CREATE POLICY rls_xrefs_insert ON vault.cross_references
     FOR INSERT WITH CHECK (core.can_write_program(program_id));
 
+DROP POLICY IF EXISTS rls_xrefs_update ON vault.cross_references;
 CREATE POLICY rls_xrefs_update ON vault.cross_references
     FOR UPDATE USING (core.can_write_program(program_id));
 
+DROP POLICY IF EXISTS rls_xrefs_delete ON vault.cross_references;
 CREATE POLICY rls_xrefs_delete ON vault.cross_references
     FOR DELETE USING (core.can_write_program(program_id));
 

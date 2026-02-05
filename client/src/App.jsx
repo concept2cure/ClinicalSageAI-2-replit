@@ -101,7 +101,6 @@ import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
 const ClientPortalV2 = lazy(() => import('./portal-v2/components/client-portal'));
 const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
 
-
 // Import Lumen Cortex AI Assistant
 const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 
@@ -114,6 +113,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const AdminProfile = lazy(() => import('./pages/AdminProfile'));
 const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
 const RoleManagementPage = lazy(() => import('./pages/admin/RoleManagementPage'));
+const BatchOpsDashboard = lazy(() => import('./pages/admin/BatchOpsDashboard'));
 const TenantManagement = lazy(() => import('./pages/TenantManagement'));
 const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
 
@@ -299,13 +299,18 @@ function MainApp() {
   const isDashboardPage = location === '/dashboard';
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
-  
+
   // Concept2Cure pages have their own layout, no top nav needed
   const isConcept2CurePage = location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   // Always show navigation for CERV2 pages
   const shouldShowNav =
-    isCERV2Page || (!isLandingPage && !isRegulatoryHub && !isCoAuthorPage && !isDashboardPage && !isConcept2CurePage);
+    isCERV2Page ||
+    (!isLandingPage &&
+      !isRegulatoryHub &&
+      !isCoAuthorPage &&
+      !isDashboardPage &&
+      !isConcept2CurePage);
 
   // Define CSR navigation items as per specifications
   const csrNavItems = [
@@ -1925,6 +1930,13 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <AdminProfile />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/batch-ops">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <BatchOpsDashboard />
                 </Suspense>
               )}
             </Route>

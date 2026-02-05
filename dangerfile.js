@@ -63,6 +63,20 @@ const getLinesChanged = () => {
   return (pr.additions || 0) + (pr.deletions || 0);
 };
 
+const hasLargePROverride = () => {
+  const pr = danger.github.pr;
+  const title = (pr.title || '').toLowerCase();
+  const labels = pr.labels || [];
+  const labelNames = labels.map(label => (label?.name || '').toLowerCase());
+
+  return (
+    labelNames.includes('override-large-pr') ||
+    labelNames.includes('hotfix') ||
+    title.startsWith('revert') ||
+    title.startsWith('hotfix')
+  );
+};
+
 // ┌─────────────────────────────────────────────────────────────────────────────┐
 // │                           RULE: PR SIZE                                      │
 // └─────────────────────────────────────────────────────────────────────────────┘
@@ -71,6 +85,18 @@ const checkPRSize = () => {
   const linesChanged = getLinesChanged();
 
   if (linesChanged > CONFIG.PR_SIZE_FAIL) {
+    if (hasLargePROverride()) {
+      warn(
+        `⚠️ **Large PR (Override)**: This PR changes ${linesChanged} lines.\n\n` +
+          `An override was detected (label or title). Please ensure reviewers are aware and the scope is justified.\n\n` +
+          `**Suggested approach:**\n` +
+          `- Separate refactoring from feature changes\n` +
+          `- Split by module or feature area\n` +
+          `- Create a PR stack with dependencies`
+      );
+      return;
+    }
+
     fail(
       `🚨 **Extremely Large PR**: This PR changes ${linesChanged} lines.\n\n` +
         `PRs over ${CONFIG.PR_SIZE_FAIL} lines are difficult to review thoroughly. ` +

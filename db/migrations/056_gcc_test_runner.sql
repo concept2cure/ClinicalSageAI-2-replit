@@ -81,26 +81,15 @@ END $$;
 -- Verify Medical Device support
 \echo ''
 \echo '  Medical Device/IVD Support Check:'
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'common_standards'
-          AND table_name = 'global_regulatory_authorities'
-          AND column_name = 'authority_code'
-    ) THEN
-        EXECUTE $sql$
-            SELECT authority_code, display_name, supports_medical_devices, supports_ivd
-            FROM common_standards.global_regulatory_authorities
-            WHERE supports_medical_devices = TRUE
-            ORDER BY authority_code
-            LIMIT 5
-        $sql$;
-    ELSE
-        RAISE NOTICE '  Skipping Medical Device/IVD support check: authority_code column not present.';
-    END IF;
-END $$;
+SELECT
+    id,
+    region_name,
+    supports_medical_device,
+    supports_ivd
+FROM common_standards.global_regulatory_authorities
+WHERE supports_medical_device = TRUE
+ORDER BY id
+LIMIT 5;
 
 -- =============================================================================
 -- TEST 3: Multi-Tenant Identity Core
@@ -390,32 +379,17 @@ ORDER BY su.sequence_number;
 \echo '  TEST 12: Sponsor/CRO Delegated Access (RLS)'
 \echo '═══════════════════════════════════════════════════════════════════════════'
 
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'identity'
-          AND table_name = 'org_relationships'
-          AND column_name = 'cro_org_id'
-    ) THEN
-        EXECUTE $sql$
-            SELECT
-                sponsor.org_name as sponsor,
-                cro.org_name as cro,
-                rel.relationship_type,
-                rel.contract_status::TEXT,
-                rel.can_view_submissions,
-                rel.can_create_submissions,
-                rel.can_upload_documents
-            FROM identity.org_relationships rel
-            JOIN identity.organizations sponsor ON rel.sponsor_org_id = sponsor.id
-            JOIN identity.organizations cro ON rel.cro_org_id = cro.id
-        $sql$;
-    ELSE
-        RAISE NOTICE '  Skipping Sponsor/CRO delegated access check: cro_org_id column not present.';
-    END IF;
-END $$;
+SELECT
+    sponsor.org_name as sponsor,
+    cro.org_name as cro,
+    rel.relationship_type,
+    rel.is_active,
+    rel.can_view_submissions,
+    rel.can_edit_submissions,
+    rel.can_upload_documents
+FROM identity.org_relationships rel
+JOIN identity.organizations sponsor ON rel.sponsor_org_id = sponsor.id
+JOIN identity.organizations cro ON rel.delegate_org_id = cro.id;
 
 -- =============================================================================
 -- TEST 13: Sender-Defined Keywords (v4.0 Flex Factor)

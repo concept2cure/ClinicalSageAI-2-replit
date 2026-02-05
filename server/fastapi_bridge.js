@@ -52,6 +52,12 @@ function registerFastapiProxy(app) {
     app.use('/api/validate', createProxyMiddleware(proxyOptions));
     app.use('/api/regintel', createProxyMiddleware(proxyOptions));
 
+    // Proxy lumen_cortex batch ops endpoints (no path rewrite needed)
+    app.use('/review', createProxyMiddleware({
+      ...proxyOptions,
+      pathRewrite: undefined, // Keep /review path as-is
+    }));
+
     // Create health check route
     app.get('/api/fastapi-health', async (req, res) => {
       try {

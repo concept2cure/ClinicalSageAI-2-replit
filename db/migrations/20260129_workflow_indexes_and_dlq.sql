@@ -3,37 +3,52 @@
 
 BEGIN;
 
+-- Workflow runs indexes
 DO $$
 BEGIN
   IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'workflow_runs'
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'workflow_runs'
   ) THEN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_tenant_status_created_at ON workflow_runs (tenant_id, status, created_at DESC)';
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_project_status ON workflow_runs (project_id, status)';
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_runs_current_step ON workflow_runs (current_step_id)';
   ELSE
-    RAISE NOTICE 'Skipping workflow_runs indexes; table missing.';
+    RAISE NOTICE 'Skipping workflow_runs indexes; table does not exist.';
   END IF;
+END $$;
 
+-- Workflow steps indexes
+DO $$
+BEGIN
   IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'workflow_steps'
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'workflow_steps'
   ) THEN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_steps_run_status_order ON workflow_steps (workflow_run_id, status, "order")';
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_steps_assignee ON workflow_steps (assignee_user_id, status)';
   ELSE
-    RAISE NOTICE 'Skipping workflow_steps indexes; table missing.';
+    RAISE NOTICE 'Skipping workflow_steps indexes; table does not exist.';
   END IF;
+END $$;
 
+-- Step runs indexes
+DO $$
+BEGIN
   IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'step_runs'
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'step_runs'
   ) THEN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_run_performed_at ON step_runs (workflow_run_id, performed_at DESC)';
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_step_runs_tenant_time ON step_runs (tenant_id, performed_at DESC)';
   ELSE
-    RAISE NOTICE 'Skipping step_runs indexes; table missing.';
+    RAISE NOTICE 'Skipping step_runs indexes; table does not exist.';
   END IF;
 END $$;
 

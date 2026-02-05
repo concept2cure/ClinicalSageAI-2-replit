@@ -8,7 +8,6 @@ libraries are unavailable to keep the batch pipeline stable.
 from __future__ import annotations
 
 import re
-import warnings
 from io import BytesIO
 from typing import Optional
 
@@ -50,14 +49,12 @@ def extract_text_from_docx_bytes(data: bytes) -> str:
 
 
 def extract_text_from_pdf_bytes(data: bytes) -> str:
-    """Extract text from PDF bytes using pypdf/PyPDF2 if available."""
+    """Extract text from PDF bytes using PyPDF2/pypdf if available."""
     try:
-        from pypdf import PdfReader  # type: ignore
+        from PyPDF2 import PdfReader  # type: ignore
     except Exception:
         try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning, module="PyPDF2")
-                from PyPDF2 import PdfReader  # type: ignore
+            from pypdf import PdfReader  # type: ignore
         except Exception:
             return ""
 

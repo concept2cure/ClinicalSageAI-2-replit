@@ -89,8 +89,6 @@ class CapturingBatchStore:
     async def mark_batch_running(
         self,
         batch_id: str,
-        program_id: str | None = None,
-        worker_id: str | None = None,
         started_at: datetime | None = None,
     ) -> None:
         """Mark batch as running."""
@@ -111,7 +109,6 @@ class CapturingBatchStore:
                 idempotency_key=batch.idempotency_key,
                 created_at=batch.created_at,
                 started_at=started_at or datetime.now(timezone.utc),
-                worker_id=worker_id,
             )
 
     async def upsert_doc_result(
