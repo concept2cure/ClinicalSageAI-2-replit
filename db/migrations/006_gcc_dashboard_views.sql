@@ -375,7 +375,7 @@ SELECT
     sfv.created_at,
     sfv.created_by,
     sfv.change_reason,
-    sfv.change_request_id,
+    sfv.request_id,
     LAG(sfv.created_at) OVER (PARTITION BY sfv.fragment_id ORDER BY sfv.version_id) AS previous_version_at,
     sfv.created_at - LAG(sfv.created_at) OVER (PARTITION BY sfv.fragment_id ORDER BY sfv.version_id) AS time_since_previous,
     LENGTH(sfv.content_prose) AS content_length,
