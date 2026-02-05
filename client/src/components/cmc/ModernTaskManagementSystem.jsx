@@ -160,7 +160,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import io from 'socket.io-client';
 import { format, addDays, differenceInDays, isAfter, isBefore, parseISO, startOfDay, endOfDay, addWeeks, addMonths, formatDistanceToNow, formatDistance } from 'date-fns';
-import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import GanttChartView from './GanttChartView';
