@@ -1,5 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Adds heartbeat, progress counters, worker tracking, and stall detection for batch runner hardening
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 (Clinical Study Reports), Module 2 (Summaries)
+--   - Integrity Risk Addressed: batch stalls, orphaned workers, progress visibility
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- A7-6: Batch Runner Hardening Migration
--- Adds heartbeat, progress counters, worker tracking, and stall detection support
 -- Author: concept2cure
 -- Date: 2026-02-03
 

@@ -28,17 +28,29 @@ class BatchRow:
     by_severity: dict[str, int] = field(default_factory=dict)
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    error_summary: list[dict[str, Any]] = field(default_factory=list)
-    # A7-6: Job runner hardening fields
-    queued_at: datetime | None = None
+    locked_at: datetime | None = None
     heartbeat_at: datetime | None = None
-    attempt_count: int = 0
-    worker_id: str | None = None
+    attempts: int = 0
     last_error: str | None = None
-    docs_total: int = 0
-    docs_processed: int = 0
-    docs_succeeded: int = 0
-    docs_failed: int = 0
+    error_summary: list[dict[str, Any]] = field(default_factory=list)
+    # A8-5: Multi-worker safety fields
+    claimed_by: str | None = None
+    failed_reason: str | None = None
+    # A8-6: Ops control plane fields
+    cancel_requested_at: datetime | None = None
+    cancel_reason: str | None = None
+    cancel_requested_by: str | None = None
+
+    # Property aliases for worker API compatibility
+    @property
+    def docs_total(self) -> int:
+        """Alias for documents_total (worker API compatibility)."""
+        return self.documents_total
+
+    @property
+    def attempt_count(self) -> int:
+        """Alias for attempts (worker API compatibility)."""
+        return self.attempts
 
 
 @dataclass
@@ -55,6 +67,21 @@ class DocRow:
     findings_count: int = 0
     findings_digest: str = "0" * 64
     findings_preview: list[dict[str, Any]] = field(default_factory=list)
+    created_at: datetime | None = None
+
+
+@dataclass
+class BatchInputRow:
+    """Database row representation for vault.review_batch_inputs."""
+
+    program_id: str
+    batch_id: str
+    seq: int
+    filename: str | None = None
+    source_type: str = "text"
+    doc_id: str = ""
+    content_hash: str = ""
+    text_content: str = ""
     created_at: datetime | None = None
 
 

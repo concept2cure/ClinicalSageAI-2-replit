@@ -432,7 +432,7 @@ class TestBatchResponseMode:
     def test_summary_mode_limits_findings(self):
         """Summary mode returns no more than max_findings_per_doc per doc."""
         pytest.importorskip("fastapi")
-        from fastapi import BackgroundTasks, HTTPException
+        from fastapi import HTTPException
         from lumen_cortex.reviewer.api import (
             review_batch_endpoint,
             BatchReviewRequest,
@@ -455,14 +455,13 @@ class TestBatchResponseMode:
             max_findings_per_doc=1,
         )
 
-        response = asyncio.run(review_batch_endpoint(request, BackgroundTasks()))
+        response = asyncio.run(review_batch_endpoint(request))
         assert response.documents[0].findings_count >= 0
         assert len(response.documents[0].findings_preview) <= 1
 
     def test_full_mode_returns_all_findings(self):
         """Full mode returns all findings (>= summary findings)."""
         pytest.importorskip("fastapi")
-        from fastapi import BackgroundTasks
         from lumen_cortex.reviewer.api import (
             review_batch_endpoint,
             BatchReviewRequest,
@@ -498,15 +497,14 @@ class TestBatchResponseMode:
             max_findings_per_doc=10,
         )
 
-        response_summary = asyncio.run(review_batch_endpoint(request_summary, BackgroundTasks()))
-        response_full = asyncio.run(review_batch_endpoint(request_full, BackgroundTasks()))
+        response_summary = asyncio.run(review_batch_endpoint(request_summary))
+        response_full = asyncio.run(review_batch_endpoint(request_full))
 
         assert len(response_full.documents[0].findings_preview) >= len(response_summary.documents[0].findings_preview)
 
     def test_max_docs_enforced(self):
         """Batch request rejects when documents exceed REVIEW_CONFIG.max_batch_docs."""
         pytest.importorskip("fastapi")
-        from fastapi import BackgroundTasks
         from lumen_cortex.reviewer.api import (
             review_batch_endpoint,
             BatchReviewRequest,
@@ -535,7 +533,7 @@ class TestBatchResponseMode:
 
         from fastapi import HTTPException
         with pytest.raises(HTTPException) as exc:
-            asyncio.run(review_batch_endpoint(request, BackgroundTasks()))
+            asyncio.run(review_batch_endpoint(request))
 
         assert exc.value.status_code == 413
 

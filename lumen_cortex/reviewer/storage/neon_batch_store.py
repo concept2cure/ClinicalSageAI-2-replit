@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Callable, Coroutine, Protocol
 
-from .models import BatchRow, BatchSummaryUpdate, DocRow
+from .models import BatchRow, BatchSummaryUpdate, DocRow, BatchInputRow
 
 
 class AsyncExecutor(Protocol):
@@ -81,9 +81,8 @@ class NeonBatchStore:
             INSERT INTO vault.review_batches (
                 batch_id, program_id, status, mode, ruleset_version,
                 extractor_version, response_mode, idempotency_key,
-                request_digest, documents_total, created_at,
-                queued_at, docs_total, docs_processed, docs_succeeded, docs_failed
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $10, 0, 0, 0)
+                request_digest, documents_total, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             ON CONFLICT (batch_id) DO NOTHING
             RETURNING *
         """
@@ -134,8 +133,6 @@ class NeonBatchStore:
     async def mark_batch_running(
         self,
         batch_id: str,
-        program_id: str,
-        worker_id: str | None = None,
         started_at: datetime | None = None,
     ) -> None:
         """
@@ -143,160 +140,486 @@ class NeonBatchStore:
 
         Args:
             batch_id: Batch UUID
-            program_id: Program UUID for RLS filtering
-            worker_id: Worker identifier
             started_at: Optional timestamp (defaults to now)
         """
-        now = started_at or datetime.now(timezone.utc)
         query = """
             UPDATE vault.review_batches
-            SET status = 'running',
-                started_at = $2,
-                heartbeat_at = $2,
-                worker_id = $3,
-                attempt_count = attempt_count + 1
-            WHERE batch_id = $1 AND program_id = $4 AND status = 'queued'
-        """
-        await self._execute(query, (batch_id, now, worker_id, program_id))
-
-    async def heartbeat(
-        self,
-        batch_id: str,
-        program_id: str,
-        docs_processed: int,
-        docs_succeeded: int,
-        docs_failed: int,
-    ) -> None:
-        """
-        Update heartbeat timestamp and progress counters.
-
-        Called periodically during processing to indicate liveness.
-
-        Args:
-            batch_id: Batch UUID
-            program_id: Program UUID for RLS filtering
-            docs_total: Total documents to process
-            docs_processed: Total documents processed so far
-            docs_succeeded: Documents that succeeded
-            docs_failed: Documents that failed
-        """
-        query = """
-            UPDATE vault.review_batches
-            SET heartbeat_at = $2,
-                docs_processed = $3,
-                docs_succeeded = $4,
-                docs_failed = $5
-            WHERE batch_id = $1 AND program_id = $6
+            SET status = 'running', started_at = $2
+            WHERE batch_id = $1 AND status = 'queued'
         """
         await self._execute(
             query,
-            (batch_id, datetime.now(timezone.utc), docs_processed, docs_succeeded, docs_failed, program_id),
+            (batch_id, started_at or datetime.now(timezone.utc)),
         )
+
+    async def claim_next_batch(
+        self,
+        program_id: str,
+        worker_id: str,
+        now: datetime,
+        heartbeat_timeout_sec: int,
+    ) -> str | None:
+        """
+        Claim the next queued or stale running batch for processing.
+
+        Uses FOR UPDATE SKIP LOCKED for atomic, conflict-free claiming.
+        Safe for multi-worker concurrent access.
+
+        Args:
+            program_id: Program UUID
+            worker_id: Worker identifier (A8-5: tracked for debugging)
+            now: Timestamp for claim
+            heartbeat_timeout_sec: Staleness threshold in seconds
+
+        Returns:
+            Batch ID or None if nothing to claim
+        """
+        stale_before = now - timedelta(seconds=heartbeat_timeout_sec)
+        query = """
+            WITH candidate AS (
+                SELECT batch_id
+                FROM vault.review_batches
+                WHERE program_id = $1
+                  AND (
+                    status = 'queued'
+                    OR (
+                        status = 'running'
+                        AND COALESCE(heartbeat_at, started_at, created_at) < $2
+                    )
+                  )
+                ORDER BY
+                    CASE WHEN status = 'queued' THEN 0 ELSE 1 END,
+                    created_at,
+                    batch_id
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            )
+            UPDATE vault.review_batches b
+            SET status = 'running',
+                locked_at = $3,
+                heartbeat_at = $3,
+                attempts = COALESCE(attempts, 0) + 1,
+                started_at = COALESCE(started_at, $3),
+                claimed_by = $4
+            FROM candidate
+            WHERE b.batch_id = candidate.batch_id
+            RETURNING b.batch_id
+        """
+        rows = await self._execute(query, (program_id, stale_before, now, worker_id))
+        if not rows:
+            return None
+        return str(rows[0]["batch_id"])
+
+    async def heartbeat_batch(
+        self,
+        program_id: str,
+        batch_id: str,
+        now: datetime,
+    ) -> None:
+        """Update heartbeat for a running batch."""
+        query = """
+            UPDATE vault.review_batches
+            SET heartbeat_at = $3
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+        """
+        await self._execute(query, (batch_id, program_id, now))
+
+    # -------------------------------------------------------------------------
+    # Worker API wrappers (for batch_worker.py compatibility)
+    # -------------------------------------------------------------------------
 
     async def claim_next_queued_batch(
         self,
         program_id: str,
         worker_id: str,
+        heartbeat_timeout_sec: int = 300,
     ) -> str | None:
         """
-        Atomically claim the next queued batch for processing.
+        Claim next queued batch for worker processing.
+
+        This is a wrapper for worker API compatibility that delegates to
+        claim_next_batch with automatic timestamping.
 
         Args:
-            program_id: Program UUID for RLS filtering
-            worker_id: Worker identifier
+            program_id: Program UUID
+            worker_id: Worker identifier (A8-5: tracked for attribution)
+            heartbeat_timeout_sec: Staleness threshold for reclaiming stale batches
 
         Returns:
-            Claimed batch_id or None if none available
+            Batch ID or None if no batches available
         """
-        query = """
-            WITH next_batch AS (
-                SELECT batch_id
-                FROM vault.review_batches
-                WHERE program_id = $1
-                  AND status = 'queued'
-                ORDER BY queued_at, batch_id
-                LIMIT 1
-                FOR UPDATE SKIP LOCKED
-            )
-            UPDATE vault.review_batches
-            SET status = 'running',
-                started_at = COALESCE(started_at, now()),
-                heartbeat_at = now(),
-                worker_id = $2,
-                attempt_count = attempt_count + 1
-            WHERE program_id = $1
-              AND batch_id IN (SELECT batch_id FROM next_batch)
-            RETURNING batch_id
-        """
-        rows = await self._execute(query, (program_id, worker_id))
-        return str(rows[0]["batch_id"]) if rows else None
+        return await self.claim_next_batch(
+            program_id=program_id,
+            worker_id=worker_id,
+            now=datetime.now(timezone.utc),
+            heartbeat_timeout_sec=heartbeat_timeout_sec,
+        )
 
-    async def sweep_stalled_batches(
+    async def heartbeat(
+        self,
+        batch_id: str,
+        program_id: str,
+        docs_processed: int = 0,
+        docs_succeeded: int = 0,
+        docs_failed: int = 0,
+    ) -> None:
+        """
+        Send heartbeat for a running batch.
+
+        This is a wrapper for worker API compatibility. Progress fields
+        are currently logged but not persisted.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            docs_processed: Documents processed so far
+            docs_succeeded: Documents succeeded so far
+            docs_failed: Documents failed so far
+        """
+        await self.heartbeat_batch(
+            program_id=program_id,
+            batch_id=batch_id,
+            now=datetime.now(timezone.utc),
+        )
+
+    async def mark_batch_failed(
         self,
         program_id: str,
-        stall_seconds: int,
-        max_attempts: int,
-    ) -> dict[str, Any]:
+        batch_id: str,
+        now: datetime,
+        reason: str,
+    ) -> None:
+        """Mark a batch as failed with a reason (A8-5: sets failed_reason)."""
+        query = """
+            UPDATE vault.review_batches
+            SET status = 'failed',
+                last_error = $4,
+                failed_reason = $4,
+                completed_at = $3,
+                claimed_by = NULL
+            WHERE batch_id = $1 AND program_id = $2
         """
-        Find and handle stalled batches.
+        await self._execute(query, (batch_id, program_id, now, reason))
 
-        For batches with attempts remaining: requeue them.
-        For batches at max attempts: mark as failed.
+    # -------------------------------------------------------------------------
+    # A8-5: Admin API methods
+    # -------------------------------------------------------------------------
+
+    async def requeue_batch(
+        self,
+        batch_id: str,
+        program_id: str,
+        reset_attempts: bool = False,
+    ) -> BatchRow | None:
+        """
+        Requeue a failed batch for retry (admin operation).
+
+        Safe operation - only failed batches can be requeued.
+        Optionally resets attempt counter.
 
         Args:
-            program_id: Program UUID to scope sweep
-            stall_seconds: Seconds after which heartbeat is considered stale
-            max_attempts: Maximum retry attempts before permanent failure
-            worker_id: Optional worker ID for logging
+            batch_id: Batch UUID
+            program_id: Program UUID
+            reset_attempts: If True, reset attempts to 0
 
         Returns:
-            List of affected batch_ids
+            Updated BatchRow or None if batch not found/not failed
         """
-        query = """
-            WITH stalled AS (
-                SELECT batch_id, attempt_count
-                FROM vault.review_batches
-                WHERE program_id = $1
-                  AND status = 'running'
-                  AND (
-                    heartbeat_at < now() - ($2 || ' seconds')::interval
-                    OR (heartbeat_at IS NULL AND started_at < now() - ($2 || ' seconds')::interval)
-                  )
-            ),
-            requeued AS (
+        now = datetime.now(timezone.utc)
+        if reset_attempts:
+            query = """
                 UPDATE vault.review_batches
                 SET status = 'queued',
-                    started_at = NULL,
+                    attempts = 0,
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
                     heartbeat_at = NULL,
-                    worker_id = NULL,
-                    last_error = 'requeued_due_to_stall'
-                WHERE program_id = $1
-                  AND batch_id IN (SELECT batch_id FROM stalled WHERE attempt_count < $3)
-                RETURNING batch_id
-            ),
-            failed AS (
+                    started_at = NULL,
+                    completed_at = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND status = 'failed'
+                RETURNING *
+            """
+        else:
+            query = """
                 UPDATE vault.review_batches
-                SET status = 'failed',
-                    completed_at = now(),
-                    last_error = 'stalled_exceeded_attempts'
-                WHERE program_id = $1
-                  AND batch_id IN (SELECT batch_id FROM stalled WHERE attempt_count >= $3)
-                RETURNING batch_id
-            )
-            SELECT
-                COALESCE((SELECT array_agg(batch_id) FROM requeued), ARRAY[]::uuid[]) AS requeued_ids,
-                COALESCE((SELECT array_agg(batch_id) FROM failed), ARRAY[]::uuid[]) AS failed_ids
+                SET status = 'queued',
+                    last_error = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND status = 'failed'
+                RETURNING *
+            """
+        rows = await self._execute(query, (batch_id, program_id))
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def list_failed_batches(
+        self,
+        program_id: str,
+        limit: int = 50,
+    ) -> list[BatchRow]:
         """
-        rows = await self._execute(query, (program_id, str(stall_seconds), max_attempts))
-        row = rows[0] if rows else {"requeued_ids": [], "failed_ids": []}
-        requeued_ids = [str(bid) for bid in (row.get("requeued_ids") or [])]
-        failed_ids = [str(bid) for bid in (row.get("failed_ids") or [])]
-        return {
-            "requeued": len(requeued_ids),
-            "failed": len(failed_ids),
-            "requeued_ids": requeued_ids,
-            "failed_ids": failed_ids,
-        }
+        List failed batches for a program (admin operation).
+
+        Args:
+            program_id: Program UUID
+            limit: Max batches to return (default 50)
+
+        Returns:
+            List of failed BatchRows, newest first
+        """
+        query = """
+            SELECT * FROM vault.review_batches
+            WHERE program_id = $1 AND status = 'failed'
+            ORDER BY created_at DESC
+            LIMIT $2
+        """
+        rows = await self._execute(query, (program_id, limit))
+        return [self._row_to_batch(r) for r in rows]
+
+    # -------------------------------------------------------------------------
+    # A8-6: Ops Control Plane methods
+    # -------------------------------------------------------------------------
+
+    async def request_cancel(
+        self,
+        batch_id: str,
+        program_id: str,
+        requested_by: str,
+        reason: str | None = None,
+    ) -> BatchRow | None:
+        """
+        Request cancellation of a batch.
+
+        - If status is 'queued': immediately mark as 'cancelled'
+        - If status is 'running': set cancel_requested_at for worker to pick up
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            requested_by: Identity of requester (admin, user email, etc.)
+            reason: Optional reason for cancellation
+
+        Returns:
+            Updated BatchRow or None if batch not found or not cancellable
+        """
+        now = datetime.now(timezone.utc)
+
+        # First, handle queued batches - cancel immediately
+        query_queued = """
+            UPDATE vault.review_batches
+            SET status = 'cancelled',
+                cancel_requested_at = $3,
+                cancel_reason = $4,
+                cancel_requested_by = $5,
+                completed_at = $3
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'queued'
+            RETURNING *
+        """
+        rows = await self._execute(
+            query_queued, (batch_id, program_id, now, reason, requested_by)
+        )
+        if rows:
+            return self._row_to_batch(rows[0])
+
+        # For running batches, just set the cancel request flag
+        # Worker will pick this up and stop
+        query_running = """
+            UPDATE vault.review_batches
+            SET cancel_requested_at = $3,
+                cancel_reason = $4,
+                cancel_requested_by = $5
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+            RETURNING *
+        """
+        rows = await self._execute(
+            query_running, (batch_id, program_id, now, reason, requested_by)
+        )
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def mark_batch_cancelled(
+        self,
+        batch_id: str,
+        program_id: str,
+    ) -> BatchRow | None:
+        """
+        Mark a batch as cancelled (called by worker after respecting cancel).
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+
+        Returns:
+            Updated BatchRow or None if not found
+        """
+        now = datetime.now(timezone.utc)
+        query = """
+            UPDATE vault.review_batches
+            SET status = 'cancelled',
+                completed_at = $3,
+                claimed_by = NULL
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+            RETURNING *
+        """
+        rows = await self._execute(query, (batch_id, program_id, now))
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def requeue_batch_v2(
+        self,
+        batch_id: str,
+        program_id: str,
+        reset_attempts: bool = False,
+        force: bool = False,
+        heartbeat_timeout_sec: int = 300,
+    ) -> BatchRow | None:
+        """
+        Requeue a batch for retry (A8-6 enhanced version).
+
+        Allowed when:
+        - status in: failed, cancelled
+        - If force=True: also allow stale running (heartbeat timeout exceeded)
+
+        Clears: claimed_by, failed_reason, last_error, cancel_requested_* fields
+        Sets: status='queued'
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            reset_attempts: If True, reset attempts to 0
+            force: If True, allow reclaim from stale running batches
+            heartbeat_timeout_sec: Staleness threshold for force reclaim
+
+        Returns:
+            Updated BatchRow or None if not found/not eligible
+        """
+        now = datetime.now(timezone.utc)
+        stale_before = now - timedelta(seconds=heartbeat_timeout_sec)
+
+        # Build allowed status condition
+        # Regular: failed or cancelled
+        # Force: also stale running
+        if force:
+            status_condition = """
+                (
+                    status IN ('failed', 'cancelled')
+                    OR (
+                        status = 'running'
+                        AND COALESCE(heartbeat_at, started_at, created_at) < $3
+                    )
+                )
+            """
+        else:
+            status_condition = "status IN ('failed', 'cancelled')"
+
+        if reset_attempts:
+            query = f"""
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    attempts = 0,
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL,
+                    started_at = NULL,
+                    completed_at = NULL,
+                    cancel_requested_at = NULL,
+                    cancel_reason = NULL,
+                    cancel_requested_by = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND {status_condition}
+                RETURNING *
+            """
+        else:
+            query = f"""
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL,
+                    cancel_requested_at = NULL,
+                    cancel_reason = NULL,
+                    cancel_requested_by = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND {status_condition}
+                RETURNING *
+            """
+
+        if force:
+            rows = await self._execute(query, (batch_id, program_id, stale_before))
+        else:
+            rows = await self._execute(query, (batch_id, program_id))
+
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def list_batches(
+        self,
+        program_id: str,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[BatchRow]:
+        """
+        List batches for a program with optional status filter.
+
+        Useful for dashboards and triage.
+
+        Args:
+            program_id: Program UUID
+            status: Optional status filter (queued, running, completed, failed, cancelled)
+            limit: Max batches to return (default 50, max 200)
+            offset: Pagination offset
+
+        Returns:
+            List of BatchRows, newest first
+        """
+        limit = min(limit, 100)  # Cap at 100
+
+        if status:
+            query = """
+                SELECT * FROM vault.review_batches
+                WHERE program_id = $1 AND status = $2
+                ORDER BY created_at DESC
+                LIMIT $3 OFFSET $4
+            """
+            rows = await self._execute(query, (program_id, status, limit, offset))
+        else:
+            query = """
+                SELECT * FROM vault.review_batches
+                WHERE program_id = $1
+                ORDER BY created_at DESC
+                LIMIT $2 OFFSET $3
+            """
+            rows = await self._execute(query, (program_id, limit, offset))
+
+        return [self._row_to_batch(r) for r in rows]
+
+    async def is_cancel_requested(
+        self,
+        batch_id: str,
+        program_id: str,
+    ) -> bool:
+        """
+        Check if cancellation has been requested for a batch.
+
+        Used by worker to check before/during processing.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+
+        Returns:
+            True if cancel_requested_at is set
+        """
+        query = """
+            SELECT cancel_requested_at IS NOT NULL as is_cancelled
+            FROM vault.review_batches
+            WHERE batch_id = $1 AND program_id = $2
+        """
+        rows = await self._execute(query, (batch_id, program_id))
+        return bool(rows and rows[0].get("is_cancelled"))
 
     async def upsert_doc_result(
         self,
@@ -362,39 +685,96 @@ class NeonBatchStore:
         )
         return self._row_to_doc(rows[0])
 
-    async def finalize_batch(
+    async def upsert_batch_input(
         self,
         batch_id: str,
         program_id: str,
-        summary: BatchSummaryUpdate,
+        seq: int,
+        doc_id: str,
+        content_hash: str,
+        source_type: str,
+        filename: str | None = None,
+        text_content: str = "",
+    ) -> BatchInputRow:
+        """Insert or update a batch input payload."""
+        query = """
+            INSERT INTO vault.review_batch_inputs (
+                program_id, batch_id, seq, filename, source_type,
+                doc_id, content_hash, text_content, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (program_id, batch_id, seq) DO UPDATE SET
+                content_hash = EXCLUDED.content_hash,
+                source_type = EXCLUDED.source_type,
+                filename = EXCLUDED.filename,
+                text_content = EXCLUDED.text_content
+            RETURNING *
+        """
+        now = datetime.now(timezone.utc)
+        rows = await self._execute(
+            query,
+            (
+                program_id,
+                batch_id,
+                seq,
+                filename,
+                source_type,
+                doc_id,
+                content_hash,
+                text_content,
+                now,
+            ),
+        )
+        return self._row_to_batch_input(rows[0])
+
+    async def get_batch_inputs(self, batch_id: str, program_id: str) -> list[BatchInputRow]:
+        """Fetch batch input payloads for processing."""
+        query = """
+            SELECT * FROM vault.review_batch_inputs
+            WHERE batch_id = $1 AND program_id = $2
+            ORDER BY seq
+        """
+        rows = await self._execute(query, (batch_id, program_id))
+        return [self._row_to_batch_input(r) for r in rows]
+
+    async def finalize_batch(
+        self,
+        batch_id: str,
+        summary: BatchSummaryUpdate | None = None,
         status: str = "completed",
         completed_at: datetime | None = None,
-        last_error: str | None = None,
+        *,  # Keyword-only args below for worker compatibility
+        program_id: str | None = None,
         docs_total: int | None = None,
         docs_succeeded: int | None = None,
         docs_failed: int | None = None,
+        last_error: str | None = None,
     ) -> BatchRow:
         """
         Finalize batch with summary statistics.
 
         Args:
             batch_id: Batch UUID
-            program_id: Program UUID for RLS filtering
-            summary: Aggregated summary data
+            summary: Aggregated summary data (if None, uses passed values)
             status: Final status ('completed' or 'failed')
             completed_at: Completion timestamp (defaults to now)
-            last_error: Error message if failed
-            docs_total: Total number of documents
-            docs_succeeded: Number of successfully processed documents
-            docs_failed: Number of failed documents
+            program_id: Program UUID (optional, passed by worker)
+            docs_total: Total documents (ignored, read from batch)
+            docs_succeeded: Documents succeeded (used if summary is None)
+            docs_failed: Documents failed (used if summary is None)
+            last_error: Error message for failed batches
 
         Returns:
             Updated BatchRow
         """
-        # Use summary values if not explicitly provided
-        final_docs_succeeded = docs_succeeded if docs_succeeded is not None else summary.documents_succeeded
-        final_docs_failed = docs_failed if docs_failed is not None else summary.documents_failed
-        final_docs_total = docs_total if docs_total is not None else (final_docs_succeeded + final_docs_failed)
+        # Build summary from individual fields if not provided
+        if summary is None:
+            summary = BatchSummaryUpdate(
+                documents_succeeded=docs_succeeded or 0,
+                documents_failed=docs_failed or 0,
+                findings_total=0,
+                by_severity={},
+                error_summary=[{"error": last_error}] if last_error else [],
+            )
 
         query = """
             UPDATE vault.review_batches SET
@@ -405,12 +785,8 @@ class NeonBatchStore:
                 by_severity = $6,
                 error_summary = $7,
                 completed_at = $8,
-                last_error = $9,
-                docs_total = $10,
-                docs_succeeded = $3,
-                docs_failed = $4,
-                docs_processed = $3 + $4
-            WHERE batch_id = $1 AND program_id = $11
+                last_error = $9
+            WHERE batch_id = $1
             RETURNING *
         """
         rows = await self._execute(
@@ -418,26 +794,26 @@ class NeonBatchStore:
             (
                 batch_id,
                 status,
-                final_docs_succeeded,
-                final_docs_failed,
+                summary.documents_succeeded,
+                summary.documents_failed,
                 summary.findings_total,
                 json.dumps(summary.by_severity),
                 json.dumps(summary.error_summary),
                 completed_at or datetime.now(timezone.utc),
                 last_error,
-                final_docs_total,
-                program_id,
             ),
         )
-        return self._row_to_batch(rows[0]) if rows else None
+        return self._row_to_batch(rows[0])
 
-    async def get_batch(self, batch_id: str, program_id: str | None = None) -> BatchRow | None:
+    async def get_batch(
+        self, batch_id: str, program_id: str | None = None
+    ) -> BatchRow | None:
         """
         Get batch by ID.
 
         Args:
             batch_id: Batch UUID
-            program_id: Optional program UUID for RLS filtering
+            program_id: Program UUID (optional, for additional filtering)
 
         Returns:
             BatchRow or None if not found
@@ -450,31 +826,22 @@ class NeonBatchStore:
             rows = await self._execute(query, (batch_id,))
         return self._row_to_batch(rows[0]) if rows else None
 
-    async def get_batch_docs(self, batch_id: str, program_id: str | None = None) -> list[DocRow]:
+    async def get_batch_docs(self, batch_id: str) -> list[DocRow]:
         """
         Get all document results for a batch.
 
         Args:
             batch_id: Batch UUID
-            program_id: Optional program UUID for RLS filtering
 
         Returns:
             List of DocRow (may be empty)
         """
-        if program_id:
-            query = """
-                SELECT * FROM vault.review_batch_docs
-                WHERE batch_id = $1 AND program_id = $2
-                ORDER BY created_at, doc_id
-            """
-            rows = await self._execute(query, (batch_id, program_id))
-        else:
-            query = """
-                SELECT * FROM vault.review_batch_docs
-                WHERE batch_id = $1
-                ORDER BY created_at, doc_id
-            """
-            rows = await self._execute(query, (batch_id,))
+        query = """
+            SELECT * FROM vault.review_batch_docs
+            WHERE batch_id = $1
+            ORDER BY created_at, doc_id
+        """
+        rows = await self._execute(query, (batch_id,))
         return [self._row_to_doc(r) for r in rows]
 
     def _row_to_batch(self, row: dict[str, Any]) -> BatchRow:
@@ -505,17 +872,18 @@ class NeonBatchStore:
             by_severity=by_severity,
             started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
-            error_summary=error_summary,
-            # A7-6: Job runner hardening fields
-            queued_at=row.get("queued_at"),
+            locked_at=row.get("locked_at"),
             heartbeat_at=row.get("heartbeat_at"),
-            attempt_count=row.get("attempt_count", 0),
-            worker_id=row.get("worker_id"),
+            attempts=row.get("attempts", 0),
             last_error=row.get("last_error"),
-            docs_total=row.get("docs_total", 0),
-            docs_processed=row.get("docs_processed", 0),
-            docs_succeeded=row.get("docs_succeeded", 0),
-            docs_failed=row.get("docs_failed", 0),
+            error_summary=error_summary,
+            # A8-5: Multi-worker safety fields
+            claimed_by=row.get("claimed_by"),
+            failed_reason=row.get("failed_reason"),
+            # A8-6: Ops control plane fields
+            cancel_requested_at=row.get("cancel_requested_at"),
+            cancel_reason=row.get("cancel_reason"),
+            cancel_requested_by=row.get("cancel_requested_by"),
         )
 
     def _row_to_doc(self, row: dict[str, Any]) -> DocRow:
@@ -539,6 +907,20 @@ class NeonBatchStore:
             findings_count=row.get("findings_count", 0),
             findings_digest=row.get("findings_digest", "0" * 64),
             findings_preview=findings_preview,
+            created_at=row.get("created_at"),
+        )
+
+    def _row_to_batch_input(self, row: dict[str, Any]) -> BatchInputRow:
+        """Convert database row dict to BatchInputRow."""
+        return BatchInputRow(
+            program_id=str(row["program_id"]),
+            batch_id=str(row["batch_id"]),
+            seq=int(row["seq"]),
+            filename=row.get("filename"),
+            source_type=row.get("source_type", "text"),
+            doc_id=str(row["doc_id"]),
+            content_hash=row.get("content_hash", ""),
+            text_content=row.get("text_content", ""),
             created_at=row.get("created_at"),
         )
 

@@ -14,7 +14,6 @@ Usage:
 from __future__ import annotations
 
 import os
-import socket
 from dataclasses import dataclass
 
 
@@ -55,11 +54,6 @@ class ReviewConfig:
     - REVIEW_RATE_LIMIT_ENABLED
     - REVIEW_RATE_RPS
     - REVIEW_RATE_BURST
-    - REVIEW_BATCH_STALL_SECONDS
-    - REVIEW_BATCH_MAX_ATTEMPTS
-    - REVIEW_SWEEPER_ENABLED
-    - REVIEW_ADMIN_TOKEN
-    - REVIEW_WORKER_ID
     """
 
     # Batch document limits
@@ -79,13 +73,6 @@ class ReviewConfig:
     rate_limit_enabled: bool = False
     rate_rps: float = 2.0
     rate_burst: int = 5
-
-    # Job runner hardening (A7-6)
-    batch_stall_seconds: int = 300  # 5 minutes
-    batch_max_attempts: int = 3
-    sweeper_enabled: bool = False
-    admin_token: str = ""
-    worker_id: str = ""
 
     @classmethod
     def from_env(cls) -> "ReviewConfig":
@@ -115,11 +102,6 @@ class ReviewConfig:
             rate_limit_enabled=_env_bool("REVIEW_RATE_LIMIT_ENABLED", False),
             rate_rps=float(_env_int("REVIEW_RATE_RPS", 2)),
             rate_burst=_env_int("REVIEW_RATE_BURST", 5),
-            batch_stall_seconds=_env_int("REVIEW_BATCH_STALL_SECONDS", 300),
-            batch_max_attempts=_env_int("REVIEW_BATCH_MAX_ATTEMPTS", 3),
-            sweeper_enabled=_env_bool("REVIEW_SWEEPER_ENABLED", False),
-            admin_token=os.environ.get("REVIEW_ADMIN_TOKEN", ""),
-            worker_id=os.environ.get("REVIEW_WORKER_ID", socket.gethostname()),
         )
 
 

@@ -9,7 +9,14 @@ CREATE SCHEMA IF NOT EXISTS core;
 
 -- UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "vector";
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'vector') THEN
+    CREATE EXTENSION IF NOT EXISTS "vector";
+  ELSE
+    RAISE NOTICE 'Extension "vector" not available, skipping.';
+  END IF;
+END $$;
 
 -- Entity type enum
 DO $$
@@ -109,11 +116,16 @@ $$;
 DO $$
 BEGIN
   -- Try to create auth.can_access_program as wrapper to core function
-  -- This may fail on Neon, so we catch the error
+  -- This may fail on Neon or CI environments without auth schema
   BEGIN
     EXECUTE 'CREATE OR REPLACE FUNCTION auth.can_access_program(p_program_id UUID) RETURNS BOOLEAN LANGUAGE SQL STABLE AS $fn$ SELECT core.can_access_program(p_program_id); $fn$;';
-  EXCEPTION WHEN insufficient_privilege THEN
-    RAISE NOTICE 'Cannot create auth.can_access_program - using core.can_access_program instead';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Cannot create auth.can_access_program - using core.can_access_program instead';
+    WHEN invalid_schema_name THEN
+      RAISE NOTICE 'Schema "auth" does not exist - using core.can_access_program instead';
+    WHEN OTHERS THEN
+      RAISE NOTICE 'Cannot create auth.can_access_program (SQLSTATE %): % - using core.can_access_program instead', SQLSTATE, SQLERRM;
   END;
 END $$;
 
