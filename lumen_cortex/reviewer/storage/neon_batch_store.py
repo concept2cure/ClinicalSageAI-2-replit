@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Callable, Coroutine, Protocol
 
-from .models import BatchRow, BatchSummaryUpdate, DocRow
+from .models import BatchRow, BatchSummaryUpdate, DocRow, BatchInputRow
 
 
 class AsyncExecutor(Protocol):
@@ -152,6 +152,146 @@ class NeonBatchStore:
             (batch_id, started_at or datetime.now(timezone.utc)),
         )
 
+    async def claim_next_batch(
+        self,
+        program_id: str,
+        now: datetime,
+        heartbeat_timeout_sec: int,
+    ) -> str | None:
+        """
+        Claim the next queued or stale running batch for processing.
+
+        Args:
+            program_id: Program UUID
+            now: Timestamp for claim
+            heartbeat_timeout_sec: Staleness threshold in seconds
+
+        Returns:
+            Batch ID or None if nothing to claim
+        """
+        stale_before = now - timedelta(seconds=heartbeat_timeout_sec)
+        query = """
+            WITH candidate AS (
+                SELECT batch_id
+                FROM vault.review_batches
+                WHERE program_id = $1
+                  AND (
+                    status = 'queued'
+                    OR (
+                        status = 'running'
+                        AND COALESCE(heartbeat_at, started_at, created_at) < $2
+                    )
+                  )
+                ORDER BY
+                    CASE WHEN status = 'queued' THEN 0 ELSE 1 END,
+                    created_at,
+                    batch_id
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            )
+            UPDATE vault.review_batches b
+            SET status = 'running',
+                locked_at = $3,
+                heartbeat_at = $3,
+                attempts = COALESCE(attempts, 0) + 1,
+                started_at = COALESCE(started_at, $3)
+            FROM candidate
+            WHERE b.batch_id = candidate.batch_id
+            RETURNING b.batch_id
+        """
+        rows = await self._execute(query, (program_id, stale_before, now))
+        if not rows:
+            return None
+        return str(rows[0]["batch_id"])
+
+    async def heartbeat_batch(
+        self,
+        program_id: str,
+        batch_id: str,
+        now: datetime,
+    ) -> None:
+        """Update heartbeat for a running batch."""
+        query = """
+            UPDATE vault.review_batches
+            SET heartbeat_at = $3
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+        """
+        await self._execute(query, (batch_id, program_id, now))
+
+    # -------------------------------------------------------------------------
+    # Worker API wrappers (for batch_worker.py compatibility)
+    # -------------------------------------------------------------------------
+
+    async def claim_next_queued_batch(
+        self,
+        program_id: str,
+        worker_id: str,
+        heartbeat_timeout_sec: int = 300,
+    ) -> str | None:
+        """
+        Claim next queued batch for worker processing.
+
+        This is a wrapper for worker API compatibility that delegates to
+        claim_next_batch with automatic timestamping.
+
+        Args:
+            program_id: Program UUID
+            worker_id: Worker identifier (currently unused, for future tracking)
+            heartbeat_timeout_sec: Staleness threshold for reclaiming stale batches
+
+        Returns:
+            Batch ID or None if no batches available
+        """
+        return await self.claim_next_batch(
+            program_id=program_id,
+            now=datetime.now(timezone.utc),
+            heartbeat_timeout_sec=heartbeat_timeout_sec,
+        )
+
+    async def heartbeat(
+        self,
+        batch_id: str,
+        program_id: str,
+        docs_processed: int = 0,
+        docs_succeeded: int = 0,
+        docs_failed: int = 0,
+    ) -> None:
+        """
+        Send heartbeat for a running batch.
+
+        This is a wrapper for worker API compatibility. Progress fields
+        are currently logged but not persisted.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            docs_processed: Documents processed so far
+            docs_succeeded: Documents succeeded so far
+            docs_failed: Documents failed so far
+        """
+        await self.heartbeat_batch(
+            program_id=program_id,
+            batch_id=batch_id,
+            now=datetime.now(timezone.utc),
+        )
+
+    async def mark_batch_failed(
+        self,
+        program_id: str,
+        batch_id: str,
+        now: datetime,
+        reason: str,
+    ) -> None:
+        """Mark a batch as failed with a reason."""
+        query = """
+            UPDATE vault.review_batches
+            SET status = 'failed',
+                last_error = $4,
+                completed_at = $3
+            WHERE batch_id = $1 AND program_id = $2
+        """
+        await self._execute(query, (batch_id, program_id, now, reason))
+
     async def upsert_doc_result(
         self,
         batch_id: str,
@@ -216,25 +356,97 @@ class NeonBatchStore:
         )
         return self._row_to_doc(rows[0])
 
+    async def upsert_batch_input(
+        self,
+        batch_id: str,
+        program_id: str,
+        seq: int,
+        doc_id: str,
+        content_hash: str,
+        source_type: str,
+        filename: str | None = None,
+        text_content: str = "",
+    ) -> BatchInputRow:
+        """Insert or update a batch input payload."""
+        query = """
+            INSERT INTO vault.review_batch_inputs (
+                program_id, batch_id, seq, filename, source_type,
+                doc_id, content_hash, text_content, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (program_id, batch_id, seq) DO UPDATE SET
+                content_hash = EXCLUDED.content_hash,
+                source_type = EXCLUDED.source_type,
+                filename = EXCLUDED.filename,
+                text_content = EXCLUDED.text_content
+            RETURNING *
+        """
+        now = datetime.now(timezone.utc)
+        rows = await self._execute(
+            query,
+            (
+                program_id,
+                batch_id,
+                seq,
+                filename,
+                source_type,
+                doc_id,
+                content_hash,
+                text_content,
+                now,
+            ),
+        )
+        return self._row_to_batch_input(rows[0])
+
+    async def get_batch_inputs(self, batch_id: str, program_id: str) -> list[BatchInputRow]:
+        """Fetch batch input payloads for processing."""
+        query = """
+            SELECT * FROM vault.review_batch_inputs
+            WHERE batch_id = $1 AND program_id = $2
+            ORDER BY seq
+        """
+        rows = await self._execute(query, (batch_id, program_id))
+        return [self._row_to_batch_input(r) for r in rows]
+
     async def finalize_batch(
         self,
         batch_id: str,
-        summary: BatchSummaryUpdate,
+        summary: BatchSummaryUpdate | None = None,
         status: str = "completed",
         completed_at: datetime | None = None,
+        *,  # Keyword-only args below for worker compatibility
+        program_id: str | None = None,
+        docs_total: int | None = None,
+        docs_succeeded: int | None = None,
+        docs_failed: int | None = None,
+        last_error: str | None = None,
     ) -> BatchRow:
         """
         Finalize batch with summary statistics.
 
         Args:
             batch_id: Batch UUID
-            summary: Aggregated summary data
+            summary: Aggregated summary data (if None, uses passed values)
             status: Final status ('completed' or 'failed')
             completed_at: Completion timestamp (defaults to now)
+            program_id: Program UUID (optional, passed by worker)
+            docs_total: Total documents (ignored, read from batch)
+            docs_succeeded: Documents succeeded (used if summary is None)
+            docs_failed: Documents failed (used if summary is None)
+            last_error: Error message for failed batches
 
         Returns:
             Updated BatchRow
         """
+        # Build summary from individual fields if not provided
+        if summary is None:
+            summary = BatchSummaryUpdate(
+                documents_succeeded=docs_succeeded or 0,
+                documents_failed=docs_failed or 0,
+                findings_total=0,
+                by_severity={},
+                error_summary=[{"error": last_error}] if last_error else [],
+            )
+
         query = """
             UPDATE vault.review_batches SET
                 status = $2,
@@ -243,7 +455,8 @@ class NeonBatchStore:
                 findings_total = $5,
                 by_severity = $6,
                 error_summary = $7,
-                completed_at = $8
+                completed_at = $8,
+                last_error = $9
             WHERE batch_id = $1
             RETURNING *
         """
@@ -258,22 +471,30 @@ class NeonBatchStore:
                 json.dumps(summary.by_severity),
                 json.dumps(summary.error_summary),
                 completed_at or datetime.now(timezone.utc),
+                last_error,
             ),
         )
         return self._row_to_batch(rows[0])
 
-    async def get_batch(self, batch_id: str) -> BatchRow | None:
+    async def get_batch(
+        self, batch_id: str, program_id: str | None = None
+    ) -> BatchRow | None:
         """
         Get batch by ID.
 
         Args:
             batch_id: Batch UUID
+            program_id: Program UUID (optional, for additional filtering)
 
         Returns:
             BatchRow or None if not found
         """
-        query = "SELECT * FROM vault.review_batches WHERE batch_id = $1"
-        rows = await self._execute(query, (batch_id,))
+        if program_id:
+            query = "SELECT * FROM vault.review_batches WHERE batch_id = $1 AND program_id = $2"
+            rows = await self._execute(query, (batch_id, program_id))
+        else:
+            query = "SELECT * FROM vault.review_batches WHERE batch_id = $1"
+            rows = await self._execute(query, (batch_id,))
         return self._row_to_batch(rows[0]) if rows else None
 
     async def get_batch_docs(self, batch_id: str) -> list[DocRow]:
@@ -322,6 +543,10 @@ class NeonBatchStore:
             by_severity=by_severity,
             started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
+            locked_at=row.get("locked_at"),
+            heartbeat_at=row.get("heartbeat_at"),
+            attempts=row.get("attempts", 0),
+            last_error=row.get("last_error"),
             error_summary=error_summary,
         )
 
@@ -346,6 +571,20 @@ class NeonBatchStore:
             findings_count=row.get("findings_count", 0),
             findings_digest=row.get("findings_digest", "0" * 64),
             findings_preview=findings_preview,
+            created_at=row.get("created_at"),
+        )
+
+    def _row_to_batch_input(self, row: dict[str, Any]) -> BatchInputRow:
+        """Convert database row dict to BatchInputRow."""
+        return BatchInputRow(
+            program_id=str(row["program_id"]),
+            batch_id=str(row["batch_id"]),
+            seq=int(row["seq"]),
+            filename=row.get("filename"),
+            source_type=row.get("source_type", "text"),
+            doc_id=str(row["doc_id"]),
+            content_hash=row.get("content_hash", ""),
+            text_content=row.get("text_content", ""),
             created_at=row.get("created_at"),
         )
 
