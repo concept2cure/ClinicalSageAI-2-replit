@@ -575,7 +575,7 @@ class NeonBatchStore:
         Returns:
             List of BatchRows, newest first
         """
-        limit = min(limit, 200)  # Cap at 200
+        limit = min(limit, 100)  # Cap at 100
 
         if status:
             query = """

@@ -109,6 +109,15 @@ const STATUS_CONFIG: Record<
 
 const PAGE_SIZE = 20;
 
+// Admin token for ops endpoints (required for auth)
+const getAdminHeaders = (): HeadersInit => {
+  const token = import.meta.env.VITE_REVIEW_ADMIN_TOKEN || '';
+  return {
+    'Content-Type': 'application/json',
+    'X-Admin-Token': token,
+  };
+};
+
 export default function BatchOpsDashboard() {
   const queryClient = useQueryClient();
 
@@ -144,7 +153,9 @@ export default function BatchOpsDashboard() {
       params.append('limit', String(PAGE_SIZE));
       params.append('offset', String(page * PAGE_SIZE));
 
-      const response = await fetch(`/review/batches?${params.toString()}`);
+      const response = await fetch(`/review/batches?${params.toString()}`, {
+        headers: getAdminHeaders(),
+      });
       if (!response.ok) throw new Error('Failed to fetch batches');
       return response.json();
     },
@@ -155,7 +166,9 @@ export default function BatchOpsDashboard() {
     queryKey: ['batch-admin', selectedBatch?.id],
     queryFn: async () => {
       if (!selectedBatch) throw new Error('No batch selected');
-      const response = await fetch(`/review/batch/${selectedBatch.id}/admin`);
+      const response = await fetch(`/review/batch/${selectedBatch.id}/admin`, {
+        headers: getAdminHeaders(),
+      });
       if (!response.ok) throw new Error('Failed to fetch admin details');
       return response.json();
     },
@@ -167,7 +180,7 @@ export default function BatchOpsDashboard() {
     mutationFn: async ({ batchId, reason }: { batchId: number; reason: string }) => {
       const response = await fetch(`/review/batch/${batchId}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ reason, requested_by: 'ops_dashboard' }),
       });
       if (!response.ok) {
@@ -197,7 +210,7 @@ export default function BatchOpsDashboard() {
     }) => {
       const response = await fetch(`/review/batch/${batchId}/requeue`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ reset_attempts: resetAttempts, force }),
       });
       if (!response.ok) {
