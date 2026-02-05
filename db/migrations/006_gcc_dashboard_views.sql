@@ -52,7 +52,8 @@ SELECT
     END AS section_category
 
 FROM prose.smart_fragments sf
-LEFT JOIN prose.smart_fragment_versions sfv ON sf.current_version_id = sfv.id
+LEFT JOIN prose.smart_fragment_versions sfv 
+    ON sf.id = sfv.fragment_id AND sf.current_version_id = sfv.version_id
 LEFT JOIN prose.fragment_truth_links ftl ON sf.id = ftl.fragment_id
 GROUP BY sf.id, sfv.created_by, sfv.change_reason;
 
