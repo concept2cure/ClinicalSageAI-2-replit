@@ -11,3 +11,37 @@ services:
     ports:
       - '4000:4000'
     restart: always
+
+  # Lumen Cortex Batch Review Worker
+  # Processes queued async review batches
+  batch-worker:
+    build: .
+    command: python scripts/worker/run_batch_worker.py
+    environment:
+      - BATCH_WORKER_PROGRAM_ID=${BATCH_WORKER_PROGRAM_ID}
+      - BATCH_WORKER_ID=${BATCH_WORKER_ID:-batch-worker-1}
+      - BATCH_WORKER_POLL_INTERVAL=${BATCH_WORKER_POLL_INTERVAL:-5}
+      - BATCH_WORKER_LOG_LEVEL=${BATCH_WORKER_LOG_LEVEL:-INFO}
+      - BATCH_WORKER_HEALTH_PORT=8081
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - '8081:8081' # Health endpoint
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health').read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
