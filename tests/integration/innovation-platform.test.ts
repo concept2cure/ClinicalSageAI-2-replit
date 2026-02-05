@@ -23,8 +23,11 @@ import { ComplianceGuardrailsSDKService } from '../../server/services/innovation
 let testPool: Pool;
 
 const hasTestDb = Boolean(process.env.TEST_DATABASE_URL || process.env.DATABASE_URL);
+const hasOpenAIKey = Boolean(process.env.OPENAI_API_KEY);
 const runIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' && hasTestDb;
 const describe = runIntegration ? baseDescribe : baseDescribe.skip;
+// For tests that require OpenAI, skip if key not available
+const describeWithOpenAI = runIntegration && hasOpenAIKey ? baseDescribe : baseDescribe.skip;
 
 // Test IDs for cleanup
 const testIds = {
@@ -850,9 +853,9 @@ describe('Innovation Platform Integration', () => {
 });
 
 /**
- * Performance Tests
+ * Performance Tests (require OpenAI for service instantiation)
  */
-describe('Performance Benchmarks', () => {
+describeWithOpenAI('Performance Benchmarks', () => {
   it('should complete delta scan within acceptable time', async () => {
     const service = new RegulatoryDeltaRadarService(testPool);
 
@@ -897,9 +900,9 @@ describe('Performance Benchmarks', () => {
 });
 
 /**
- * Security Tests
+ * Security Tests (require OpenAI for service instantiation)
  */
-describe('Security Validation', () => {
+describeWithOpenAI('Security Validation', () => {
   it('should enforce organization isolation', async () => {
     const otherOrgId = uuidv4();
     const service = new RegulatoryDeltaRadarService(testPool);
