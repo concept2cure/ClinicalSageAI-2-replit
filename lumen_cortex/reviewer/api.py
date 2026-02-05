@@ -1283,3 +1283,198 @@ async def get_batch_status(
 
     return response
 
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-5: Admin API Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+class BatchAdminResponse(BaseModel):
+    """Admin view of a batch with operational fields."""
+    batch_id: str
+    program_id: str
+    status: Literal["queued", "running", "completed", "failed"]
+    mode: Literal["sync", "async"]
+    documents_total: int
+    documents_succeeded: int
+    documents_failed: int
+    findings_total: Optional[int] = None
+    attempts: int = 0
+    last_error: Optional[str] = None
+    failed_reason: Optional[str] = None
+    claimed_by: Optional[str] = None
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    locked_at: Optional[str] = None
+    heartbeat_at: Optional[str] = None
+
+
+class RequeueRequest(BaseModel):
+    """Request body for requeue operation."""
+    reset_attempts: bool = Field(
+        default=False,
+        description="Reset attempt counter to 0 (otherwise keeps current value)"
+    )
+
+
+class RequeueResponse(BaseModel):
+    """Response from requeue operation."""
+    success: bool
+    batch_id: str
+    new_status: str
+    attempts: int
+    message: str
+
+
+class FailedBatchesResponse(BaseModel):
+    """Response listing failed batches."""
+    program_id: str
+    count: int
+    batches: List[BatchAdminResponse]
+
+
+def _batch_row_to_admin_response(batch: BatchRow) -> BatchAdminResponse:
+    """Convert BatchRow to admin response model."""
+    return BatchAdminResponse(
+        batch_id=batch.batch_id,
+        program_id=batch.program_id,
+        status=batch.status,
+        mode=batch.mode,
+        documents_total=batch.documents_total,
+        documents_succeeded=batch.documents_succeeded,
+        documents_failed=batch.documents_failed,
+        findings_total=batch.findings_total,
+        attempts=batch.attempts,
+        last_error=batch.last_error,
+        failed_reason=batch.failed_reason,
+        claimed_by=batch.claimed_by,
+        created_at=batch.created_at.isoformat() if batch.created_at else "",
+        started_at=batch.started_at.isoformat() if batch.started_at else None,
+        completed_at=batch.completed_at.isoformat() if batch.completed_at else None,
+        locked_at=batch.locked_at.isoformat() if batch.locked_at else None,
+        heartbeat_at=batch.heartbeat_at.isoformat() if batch.heartbeat_at else None,
+    )
+
+
+@router.get("/batch/{batch_id}/admin", response_model=BatchAdminResponse)
+async def get_batch_admin(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+) -> BatchAdminResponse:
+    """
+    Get admin view of a batch with operational fields.
+
+    Includes: attempts, last_error, failed_reason, claimed_by, timestamps.
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    batch_row = await store.get_batch(batch_id, str(program_id))
+    if batch_row is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    return _batch_row_to_admin_response(batch_row)
+
+
+@router.post("/batch/{batch_id}/retry", response_model=RequeueResponse)
+async def retry_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: RequeueRequest = RequeueRequest(),
+) -> RequeueResponse:
+    """
+    Requeue a failed batch for retry.
+
+    Only failed batches can be retried. The batch will be put back in
+    'queued' status for the worker to pick up again.
+
+    Options:
+    - reset_attempts=true: Reset attempt counter to 0
+    - reset_attempts=false (default): Keep current attempt count
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status first
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    if existing.status != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only failed batches can be retried. Current status: {existing.status}",
+        )
+
+    # Requeue the batch
+    updated = await store.requeue_batch(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        reset_attempts=request.reset_attempts,
+    )
+
+    if updated is None:
+        raise HTTPException(status_code=500, detail="Requeue failed unexpectedly")
+
+    return RequeueResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        new_status=updated.status,
+        attempts=updated.attempts,
+        message=f"Batch requeued for retry (attempts: {updated.attempts})",
+    )
+
+
+@router.get("/batches/failed", response_model=FailedBatchesResponse)
+async def list_failed_batches(
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    limit: int = Query(default=50, ge=1, le=200, description="Maximum batches to return"),
+) -> FailedBatchesResponse:
+    """
+    List failed batches for a program.
+
+    Returns batches in failed status, newest first.
+    Useful for admin dashboards and retry workflows.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    failed_batches = await store.list_failed_batches(
+        program_id=str(program_id),
+        limit=limit,
+    )
+
+    return FailedBatchesResponse(
+        program_id=str(program_id),
+        count=len(failed_batches),
+        batches=[_batch_row_to_admin_response(b) for b in failed_batches],
+    )
+
+

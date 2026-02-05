@@ -155,14 +155,19 @@ class NeonBatchStore:
     async def claim_next_batch(
         self,
         program_id: str,
+        worker_id: str,
         now: datetime,
         heartbeat_timeout_sec: int,
     ) -> str | None:
         """
         Claim the next queued or stale running batch for processing.
 
+        Uses FOR UPDATE SKIP LOCKED for atomic, conflict-free claiming.
+        Safe for multi-worker concurrent access.
+
         Args:
             program_id: Program UUID
+            worker_id: Worker identifier (A8-5: tracked for debugging)
             now: Timestamp for claim
             heartbeat_timeout_sec: Staleness threshold in seconds
 
@@ -194,12 +199,13 @@ class NeonBatchStore:
                 locked_at = $3,
                 heartbeat_at = $3,
                 attempts = COALESCE(attempts, 0) + 1,
-                started_at = COALESCE(started_at, $3)
+                started_at = COALESCE(started_at, $3),
+                claimed_by = $4
             FROM candidate
             WHERE b.batch_id = candidate.batch_id
             RETURNING b.batch_id
         """
-        rows = await self._execute(query, (program_id, stale_before, now))
+        rows = await self._execute(query, (program_id, stale_before, now, worker_id))
         if not rows:
             return None
         return str(rows[0]["batch_id"])
@@ -236,7 +242,7 @@ class NeonBatchStore:
 
         Args:
             program_id: Program UUID
-            worker_id: Worker identifier (currently unused, for future tracking)
+            worker_id: Worker identifier (A8-5: tracked for attribution)
             heartbeat_timeout_sec: Staleness threshold for reclaiming stale batches
 
         Returns:
@@ -244,6 +250,7 @@ class NeonBatchStore:
         """
         return await self.claim_next_batch(
             program_id=program_id,
+            worker_id=worker_id,
             now=datetime.now(timezone.utc),
             heartbeat_timeout_sec=heartbeat_timeout_sec,
         )
@@ -282,15 +289,95 @@ class NeonBatchStore:
         now: datetime,
         reason: str,
     ) -> None:
-        """Mark a batch as failed with a reason."""
+        """Mark a batch as failed with a reason (A8-5: sets failed_reason)."""
         query = """
             UPDATE vault.review_batches
             SET status = 'failed',
                 last_error = $4,
-                completed_at = $3
+                failed_reason = $4,
+                completed_at = $3,
+                claimed_by = NULL
             WHERE batch_id = $1 AND program_id = $2
         """
         await self._execute(query, (batch_id, program_id, now, reason))
+
+    # -------------------------------------------------------------------------
+    # A8-5: Admin API methods
+    # -------------------------------------------------------------------------
+
+    async def requeue_batch(
+        self,
+        batch_id: str,
+        program_id: str,
+        reset_attempts: bool = False,
+    ) -> BatchRow | None:
+        """
+        Requeue a failed batch for retry (admin operation).
+
+        Safe operation - only failed batches can be requeued.
+        Optionally resets attempt counter.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            reset_attempts: If True, reset attempts to 0
+
+        Returns:
+            Updated BatchRow or None if batch not found/not failed
+        """
+        now = datetime.now(timezone.utc)
+        if reset_attempts:
+            query = """
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    attempts = 0,
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL,
+                    started_at = NULL,
+                    completed_at = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND status = 'failed'
+                RETURNING *
+            """
+        else:
+            query = """
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    last_error = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND status = 'failed'
+                RETURNING *
+            """
+        rows = await self._execute(query, (batch_id, program_id))
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def list_failed_batches(
+        self,
+        program_id: str,
+        limit: int = 50,
+    ) -> list[BatchRow]:
+        """
+        List failed batches for a program (admin operation).
+
+        Args:
+            program_id: Program UUID
+            limit: Max batches to return (default 50)
+
+        Returns:
+            List of failed BatchRows, newest first
+        """
+        query = """
+            SELECT * FROM vault.review_batches
+            WHERE program_id = $1 AND status = 'failed'
+            ORDER BY created_at DESC
+            LIMIT $2
+        """
+        rows = await self._execute(query, (program_id, limit))
+        return [self._row_to_batch(r) for r in rows]
 
     async def upsert_doc_result(
         self,
@@ -548,6 +635,9 @@ class NeonBatchStore:
             attempts=row.get("attempts", 0),
             last_error=row.get("last_error"),
             error_summary=error_summary,
+            # A8-5: Multi-worker safety fields
+            claimed_by=row.get("claimed_by"),
+            failed_reason=row.get("failed_reason"),
         )
 
     def _row_to_doc(self, row: dict[str, Any]) -> DocRow:
