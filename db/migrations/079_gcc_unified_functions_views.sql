@@ -861,39 +861,33 @@ COMMENT ON VIEW cortex.statistics IS
 'Overview statistics for all Cortex Prime tables.';
 
 -- ============================================================================
--- SECTION 9: PERMISSIONS
+-- SECTION 9: PERMISSIONS (all conditional - roles may not exist)
 -- ============================================================================
 
--- Grant execute on functions to app roles
-GRANT EXECUTE ON FUNCTION cortex.unified_search TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.unified_search_fast TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.traverse_reasoning TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.assemble_context TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.query TO app_service;
-GRANT EXECUTE ON FUNCTION cortex.health_check TO app_service;
+-- Grant execute on functions to app roles (conditional)
 DO $$
 BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
+        GRANT EXECUTE ON FUNCTION cortex.unified_search TO app_service;
+        GRANT EXECUTE ON FUNCTION cortex.unified_search_fast TO app_service;
+        GRANT EXECUTE ON FUNCTION cortex.traverse_reasoning TO app_service;
+        GRANT EXECUTE ON FUNCTION cortex.assemble_context TO app_service;
+        GRANT EXECUTE ON FUNCTION cortex.query TO app_service;
+        GRANT EXECUTE ON FUNCTION cortex.health_check TO app_service;
+        GRANT SELECT ON cortex.statistics TO app_service;
+        GRANT SELECT ON lumen.data_atoms TO app_service;
+        GRANT SELECT ON vault.document_chunks_v2 TO app_service;
+        GRANT SELECT ON vault.extracted_entities_v2 TO app_service;
+        GRANT SELECT ON ai.document_embeddings_v2 TO app_service;
+        GRANT SELECT ON lumen.agent_registry_v2 TO app_service;
+        GRANT SELECT ON agent_runtime.agent_executions_v2 TO app_service;
+    END IF;
+    
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
         GRANT EXECUTE ON FUNCTION cortex.health_check TO app_readonly;
-    END IF;
-END $$;
-
--- Grant select on views
-GRANT SELECT ON cortex.statistics TO app_service;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
         GRANT SELECT ON cortex.statistics TO app_readonly;
     END IF;
 END $$;
-
--- Legacy view access
-GRANT SELECT ON lumen.data_atoms TO app_service;
-GRANT SELECT ON vault.document_chunks_v2 TO app_service;
-GRANT SELECT ON vault.extracted_entities_v2 TO app_service;
-GRANT SELECT ON ai.document_embeddings_v2 TO app_service;
-GRANT SELECT ON lumen.agent_registry_v2 TO app_service;
-GRANT SELECT ON agent_runtime.agent_executions_v2 TO app_service;
 
 -- ============================================================================
 -- SECTION 10: COMPLETION
