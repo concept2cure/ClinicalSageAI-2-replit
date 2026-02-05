@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
-from fastapi import APIRouter, BackgroundTasks, File, Header, HTTPException, UploadFile, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -45,6 +45,26 @@ from lumen_cortex.reviewer.storage import NeonBatchStore, BatchRow, get_batch_st
 
 
 router = APIRouter(prefix="/review", tags=["review"])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Auth Guard (fail-closed)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def require_review_admin(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")
+) -> None:
+    """
+    Require admin token for ops endpoints.
+
+    Fail-closed: if REVIEW_ADMIN_TOKEN is not configured, ops endpoints are disabled.
+    """
+    expected = os.getenv("REVIEW_ADMIN_TOKEN")
+    if not expected:
+        raise HTTPException(status_code=503, detail="REVIEW_ADMIN_TOKEN not configured")
+    if x_admin_token != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
 
 # Environment variable to enable/disable event emission
 LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").lower() == "true"
@@ -1417,6 +1437,7 @@ def _batch_row_to_admin_response(batch: BatchRow) -> BatchAdminResponse:
 async def get_batch_admin(
     batch_id: str,
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    _: None = Depends(require_review_admin),
 ) -> BatchAdminResponse:
     """
     Get admin view of a batch with operational fields.
@@ -1446,6 +1467,7 @@ async def retry_batch(
     batch_id: str,
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: RequeueRequest = RequeueRequest(),
+    _: None = Depends(require_review_admin),
 ) -> RequeueResponse:
     """
     Requeue a failed batch for retry.
@@ -1502,7 +1524,8 @@ async def retry_batch(
 @router.get("/batches/failed", response_model=FailedBatchesResponse)
 async def list_failed_batches(
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
-    limit: int = Query(default=50, ge=1, le=200, description="Maximum batches to return"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
+    _: None = Depends(require_review_admin),
 ) -> FailedBatchesResponse:
     """
     List failed batches for a program.
@@ -1544,6 +1567,7 @@ async def cancel_batch(
     batch_id: str,
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: CancelRequest = CancelRequest(),
+    _: None = Depends(require_review_admin),
 ) -> CancelResponse:
     """
     Request cancellation of a batch (queued or running).
@@ -1616,6 +1640,7 @@ async def requeue_batch(
     batch_id: str,
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: RequeueV2Request = RequeueV2Request(),
+    _: None = Depends(require_review_admin),
 ) -> RequeueResponse:
     """
     Requeue a batch for retry (A8-6 enhanced version).
@@ -1708,8 +1733,9 @@ async def list_batches(
         default=None,
         description="Filter by status (queued, running, completed, failed, cancelled)"
     ),
-    limit: int = Query(default=50, ge=1, le=200, description="Maximum batches to return"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
+    _: None = Depends(require_review_admin),
 ) -> BatchListResponse:
     """
     List batches for a program with optional status filter.
