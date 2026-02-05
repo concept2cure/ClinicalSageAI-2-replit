@@ -52,6 +52,11 @@ LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").l
 # Environment variable to enable/disable batch persistence to Neon
 BATCH_PERSISTENCE_ENABLED = os.environ.get("BATCH_PERSISTENCE_ENABLED", "false").lower() == "true"
 
+# Environment variable to use external worker for async batches (disables in-process BackgroundTasks)
+# When true: API just queues batch, external worker picks it up
+# When false: API processes batch using FastAPI BackgroundTasks (default for backwards compat)
+BATCH_WORKER_EXTERNAL = os.environ.get("BATCH_WORKER_EXTERNAL", "false").lower() == "true"
+
 # Constants (from REVIEW_CONFIG)
 MAX_FINDINGS_PREVIEW = REVIEW_CONFIG.max_findings_preview
 MAX_BATCH_FILES = REVIEW_CONFIG.max_batch_docs
@@ -730,23 +735,25 @@ async def review_batch_file_endpoint(
                 idempotency_key=idempotency_key,
                 request_digest=request_digest,
             )
-        # Queue background task for processing
-        background_tasks.add_task(
-            _process_batch_async,
-            batch_id=existing_batch.batch_id,
-            program_id=program_id,
-            file_bytes_list=file_bytes_list,
-            ruleset_version=ruleset_version,
-            extractor_version=extractor_version,
-            max_findings_per_doc=max_findings_per_doc,
-        )
+        # Queue background task for processing (unless external worker mode)
+        # When BATCH_WORKER_EXTERNAL=true, just leave batch queued for external worker
+        if not BATCH_WORKER_EXTERNAL:
+            background_tasks.add_task(
+                _process_batch_async,
+                batch_id=existing_batch.batch_id,
+                program_id=program_id,
+                file_bytes_list=file_bytes_list,
+                ruleset_version=ruleset_version,
+                extractor_version=extractor_version,
+                max_findings_per_doc=max_findings_per_doc,
+            )
         return JSONResponse(
             status_code=202,
             content=BatchQueuedResponse(
                 batch_id=existing_batch.batch_id,
                 status="queued",
                 poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
-                message="Batch queued for processing",
+                message="Batch queued for processing" + (" (external worker)" if BATCH_WORKER_EXTERNAL else ""),
             ).model_dump(),
         )
 
