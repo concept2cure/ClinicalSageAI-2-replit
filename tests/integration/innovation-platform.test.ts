@@ -762,9 +762,9 @@ describe('Compliance Guardrails SDK Service', () => {
 });
 
 /**
- * Integration Tests
+ * Integration Tests (require OpenAI for service instantiation)
  */
-describe('Innovation Platform Integration', () => {
+describeWithOpenAI('Innovation Platform Integration', () => {
   describe('Cross-Feature Integration', () => {
     it('should link delta findings to evidence gaps', async () => {
       const deltaService = new RegulatoryDeltaRadarService(testPool);
