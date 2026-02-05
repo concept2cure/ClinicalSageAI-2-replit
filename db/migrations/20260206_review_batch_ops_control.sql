@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Add ops control plane columns for batch job cancel/requeue operations
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (Admin submission control), Module 5 (Batch QC)
+--   - Integrity Risk Addressed: Stale/orphan batch processing, audit trail for ops actions
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
+
 -- Migration: A8-6 Ops Control Plane
 -- Adds cancel columns for batch operations control
 -- Date: 2026-02-06
