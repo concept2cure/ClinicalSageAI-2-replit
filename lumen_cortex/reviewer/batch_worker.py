@@ -46,6 +46,9 @@ logger = logging.getLogger(__name__)
 # Global reference for health check
 _worker_instance: "BatchWorker | None" = None
 
+# DB health threshold: if no successful DB op in this many seconds, report unhealthy
+DB_HEALTH_TIMEOUT_SEC = 60
+
 
 class HealthCheckHandler(BaseHTTPRequestHandler):
     """Simple HTTP handler for health/liveness probes."""
@@ -80,30 +83,47 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(status).encode())
 
     def _respond_ready(self) -> None:
-        """Readiness probe - is the worker ready to process?"""
-        if _worker_instance and not _worker_instance.shutdown_requested:
+        """Readiness probe - is the worker ready to process?
+
+        Returns 503 if:
+        - No worker instance
+        - Shutdown requested
+        - DB connection stale (no successful op in DB_HEALTH_TIMEOUT_SEC)
+        """
+        if not _worker_instance:
+            self.send_response(503)
+            status = {"status": "not_ready", "reason": "no_worker_instance"}
+        elif _worker_instance.shutdown_requested:
+            self.send_response(503)
+            status = {"status": "not_ready", "reason": "shutdown_requested"}
+        elif not _worker_instance.is_db_healthy():
+            self.send_response(503)
+            status = {"status": "not_ready", "reason": "db_connection_stale"}
+        else:
             self.send_response(200)
             status = {"status": "ready"}
-        else:
-            self.send_response(503)
-            status = {"status": "not_ready", "reason": "shutdown_requested or no worker"}
 
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(status).encode())
 
     def _respond_metrics(self) -> None:
-        """Simple metrics endpoint."""
+        """Metrics endpoint with operational counters."""
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
 
+        w = _worker_instance
         metrics = {
-            "worker_id": _worker_instance.worker_id if _worker_instance else None,
-            "program_id": _worker_instance.program_id if _worker_instance else None,
-            "current_batch_id": _worker_instance.current_batch_id if _worker_instance else None,
-            "poll_interval": _worker_instance.poll_interval if _worker_instance else None,
-            "batches_processed": getattr(_worker_instance, "batches_processed", 0) if _worker_instance else 0,
+            "worker_id": w.worker_id if w else None,
+            "program_id": w.program_id if w else None,
+            "current_batch_id": w.current_batch_id if w else None,
+            "poll_interval_sec": w.poll_interval if w else None,
+            "batches_processed_total": w.batches_processed if w else 0,
+            "batches_failed_total": w.batches_failed if w else 0,
+            "last_batch_completed_at": w.last_batch_completed_at.isoformat() if w and w.last_batch_completed_at else None,
+            "last_db_success_at": w.last_db_success_at.isoformat() if w and w.last_db_success_at else None,
+            "uptime_sec": (datetime.now(timezone.utc) - w.started_at).total_seconds() if w and w.started_at else 0,
         }
         self.wfile.write(json.dumps(metrics).encode())
 
@@ -154,7 +174,24 @@ class BatchWorker:
         self.store = store
         self.shutdown_requested = False
         self.current_batch_id: str | None = None
+
+        # Metrics
         self.batches_processed: int = 0
+        self.batches_failed: int = 0
+        self.last_batch_completed_at: datetime | None = None
+        self.last_db_success_at: datetime | None = None
+        self.started_at: datetime | None = None
+
+    def is_db_healthy(self) -> bool:
+        """Check if DB connection is healthy based on last successful operation."""
+        if self.last_db_success_at is None:
+            # No DB ops yet - give benefit of doubt if we just started
+            if self.started_at:
+                age = (datetime.now(timezone.utc) - self.started_at).total_seconds()
+                return age < DB_HEALTH_TIMEOUT_SEC
+            return False
+        age = (datetime.now(timezone.utc) - self.last_db_success_at).total_seconds()
+        return age < DB_HEALTH_TIMEOUT_SEC
 
     async def run(self) -> None:
         """
@@ -165,6 +202,7 @@ class BatchWorker:
         if self.store is None:
             self.store = await get_batch_store()
 
+        self.started_at = datetime.now(timezone.utc)
         logger.info(
             f"Batch worker started: worker_id={self.worker_id}, "
             f"program_id={self.program_id}, poll_interval={self.poll_interval}s"
@@ -177,6 +215,8 @@ class BatchWorker:
                     program_id=self.program_id,
                     worker_id=self.worker_id,
                 )
+                # DB op succeeded
+                self.last_db_success_at = datetime.now(timezone.utc)
 
                 if batch_id:
                     self.current_batch_id = batch_id
@@ -185,8 +225,10 @@ class BatchWorker:
                     try:
                         await self._process_batch(batch_id)
                         self.batches_processed += 1
+                        self.last_batch_completed_at = datetime.now(timezone.utc)
                         logger.info(f"Batch completed: {batch_id} (total processed: {self.batches_processed})")
                     except Exception as e:
+                        self.batches_failed += 1
                         logger.error(f"Batch failed: {batch_id}, error: {e}", exc_info=True)
                         await self._mark_batch_failed(batch_id, str(e))
                     finally:
