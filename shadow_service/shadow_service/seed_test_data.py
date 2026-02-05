@@ -441,11 +441,14 @@ async def seed_data(program_id: Optional[UUID] = None, dry_run: bool = False):
         # Initialize database connection
         await db.init_pool()
         
-        # Set attribution context
+        # Set attribution context using parameterized queries
         conn = await db.acquire_connection()
-        await conn.execute("SET LOCAL app.user = 'seed_script@trialsage.ai'")
-        await conn.execute(f"SET LOCAL app.reason = 'Test data seeding for development'")
-        await conn.execute(f"SET LOCAL app.request_id = '{uuid4()}'")
+        await db.set_session_context(
+            conn,
+            user='seed_script@trialsage.ai',
+            reason='Test data seeding for development',
+            request_id=str(uuid4()),
+        )
         
         async with conn.transaction():
             # 1. Seed Drift Monitoring Data
@@ -568,8 +571,11 @@ async def cleanup_test_data(program_id: UUID):
     try:
         await db.init_pool()
         conn = await db.acquire_connection()
-        await conn.execute("SET LOCAL app.user = 'cleanup_script@trialsage.ai'")
-        await conn.execute(f"SET LOCAL app.reason = 'Test data cleanup'")
+        await db.set_session_context(
+            conn,
+            user='cleanup_script@trialsage.ai',
+            reason='Test data cleanup',
+        )
         
         async with conn.transaction():
             # Delete in reverse dependency order

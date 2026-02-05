@@ -119,7 +119,7 @@ async def create_package(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_PACKAGE,
                 data.package_code,
@@ -150,7 +150,7 @@ async def update_package_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_PACKAGE_STATUS,
                 package_id,
@@ -193,7 +193,7 @@ async def validate_package(
         all_passed = True
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             
             # Run validation rules against documents
             for rule in rules:
@@ -252,7 +252,7 @@ async def mark_package_delivered(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_MARK_PACKAGE_DELIVERED,
                 package_id,
@@ -334,7 +334,7 @@ async def add_package_document(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_ADD_PACKAGE_DOCUMENT,
                 data.package_id,
@@ -375,7 +375,7 @@ async def update_document_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_DOCUMENT_STATUS,
                 document_id,
@@ -453,7 +453,7 @@ async def add_validation_result(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_ADD_VALIDATION_RESULT,
                 data.package_id,
@@ -500,7 +500,7 @@ async def create_delivery_record(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_DELIVERY_RECORD,
                 data.package_id,
@@ -526,7 +526,7 @@ async def update_delivery_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_DELIVERY_STATUS,
                 delivery_id,
@@ -559,7 +559,7 @@ async def acknowledge_delivery(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_SET_DELIVERY_ACKNOWLEDGED,
                 delivery_id,
