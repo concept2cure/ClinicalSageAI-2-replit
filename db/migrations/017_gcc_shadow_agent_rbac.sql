@@ -43,29 +43,44 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- 2. SHADOW AGENT SPECIFIC GRANTS
+-- 2. SHADOW AGENT SPECIFIC GRANTS (Conditional for tables that may not exist yet)
 -- ============================================================================
 
--- Audit: INSERT only for append-only audit logging
-GRANT INSERT ON audit.concomitant_audit_logs TO gcc_shadow_agent;
+DO $$ BEGIN
+  -- Audit: INSERT only for append-only audit logging
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='audit' AND table_name='concomitant_audit_logs') THEN
+    EXECUTE 'GRANT INSERT, SELECT ON audit.concomitant_audit_logs TO gcc_shadow_agent';
+  END IF;
 
--- Read audit for comparisons (last interrogation state, etc.)
-GRANT SELECT ON audit.concomitant_audit_logs TO gcc_shadow_agent;
+  -- Read truth for drift computation
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='truth' AND table_name='clinical_truth_store') THEN
+    EXECUTE 'GRANT SELECT ON truth.clinical_truth_store TO gcc_shadow_agent';
+  END IF;
 
--- Read truth for drift computation
-GRANT SELECT ON truth.clinical_truth_store TO gcc_shadow_agent;
+  -- Read prose for interrogation
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragments TO gcc_shadow_agent';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragment_versions') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragment_versions TO gcc_shadow_agent';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='fragment_truth_links') THEN
+    EXECUTE 'GRANT SELECT ON prose.fragment_truth_links TO gcc_shadow_agent';
+  END IF;
 
--- Read prose for interrogation
-GRANT SELECT ON prose.smart_fragments TO gcc_shadow_agent;
-GRANT SELECT ON prose.smart_fragment_versions TO gcc_shadow_agent;
-GRANT SELECT ON prose.fragment_truth_links TO gcc_shadow_agent;
+  -- Read adversarial for precedent matching
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='adversarial' AND table_name='regulatory_adversarial_precedents') THEN
+    EXECUTE 'GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_shadow_agent';
+  END IF;
 
--- Read adversarial for precedent matching
-GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_shadow_agent;
-
--- Read snapshots (for snapshot-scoped interrogation)
-GRANT SELECT ON prose.submission_snapshots TO gcc_shadow_agent;
-GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_shadow_agent;
+  -- Read snapshots (for snapshot-scoped interrogation)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshots') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshots TO gcc_shadow_agent';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshot_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_shadow_agent';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- 3. GRANT ACCESS TO HEATMAP VIEWS (Migration 007)
