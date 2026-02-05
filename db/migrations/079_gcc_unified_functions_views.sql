@@ -60,6 +60,79 @@ CREATE TABLE IF NOT EXISTS cortex.traces (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure cortex.edges exists (needed for graph traversal functions and views)
+CREATE TABLE IF NOT EXISTS cortex.edges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source_atom_id UUID,
+    target_atom_id UUID,
+    edge_type TEXT,
+    weight NUMERIC,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure cortex.threads exists (needed for conversation context)
+CREATE TABLE IF NOT EXISTS cortex.threads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    thread_type TEXT,
+    context JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure tables exist for cortex stats function
+CREATE TABLE IF NOT EXISTS cortex.regulatory_signals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    signal_type TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.rejection_patterns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    pattern_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.distilled_insights (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    insight_type TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.expertise_scores (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    domain TEXT,
+    score NUMERIC,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.domain_knowledge (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    domain TEXT,
+    content TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.evolution_ledger (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    event_type TEXT,
+    event_data JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cortex.learning_experiences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    experience_type TEXT,
+    content TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================================
 -- SECTION 1: UNIFIED SEARCH
 -- ============================================================================
