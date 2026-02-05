@@ -8,6 +8,19 @@
 
 BEGIN;
 
+-- Ensure cortex schema exists (may have been created by 073 or _legacy migration)
+CREATE SCHEMA IF NOT EXISTS cortex;
+
+-- Create minimal cortex.atoms table if not exists (dependency for regulatory_signals)
+CREATE TABLE IF NOT EXISTS cortex.atoms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    content TEXT,
+    content_type TEXT,
+    embedding VECTOR(3072),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 DO $$
 BEGIN
     IF NOT EXISTS (
