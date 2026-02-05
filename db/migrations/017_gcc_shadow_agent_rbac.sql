@@ -33,7 +33,7 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_auth_members 
+        SELECT 1 FROM pg_auth_members
         WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'gcc_app_reader')
         AND member = (SELECT oid FROM pg_roles WHERE rolname = 'gcc_shadow_agent')
     ) THEN
@@ -92,35 +92,35 @@ END $$;
 DO $$
 BEGIN
     -- audit.v_fragment_latest_risk
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'audit' AND table_name = 'v_fragment_latest_risk') THEN
         GRANT SELECT ON audit.v_fragment_latest_risk TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on audit.v_fragment_latest_risk';
     END IF;
 
     -- prose.v_fragment_truth_coverage
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'prose' AND table_name = 'v_fragment_truth_coverage') THEN
         GRANT SELECT ON prose.v_fragment_truth_coverage TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on prose.v_fragment_truth_coverage';
     END IF;
 
     -- prose.v_fragment_current
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'prose' AND table_name = 'v_fragment_current') THEN
         GRANT SELECT ON prose.v_fragment_current TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on prose.v_fragment_current';
     END IF;
 
     -- prose.v_section_risk_rollup
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'prose' AND table_name = 'v_section_risk_rollup') THEN
         GRANT SELECT ON prose.v_section_risk_rollup TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on prose.v_section_risk_rollup';
     END IF;
 
     -- prose.v_jurisdiction_risk_rollup
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'prose' AND table_name = 'v_jurisdiction_risk_rollup') THEN
         GRANT SELECT ON prose.v_jurisdiction_risk_rollup TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on prose.v_jurisdiction_risk_rollup';
@@ -134,7 +134,7 @@ END $$;
 DO $$
 BEGIN
     -- prose.v_snapshot_gate_metrics
-    IF EXISTS (SELECT 1 FROM information_schema.views 
+    IF EXISTS (SELECT 1 FROM information_schema.views
                WHERE table_schema = 'prose' AND table_name = 'v_snapshot_gate_metrics') THEN
         GRANT SELECT ON prose.v_snapshot_gate_metrics TO gcc_app_reader, gcc_shadow_agent, gcc_auditor;
         RAISE NOTICE 'Granted SELECT on prose.v_snapshot_gate_metrics';
@@ -146,15 +146,15 @@ END $$;
 -- ============================================================================
 
 -- Future tables in audit schema: shadow agent gets SELECT + INSERT
-ALTER DEFAULT PRIVILEGES IN SCHEMA audit 
+ALTER DEFAULT PRIVILEGES IN SCHEMA audit
     GRANT SELECT ON TABLES TO gcc_shadow_agent;
-    
+
 -- Future tables in prose/truth/adversarial: shadow agent gets SELECT
-ALTER DEFAULT PRIVILEGES IN SCHEMA truth 
+ALTER DEFAULT PRIVILEGES IN SCHEMA truth
     GRANT SELECT ON TABLES TO gcc_shadow_agent;
-ALTER DEFAULT PRIVILEGES IN SCHEMA prose 
+ALTER DEFAULT PRIVILEGES IN SCHEMA prose
     GRANT SELECT ON TABLES TO gcc_shadow_agent;
-ALTER DEFAULT PRIVILEGES IN SCHEMA adversarial 
+ALTER DEFAULT PRIVILEGES IN SCHEMA adversarial
     GRANT SELECT ON TABLES TO gcc_shadow_agent;
 
 -- ============================================================================
@@ -163,10 +163,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA adversarial
 -- Ensure writer can manage snapshots properly (freeze, delete draft)
 
 -- Writer can DELETE draft snapshots (trigger enforces DRAFT-only deletion)
-GRANT DELETE ON prose.submission_snapshots TO gcc_app_writer;
-
--- Writer can DELETE snapshot fragments (for draft modification)
-GRANT DELETE ON prose.submission_snapshot_fragments TO gcc_app_writer;
+-- Conditional for tables that may not exist yet
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshots') THEN
+    EXECUTE 'GRANT DELETE ON prose.submission_snapshots TO gcc_app_writer';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshot_fragments') THEN
+    EXECUTE 'GRANT DELETE ON prose.submission_snapshot_fragments TO gcc_app_writer';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- 7. SEQUENCE GRANTS (for INSERT operations)
@@ -179,8 +184,8 @@ DECLARE
     seq_name TEXT;
 BEGIN
     -- Find and grant sequences in each schema
-    FOR seq_schema, seq_name IN 
-        SELECT sequence_schema, sequence_name FROM information_schema.sequences 
+    FOR seq_schema, seq_name IN
+        SELECT sequence_schema, sequence_name FROM information_schema.sequences
         WHERE sequence_schema IN ('truth', 'prose', 'adversarial', 'audit')
     LOOP
         EXECUTE format(
@@ -195,7 +200,7 @@ END $$;
 -- 8. ROLE DOCUMENTATION
 -- ============================================================================
 
-COMMENT ON ROLE gcc_shadow_agent IS 
+COMMENT ON ROLE gcc_shadow_agent IS
     'Shadow Interrogation Agent: reads all schemas, INSERT-only on audit logs (21 CFR Part 11 compliant)';
 
 -- ============================================================================
@@ -204,7 +209,7 @@ COMMENT ON ROLE gcc_shadow_agent IS
 /*
 Run this to verify shadow agent role configuration:
 
-SELECT 
+SELECT
     r.rolname,
     ARRAY_AGG(DISTINCT m.rolname) AS member_of
 FROM pg_roles r
@@ -214,10 +219,10 @@ WHERE r.rolname = 'gcc_shadow_agent'
 GROUP BY r.rolname;
 
 -- Check table privileges:
-SELECT 
-    grantee, 
-    table_schema, 
-    table_name, 
+SELECT
+    grantee,
+    table_schema,
+    table_name,
     privilege_type
 FROM information_schema.table_privileges
 WHERE grantee = 'gcc_shadow_agent'
