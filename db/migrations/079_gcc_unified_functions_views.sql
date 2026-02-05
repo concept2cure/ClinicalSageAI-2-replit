@@ -16,6 +16,7 @@ CREATE SCHEMA IF NOT EXISTS cortex;
 CREATE SCHEMA IF NOT EXISTS lumen;
 CREATE SCHEMA IF NOT EXISTS vault;
 CREATE SCHEMA IF NOT EXISTS ai;
+CREATE SCHEMA IF NOT EXISTS agent_runtime;
 
 -- Ensure cortex.atoms exists with required columns (may have been created by 073/074)
 CREATE TABLE IF NOT EXISTS cortex.atoms (
@@ -42,6 +43,20 @@ CREATE TABLE IF NOT EXISTS cortex.agents (
     capabilities JSONB,
     model_config JSONB,
     is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure cortex.traces exists (needed for agent_runtime.agent_executions_v2 view)
+CREATE TABLE IF NOT EXISTS cortex.traces (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    trace_type TEXT,
+    agent_id UUID,
+    thread_id UUID,
+    input_data JSONB,
+    output_data JSONB,
+    execution_ms INTEGER,
+    token_count INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -79,10 +94,10 @@ DECLARE
 BEGIN
     -- Set org filter
     v_org_filter := COALESCE(p_org_id, current_setting('app.current_org_id', true)::UUID);
-    
+
     RETURN QUERY
     WITH vector_search AS (
-        SELECT 
+        SELECT
             a.id,
             a.atom_type,
             a.content,
@@ -100,7 +115,7 @@ BEGIN
         LIMIT p_limit * 2
     ),
     fts_search AS (
-        SELECT 
+        SELECT
             a.id,
             ts_rank_cd(to_tsvector('english', a.content), plainto_tsquery('english', COALESCE(p_query_text, ''))) AS fts_rank
         FROM cortex.atoms a
@@ -109,7 +124,7 @@ BEGIN
           AND to_tsvector('english', a.content) @@ plainto_tsquery('english', p_query_text)
     ),
     combined AS (
-        SELECT 
+        SELECT
             vs.id AS atom_id,
             vs.atom_type,
             vs.content,
@@ -155,7 +170,7 @@ SET search_path = cortex, pg_catalog
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id AS atom_id,
         a.atom_type,
         a.content,
@@ -201,17 +216,17 @@ BEGIN
     RETURN QUERY
     WITH RECURSIVE traversal AS (
         -- Base case: start node
-        SELECT 
+        SELECT
             p_start_atom_id AS current_id,
             0 AS depth,
             ARRAY[p_start_atom_id] AS path,
             ARRAY[]::TEXT[] AS edge_types_used,
             1.0::NUMERIC AS cumulative_strength
-        
+
         UNION ALL
-        
+
         -- Recursive case: follow edges
-        SELECT 
+        SELECT
             e.target_atom_id AS current_id,
             t.depth + 1 AS depth,
             t.path || e.target_atom_id AS path,
@@ -224,7 +239,7 @@ BEGIN
           AND NOT (e.target_atom_id = ANY(t.path)) -- Prevent cycles
           AND (p_edge_types IS NULL OR e.edge_type = ANY(p_edge_types))
     )
-    SELECT 
+    SELECT
         a.id AS atom_id,
         a.atom_type,
         a.content,
@@ -270,7 +285,7 @@ BEGIN
     IF v_thread IS NULL THEN
         RAISE EXCEPTION 'Thread not found: %', p_thread_id;
     END IF;
-    
+
     -- Add metadata
     v_context := jsonb_set(v_context, '{metadata}', jsonb_build_object(
         'thread_id', v_thread.id,
@@ -278,37 +293,37 @@ BEGIN
         'program_id', v_thread.program_id,
         'submission_id', v_thread.submission_id
     ));
-    
+
     -- Add conversation history (most recent first)
     IF p_include_history THEN
-        FOR v_trace IN 
-            SELECT * FROM cortex.traces 
-            WHERE thread_id = p_thread_id 
-            ORDER BY created_at DESC 
+        FOR v_trace IN
+            SELECT * FROM cortex.traces
+            WHERE thread_id = p_thread_id
+            ORDER BY created_at DESC
             LIMIT 10
         LOOP
             -- Estimate tokens (rough: 4 chars per token)
             v_total_tokens := v_total_tokens + COALESCE(length(v_trace.input::TEXT) / 4, 0);
             v_total_tokens := v_total_tokens + COALESCE(length(v_trace.output::TEXT) / 4, 0);
-            
+
             IF v_total_tokens > p_max_tokens THEN
                 EXIT;
             END IF;
-            
+
             v_context := jsonb_set(
-                v_context, 
-                '{messages}', 
+                v_context,
+                '{messages}',
                 v_context->'messages' || jsonb_build_object(
                     'role', 'user',
                     'content', v_trace.input->>'content'
                 ) || jsonb_build_object(
-                    'role', 'assistant', 
+                    'role', 'assistant',
                     'content', v_trace.output->>'content'
                 )
             );
         END LOOP;
     END IF;
-    
+
     -- Add relevant knowledge atoms
     FOR v_atom IN
         SELECT a.* FROM cortex.atoms a
@@ -316,11 +331,11 @@ BEGIN
         LIMIT 20
     LOOP
         v_total_tokens := v_total_tokens + COALESCE(length(v_atom.content) / 4, 0);
-        
+
         IF v_total_tokens > p_max_tokens THEN
             EXIT;
         END IF;
-        
+
         v_context := jsonb_set(
             v_context,
             '{knowledge}',
@@ -331,7 +346,7 @@ BEGIN
             )
         );
     END LOOP;
-    
+
     RETURN v_context;
 END;
 $$;
@@ -367,7 +382,7 @@ BEGIN
     v_search_limit := COALESCE((p_options->>'limit')::INTEGER, 10);
     v_include_patterns := COALESCE((p_options->>'include_patterns')::BOOLEAN, FALSE);
     v_include_predictions := COALESCE((p_options->>'include_predictions')::BOOLEAN, FALSE);
-    
+
     -- Search for relevant atoms
     IF p_query_embedding IS NOT NULL THEN
         FOR v_atom IN
@@ -395,7 +410,7 @@ BEGIN
             );
         END LOOP;
     END IF;
-    
+
     -- Include rejection patterns if requested
     IF v_include_patterns THEN
         SELECT jsonb_agg(jsonb_build_object(
@@ -413,10 +428,10 @@ BEGIN
             ORDER BY outcome_probability DESC
             LIMIT 5
         ) rp;
-        
+
         v_results := jsonb_set(v_results, '{patterns}', COALESCE(v_results, '[]'::JSONB));
     END IF;
-    
+
     RETURN v_results;
 END;
 $$;
@@ -442,7 +457,7 @@ BEGIN
     ) THEN
         EXECUTE $view$
         CREATE OR REPLACE VIEW lumen.data_atoms AS
-        SELECT 
+        SELECT
             a.id,
             a.org_id,
             a.content,
@@ -464,7 +479,7 @@ END $$;
 
 -- View: vault.document_chunks -> cortex.atoms
 CREATE OR REPLACE VIEW vault.document_chunks_v2 AS
-SELECT 
+SELECT
     a.id,
     a.org_id AS organization_id,
     a.source_document_id AS document_id,
@@ -483,7 +498,7 @@ COMMENT ON VIEW vault.document_chunks_v2 IS
 
 -- View: vault.extracted_entities -> cortex.atoms
 CREATE OR REPLACE VIEW vault.extracted_entities_v2 AS
-SELECT 
+SELECT
     a.id,
     a.org_id AS organization_id,
     a.source_document_id AS document_id,
@@ -502,7 +517,7 @@ COMMENT ON VIEW vault.extracted_entities_v2 IS
 
 -- View: ai.document_embeddings -> cortex.atoms
 CREATE OR REPLACE VIEW ai.document_embeddings_v2 AS
-SELECT 
+SELECT
     a.id,
     a.source_document_id AS document_id,
     a.org_id,
@@ -519,7 +534,7 @@ COMMENT ON VIEW ai.document_embeddings_v2 IS
 
 -- View: lumen.agent_registry -> cortex.agents
 CREATE OR REPLACE VIEW lumen.agent_registry_v2 AS
-SELECT 
+SELECT
     a.id,
     a.agent_code AS name,
     a.agent_type AS type,
@@ -536,7 +551,7 @@ COMMENT ON VIEW lumen.agent_registry_v2 IS
 
 -- View: agent_runtime.agent_executions -> cortex.traces
 CREATE OR REPLACE VIEW agent_runtime.agent_executions_v2 AS
-SELECT 
+SELECT
     t.id,
     t.agent_id,
     t.thread_id AS session_id,
@@ -577,7 +592,7 @@ DECLARE
 BEGIN
     -- This is a template - actual migration depends on source table structure
     -- In production, create specific functions for each source table
-    
+
     v_result := jsonb_build_object(
         'source_table', p_source_table,
         'dry_run', p_dry_run,
@@ -586,7 +601,7 @@ BEGIN
         'errors', v_errors,
         'message', 'Migration template - implement specific migration for ' || p_source_table
     );
-    
+
     RETURN v_result;
 END;
 $$;
@@ -613,23 +628,23 @@ BEGIN
         SELECT COUNT(*) INTO v_migrated
         FROM lumen.data_atoms lda
         WHERE NOT EXISTS (
-            SELECT 1 FROM cortex.atoms ca 
-                        WHERE ca.source_document_id = lda.id 
+            SELECT 1 FROM cortex.atoms ca
+                        WHERE ca.source_document_id = lda.id
               AND ca.source_type = 'lumen.data_atoms'
         );
-        
+
         RETURN jsonb_build_object(
             'dry_run', TRUE,
             'would_migrate', v_migrated
         );
     END IF;
-    
+
     -- Actual migration
     INSERT INTO cortex.atoms (
         org_id, atom_type, content, embedding_3072,
         source_type, source_document_id, structured_data, created_at
     )
-    SELECT 
+    SELECT
         lda.org_id,
         'chunk',
         lda.content,
@@ -640,14 +655,14 @@ BEGIN
         lda.created_at
     FROM lumen.data_atoms lda
     WHERE NOT EXISTS (
-        SELECT 1 FROM cortex.atoms ca 
-        WHERE ca.source_document_id = lda.id 
+        SELECT 1 FROM cortex.atoms ca
+        WHERE ca.source_document_id = lda.id
           AND ca.source_type = 'lumen.data_atoms'
     )
     LIMIT p_batch_size;
-    
+
     GET DIAGNOSTICS v_migrated = ROW_COUNT;
-    
+
     RETURN jsonb_build_object(
         'dry_run', FALSE,
         'migrated', v_migrated
@@ -701,7 +716,7 @@ BEGIN
             LIMIT 1
         )
     );
-    
+
     RETURN v_result;
 EXCEPTION WHEN OTHERS THEN
     RETURN jsonb_build_object(
@@ -719,7 +734,7 @@ COMMENT ON FUNCTION cortex.health_check IS
 -- ============================================================================
 
 CREATE OR REPLACE VIEW cortex.statistics AS
-SELECT 
+SELECT
     'atoms' AS table_name,
     COUNT(*) AS total_rows,
     COUNT(*) AS active_rows,
@@ -729,7 +744,7 @@ SELECT
     MAX(created_at) AS latest
 FROM cortex.atoms
 UNION ALL
-SELECT 
+SELECT
     'edges',
     COUNT(*),
     COUNT(*),
@@ -739,7 +754,7 @@ SELECT
     MAX(created_at)
 FROM cortex.edges
 UNION ALL
-SELECT 
+SELECT
     'traces',
     COUNT(*),
     COUNT(*),
@@ -749,7 +764,7 @@ SELECT
     MAX(created_at)
 FROM cortex.traces
 UNION ALL
-SELECT 
+SELECT
     'regulatory_signals',
     COUNT(*),
     COUNT(*) FILTER (WHERE is_active),
@@ -759,7 +774,7 @@ SELECT
     MAX(created_at)
 FROM cortex.regulatory_signals
 UNION ALL
-SELECT 
+SELECT
     'learning_experiences',
     COUNT(*),
     COUNT(*),
