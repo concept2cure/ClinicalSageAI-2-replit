@@ -11,6 +11,40 @@
 
 BEGIN;
 
+-- Ensure required schemas exist for backward-compatible views
+CREATE SCHEMA IF NOT EXISTS cortex;
+CREATE SCHEMA IF NOT EXISTS lumen;
+CREATE SCHEMA IF NOT EXISTS vault;
+CREATE SCHEMA IF NOT EXISTS ai;
+
+-- Ensure cortex.atoms exists with required columns (may have been created by 073/074)
+CREATE TABLE IF NOT EXISTS cortex.atoms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    atom_type TEXT,
+    content TEXT,
+    content_type TEXT,
+    source_type TEXT,
+    source_document_id UUID,
+    structured_data JSONB,
+    embedding_3072 VECTOR(3072),
+    embedding_1536 VECTOR(1536),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure cortex.agents exists (needed for lumen.agent_registry_v2 view)
+CREATE TABLE IF NOT EXISTS cortex.agents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_code TEXT,
+    agent_type TEXT,
+    system_prompt TEXT,
+    capabilities JSONB,
+    model_config JSONB,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================================
 -- SECTION 1: UNIFIED SEARCH
 -- ============================================================================
