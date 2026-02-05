@@ -159,7 +159,7 @@ class ECTD4Compiler:
         elif hasattr(signer, 'sign_document'):
             signed_path = signer.sign_document(docx_path, signer_info)
         else:
-            raise RuntimeError("Signer does not implement sign_document or sign_with_timestamp")
+            raise RuntimeError("Signer must implement sign_document() or sign_with_timestamp()")
 
         # Build signature audit event and append
         signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
