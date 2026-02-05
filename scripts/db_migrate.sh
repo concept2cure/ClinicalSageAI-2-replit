@@ -17,9 +17,10 @@ set -e  # Exit on error
 
 # === TERMINAL SAFETY ===
 # Prevent pager from hijacking terminal (alternate screen buffer issues)
-export PAGER="${PAGER:-cat}"
-export LESS="${LESS:--FRSX}"
-export PSQL_PAGER="${PSQL_PAGER:-cat}"
+export PAGER=cat
+export LESS="-FRSX"
+export PSQL_PAGER=cat
+export TERM=dumb
 
 # Colors for output
 RED='\033[0;31m'
@@ -57,10 +58,39 @@ elif [ -z "$DATABASE_URL" ]; then
     fi
 fi
 
+# Sanitize connection string if wrapped with a leading psql command
+if [[ "$DATABASE_URL" =~ ^psql[[:space:]]+ ]]; then
+    DATABASE_URL="$(echo "$DATABASE_URL" | sed -E 's/^psql[[:space:]]+//')"
+fi
+
+# Trim surrounding whitespace
+DATABASE_URL="$(echo "$DATABASE_URL" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+# Trim surrounding quotes (defensive, handles mismatched quoting)
+DATABASE_URL="${DATABASE_URL#\"}"
+DATABASE_URL="${DATABASE_URL%\"}"
+DATABASE_URL="${DATABASE_URL#\'}"
+DATABASE_URL="${DATABASE_URL%\'}"
+
 # Mask password in URL for display
 DISPLAY_URL=$(echo "$DATABASE_URL" | sed 's/:[^:@]*@/:***@/')
 echo -e "${BLUE}Target: ${NC}$DISPLAY_URL"
 echo ""
+
+# Safe psql wrapper (no pager, non-interactive, with timeout if available)
+psql_safe() {
+    local conn_str="$1"
+    shift
+    if command -v timeout >/dev/null 2>&1; then
+        TERM=dumb PAGER=cat timeout 30s psql "$conn_str" \
+            -X --no-align --tuples-only --pset pager=off \
+            -v ON_ERROR_STOP=1 "$@"
+    else
+        TERM=dumb PAGER=cat psql "$conn_str" \
+            -X --no-align --tuples-only --pset pager=off \
+            -v ON_ERROR_STOP=1 "$@"
+    fi
+}
 
 # Check if migrations directory exists
 if [ ! -d "$MIGRATIONS_DIR" ]; then
@@ -123,10 +153,7 @@ for migration in $MIGRATION_FILES; do
 
     # Run migration with safe psql settings (no pager, no .psqlrc, fail fast)
     # -X: skip .psqlrc, --no-psqlrc: extra safety, ON_ERROR_STOP: fail on errors
-    if PAGER=cat psql -X --no-psqlrc "$DATABASE_URL" \
-        -v ON_ERROR_STOP=1 \
-        -f "$migration" \
-        2>&1; then
+    if psql_safe "$DATABASE_URL" -f "$migration" 2>&1; then
         echo -e "${GREEN}✓ Applied: ${NC}$MIGRATION_NAME"
         APPLIED=$((APPLIED + 1))
     else
