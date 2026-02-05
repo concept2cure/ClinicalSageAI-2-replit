@@ -33,6 +33,9 @@ class BatchRow:
     attempts: int = 0
     last_error: str | None = None
     error_summary: list[dict[str, Any]] = field(default_factory=list)
+    # A8-5: Multi-worker safety fields
+    claimed_by: str | None = None
+    failed_reason: str | None = None
 
     # Property aliases for worker API compatibility
     @property

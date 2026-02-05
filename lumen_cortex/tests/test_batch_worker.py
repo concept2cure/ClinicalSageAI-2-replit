@@ -45,10 +45,12 @@ class FakeExecutor:
             return []
 
         # Claim next batch (claim_next_batch uses "WITH candidate AS")
+        # A8-5: Now accepts 4 params: program_id, stale_before, claim_now, worker_id
         if "WITH candidate AS" in q and "FOR UPDATE SKIP LOCKED" in q:
             program_id = str(params[0])
             stale_before = params[1]  # datetime for stale detection
             claim_now = params[2]  # datetime for locking
+            worker_id = str(params[3]) if len(params) >= 4 else None  # A8-5: claimed_by
             candidates = [
                 r
                 for r in self.rows.values()
@@ -63,6 +65,7 @@ class FakeExecutor:
             row["heartbeat_at"] = claim_now
             row["locked_at"] = claim_now
             row["attempts"] = row.get("attempts", 0) + 1
+            row["claimed_by"] = worker_id  # A8-5: track claiming worker
             return [{"batch_id": row["batch_id"]}]
 
         # Heartbeat update (heartbeat_batch sends 3 params: batch_id, program_id, now)
@@ -145,6 +148,9 @@ def _seed_batch(
         "findings_total": 0,
         "by_severity": {},
         "error_summary": [],
+        # A8-5: Multi-worker safety fields
+        "claimed_by": None,
+        "failed_reason": None,
     }
 
 
@@ -619,3 +625,109 @@ def test_worker_metrics_include_reliability_fields() -> None:
         assert worker.poison_threshold == 3
 
     asyncio.run(_test())
+
+
+# =============================================================================
+# A8-5 Multi-Worker Safety Tests
+# =============================================================================
+
+
+def test_claim_sets_claimed_by() -> None:
+    """A8-5: Claim records which worker claimed the batch."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 4, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="queued",
+            docs_total=5,
+            queued_at=now,
+        )
+
+        # Claim with a specific worker_id
+        claimed_id = await store.claim_next_queued_batch(
+            program_id=program_id,
+            worker_id="worker-alpha-1",
+        )
+
+        assert claimed_id == batch_id
+        # Verify claimed_by was set
+        assert executor.rows[batch_id]["claimed_by"] == "worker-alpha-1"
+        assert executor.rows[batch_id]["status"] == "running"
+
+    asyncio.run(_test())
+
+
+def test_batch_row_includes_a8_5_fields() -> None:
+    """A8-5: BatchRow model includes multi-worker safety fields."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 4, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="queued",
+            docs_total=3,
+            queued_at=now,
+        )
+        # Simulate claimed_by and failed_reason
+        executor.rows[batch_id]["claimed_by"] = "worker-beta-2"
+        executor.rows[batch_id]["failed_reason"] = "Test failure"
+
+        batch = await store.get_batch(batch_id, program_id)
+        assert batch is not None
+        assert batch.claimed_by == "worker-beta-2"
+        assert batch.failed_reason == "Test failure"
+
+    asyncio.run(_test())
+
+
+def test_transactional_claim_is_atomic() -> None:
+    """A8-5: FOR UPDATE SKIP LOCKED ensures atomic claims."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 4, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="queued",
+            docs_total=5,
+            queued_at=now,
+        )
+
+        # First worker claims
+        claimed1 = await store.claim_next_queued_batch(
+            program_id=program_id,
+            worker_id="worker-1",
+        )
+        assert claimed1 == batch_id
+
+        # Second worker tries to claim - should get nothing
+        # (batch is now running, not queued)
+        claimed2 = await store.claim_next_queued_batch(
+            program_id=program_id,
+            worker_id="worker-2",
+        )
+        assert claimed2 is None
+
+        # Original claim is preserved
+        assert executor.rows[batch_id]["claimed_by"] == "worker-1"
+
+    asyncio.run(_test())
+
