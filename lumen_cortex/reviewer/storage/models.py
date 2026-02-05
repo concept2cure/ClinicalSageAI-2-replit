@@ -36,6 +36,10 @@ class BatchRow:
     # A8-5: Multi-worker safety fields
     claimed_by: str | None = None
     failed_reason: str | None = None
+    # A8-6: Ops control plane fields
+    cancel_requested_at: datetime | None = None
+    cancel_reason: str | None = None
+    cancel_requested_by: str | None = None
 
     # Property aliases for worker API compatibility
     @property

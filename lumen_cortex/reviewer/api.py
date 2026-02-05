@@ -1293,7 +1293,7 @@ class BatchAdminResponse(BaseModel):
     """Admin view of a batch with operational fields."""
     batch_id: str
     program_id: str
-    status: Literal["queued", "running", "completed", "failed"]
+    status: Literal["queued", "running", "completed", "failed", "cancelled"]
     mode: Literal["sync", "async"]
     documents_total: int
     documents_succeeded: int
@@ -1303,6 +1303,10 @@ class BatchAdminResponse(BaseModel):
     last_error: Optional[str] = None
     failed_reason: Optional[str] = None
     claimed_by: Optional[str] = None
+    # A8-6: Cancel fields
+    cancel_requested_at: Optional[str] = None
+    cancel_reason: Optional[str] = None
+    cancel_requested_by: Optional[str] = None
     created_at: str
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
@@ -1334,6 +1338,54 @@ class FailedBatchesResponse(BaseModel):
     batches: List[BatchAdminResponse]
 
 
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-6: Ops Control Plane Models
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+class CancelRequest(BaseModel):
+    """Request body for cancel operation."""
+    reason: Optional[str] = Field(
+        default=None,
+        description="Reason for cancellation (optional but recommended)"
+    )
+    requested_by: str = Field(
+        default="admin",
+        description="Identity of who is requesting cancellation"
+    )
+
+
+class CancelResponse(BaseModel):
+    """Response from cancel operation."""
+    success: bool
+    batch_id: str
+    status: str
+    message: str
+    cancel_requested_at: Optional[str] = None
+
+
+class RequeueV2Request(BaseModel):
+    """Request body for enhanced requeue operation."""
+    reset_attempts: bool = Field(
+        default=False,
+        description="Reset attempt counter to 0"
+    )
+    force: bool = Field(
+        default=False,
+        description="Force requeue of stale running batches (heartbeat timeout)"
+    )
+
+
+class BatchListResponse(BaseModel):
+    """Response listing batches with pagination."""
+    program_id: str
+    status_filter: Optional[str] = None
+    count: int
+    offset: int
+    limit: int
+    batches: List[BatchAdminResponse]
+
+
 def _batch_row_to_admin_response(batch: BatchRow) -> BatchAdminResponse:
     """Convert BatchRow to admin response model."""
     return BatchAdminResponse(
@@ -1349,6 +1401,10 @@ def _batch_row_to_admin_response(batch: BatchRow) -> BatchAdminResponse:
         last_error=batch.last_error,
         failed_reason=batch.failed_reason,
         claimed_by=batch.claimed_by,
+        # A8-6: Cancel fields
+        cancel_requested_at=batch.cancel_requested_at.isoformat() if batch.cancel_requested_at else None,
+        cancel_reason=batch.cancel_reason,
+        cancel_requested_by=batch.cancel_requested_by,
         created_at=batch.created_at.isoformat() if batch.created_at else "",
         started_at=batch.started_at.isoformat() if batch.started_at else None,
         completed_at=batch.completed_at.isoformat() if batch.completed_at else None,
@@ -1478,3 +1534,240 @@ async def list_failed_batches(
     )
 
 
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-6: Ops Control Plane Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+@router.post("/batch/{batch_id}/cancel", response_model=CancelResponse)
+async def cancel_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: CancelRequest = CancelRequest(),
+) -> CancelResponse:
+    """
+    Request cancellation of a batch (queued or running).
+
+    - Queued batches: immediately set to 'cancelled' status
+    - Running batches: sets cancel_requested_at flag for worker to respect
+
+    The worker will check this flag and stop processing.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    if existing.status not in ("queued", "running"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot cancel batch with status '{existing.status}'. Only queued or running batches can be cancelled.",
+        )
+
+    # Request cancellation
+    updated = await store.request_cancel(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        requested_by=request.requested_by,
+        reason=request.reason,
+    )
+
+    if updated is None:
+        raise HTTPException(status_code=500, detail="Cancel request failed unexpectedly")
+
+    # Emit event
+    await _emit_ops_event("review.batch_cancel_requested", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "requested_by": request.requested_by,
+        "reason": request.reason,
+        "previous_status": existing.status,
+        "new_status": updated.status,
+    })
+
+    if updated.status == "cancelled":
+        message = "Batch cancelled immediately (was queued)"
+    else:
+        message = "Cancel requested - worker will stop processing"
+
+    return CancelResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        status=updated.status,
+        message=message,
+        cancel_requested_at=updated.cancel_requested_at.isoformat() if updated.cancel_requested_at else None,
+    )
+
+
+@router.post("/batch/{batch_id}/requeue", response_model=RequeueResponse)
+async def requeue_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: RequeueV2Request = RequeueV2Request(),
+) -> RequeueResponse:
+    """
+    Requeue a batch for retry (A8-6 enhanced version).
+
+    Allowed when:
+    - Status is 'failed' or 'cancelled'
+    - If force=true: also allows reclaim from stale 'running' batches
+
+    Options:
+    - reset_attempts=true: Reset attempt counter to 0
+    - force=true: Force reclaim stale running batches (heartbeat timeout)
+
+    Clears all error/cancel state and sets batch back to 'queued'.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    # Validate status
+    allowed_statuses = ["failed", "cancelled"]
+    if request.force:
+        allowed_statuses.append("running")
+
+    if existing.status not in allowed_statuses:
+        if request.force:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot requeue batch with status '{existing.status}'. "
+                       f"Allowed: failed, cancelled, or running (with force).",
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot requeue batch with status '{existing.status}'. "
+                       f"Allowed: failed, cancelled. Use force=true for stale running batches.",
+            )
+
+    # Requeue the batch
+    updated = await store.requeue_batch_v2(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        reset_attempts=request.reset_attempts,
+        force=request.force,
+    )
+
+    if updated is None:
+        if existing.status == "running" and request.force:
+            raise HTTPException(
+                status_code=400,
+                detail="Running batch is not stale (heartbeat still fresh). Wait or kill the worker.",
+            )
+        raise HTTPException(status_code=500, detail="Requeue failed unexpectedly")
+
+    # Emit event
+    await _emit_ops_event("review.batch_requeued", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "previous_status": existing.status,
+        "reset_attempts": request.reset_attempts,
+        "force": request.force,
+        "attempts": updated.attempts,
+    })
+
+    return RequeueResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        new_status=updated.status,
+        attempts=updated.attempts,
+        message=f"Batch requeued for processing (attempts: {updated.attempts})",
+    )
+
+
+@router.get("/batches", response_model=BatchListResponse)
+async def list_batches(
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by status (queued, running, completed, failed, cancelled)"
+    ),
+    limit: int = Query(default=50, ge=1, le=200, description="Maximum batches to return"),
+    offset: int = Query(default=0, ge=0, description="Pagination offset"),
+) -> BatchListResponse:
+    """
+    List batches for a program with optional status filter.
+
+    Useful for dashboards and triage. Returns batches newest first.
+
+    Valid status values: queued, running, completed, failed, cancelled
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    # Validate status if provided
+    valid_statuses = {"queued", "running", "completed", "failed", "cancelled"}
+    if status and status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status '{status}'. Valid values: {', '.join(sorted(valid_statuses))}",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    batches = await store.list_batches(
+        program_id=str(program_id),
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+
+    return BatchListResponse(
+        program_id=str(program_id),
+        status_filter=status,
+        count=len(batches),
+        offset=offset,
+        limit=limit,
+        batches=[_batch_row_to_admin_response(b) for b in batches],
+    )
+
+
+async def _emit_ops_event(event_type: str, payload: dict) -> None:
+    """
+    Emit ops event for observability (A8-6).
+
+    Fails silently if event bus not available.
+    """
+    try:
+        from lumen_cortex.enterprise.core import event_bus
+        await event_bus.publish(
+            event_type,
+            payload,
+            source_service="review_api",
+        )
+    except Exception:
+        # Don't let event emission failure break the API
+        pass

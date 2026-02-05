@@ -430,6 +430,8 @@ class BatchWorker:
         """
         Process a single batch.
 
+        A8-6: Respects cancel requests at start and during processing.
+
         Args:
             batch_id: Batch UUID to process
         """
@@ -437,6 +439,14 @@ class BatchWorker:
         batch = await self.store.get_batch(batch_id, self.program_id)
         if not batch:
             raise RuntimeError(f"Batch {batch_id} not found")
+
+        # A8-6: Check for cancel request BEFORE starting heavy processing
+        if batch.cancel_requested_at:
+            logger.info(
+                f"Batch {batch_id} has cancel requested, marking cancelled"
+            )
+            await self._mark_batch_cancelled(batch_id, batch)
+            return
 
         logger.info(
             f"Processing batch {batch_id}: {batch.docs_total} docs, "
@@ -459,6 +469,15 @@ class BatchWorker:
         docs_failed = 0
 
         for i in range(batch.docs_total):
+            # A8-6: Check for cancel during processing (every heartbeat interval)
+            if (i + 1) % self.heartbeat_interval == 0:
+                if await self.store.is_cancel_requested(batch_id, self.program_id):
+                    logger.info(
+                        f"Cancel detected during processing of batch {batch_id}, stopping"
+                    )
+                    await self._mark_batch_cancelled(batch_id, batch)
+                    return
+
             # Simulate document processing
             await asyncio.sleep(0.1)  # Placeholder
 
@@ -478,6 +497,14 @@ class BatchWorker:
                     f"Heartbeat sent: batch={batch_id}, "
                     f"progress={docs_processed}/{batch.docs_total}"
                 )
+
+        # Final cancel check before finalizing
+        if await self.store.is_cancel_requested(batch_id, self.program_id):
+            logger.info(
+                f"Cancel detected before finalization of batch {batch_id}"
+            )
+            await self._mark_batch_cancelled(batch_id, batch)
+            return
 
         # Final heartbeat
         await self.store.heartbeat(
@@ -537,6 +564,61 @@ class BatchWorker:
             )
         except Exception as e:
             logger.error(f"Failed to mark batch as failed: {e}", exc_info=True)
+
+    async def _mark_batch_cancelled(self, batch_id: str, batch: Any) -> None:
+        """
+        Mark batch as cancelled (A8-6: worker cancel compliance).
+
+        Args:
+            batch_id: Batch UUID
+            batch: Batch metadata
+        """
+        try:
+            await self.store.mark_batch_cancelled(
+                batch_id=batch_id,
+                program_id=self.program_id,
+            )
+            logger.info(f"Batch {batch_id} marked as cancelled")
+
+            # Emit cancellation event
+            await self._emit_batch_cancelled_event(batch_id, batch)
+        except Exception as e:
+            logger.error(f"Failed to mark batch as cancelled: {e}", exc_info=True)
+
+    async def _emit_batch_cancelled_event(
+        self,
+        batch_id: str,
+        batch: Any,
+    ) -> None:
+        """
+        Emit review.batch_cancelled event for observability (A8-6).
+
+        Args:
+            batch_id: Batch UUID
+            batch: Batch metadata
+        """
+        try:
+            from lumen_cortex.enterprise.core import event_bus
+
+            payload = {
+                "batch_id": batch_id,
+                "program_id": self.program_id,
+                "worker_id": self.worker_id,
+                "cancel_reason": batch.cancel_reason if batch else None,
+                "cancel_requested_by": batch.cancel_requested_by if batch else None,
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+            await event_bus.publish(
+                "review.batch_cancelled",
+                payload,
+                source_service="batch_worker",
+            )
+
+            logger.info(f"Emitted review.batch_cancelled event: batch_id={batch_id}")
+        except Exception as e:
+            # Don't let event emission failure break the worker
+            logger.warning(f"Failed to emit batch_cancelled event: {e}")
 
     async def _emit_batch_failed_event(
         self,
