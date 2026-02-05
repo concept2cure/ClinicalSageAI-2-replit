@@ -308,10 +308,11 @@ CREATE POLICY rls_users_select
 -- In production, replace 'authenticated' with your actual role
 DO $$
 BEGIN
-    -- Grant usage on schemas
-    EXECUTE 'GRANT USAGE ON SCHEMA ectd_v4 TO authenticated' WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated');
-    EXECUTE 'GRANT USAGE ON SCHEMA identity TO authenticated' WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated');
-    EXECUTE 'GRANT USAGE ON SCHEMA common_standards TO authenticated' WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated');
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        EXECUTE 'GRANT USAGE ON SCHEMA ectd_v4 TO authenticated';
+        EXECUTE 'GRANT USAGE ON SCHEMA identity TO authenticated';
+        EXECUTE 'GRANT USAGE ON SCHEMA common_standards TO authenticated';
+    END IF;
 EXCEPTION WHEN undefined_object THEN
     -- Role doesn't exist, skip
     NULL;
