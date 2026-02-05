@@ -15,14 +15,18 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import os
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile, Query
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 
 from lumen_cortex.core.canonical import CanonicalDocument, EvidencePointer
@@ -50,6 +54,41 @@ router = APIRouter(prefix="/review", tags=["review"])
 # ─────────────────────────────────────────────────────────────────────────────
 # Admin Auth Guard (fail-closed)
 # ─────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class AdminContext:
+    """Context for admin operations - used for audit attribution."""
+    request_id: str
+    token_hash_prefix: str  # First 8 chars of sha256(token) for correlation
+    timestamp: str
+
+
+def _hash_token_prefix(token: str) -> str:
+    """Return first 8 chars of sha256 hash of token for audit correlation."""
+    return hashlib.sha256(token.encode()).hexdigest()[:8]
+
+
+def get_admin_context(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
+) -> AdminContext:
+    """
+    Extract admin context for audit attribution.
+
+    Returns AdminContext with:
+    - request_id: From X-Request-Id header or auto-generated UUID
+    - token_hash_prefix: First 8 chars of sha256(token) for correlation
+    - timestamp: ISO timestamp
+    """
+    request_id = x_request_id or str(uuid4())
+    token_hash_prefix = _hash_token_prefix(x_admin_token) if x_admin_token else "no-token"
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return AdminContext(
+        request_id=request_id,
+        token_hash_prefix=token_hash_prefix,
+        timestamp=timestamp,
+    )
+
 
 def require_review_admin(
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")
@@ -1438,6 +1477,7 @@ async def get_batch_admin(
     batch_id: str,
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> BatchAdminResponse:
     """
     Get admin view of a batch with operational fields.
@@ -1459,6 +1499,13 @@ async def get_batch_admin(
     if batch_row is None:
         raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
 
+    # Emit audit event for admin access
+    await _emit_ops_event("review.batch_admin_viewed", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "batch_status": batch_row.status,
+    }, admin_context=admin_context)
+
     return _batch_row_to_admin_response(batch_row)
 
 
@@ -1468,6 +1515,7 @@ async def retry_batch(
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: RequeueRequest = RequeueRequest(),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> RequeueResponse:
     """
     Requeue a failed batch for retry.
@@ -1512,6 +1560,14 @@ async def retry_batch(
     if updated is None:
         raise HTTPException(status_code=500, detail="Requeue failed unexpectedly")
 
+    # Emit audit event for retry
+    await _emit_ops_event("review.batch_retried", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "reset_attempts": request.reset_attempts,
+        "attempts": updated.attempts,
+    }, admin_context=admin_context)
+
     return RequeueResponse(
         success=True,
         batch_id=updated.batch_id,
@@ -1526,6 +1582,7 @@ async def list_failed_batches(
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> FailedBatchesResponse:
     """
     List failed batches for a program.
@@ -1550,6 +1607,13 @@ async def list_failed_batches(
         limit=limit,
     )
 
+    # Emit audit event for failed batches list access
+    await _emit_ops_event("review.failed_batches_listed", {
+        "program_id": str(program_id),
+        "limit": limit,
+        "count": len(failed_batches),
+    }, admin_context=admin_context)
+
     return FailedBatchesResponse(
         program_id=str(program_id),
         count=len(failed_batches),
@@ -1568,6 +1632,7 @@ async def cancel_batch(
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: CancelRequest = CancelRequest(),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> CancelResponse:
     """
     Request cancellation of a batch (queued or running).
@@ -1619,7 +1684,7 @@ async def cancel_batch(
         "reason": request.reason,
         "previous_status": existing.status,
         "new_status": updated.status,
-    })
+    }, admin_context=admin_context)
 
     if updated.status == "cancelled":
         message = "Batch cancelled immediately (was queued)"
@@ -1641,6 +1706,7 @@ async def requeue_batch(
     program_id: UUID = Query(..., description="Program ID for RLS (required)"),
     request: RequeueV2Request = RequeueV2Request(),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> RequeueResponse:
     """
     Requeue a batch for retry (A8-6 enhanced version).
@@ -1715,7 +1781,7 @@ async def requeue_batch(
         "reset_attempts": request.reset_attempts,
         "force": request.force,
         "attempts": updated.attempts,
-    })
+    }, admin_context=admin_context)
 
     return RequeueResponse(
         success=True,
@@ -1736,6 +1802,7 @@ async def list_batches(
     limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
     _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
 ) -> BatchListResponse:
     """
     List batches for a program with optional status filter.
@@ -1771,6 +1838,15 @@ async def list_batches(
         offset=offset,
     )
 
+    # Emit audit event for list access
+    await _emit_ops_event("review.batches_listed", {
+        "program_id": str(program_id),
+        "status_filter": status,
+        "limit": limit,
+        "offset": offset,
+        "count": len(batches),
+    }, admin_context=admin_context)
+
     return BatchListResponse(
         program_id=str(program_id),
         status_filter=status,
@@ -1781,13 +1857,40 @@ async def list_batches(
     )
 
 
-async def _emit_ops_event(event_type: str, payload: dict) -> None:
+async def _emit_ops_event(
+    event_type: str,
+    payload: dict,
+    admin_context: AdminContext | None = None,
+) -> None:
     """
-    Emit ops event for observability (A8-6).
+    Emit ops event for observability (A8-6) with audit attribution (A8-7.3).
+
+    Adds actor info from admin_context:
+    - request_id: For request correlation
+    - admin_actor: Token hash prefix for identifying who did what
+    - event_timestamp: When the event occurred
 
     Fails silently if event bus not available.
     """
     try:
+        # Add audit attribution
+        if admin_context:
+            payload = {
+                **payload,
+                "request_id": admin_context.request_id,
+                "admin_actor": admin_context.token_hash_prefix,
+                "event_timestamp": admin_context.timestamp,
+            }
+        # Log audit trail
+        logger.info(
+            "ops_event",
+            extra={
+                "event_type": event_type,
+                "request_id": admin_context.request_id if admin_context else "unknown",
+                "admin_actor": admin_context.token_hash_prefix if admin_context else "unknown",
+                **{k: v for k, v in payload.items() if k not in ("request_id", "admin_actor", "event_timestamp")},
+            },
+        )
         from lumen_cortex.enterprise.core import event_bus
         await event_bus.publish(
             event_type,
