@@ -379,6 +379,248 @@ class NeonBatchStore:
         rows = await self._execute(query, (program_id, limit))
         return [self._row_to_batch(r) for r in rows]
 
+    # -------------------------------------------------------------------------
+    # A8-6: Ops Control Plane methods
+    # -------------------------------------------------------------------------
+
+    async def request_cancel(
+        self,
+        batch_id: str,
+        program_id: str,
+        requested_by: str,
+        reason: str | None = None,
+    ) -> BatchRow | None:
+        """
+        Request cancellation of a batch.
+
+        - If status is 'queued': immediately mark as 'cancelled'
+        - If status is 'running': set cancel_requested_at for worker to pick up
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            requested_by: Identity of requester (admin, user email, etc.)
+            reason: Optional reason for cancellation
+
+        Returns:
+            Updated BatchRow or None if batch not found or not cancellable
+        """
+        now = datetime.now(timezone.utc)
+
+        # First, handle queued batches - cancel immediately
+        query_queued = """
+            UPDATE vault.review_batches
+            SET status = 'cancelled',
+                cancel_requested_at = $3,
+                cancel_reason = $4,
+                cancel_requested_by = $5,
+                completed_at = $3
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'queued'
+            RETURNING *
+        """
+        rows = await self._execute(
+            query_queued, (batch_id, program_id, now, reason, requested_by)
+        )
+        if rows:
+            return self._row_to_batch(rows[0])
+
+        # For running batches, just set the cancel request flag
+        # Worker will pick this up and stop
+        query_running = """
+            UPDATE vault.review_batches
+            SET cancel_requested_at = $3,
+                cancel_reason = $4,
+                cancel_requested_by = $5
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+            RETURNING *
+        """
+        rows = await self._execute(
+            query_running, (batch_id, program_id, now, reason, requested_by)
+        )
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def mark_batch_cancelled(
+        self,
+        batch_id: str,
+        program_id: str,
+    ) -> BatchRow | None:
+        """
+        Mark a batch as cancelled (called by worker after respecting cancel).
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+
+        Returns:
+            Updated BatchRow or None if not found
+        """
+        now = datetime.now(timezone.utc)
+        query = """
+            UPDATE vault.review_batches
+            SET status = 'cancelled',
+                completed_at = $3,
+                claimed_by = NULL
+            WHERE batch_id = $1 AND program_id = $2 AND status = 'running'
+            RETURNING *
+        """
+        rows = await self._execute(query, (batch_id, program_id, now))
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def requeue_batch_v2(
+        self,
+        batch_id: str,
+        program_id: str,
+        reset_attempts: bool = False,
+        force: bool = False,
+        heartbeat_timeout_sec: int = 300,
+    ) -> BatchRow | None:
+        """
+        Requeue a batch for retry (A8-6 enhanced version).
+
+        Allowed when:
+        - status in: failed, cancelled
+        - If force=True: also allow stale running (heartbeat timeout exceeded)
+
+        Clears: claimed_by, failed_reason, last_error, cancel_requested_* fields
+        Sets: status='queued'
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+            reset_attempts: If True, reset attempts to 0
+            force: If True, allow reclaim from stale running batches
+            heartbeat_timeout_sec: Staleness threshold for force reclaim
+
+        Returns:
+            Updated BatchRow or None if not found/not eligible
+        """
+        now = datetime.now(timezone.utc)
+        stale_before = now - timedelta(seconds=heartbeat_timeout_sec)
+
+        # Build allowed status condition
+        # Regular: failed or cancelled
+        # Force: also stale running
+        if force:
+            status_condition = """
+                (
+                    status IN ('failed', 'cancelled')
+                    OR (
+                        status = 'running'
+                        AND COALESCE(heartbeat_at, started_at, created_at) < $3
+                    )
+                )
+            """
+        else:
+            status_condition = "status IN ('failed', 'cancelled')"
+
+        if reset_attempts:
+            query = f"""
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    attempts = 0,
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL,
+                    started_at = NULL,
+                    completed_at = NULL,
+                    cancel_requested_at = NULL,
+                    cancel_reason = NULL,
+                    cancel_requested_by = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND {status_condition}
+                RETURNING *
+            """
+        else:
+            query = f"""
+                UPDATE vault.review_batches
+                SET status = 'queued',
+                    last_error = NULL,
+                    failed_reason = NULL,
+                    claimed_by = NULL,
+                    locked_at = NULL,
+                    heartbeat_at = NULL,
+                    cancel_requested_at = NULL,
+                    cancel_reason = NULL,
+                    cancel_requested_by = NULL
+                WHERE batch_id = $1 AND program_id = $2 AND {status_condition}
+                RETURNING *
+            """
+
+        if force:
+            rows = await self._execute(query, (batch_id, program_id, stale_before))
+        else:
+            rows = await self._execute(query, (batch_id, program_id))
+
+        return self._row_to_batch(rows[0]) if rows else None
+
+    async def list_batches(
+        self,
+        program_id: str,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[BatchRow]:
+        """
+        List batches for a program with optional status filter.
+
+        Useful for dashboards and triage.
+
+        Args:
+            program_id: Program UUID
+            status: Optional status filter (queued, running, completed, failed, cancelled)
+            limit: Max batches to return (default 50, max 200)
+            offset: Pagination offset
+
+        Returns:
+            List of BatchRows, newest first
+        """
+        limit = min(limit, 200)  # Cap at 200
+
+        if status:
+            query = """
+                SELECT * FROM vault.review_batches
+                WHERE program_id = $1 AND status = $2
+                ORDER BY created_at DESC
+                LIMIT $3 OFFSET $4
+            """
+            rows = await self._execute(query, (program_id, status, limit, offset))
+        else:
+            query = """
+                SELECT * FROM vault.review_batches
+                WHERE program_id = $1
+                ORDER BY created_at DESC
+                LIMIT $2 OFFSET $3
+            """
+            rows = await self._execute(query, (program_id, limit, offset))
+
+        return [self._row_to_batch(r) for r in rows]
+
+    async def is_cancel_requested(
+        self,
+        batch_id: str,
+        program_id: str,
+    ) -> bool:
+        """
+        Check if cancellation has been requested for a batch.
+
+        Used by worker to check before/during processing.
+
+        Args:
+            batch_id: Batch UUID
+            program_id: Program UUID
+
+        Returns:
+            True if cancel_requested_at is set
+        """
+        query = """
+            SELECT cancel_requested_at IS NOT NULL as is_cancelled
+            FROM vault.review_batches
+            WHERE batch_id = $1 AND program_id = $2
+        """
+        rows = await self._execute(query, (batch_id, program_id))
+        return bool(rows and rows[0].get("is_cancelled"))
+
     async def upsert_doc_result(
         self,
         batch_id: str,
@@ -638,6 +880,10 @@ class NeonBatchStore:
             # A8-5: Multi-worker safety fields
             claimed_by=row.get("claimed_by"),
             failed_reason=row.get("failed_reason"),
+            # A8-6: Ops control plane fields
+            cancel_requested_at=row.get("cancel_requested_at"),
+            cancel_reason=row.get("cancel_reason"),
+            cancel_requested_by=row.get("cancel_requested_by"),
         )
 
     def _row_to_doc(self, row: dict[str, Any]) -> DocRow:

@@ -112,6 +112,60 @@ class FakeExecutor:
                 return [row]
             return []
 
+        # A8-6: is_cancel_requested check
+        if "cancel_requested_at IS NOT NULL" in q:
+            batch_id = str(params[0])
+            row = self.rows.get(batch_id)
+            if row:
+                is_cancelled = row.get("cancel_requested_at") is not None
+                return [{"is_cancelled": is_cancelled}]
+            return []
+
+        # A8-6: mark_batch_cancelled
+        if "status = 'cancelled'" in q and "status = 'running'" in q:
+            batch_id = str(params[0])
+            program_id = str(params[1])
+            completed_at = params[2]
+            row = self.rows.get(batch_id)
+            if row and row["program_id"] == program_id and row["status"] == "running":
+                row["status"] = "cancelled"
+                row["completed_at"] = completed_at
+                row["claimed_by"] = None
+                return [row]
+            return []
+
+        # A8-6: request_cancel (queued)
+        if "status = 'cancelled'" in q and "status = 'queued'" in q:
+            batch_id = str(params[0])
+            program_id = str(params[1])
+            now = params[2]
+            reason = params[3]
+            requested_by = params[4]
+            row = self.rows.get(batch_id)
+            if row and row["program_id"] == program_id and row["status"] == "queued":
+                row["status"] = "cancelled"
+                row["cancel_requested_at"] = now
+                row["cancel_reason"] = reason
+                row["cancel_requested_by"] = requested_by
+                row["completed_at"] = now
+                return [row]
+            return []
+
+        # A8-6: request_cancel (running)
+        if "cancel_requested_at = $3" in q and "status = 'running'" in q:
+            batch_id = str(params[0])
+            program_id = str(params[1])
+            now = params[2]
+            reason = params[3]
+            requested_by = params[4]
+            row = self.rows.get(batch_id)
+            if row and row["program_id"] == program_id and row["status"] == "running":
+                row["cancel_requested_at"] = now
+                row["cancel_reason"] = reason
+                row["cancel_requested_by"] = requested_by
+                return [row]
+            return []
+
         return []
 
 
@@ -151,6 +205,10 @@ def _seed_batch(
         # A8-5: Multi-worker safety fields
         "claimed_by": None,
         "failed_reason": None,
+        # A8-6: Ops control plane fields
+        "cancel_requested_at": None,
+        "cancel_reason": None,
+        "cancel_requested_by": None,
     }
 
 
@@ -731,3 +789,176 @@ def test_transactional_claim_is_atomic() -> None:
 
     asyncio.run(_test())
 
+
+# =============================================================================
+# A8-6 Ops Control Plane Tests
+# =============================================================================
+
+def test_request_cancel_on_queued_batch() -> None:
+    """A8-6: Cancel on queued batch sets status to cancelled immediately."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 5, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="queued",
+            docs_total=5,
+            queued_at=now,
+        )
+
+        # Request cancel
+        result = await store.request_cancel(
+            batch_id=batch_id,
+            program_id=program_id,
+            requested_by="admin-test",
+            reason="Test cancellation",
+        )
+
+        assert result is not None
+        assert result.status == "cancelled"
+        assert result.cancel_reason == "Test cancellation"
+        assert result.cancel_requested_by == "admin-test"
+        assert result.cancel_requested_at is not None
+
+    asyncio.run(_test())
+
+
+def test_request_cancel_on_running_batch() -> None:
+    """A8-6: Cancel on running batch sets flag for worker to pick up."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 5, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="running",  # Already running
+            docs_total=5,
+            queued_at=now,
+        )
+
+        # Request cancel
+        result = await store.request_cancel(
+            batch_id=batch_id,
+            program_id=program_id,
+            requested_by="admin-test",
+            reason="Stop processing",
+        )
+
+        assert result is not None
+        # Running batch stays running until worker respects cancel
+        assert result.status == "running"
+        assert result.cancel_requested_at is not None
+        assert result.cancel_reason == "Stop processing"
+
+    asyncio.run(_test())
+
+
+def test_is_cancel_requested() -> None:
+    """A8-6: is_cancel_requested correctly detects cancel flag."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 5, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="running",
+            docs_total=5,
+            queued_at=now,
+        )
+
+        # Initially no cancel
+        is_cancelled = await store.is_cancel_requested(batch_id, program_id)
+        assert is_cancelled is False
+
+        # Set cancel flag
+        executor.rows[batch_id]["cancel_requested_at"] = now
+        is_cancelled = await store.is_cancel_requested(batch_id, program_id)
+        assert is_cancelled is True
+
+    asyncio.run(_test())
+
+
+def test_worker_respects_cancel_before_processing() -> None:
+    """A8-6: Worker checks for cancel BEFORE starting heavy processing."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 5, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="running",
+            docs_total=10,  # Would take time if processed
+            queued_at=now,
+        )
+        # Pre-set cancel request (simulating API called before worker picks up)
+        executor.rows[batch_id]["cancel_requested_at"] = now
+        executor.rows[batch_id]["cancel_reason"] = "Pre-cancel test"
+
+        worker = BatchWorker(
+            program_id=program_id,
+            worker_id="test-worker",
+            heartbeat_interval=2,
+            store=store,
+        )
+
+        # Process batch - should detect cancel immediately
+        await worker._process_batch(batch_id)
+
+        # Verify batch was cancelled, not processed
+        row = executor.rows[batch_id]
+        assert row["status"] == "cancelled"
+        # Finalize should NOT have been called with completed status
+        for call in executor.finalize_calls:
+            assert call["status"] != "completed"
+
+    asyncio.run(_test())
+
+
+def test_mark_batch_cancelled() -> None:
+    """A8-6: mark_batch_cancelled updates status correctly."""
+    async def _test() -> None:
+        now = datetime(2026, 2, 5, 12, 0, 0, tzinfo=timezone.utc)
+        executor = FakeExecutor(now)
+        store = NeonBatchStore(executor)
+
+        program_id = str(uuid4())
+        batch_id = str(uuid4())
+        _seed_batch(
+            executor,
+            batch_id=batch_id,
+            program_id=program_id,
+            status="running",
+            docs_total=5,
+            queued_at=now,
+        )
+        executor.rows[batch_id]["claimed_by"] = "worker-1"
+
+        result = await store.mark_batch_cancelled(batch_id, program_id)
+
+        assert result is not None
+        assert result.status == "cancelled"
+        assert result.claimed_by is None  # Worker claim cleared
+        assert result.completed_at is not None
+
+    asyncio.run(_test())
