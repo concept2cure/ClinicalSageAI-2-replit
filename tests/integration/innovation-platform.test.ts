@@ -117,7 +117,7 @@ if (runIntegration) {
 /**
  * Test Suite 1: Regulatory Delta Radar
  */
-describe('Regulatory Delta Radar Service', () => {
+describeWithOpenAI('Regulatory Delta Radar Service', () => {
   let service: RegulatoryDeltaRadarService;
 
   beforeAll(() => {
@@ -200,7 +200,7 @@ describe('Regulatory Delta Radar Service', () => {
 /**
  * Test Suite 2: Evidence Confidence Heatmap
  */
-describe('Evidence Confidence Heatmap Service', () => {
+describeWithOpenAI('Evidence Confidence Heatmap Service', () => {
   let service: EvidenceConfidenceHeatmapService;
   let configId: string;
 
@@ -269,7 +269,7 @@ describe('Evidence Confidence Heatmap Service', () => {
 /**
  * Test Suite 3: Submission Readiness Twin
  */
-describe('Submission Readiness Twin Service', () => {
+describeWithOpenAI('Submission Readiness Twin Service', () => {
   let service: SubmissionReadinessTwinService;
 
   beforeAll(() => {
@@ -334,7 +334,7 @@ describe('Submission Readiness Twin Service', () => {
 /**
  * Test Suite 4: Auto-Traceability
  */
-describe('Auto-Traceability Service', () => {
+describeWithOpenAI('Auto-Traceability Service', () => {
   let service: AutoTraceabilityService;
 
   beforeAll(() => {
@@ -397,7 +397,7 @@ describe('Auto-Traceability Service', () => {
 /**
  * Test Suite 5: Adaptive Reviewer Workspace
  */
-describe('Adaptive Reviewer Workspace Service', () => {
+describeWithOpenAI('Adaptive Reviewer Workspace Service', () => {
   let service: AdaptiveReviewerWorkspaceService;
 
   beforeAll(() => {
@@ -454,7 +454,7 @@ describe('Adaptive Reviewer Workspace Service', () => {
 /**
  * Test Suite 6: Outcome-Based Template Learning
  */
-describe('Outcome-Based Template Learning Service', () => {
+describeWithOpenAI('Outcome-Based Template Learning Service', () => {
   let service: OutcomeBasedTemplateLearningService;
   let templateId: string;
 
@@ -530,7 +530,7 @@ describe('Outcome-Based Template Learning Service', () => {
 /**
  * Test Suite 7: Regulatory Negotiation Logbook
  */
-describe('Regulatory Negotiation Logbook Service', () => {
+describeWithOpenAI('Regulatory Negotiation Logbook Service', () => {
   let service: RegulatoryNegotiationLogbookService;
   let threadId: string;
 
@@ -636,7 +636,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
 /**
  * Test Suite 8: Compliance Guardrails SDK
  */
-describe('Compliance Guardrails SDK Service', () => {
+describeWithOpenAI('Compliance Guardrails SDK Service', () => {
   let service: ComplianceGuardrailsSDKService;
   let ruleId: string;
   let profileId: string;
