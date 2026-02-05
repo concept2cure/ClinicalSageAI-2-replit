@@ -13,7 +13,15 @@ COPY services/requirements.txt /app/services/requirements.txt
 # Install python deps
 RUN pip install --no-cache-dir -r /app/services/requirements.txt
 
-# Run as root so worker can access docker.sock; this is test infra only
+RUN addgroup --system app \
+	&& adduser --system --ingroup app app \
+	&& (getent group docker || addgroup --system docker) \
+	&& adduser app docker
+RUN chown -R app:app /app
+
+USER app
+
+# Ensure non-root runtime
 ENV PYTHONUNBUFFERED=1
 
 CMD ["/bin/sh", "-c", "celery -A services.celery_app worker --loglevel=info"]

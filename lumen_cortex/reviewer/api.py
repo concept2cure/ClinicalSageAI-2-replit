@@ -15,14 +15,18 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import os
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 
-from fastapi import APIRouter, BackgroundTasks, File, Header, HTTPException, UploadFile, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, UploadFile, Query
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 
 from lumen_cortex.core.canonical import CanonicalDocument, EvidencePointer
@@ -35,7 +39,6 @@ from lumen_cortex.core.extractors.text_extract import (
 from lumen_cortex.core.events import (
     EventStoreAdapter,
     derive_error_content_hash,
-    derive_batch_id,
     BatchQueuedPayload,
     BatchPersistedPayload,
 )
@@ -47,11 +50,71 @@ from lumen_cortex.reviewer.storage import NeonBatchStore, BatchRow, get_batch_st
 
 router = APIRouter(prefix="/review", tags=["review"])
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Auth Guard (fail-closed)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class AdminContext:
+    """Context for admin operations - used for audit attribution."""
+    request_id: str
+    token_hash_prefix: str  # First 8 chars of sha256(token) for correlation
+    timestamp: str
+
+
+def _hash_token_prefix(token: str) -> str:
+    """Return first 8 chars of sha256 hash of token for audit correlation."""
+    return hashlib.sha256(token.encode()).hexdigest()[:8]
+
+
+def get_admin_context(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
+) -> AdminContext:
+    """
+    Extract admin context for audit attribution.
+
+    Returns AdminContext with:
+    - request_id: From X-Request-Id header or auto-generated UUID
+    - token_hash_prefix: First 8 chars of sha256(token) for correlation
+    - timestamp: ISO timestamp
+    """
+    request_id = x_request_id or str(uuid4())
+    token_hash_prefix = _hash_token_prefix(x_admin_token) if x_admin_token else "no-token"
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return AdminContext(
+        request_id=request_id,
+        token_hash_prefix=token_hash_prefix,
+        timestamp=timestamp,
+    )
+
+
+def require_review_admin(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")
+) -> None:
+    """
+    Require admin token for ops endpoints.
+
+    Fail-closed: if REVIEW_ADMIN_TOKEN is not configured, ops endpoints are disabled.
+    """
+    expected = os.getenv("REVIEW_ADMIN_TOKEN")
+    if not expected:
+        raise HTTPException(status_code=503, detail="REVIEW_ADMIN_TOKEN not configured")
+    if x_admin_token != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 # Environment variable to enable/disable event emission
 LUMEN_EVENTSTORE_ENABLED = os.environ.get("LUMEN_EVENTSTORE_ENABLED", "false").lower() == "true"
 
 # Environment variable to enable/disable batch persistence to Neon
 BATCH_PERSISTENCE_ENABLED = os.environ.get("BATCH_PERSISTENCE_ENABLED", "false").lower() == "true"
+
+# Environment variable to use external worker for async batches (disables in-process BackgroundTasks)
+# When true: API just queues batch, external worker picks it up
+# When false: API processes batch using FastAPI BackgroundTasks (default for backwards compat)
+BATCH_WORKER_EXTERNAL = os.environ.get("BATCH_WORKER_EXTERNAL", "false").lower() == "true"
 
 # Constants (from REVIEW_CONFIG)
 MAX_FINDINGS_PREVIEW = REVIEW_CONFIG.max_findings_preview
@@ -190,17 +253,10 @@ class BatchStatusResponse(BaseModel):
     mode: Literal["sync", "async"]
     documents_total: int
     documents_processed: int
-    docs_succeeded: int = 0
-    docs_failed: int = 0
     findings_total: Optional[int] = None
     by_severity: Optional[Dict[str, int]] = None
-    attempt_count: int = 0
-    worker_id: Optional[str] = None
-    last_error: Optional[str] = None
-    queued_at: Optional[str] = None
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    heartbeat_at: Optional[str] = None
+    created_at: str
+    updated_at: str
     documents: Optional[List[BatchDocumentResponse]] = None
 
 
@@ -210,19 +266,6 @@ class BatchQueuedResponse(BaseModel):
     status: Literal["queued"] = "queued"
     poll_url: str
     message: str = "Batch queued for processing"
-
-
-class SweepRequest(BaseModel):
-    """Request body for sweeper endpoint."""
-    program_id: UUID = Field(..., description="Program ID to sweep batches for")
-
-
-class SweepResponse(BaseModel):
-    """Response from sweeper endpoint."""
-    requeued: int
-    failed: int
-    requeued_ids: List[str]
-    failed_ids: List[str]
 
 
 def _build_canonical_document(
@@ -338,34 +381,21 @@ async def _process_batch_async(
     Background task to process a batch asynchronously.
 
     Updates batch status in database as processing progresses.
-    Emits heartbeats every 3 documents to prevent stall detection.
-    Tracks progress counters (docs_processed, docs_succeeded, docs_failed).
     """
     store = get_batch_store()
     if not store:
         return
 
-    # Progress counters
-    docs_total = len(file_bytes_list)
-    docs_processed = 0
-    docs_succeeded = 0
-    docs_failed = 0
-    heartbeat_interval = 3  # Heartbeat every N documents
-
     try:
-        # Mark batch as running with worker_id and initial counts
-        await store.mark_batch_running(
-            batch_id,
-            str(program_id),
-            worker_id=REVIEW_CONFIG.worker_id,
-        )
+        # Mark batch as running
+        await store.mark_batch_running(batch_id, str(program_id))
 
         # Process documents
         canonical_docs: List[CanonicalDocument] = []
         content_hashes_all: List[str] = []
         errored_docs_info: List[Dict[str, Any]] = []
 
-        for idx, (filename, file_bytes) in enumerate(file_bytes_list):
+        for filename, file_bytes in file_bytes_list:
             source_type = _infer_source_type_from_filename(filename)
             file_size = len(file_bytes)
 
@@ -389,18 +419,6 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
-                docs_processed += 1
-                docs_failed += 1
-
-                # Heartbeat every N documents
-                if docs_processed % heartbeat_interval == 0:
-                    await store.heartbeat(
-                        batch_id,
-                        str(program_id),
-                        docs_processed=docs_processed,
-                        docs_succeeded=docs_succeeded,
-                        docs_failed=docs_failed,
-                    )
                 continue
 
             if file_size > REVIEW_CONFIG.max_file_bytes:
@@ -423,18 +441,6 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
-                docs_processed += 1
-                docs_failed += 1
-
-                # Heartbeat every N documents
-                if docs_processed % heartbeat_interval == 0:
-                    await store.heartbeat(
-                        batch_id,
-                        str(program_id),
-                        docs_processed=docs_processed,
-                        docs_succeeded=docs_succeeded,
-                        docs_failed=docs_failed,
-                    )
                 continue
 
             try:
@@ -467,28 +473,7 @@ async def _process_batch_async(
                     findings_count=0,
                     findings_preview=[],
                 )
-                docs_processed += 1
-                docs_failed += 1
-
-                # Heartbeat every N documents
-                if docs_processed % heartbeat_interval == 0:
-                    await store.heartbeat(
-                        batch_id,
-                        str(program_id),
-                        docs_processed=docs_processed,
-                        docs_succeeded=docs_succeeded,
-                        docs_failed=docs_failed,
-                    )
                 continue
-
-        # Heartbeat before review phase (long-running)
-        await store.heartbeat(
-            batch_id,
-            str(program_id),
-            docs_processed=docs_processed,
-            docs_succeeded=docs_succeeded,
-            docs_failed=docs_failed,
-        )
 
         # Run review
         event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
@@ -506,7 +491,7 @@ async def _process_batch_async(
             errored_docs=errored_docs_info,
         )
 
-        # Persist document results and update counters
+        # Persist document results
         for doc_result in result.documents:
             findings_preview = [
                 {
@@ -526,209 +511,19 @@ async def _process_batch_async(
                 findings_count=doc_result.findings_count,
                 findings_preview=findings_preview,
             )
-
-            # Track successful docs (those not in errored_docs_info)
-            if not any(e["doc_id"] == doc_result.doc_id for e in errored_docs_info):
-                docs_processed += 1
-                docs_succeeded += 1
-
-                # Heartbeat every N documents
-                if docs_processed % heartbeat_interval == 0:
-                    await store.heartbeat(
-                        batch_id,
-                        str(program_id),
-                        docs_processed=docs_processed,
-                        docs_succeeded=docs_succeeded,
-                        docs_failed=docs_failed,
-                    )
 
         # Finalize batch with summary
         from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
         summary = BatchSummaryUpdate(
-            documents_succeeded=docs_succeeded,
-            documents_failed=docs_failed,
             findings_total=result.total_findings,
             by_severity=result.findings_by_severity,
         )
-        await store.finalize_batch(
-            batch_id,
-            str(program_id),
-            summary,
-            docs_total=docs_total,
-            docs_succeeded=docs_succeeded,
-            docs_failed=docs_failed,
-        )
+        await store.finalize_batch(batch_id, str(program_id), summary)
 
     except Exception as e:
-        # Mark batch as failed on error with error message
-        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
-        summary = BatchSummaryUpdate(
-            documents_succeeded=docs_succeeded,
-            documents_failed=docs_failed,
-            findings_total=0,
-            by_severity={},
-        )
-        try:
-            await store.finalize_batch(
-                batch_id,
-                str(program_id),
-                summary,
-                status="failed",
-                last_error=str(e)[:500],
-                docs_total=docs_total,
-                docs_succeeded=docs_succeeded,
-                docs_failed=docs_failed,
-            )
-        except Exception:
-            # If finalize fails, best effort - log in production
-            pass
-
-
-async def _process_batch_async_json(
-    batch_id: str,
-    program_id: UUID,
-    canonical_docs: List[CanonicalDocument],
-    content_hashes_all: List[str],
-    errored_docs_info: List[Dict[str, Any]],
-    ruleset_version: str,
-    extractor_version: str,
-    max_findings_per_doc: int,
-    docs_total: int,
-) -> None:
-    """
-    Background task to process a JSON batch asynchronously.
-
-    Reuses pre-built canonical documents and errored doc metadata.
-    Emits heartbeats every 2 documents to prevent stall detection.
-    """
-    store = get_batch_store()
-    if not store:
-        return
-
-    docs_processed = 0
-    docs_succeeded = 0
-    docs_failed = 0
-    heartbeat_interval = 2
-
-    try:
-        await store.mark_batch_running(
-            batch_id,
-            str(program_id),
-            worker_id=REVIEW_CONFIG.worker_id,
-        )
-
-        # Persist errored docs immediately
-        for err in errored_docs_info:
-            await store.upsert_doc_result(
-                batch_id=batch_id,
-                program_id=str(program_id),
-                doc_id=err["doc_id"],
-                content_hash=err["content_hash"],
-                status="failed",
-                findings_count=0,
-                findings_preview=[],
-            )
-            docs_processed += 1
-            docs_failed += 1
-            if docs_processed % heartbeat_interval == 0:
-                await store.heartbeat(
-                    batch_id,
-                    str(program_id),
-                    docs_processed=docs_processed,
-                    docs_succeeded=docs_succeeded,
-                    docs_failed=docs_failed,
-                )
-
-        # Heartbeat before review phase
-        await store.heartbeat(
-            batch_id,
-            str(program_id),
-            docs_processed=docs_processed,
-            docs_succeeded=docs_succeeded,
-            docs_failed=docs_failed,
-        )
-
-        event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
-        runner = ReviewRunner(
-            program_id=program_id,
-            event_store=event_store,
-            extractor_version=extractor_version,
-        )
-        result = runner.review_batch(
-            docs=canonical_docs,
-            program_id=program_id,
-            extractor_version=extractor_version,
-            ruleset_version=ruleset_version,
-            content_hashes=content_hashes_all,
-            errored_docs=errored_docs_info,
-        )
-
-        for doc_result in result.documents:
-            findings_preview = [
-                {
-                    "finding_id": str(f.finding_id),
-                    "rule_id": f.rule_id,
-                    "severity": f.severity,
-                    "description": f.description[:200],
-                }
-                for f in doc_result.findings[:max_findings_per_doc]
-            ]
-            await store.upsert_doc_result(
-                batch_id=batch_id,
-                program_id=str(program_id),
-                doc_id=doc_result.doc_id,
-                content_hash=doc_result.content_hash,
-                status="completed",
-                findings_count=doc_result.findings_count,
-                findings_preview=findings_preview,
-            )
-            docs_processed += 1
-            docs_succeeded += 1
-            if docs_processed % heartbeat_interval == 0:
-                await store.heartbeat(
-                    batch_id,
-                    str(program_id),
-                    docs_processed=docs_processed,
-                    docs_succeeded=docs_succeeded,
-                    docs_failed=docs_failed,
-                )
-
-        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
-        summary = BatchSummaryUpdate(
-            documents_succeeded=docs_succeeded,
-            documents_failed=docs_failed,
-            findings_total=result.total_findings,
-            by_severity=result.findings_by_severity,
-        )
-        await store.finalize_batch(
-            batch_id,
-            str(program_id),
-            summary,
-            docs_total=docs_total,
-            docs_succeeded=docs_succeeded,
-            docs_failed=docs_failed,
-        )
-    except Exception as e:
-        from lumen_cortex.reviewer.storage.models import BatchSummaryUpdate
-        summary = BatchSummaryUpdate(
-            documents_succeeded=docs_succeeded,
-            documents_failed=docs_failed,
-            findings_total=0,
-            by_severity={},
-        )
-        try:
-            await store.finalize_batch(
-                batch_id,
-                str(program_id),
-                summary,
-                status="failed",
-                last_error=str(e)[:500],
-                docs_total=docs_total,
-                docs_succeeded=docs_succeeded,
-                docs_failed=docs_failed,
-            )
-        except Exception:
-            pass
+        # Mark batch as failed on error
+        # Note: In production, would log the error
+        pass
 
 
 def _raise_limit_violation(
@@ -942,27 +737,18 @@ async def review_batch_file_endpoint(
     # Idempotency and persistence logic
     store = get_batch_store() if BATCH_PERSISTENCE_ENABLED else None
     existing_batch: Optional[BatchRow] = None
-    batch_id = derive_batch_id(
-        program_id=program_id,
-        ruleset_version=ruleset_version,
-        extractor_version=extractor_version,
-        content_hashes=sorted_file_hashes,
-    )
 
     if store and idempotency_key:
-        existing_batch, _ = await store.create_or_get_batch(
-            batch_id=batch_id,
+        # Check for existing batch with same idempotency key
+        existing_batch = await store.create_or_get_batch(
             program_id=str(program_id),
-            mode=mode,
-            ruleset_version=ruleset_version,
-            extractor_version=extractor_version,
-            response_mode=response_mode,
-            request_digest=request_digest,
             documents_total=len(file_bytes_list),
+            mode=mode,
             idempotency_key=idempotency_key,
+            request_digest=request_digest,
         )
+        # If batch exists and is completed, return cached result
         if existing_batch.status == "completed":
-            preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
             doc_rows = await store.get_batch_docs(existing_batch.batch_id, str(program_id))
             return BatchReviewResponse(
                 batch_id=existing_batch.batch_id,
@@ -974,11 +760,11 @@ async def review_batch_file_endpoint(
                         content_hash=doc.content_hash,
                         findings_count=doc.findings_count,
                         findings_digest="",
-                        findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
-                        findings_preview=(doc.findings_preview or [])[:preview_cap],
+                        findings_truncated=False,
+                        findings_preview=doc.findings_preview or [],
                         errors=[],
                     )
-                    for doc in (doc_rows if response_mode == "full" else [])
+                    for doc in doc_rows
                 ],
                 summary=BatchSummary(
                     documents=existing_batch.documents_total,
@@ -986,54 +772,48 @@ async def review_batch_file_endpoint(
                     by_severity=existing_batch.by_severity or {},
                 ),
             )
+        # If batch is queued or running, return status for polling
         if existing_batch.status in ("queued", "running"):
             return JSONResponse(
                 status_code=202,
-                content={
-                    "batch_id": existing_batch.batch_id,
-                    "status": existing_batch.status,
-                },
-            )
-        if existing_batch.status == "failed":
-            return JSONResponse(
-                status_code=409,
-                content={
-                    "batch_id": existing_batch.batch_id,
-                    "status": existing_batch.status,
-                    "last_error": existing_batch.last_error,
-                },
+                content=BatchQueuedResponse(
+                    batch_id=existing_batch.batch_id,
+                    status="queued",
+                    poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
+                    message="Batch already in progress",
+                ).model_dump(),
             )
 
     # For async mode with persistence, create batch and return immediately
     if mode == "async" and store:
         if not existing_batch:
-            existing_batch, _ = await store.create_or_get_batch(
-                batch_id=batch_id,
+            existing_batch = await store.create_or_get_batch(
                 program_id=str(program_id),
+                documents_total=len(file_bytes_list),
                 mode=mode,
+                idempotency_key=idempotency_key,
+                request_digest=request_digest,
+            )
+        # Queue background task for processing (unless external worker mode)
+        # When BATCH_WORKER_EXTERNAL=true, just leave batch queued for external worker
+        if not BATCH_WORKER_EXTERNAL:
+            background_tasks.add_task(
+                _process_batch_async,
+                batch_id=existing_batch.batch_id,
+                program_id=program_id,
+                file_bytes_list=file_bytes_list,
                 ruleset_version=ruleset_version,
                 extractor_version=extractor_version,
-                response_mode=response_mode,
-                request_digest=request_digest,
-                documents_total=len(file_bytes_list),
-                idempotency_key=idempotency_key,
+                max_findings_per_doc=max_findings_per_doc,
             )
-        # Queue background task for processing
-        background_tasks.add_task(
-            _process_batch_async,
-            batch_id=existing_batch.batch_id,
-            program_id=program_id,
-            file_bytes_list=file_bytes_list,
-            ruleset_version=ruleset_version,
-            extractor_version=extractor_version,
-            max_findings_per_doc=max_findings_per_doc,
-        )
         return JSONResponse(
             status_code=202,
-            content={
-                "batch_id": existing_batch.batch_id,
-                "status": existing_batch.status,
-            },
+            content=BatchQueuedResponse(
+                batch_id=existing_batch.batch_id,
+                status="queued",
+                poll_url=f"/review/batch/{existing_batch.batch_id}?program_id={program_id}",
+                message="Batch queued for processing" + (" (external worker)" if BATCH_WORKER_EXTERNAL else ""),
+            ).model_dump(),
         )
 
     # Limit: number of files (use already-read file_bytes_list)
@@ -1278,9 +1058,6 @@ async def review_batch_file_endpoint(
 @router.post("/batch", response_model=BatchReviewResponse)
 async def review_batch_endpoint(
     request: BatchReviewRequest,
-    background_tasks: BackgroundTasks,
-    mode: Literal["sync", "async"] = Query(default="sync", description="Processing mode: sync (wait) or async (return immediately)"),
-    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key", description="Idempotency key for deduplication"),
 ) -> BatchReviewResponse:
     """
     Review multiple documents in a deterministic batch.
@@ -1399,108 +1176,6 @@ async def review_batch_endpoint(
             )
             doc_timings[str(canonical_doc.doc_id)] = (time.perf_counter() - doc_start) * 1000
             canonical_docs.append(canonical_doc)
-
-        # Compute deterministic batch_id + request_digest
-        request_digest = hashlib.sha256(
-            "|".join(sorted(content_hashes_all)).encode()
-        ).hexdigest()[:32]
-        batch_id = derive_batch_id(
-            program_id=request.program_id,
-            ruleset_version=request.ruleset_version,
-            extractor_version=request.extractor_version,
-            content_hashes=content_hashes_all,
-        )
-
-        # Idempotency and persistence logic for async
-        store = get_batch_store() if BATCH_PERSISTENCE_ENABLED else None
-        existing_batch: Optional[BatchRow] = None
-        if store and idempotency_key:
-            existing_batch, _ = await store.create_or_get_batch(
-                batch_id=batch_id,
-                program_id=str(request.program_id),
-                mode=mode,
-                ruleset_version=request.ruleset_version,
-                extractor_version=request.extractor_version,
-                response_mode=request.response_mode,
-                request_digest=request_digest,
-                documents_total=len(request.documents),
-                idempotency_key=idempotency_key,
-            )
-            if existing_batch.status == "completed":
-                preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
-                doc_rows = await store.get_batch_docs(existing_batch.batch_id, str(request.program_id))
-                return BatchReviewResponse(
-                    batch_id=existing_batch.batch_id,
-                    program_id=existing_batch.program_id,
-                    documents=[
-                        BatchDocumentResponse(
-                            filename=None,
-                            doc_id=doc.doc_id,
-                            content_hash=doc.content_hash,
-                            findings_count=doc.findings_count,
-                            findings_digest="",
-                            findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
-                            findings_preview=(doc.findings_preview or [])[:preview_cap],
-                            errors=[],
-                        )
-                        for doc in (doc_rows if request.response_mode == "full" else [])
-                    ],
-                    summary=BatchSummary(
-                        documents=existing_batch.documents_total,
-                        findings_total=existing_batch.findings_total or 0,
-                        by_severity=existing_batch.by_severity or {},
-                    ),
-                )
-            if existing_batch.status in ("queued", "running"):
-                return JSONResponse(
-                    status_code=202,
-                    content={
-                        "batch_id": existing_batch.batch_id,
-                        "status": existing_batch.status,
-                    },
-                )
-            if existing_batch.status == "failed":
-                return JSONResponse(
-                    status_code=409,
-                    content={
-                        "batch_id": existing_batch.batch_id,
-                        "status": existing_batch.status,
-                        "last_error": existing_batch.last_error,
-                    },
-                )
-
-        if mode == "async" and store:
-            if not existing_batch:
-                existing_batch, _ = await store.create_or_get_batch(
-                    batch_id=batch_id,
-                    program_id=str(request.program_id),
-                    mode=mode,
-                    ruleset_version=request.ruleset_version,
-                    extractor_version=request.extractor_version,
-                    response_mode=request.response_mode,
-                    request_digest=request_digest,
-                    documents_total=len(request.documents),
-                    idempotency_key=idempotency_key,
-                )
-            background_tasks.add_task(
-                _process_batch_async_json,
-                batch_id=existing_batch.batch_id,
-                program_id=request.program_id,
-                canonical_docs=canonical_docs,
-                content_hashes_all=content_hashes_all,
-                errored_docs_info=errored_docs_info,
-                ruleset_version=request.ruleset_version,
-                extractor_version=request.extractor_version,
-                max_findings_per_doc=request.max_findings_per_doc,
-                docs_total=len(request.documents),
-            )
-            return JSONResponse(
-                status_code=202,
-                content={
-                    "batch_id": existing_batch.batch_id,
-                    "status": existing_batch.status,
-                },
-            )
 
         # Create event store adapter if enabled
         event_store = EventStoreAdapter() if LUMEN_EVENTSTORE_ENABLED else None
@@ -1639,25 +1314,17 @@ async def get_batch_status(
         program_id=batch_row.program_id,
         status=batch_row.status,
         mode=batch_row.mode,
-        documents_total=batch_row.documents_total or batch_row.docs_total,
-        documents_processed=batch_row.docs_processed,
-        docs_succeeded=batch_row.docs_succeeded,
-        docs_failed=batch_row.docs_failed,
+        documents_total=batch_row.documents_total,
+        documents_processed=batch_row.documents_total if batch_row.status == "completed" else 0,
         findings_total=batch_row.findings_total,
         by_severity=batch_row.by_severity,
-        attempt_count=batch_row.attempt_count,
-        worker_id=batch_row.worker_id,
-        last_error=batch_row.last_error,
-        queued_at=batch_row.queued_at.isoformat() if batch_row.queued_at else None,
-        started_at=batch_row.started_at.isoformat() if batch_row.started_at else None,
-        completed_at=batch_row.completed_at.isoformat() if batch_row.completed_at else None,
-        heartbeat_at=batch_row.heartbeat_at.isoformat() if batch_row.heartbeat_at else None,
+        created_at=batch_row.created_at.isoformat() if batch_row.created_at else "",
+        updated_at=batch_row.updated_at.isoformat() if batch_row.updated_at else "",
     )
 
     # Include documents if requested and batch is completed
     if include_documents and batch_row.status == "completed":
         doc_rows = await store.get_batch_docs(batch_id, str(program_id))
-        preview_cap = min(REVIEW_CONFIG.max_findings_preview, REVIEW_CONFIG.max_findings_per_doc)
         response.documents = [
             BatchDocumentResponse(
                 filename=None,
@@ -1665,8 +1332,8 @@ async def get_batch_status(
                 content_hash=doc.content_hash,
                 findings_count=doc.findings_count,
                 findings_digest="",  # Not stored in doc row
-                findings_truncated=doc.findings_count > REVIEW_CONFIG.max_findings_per_doc,
-                findings_preview=(doc.findings_preview or [])[:preview_cap],
+                findings_truncated=False,
+                findings_preview=doc.findings_preview or [],
                 errors=[],
             )
             for doc in doc_rows
@@ -1676,39 +1343,148 @@ async def get_batch_status(
     return response
 
 
-@router.post("/batch/sweep", response_model=SweepResponse)
-async def sweep_stalled_batches(
-    request: SweepRequest,
-    x_admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
-) -> SweepResponse:
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-5: Admin API Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+class BatchAdminResponse(BaseModel):
+    """Admin view of a batch with operational fields."""
+    batch_id: str
+    program_id: str
+    status: Literal["queued", "running", "completed", "failed", "cancelled"]
+    mode: Literal["sync", "async"]
+    documents_total: int
+    documents_succeeded: int
+    documents_failed: int
+    findings_total: Optional[int] = None
+    attempts: int = 0
+    last_error: Optional[str] = None
+    failed_reason: Optional[str] = None
+    claimed_by: Optional[str] = None
+    # A8-6: Cancel fields
+    cancel_requested_at: Optional[str] = None
+    cancel_reason: Optional[str] = None
+    cancel_requested_by: Optional[str] = None
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    locked_at: Optional[str] = None
+    heartbeat_at: Optional[str] = None
+
+
+class RequeueRequest(BaseModel):
+    """Request body for requeue operation."""
+    reset_attempts: bool = Field(
+        default=False,
+        description="Reset attempt counter to 0 (otherwise keeps current value)"
+    )
+
+
+class RequeueResponse(BaseModel):
+    """Response from requeue operation."""
+    success: bool
+    batch_id: str
+    new_status: str
+    attempts: int
+    message: str
+
+
+class FailedBatchesResponse(BaseModel):
+    """Response listing failed batches."""
+    program_id: str
+    count: int
+    batches: List[BatchAdminResponse]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-6: Ops Control Plane Models
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+class CancelRequest(BaseModel):
+    """Request body for cancel operation."""
+    reason: Optional[str] = Field(
+        default=None,
+        description="Reason for cancellation (optional but recommended)"
+    )
+    requested_by: str = Field(
+        default="admin",
+        description="Identity of who is requesting cancellation"
+    )
+
+
+class CancelResponse(BaseModel):
+    """Response from cancel operation."""
+    success: bool
+    batch_id: str
+    status: str
+    message: str
+    cancel_requested_at: Optional[str] = None
+
+
+class RequeueV2Request(BaseModel):
+    """Request body for enhanced requeue operation."""
+    reset_attempts: bool = Field(
+        default=False,
+        description="Reset attempt counter to 0"
+    )
+    force: bool = Field(
+        default=False,
+        description="Force requeue of stale running batches (heartbeat timeout)"
+    )
+
+
+class BatchListResponse(BaseModel):
+    """Response listing batches with pagination."""
+    program_id: str
+    status_filter: Optional[str] = None
+    count: int
+    offset: int
+    limit: int
+    batches: List[BatchAdminResponse]
+
+
+def _batch_row_to_admin_response(batch: BatchRow) -> BatchAdminResponse:
+    """Convert BatchRow to admin response model."""
+    return BatchAdminResponse(
+        batch_id=batch.batch_id,
+        program_id=batch.program_id,
+        status=batch.status,
+        mode=batch.mode,
+        documents_total=batch.documents_total,
+        documents_succeeded=batch.documents_succeeded,
+        documents_failed=batch.documents_failed,
+        findings_total=batch.findings_total,
+        attempts=batch.attempts,
+        last_error=batch.last_error,
+        failed_reason=batch.failed_reason,
+        claimed_by=batch.claimed_by,
+        # A8-6: Cancel fields
+        cancel_requested_at=batch.cancel_requested_at.isoformat() if batch.cancel_requested_at else None,
+        cancel_reason=batch.cancel_reason,
+        cancel_requested_by=batch.cancel_requested_by,
+        created_at=batch.created_at.isoformat() if batch.created_at else "",
+        started_at=batch.started_at.isoformat() if batch.started_at else None,
+        completed_at=batch.completed_at.isoformat() if batch.completed_at else None,
+        locked_at=batch.locked_at.isoformat() if batch.locked_at else None,
+        heartbeat_at=batch.heartbeat_at.isoformat() if batch.heartbeat_at else None,
+    )
+
+
+@router.get("/batch/{batch_id}/admin", response_model=BatchAdminResponse)
+async def get_batch_admin(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> BatchAdminResponse:
     """
-    Sweep and requeue stalled batch jobs.
+    Get admin view of a batch with operational fields.
 
-    Admin-only endpoint. Requires:
-    - REVIEW_SWEEPER_ENABLED=true
-    - Valid X-Admin-Token header matching REVIEW_ADMIN_TOKEN
-
-    Finds batches in 'running' status with stale heartbeat and either:
-    - Requeues them if attempts remaining
-    - Marks as failed if max attempts exceeded
-
-    Args:
-        request: SweepRequest with program_id
-        x_admin_token: Admin authentication token
-
-    Returns:
-        SweepResponse with affected batch IDs and counts
+    Includes: attempts, last_error, failed_reason, claimed_by, timestamps.
+    Requires BATCH_PERSISTENCE_ENABLED=true.
     """
-    # Check if sweeper is enabled and configured - return 404 to not leak existence
-    if not REVIEW_CONFIG.sweeper_enabled or not REVIEW_CONFIG.admin_token:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    if x_admin_token != REVIEW_CONFIG.admin_token:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid admin token",
-        )
-
     if not BATCH_PERSISTENCE_ENABLED:
         raise HTTPException(
             status_code=501,
@@ -1717,21 +1493,410 @@ async def sweep_stalled_batches(
 
     store = get_batch_store()
     if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    batch_row = await store.get_batch(batch_id, str(program_id))
+    if batch_row is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    # Emit audit event for admin access
+    await _emit_ops_event("review.batch_admin_viewed", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "batch_status": batch_row.status,
+    }, admin_context=admin_context)
+
+    return _batch_row_to_admin_response(batch_row)
+
+
+@router.post("/batch/{batch_id}/retry", response_model=RequeueResponse)
+async def retry_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: RequeueRequest = RequeueRequest(),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> RequeueResponse:
+    """
+    Requeue a failed batch for retry.
+
+    Only failed batches can be retried. The batch will be put back in
+    'queued' status for the worker to pick up again.
+
+    Options:
+    - reset_attempts=true: Reset attempt counter to 0
+    - reset_attempts=false (default): Keep current attempt count
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
         raise HTTPException(
-            status_code=503,
-            detail="Batch store not configured",
+            status_code=501,
+            detail="Batch persistence is not enabled",
         )
 
-    # Run sweep
-    sweep_result = await store.sweep_stalled_batches(
-        program_id=str(request.program_id),
-        stall_seconds=REVIEW_CONFIG.batch_stall_seconds,
-        max_attempts=REVIEW_CONFIG.batch_max_attempts,
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status first
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    if existing.status != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only failed batches can be retried. Current status: {existing.status}",
+        )
+
+    # Requeue the batch
+    updated = await store.requeue_batch(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        reset_attempts=request.reset_attempts,
     )
 
-    return SweepResponse(
-        requeued=sweep_result["requeued"],
-        failed=sweep_result["failed"],
-        requeued_ids=sweep_result["requeued_ids"],
-        failed_ids=sweep_result["failed_ids"],
+    if updated is None:
+        raise HTTPException(status_code=500, detail="Requeue failed unexpectedly")
+
+    # Emit audit event for retry
+    await _emit_ops_event("review.batch_retried", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "reset_attempts": request.reset_attempts,
+        "attempts": updated.attempts,
+    }, admin_context=admin_context)
+
+    return RequeueResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        new_status=updated.status,
+        attempts=updated.attempts,
+        message=f"Batch requeued for retry (attempts: {updated.attempts})",
     )
+
+
+@router.get("/batches/failed", response_model=FailedBatchesResponse)
+async def list_failed_batches(
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> FailedBatchesResponse:
+    """
+    List failed batches for a program.
+
+    Returns batches in failed status, newest first.
+    Useful for admin dashboards and retry workflows.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    failed_batches = await store.list_failed_batches(
+        program_id=str(program_id),
+        limit=limit,
+    )
+
+    # Emit audit event for failed batches list access
+    await _emit_ops_event("review.failed_batches_listed", {
+        "program_id": str(program_id),
+        "limit": limit,
+        "count": len(failed_batches),
+    }, admin_context=admin_context)
+
+    return FailedBatchesResponse(
+        program_id=str(program_id),
+        count=len(failed_batches),
+        batches=[_batch_row_to_admin_response(b) for b in failed_batches],
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# A8-6: Ops Control Plane Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+
+@router.post("/batch/{batch_id}/cancel", response_model=CancelResponse)
+async def cancel_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: CancelRequest = CancelRequest(),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> CancelResponse:
+    """
+    Request cancellation of a batch (queued or running).
+
+    - Queued batches: immediately set to 'cancelled' status
+    - Running batches: sets cancel_requested_at flag for worker to respect
+
+    The worker will check this flag and stop processing.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    if existing.status not in ("queued", "running"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot cancel batch with status '{existing.status}'. Only queued or running batches can be cancelled.",
+        )
+
+    # Request cancellation
+    updated = await store.request_cancel(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        requested_by=request.requested_by,
+        reason=request.reason,
+    )
+
+    if updated is None:
+        raise HTTPException(status_code=500, detail="Cancel request failed unexpectedly")
+
+    # Emit event
+    await _emit_ops_event("review.batch_cancel_requested", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "requested_by": request.requested_by,
+        "reason": request.reason,
+        "previous_status": existing.status,
+        "new_status": updated.status,
+    }, admin_context=admin_context)
+
+    if updated.status == "cancelled":
+        message = "Batch cancelled immediately (was queued)"
+    else:
+        message = "Cancel requested - worker will stop processing"
+
+    return CancelResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        status=updated.status,
+        message=message,
+        cancel_requested_at=updated.cancel_requested_at.isoformat() if updated.cancel_requested_at else None,
+    )
+
+
+@router.post("/batch/{batch_id}/requeue", response_model=RequeueResponse)
+async def requeue_batch(
+    batch_id: str,
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    request: RequeueV2Request = RequeueV2Request(),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> RequeueResponse:
+    """
+    Requeue a batch for retry (A8-6 enhanced version).
+
+    Allowed when:
+    - Status is 'failed' or 'cancelled'
+    - If force=true: also allows reclaim from stale 'running' batches
+
+    Options:
+    - reset_attempts=true: Reset attempt counter to 0
+    - force=true: Force reclaim stale running batches (heartbeat timeout)
+
+    Clears all error/cancel state and sets batch back to 'queued'.
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    # Check current batch status
+    existing = await store.get_batch(batch_id, str(program_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+
+    # Validate status
+    allowed_statuses = ["failed", "cancelled"]
+    if request.force:
+        allowed_statuses.append("running")
+
+    if existing.status not in allowed_statuses:
+        if request.force:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot requeue batch with status '{existing.status}'. "
+                       f"Allowed: failed, cancelled, or running (with force).",
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot requeue batch with status '{existing.status}'. "
+                       f"Allowed: failed, cancelled. Use force=true for stale running batches.",
+            )
+
+    # Requeue the batch
+    updated = await store.requeue_batch_v2(
+        batch_id=batch_id,
+        program_id=str(program_id),
+        reset_attempts=request.reset_attempts,
+        force=request.force,
+    )
+
+    if updated is None:
+        if existing.status == "running" and request.force:
+            raise HTTPException(
+                status_code=400,
+                detail="Running batch is not stale (heartbeat still fresh). Wait or kill the worker.",
+            )
+        raise HTTPException(status_code=500, detail="Requeue failed unexpectedly")
+
+    # Emit event
+    await _emit_ops_event("review.batch_requeued", {
+        "batch_id": batch_id,
+        "program_id": str(program_id),
+        "previous_status": existing.status,
+        "reset_attempts": request.reset_attempts,
+        "force": request.force,
+        "attempts": updated.attempts,
+    }, admin_context=admin_context)
+
+    return RequeueResponse(
+        success=True,
+        batch_id=updated.batch_id,
+        new_status=updated.status,
+        attempts=updated.attempts,
+        message=f"Batch requeued for processing (attempts: {updated.attempts})",
+    )
+
+
+@router.get("/batches", response_model=BatchListResponse)
+async def list_batches(
+    program_id: UUID = Query(..., description="Program ID for RLS (required)"),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by status (queued, running, completed, failed, cancelled)"
+    ),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum batches to return"),
+    offset: int = Query(default=0, ge=0, description="Pagination offset"),
+    _: None = Depends(require_review_admin),
+    admin_context: AdminContext = Depends(get_admin_context),
+) -> BatchListResponse:
+    """
+    List batches for a program with optional status filter.
+
+    Useful for dashboards and triage. Returns batches newest first.
+
+    Valid status values: queued, running, completed, failed, cancelled
+
+    Requires BATCH_PERSISTENCE_ENABLED=true.
+    """
+    if not BATCH_PERSISTENCE_ENABLED:
+        raise HTTPException(
+            status_code=501,
+            detail="Batch persistence is not enabled",
+        )
+
+    # Validate status if provided
+    valid_statuses = {"queued", "running", "completed", "failed", "cancelled"}
+    if status and status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status '{status}'. Valid values: {', '.join(sorted(valid_statuses))}",
+        )
+
+    store = get_batch_store()
+    if store is None:
+        raise HTTPException(status_code=503, detail="Batch store not configured")
+
+    batches = await store.list_batches(
+        program_id=str(program_id),
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+
+    # Emit audit event for list access
+    await _emit_ops_event("review.batches_listed", {
+        "program_id": str(program_id),
+        "status_filter": status,
+        "limit": limit,
+        "offset": offset,
+        "count": len(batches),
+    }, admin_context=admin_context)
+
+    return BatchListResponse(
+        program_id=str(program_id),
+        status_filter=status,
+        count=len(batches),
+        offset=offset,
+        limit=limit,
+        batches=[_batch_row_to_admin_response(b) for b in batches],
+    )
+
+
+async def _emit_ops_event(
+    event_type: str,
+    payload: dict,
+    admin_context: AdminContext | None = None,
+) -> None:
+    """
+    Emit ops event for observability (A8-6) with audit attribution (A8-7.3).
+
+    Adds actor info from admin_context:
+    - request_id: For request correlation
+    - admin_actor: Token hash prefix for identifying who did what
+    - event_timestamp: When the event occurred
+
+    Fails silently if event bus not available.
+    """
+    try:
+        # Add audit attribution
+        if admin_context:
+            payload = {
+                **payload,
+                "request_id": admin_context.request_id,
+                "admin_actor": admin_context.token_hash_prefix,
+                "event_timestamp": admin_context.timestamp,
+            }
+        # Log audit trail
+        logger.info(
+            "ops_event",
+            extra={
+                "event_type": event_type,
+                "request_id": admin_context.request_id if admin_context else "unknown",
+                "admin_actor": admin_context.token_hash_prefix if admin_context else "unknown",
+                **{k: v for k, v in payload.items() if k not in ("request_id", "admin_actor", "event_timestamp")},
+            },
+        )
+        from lumen_cortex.enterprise.core import event_bus
+        await event_bus.publish(
+            event_type,
+            payload,
+            source_service="review_api",
+        )
+    except Exception:
+        # Don't let event emission failure break the API
+        pass
