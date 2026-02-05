@@ -14,7 +14,7 @@ BEGIN;
 -- ============================================================================
 
 CREATE OR REPLACE VIEW prose.v_fragment_latest AS
-SELECT 
+SELECT
     sf.id AS fragment_id,
     sf.ectd_section_path,
     sf.jurisdiction,
@@ -27,17 +27,17 @@ SELECT
     sf.created_at,
     sf.updated_at,
     (sf.embedding IS NOT NULL) AS has_embedding,
-    
+
     -- Latest version metadata
     sfv.created_by AS last_modified_by,
     sfv.change_reason AS last_change_reason,
-    
+
     -- Truth link summary
     COUNT(DISTINCT ftl.id) AS truth_link_count,
     COUNT(DISTINCT CASE WHEN ftl.evidence_strength = 'primary_endpoint' THEN ftl.id END) AS primary_evidence_count,
-    
+
     -- Section classification
-    CASE 
+    CASE
         WHEN sf.ectd_section_path LIKE 'm2.7.3%' THEN 'Efficacy Summary'
         WHEN sf.ectd_section_path LIKE 'm2.7.4%' THEN 'Safety Summary'
         WHEN sf.ectd_section_path LIKE 'm2.7.1%' THEN 'Biopharm Summary'
@@ -52,7 +52,7 @@ SELECT
     END AS section_category
 
 FROM prose.smart_fragments sf
-LEFT JOIN prose.smart_fragment_versions sfv 
+LEFT JOIN prose.smart_fragment_versions sfv
     ON sf.id = sfv.fragment_id AND sf.current_version_id = sfv.version_id
 LEFT JOIN prose.fragment_truth_links ftl ON sf.id = ftl.fragment_id
 GROUP BY sf.id, sfv.created_by, sfv.change_reason;
@@ -66,7 +66,7 @@ COMMENT ON VIEW prose.v_fragment_latest IS
 
 CREATE OR REPLACE VIEW audit.v_fragment_latest_risk AS
 WITH ranked_audits AS (
-    SELECT 
+    SELECT
         cal.fragment_id,
         cal.id AS audit_log_id,
         cal.agent_identity,
@@ -76,13 +76,13 @@ WITH ranked_audits AS (
         cal.created_at,
         cal.request_id,
         ROW_NUMBER() OVER (
-            PARTITION BY cal.fragment_id 
+            PARTITION BY cal.fragment_id
             ORDER BY cal.created_at DESC
         ) AS rn
     FROM audit.concomitant_audit_logs cal
     WHERE cal.fragment_id IS NOT NULL
 )
-SELECT 
+SELECT
     ra.fragment_id,
     ra.audit_log_id,
     ra.agent_identity,
@@ -91,14 +91,14 @@ SELECT
     ra.feedback_payload,
     ra.created_at AS assessed_at,
     ra.request_id,
-    
+
     -- Extract key metrics from payload
     (ra.feedback_payload->>'truth_links_count')::int AS truth_links_count,
     ra.feedback_payload->'predicted_questions' AS predicted_questions,
     jsonb_array_length(COALESCE(ra.feedback_payload->'predicted_questions', '[]'::jsonb)) AS question_count,
-    
+
     -- Risk classification
-    CASE 
+    CASE
         WHEN ra.risk_status = 'IR_PREDICTED' THEN 'RED'
         WHEN ra.risk_status = 'DATA_DRIFT' THEN 'AMBER'
         WHEN ra.risk_status = 'ALIGNED' THEN 'GREEN'
@@ -116,37 +116,37 @@ COMMENT ON VIEW audit.v_fragment_latest_risk IS
 -- ============================================================================
 
 CREATE OR REPLACE VIEW prose.v_section_risk_rollup AS
-SELECT 
+SELECT
     sf.ectd_section_path,
     sf.jurisdiction,
-    
+
     -- Fragment counts
     COUNT(DISTINCT sf.id) AS total_fragments,
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'IR_PREDICTED' THEN sf.id END) AS red_fragments,
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'DATA_DRIFT' THEN sf.id END) AS amber_fragments,
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END) AS green_fragments,
     COUNT(DISTINCT CASE WHEN flr.risk_status IS NULL THEN sf.id END) AS unassessed_fragments,
-    
+
     -- Drift statistics
     AVG(flr.drift_magnitude) AS avg_drift,
     MAX(flr.drift_magnitude) AS max_drift,
-    
+
     -- Overall section status
-    CASE 
+    CASE
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'IR_PREDICTED' THEN sf.id END) > 0 THEN 'RED'
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'DATA_DRIFT' THEN sf.id END) > 0 THEN 'AMBER'
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status IS NULL THEN sf.id END) > COUNT(sf.id) * 0.2 THEN 'INCOMPLETE'
         ELSE 'GREEN'
     END AS section_status,
-    
+
     -- Submission readiness score (0-100)
     ROUND(
-        (COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END)::numeric 
+        (COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END)::numeric
          / NULLIF(COUNT(DISTINCT sf.id), 0)) * 100
     , 1) AS readiness_score,
-    
+
     -- Section category
-    CASE 
+    CASE
         WHEN sf.ectd_section_path LIKE 'm2.7.3%' THEN 'Efficacy Summary'
         WHEN sf.ectd_section_path LIKE 'm2.7.4%' THEN 'Safety Summary'
         WHEN sf.ectd_section_path LIKE 'm2.5%' THEN 'Clinical Overview'
@@ -157,8 +157,8 @@ SELECT
 FROM prose.smart_fragments sf
 LEFT JOIN audit.v_fragment_latest_risk flr ON sf.id = flr.fragment_id
 GROUP BY sf.ectd_section_path, sf.jurisdiction
-ORDER BY 
-    CASE 
+ORDER BY
+    CASE
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'IR_PREDICTED' THEN sf.id END) > 0 THEN 1
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'DATA_DRIFT' THEN sf.id END) > 0 THEN 2
         ELSE 3
@@ -173,29 +173,29 @@ COMMENT ON VIEW prose.v_section_risk_rollup IS
 -- ============================================================================
 
 CREATE OR REPLACE VIEW prose.v_agency_risk_summary AS
-SELECT 
+SELECT
     sf.jurisdiction AS agency,
-    
+
     -- Overall counts
     COUNT(DISTINCT sf.id) AS total_fragments,
     COUNT(DISTINCT sf.ectd_section_path) AS sections_count,
-    
+
     -- Risk distribution
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'IR_PREDICTED' THEN sf.id END) AS ir_predicted_count,
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'DATA_DRIFT' THEN sf.id END) AS drift_count,
     COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END) AS aligned_count,
-    
+
     -- Predicted question count
     SUM(jsonb_array_length(COALESCE(flr.feedback_payload->'predicted_questions', '[]'::jsonb))) AS total_predicted_questions,
-    
+
     -- Submission readiness
     ROUND(
-        (COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END)::numeric 
+        (COUNT(DISTINCT CASE WHEN flr.risk_status = 'ALIGNED' THEN sf.id END)::numeric
          / NULLIF(COUNT(DISTINCT sf.id), 0)) * 100
     , 1) AS readiness_score,
-    
+
     -- Gate status
-    CASE 
+    CASE
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'IR_PREDICTED' THEN sf.id END) > 0 THEN 'BLOCKED'
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status = 'DATA_DRIFT' THEN sf.id END) > 5 THEN 'REVIEW_REQUIRED'
         WHEN COUNT(DISTINCT CASE WHEN flr.risk_status IS NULL THEN sf.id END) > COUNT(sf.id) * 0.1 THEN 'INCOMPLETE'
@@ -216,7 +216,7 @@ COMMENT ON VIEW prose.v_agency_risk_summary IS
 
 CREATE OR REPLACE VIEW adversarial.v_predicted_ir_hotspots AS
 WITH expanded_questions AS (
-    SELECT 
+    SELECT
         cal.fragment_id,
         cal.created_at AS predicted_at,
         q->>'question' AS predicted_question,
@@ -229,7 +229,7 @@ WITH expanded_questions AS (
     WHERE cal.agent_identity = 'SHADOW_AGENT'
       AND cal.feedback_payload->'predicted_questions' IS NOT NULL
 )
-SELECT 
+SELECT
     eq.predicted_question,
     eq.failure_mode,
     eq.source_agency,
@@ -254,44 +254,44 @@ COMMENT ON VIEW adversarial.v_predicted_ir_hotspots IS
 
 CREATE OR REPLACE VIEW prose.v_submission_gate_check AS
 WITH gate_criteria AS (
-    SELECT 
+    SELECT
         sf.jurisdiction,
-        
+
         -- Critical sections unlinked
-        COUNT(DISTINCT CASE 
-            WHEN sf.ectd_section_path LIKE 'm2.7.3%' 
-                 AND NOT sf.is_verified_against_truth 
-            THEN sf.id 
+        COUNT(DISTINCT CASE
+            WHEN sf.ectd_section_path LIKE 'm2.7.3%'
+                 AND NOT sf.is_verified_against_truth
+            THEN sf.id
         END) AS unlinked_efficacy_fragments,
-        
+
         -- High-drift fragments
-        COUNT(DISTINCT CASE 
-            WHEN flr.drift_magnitude > 0.2 
-            THEN sf.id 
+        COUNT(DISTINCT CASE
+            WHEN flr.drift_magnitude > 0.2
+            THEN sf.id
         END) AS high_drift_fragments,
-        
+
         -- IR predicted fragments
-        COUNT(DISTINCT CASE 
-            WHEN flr.risk_status = 'IR_PREDICTED' 
-            THEN sf.id 
+        COUNT(DISTINCT CASE
+            WHEN flr.risk_status = 'IR_PREDICTED'
+            THEN sf.id
         END) AS ir_predicted_fragments,
-        
+
         -- Unassessed critical fragments
-        COUNT(DISTINCT CASE 
-            WHEN sf.ectd_section_path LIKE 'm2.%' 
-                 AND flr.risk_status IS NULL 
-            THEN sf.id 
+        COUNT(DISTINCT CASE
+            WHEN sf.ectd_section_path LIKE 'm2.%'
+                 AND flr.risk_status IS NULL
+            THEN sf.id
         END) AS unassessed_module2_fragments,
-        
+
         -- Total fragments
         COUNT(DISTINCT sf.id) AS total_fragments,
         COUNT(DISTINCT CASE WHEN sf.ectd_section_path LIKE 'm2.%' THEN sf.id END) AS module2_fragments
-        
+
     FROM prose.smart_fragments sf
     LEFT JOIN audit.v_fragment_latest_risk flr ON sf.id = flr.fragment_id
     GROUP BY sf.jurisdiction
 )
-SELECT 
+SELECT
     gc.jurisdiction,
     gc.total_fragments,
     gc.module2_fragments,
@@ -299,37 +299,37 @@ SELECT
     gc.high_drift_fragments,
     gc.ir_predicted_fragments,
     gc.unassessed_module2_fragments,
-    
+
     -- Individual gate checks
     gc.unlinked_efficacy_fragments = 0 AS gate_efficacy_linked,
     gc.high_drift_fragments <= 3 AS gate_drift_acceptable,
     gc.ir_predicted_fragments = 0 AS gate_no_ir_predictions,
     gc.unassessed_module2_fragments = 0 AS gate_fully_assessed,
-    
+
     -- Overall gate decision
-    CASE 
+    CASE
         WHEN gc.ir_predicted_fragments > 0 THEN 'STOP'
         WHEN gc.unlinked_efficacy_fragments > 0 THEN 'STOP'
         WHEN gc.high_drift_fragments > 3 THEN 'REVIEW'
         WHEN gc.unassessed_module2_fragments > 0 THEN 'INCOMPLETE'
         ELSE 'GO'
     END AS gate_decision,
-    
+
     -- Blockers summary
     ARRAY_REMOVE(ARRAY[
-        CASE WHEN gc.ir_predicted_fragments > 0 
+        CASE WHEN gc.ir_predicted_fragments > 0
              THEN gc.ir_predicted_fragments || ' fragments have IR predictions' END,
-        CASE WHEN gc.unlinked_efficacy_fragments > 0 
+        CASE WHEN gc.unlinked_efficacy_fragments > 0
              THEN gc.unlinked_efficacy_fragments || ' efficacy fragments unlinked to truth' END,
-        CASE WHEN gc.high_drift_fragments > 3 
+        CASE WHEN gc.high_drift_fragments > 3
              THEN gc.high_drift_fragments || ' fragments have high drift' END,
-        CASE WHEN gc.unassessed_module2_fragments > 0 
+        CASE WHEN gc.unassessed_module2_fragments > 0
              THEN gc.unassessed_module2_fragments || ' Module 2 fragments unassessed' END
     ], NULL) AS blockers
 
 FROM gate_criteria gc
-ORDER BY 
-    CASE 
+ORDER BY
+    CASE
         WHEN gc.ir_predicted_fragments > 0 THEN 1
         WHEN gc.unlinked_efficacy_fragments > 0 THEN 2
         ELSE 3
@@ -344,7 +344,7 @@ COMMENT ON VIEW prose.v_submission_gate_check IS
 -- ============================================================================
 
 CREATE OR REPLACE VIEW audit.v_audit_trail_summary AS
-SELECT 
+SELECT
     DATE_TRUNC('day', cal.created_at) AS audit_date,
     cal.agent_identity,
     cal.risk_status,
@@ -353,7 +353,7 @@ SELECT
     AVG(cal.drift_magnitude) AS avg_drift,
     COUNT(DISTINCT cal.request_id) AS unique_requests
 FROM audit.concomitant_audit_logs cal
-GROUP BY 
+GROUP BY
     DATE_TRUNC('day', cal.created_at),
     cal.agent_identity,
     cal.risk_status
@@ -367,7 +367,7 @@ COMMENT ON VIEW audit.v_audit_trail_summary IS
 -- ============================================================================
 
 CREATE OR REPLACE VIEW prose.v_version_timeline AS
-SELECT 
+SELECT
     sfv.fragment_id,
     sf.ectd_section_path,
     sf.jurisdiction,

@@ -100,10 +100,9 @@ if (runIntegration) {
 
   afterAll(async () => {
     // Cleanup test data
-    await testPool.query(
-      'DELETE FROM innovation.delta_findings WHERE program_id = $1',
-      [testIds.programId]
-    );
+    await testPool.query('DELETE FROM innovation.delta_findings WHERE program_id = $1', [
+      testIds.programId,
+    ]);
     await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE program_id = $1', [
       testIds.programId,
     ]);

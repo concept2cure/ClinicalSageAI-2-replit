@@ -58,5 +58,7 @@
   "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
-  }
+  },
+  "editor.codeActions.triggerOnFocusChange": true,
+  "azureTerraform.checkTerraformCmd": false
 }

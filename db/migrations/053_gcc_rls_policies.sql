@@ -39,17 +39,17 @@ BEGIN
     IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
         RETURN TRUE;
     END IF;
-    
+
     -- No context set = deny
     IF v_current_org_id IS NULL THEN
         RETURN FALSE;
     END IF;
-    
+
     -- Same org = allow
     IF v_current_org_id = target_org_id THEN
         RETURN TRUE;
     END IF;
-    
+
     -- Check delegated access via org_relationships
         RETURN EXISTS (
                 SELECT 1 FROM identity.org_relationships
@@ -76,17 +76,17 @@ BEGIN
     IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
         RETURN TRUE;
     END IF;
-    
+
     -- No context set = deny
     IF v_current_org_id IS NULL THEN
         RETURN FALSE;
     END IF;
-    
+
     -- Same org = allow
     IF v_current_org_id = target_org_id THEN
         RETURN TRUE;
     END IF;
-    
+
     -- Check delegated write access
         RETURN EXISTS (
                 SELECT 1 FROM identity.org_relationships
@@ -215,7 +215,7 @@ CREATE POLICY rls_cou_select
     FOR SELECT
     USING (
         EXISTS (
-            SELECT 1 
+            SELECT 1
             FROM ectd_v4.submission_units su
             JOIN ectd_v4.regulatory_submissions rs ON su.submission_id = rs.id
             WHERE su.id = submission_unit_id
@@ -229,7 +229,7 @@ CREATE POLICY rls_cou_insert
     FOR INSERT
     WITH CHECK (
         EXISTS (
-            SELECT 1 
+            SELECT 1
             FROM ectd_v4.submission_units su
             JOIN ectd_v4.regulatory_submissions rs ON su.submission_id = rs.id
             WHERE su.id = submission_unit_id
@@ -243,7 +243,7 @@ CREATE POLICY rls_cou_update
     FOR UPDATE
     USING (
         EXISTS (
-            SELECT 1 
+            SELECT 1
             FROM ectd_v4.submission_units su
             JOIN ectd_v4.regulatory_submissions rs ON su.submission_id = rs.id
             WHERE su.id = submission_unit_id
@@ -261,7 +261,7 @@ CREATE POLICY rls_keywords_select
     FOR SELECT
     USING (
         EXISTS (
-            SELECT 1 
+            SELECT 1
             FROM ectd_v4.submission_units su
             JOIN ectd_v4.regulatory_submissions rs ON su.submission_id = rs.id
             WHERE su.id = submission_unit_id
@@ -279,7 +279,7 @@ CREATE POLICY rls_cou_rel_select
     FOR SELECT
     USING (
         EXISTS (
-            SELECT 1 
+            SELECT 1
             FROM ectd_v4.context_of_use_elements cou
             JOIN ectd_v4.submission_units su ON cou.submission_unit_id = su.id
             JOIN ectd_v4.regulatory_submissions rs ON su.submission_id = rs.id

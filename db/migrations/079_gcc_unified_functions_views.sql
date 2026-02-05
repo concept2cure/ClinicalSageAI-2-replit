@@ -882,7 +882,7 @@ BEGIN
         GRANT SELECT ON lumen.agent_registry_v2 TO app_service;
         GRANT SELECT ON agent_runtime.agent_executions_v2 TO app_service;
     END IF;
-    
+
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
         GRANT EXECUTE ON FUNCTION cortex.health_check TO app_readonly;
         GRANT SELECT ON cortex.statistics TO app_readonly;

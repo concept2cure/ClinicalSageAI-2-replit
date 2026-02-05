@@ -288,92 +288,92 @@ BEGIN
     RAISE NOTICE 'Schema site_intel does not exist, skipping site_intel RLS policies';
     RETURN;
   END IF;
-  
+
   -- Enable RLS on each table if it exists
   FOREACH tbl IN ARRAY site_intel_tables LOOP
-    IF EXISTS (SELECT 1 FROM information_schema.tables 
+    IF EXISTS (SELECT 1 FROM information_schema.tables
                WHERE table_schema = 'site_intel' AND table_name = tbl) THEN
       EXECUTE format('ALTER TABLE site_intel.%I ENABLE ROW LEVEL SECURITY', tbl);
     END IF;
   END LOOP;
-  
+
   -- site_intel.sites policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'site_intel' AND table_name = 'sites') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_sites_select ON site_intel.sites';
-    EXECUTE $p$CREATE POLICY rls_site_intel_sites_select ON site_intel.sites FOR SELECT 
+    EXECUTE $p$CREATE POLICY rls_site_intel_sites_select ON site_intel.sites FOR SELECT
              USING (core.can_access_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_sites_insert ON site_intel.sites';
-    EXECUTE $p$CREATE POLICY rls_site_intel_sites_insert ON site_intel.sites FOR INSERT 
+    EXECUTE $p$CREATE POLICY rls_site_intel_sites_insert ON site_intel.sites FOR INSERT
              WITH CHECK (core.can_write_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_sites_update ON site_intel.sites';
-    EXECUTE $p$CREATE POLICY rls_site_intel_sites_update ON site_intel.sites FOR UPDATE 
+    EXECUTE $p$CREATE POLICY rls_site_intel_sites_update ON site_intel.sites FOR UPDATE
              USING (core.can_write_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_sites_delete ON site_intel.sites';
-    EXECUTE $p$CREATE POLICY rls_site_intel_sites_delete ON site_intel.sites FOR DELETE 
+    EXECUTE $p$CREATE POLICY rls_site_intel_sites_delete ON site_intel.sites FOR DELETE
              USING (core.can_write_program(program_id))$p$;
   END IF;
-  
+
   -- site_intel.site_metrics policies (via site)
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'site_intel' AND table_name = 'site_metrics') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_metrics_select ON site_intel.site_metrics';
-    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_select ON site_intel.site_metrics FOR SELECT 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_select ON site_intel.site_metrics FOR SELECT
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_access_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_metrics_insert ON site_intel.site_metrics';
-    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_insert ON site_intel.site_metrics FOR INSERT 
-             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_insert ON site_intel.site_metrics FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                          AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_metrics_update ON site_intel.site_metrics';
-    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_update ON site_intel.site_metrics FOR UPDATE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_update ON site_intel.site_metrics FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_metrics_delete ON site_intel.site_metrics';
-    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_delete ON site_intel.site_metrics FOR DELETE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_metrics_delete ON site_intel.site_metrics FOR DELETE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
   END IF;
-  
+
   -- site_intel.site_risks policies (via site)
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'site_intel' AND table_name = 'site_risks') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_risks_select ON site_intel.site_risks';
-    EXECUTE $p$CREATE POLICY rls_site_intel_risks_select ON site_intel.site_risks FOR SELECT 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_risks_select ON site_intel.site_risks FOR SELECT
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_access_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_risks_insert ON site_intel.site_risks';
-    EXECUTE $p$CREATE POLICY rls_site_intel_risks_insert ON site_intel.site_risks FOR INSERT 
-             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_risks_insert ON site_intel.site_risks FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                          AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_risks_update ON site_intel.site_risks';
-    EXECUTE $p$CREATE POLICY rls_site_intel_risks_update ON site_intel.site_risks FOR UPDATE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_risks_update ON site_intel.site_risks FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_risks_delete ON site_intel.site_risks';
-    EXECUTE $p$CREATE POLICY rls_site_intel_risks_delete ON site_intel.site_risks FOR DELETE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_risks_delete ON site_intel.site_risks FOR DELETE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
   END IF;
-  
+
   -- site_intel.enrollment_predictions policies (via site)
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'site_intel' AND table_name = 'enrollment_predictions') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_pred_select ON site_intel.enrollment_predictions';
-    EXECUTE $p$CREATE POLICY rls_site_intel_pred_select ON site_intel.enrollment_predictions FOR SELECT 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_pred_select ON site_intel.enrollment_predictions FOR SELECT
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_access_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_pred_insert ON site_intel.enrollment_predictions';
-    EXECUTE $p$CREATE POLICY rls_site_intel_pred_insert ON site_intel.enrollment_predictions FOR INSERT 
-             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_pred_insert ON site_intel.enrollment_predictions FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                          AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_pred_update ON site_intel.enrollment_predictions';
-    EXECUTE $p$CREATE POLICY rls_site_intel_pred_update ON site_intel.enrollment_predictions FOR UPDATE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_pred_update ON site_intel.enrollment_predictions FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_site_intel_pred_delete ON site_intel.enrollment_predictions';
-    EXECUTE $p$CREATE POLICY rls_site_intel_pred_delete ON site_intel.enrollment_predictions FOR DELETE 
-             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id 
+    EXECUTE $p$CREATE POLICY rls_site_intel_pred_delete ON site_intel.enrollment_predictions FOR DELETE
+             USING (EXISTS (SELECT 1 FROM site_intel.sites s WHERE s.id = site_id
                     AND core.can_write_program(s.program_id)))$p$;
   END IF;
 END $$;
@@ -392,71 +392,71 @@ BEGIN
     RAISE NOTICE 'Schema signing does not exist, skipping signing RLS policies';
     RETURN;
   END IF;
-  
+
   -- Enable RLS on each table if it exists
   FOREACH tbl IN ARRAY signing_tables LOOP
-    IF EXISTS (SELECT 1 FROM information_schema.tables 
+    IF EXISTS (SELECT 1 FROM information_schema.tables
                WHERE table_schema = 'signing' AND table_name = tbl) THEN
       EXECUTE format('ALTER TABLE signing.%I ENABLE ROW LEVEL SECURITY', tbl);
     END IF;
   END LOOP;
-  
+
   -- signing.signing_requests policies
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'signing' AND table_name = 'signing_requests') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_requests_select ON signing.signing_requests';
-    EXECUTE $p$CREATE POLICY rls_signing_requests_select ON signing.signing_requests FOR SELECT 
+    EXECUTE $p$CREATE POLICY rls_signing_requests_select ON signing.signing_requests FOR SELECT
              USING (core.can_access_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_requests_insert ON signing.signing_requests';
-    EXECUTE $p$CREATE POLICY rls_signing_requests_insert ON signing.signing_requests FOR INSERT 
+    EXECUTE $p$CREATE POLICY rls_signing_requests_insert ON signing.signing_requests FOR INSERT
              WITH CHECK (core.can_write_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_requests_update ON signing.signing_requests';
-    EXECUTE $p$CREATE POLICY rls_signing_requests_update ON signing.signing_requests FOR UPDATE 
+    EXECUTE $p$CREATE POLICY rls_signing_requests_update ON signing.signing_requests FOR UPDATE
              USING (core.can_write_program(program_id))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_requests_delete ON signing.signing_requests';
-    EXECUTE $p$CREATE POLICY rls_signing_requests_delete ON signing.signing_requests FOR DELETE 
+    EXECUTE $p$CREATE POLICY rls_signing_requests_delete ON signing.signing_requests FOR DELETE
              USING (core.can_write_program(program_id))$p$;
   END IF;
-  
+
   -- signing.signatures policies (via request)
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'signing' AND table_name = 'signatures') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_signatures_select ON signing.signatures';
-    EXECUTE $p$CREATE POLICY rls_signing_signatures_select ON signing.signatures FOR SELECT 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_signatures_select ON signing.signatures FOR SELECT
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_access_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_signatures_insert ON signing.signatures';
-    EXECUTE $p$CREATE POLICY rls_signing_signatures_insert ON signing.signatures FOR INSERT 
-             WITH CHECK (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_signatures_insert ON signing.signatures FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                          AND core.can_write_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_signatures_update ON signing.signatures';
-    EXECUTE $p$CREATE POLICY rls_signing_signatures_update ON signing.signatures FOR UPDATE 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_signatures_update ON signing.signatures FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_write_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_signatures_delete ON signing.signatures';
-    EXECUTE $p$CREATE POLICY rls_signing_signatures_delete ON signing.signatures FOR DELETE 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_signatures_delete ON signing.signatures FOR DELETE
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_write_program(r.program_id)))$p$;
   END IF;
-  
+
   -- signing.signature_manifests policies (via request)
-  IF EXISTS (SELECT 1 FROM information_schema.tables 
+  IF EXISTS (SELECT 1 FROM information_schema.tables
              WHERE table_schema = 'signing' AND table_name = 'signature_manifests') THEN
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_manifests_select ON signing.signature_manifests';
-    EXECUTE $p$CREATE POLICY rls_signing_manifests_select ON signing.signature_manifests FOR SELECT 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_manifests_select ON signing.signature_manifests FOR SELECT
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_access_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_manifests_insert ON signing.signature_manifests';
-    EXECUTE $p$CREATE POLICY rls_signing_manifests_insert ON signing.signature_manifests FOR INSERT 
-             WITH CHECK (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_manifests_insert ON signing.signature_manifests FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                          AND core.can_write_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_manifests_update ON signing.signature_manifests';
-    EXECUTE $p$CREATE POLICY rls_signing_manifests_update ON signing.signature_manifests FOR UPDATE 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_manifests_update ON signing.signature_manifests FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_write_program(r.program_id)))$p$;
     EXECUTE 'DROP POLICY IF EXISTS rls_signing_manifests_delete ON signing.signature_manifests';
-    EXECUTE $p$CREATE POLICY rls_signing_manifests_delete ON signing.signature_manifests FOR DELETE 
-             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id 
+    EXECUTE $p$CREATE POLICY rls_signing_manifests_delete ON signing.signature_manifests FOR DELETE
+             USING (EXISTS (SELECT 1 FROM signing.signing_requests r WHERE r.id = request_id
                     AND core.can_write_program(r.program_id)))$p$;
   END IF;
 END $$;
