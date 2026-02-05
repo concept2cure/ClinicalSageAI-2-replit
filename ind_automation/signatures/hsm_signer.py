@@ -84,6 +84,15 @@ class HSMSignature(Part11Signature):
 
         return signed_path
 
+    def create_fhir_signature_event(self, signature_result: dict, signer_info: dict, document_id: str) -> dict:
+        """Override to include HSM/KMS metadata in audit event details."""
+        event = super().create_fhir_signature_event(signature_result, signer_info, document_id)
+        # Append HSM-specific details for traceability
+        details = event['entity'][0]['detail']
+        details.append({"type": "hsm-provider", "valueString": "AWS-KMS"})
+        details.append({"type": "kms-key-id", "valueString": self.kms_key_id})
+        return event
+
     def _create_xades_with_hsm_sig(self, payload: dict, signature: bytes, signer_info: dict) -> str:
         """Create a simplified XAdES XML and embed HSM metadata in KeyInfo."""
         from lxml import etree

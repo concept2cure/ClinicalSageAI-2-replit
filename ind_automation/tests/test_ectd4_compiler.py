@@ -404,7 +404,9 @@ class TestHSMSignatures:
 
             # Create test doc
             docx_path = tmp_path / "test.docx"
-            Document().add_paragraph("Test").save(docx_path)
+            doc = Document()
+            doc.add_paragraph("Test")
+            doc.save(docx_path)
 
             signed = signer.sign_document(docx_path, {
                 "name": "Dr. Smith", "role": "PI"
@@ -451,5 +453,6 @@ class TestHSMSignatures:
             details = sig_events[0]['entity'][0]['detail']
             assert any(d.get('type') == 'certificate-fingerprint' for d in details)
             # HSM key id should be discoverable somewhere in the audit event payload
-            assert any('hsm' in json.dumps(details).lower() or 'kms' in json.dumps(details).lower())
+            details_json = json.dumps(details).lower()
+            assert 'hsm' in details_json or 'kms' in details_json
 
