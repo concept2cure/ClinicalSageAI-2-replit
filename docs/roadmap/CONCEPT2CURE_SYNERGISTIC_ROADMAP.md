@@ -244,28 +244,28 @@ Implement **hash-chained audit + record fingerprinting**:
 **Goal:** IND workflow can run end-to-end as executable steps with owners, due dates, and auto-advancement.
 
 **Tasks**
-- [ ] Workflow definition format (JSON/YAML in DB)
-- [ ] Execution engine:
+- [x] Workflow definition format (JSON/YAML in DB)
+- [x] Execution engine:
   - step queue
   - precondition checks
   - auto-advance rules
   - manual approval gates
-- [ ] Step templates for IND:
+- [x] Step templates for IND:
   - program intake
   - source ingestion
   - authoring plan
   - section drafting
   - review/signature
   - export/release
-- [ ] UI: workflow timeline + step status + next actions
-- [ ] Notifications (in-app first; email later)
+- [x] UI: workflow timeline + step status + next actions
+- [x] Notifications (in-app first; email later)
 
 **Acceptance**
 - IND workflow run created automatically when an IND submission is created
 - At least 10 core steps execute and advance predictably
 - Audit trail captures every step transition and approval
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ COMPLETE
 
 ---
 
@@ -273,14 +273,14 @@ Implement **hash-chained audit + record fingerprinting**:
 **Goal:** traceability + living docs + compliance scoring are real, not marketing.
 
 **Tasks**
-- [ ] Editor: unified doc editor (Google Docs style)
-- [ ] Traceability UI:
+- [x] Editor: unified doc editor (Google Docs style)
+- [x] Traceability UI:
   - highlight text → link to source
   - show source preview + hash + citation
-- [ ] Change propagation:
+- [x] Change propagation:
   - when `source_version` updates, compute impacted artifacts/sections
   - create "suggested patch" drafts
-- [ ] Compliance scoring:
+- [x] Compliance scoring:
   - rules engine (completeness, required sections, missing citations)
   - real-time dashboard
 
@@ -289,7 +289,7 @@ Implement **hash-chained audit + record fingerprinting**:
 - Updating a source flags impacted sections within minutes
 - Compliance score updates live
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ COMPLETE
 
 ---
 
@@ -343,17 +343,17 @@ Implement **hash-chained audit + record fingerprinting**:
 **Goal:** manage health authority questions with traceability and response workflows.
 
 **Tasks**
-- [ ] HAQ intake (email/manual upload)
-- [ ] Response workflow: assign, draft, review, sign, export
-- [ ] Link responses to sources + prior submissions
-- [ ] Timeline and audit
-- [ ] FDA Communication tracking
+- [x] HAQ intake (email/manual upload)
+- [x] Response workflow: assign, draft, review, sign, export
+- [x] Link responses to sources + prior submissions
+- [x] Timeline and audit
+- [x] FDA Communication tracking
 
 **Acceptance**
 - HAQs can be triaged and tracked to closure
 - Every response is traceable and versioned
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ COMPLETE
 
 ---
 
@@ -495,12 +495,47 @@ npm run dev
 - Create ProactiveMonitoringService with scheduled cycles and alerts.
 - Create OutcomeScenarioGenerator with detailed scenario modeling.
 
-### Runbook D — Workflow Engine (NEXT)
+### Runbook D — Workflow Engine ✅ COMPLETE
 **Prompt to agent:**
 - Create workflow_definitions + workflow_runs tables and API.
 - Implement executor that advances steps based on preconditions.
 - Implement IND workflow template with 10 steps and approvals.
 - Add UI timeline and next-actions.
+
+### Runbook E — Evidence Fabric (Phase 4 Kernel — NEXT)
+**Prompt to agent:**
+- Create evidence graph schema linking claims → sources → outcomes.
+- Add content-hash on every artifact version.
+- Implement hash-verified traceability links.
+- Build evidence coverage dashboard UI.
+
+### Runbook F — Policy-as-Code Quality Gates (Phase 4 Kernel)
+**Prompt to agent:**
+- Create executable policy schema (OPA/Rego-style).
+- Implement auto-evaluation at workflow step transitions.
+- Add gate enforcement (block advance on policy failure).
+- Record policy decisions in audit log.
+
+### Runbook G — Step DSL + Tool Registry (Phase 4 Kernel)
+**Prompt to agent:**
+- Define Step DSL schema (YAML/JSON) for workflow definitions.
+- Build Tool Registry with version, capability, and audit metadata.
+- Wire tool invocation from step definitions (AI agents, validators, exporters).
+- Add Step DSL schema validation.
+
+### Runbook H — Semantic Cache (Phase 4 Kernel)
+**Prompt to agent:**
+- Build embedding-similarity cache for LLM queries.
+- Add configurable similarity threshold.
+- Implement cache hit/miss metrics.
+- Target 40-60 % API cost reduction.
+
+### Runbook I — DOCX Workflow-Native Artifact Generation (Phase 4 Kernel)
+**Prompt to agent:**
+- Make DOCX a first-class workflow artifact.
+- Implement diff/redline (tracked-changes comparison between versions).
+- Add manifest hashing: embed SHA-256 binding content + metadata + signatures.
+- Record manifest hash in audit trail and export release ledger.
 
 
 ## 8. Definition of Done, Metrics, and Validation
@@ -539,7 +574,8 @@ npm run dev
 ### 9.2 Where DVLP Injections Land
 - **Phase 1:** trust rails (hash chaining), provable audit ✅
 - **Phase 3:** predictive intelligence engine ✅
-- **Phase 4:** workflow-as-contract (milestone triggers)
+- **Phase 4:** workflow-as-contract (milestone triggers) ✅
+- **Phase 4 Kernel:** Evidence Fabric, Policy-as-Code Quality Gates, Step DSL + Tool Registry, Semantic Cache, DOCX Artifact Generation 🔄
 - **Phase 7:** asset lifecycle in mission control
 - **Phase 11+ (optional):** marketplace + embedded finance
 
@@ -551,14 +587,15 @@ npm run dev
 | 1 | Database Foundation + RLS + Audit | ✅ COMPLETE | 100% |
 | 2 | Submission Pyramids + Projects UX | ✅ COMPLETE | 100% |
 | 3 | Predictive Intelligence Engine | ✅ COMPLETE | 100% |
-| 4 | Workflow Orchestration Engine | ⏳ NOT STARTED | 0% |
-| 5 | Intelligent Document System | ⏳ NOT STARTED | 0% |
+| 4 | Workflow Orchestration Engine | ✅ COMPLETE | 100% |
+| 5 | Intelligent Document System | ✅ COMPLETE | 100% |
 | 6 | eCTD Co-Author + Document Drafting | ⏳ NOT STARTED | 0% |
 | 7 | Mission Control + Lumen PM | ⏳ NOT STARTED | 0% |
-| 8 | Communication Hub + HAQ Manager | ⏳ NOT STARTED | 0% |
+| 8 | Communication Hub + HAQ Manager | ✅ COMPLETE | 100% |
 | 9 | Data Ingestion Workers | ⏳ NOT STARTED | 0% |
 | 10 | Testing, Validation, Deployment | ⏳ NOT STARTED | 0% |
 | 11 | Marketplace + Funding Rails | ⏳ FUTURE | 0% |
+| **4K** | **Phase 4 Kernel (Next Lane)** | **🔄 ACTIVE** | **5%** |
 
 ### 9.4 "Later" Roadmap Placeholder (Post-v3.0)
 - Vendor marketplace module
@@ -590,5 +627,5 @@ npm run dev
 
 ---
 
-*Last Updated: 2026-01-28*
-*Next Phase: Phase 4 — Workflow Orchestration Engine*
+*Last Updated: 2026-02-05*
+*Next Phase: Phase 4 Kernel — Evidence Fabric, Policy-as-Code Quality Gates, Step DSL + Tool Registry, Semantic Cache, DOCX Artifact Generation*

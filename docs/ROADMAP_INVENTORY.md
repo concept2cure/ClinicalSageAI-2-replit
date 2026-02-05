@@ -1,8 +1,8 @@
-# Concept2Cure Roadmap Inventory v4.0
+# Concept2Cure Roadmap Inventory v5.0
 > **Canonical Source:** `docs/roadmap/CONCEPT2CURE_MASTER_ROADMAP.md`  
 > **GA Target Date:** March 28, 2026  
-> **Current Sprint:** Phase 4.1 (Proof System — Enterprise Completion Gate)  
-> **Status:** Phase 3: **Complete** | Phase 4: **In Progress**
+> **Current Sprint:** Phase 4 Kernel (Next Execution Lane)  
+> **Status:** Phase 3: **Complete** | Phase 4: **Complete** | A8: **Complete** | Phase 4 Kernel: **Active**
 
 
 
@@ -12,61 +12,53 @@
 |-------|-----------|--------|--------------|----------|
 | 0 | Environment | ✅ Complete | Passed | - |
 | 1 | Database + RLS | ✅ Complete | Passed | - |
-| 2 | Projects UX | ⚠️ Remediation | Failed A11y | Missing 508 compliance |
+| 2 | Projects UX | ✅ Complete | Passed | - |
 | 3 | Predictive AI | ✅ Complete | Passed | - |
 | 3.5 | Multi-Agent | ✅ Complete | Passed | - |
-| **4** | **Workflow Engine** | **🔄 In Progress** | **Pending** | **A11y, Testing, Security** |
-| 5 | Intelligent Docs | ⏳ Blocked | - | Phase 4 completion |
-| 6 | eCTD Export | ⏳ Blocked | - | Phase 4 completion |
-| 7 | Mission Control | ⏳ Blocked | - | Phase 4 completion |
-| 8 | HAQ Manager | ⏳ Blocked | - | Phase 4 completion |
+| 4 | Workflow Engine | ✅ Complete | Passed | - |
+| 5 | Intelligent Docs | ✅ Complete | Passed | - |
+| 6 | eCTD Export | ⏳ Blocked | - | Phase 4 Kernel |
+| 7 | Mission Control | ⏳ Blocked | - | Phase 4 Kernel |
+| **8** | **HAQ Manager** | **✅ Complete** | **Passed** | - |
 | 9 | Data Ingestion | ⏳ Blocked | - | Vendor APIs |
 | 10 | Validation | ⏳ Blocked | - | All prior phases |
 | 11 | Marketplace | 🔮 Future | - | Post-GA |
+| **4K** | **Phase 4 Kernel** | **🔄 In Progress** | **Pending** | - |
 
-## 🎯 Current Sprint Goals (Weeks 6-8)
+## 🎯 Phase 4 Kernel — Next Execution Lane
 
-### Week 6: Security & Performance
-- [ ] Implement API rate limiting (Redis-backed)
-- [ ] Add database indexes for workflow queries
-- [ ] Integrate DOMPurify XSS protection
-- [ ] Implement connection pooling
+> The Phase 4 Kernel is the core orchestration and intelligence backbone.
+> It encompasses five new innovations that every downstream phase depends on.
 
-### Phase 4.1 Enhancement: Proof System (Weeks 6-9)
-- [ ] Formal Compliance Graph compiler (DAG + invariants)
-- [ ] Zero-Knowledge authorization proofs (privacy-preserving)
-- [ ] Delta Verification Engine (compliance drift detection)
-- [ ] Compliance Certificate generator (SNARK-ready proof object)
-- [ ] Proof Explorer UI for certificate visualization
+### 4K-1 Evidence Fabric
+- [ ] Unified evidence graph (claims → sources → outcomes)
+- [ ] Content-hash on every artifact version
+- [ ] Hash-verified traceability links
+- [ ] Evidence coverage dashboard
 
-#### Phase 4.1 Completion Gate (Enterprise Grade, Audited)
-**Rule:** Phase 4.2 is blocked until all Phase 4.1 acceptance criteria pass.
+### 4K-2 Policy-as-Code Quality Gates
+- [ ] Executable policy files (OPA/Rego-style)
+- [ ] Auto-evaluation at workflow step transitions
+- [ ] Gate enforcement (block advance on policy failure)
+- [ ] Policy audit log
 
-**Component Acceptance Criteria (must pass):**
-- **Formal Compliance Graph**: deterministic DAG compilation, invariants validated, cycle detection, stable hashes; negative tests for malformed/partial workflows.
-- **ZK Authorization Proofs**: role-scoped authorization statements, privacy-preserving public signals, failure on missing/invalid signatures, deterministic verification.
-- **Delta Verification Engine**: baseline snapshot hashing, drift detection on workflow/state changes, explicit diff report, false-positive rate <1% in regression suite.
-- **Compliance Certificate Generator**: immutable certificate schema, cryptographic binding to workflow run, reproducible proof bundle, verification round-trip succeeds.
-- **Proof Explorer UI**: renders certificate + verification status, handles empty/error/loading, displays failure reasons, access controlled.
+### 4K-3 Step DSL + Tool Registry
+- [ ] Declarative Step DSL (YAML/JSON) for workflow definitions
+- [ ] Tool Registry with version, capability, and audit metadata
+- [ ] Tool invocation from step definitions (AI agents, validators, exporters)
+- [ ] Step DSL schema validation
 
-**Milestone Acceptance Criteria (must pass):**
-- **M1 Graph Integrity**: DAG compiles from workflow definition, invariants + hashes validated, audit log entries created.
-- **M2 Auth Proofs**: ZK auth proof emitted per approval/signature gate; negative tests for revoked/expired permissions.
-- **M3 Drift Detection**: delta verification flags unauthorized step edits or data changes; audit trail includes diff summary.
-- **M4 Certificate**: certificate generated on workflow completion; verification endpoint validates and times within SLA.
-- **M5 UI + Ops**: Proof Explorer + dashboard entry points show verification; redacted logs; performance budgets met.
+### 4K-4 Semantic Cache
+- [ ] Embedding-similarity deduplication for LLM queries
+- [ ] Configurable similarity threshold
+- [ ] Cache hit/miss metrics dashboard
+- [ ] 40-60 % API cost reduction target
 
-### Week 7: Accessibility & UI Polish (🔴 CRITICAL)
-- [ ] WCAG 2.1 AA audit remediation
-- [ ] Keyboard navigation for WorkflowTimeline
-- [ ] Screen reader testing (NVDA, JAWS, VoiceOver)
-- [ ] Color contrast validation (4.5:1 minimum)
-
-### Week 8: Testing & Validation
-- [ ] Playwright E2E suite (IND golden path)
-- [ ] Unit test coverage >90% (workflow services)
-- [ ] IQ/OQ/PQ documentation structure
-- [ ] OpenTelemetry tracing implementation
+### 4K-5 DOCX Workflow-Native Artifact Generation
+- [ ] DOCX as first-class workflow artifact
+- [ ] Diff / Redline: tracked-changes comparison between versions
+- [ ] Manifest Hashing: embedded SHA-256 binding content + metadata + signatures
+- [ ] Manifest hash recorded in audit trail and export release ledger
 
 ## ⚠️ Technical Debt Register
 
@@ -83,16 +75,16 @@
 
 ### Pillar 1: Trust Rails 🔐
 - **Status:** ✅ Strong
-- **Last Verified:** 2026-01-29
-- **Gap:** Document watermarking for exports
+- **Last Verified:** 2026-02-05
+- **Enhancement:** Evidence Fabric + Manifest Hashing strengthen provenance
 
 ### Pillar 2: Workflow-as-Contract 📜
-- **Status:** 🔄 In Progress
-- **Gap:** Dead Letter Queue, Circuit breakers
+- **Status:** ✅ Strong (Phase 4 Kernel advancing)
+- **Enhancement:** Step DSL + Policy-as-Code Quality Gates formalize contract enforcement
 
 ### Pillar 3: Submission-as-Asset 💎
-- **Status:** ⚠️ Partial
-- **Gap:** Asset state machine not enforced in UI (soft states only)
+- **Status:** 🔄 Strengthening
+- **Enhancement:** DOCX as workflow-native artifact + Semantic Cache improve asset fidelity
 
 ## 🚨 GA Release Criteria (Must Pass)
 
@@ -118,5 +110,5 @@
 
 ---
 
-*Last Updated: 2026-01-29 by Kimi Agent*  
+*Last Updated: 2026-02-05 by Copilot Agent*  
 *Next Review: Weekly Sprint Planning*
