@@ -23,8 +23,11 @@ import { ComplianceGuardrailsSDKService } from '../../server/services/innovation
 let testPool: Pool;
 
 const hasTestDb = Boolean(process.env.TEST_DATABASE_URL || process.env.DATABASE_URL);
+const hasOpenAIKey = Boolean(process.env.OPENAI_API_KEY);
 const runIntegration = process.env.RUN_INTEGRATION_TESTS === 'true' && hasTestDb;
 const describe = runIntegration ? baseDescribe : baseDescribe.skip;
+// For tests that require OpenAI, skip if key not available
+const describeWithOpenAI = runIntegration && hasOpenAIKey ? baseDescribe : baseDescribe.skip;
 
 // Test IDs for cleanup
 const testIds = {
@@ -97,10 +100,9 @@ if (runIntegration) {
 
   afterAll(async () => {
     // Cleanup test data
-    await testPool.query(
-      'DELETE FROM innovation.delta_findings WHERE program_id = $1',
-      [testIds.programId]
-    );
+    await testPool.query('DELETE FROM innovation.delta_findings WHERE program_id = $1', [
+      testIds.programId,
+    ]);
     await testPool.query('DELETE FROM innovation.delta_radar_scans WHERE program_id = $1', [
       testIds.programId,
     ]);
@@ -114,7 +116,7 @@ if (runIntegration) {
 /**
  * Test Suite 1: Regulatory Delta Radar
  */
-describe('Regulatory Delta Radar Service', () => {
+describeWithOpenAI('Regulatory Delta Radar Service', () => {
   let service: RegulatoryDeltaRadarService;
 
   beforeAll(() => {
@@ -197,7 +199,7 @@ describe('Regulatory Delta Radar Service', () => {
 /**
  * Test Suite 2: Evidence Confidence Heatmap
  */
-describe('Evidence Confidence Heatmap Service', () => {
+describeWithOpenAI('Evidence Confidence Heatmap Service', () => {
   let service: EvidenceConfidenceHeatmapService;
   let configId: string;
 
@@ -266,7 +268,7 @@ describe('Evidence Confidence Heatmap Service', () => {
 /**
  * Test Suite 3: Submission Readiness Twin
  */
-describe('Submission Readiness Twin Service', () => {
+describeWithOpenAI('Submission Readiness Twin Service', () => {
   let service: SubmissionReadinessTwinService;
 
   beforeAll(() => {
@@ -331,7 +333,7 @@ describe('Submission Readiness Twin Service', () => {
 /**
  * Test Suite 4: Auto-Traceability
  */
-describe('Auto-Traceability Service', () => {
+describeWithOpenAI('Auto-Traceability Service', () => {
   let service: AutoTraceabilityService;
 
   beforeAll(() => {
@@ -394,7 +396,7 @@ describe('Auto-Traceability Service', () => {
 /**
  * Test Suite 5: Adaptive Reviewer Workspace
  */
-describe('Adaptive Reviewer Workspace Service', () => {
+describeWithOpenAI('Adaptive Reviewer Workspace Service', () => {
   let service: AdaptiveReviewerWorkspaceService;
 
   beforeAll(() => {
@@ -451,7 +453,7 @@ describe('Adaptive Reviewer Workspace Service', () => {
 /**
  * Test Suite 6: Outcome-Based Template Learning
  */
-describe('Outcome-Based Template Learning Service', () => {
+describeWithOpenAI('Outcome-Based Template Learning Service', () => {
   let service: OutcomeBasedTemplateLearningService;
   let templateId: string;
 
@@ -527,7 +529,7 @@ describe('Outcome-Based Template Learning Service', () => {
 /**
  * Test Suite 7: Regulatory Negotiation Logbook
  */
-describe('Regulatory Negotiation Logbook Service', () => {
+describeWithOpenAI('Regulatory Negotiation Logbook Service', () => {
   let service: RegulatoryNegotiationLogbookService;
   let threadId: string;
 
@@ -633,7 +635,7 @@ describe('Regulatory Negotiation Logbook Service', () => {
 /**
  * Test Suite 8: Compliance Guardrails SDK
  */
-describe('Compliance Guardrails SDK Service', () => {
+describeWithOpenAI('Compliance Guardrails SDK Service', () => {
   let service: ComplianceGuardrailsSDKService;
   let ruleId: string;
   let profileId: string;
@@ -759,9 +761,9 @@ describe('Compliance Guardrails SDK Service', () => {
 });
 
 /**
- * Integration Tests
+ * Integration Tests (require OpenAI for service instantiation)
  */
-describe('Innovation Platform Integration', () => {
+describeWithOpenAI('Innovation Platform Integration', () => {
   describe('Cross-Feature Integration', () => {
     it('should link delta findings to evidence gaps', async () => {
       const deltaService = new RegulatoryDeltaRadarService(testPool);
@@ -850,9 +852,9 @@ describe('Innovation Platform Integration', () => {
 });
 
 /**
- * Performance Tests
+ * Performance Tests (require OpenAI for service instantiation)
  */
-describe('Performance Benchmarks', () => {
+describeWithOpenAI('Performance Benchmarks', () => {
   it('should complete delta scan within acceptable time', async () => {
     const service = new RegulatoryDeltaRadarService(testPool);
 
@@ -897,9 +899,9 @@ describe('Performance Benchmarks', () => {
 });
 
 /**
- * Security Tests
+ * Security Tests (require OpenAI for service instantiation)
  */
-describe('Security Validation', () => {
+describeWithOpenAI('Security Validation', () => {
   it('should enforce organization isolation', async () => {
     const otherOrgId = uuidv4();
     const service = new RegulatoryDeltaRadarService(testPool);
