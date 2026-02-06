@@ -163,19 +163,39 @@ WHERE id = $1 AND status = 'pending'
 RETURNING id
 """
 
-# Claim a queued step (worker lock with advisory check)
+# Claim a queued step — concurrency-safe with FOR UPDATE SKIP LOCKED
 CLAIM_STEP_RUN = """
-UPDATE orchestration.step_runs
+WITH claimable AS (
+    SELECT id
+    FROM orchestration.step_runs
+    WHERE id = $1
+      AND status = 'queued'
+      AND locked_at IS NULL
+    FOR UPDATE SKIP LOCKED
+    LIMIT 1
+)
+UPDATE orchestration.step_runs sr
 SET status = 'running',
     worker_id = $2,
     locked_at = NOW(),
     heartbeat_at = NOW(),
-    started_at = COALESCE(started_at, NOW())
-WHERE id = $1
-  AND status = 'queued'
-  AND locked_at IS NULL
-RETURNING id, workflow_run_id, step_template_id, program_id,
-          status, attempt, input, worker_id, locked_at
+    started_at = COALESCE(sr.started_at, NOW())
+FROM claimable c
+WHERE sr.id = c.id
+RETURNING sr.id, sr.workflow_run_id, sr.step_template_id, sr.program_id,
+          sr.status, sr.attempt, sr.input, sr.worker_id, sr.locked_at
+"""
+
+# Reclaim stale locks — steps stuck in 'running' with no heartbeat for > TTL
+RECLAIM_STALE_STEPS = """
+UPDATE orchestration.step_runs
+SET status = 'queued',
+    worker_id = NULL,
+    locked_at = NULL,
+    heartbeat_at = NULL
+WHERE status = 'running'
+  AND heartbeat_at < NOW() - INTERVAL '10 minutes'
+RETURNING id, workflow_run_id, program_id, worker_id AS prev_worker_id
 """
 
 # Complete a step
@@ -210,7 +230,7 @@ WHERE id = $1 AND status = 'running' AND worker_id = $2
 RETURNING id
 """
 
-# Queue view — claimable steps for a program
+# Queue view — claimable steps for a program (capped at 100)
 SELECT_CLAIMABLE_STEPS = """
 SELECT sr.id, sr.workflow_run_id, sr.step_template_id, sr.program_id,
        sr.status, sr.attempt, sr.queued_at,
@@ -221,6 +241,7 @@ WHERE sr.program_id = $1
   AND sr.status = 'queued'
   AND sr.locked_at IS NULL
 ORDER BY sr.queued_at
+LIMIT 100
 """
 
 # Set batch_id on step_run (A8 bridge)
