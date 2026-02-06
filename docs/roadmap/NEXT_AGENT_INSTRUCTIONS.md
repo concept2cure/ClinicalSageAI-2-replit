@@ -1,40 +1,58 @@
 # Next Agent Instructions — Continuation Playbook
-> **Updated:** 2026-02-06 | **Branch:** `phase4/orchestration-schema`  
-> **PR:** [#110](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/110)
+
+> **Updated:** 2026-02-06 | **Status:** Phase 4 split into clean PRs
 
 ---
 
 ## Current State
 
+### Open PRs (merge in order)
+
+| PR                                                                       | Branch                        | Scope                                           | Status  |
+| ------------------------------------------------------------------------ | ----------------------------- | ----------------------------------------------- | ------- |
+| [#110](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/110) | `phase4/orchestration-schema` | Schema DDL only (6 tables, RLS, indexes, views) | 🟡 Open |
+| [#112](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/112) | `phase4/orchestration-runner` | Runner + API + tests (no schema)                | 🟡 Open |
+| [#113](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/113) | `phase4/orchestration-seeds`  | Seed workflow templates (no code)               | 🟡 Open |
+| [#114](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/114) | `docs/roadmap-phase4`         | Roadmap docs + index (no runtime)               | 🟡 Open |
+
+**Merge order:** #110 → #112 → #113 → #114 (schema first, then code, then data, then docs)
+
 ### What Has Been Built
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| Orchestration schema (6 tables, RLS, indexes, views) | ✅ Complete | `db/migrations/20260206_phase4_orchestration_kernel.sql` |
-| Seed workflow templates (IND Intake + DOCX Gen) | ✅ Complete | `db/migrations/20260206_phase4_seed_templates.sql` |
-| SQL query module | ✅ Complete | `shadow_service/shadow_service/sql_orchestration.py` |
-| Pydantic models | ✅ Complete | `shadow_service/shadow_service/models_orchestration.py` |
-| Runner service (start, advance, claim, complete, fail, A8 bridge) | ✅ Complete | `shadow_service/shadow_service/orchestration_runner.py` |
-| FastAPI router (9 endpoints) | ✅ Complete | `shadow_service/shadow_service/router_orchestration.py` |
-| Router registered in main.py | ✅ Complete | `shadow_service/shadow_service/main.py` |
-| Unit tests | ✅ Complete | `shadow_service/tests/test_orchestration.py` |
-| Roadmap documentation | ✅ Complete | `docs/roadmap/` |
+| Component                                                         | Status | Location                                                 | PR   |
+| ----------------------------------------------------------------- | ------ | -------------------------------------------------------- | ---- |
+| Orchestration schema (6 tables, RLS, indexes, views)              | ✅     | `db/migrations/20260206_phase4_orchestration_kernel.sql` | #110 |
+| SQL query module                                                  | ✅     | `shadow_service/shadow_service/sql_orchestration.py`     | #112 |
+| Pydantic models                                                   | ✅     | `shadow_service/shadow_service/models_orchestration.py`  | #112 |
+| Runner service (start, advance, claim, complete, fail, A8 bridge) | ✅     | `shadow_service/shadow_service/orchestration_runner.py`  | #112 |
+| FastAPI router (9 endpoints)                                      | ✅     | `shadow_service/shadow_service/router_orchestration.py`  | #112 |
+| Router registered in main.py                                      | ✅     | `shadow_service/shadow_service/main.py`                  | #112 |
+| Unit tests                                                        | ✅     | `shadow_service/tests/test_orchestration.py`             | #112 |
+| Seed workflow templates (IND Intake + DOCX Gen)                   | ✅     | `db/migrations/20260207_phase4_seed_templates.sql`       | #113 |
+| Roadmap documentation                                             | ✅     | `docs/roadmap/`                                          | #114 |
 
-### Branch Status
+### Base State
 
-- **Branch:** `phase4/orchestration-schema`
-- **PR #110:** Open — includes schema + runner + API + tests + docs
-- **Base:** `main` (all 6 prior PRs #104-#109 merged)
+- **`main`** has all 6 prior PRs (#104-#109) merged
+- All Phase 4 branches fork from `main` + schema commit
 
 ---
 
 ## What to Do Next
 
-### Immediate: Merge PR #110
+### Immediate: Merge Phase 4 PRs
 
-1. Verify CI passes (or fix any lint/test failures)
-2. Merge PR #110 into main
-3. Pull latest main locally
+1. Merge #110 (schema) — verify CI, merge
+2. Rebase #112 onto updated main, fix any conflicts, merge
+3. Rebase #113 onto updated main, merge
+4. Merge #114 (docs — no conflicts expected)
+
+### Phase 4.2 Hardening Checklist (before merging #112)
+
+- [ ] **Auth gate** orchestration endpoints (admin token or service auth — same as A8 ops)
+- [ ] **Audit trail** on every state transition includes `request_id` + `actor` headers
+- [ ] **DB session GUC** — verify `set_config('app.current_program_id', ...)` is called before every RLS-scoped query
+- [ ] **Error handling** — runner functions catch DB errors and return meaningful HTTP status codes
 
 ### Phase 5: Evidence Fabric
 
@@ -71,6 +89,7 @@ Examples: `phase5/evidence-fabric`, `phase6/docx-factory`
 ### PR Convention
 
 Each phase ships in 1-3 PRs:
+
 1. **Schema PR** — Database migration only
 2. **Kernel PR** — Backend services + API + tests
 3. **Seed PR** — Templates/seed data (if separate from kernel)
@@ -128,28 +147,28 @@ finally:
 
 ### Database Schemas
 
-| Schema | Purpose | RLS GUC |
-|--------|---------|---------|
-| `core` | Programs, projects | `app.current_program_id` |
-| `identity` | Organizations, users | `app.current_org_id` |
-| `vault` | Review batches, sensitive data | `app.current_program_id` |
-| `prose` | Smart fragments, document content | — |
-| `truth` | Clinical truth store | — |
-| `audit` | Immutable audit log | — |
-| `orchestration` | Workflow engine (Phase 4) | `app.current_program_id` |
+| Schema          | Purpose                           | RLS GUC                  |
+| --------------- | --------------------------------- | ------------------------ |
+| `core`          | Programs, projects                | `app.current_program_id` |
+| `identity`      | Organizations, users              | `app.current_org_id`     |
+| `vault`         | Review batches, sensitive data    | `app.current_program_id` |
+| `prose`         | Smart fragments, document content | —                        |
+| `truth`         | Clinical truth store              | —                        |
+| `audit`         | Immutable audit log               | —                        |
+| `orchestration` | Workflow engine (Phase 4)         | `app.current_program_id` |
 
 ### Shadow Service Routers
 
-| Router | Prefix | Domain |
-|--------|--------|--------|
-| `router_drift` | `/drift` | Configuration drift |
-| `router_regulatory` | `/regulatory` | Regulatory operations |
-| `router_ectd` | `/ectd` | eCTD management |
-| `router_governance` | `/governance` | Purge/approval workflows |
-| `router_aiml` | `/aiml` | AI/ML governance |
-| `router_cybersecurity` | `/cybersecurity` | SBOM/VEX |
-| `router_transparency` | `/transparency` | Data transparency |
-| `router_training` | `/training` | Training compliance |
+| Router                 | Prefix           | Domain                    |
+| ---------------------- | ---------------- | ------------------------- |
+| `router_drift`         | `/drift`         | Configuration drift       |
+| `router_regulatory`    | `/regulatory`    | Regulatory operations     |
+| `router_ectd`          | `/ectd`          | eCTD management           |
+| `router_governance`    | `/governance`    | Purge/approval workflows  |
+| `router_aiml`          | `/aiml`          | AI/ML governance          |
+| `router_cybersecurity` | `/cybersecurity` | SBOM/VEX                  |
+| `router_transparency`  | `/transparency`  | Data transparency         |
+| `router_training`      | `/training`      | Training compliance       |
 | `router_orchestration` | `/orchestration` | Workflow engine (Phase 4) |
 
 ---
