@@ -14,6 +14,9 @@ Endpoints:
   GET   /evidence/provenance?claim_id=...  — provenance trail
   GET   /evidence/claims/{claim_id}/verify — hash integrity check
   GET   /evidence/contradictions           — contradiction detector
+  POST  /evidence/contradiction-scans      — run a contradiction scan
+  GET   /evidence/contradiction-scans      — list scan results
+  GET   /evidence/contradiction-scans/{scan_id} — get specific scan
 
 Auth: All endpoints require X-Admin-Token matching REVIEW_ADMIN_TOKEN env var.
       Reuses the same A8 ops token — no second secret.
@@ -49,6 +52,7 @@ from .models_evidence import (
     ClaimScoreBreakdown,
 )
 from . import evidence_runner as runner
+from . import contradiction_scanner as scanner
 
 logger = logging.getLogger(__name__)
 
@@ -374,5 +378,64 @@ async def detect_contradictions(
     try:
         results = await runner.detect_contradictions(program_id, section_ref)
         return {"contradictions": results, "total": len(results)}
+    except LiteModeError as e:
+        _handle_lite_mode(e)
+
+
+# =============================================================================
+# Contradiction Scanner — batch scan with persisted results
+# =============================================================================
+
+@router.post("/contradiction-scans")
+async def run_contradiction_scan(
+    program_id: UUID = Query(...),
+    scan_type: str = Query("full"),
+    section_ref: Optional[str] = Query(None),
+    triggered_by: str = Query("manual"),
+    ctx: EvidenceAdminContext = Depends(get_evidence_context),
+):
+    """Run a contradiction scan and persist the results.
+
+    Creates a scan record, executes detection, and stores the snapshot.
+    Scan types: full (all claims), section (filtered by section_ref).
+    """
+    try:
+        result = await scanner.run_scan(
+            program_id=program_id,
+            scan_type=scan_type,
+            section_ref=section_ref,
+            triggered_by=triggered_by,
+            actor=ctx.admin_actor,
+        )
+        return result
+    except LiteModeError as e:
+        _handle_lite_mode(e)
+
+
+@router.get("/contradiction-scans")
+async def list_contradiction_scans(
+    program_id: UUID = Query(...),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """List contradiction scans for a program (newest first)."""
+    try:
+        scans = await scanner.list_scans(program_id, limit, offset)
+        return {"scans": scans, "total": len(scans)}
+    except LiteModeError as e:
+        _handle_lite_mode(e)
+
+
+@router.get("/contradiction-scans/{scan_id}")
+async def get_contradiction_scan(
+    scan_id: UUID,
+    program_id: UUID = Query(...),
+):
+    """Get a specific contradiction scan by ID."""
+    try:
+        result = await scanner.get_scan(scan_id, program_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Scan not found")
+        return result
     except LiteModeError as e:
         _handle_lite_mode(e)

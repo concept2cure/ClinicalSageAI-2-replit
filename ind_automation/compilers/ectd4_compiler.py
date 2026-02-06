@@ -160,7 +160,10 @@ class ECTD4Compiler:
             else:
                 raise RuntimeError("Production requires TSA timestamping on signatures")
         else:
-            if hasattr(signer, 'sign_document'):
+            # Prefer TSA-enabled signing when available, even outside production
+            if hasattr(signer, 'sign_with_timestamp'):
+                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+            elif hasattr(signer, 'sign_document'):
                 signed_path = signer.sign_document(docx_path, signer_info)
             else:
                 raise RuntimeError("Signer does not implement sign_document")
@@ -169,6 +172,9 @@ class ECTD4Compiler:
         signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
         if hasattr(signer, 'last_tsa_info') and getattr(signer, 'last_tsa_info'):
             signature_result['tsa'] = signer.last_tsa_info
+        # Include HSM/KMS metadata when signer exposes it
+        if hasattr(signer, 'kms_key_id') and signer.kms_key_id:
+            signature_result['hsm_key_id'] = signer.kms_key_id
 
         try:
             sig_event = signer.create_fhir_signature_event(signature_result, signer_info, ectd_doc.document_id)

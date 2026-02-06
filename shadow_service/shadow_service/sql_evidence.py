@@ -266,6 +266,60 @@ LIMIT 1
 """
 
 # =============================================================================
+# Contradiction Scans — persist batch scan results
+# =============================================================================
+
+INSERT_CONTRADICTION_SCAN = """
+INSERT INTO evidence.contradiction_scans
+    (program_id, scan_type, section_ref, status, total_claims,
+     contradictions_found, results, triggered_by, actor)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, program_id, scan_type, section_ref, status, total_claims,
+          contradictions_found, results, triggered_by, actor,
+          error_message, started_at, completed_at, created_at
+"""
+
+UPDATE_CONTRADICTION_SCAN_COMPLETE = """
+UPDATE evidence.contradiction_scans
+SET status = 'completed',
+    total_claims = $2,
+    contradictions_found = $3,
+    results = $4,
+    completed_at = NOW()
+WHERE id = $1
+RETURNING id, program_id, scan_type, section_ref, status, total_claims,
+          contradictions_found, results, triggered_by, actor,
+          error_message, started_at, completed_at, created_at
+"""
+
+UPDATE_CONTRADICTION_SCAN_FAILED = """
+UPDATE evidence.contradiction_scans
+SET status = 'failed',
+    error_message = $2,
+    completed_at = NOW()
+WHERE id = $1
+RETURNING id, status, error_message, completed_at
+"""
+
+SELECT_CONTRADICTION_SCANS_BY_PROGRAM = """
+SELECT id, program_id, scan_type, section_ref, status, total_claims,
+       contradictions_found, results, triggered_by, actor,
+       error_message, started_at, completed_at, created_at
+FROM evidence.contradiction_scans
+WHERE program_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+"""
+
+SELECT_CONTRADICTION_SCAN_BY_ID = """
+SELECT id, program_id, scan_type, section_ref, status, total_claims,
+       contradictions_found, results, triggered_by, actor,
+       error_message, started_at, completed_at, created_at
+FROM evidence.contradiction_scans
+WHERE id = $1
+"""
+
+# =============================================================================
 # RLS GUC helpers — reuse orchestration pattern
 # =============================================================================
 
