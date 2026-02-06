@@ -14430,7 +14430,6 @@ const ComprehensiveCMCPlatform = () => {
             </div>
           </div>
         )}
-        />
       </div>
     );
   };

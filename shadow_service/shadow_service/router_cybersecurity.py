@@ -60,7 +60,7 @@ async def create_sbom(
 ):
     """
     Create a new Software Bill of Materials.
-    
+
     SBOM must meet NTIA Minimum Elements:
     - Supplier Name
     - Component Name
@@ -73,10 +73,10 @@ async def create_sbom(
     try:
         sbom_id = uuid4()
         now = datetime.utcnow()
-        
+
         # Validate SBOM components
         validation_result = _validate_sbom(data.components)
-        
+
         sbom = SBOM(
             id=sbom_id,
             program_id=data.program_id,
@@ -97,22 +97,20 @@ async def create_sbom(
             is_machine_generated=True,
             fda_submission_ready=validation_result.ntia_compliant,
         )
-        
+
         # Persist to DB if available
         try:
             conn = await db.acquire_connection()
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-                if x_request_id:
-                    await conn.execute(f"SET LOCAL app.request_id = '{x_request_id}'")
+                await db.set_session_context(conn, user=x_actor, request_id=x_request_id)
                 # DB insert would go here
             await db.release_connection(conn)
         except LiteModeError:
             logger.info("Running in lite mode - SBOM not persisted to database")
-        
+
         logger.info(f"SBOM created: {sbom_id} - {data.name} v{data.version}")
         return sbom
-        
+
     except Exception as e:
         logger.exception("Failed to create SBOM")
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,7 +120,7 @@ def _validate_sbom(components: List[SBOMComponent]) -> SBOMValidationResult:
     """Validate SBOM against NTIA minimum elements."""
     errors = []
     warnings = []
-    
+
     # Check each component for NTIA required fields
     for i, comp in enumerate(components):
         if not comp.supplier_name:
@@ -131,7 +129,7 @@ def _validate_sbom(components: List[SBOMComponent]) -> SBOMValidationResult:
             errors.append(f"Component {i}: Missing component_name (NTIA required)")
         if not comp.version:
             errors.append(f"Component {i}: Missing version (NTIA required)")
-        
+
         # Warnings for recommended fields
         if not comp.cpe and not comp.purl:
             warnings.append(f"Component {i} ({comp.component_name}): Missing unique identifier (CPE or PURL)")
@@ -139,10 +137,10 @@ def _validate_sbom(components: List[SBOMComponent]) -> SBOMValidationResult:
             warnings.append(f"Component {i} ({comp.component_name}): Missing license information")
         if not comp.sha256:
             warnings.append(f"Component {i} ({comp.component_name}): Missing SHA-256 hash")
-    
+
     is_valid = len(errors) == 0
     ntia_compliant = is_valid  # Basic NTIA compliance
-    
+
     return SBOMValidationResult(
         is_valid=is_valid,
         format_compliant=True,  # Would check against schema
@@ -163,7 +161,7 @@ async def list_sboms(
     """List SBOMs with filtering."""
     try:
         return SBOMList(items=[], count=0, total=0)
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -176,7 +174,7 @@ async def get_sbom(sbom_id: UUID):
     """Get a specific SBOM by ID."""
     try:
         raise HTTPException(status_code=404, detail="SBOM not found")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -193,7 +191,7 @@ async def export_sbom(
 ):
     """
     Export SBOM in standard format.
-    
+
     Formats:
     - SPDX_JSON: ISO/IEC 5962 JSON format
     - CYCLONEDX_JSON: OWASP CycloneDX JSON format
@@ -205,7 +203,7 @@ async def export_sbom(
             "content": "SBOM export not yet implemented",
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -220,7 +218,7 @@ async def validate_sbom(
 ):
     """
     Re-validate an existing SBOM.
-    
+
     Checks compliance with:
     - NTIA Minimum Elements
     - Format specification (SPDX/CycloneDX schema)
@@ -238,7 +236,7 @@ async def validate_sbom(
             "validated_by": x_actor,
             "validated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -266,7 +264,7 @@ async def get_sbom_compliance_report(sbom_id: UUID):
             generated_at=datetime.utcnow(),
             generated_by="system",
         )
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -286,19 +284,19 @@ async def create_vex_document(
 ):
     """
     Create a VEX (Vulnerability Exploitability Exchange) document.
-    
+
     VEX provides context for vulnerabilities in SBOM components,
     indicating whether they are actually exploitable in the product.
     """
     try:
         now = datetime.utcnow()
-        
+
         # Calculate summary stats
         not_affected = sum(1 for s in data.statements if s.status == VulnerabilityStatus.NOT_AFFECTED)
         affected = sum(1 for s in data.statements if s.status == VulnerabilityStatus.AFFECTED)
         fixed = sum(1 for s in data.statements if s.status == VulnerabilityStatus.FIXED)
         investigating = sum(1 for s in data.statements if s.status == VulnerabilityStatus.UNDER_INVESTIGATION)
-        
+
         vex_doc = VEXDocument(
             id=uuid4(),
             sbom_id=sbom_id,
@@ -316,10 +314,10 @@ async def create_vex_document(
             created_at=now,
             last_updated=now,
         )
-        
+
         logger.info(f"VEX document created for SBOM {sbom_id}: {vex_doc.document_id}")
         return vex_doc
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -332,7 +330,7 @@ async def get_vex_document(sbom_id: UUID):
     """Get the VEX document for an SBOM."""
     try:
         raise HTTPException(status_code=404, detail="No VEX document found for this SBOM")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -350,13 +348,13 @@ async def add_vex_statement(
 ):
     """
     Add a VEX statement to an existing document.
-    
+
     Use this to communicate the status of newly discovered
     vulnerabilities in SBOM components.
     """
     try:
         now = datetime.utcnow()
-        
+
         statement = VEXStatement(
             id=uuid4(),
             vulnerability_id=data.vulnerability_id,
@@ -374,14 +372,14 @@ async def add_vex_statement(
             last_updated=now,
             issued_by=x_actor,
         )
-        
+
         return {
             "vex_document_id": str(vex_id),
             "statement": statement.model_dump(),
             "added_by": x_actor,
             "added_at": now.isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -400,7 +398,7 @@ async def register_cyber_device(
 ):
     """
     Register a cyber device per Section 524B requirements.
-    
+
     A "cyber device" is any device that:
     1. Includes software
     2. Can connect to the internet
@@ -408,7 +406,7 @@ async def register_cyber_device(
     """
     try:
         now = datetime.utcnow()
-        
+
         device = CyberDevice(
             id=uuid4(),
             program_id=data.program_id,
@@ -425,10 +423,10 @@ async def register_cyber_device(
             created_at=now,
             created_by=x_actor,
         )
-        
+
         logger.info(f"Cyber device registered: {device.id} - {data.device_name}")
         return device
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -447,7 +445,7 @@ async def list_cyber_devices(
     """List registered cyber devices."""
     try:
         return CyberDeviceList(items=[], count=0, total=0)
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -460,7 +458,7 @@ async def get_cyber_device(device_id: UUID):
     """Get details of a registered cyber device."""
     try:
         raise HTTPException(status_code=404, detail="Cyber device not found")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -477,7 +475,7 @@ async def assess_device_compliance(
 ):
     """
     Assess Section 524B compliance for a cyber device.
-    
+
     Checks:
     - SBOM exists and is valid
     - VEX document exists
@@ -486,7 +484,7 @@ async def assess_device_compliance(
     """
     try:
         now = datetime.utcnow()
-        
+
         # Would fetch device and check requirements
         assessment = {
             "device_id": str(device_id),
@@ -515,9 +513,9 @@ async def assess_device_compliance(
             "assessed_by": x_actor,
             "assessed_at": now.isoformat(),
         }
-        
+
         return assessment
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -539,7 +537,7 @@ async def link_sbom_to_device(
             "linked_by": x_actor,
             "linked_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -559,18 +557,18 @@ async def scan_sbom_vulnerabilities(
 ):
     """
     Record a vulnerability scan result for an SBOM.
-    
+
     Integrate with tools like Trivy, Grype, or Snyk
     to scan components for known vulnerabilities.
     """
     try:
         now = datetime.utcnow()
-        
+
         total = data.critical_count + data.high_count + data.medium_count + data.low_count
-        
+
         # Example threshold: No critical, <=3 high
         passes_threshold = (data.critical_count == 0 and data.high_count <= 3)
-        
+
         scan = VulnerabilityScan(
             id=uuid4(),
             sbom_id=sbom_id,
@@ -587,10 +585,10 @@ async def scan_sbom_vulnerabilities(
             passes_threshold=passes_threshold,
             threshold_definition=data.threshold_definition,
         )
-        
+
         logger.info(f"Vulnerability scan recorded for SBOM {sbom_id}: {total} vulnerabilities")
         return scan
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -607,7 +605,7 @@ async def list_sbom_scans(sbom_id: UUID):
             "scans": [],
             "count": 0,
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -625,7 +623,7 @@ async def get_cybersecurity_dashboard(
 ):
     """
     Get cybersecurity compliance dashboard.
-    
+
     Executive-level view of:
     - Device inventory and compliance
     - SBOM/VEX coverage
@@ -634,7 +632,7 @@ async def get_cybersecurity_dashboard(
     """
     try:
         now = datetime.utcnow()
-        
+
         return CybersecurityDashboard(
             total_cyber_devices=0,
             compliant_devices=0,
@@ -652,7 +650,7 @@ async def get_cybersecurity_dashboard(
             alerts=_generate_cybersecurity_alerts(),
             generated_at=now,
         )
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -684,7 +682,7 @@ def _generate_cybersecurity_alerts() -> List[dict]:
 async def get_section_524b_requirements():
     """
     Get Section 524B compliance requirements reference.
-    
+
     Summary of FDA cyber device requirements from the
     Consolidated Appropriations Act, 2023.
     """
@@ -753,7 +751,7 @@ async def get_fda_cybersecurity_readiness(
 ):
     """
     Generate FDA cybersecurity submission readiness report.
-    
+
     Assesses readiness for premarket submission including:
     - SBOM completeness and validity
     - VEX documentation
@@ -788,7 +786,7 @@ async def get_fda_cybersecurity_readiness(
             ],
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:

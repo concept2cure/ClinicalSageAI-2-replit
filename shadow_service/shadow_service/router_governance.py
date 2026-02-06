@@ -63,7 +63,7 @@ async def create_purge_request(
 ):
     """
     Create a new purge request.
-    
+
     Purge requests require approval from designated roles (default: QA + Legal)
     before execution. The request captures the current retention and legal hold
     state for audit purposes.
@@ -72,13 +72,11 @@ async def create_purge_request(
         # Set session context for attribution
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-            if x_request_id:
-                await conn.execute(f"SET LOCAL app.request_id = '{x_request_id}'")
-            
+            await db.set_session_context(conn, user=x_actor, request_id=x_request_id)
+
             # Convert required_approvals to text array
             required_approvals = [r.value for r in data.required_approvals]
-            
+
             record = await conn.fetchrow(
                 sql.SQL_CREATE_PURGE_REQUEST_SIMPLE,
                 data.program_id,
@@ -91,12 +89,12 @@ async def create_purge_request(
                 required_approvals,
                 data.scheduled_execution_at,
             )
-            
+
         await db.release_connection(conn)
-        
+
         logger.info(f"Purge request created: {record['id']} by {x_actor}")
         return PurgeRequest(**dict(record))
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -122,21 +120,21 @@ async def list_purge_requests(
             limit,
             offset,
         )
-        
+
         count_record = await db.fetchrow(
             sql.SQL_COUNT_PURGE_REQUESTS,
             program_id,
             status.value if status else None,
             object_type.value if object_type else None,
         )
-        
+
         items = [PurgeRequestSummary(**dict(r)) for r in records]
         return PurgeRequestList(
             items=items,
             count=len(items),
             total=count_record['count'] if count_record else len(items)
         )
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -161,28 +159,28 @@ async def cancel_purge_request(
 ):
     """
     Cancel a purge request.
-    
+
     Only requests in REQUESTED, PENDING_APPROVAL, APPROVED, or SCHEDULED
     status can be canceled.
     """
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-            
+            await db.set_session_context(conn, user=x_actor)
+
             record = await conn.fetchrow(sql.SQL_CANCEL_PURGE_REQUEST, request_id)
-            
+
         await db.release_connection(conn)
-        
+
         if not record:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Cannot cancel request (not found or already completed/canceled)"
             )
-        
+
         logger.info(f"Purge request {request_id} canceled by {x_actor}: {x_change_reason}")
         return PurgeRequest(**dict(record))
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -211,13 +209,13 @@ async def get_approval_status(request_id: UUID):
     request = await db.fetchrow(sql.SQL_GET_PURGE_REQUEST, request_id)
     if not request:
         raise HTTPException(status_code=404, detail="Purge request not found")
-    
+
     records = await db.fetch(sql.SQL_GET_APPROVAL_STATUS, request_id)
     statuses = [ApprovalStatus(**dict(r)) for r in records]
-    
+
     all_approved = all(s.status == 'APPROVE' for s in statuses)
     has_rejection = any(s.status == 'REJECT' for s in statuses)
-    
+
     return ApprovalStatusList(
         request_id=request_id,
         statuses=statuses,
@@ -235,15 +233,15 @@ async def approve_purge_request(
 ):
     """
     Submit an approval decision for a purge request.
-    
+
     Each required role can only approve once. All required approvals
     must be received before execution.
     """
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-            
+            await db.set_session_context(conn, user=x_actor)
+
             record = await conn.fetchrow(
                 sql.SQL_CREATE_PURGE_APPROVAL,
                 request_id,
@@ -253,15 +251,15 @@ async def approve_purge_request(
                 data.decision.value,
                 data.decision_reason,
             )
-            
+
         await db.release_connection(conn)
-        
+
         logger.info(
             f"Purge request {request_id} {data.decision.value}d by {x_actor} "
             f"as {data.approver_role.value}"
         )
         return PurgeApproval(**dict(record))
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -295,76 +293,76 @@ async def execute_purge_request(
 ):
     """
     Execute a purge request.
-    
+
     This endpoint will:
     1. Verify all constraints are satisfied (approvals, retention, legal hold)
     2. Execute the requested action (ARCHIVE, TOMBSTONE, or FULL_PURGE)
     3. Create tombstone record if applicable
     4. Update request status
-    
+
     For TOMBSTONE action, content is hashed and then redacted, preserving
     proof of prior existence without the actual data.
     """
     import time
     start_time = time.time()
-    
+
     try:
         # Check if can execute
         check = await db.fetchrow(sql.SQL_CHECK_CAN_EXECUTE, request_id)
         if not check:
             raise HTTPException(status_code=404, detail="Purge request not found")
-        
+
         if not check['can_execute'] and not data.force:
             raise HTTPException(
                 status_code=400,
                 detail=f"Cannot execute: {check['reason']}"
             )
-        
+
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-            
+            await db.set_session_context(conn, user=x_actor)
+
             # Get the request details
             request = await conn.fetchrow(sql.SQL_GET_PURGE_REQUEST, request_id)
             if not request:
                 raise HTTPException(status_code=404, detail="Purge request not found")
-            
+
             # Start execution
             await conn.fetchrow(sql.SQL_START_EXECUTION, request_id, x_actor)
-            
+
             tombstone_id = None
             content_hash = None
             execution_details = {"notes": data.execution_notes}
-            
+
             try:
                 # Execute based on action type
                 action = request['requested_action']
                 object_type = request['object_type']
                 object_id = request['object_id']
-                
+
                 if action == 'ARCHIVE':
                     # Soft archive - just update status
                     execution_details['action'] = 'status_update'
                     execution_details['new_status'] = 'ARCHIVED'
                     # Note: Actual status update would happen on the target table
-                    
+
                 elif action == 'TOMBSTONE':
                     # Create tombstone and redact content
                     # First, get the original record to hash it
                     schema, table = _get_schema_table(object_type)
-                    
+
                     # Get original content for hashing
                     original = await conn.fetchrow(
                         f"SELECT * FROM {schema}.{table} WHERE id = $1",
                         object_id
                     )
-                    
+
                     if original:
                         # Create content hash
                         content_hash = hashlib.sha256(
                             json.dumps(dict(original), default=str).encode()
                         ).hexdigest()
-                        
+
                         metadata_hash = hashlib.sha256(
                             json.dumps({
                                 'id': str(object_id),
@@ -372,7 +370,7 @@ async def execute_purge_request(
                                 'created_at': str(original.get('created_at', ''))
                             }).encode()
                         ).hexdigest()
-                        
+
                         # Create tombstone
                         tombstone = await conn.fetchrow(
                             sql.SQL_CREATE_TOMBSTONE,
@@ -388,20 +386,20 @@ async def execute_purge_request(
                             None,  # related_tombstone_ids
                         )
                         tombstone_id = tombstone['id']
-                        
+
                         execution_details['tombstone_created'] = True
                         execution_details['content_hash'] = content_hash
-                        
+
                         # Redact content (if the table supports it)
                         # Note: This would need to be table-specific
                         # For now, we just record the tombstone
-                
+
                 elif action == 'FULL_PURGE':
                     # This is only for non-regulated data
                     # We still create a tombstone for audit trail
                     execution_details['action'] = 'full_purge'
                     execution_details['warning'] = 'Full purge is not recommended for regulated data'
-                
+
                 # Complete execution
                 await conn.fetchrow(
                     sql.SQL_COMPLETE_EXECUTION,
@@ -410,7 +408,7 @@ async def execute_purge_request(
                     tombstone_id,
                     content_hash,
                 )
-                
+
             except Exception as exec_error:
                 # Mark as failed
                 await conn.fetchrow(
@@ -420,13 +418,13 @@ async def execute_purge_request(
                     json.dumps({'error': str(exec_error)}),
                 )
                 raise
-            
+
         await db.release_connection(conn)
-        
+
         execution_time_ms = int((time.time() - start_time) * 1000)
-        
+
         logger.info(f"Purge request {request_id} executed by {x_actor}")
-        
+
         return ExecutionResult(
             success=True,
             request_id=request_id,
@@ -436,7 +434,7 @@ async def execute_purge_request(
             execution_time_ms=execution_time_ms,
             details=execution_details,
         )
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -473,7 +471,7 @@ async def get_purge_audit_trail(
 ):
     """
     Get purge audit trail for regulatory inspections.
-    
+
     Returns complete history of purge requests including approval chains
     and tombstone references.
     """
@@ -484,7 +482,7 @@ async def get_purge_audit_trail(
         to_date,
         limit,
     )
-    
+
     items = [PurgeAuditEntry(**dict(r)) for r in records]
     return PurgeAuditTrail(
         items=items,
@@ -540,7 +538,7 @@ async def get_governance_dashboard_summary(
 ):
     """
     Get comprehensive governance dashboard summary.
-    
+
     Provides executive-level KPIs including:
     - Request volume and status distribution
     - Approval workflow metrics
@@ -550,20 +548,20 @@ async def get_governance_dashboard_summary(
     try:
         # Get workflow stats
         workflow_stats = await db.fetchrow(sql.SQL_GET_PURGE_WORKFLOW_STATS, program_id)
-        
+
         # Get pending requests for urgency analysis
         pending = await db.fetch(sql.SQL_GET_PENDING_PURGE_REQUESTS, program_id)
-        
+
         # Analyze urgency levels
         critical_pending = []
         high_pending = []
         normal_pending = []
-        
+
         now = datetime.utcnow()
         for r in pending:
             created = r.get('created_at', now)
             age_days = (now - created).days if created else 0
-            
+
             # Calculate urgency based on age and scheduled time
             scheduled = r.get('scheduled_execution_at')
             if scheduled and scheduled <= now:
@@ -572,7 +570,7 @@ async def get_governance_dashboard_summary(
                 high_pending.append(dict(r))
             else:
                 normal_pending.append(dict(r))
-        
+
         # Calculate approval efficiency metrics
         approval_efficiency = None
         if workflow_stats:
@@ -580,7 +578,7 @@ async def get_governance_dashboard_summary(
             completed = workflow_stats.get('completed', 0)
             if total > 0:
                 approval_efficiency = round((completed / total) * 100, 1)
-        
+
         return {
             "summary": {
                 "total_requests": workflow_stats['total_requests'] if workflow_stats else 0,
@@ -605,7 +603,7 @@ async def get_governance_dashboard_summary(
             "alerts": _generate_governance_alerts(workflow_stats, critical_pending, high_pending),
             "generated_at": now.isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -616,7 +614,7 @@ async def get_governance_dashboard_summary(
 def _generate_governance_alerts(workflow_stats: dict, critical: list, high: list) -> List[dict]:
     """Generate governance-related alerts based on current state."""
     alerts = []
-    
+
     # Critical pending requests alert
     if len(critical) > 0:
         alerts.append({
@@ -626,7 +624,7 @@ def _generate_governance_alerts(workflow_stats: dict, critical: list, high: list
             "description": "Scheduled purge operations have not been executed on time",
             "action": "Review and execute or reschedule immediately",
         })
-    
+
     # High urgency pending requests
     if len(high) > 3:
         alerts.append({
@@ -636,7 +634,7 @@ def _generate_governance_alerts(workflow_stats: dict, critical: list, high: list
             "description": "Extended approval delays may impact compliance timelines",
             "action": "Expedite approval workflow review",
         })
-    
+
     # Failed requests
     if workflow_stats and workflow_stats.get('failed', 0) > 0:
         alerts.append({
@@ -646,7 +644,7 @@ def _generate_governance_alerts(workflow_stats: dict, critical: list, high: list
             "description": "Some purge operations failed during execution",
             "action": "Investigate failure causes and retry",
         })
-    
+
     # Pending approval backlog
     if workflow_stats and workflow_stats.get('pending_approval', 0) > 10:
         alerts.append({
@@ -656,7 +654,7 @@ def _generate_governance_alerts(workflow_stats: dict, critical: list, high: list
             "description": "Consider assigning additional approvers",
             "action": "Review approval workflow capacity",
         })
-    
+
     return alerts
 
 
@@ -668,7 +666,7 @@ async def get_approval_metrics(
 ):
     """
     Get detailed approval workflow metrics.
-    
+
     Provides insights into:
     - Approver response times
     - Approval vs rejection ratios
@@ -701,7 +699,7 @@ async def get_approval_metrics(
             },
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -715,7 +713,7 @@ async def get_compliance_status(
 ):
     """
     Get compliance status for governance operations.
-    
+
     Part 11 compliance indicators including:
     - Audit trail completeness
     - Retention policy adherence
@@ -724,10 +722,10 @@ async def get_compliance_status(
     """
     try:
         workflow_stats = await db.fetchrow(sql.SQL_GET_PURGE_WORKFLOW_STATS, program_id)
-        
+
         # Calculate compliance scores
         audit_completeness = 100.0  # All actions are logged by design
-        
+
         return {
             "compliance": {
                 "overall_score": 98.5,
@@ -751,7 +749,7 @@ async def get_compliance_status(
             "recommendations": _generate_compliance_recommendations(workflow_stats),
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -762,7 +760,7 @@ async def get_compliance_status(
 def _generate_compliance_recommendations(workflow_stats: dict) -> List[dict]:
     """Generate compliance improvement recommendations."""
     recommendations = []
-    
+
     if workflow_stats and workflow_stats.get('failed', 0) > 0:
         recommendations.append({
             "priority": "high",
@@ -771,7 +769,7 @@ def _generate_compliance_recommendations(workflow_stats: dict) -> List[dict]:
             "description": "Failed executions may leave data in inconsistent state",
             "action": "Review execution logs and retry failed operations",
         })
-    
+
     # General best practices
     recommendations.append({
         "priority": "low",
@@ -780,7 +778,7 @@ def _generate_compliance_recommendations(workflow_stats: dict) -> List[dict]:
         "description": "Periodic verification ensures data integrity for inspections",
         "action": "Enable automated monthly tombstone hash verification",
     })
-    
+
     return recommendations
 
 
@@ -795,7 +793,7 @@ async def list_tombstones(
 ):
     """
     List tombstone records for audit and compliance.
-    
+
     Tombstones are immutable records that prove prior existence of deleted
     data without containing the actual content. They include cryptographic
     hashes for verification purposes.
@@ -818,7 +816,7 @@ async def list_tombstones(
             },
             "note": "Tombstone records provide proof of data existence for regulatory compliance",
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -830,7 +828,7 @@ async def list_tombstones(
 async def verify_tombstone_integrity(tombstone_id: UUID):
     """
     Verify the integrity of a tombstone record.
-    
+
     Cryptographic verification ensures the tombstone has not been
     tampered with since creation.
     """
@@ -845,7 +843,7 @@ async def verify_tombstone_integrity(tombstone_id: UUID):
             "verified_at": datetime.utcnow().isoformat(),
             "note": "Tombstone verification requires hash comparison with original computation",
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -859,7 +857,7 @@ async def get_retention_summary(
 ):
     """
     Get retention policy summary for a program.
-    
+
     Shows current retention settings and data approaching
     end-of-retention period.
     """
@@ -887,7 +885,7 @@ async def get_retention_summary(
             "legal_holds_active": 0,  # Would need legal hold count
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:

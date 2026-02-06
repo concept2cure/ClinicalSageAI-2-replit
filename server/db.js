@@ -50,26 +50,21 @@ pool.on('remove', client => {
 });
 
 // Function to set tenant context variables on the database session
+// Uses parameterized set_config() to prevent SQL injection
 const setTenantContext = async (client, tenantContext) => {
   const { userId, croId, clientId } = tenantContext;
 
-  // Set session variables for row-level security policies
-  const queries = [];
-
+  // Set session variables for row-level security policies using parameterized queries
   if (userId) {
-    queries.push(`SET LOCAL app.current_user_id = '${userId}';`);
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [String(userId)]);
   }
 
   if (croId) {
-    queries.push(`SET LOCAL app.current_cro_id = '${croId}';`);
+    await client.query(`SELECT set_config('app.current_cro_id', $1, true)`, [String(croId)]);
   }
 
   if (clientId) {
-    queries.push(`SET LOCAL app.current_client_id = '${clientId}';`);
-  }
-
-  if (queries.length > 0) {
-    await client.query(queries.join(' '));
+    await client.query(`SELECT set_config('app.current_client_id', $1, true)`, [String(clientId)]);
   }
 };
 
