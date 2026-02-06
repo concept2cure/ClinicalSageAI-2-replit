@@ -335,236 +335,97 @@ REVOKE ALL ON FUNCTION core.can_access_program(UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION core.can_write_program(UUID) FROM PUBLIC;
 
 -- =============================================================================
--- F) Expanded RLS: Regulatory schema
+-- F) Expanded RLS: Regulatory schema (if it exists)
 -- =============================================================================
 
-ALTER TABLE regulatory.submissions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE regulatory.milestones ENABLE ROW LEVEL SECURITY;
-ALTER TABLE regulatory.correspondence ENABLE ROW LEVEL SECURITY;
-ALTER TABLE regulatory.meetings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE regulatory.timeline_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE regulatory.information_requests ENABLE ROW LEVEL SECURITY;
+-- Create regulatory schema if not exists (may be created by migration 014 or 081)
+CREATE SCHEMA IF NOT EXISTS regulatory;
 
--- Submissions
-DROP POLICY IF EXISTS rls_regulatory_submissions_select ON regulatory.submissions;
-CREATE POLICY rls_regulatory_submissions_select
-  ON regulatory.submissions
-  FOR SELECT
-  USING (core.can_access_program(program_id));
+-- These tables may not exist yet - use conditional approach
+DO $$
+DECLARE
+  tbl TEXT;
+BEGIN
+  FOR tbl IN SELECT unnest(ARRAY['submissions', 'milestones', 'correspondence', 'meetings', 'timeline_events', 'information_requests'])
+  LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name=tbl) THEN
+      EXECUTE format('ALTER TABLE regulatory.%I ENABLE ROW LEVEL SECURITY', tbl);
+    END IF;
+  END LOOP;
+END $$;
 
-DROP POLICY IF EXISTS rls_regulatory_submissions_insert ON regulatory.submissions;
-CREATE POLICY rls_regulatory_submissions_insert
-  ON regulatory.submissions
-  FOR INSERT
-  WITH CHECK (core.can_write_program(program_id));
+-- Submissions (conditional)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='submissions') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_submissions_select ON regulatory.submissions';
+    EXECUTE 'CREATE POLICY rls_regulatory_submissions_select ON regulatory.submissions FOR SELECT USING (core.can_access_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_submissions_insert ON regulatory.submissions';
+    EXECUTE 'CREATE POLICY rls_regulatory_submissions_insert ON regulatory.submissions FOR INSERT WITH CHECK (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_submissions_update ON regulatory.submissions';
+    EXECUTE 'CREATE POLICY rls_regulatory_submissions_update ON regulatory.submissions FOR UPDATE USING (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_submissions_delete ON regulatory.submissions';
+    EXECUTE 'CREATE POLICY rls_regulatory_submissions_delete ON regulatory.submissions FOR DELETE USING (core.can_write_program(program_id))';
+  END IF;
 
-DROP POLICY IF EXISTS rls_regulatory_submissions_update ON regulatory.submissions;
-CREATE POLICY rls_regulatory_submissions_update
-  ON regulatory.submissions
-  FOR UPDATE
-  USING (core.can_write_program(program_id));
+  -- Milestones (via submission)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='milestones') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_milestones_select ON regulatory.milestones';
+    EXECUTE 'CREATE POLICY rls_regulatory_milestones_select ON regulatory.milestones FOR SELECT USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_access_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_milestones_insert ON regulatory.milestones';
+    EXECUTE 'CREATE POLICY rls_regulatory_milestones_insert ON regulatory.milestones FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_milestones_update ON regulatory.milestones';
+    EXECUTE 'CREATE POLICY rls_regulatory_milestones_update ON regulatory.milestones FOR UPDATE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_milestones_delete ON regulatory.milestones';
+    EXECUTE 'CREATE POLICY rls_regulatory_milestones_delete ON regulatory.milestones FOR DELETE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+  END IF;
 
-DROP POLICY IF EXISTS rls_regulatory_submissions_delete ON regulatory.submissions;
-CREATE POLICY rls_regulatory_submissions_delete
-  ON regulatory.submissions
-  FOR DELETE
-  USING (core.can_write_program(program_id));
+  -- Correspondence (via submission)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='correspondence') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_correspondence_select ON regulatory.correspondence';
+    EXECUTE 'CREATE POLICY rls_regulatory_correspondence_select ON regulatory.correspondence FOR SELECT USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_access_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_correspondence_insert ON regulatory.correspondence';
+    EXECUTE 'CREATE POLICY rls_regulatory_correspondence_insert ON regulatory.correspondence FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_correspondence_update ON regulatory.correspondence';
+    EXECUTE 'CREATE POLICY rls_regulatory_correspondence_update ON regulatory.correspondence FOR UPDATE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_correspondence_delete ON regulatory.correspondence';
+    EXECUTE 'CREATE POLICY rls_regulatory_correspondence_delete ON regulatory.correspondence FOR DELETE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+  END IF;
 
--- Milestones (via submission)
-DROP POLICY IF EXISTS rls_regulatory_milestones_select ON regulatory.milestones;
-CREATE POLICY rls_regulatory_milestones_select
-  ON regulatory.milestones
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_access_program(s.program_id)
-    )
-  );
+  -- Meetings (program_id)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='meetings') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_meetings_select ON regulatory.meetings';
+    EXECUTE 'CREATE POLICY rls_regulatory_meetings_select ON regulatory.meetings FOR SELECT USING (core.can_access_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_meetings_insert ON regulatory.meetings';
+    EXECUTE 'CREATE POLICY rls_regulatory_meetings_insert ON regulatory.meetings FOR INSERT WITH CHECK (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_meetings_update ON regulatory.meetings';
+    EXECUTE 'CREATE POLICY rls_regulatory_meetings_update ON regulatory.meetings FOR UPDATE USING (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_meetings_delete ON regulatory.meetings';
+    EXECUTE 'CREATE POLICY rls_regulatory_meetings_delete ON regulatory.meetings FOR DELETE USING (core.can_write_program(program_id))';
+  END IF;
 
-DROP POLICY IF EXISTS rls_regulatory_milestones_insert ON regulatory.milestones;
-CREATE POLICY rls_regulatory_milestones_insert
-  ON regulatory.milestones
-  FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
+  -- Timeline events (program_id)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='timeline_events') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_timeline_select ON regulatory.timeline_events';
+    EXECUTE 'CREATE POLICY rls_regulatory_timeline_select ON regulatory.timeline_events FOR SELECT USING (core.can_access_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_timeline_insert ON regulatory.timeline_events';
+    EXECUTE 'CREATE POLICY rls_regulatory_timeline_insert ON regulatory.timeline_events FOR INSERT WITH CHECK (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_timeline_update ON regulatory.timeline_events';
+    EXECUTE 'CREATE POLICY rls_regulatory_timeline_update ON regulatory.timeline_events FOR UPDATE USING (core.can_write_program(program_id))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_timeline_delete ON regulatory.timeline_events';
+    EXECUTE 'CREATE POLICY rls_regulatory_timeline_delete ON regulatory.timeline_events FOR DELETE USING (core.can_write_program(program_id))';
+  END IF;
 
-DROP POLICY IF EXISTS rls_regulatory_milestones_update ON regulatory.milestones;
-CREATE POLICY rls_regulatory_milestones_update
-  ON regulatory.milestones
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_milestones_delete ON regulatory.milestones;
-CREATE POLICY rls_regulatory_milestones_delete
-  ON regulatory.milestones
-  FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
--- Correspondence (via submission)
-DROP POLICY IF EXISTS rls_regulatory_correspondence_select ON regulatory.correspondence;
-CREATE POLICY rls_regulatory_correspondence_select
-  ON regulatory.correspondence
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_access_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_correspondence_insert ON regulatory.correspondence;
-CREATE POLICY rls_regulatory_correspondence_insert
-  ON regulatory.correspondence
-  FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_correspondence_update ON regulatory.correspondence;
-CREATE POLICY rls_regulatory_correspondence_update
-  ON regulatory.correspondence
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_correspondence_delete ON regulatory.correspondence;
-CREATE POLICY rls_regulatory_correspondence_delete
-  ON regulatory.correspondence
-  FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
--- Meetings (program_id)
-DROP POLICY IF EXISTS rls_regulatory_meetings_select ON regulatory.meetings;
-CREATE POLICY rls_regulatory_meetings_select
-  ON regulatory.meetings
-  FOR SELECT
-  USING (core.can_access_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_meetings_insert ON regulatory.meetings;
-CREATE POLICY rls_regulatory_meetings_insert
-  ON regulatory.meetings
-  FOR INSERT
-  WITH CHECK (core.can_write_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_meetings_update ON regulatory.meetings;
-CREATE POLICY rls_regulatory_meetings_update
-  ON regulatory.meetings
-  FOR UPDATE
-  USING (core.can_write_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_meetings_delete ON regulatory.meetings;
-CREATE POLICY rls_regulatory_meetings_delete
-  ON regulatory.meetings
-  FOR DELETE
-  USING (core.can_write_program(program_id));
-
--- Timeline events (program_id)
-DROP POLICY IF EXISTS rls_regulatory_timeline_select ON regulatory.timeline_events;
-CREATE POLICY rls_regulatory_timeline_select
-  ON regulatory.timeline_events
-  FOR SELECT
-  USING (core.can_access_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_timeline_insert ON regulatory.timeline_events;
-CREATE POLICY rls_regulatory_timeline_insert
-  ON regulatory.timeline_events
-  FOR INSERT
-  WITH CHECK (core.can_write_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_timeline_update ON regulatory.timeline_events;
-CREATE POLICY rls_regulatory_timeline_update
-  ON regulatory.timeline_events
-  FOR UPDATE
-  USING (core.can_write_program(program_id));
-
-DROP POLICY IF EXISTS rls_regulatory_timeline_delete ON regulatory.timeline_events;
-CREATE POLICY rls_regulatory_timeline_delete
-  ON regulatory.timeline_events
-  FOR DELETE
-  USING (core.can_write_program(program_id));
-
--- Information requests (via submission)
-DROP POLICY IF EXISTS rls_regulatory_ir_select ON regulatory.information_requests;
-CREATE POLICY rls_regulatory_ir_select
-  ON regulatory.information_requests
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_access_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_ir_insert ON regulatory.information_requests;
-CREATE POLICY rls_regulatory_ir_insert
-  ON regulatory.information_requests
-  FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_ir_update ON regulatory.information_requests;
-CREATE POLICY rls_regulatory_ir_update
-  ON regulatory.information_requests
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
-
-DROP POLICY IF EXISTS rls_regulatory_ir_delete ON regulatory.information_requests;
-CREATE POLICY rls_regulatory_ir_delete
-  ON regulatory.information_requests
-  FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM regulatory.submissions s
-      WHERE s.id = submission_id
-        AND core.can_write_program(s.program_id)
-    )
-  );
+  -- Information requests (via submission)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='regulatory' AND table_name='information_requests') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_ir_select ON regulatory.information_requests';
+    EXECUTE 'CREATE POLICY rls_regulatory_ir_select ON regulatory.information_requests FOR SELECT USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_access_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_ir_insert ON regulatory.information_requests';
+    EXECUTE 'CREATE POLICY rls_regulatory_ir_insert ON regulatory.information_requests FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_ir_update ON regulatory.information_requests';
+    EXECUTE 'CREATE POLICY rls_regulatory_ir_update ON regulatory.information_requests FOR UPDATE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+    EXECUTE 'DROP POLICY IF EXISTS rls_regulatory_ir_delete ON regulatory.information_requests';
+    EXECUTE 'CREATE POLICY rls_regulatory_ir_delete ON regulatory.information_requests FOR DELETE USING (EXISTS (SELECT 1 FROM regulatory.submissions s WHERE s.id = submission_id AND core.can_write_program(s.program_id)))';
+  END IF;
+END $$;
 
 COMMIT;
