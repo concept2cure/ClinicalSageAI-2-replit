@@ -10,13 +10,20 @@ Endpoints:
   POST  /orchestration/steps/{step_run_id}/fail  — fail a step
   GET   /orchestration/steps/{step_run_id}/events — event trail
   POST  /orchestration/batch/complete            — A8 batch callback
+
+Auth: All endpoints require X-Admin-Token matching REVIEW_ADMIN_TOKEN env var.
+      Reuses the same A8 ops token — no second secret.
 """
 
+import hashlib
 import logging
-from typing import Optional
-from uuid import UUID
+import os
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Optional
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
 
 from .db import LiteModeError
 from .models_orchestration import (
@@ -36,7 +43,59 @@ from . import orchestration_runner as runner
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/orchestration", tags=["Orchestration"])
+
+# =============================================================================
+# Admin Auth Guard — mirrors lumen_cortex/reviewer/api.py A8 pattern
+# =============================================================================
+
+@dataclass
+class OrchestrationAdminContext:
+    """Context carried through every orchestration request for audit."""
+    request_id: str
+    admin_actor: str          # sha256(token)[:8] — never the raw secret
+    timestamp: str            # ISO-8601 UTC
+
+
+def _hash_token_prefix(token: str) -> str:
+    """First 8 hex chars of sha256(token) — safe for logs & audit columns."""
+    return hashlib.sha256(token.encode()).hexdigest()[:8]
+
+
+def require_orchestration_admin(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+) -> None:
+    """Fail-closed admin gate — reuses REVIEW_ADMIN_TOKEN.
+
+    * env missing  → 503  (ops endpoints disabled until configured)
+    * token wrong  → 403
+    """
+    expected = os.getenv("REVIEW_ADMIN_TOKEN")
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="REVIEW_ADMIN_TOKEN not configured — orchestration endpoints disabled",
+        )
+    if x_admin_token != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+def get_orchestration_context(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
+) -> OrchestrationAdminContext:
+    """Build audit context from request headers."""
+    return OrchestrationAdminContext(
+        request_id=x_request_id or str(uuid4()),
+        admin_actor=_hash_token_prefix(x_admin_token) if x_admin_token else "no-token",
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+router = APIRouter(
+    prefix="/orchestration",
+    tags=["Orchestration"],
+    dependencies=[Depends(require_orchestration_admin)],
+)
 
 
 def _handle_lite_mode(e: LiteModeError):
@@ -53,9 +112,11 @@ def _handle_lite_mode(e: LiteModeError):
 @router.post("/runs/start", response_model=WorkflowRunResponse, status_code=201)
 async def start_workflow(
     body: StartWorkflowRequest,
+    ctx: OrchestrationAdminContext = Depends(get_orchestration_context),
     x_actor: Optional[str] = Header(None, alias="X-Actor"),
 ):
     """Start a new workflow run from a template."""
+    actor = x_actor or ctx.admin_actor
     try:
         result = await runner.start_workflow(
             program_id=body.program_id,
@@ -63,7 +124,8 @@ async def start_workflow(
             idempotency_key=body.idempotency_key,
             context=body.context,
             priority=body.priority,
-            actor=x_actor or "system",
+            actor=actor,
+            request_id=ctx.request_id,
         )
         return WorkflowRunResponse(**result)
     except LiteModeError as e:
@@ -71,14 +133,14 @@ async def start_workflow(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.exception("Failed to start workflow")
+        logger.exception("Failed to start workflow [req=%s]", ctx.request_id)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/runs", response_model=WorkflowRunList)
 async def list_runs(
     program_id: UUID = Query(..., description="Filter by program"),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(25, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     """List workflow runs for a program."""
@@ -146,16 +208,19 @@ async def get_step_queue(
 async def claim_step(
     step_run_id: UUID,
     body: ClaimStepRequest,
+    ctx: OrchestrationAdminContext = Depends(get_orchestration_context),
     x_program_id: UUID = Header(..., alias="X-Program-ID"),
     x_actor: Optional[str] = Header(None, alias="X-Actor"),
 ):
     """Claim a queued step for processing."""
+    actor = x_actor or ctx.admin_actor
     try:
         result = await runner.claim_step(
             step_run_id=step_run_id,
             worker_id=body.worker_id,
             program_id=x_program_id,
-            actor=x_actor or body.worker_id,
+            actor=actor,
+            request_id=ctx.request_id,
         )
         if result is None:
             raise HTTPException(
@@ -176,16 +241,19 @@ async def claim_step(
 async def complete_step(
     step_run_id: UUID,
     body: CompleteStepRequest,
+    ctx: OrchestrationAdminContext = Depends(get_orchestration_context),
     x_program_id: UUID = Header(..., alias="X-Program-ID"),
     x_actor: Optional[str] = Header(None, alias="X-Actor"),
 ):
     """Mark a running step as completed."""
+    actor = x_actor or ctx.admin_actor
     try:
         result = await runner.complete_step(
             step_run_id=step_run_id,
             output=body.output,
             program_id=x_program_id,
-            actor=x_actor or "system",
+            actor=actor,
+            request_id=ctx.request_id,
         )
         if result is None:
             raise HTTPException(
@@ -206,16 +274,19 @@ async def complete_step(
 async def fail_step(
     step_run_id: UUID,
     body: FailStepRequest,
+    ctx: OrchestrationAdminContext = Depends(get_orchestration_context),
     x_program_id: UUID = Header(..., alias="X-Program-ID"),
     x_actor: Optional[str] = Header(None, alias="X-Actor"),
 ):
     """Mark a running step as failed (may trigger retry)."""
+    actor = x_actor or ctx.admin_actor
     try:
         result = await runner.fail_step(
             step_run_id=step_run_id,
             error=body.error,
             program_id=x_program_id,
-            actor=x_actor or "system",
+            actor=actor,
+            request_id=ctx.request_id,
         )
         if result is None:
             raise HTTPException(
@@ -273,15 +344,18 @@ class BatchCompleteCallback(BaseModel):
 @router.post("/batch/complete", response_model=StepRunResponse)
 async def batch_complete(
     body: BatchCompleteCallback,
+    ctx: OrchestrationAdminContext = Depends(get_orchestration_context),
     x_actor: Optional[str] = Header(None, alias="X-Actor"),
 ):
     """Callback endpoint for A8 batch worker completion."""
+    actor = x_actor or ctx.admin_actor
     try:
         result = await runner.on_batch_complete(
             batch_id=body.batch_id,
             program_id=body.program_id,
             output=body.output,
-            actor=x_actor or "a8_worker",
+            actor=actor,
+            request_id=ctx.request_id,
         )
         if result is None:
             raise HTTPException(
