@@ -152,3 +152,70 @@ async def list_scans(
         return [dict(r) for r in rows]
     finally:
         await db.release_connection(conn)
+
+
+# =============================================================================
+# Health Summary — aggregated evidence health for dashboard panel
+# =============================================================================
+
+async def health_summary(program_id: UUID) -> dict[str, Any]:
+    """Build an evidence health summary for the dashboard.
+
+    Returns:
+        {
+            "program_id": ...,
+            "latest_scan": { ... } | null,
+            "claims": { "active": N, "superseded": N, ... },
+            "sources_count": N,
+            "provenance_count": N,
+            "scans": { "completed": N, "failed": N, "running": N },
+            "top_contradictions": [ ... ],  # up to 5 from latest scan
+        }
+    """
+    conn = await db.acquire_connection()
+    try:
+        await _set_rls(conn, program_id)
+
+        # Latest completed scan
+        scan_row = await conn.fetchrow(
+            sql.SELECT_LATEST_COMPLETED_SCAN, program_id,
+        )
+        latest_scan = None
+        top_contradictions: list = []
+        if scan_row:
+            latest_scan = dict(scan_row)
+            # Parse results (JSONB) for top 5 contradictions
+            results = latest_scan.get("results")
+            if isinstance(results, str):
+                results = json.loads(results)
+            if isinstance(results, list):
+                top_contradictions = results[:5]
+            latest_scan.pop("results", None)  # Don't send full payload in summary
+
+        # Claims breakdown by status
+        claims_rows = await conn.fetch(sql.COUNT_CLAIMS_BY_STATUS, program_id)
+        claims = {r["status"]: r["cnt"] for r in claims_rows}
+
+        # Source and provenance counts
+        sources_row = await conn.fetchrow(sql.COUNT_SOURCES, program_id)
+        sources_count = sources_row["cnt"] if sources_row else 0
+
+        prov_row = await conn.fetchrow(sql.COUNT_PROVENANCE_ENTRIES, program_id)
+        provenance_count = prov_row["cnt"] if prov_row else 0
+
+        # Scan counts by status
+        scans_rows = await conn.fetch(sql.COUNT_SCANS_BY_STATUS, program_id)
+        scans = {r["status"]: r["cnt"] for r in scans_rows}
+
+        return {
+            "program_id": str(program_id),
+            "latest_scan": latest_scan,
+            "claims": claims,
+            "sources_count": sources_count,
+            "provenance_count": provenance_count,
+            "scans": scans,
+            "top_contradictions": top_contradictions,
+        }
+
+    finally:
+        await db.release_connection(conn)
