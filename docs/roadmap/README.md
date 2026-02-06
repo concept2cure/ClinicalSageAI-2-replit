@@ -1,50 +1,47 @@
-# Phase 4 Roadmap — Orchestration Kernel & Beyond
+# Concept2Cure Roadmap — Navigation Index
+> **Updated:** 2026-02-06
 
-_Last updated: 2026-02-05_
+---
 
-## 📍 Navigation
+## Authoritative Documents
 
-This directory contains the **active implementation roadmap** for Concept2Cure's backend-first architecture.
+| Document | Purpose | Status |
+|----------|---------|--------|
+| [CONCEPT2CURE_MASTER_ROADMAP.md](./CONCEPT2CURE_MASTER_ROADMAP.md) | Complete build guide — Pillars + Phases + Execution Plan | ✅ Authoritative |
+| [CONCEPT2CURE_SYNERGISTIC_ROADMAP.md](./CONCEPT2CURE_SYNERGISTIC_ROADMAP.md) | Merged v3 roadmap + Claude UX + DVLP learnings | ✅ Reference |
 
-### Core Documents
+---
+
+## Phase Specifications
+
+| Phase | Document | Status |
+|-------|----------|--------|
+| Phase 4 | [PHASE4_ORCHESTRATION_KERNEL.md](./PHASE4_ORCHESTRATION_KERNEL.md) | ✅ In Progress (PR #110) |
+| Phase 5 | [EVIDENCE_FABRIC.md](./EVIDENCE_FABRIC.md) | 📋 Planned |
+| Phase 6 | [DOCX_FACTORY.md](./DOCX_FACTORY.md) | 📋 Planned |
+
+---
+
+## Operational
 
 | Document | Purpose |
 |----------|---------|
-| **[ROADMAP.md](./ROADMAP.md)** | Master roadmap (backend-first, layers-intelligence-orchestration) |
-| **[PHASE4_ORCHESTRATION_KERNEL.md](./PHASE4_ORCHESTRATION_KERNEL.md)** | Project orchestration spine (workflows, state machine, job runner) |
-| **[EVIDENCE_FABRIC.md](./EVIDENCE_FABRIC.md)** | Provenance + trust layer (citations, chain-of-custody, shadow review) |
-| **[DOCX_FACTORY.md](./DOCX_FACTORY.md)** | Document assembly system (templates, manifest, redline/diff) |
-| **[NEXT_AGENT_INSTRUCTIONS.md](./NEXT_AGENT_INSTRUCTIONS.md)** | Immediate work packet (branching discipline, PR sequence) |
+| [NEXT_AGENT_INSTRUCTIONS.md](./NEXT_AGENT_INSTRUCTIONS.md) | Continuation playbook for Copilot agents — current state, conventions, gotchas |
 
 ---
 
-## 🎯 Current Phase: **Phase 4 — Orchestration Kernel**
+## Backlog
 
-**Status:** Ready for implementation  
-**Foundation:** A8 async batch system (complete)  
-**Next:** Domain spine + work graph + job runner
-
-### Implementation Sequence
-
-1. **PR 1:** Schema (clients/programs/projects + workflow tables)
-2. **PR 2:** Kernel services + A8 bridge
-3. **PR 3:** Seed workflow definition (end-to-end test)
+| Document | Purpose |
+|----------|---------|
+| [backlog/index.md](./backlog/index.md) | Backlog items index |
+| [backlog/epic_project_workspace_shell.md](./backlog/epic_project_workspace_shell.md) | Project Workspace Shell epic |
 
 ---
 
-## 📚 Relationship to Other Documentation
+## Reading Order
 
-- **Previous unified roadmap** (`CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md`) → archived for historical reference
-- **Phase 4 roadmap** (this directory) → **active** implementation guide
-- See [docs/PROJECT_DOCUMENTATION_INDEX.md](../PROJECT_DOCUMENTATION_INDEX.md) for complete documentation hierarchy
-
----
-
-## 🤖 For AI Development Agents
-
-When implementing features:
-1. Read the relevant spec file FIRST
-2. Follow branching discipline in NEXT_AGENT_INSTRUCTIONS.md
-3. Create small, reviewable PRs (one concern per PR)
-4. Emit audit events and maintain idempotency
-5. Integrate with A8 worker (do not create new queues)
+1. **Master Roadmap** — Understand the vision, pillars, and phase plan
+2. **Phase 4 spec** — Current implementation (orchestration kernel)
+3. **Next Agent Instructions** — Pick up where the last session left off
+4. **Evidence Fabric / DOCX Factory** — Upcoming phases (reference only until Phase 4 merges)

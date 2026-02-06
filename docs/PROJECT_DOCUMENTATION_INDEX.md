@@ -14,11 +14,23 @@ This document consolidates ALL project planning, architecture, and implementatio
 - 21 CFR Part 11 Compliance
 - 10-Week Implementation Phases
 
+## �️ Roadmap & Phase Specifications
+
+📂 **[docs/roadmap/](./roadmap/README.md)** — Phase-by-phase build specifications
+
+| Document | Purpose | Status |
+|----------|---------|--------|
+| [Master Roadmap](./roadmap/CONCEPT2CURE_MASTER_ROADMAP.md) | Complete build guide — Pillars + Phases | ✅ Authoritative |
+| [Phase 4: Orchestration Kernel](./roadmap/PHASE4_ORCHESTRATION_KERNEL.md) | Workflow engine, DAG runner, A8 bridge | ✅ In Progress |
+| [Phase 5: Evidence Fabric](./roadmap/EVIDENCE_FABRIC.md) | Traceability, claims, compliance scoring | 📋 Planned |
+| [Phase 6: DOCX Factory](./roadmap/DOCX_FACTORY.md) | Document generation, eCTD packaging | 📋 Planned |
+| [Next Agent Instructions](./roadmap/NEXT_AGENT_INSTRUCTIONS.md) | Continuation playbook for agents | ✅ Current |
+
 ## 🚫 All Other Roadmaps Are Superseded
 
 Any other planning documents not listed above are archived and should NOT be referenced.
 
 ---
-**Last Updated:** January 27, 2026  
-**Version:** 1.0.0
+**Last Updated:** February 6, 2026  
+**Version:** 2.0.0
 **Status:** Implementation Ready
