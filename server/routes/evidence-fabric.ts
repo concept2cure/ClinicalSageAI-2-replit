@@ -14,7 +14,10 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { eq, and } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth.js';
+import { db } from '../db.js';
+import { regulatoryPrograms } from '../../shared/schema/programs.js';
 
 const router = Router();
 
@@ -45,6 +48,61 @@ function requireConfigured(_req: Request, res: Response, next: NextFunction) {
     });
   }
   next();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Middleware — program ownership guard (IDOR prevention)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Verifies the authenticated user's organization owns the requested program_id.
+ * Extracts program_id from req.query and checks regulatoryPrograms.organizationId.
+ * Returns 422 if program_id is missing, 403 if ownership check fails.
+ *
+ * Matches the pattern used in programsV2.ts and evidenceV2.ts:
+ *   eq(regulatoryPrograms.organizationId, req.user.organizationId)
+ */
+async function requireProgramAccess(req: Request, res: Response, next: NextFunction) {
+  const programId = String(req.query.program_id || '');
+  if (!programId) {
+    return res.status(422).json({ error: 'program_id is required' });
+  }
+
+  const userOrgId = (req as any).user?.organizationId;
+  if (!userOrgId) {
+    return res.status(403).json({ error: 'Organization context required' });
+  }
+
+  try {
+    const orgId = typeof userOrgId === 'string' ? parseInt(userOrgId, 10) : userOrgId;
+    if (isNaN(orgId)) {
+      return res.status(403).json({ error: 'Invalid organization context' });
+    }
+
+    const [program] = await db
+      .select({ id: regulatoryPrograms.id })
+      .from(regulatoryPrograms)
+      .where(
+        and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId))
+      )
+      .limit(1);
+
+    if (!program) {
+      console.warn(`[evidence-fabric] IDOR blocked: org=${orgId} tried program=${programId}`);
+      return res.status(403).json({
+        error: 'Access denied',
+        detail: 'You do not have access to this program',
+      });
+    }
+
+    next();
+  } catch (err: any) {
+    console.error('[evidence-fabric] program access check failed:', err.message);
+    return res.status(500).json({
+      error: 'Program access check failed',
+      detail: err.message,
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -99,83 +157,89 @@ async function proxyToShadow(
  *
  * Dashboard health panel data — latest scan, claims, sources, contradictions.
  */
-router.get('/health-summary', requireConfigured, async (req: Request, res: Response) => {
-  const programId = String(req.query.program_id || '');
-  if (!programId) {
-    return res.status(422).json({ error: 'program_id is required' });
-  }
+router.get(
+  '/health-summary',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
 
-  try {
-    const result = await proxyToShadow('/evidence/health-summary', {
-      query: { program_id: programId },
-    });
-    res.status(result.status).type(result.contentType).send(result.body);
-  } catch (err: any) {
-    console.error('[evidence-fabric] health-summary proxy error:', err.message);
-    res.status(502).json({
-      error: 'Shadow service unreachable',
-      detail: err.message,
-    });
+    try {
+      const result = await proxyToShadow('/evidence/health-summary', {
+        query: { program_id: programId },
+      });
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[evidence-fabric] health-summary proxy error:', err.message);
+      res.status(502).json({
+        error: 'Shadow service unreachable',
+        detail: err.message,
+      });
+    }
   }
-});
+);
 
 /**
  * POST /api/evidence-fabric/contradiction-scans?program_id=...&triggered_by=...&scan_type=...&section_ref=...
  *
  * Trigger a new contradiction scan.
  */
-router.post('/contradiction-scans', requireConfigured, async (req: Request, res: Response) => {
-  const programId = String(req.query.program_id || '');
-  if (!programId) {
-    return res.status(422).json({ error: 'program_id is required' });
-  }
+router.post(
+  '/contradiction-scans',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
 
-  try {
-    const query: Record<string, string> = { program_id: programId };
-    if (req.query.triggered_by) query.triggered_by = String(req.query.triggered_by);
-    if (req.query.scan_type) query.scan_type = String(req.query.scan_type);
-    if (req.query.section_ref) query.section_ref = String(req.query.section_ref);
+    try {
+      const query: Record<string, string> = { program_id: programId };
+      if (req.query.triggered_by) query.triggered_by = String(req.query.triggered_by);
+      if (req.query.scan_type) query.scan_type = String(req.query.scan_type);
+      if (req.query.section_ref) query.section_ref = String(req.query.section_ref);
 
-    const result = await proxyToShadow('/evidence/contradiction-scans', {
-      method: 'POST',
-      query,
-    });
-    res.status(result.status).type(result.contentType).send(result.body);
-  } catch (err: any) {
-    console.error('[evidence-fabric] contradiction-scans proxy error:', err.message);
-    res.status(502).json({
-      error: 'Shadow service unreachable',
-      detail: err.message,
-    });
+      const result = await proxyToShadow('/evidence/contradiction-scans', {
+        method: 'POST',
+        query,
+      });
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[evidence-fabric] contradiction-scans proxy error:', err.message);
+      res.status(502).json({
+        error: 'Shadow service unreachable',
+        detail: err.message,
+      });
+    }
   }
-});
+);
 
 /**
  * GET /api/evidence-fabric/contradiction-scans?program_id=...&limit=...&offset=...
  *
  * List contradiction scans for a program.
  */
-router.get('/contradiction-scans', requireConfigured, async (req: Request, res: Response) => {
-  const programId = String(req.query.program_id || '');
-  if (!programId) {
-    return res.status(422).json({ error: 'program_id is required' });
-  }
+router.get(
+  '/contradiction-scans',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
 
-  try {
-    const query: Record<string, string> = { program_id: programId };
-    if (req.query.limit) query.limit = String(req.query.limit);
-    if (req.query.offset) query.offset = String(req.query.offset);
+    try {
+      const query: Record<string, string> = { program_id: programId };
+      if (req.query.limit) query.limit = String(req.query.limit);
+      if (req.query.offset) query.offset = String(req.query.offset);
 
-    const result = await proxyToShadow('/evidence/contradiction-scans', { query });
-    res.status(result.status).type(result.contentType).send(result.body);
-  } catch (err: any) {
-    console.error('[evidence-fabric] list contradiction-scans proxy error:', err.message);
-    res.status(502).json({
-      error: 'Shadow service unreachable',
-      detail: err.message,
-    });
+      const result = await proxyToShadow('/evidence/contradiction-scans', { query });
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[evidence-fabric] list contradiction-scans proxy error:', err.message);
+      res.status(502).json({
+        error: 'Shadow service unreachable',
+        detail: err.message,
+      });
+    }
   }
-});
+);
 
 /**
  * GET /api/evidence-fabric/contradiction-scans/:scanId?program_id=...
@@ -185,11 +249,9 @@ router.get('/contradiction-scans', requireConfigured, async (req: Request, res: 
 router.get(
   '/contradiction-scans/:scanId',
   requireConfigured,
+  requireProgramAccess,
   async (req: Request, res: Response) => {
     const programId = String(req.query.program_id || '');
-    if (!programId) {
-      return res.status(422).json({ error: 'program_id is required' });
-    }
 
     try {
       const result = await proxyToShadow(
@@ -217,43 +279,46 @@ router.get(
  * Downloads a Regulatory Defense Packet ZIP from Shadow Service.
  * Streams binary response directly to the browser.
  */
-router.get('/defense-packet', requireConfigured, async (req: Request, res: Response) => {
-  const programId = String(req.query.program_id || '');
-  if (!programId) {
-    return res.status(422).json({ error: 'program_id is required' });
-  }
+router.get(
+  '/defense-packet',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
 
-  try {
-    const url = new URL('/evidence/defense-packet', getShadowUrl());
-    url.searchParams.set('program_id', programId);
+    try {
+      const url = new URL('/evidence/defense-packet', getShadowUrl());
+      url.searchParams.set('program_id', programId);
 
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { 'X-Admin-Token': getAdminToken() },
-    });
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: { 'X-Admin-Token': getAdminToken() },
+      });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      return res.status(response.status).type('application/json').send(errorBody);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        return res.status(response.status).type('application/json').send(errorBody);
+      }
+
+      // Stream binary response
+      const contentType = response.headers.get('content-type') || 'application/zip';
+      const contentDisposition =
+        response.headers.get('content-disposition') ||
+        `attachment; filename="defense-packet-${programId}.zip"`;
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', contentDisposition);
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.status(200).send(buffer);
+    } catch (err: any) {
+      console.error('[evidence-fabric] defense-packet proxy error:', err.message);
+      res.status(502).json({
+        error: 'Shadow service unreachable',
+        detail: err.message,
+      });
     }
-
-    // Stream binary response
-    const contentType = response.headers.get('content-type') || 'application/zip';
-    const contentDisposition = response.headers.get('content-disposition')
-      || `attachment; filename="defense-packet-${programId}.zip"`;
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', contentDisposition);
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    res.status(200).send(buffer);
-  } catch (err: any) {
-    console.error('[evidence-fabric] defense-packet proxy error:', err.message);
-    res.status(502).json({
-      error: 'Shadow service unreachable',
-      detail: err.message,
-    });
   }
-});
+);
 
 export default router;
