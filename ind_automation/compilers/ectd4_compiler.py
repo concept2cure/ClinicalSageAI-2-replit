@@ -160,7 +160,10 @@ class ECTD4Compiler:
             else:
                 raise RuntimeError("Production requires TSA timestamping on signatures")
         else:
-            if hasattr(signer, 'sign_document'):
+            # Prefer TSA-enabled signing when available, even outside production
+            if hasattr(signer, 'sign_with_timestamp'):
+                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+            elif hasattr(signer, 'sign_document'):
                 signed_path = signer.sign_document(docx_path, signer_info)
             else:
                 raise RuntimeError("Signer does not implement sign_document")
