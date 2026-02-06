@@ -59,14 +59,14 @@ async def register_model(
 ):
     """
     Register a new AI/ML model in the governance registry.
-    
+
     All AI/ML models used in GxP processes must be registered
     to enable compliance tracking, validation, and audit.
     """
     try:
         model_id = uuid4()
         now = datetime.utcnow()
-        
+
         # Construct model (DB storage when available)
         model = AIMLModel(
             id=model_id,
@@ -85,22 +85,20 @@ async def register_model(
             created_at=now,
             created_by=x_actor,
         )
-        
+
         # Persist to DB if available
         try:
             conn = await db.acquire_connection()
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
-                if x_request_id:
-                    await conn.execute(f"SET LOCAL app.request_id = '{x_request_id}'")
+                await db.set_session_context(conn, user=x_actor, request_id=x_request_id)
                 # DB insert would go here
             await db.release_connection(conn)
         except LiteModeError:
             logger.info("Running in lite mode - model not persisted to database")
-        
+
         logger.info(f"AI/ML model registered: {model_id} - {data.name} v{data.version}")
         return model
-        
+
     except Exception as e:
         logger.exception("Failed to register AI/ML model")
         raise HTTPException(status_code=500, detail=str(e))
@@ -118,7 +116,7 @@ async def list_models(
     try:
         # For MVP, return empty list structure
         return AIMLModelList(items=[], count=0, total=0)
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -132,7 +130,7 @@ async def get_model(model_id: UUID):
     try:
         # Would fetch from DB
         raise HTTPException(status_code=404, detail="Model not found")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -151,7 +149,7 @@ async def update_model_status(
 ):
     """
     Update the lifecycle status of an AI/ML model.
-    
+
     Status transitions must follow the governance workflow:
     DEVELOPMENT -> VALIDATION -> PRODUCTION -> MONITORING
     """
@@ -163,7 +161,7 @@ async def update_model_status(
             "reason": x_change_reason,
             "updated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -183,25 +181,25 @@ async def create_gmlp_assessment(
 ):
     """
     Create a GMLP compliance assessment for an AI/ML model.
-    
+
     Assesses compliance with the 10 Guiding Principles for
     Good Machine Learning Practice (FDA/Health Canada/MHRA).
     """
     try:
         now = datetime.utcnow()
-        
+
         # Calculate overall score based on assessments
         compliant_count = sum(
-            1 for a in data.assessments 
+            1 for a in data.assessments
             if a.status == GMLPComplianceStatus.COMPLIANT
         )
         total_applicable = sum(
-            1 for a in data.assessments 
+            1 for a in data.assessments
             if a.status != GMLPComplianceStatus.NOT_APPLICABLE
         )
-        
+
         overall_score = (compliant_count / total_applicable * 100) if total_applicable > 0 else 0
-        
+
         # Determine overall status
         if overall_score >= 90:
             overall_status = GMLPComplianceStatus.COMPLIANT
@@ -209,7 +207,7 @@ async def create_gmlp_assessment(
             overall_status = GMLPComplianceStatus.PARTIALLY_COMPLIANT
         else:
             overall_status = GMLPComplianceStatus.NON_COMPLIANT
-        
+
         report = GMLPComplianceReport(
             id=uuid4(),
             model_id=model_id,
@@ -221,10 +219,10 @@ async def create_gmlp_assessment(
             executive_summary=data.executive_summary,
             created_at=now,
         )
-        
+
         logger.info(f"GMLP assessment created for model {model_id}: {overall_status.value}")
         return report
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -237,7 +235,7 @@ async def get_gmlp_assessment(model_id: UUID):
     """Get the latest GMLP compliance assessment for a model."""
     try:
         raise HTTPException(status_code=404, detail="No GMLP assessment found for this model")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -251,7 +249,7 @@ async def get_gmlp_assessment(model_id: UUID):
 async def get_gmlp_principles():
     """
     Get the 10 GMLP Guiding Principles with descriptions.
-    
+
     Reference for creating compliance assessments.
     """
     principles = [
@@ -356,7 +354,7 @@ async def get_gmlp_principles():
             ],
         },
     ]
-    
+
     return {
         "principles": principles,
         "source": "FDA/Health Canada/MHRA Joint Statement (2021)",
@@ -376,11 +374,11 @@ async def create_pccp(
 ):
     """
     Create a Predetermined Change Control Plan for an AI/ML model.
-    
+
     A PCCP defines the types of changes allowed without requiring
     a new regulatory submission, along with the protocols for
     implementing and validating those changes.
-    
+
     Required components per FDA guidance:
     1. Description of Modifications
     2. Modification Protocol
@@ -388,7 +386,7 @@ async def create_pccp(
     """
     try:
         now = datetime.utcnow()
-        
+
         pccp = PCCP(
             id=uuid4(),
             program_id=data.program_id,
@@ -408,10 +406,10 @@ async def create_pccp(
                 "at": now.isoformat(),
             }],
         )
-        
+
         logger.info(f"PCCP created for model {model_id}: {pccp.id}")
         return pccp
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -429,7 +427,7 @@ async def list_pccps(
     """List PCCPs with filtering."""
     try:
         return PCCPList(items=[], count=0, total=0)
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -442,7 +440,7 @@ async def get_pccp(pccp_id: UUID):
     """Get a specific PCCP by ID."""
     try:
         raise HTTPException(status_code=404, detail="PCCP not found")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -461,7 +459,7 @@ async def update_pccp_status(
 ):
     """
     Update PCCP status through the approval workflow.
-    
+
     Status transitions:
     DRAFT -> UNDER_REVIEW -> APPROVED -> ACTIVE
     """
@@ -473,7 +471,7 @@ async def update_pccp_status(
             "reason": x_change_reason,
             "updated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -493,7 +491,7 @@ async def create_model_card(
 ):
     """
     Create a Model Card for algorithmic transparency.
-    
+
     Model Cards provide standardized documentation following
     the Google Model Card Toolkit specification, suitable for
     regulatory submissions and audit purposes.
@@ -501,7 +499,7 @@ async def create_model_card(
     try:
         now = datetime.utcnow()
         from .models_aiml import QuantitativeAnalysis, EthicalConsiderations, CaveatsAndRecommendations
-        
+
         model_card = ModelCard(
             id=uuid4(),
             program_id=data.program_id,
@@ -518,10 +516,10 @@ async def create_model_card(
             created_at=now,
             created_by=x_actor,
         )
-        
+
         logger.info(f"Model Card created for model {model_id}")
         return model_card
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -534,7 +532,7 @@ async def get_model_card(model_id: UUID):
     """Get the Model Card for a registered model."""
     try:
         raise HTTPException(status_code=404, detail="Model Card not found")
-        
+
     except HTTPException:
         raise
     except LiteModeError as e:
@@ -551,7 +549,7 @@ async def export_model_card(
 ):
     """
     Export a Model Card in various formats.
-    
+
     Formats:
     - json: Machine-readable JSON
     - markdown: Human-readable Markdown
@@ -565,7 +563,7 @@ async def export_model_card(
             "content": "Model Card export not yet implemented",
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -585,13 +583,13 @@ async def initiate_model_update(
 ):
     """
     Initiate a model update under an approved PCCP.
-    
+
     This creates a tracked update record that must be validated
     and approved before deployment, following the PCCP protocol.
     """
     try:
         now = datetime.utcnow()
-        
+
         update = ModelUpdate(
             id=uuid4(),
             model_id=model_id,
@@ -613,10 +611,10 @@ async def initiate_model_update(
                 "at": now.isoformat(),
             }],
         )
-        
+
         logger.info(f"Model update initiated for {model_id} under PCCP {data.pccp_id}")
         return update
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -636,7 +634,7 @@ async def list_model_updates(
             "updates": [],
             "count": 0,
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -653,9 +651,9 @@ async def update_model_update_status(
 ):
     """
     Progress a model update through the validation workflow.
-    
+
     Status transitions:
-    INITIATED -> DATA_COLLECTED -> RETRAINING -> VALIDATION -> 
+    INITIATED -> DATA_COLLECTED -> RETRAINING -> VALIDATION ->
     APPROVED -> DEPLOYING -> DEPLOYED
     """
     try:
@@ -665,7 +663,7 @@ async def update_model_update_status(
             "updated_by": x_actor,
             "updated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -683,7 +681,7 @@ async def get_ai_governance_dashboard(
 ):
     """
     Get AI/ML governance dashboard summary.
-    
+
     Provides executive-level view of:
     - Model inventory
     - GMLP compliance status
@@ -692,7 +690,7 @@ async def get_ai_governance_dashboard(
     """
     try:
         now = datetime.utcnow()
-        
+
         return {
             "summary": {
                 "total_models": 0,
@@ -720,7 +718,7 @@ async def get_ai_governance_dashboard(
             "alerts": _generate_ai_governance_alerts(),
             "generated_at": now.isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:
@@ -747,7 +745,7 @@ async def get_regulatory_readiness_report(
 ):
     """
     Generate regulatory readiness report for AI/ML models.
-    
+
     Assesses readiness for FDA submission including:
     - GMLP compliance gaps
     - PCCP completeness
@@ -778,7 +776,7 @@ async def get_regulatory_readiness_report(
             ],
             "generated_at": datetime.utcnow().isoformat(),
         }
-        
+
     except LiteModeError as e:
         _handle_lite_mode(e)
     except Exception as e:

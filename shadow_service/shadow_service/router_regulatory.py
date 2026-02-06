@@ -78,7 +78,7 @@ async def create_submission(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_SUBMISSION,
                 data.submission_code,
@@ -102,7 +102,7 @@ async def create_submission(
 
 @router.patch("/submissions/{submission_id}/status", response_model=Submission)
 async def update_submission_status(
-    submission_id: UUID, 
+    submission_id: UUID,
     data: SubmissionStatusUpdate,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -110,7 +110,7 @@ async def update_submission_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_SUBMISSION_STATUS,
                 submission_id,
@@ -131,7 +131,7 @@ async def update_submission_status(
 
 @router.patch("/submissions/{submission_id}/dates", response_model=Submission)
 async def update_submission_dates(
-    submission_id: UUID, 
+    submission_id: UUID,
     data: SubmissionDatesUpdate,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -139,7 +139,7 @@ async def update_submission_dates(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_SUBMISSION_DATES,
                 submission_id,
@@ -219,7 +219,7 @@ async def create_milestone(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_MILESTONE,
                 data.submission_id,
@@ -243,7 +243,7 @@ async def create_milestone(
 
 @router.patch("/milestones/{milestone_id}/status", response_model=Milestone)
 async def update_milestone_status(
-    milestone_id: UUID, 
+    milestone_id: UUID,
     data: MilestoneStatusUpdate,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -251,7 +251,7 @@ async def update_milestone_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_MILESTONE_STATUS,
                 milestone_id,
@@ -315,7 +315,7 @@ async def create_correspondence(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_CORRESPONDENCE,
                 data.submission_id,
@@ -383,7 +383,7 @@ async def create_information_request(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_INFORMATION_REQUEST,
                 data.submission_id,
@@ -406,7 +406,7 @@ async def create_information_request(
 
 @router.patch("/information-requests/{ir_id}/status", response_model=InformationRequest)
 async def update_ir_status(
-    ir_id: UUID, 
+    ir_id: UUID,
     data: IRStatusUpdate,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -414,7 +414,7 @@ async def update_ir_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_IR_STATUS,
                 ir_id,
@@ -464,7 +464,7 @@ async def get_regulatory_dashboard_summary(
     program_id: Optional[UUID] = Query(None, description="Filter by program")
 ):
     """Get summary statistics for regulatory timeline dashboard.
-    
+
     Returns aggregated metrics including:
     - Active submissions by status
     - Upcoming deadlines (next 30 days)
@@ -478,13 +478,13 @@ async def get_regulatory_dashboard_summary(
         for sub in submissions:
             status = dict(sub).get('status', 'UNKNOWN')
             status_counts[status] = status_counts.get(status, 0) + 1
-        
+
         # Get upcoming deadlines
         deadlines = await db.fetch(sql.SQL_GET_UPCOMING_DEADLINES, 30, program_id)
-        
+
         # Get pending responses
         pending = await db.fetch(sql.SQL_GET_PENDING_RESPONSES, program_id)
-        
+
         # Get IRs
         irs = await db.fetch(sql.SQL_LIST_INFORMATION_REQUESTS, None, None)
         ir_counts = {"open": 0, "in_progress": 0, "closed": 0}
@@ -492,7 +492,7 @@ async def get_regulatory_dashboard_summary(
             status = dict(ir).get('status', 'open').lower()
             if status in ir_counts:
                 ir_counts[status] += 1
-        
+
         return {
             "submissions": {
                 "total": len(submissions),
@@ -519,7 +519,7 @@ async def get_regulatory_dashboard_summary(
 @router.get("/timeline/gantt/{submission_id}")
 async def get_submission_gantt_data(submission_id: UUID):
     """Get Gantt chart data for a submission timeline.
-    
+
     Returns milestone data formatted for Gantt chart visualization
     including dependencies and critical path indicators.
     """
@@ -528,10 +528,10 @@ async def get_submission_gantt_data(submission_id: UUID):
         submission = await db.fetchrow(sql.SQL_GET_SUBMISSION, submission_id)
         if not submission:
             raise HTTPException(status_code=404, detail="Submission not found")
-        
+
         # Get milestones
         milestones = await db.fetch(sql.SQL_LIST_MILESTONES, submission_id)
-        
+
         gantt_items = []
         for ms in milestones:
             ms_dict = dict(ms)
@@ -545,7 +545,7 @@ async def get_submission_gantt_data(submission_id: UUID):
                 "is_complete": ms_dict.get('status') == 'COMPLETED',
                 "is_critical": ms_dict.get('deadline') is not None,
             })
-        
+
         return {
             "submission_id": str(submission_id),
             "submission_code": dict(submission).get('submission_code'),
@@ -572,7 +572,7 @@ async def get_critical_regulatory_alerts(
     days_ahead: int = Query(14, ge=1, le=90, description="Look-ahead window")
 ):
     """Get critical regulatory alerts and warnings.
-    
+
     Identifies:
     - Milestones at risk (approaching deadline, not started)
     - Overdue agency responses
@@ -581,7 +581,7 @@ async def get_critical_regulatory_alerts(
     """
     try:
         alerts = []
-        
+
         # Check upcoming deadlines
         deadlines = await db.fetch(sql.SQL_GET_UPCOMING_DEADLINES, days_ahead, program_id)
         for deadline in deadlines:
@@ -596,7 +596,7 @@ async def get_critical_regulatory_alerts(
                     "action_required": f"Complete milestone by {d.get('deadline')}",
                     "days_until": days_until,
                 })
-        
+
         # Check pending responses
         pending = await db.fetch(sql.SQL_GET_PENDING_RESPONSES, program_id)
         for response in pending:
@@ -610,11 +610,11 @@ async def get_critical_regulatory_alerts(
                     "action_required": "Submit response immediately",
                     "due_date": r.get('response_due_date'),
                 })
-        
+
         # Sort by severity
         severity_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
         alerts.sort(key=lambda x: severity_order.get(x.get('severity'), 3))
-        
+
         return {
             "alerts": alerts,
             "total_count": len(alerts),

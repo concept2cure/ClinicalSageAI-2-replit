@@ -7,7 +7,7 @@ attributed per 21 CFR Part 11 requirements.
 Usage:
     from shadow_service.attribution import with_attribution
 
-    async with with_attribution(conn, user="shadow.agent@concept2cure.ai", 
+    async with with_attribution(conn, user="shadow.agent@concept2cure.ai",
                                  reason="Auto-rewrite for objectivity",
                                  request_id="AUTO-2026-0001"):
         await conn.execute(UPDATE_FRAGMENT, ...)
@@ -33,22 +33,22 @@ async def with_attribution(
     request_id: Optional[str] = None,
 ) -> AsyncGenerator[Connection, None]:
     """Context manager that sets attribution for fragment updates.
-    
+
     All updates to prose.smart_fragments within this context will be
     attributed to the specified user with the given reason and request_id.
     The attribution is captured by database triggers and stored immutably
     in prose.smart_fragment_versions.
-    
+
     Args:
         conn: asyncpg connection (should be within a transaction)
         user: User email/identifier creating this change
         reason: Human-readable explanation of why this change was made
         request_id: External change request/ticket ID for traceability
-        
+
     Example:
         async with get_connection() as conn:
             async with conn.transaction():
-                async with with_attribution(conn, 
+                async with with_attribution(conn,
                                             user="shadow.agent@concept2cure.ai",
                                             reason="Auto-rewrite for objectivity",
                                             request_id="SR-2026-0001"):
@@ -58,21 +58,21 @@ async def with_attribution(
                     )
     """
     try:
-        # Set session-local attribution variables
+        # Set session-local attribution variables using parameterized queries
         # These are read by the database triggers in migration 003
-        # Note: "user" is quoted because it's a reserved word in PostgreSQL
-        await conn.execute(f"SET LOCAL \"app.user\" = '{_escape_sql_string(user)}'")
-        
+        # Uses set_config() to prevent SQL injection via user-supplied values
+        await conn.execute("SELECT set_config('app.user', $1, true)", user)
+
         if reason:
-            await conn.execute(f"SET LOCAL \"app.reason\" = '{_escape_sql_string(reason)}'")
-        
+            await conn.execute("SELECT set_config('app.reason', $1, true)", reason)
+
         if request_id:
-            await conn.execute(f"SET LOCAL \"app.request_id\" = '{_escape_sql_string(request_id)}'")
-        
+            await conn.execute("SELECT set_config('app.request_id', $1, true)", request_id)
+
         logger.debug(f"Attribution context set: user={user}, reason={reason}, request_id={request_id}")
-        
+
         yield conn
-        
+
     finally:
         # Session variables are automatically cleared at transaction end
         # but we can explicitly reset them if needed
@@ -80,7 +80,11 @@ async def with_attribution(
 
 
 def _escape_sql_string(value: str) -> str:
-    """Escape single quotes in SQL string values."""
+    """Escape single quotes in SQL string values.
+
+    DEPRECATED: Use parameterized set_config() queries instead.
+    Retained only for backward compatibility.
+    """
     if value is None:
         return ''
     return value.replace("'", "''")
@@ -91,7 +95,7 @@ def _escape_sql_string(value: str) -> str:
 # =============================================================================
 
 SELECT_FRAGMENT_VERSION_HISTORY = """
-SELECT 
+SELECT
     v.id,
     v.fragment_id,
     v.version_id,
@@ -113,7 +117,7 @@ ORDER BY v.version_id DESC
 """
 
 SELECT_FRAGMENT_VERSION_BY_ID = """
-SELECT 
+SELECT
     v.id,
     v.fragment_id,
     v.version_id,
@@ -135,7 +139,7 @@ WHERE v.fragment_id = $1 AND v.version_id = $2
 """
 
 SELECT_FRAGMENT_LATEST_VERSION = """
-SELECT 
+SELECT
     v.id,
     v.fragment_id,
     v.version_id,
@@ -164,7 +168,7 @@ SELECT COUNT(*) FROM prose.smart_fragment_versions WHERE fragment_id = $1
 
 # Compare two versions of a fragment
 SELECT_VERSION_COMPARISON = """
-SELECT 
+SELECT
     v.version_id,
     v.content_prose,
     v.objectivity_score,
@@ -180,7 +184,7 @@ ORDER BY v.version_id
 
 # Get all fragments modified by a specific user
 SELECT_VERSIONS_BY_USER = """
-SELECT 
+SELECT
     v.fragment_id,
     v.version_id,
     v.ectd_section_path,
@@ -196,7 +200,7 @@ LIMIT $2
 
 # Get all fragments modified for a specific request/ticket
 SELECT_VERSIONS_BY_REQUEST = """
-SELECT 
+SELECT
     v.fragment_id,
     v.version_id,
     v.ectd_section_path,
@@ -211,7 +215,7 @@ ORDER BY v.created_at
 
 # Audit trail: all changes in a date range
 SELECT_VERSIONS_IN_RANGE = """
-SELECT 
+SELECT
     v.fragment_id,
     v.version_id,
     v.ectd_section_path,

@@ -77,7 +77,7 @@ async def create_drift_job(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_DRIFT_JOB,
                 data.job_type.value if data.job_type else 'INCREMENTAL_DRIFT',
@@ -103,7 +103,7 @@ async def create_drift_job(
 
 @router.patch("/jobs/{job_id}/status", response_model=DriftJob)
 async def update_drift_job_status(
-    job_id: UUID, 
+    job_id: UUID,
     data: DriftJobStatusUpdate,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -111,7 +111,7 @@ async def update_drift_job_status(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_UPDATE_DRIFT_JOB_STATUS,
                 job_id,
@@ -162,7 +162,7 @@ async def create_drift_run(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_DRIFT_RUN,
                 data.job_id,
@@ -179,7 +179,7 @@ async def create_drift_run(
 
 @router.patch("/runs/{run_id}/complete", response_model=DriftRun)
 async def complete_drift_run(
-    run_id: UUID, 
+    run_id: UUID,
     data: DriftRunComplete,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -187,7 +187,7 @@ async def complete_drift_run(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_COMPLETE_DRIFT_RUN,
                 run_id,
@@ -276,7 +276,7 @@ async def create_drift_alert(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_CREATE_DRIFT_ALERT,
                 data.run_id,
@@ -301,7 +301,7 @@ async def create_drift_alert(
 
 @router.post("/alerts/{alert_id}/acknowledge", response_model=DriftAlert)
 async def acknowledge_drift_alert(
-    alert_id: UUID, 
+    alert_id: UUID,
     data: AlertAcknowledge,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -309,7 +309,7 @@ async def acknowledge_drift_alert(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_ACKNOWLEDGE_DRIFT_ALERT,
                 alert_id,
@@ -330,7 +330,7 @@ async def acknowledge_drift_alert(
 
 @router.post("/alerts/{alert_id}/resolve", response_model=DriftAlert)
 async def resolve_drift_alert(
-    alert_id: UUID, 
+    alert_id: UUID,
     data: AlertResolve,
     x_actor: str = Header(..., alias="X-Actor"),
 ):
@@ -338,7 +338,7 @@ async def resolve_drift_alert(
     try:
         conn = await db.acquire_connection()
         async with conn.transaction():
-            await conn.execute(f"SET LOCAL app.user = '{x_actor}'")
+            await db.set_session_context(conn, user=x_actor)
             record = await conn.fetchrow(
                 sql.SQL_RESOLVE_DRIFT_ALERT,
                 alert_id,
@@ -404,7 +404,7 @@ async def get_drift_dashboard_summary(
     program_id: Optional[UUID] = Query(None, description="Filter by program")
 ):
     """Get summary statistics for drift monitoring dashboard.
-    
+
     Returns aggregated metrics including:
     - Active jobs count
     - Total alerts by severity
@@ -414,10 +414,10 @@ async def get_drift_dashboard_summary(
     try:
         # Get active job count
         jobs = await db.fetch(sql.SQL_LIST_DRIFT_JOBS, True, program_id)
-        
+
         # Get alert summary
         alert_summary = await db.fetchrow(sql.SQL_GET_OPEN_ALERTS_SUMMARY, program_id)
-        
+
         return {
             "active_jobs": len(jobs),
             "alerts": {
@@ -437,7 +437,7 @@ async def get_drift_dashboard_summary(
 @router.get("/risk-assessment/{program_id}")
 async def get_program_risk_assessment(program_id: UUID):
     """Get risk assessment for a program based on drift analysis.
-    
+
     Provides:
     - Overall drift risk score (0-100)
     - Sections with highest drift
@@ -446,14 +446,14 @@ async def get_program_risk_assessment(program_id: UUID):
     try:
         # Get open alerts for the program
         alerts = await db.fetch(sql.SQL_LIST_DRIFT_ALERTS, program_id, None, None, 100)
-        
+
         # Calculate risk metrics
         red_alerts = sum(1 for a in alerts if dict(a).get('severity') == 'RED')
         amber_alerts = sum(1 for a in alerts if dict(a).get('severity') == 'AMBER')
-        
+
         # Risk score calculation (weighted)
         risk_score = min(100, (red_alerts * 15) + (amber_alerts * 5))
-        
+
         # Get affected sections
         affected_sections = {}
         for alert in alerts:
@@ -464,14 +464,14 @@ async def get_program_risk_assessment(program_id: UUID):
                 affected_sections[section]['red'] += 1
             else:
                 affected_sections[section]['amber'] += 1
-        
+
         # Sort by severity
         prioritized_sections = sorted(
             affected_sections.items(),
             key=lambda x: (x[1]['red'] * 3 + x[1]['amber']),
             reverse=True
         )[:10]
-        
+
         return {
             "program_id": str(program_id),
             "risk_score": risk_score,
@@ -502,23 +502,23 @@ async def get_program_risk_assessment(program_id: UUID):
 def _generate_remediation_recommendations(risk_score: int, red_count: int, amber_count: int) -> list[str]:
     """Generate remediation recommendations based on risk metrics."""
     recommendations = []
-    
+
     if risk_score >= 70:
         recommendations.append("CRITICAL: Immediate review required for high-risk sections")
         recommendations.append("Schedule emergency drift remediation session")
-    
+
     if red_count > 0:
         recommendations.append(f"Address {red_count} RED alerts as priority - truth/prose drift exceeds threshold")
-    
+
     if amber_count > 5:
         recommendations.append(f"Review {amber_count} AMBER alerts to prevent escalation")
-    
+
     if risk_score >= 40:
         recommendations.append("Consider increasing drift monitoring frequency")
         recommendations.append("Review source truth data for potential updates")
-    
+
     if not recommendations:
         recommendations.append("No immediate actions required - drift levels within acceptable range")
-    
+
     return recommendations
 

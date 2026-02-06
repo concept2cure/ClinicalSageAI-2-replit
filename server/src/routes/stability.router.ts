@@ -130,9 +130,9 @@ async function executeQuery(req: any, queryText: string, params?: any[]) {
   try {
     // Set tenant context for RLS policies - use tenant from header or default to 1
     const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'] || '1';
-    // SET commands don't support parameterized queries, ensure tenant ID is numeric
+    // Use parameterized set_config() to prevent SQL injection
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Execute the actual query
     return await client.query(queryText, params);
@@ -145,9 +145,9 @@ async function executeQuery(req: any, queryText: string, params?: any[]) {
 async function executeInternalQuery(tenantId: string = '1', queryText: string, params?: any[]) {
   const client = await pool.connect();
   try {
-    // SET commands don't support parameterized queries, ensure tenant ID is numeric
+    // Use parameterized set_config() to prevent SQL injection
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
     return await client.query(queryText, params);
   } finally {
     client.release();
@@ -159,10 +159,10 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
   const actor = (req.headers['x-user-name'] || req.headers['x-user-email'] || 'user').toString();
   const client = await pool.connect();
   try {
-    // Set tenant context for audit - SET commands don't support parameterized queries
+    // Set tenant context for audit - use parameterized set_config() to prevent SQL injection
     const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     await client.query(
       `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
@@ -179,9 +179,9 @@ router.get('/studies', async (req, res) => {
   try {
     // Set tenant context for RLS policies - use tenant from header or default to 1
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
-    // SET commands don't support parameterized queries, but we ensure tenant ID is numeric
+    // SET commands don't support parameterized queries, but set_config() does
     const safetenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safetenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safetenantId)]);
 
     const result = await client.query(`
       SELECT
@@ -267,9 +267,9 @@ router.post('/studies', async (req, res) => {
     // Start transaction
     await client.query('BEGIN');
 
-    // Set tenant context for RLS policies - SET commands don't support parameterized queries
+    // Set tenant context for RLS policies - use parameterized set_config()
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Generate dates
     const plannedEndDate = new Date(startDate);
@@ -506,10 +506,10 @@ router.get('/studies/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Set tenant context for RLS policies - SET commands don't support parameterized queries
+    // Set tenant context for RLS policies - use parameterized set_config()
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Get study
     const studyResult = await client.query('SELECT * FROM stab_studies WHERE study_id = $1', [id]);
@@ -585,10 +585,10 @@ router.post('/studies/:id/conditions', async (req, res) => {
     const { id } = req.params;
     const { kind, temp, rh, description } = req.body;
 
-    // Set tenant context for RLS policies - SET commands don't support parameterized queries
+    // Set tenant context for RLS policies - use parameterized set_config()
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     const result = await client.query(
       `
@@ -614,10 +614,10 @@ router.delete('/conditions/:condId', async (req, res) => {
   try {
     const { condId } = req.params;
 
-    // Set tenant context for RLS policies - SET commands don't support parameterized queries
+    // Set tenant context for RLS policies - use parameterized set_config()
     const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const safeTenantId = parseInt(tenantId.toString()) || 1;
-    await client.query(`SET LOCAL app.tenant_id = ${safeTenantId}`);
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     await client.query('DELETE FROM stab_conditions WHERE cond_id = $1', [condId]);
 

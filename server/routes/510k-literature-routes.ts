@@ -33,8 +33,6 @@ const extractTenantContext = (req: Request, res: Response, next: Function) => {
   next();
 };
 
-const router = Router();
-
 // Custom validation helper functions
 interface ValidationError {
   param: string;
@@ -614,5 +612,4 @@ router.get('/summary/:id', extractTenantContext, async (req: Request, res: Respo
   }
 });
 
-export default router;
 export default router;
