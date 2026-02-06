@@ -13,7 +13,28 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Mock auth middleware — simulates dev-mode auto-auth for unit tests.
+// In production, real JWT verification runs; here we just populate req.user.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../middleware/auth.js', () => ({
+  authenticateToken: (req: Request, _res: Response, next: NextFunction) => {
+    (req as any).user = {
+      id: 1,
+      userId: 1,
+      email: 'test@trialsage.ai',
+      role: 'admin',
+      roles: ['admin', 'user'],
+      organizationId: '2',
+      permissions: ['*'],
+    };
+    next();
+  },
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Test setup — env vars are read at request time, so we set them per-test
@@ -88,14 +109,16 @@ describe('Evidence Fabric BFF Proxy', () => {
     });
   });
 
-  // 3) No admin token exposed to browser
+  // 3) Auth required — no REVIEW_ADMIN_TOKEN in browser, but JWT is required
   describe('Security', () => {
-    it('browser request needs NO auth header (token injected server-side)', async () => {
-      // No auth header sent — proxy should NOT return 401/403
+    it('browser request needs NO shadow admin token (it is injected server-side)', async () => {
+      // No X-Admin-Token header sent — proxy should NOT return 401/403
+      // (auth is via JWT, which is mocked here)
       const res = await request(app)
         .get('/api/evidence-fabric/health-summary')
         .query({ program_id: PROGRAM_ID });
 
+      // Should NOT be 401 or 403 — those would mean the proxy requires the shadow admin token
       expect(res.status).not.toBe(401);
       expect(res.status).not.toBe(403);
       // 502 = proxy tried to reach shadow but it's not running → correct

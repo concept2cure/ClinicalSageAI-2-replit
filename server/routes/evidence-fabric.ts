@@ -14,8 +14,12 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
+
+// All evidence-fabric routes require a logged-in user (JWT)
+router.use(authenticateToken);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Configuration — read at request time so env changes are picked up
