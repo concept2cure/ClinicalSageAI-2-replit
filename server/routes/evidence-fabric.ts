@@ -207,4 +207,53 @@ router.get(
   }
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Defense Packet — binary ZIP download proxy
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/evidence-fabric/defense-packet?program_id=...
+ *
+ * Downloads a Regulatory Defense Packet ZIP from Shadow Service.
+ * Streams binary response directly to the browser.
+ */
+router.get('/defense-packet', requireConfigured, async (req: Request, res: Response) => {
+  const programId = String(req.query.program_id || '');
+  if (!programId) {
+    return res.status(422).json({ error: 'program_id is required' });
+  }
+
+  try {
+    const url = new URL('/evidence/defense-packet', getShadowUrl());
+    url.searchParams.set('program_id', programId);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: { 'X-Admin-Token': getAdminToken() },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      return res.status(response.status).type('application/json').send(errorBody);
+    }
+
+    // Stream binary response
+    const contentType = response.headers.get('content-type') || 'application/zip';
+    const contentDisposition = response.headers.get('content-disposition')
+      || `attachment; filename="defense-packet-${programId}.zip"`;
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', contentDisposition);
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.status(200).send(buffer);
+  } catch (err: any) {
+    console.error('[evidence-fabric] defense-packet proxy error:', err.message);
+    res.status(502).json({
+      error: 'Shadow service unreachable',
+      detail: err.message,
+    });
+  }
+});
+
 export default router;

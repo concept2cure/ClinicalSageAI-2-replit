@@ -174,5 +174,38 @@ describe('Evidence Fabric BFF Proxy', () => {
         .query({ program_id: PROGRAM_ID });
       expect(res.status).not.toBe(404);
     });
+
+    it('has GET /defense-packet endpoint', async () => {
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).not.toBe(404);
+    });
+  });
+
+  // 6) Defense Packet specific
+  describe('Defense Packet', () => {
+    it('GET /defense-packet without program_id → 422', async () => {
+      const res = await request(app).get('/api/evidence-fabric/defense-packet');
+      expect(res.status).toBe(422);
+      expect(res.body.error).toContain('program_id');
+    });
+
+    it('GET /defense-packet returns 503 when token not configured', async () => {
+      process.env.REVIEW_ADMIN_TOKEN = '';
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(503);
+      expect(res.body.error).toContain('not configured');
+    });
+
+    it('GET /defense-packet returns 502 when shadow service unreachable', async () => {
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('unreachable');
+    });
   });
 });
