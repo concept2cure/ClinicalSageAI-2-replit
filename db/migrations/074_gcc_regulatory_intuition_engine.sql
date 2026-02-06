@@ -2,11 +2,31 @@
 -- Purpose: Learn from rejection letters, CRLs, IRs, RTFs to predict submission outcomes
 -- Dependencies: 073_cortex_prime_unified_brain.sql
 -- Part of: Cortex Prime - The Definitive Life Sciences AI Mind
--- 
+--
 -- This migration implements "30-Year Veteran Intuition" - the ability to detect
 -- subtle patterns that experienced regulatory professionals recognize intuitively.
 
 BEGIN;
+
+-- Ensure cortex schema exists (may have been created by 073 or _legacy migration)
+CREATE SCHEMA IF NOT EXISTS cortex;
+
+-- Create cortex.atoms table with all columns needed by dependent migrations if not exists
+CREATE TABLE IF NOT EXISTS cortex.atoms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID,
+    atom_type TEXT,
+    content TEXT,
+    content_type TEXT,
+    source_type TEXT,
+    source_document_id UUID,
+    structured_data JSONB,
+    embedding VECTOR(3072),
+    embedding_3072 VECTOR(3072),
+    embedding_1536 VECTOR(1536),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 DO $$
 BEGIN
@@ -34,7 +54,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS cortex.regulatory_signals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL,
-    
+
     -- Signal identification
     signal_type TEXT NOT NULL CHECK (signal_type IN (
         'crl_deficiency',        -- Complete Response Letter deficiency
@@ -58,7 +78,7 @@ CREATE TABLE IF NOT EXISTS cortex.regulatory_signals (
         'foreign_data_concern',  -- Foreign clinical data acceptance
         'biomarker_validation'   -- Biomarker validation concern
     )),
-    
+
     -- Source document reference
     source_atom_id UUID REFERENCES cortex.atoms(id),
     source_document_type TEXT NOT NULL CHECK (source_document_type IN (
@@ -67,39 +87,39 @@ CREATE TABLE IF NOT EXISTS cortex.regulatory_signals (
         'label', 'review_document', 'sponsor_response', 'amendment'
     )),
     source_date TIMESTAMPTZ,
-    
+
     -- Signal content
     signal_text TEXT NOT NULL,
     normalized_text TEXT, -- Cleaned/normalized version
     signal_embedding VECTOR(3072),
     signal_embedding_1536 VECTOR(1536), -- Cost-efficient version
-    
+
     -- Regulatory context
     therapeutic_area TEXT,
     indication TEXT,
     submission_type TEXT, -- NDA, BLA, ANDA, 505(b)(2), etc.
     review_division TEXT,
     agency TEXT DEFAULT 'FDA',
-    
+
     -- Signal strength metrics
     severity TEXT CHECK (severity IN ('critical', 'major', 'minor', 'observation')),
     frequency_score NUMERIC(5,4), -- How often this signal appears (0-1)
     preceded_rejection_rate NUMERIC(5,4), -- % of times this signal preceded rejection
     preceded_delay_rate NUMERIC(5,4), -- % of times this signal preceded delay
     resolution_rate NUMERIC(5,4), -- % of times sponsors successfully resolved
-    
+
     -- Learned weights (updated by evolution)
     predictive_weight NUMERIC(8,6) DEFAULT 1.0,
     confidence_in_weight NUMERIC(5,4) DEFAULT 0.5,
     last_weight_update TIMESTAMPTZ,
     weight_update_count INTEGER DEFAULT 0,
-    
+
     -- Metadata
     extracted_by TEXT, -- 'human' | 'ai' | 'hybrid'
     extraction_confidence NUMERIC(5,4),
     validated_by UUID, -- User who validated
     validation_date TIMESTAMPTZ,
-    
+
     -- Audit
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -107,8 +127,8 @@ CREATE TABLE IF NOT EXISTS cortex.regulatory_signals (
     is_active BOOLEAN DEFAULT TRUE
 );
 
-COMMENT ON TABLE cortex.regulatory_signals IS 
-'Atomic patterns extracted from regulatory correspondence that indicate approval risk. 
+COMMENT ON TABLE cortex.regulatory_signals IS
+'Atomic patterns extracted from regulatory correspondence that indicate approval risk.
 Each signal represents a single concern, question, or issue raised by regulators.
 Signals are learned from historical CRLs, IRs, RTFs, and advisory committee proceedings.';
 
@@ -121,21 +141,21 @@ Signals are learned from historical CRLs, IRs, RTFs, and advisory committee proc
 CREATE TABLE IF NOT EXISTS cortex.rejection_patterns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID, -- NULL = global pattern (learned across all orgs, privacy-safe)
-    
+
     -- Pattern identification
     pattern_name TEXT NOT NULL,
     pattern_description TEXT,
     pattern_embedding VECTOR(3072), -- Semantic representation of pattern
     pattern_embedding_1536 VECTOR(1536),
-    
+
     -- Signal sequence (ordered array of signal types)
     signal_sequence TEXT[] NOT NULL, -- e.g., ['endpoint_question', 'comparator_challenge', 'crl_deficiency']
     signal_ids UUID[], -- Specific signals that formed this pattern (may span orgs)
-    
+
     -- Temporal requirements
     sequence_window_days INTEGER, -- Max days between first and last signal
     typical_gap_days INTEGER[], -- Typical gaps between each signal pair
-    
+
     -- Outcome prediction
     predicted_outcome TEXT NOT NULL CHECK (predicted_outcome IN (
         'approval', 'crl', 'rtf', 'clinical_hold', 'withdrawal',
@@ -145,7 +165,7 @@ CREATE TABLE IF NOT EXISTS cortex.rejection_patterns (
     outcome_probability NUMERIC(5,4) NOT NULL, -- 0.0-1.0
     confidence_interval_lower NUMERIC(5,4),
     confidence_interval_upper NUMERIC(5,4),
-    
+
     -- Statistical validation
     support_count INTEGER NOT NULL DEFAULT 0, -- How many times pattern observed
     true_positive_count INTEGER DEFAULT 0,
@@ -156,22 +176,22 @@ CREATE TABLE IF NOT EXISTS cortex.rejection_patterns (
     recall_score NUMERIC(5,4), -- TP / (TP + FN)
     f1_score NUMERIC(5,4), -- Harmonic mean of precision/recall
     lift NUMERIC(8,4), -- How much better than random
-    
+
     -- Recommended actions
     recommended_actions JSONB DEFAULT '[]', -- Array of {action, priority, expected_impact}
     mitigation_success_rate NUMERIC(5,4), -- % of sponsors who mitigated successfully
-    
+
     -- Scope
     therapeutic_areas TEXT[], -- NULL = all
     submission_types TEXT[], -- NULL = all
     agencies TEXT[] DEFAULT ARRAY['FDA'],
-    
+
     -- Evolution tracking
     first_observed TIMESTAMPTZ,
     last_observed TIMESTAMPTZ,
     version INTEGER DEFAULT 1,
     parent_pattern_id UUID REFERENCES cortex.rejection_patterns(id), -- For pattern evolution
-    
+
     -- Audit
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -196,63 +216,63 @@ CREATE TABLE IF NOT EXISTS cortex.intuition_predictions (
     org_id UUID NOT NULL,
     program_id UUID,
     submission_id UUID, -- Links to regulatory.submissions
-    
+
     -- Prediction context
     prediction_type TEXT NOT NULL CHECK (prediction_type IN (
         'pre_submission', 'during_review', 'post_action', 'what_if'
     )),
     prediction_date TIMESTAMPTZ DEFAULT NOW(),
     prediction_horizon_days INTEGER, -- How far ahead we're predicting
-    
+
     -- Core predictions
     approval_probability NUMERIC(5,4),
     crl_probability NUMERIC(5,4),
     rtf_probability NUMERIC(5,4),
     delay_probability NUMERIC(5,4),
-    
+
     -- Timeline predictions
     expected_action_date DATE,
     earliest_action_date DATE,
     latest_action_date DATE,
     expected_review_months NUMERIC(4,1),
-    
+
     -- Risk decomposition
     risk_factors JSONB NOT NULL DEFAULT '[]', -- Array of {factor, contribution, signal_ids, mitigation}
     top_risk_factor TEXT,
     risk_concentration NUMERIC(5,4), -- Herfindahl index of risk sources
-    
+
     -- Pattern matches
     matched_pattern_ids UUID[],
     pattern_match_scores NUMERIC(5,4)[],
     strongest_pattern_id UUID REFERENCES cortex.rejection_patterns(id),
-    
+
     -- Similar historical cases
     similar_cases JSONB DEFAULT '[]', -- Array of {submission_id, similarity, outcome, key_differences}
     most_similar_case_id UUID,
     similarity_to_most_similar NUMERIC(5,4),
-    
+
     -- Confidence and uncertainty
     overall_confidence NUMERIC(5,4),
     epistemic_uncertainty NUMERIC(5,4), -- Uncertainty from lack of data
     aleatoric_uncertainty NUMERIC(5,4), -- Inherent uncertainty
     out_of_distribution_score NUMERIC(5,4), -- How novel is this submission
-    
+
     -- Explanation
     explanation_text TEXT,
     key_concerns TEXT[],
     recommended_actions TEXT[],
-    
+
     -- Outcome tracking (for learning)
     actual_outcome TEXT,
     actual_action_date DATE,
     outcome_recorded_at TIMESTAMPTZ,
     prediction_error NUMERIC(5,4), -- Brier score component
-    
+
     -- Audit
     created_at TIMESTAMPTZ DEFAULT NOW(),
     created_by UUID,
     model_version TEXT,
-    
+
     CONSTRAINT valid_probabilities CHECK (
         approval_probability + crl_probability + rtf_probability <= 1.05 -- Allow small rounding
     )
@@ -271,7 +291,7 @@ Outcomes are tracked for continuous learning and model improvement.';
 CREATE TABLE IF NOT EXISTS cortex.soft_signals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID, -- NULL = global
-    
+
     -- Signal identification
     signal_category TEXT NOT NULL CHECK (signal_category IN (
         'reviewer_word_choice',     -- Specific word/phrase patterns
@@ -289,28 +309,28 @@ CREATE TABLE IF NOT EXISTS cortex.soft_signals (
         'data_quality_concern',     -- Data quality/integrity concerns
         'regulatory_pathway_fit'    -- Fit with chosen pathway
     )),
-    
+
     -- Signal definition
     signal_name TEXT NOT NULL,
     signal_description TEXT,
     detection_rules JSONB, -- Rules for automatic detection
-    
+
     -- Examples
     positive_examples TEXT[], -- Examples where signal is present
     negative_examples TEXT[], -- Examples where signal is absent
     signal_embedding VECTOR(3072),
-    
+
     -- Learned weights
     weight_approval NUMERIC(8,6) DEFAULT 0.0, -- Contribution to approval prediction
     weight_rejection NUMERIC(8,6) DEFAULT 0.0, -- Contribution to rejection prediction
     weight_delay NUMERIC(8,6) DEFAULT 0.0, -- Contribution to delay prediction
     weight_confidence NUMERIC(5,4) DEFAULT 0.5,
-    
+
     -- Validation
     expert_validated BOOLEAN DEFAULT FALSE,
     expert_agreement_rate NUMERIC(5,4), -- % of experts who agree signal is meaningful
     inter_rater_reliability NUMERIC(5,4), -- Kappa or similar
-    
+
     -- Metadata
     discovered_by TEXT, -- 'human_expert' | 'ai_discovery' | 'literature'
     discovery_date TIMESTAMPTZ,
@@ -321,7 +341,7 @@ CREATE TABLE IF NOT EXISTS cortex.soft_signals (
 
 COMMENT ON TABLE cortex.soft_signals IS
 'Subtle language and behavioral patterns that indicate regulatory sentiment. These are
-the nuanced signals that experienced regulatory professionals intuit but may not 
+the nuanced signals that experienced regulatory professionals intuit but may not
 consciously articulate. Learned through expert interviews and outcome correlation.';
 
 -- ============================================================================
@@ -334,7 +354,7 @@ CREATE TABLE IF NOT EXISTS cortex.timeline_predictions (
     org_id UUID NOT NULL,
     submission_id UUID,
     program_id UUID,
-    
+
     -- Milestone identification
     milestone_type TEXT NOT NULL CHECK (milestone_type IN (
         'filing_decision', 'mid_cycle_meeting', 'late_cycle_meeting',
@@ -343,35 +363,35 @@ CREATE TABLE IF NOT EXISTS cortex.timeline_predictions (
         'launch_readiness', 'first_commercial_sale'
     )),
     milestone_name TEXT,
-    
+
     -- Point estimates
     predicted_date DATE NOT NULL,
     predicted_duration_days INTEGER, -- From previous milestone
-    
+
     -- Uncertainty bounds (multiple confidence levels)
     date_p10 DATE, -- 10th percentile (optimistic)
     date_p25 DATE,
     date_p50 DATE, -- Median
     date_p75 DATE,
     date_p90 DATE, -- 90th percentile (pessimistic)
-    
+
     -- Distribution parameters
     distribution_type TEXT DEFAULT 'lognormal', -- 'normal', 'lognormal', 'weibull', 'empirical'
     distribution_params JSONB, -- {mu, sigma} or {shape, scale} depending on type
-    
+
     -- Risk events that could cause delay
     delay_risk_events JSONB DEFAULT '[]', -- Array of {event, probability, impact_days, mitigation}
     total_delay_risk_days NUMERIC(6,1),
-    
+
     -- Factors driving prediction
     key_factors JSONB DEFAULT '[]', -- Array of {factor, direction, magnitude}
     similar_historical_durations INTEGER[], -- Days for similar submissions
-    
+
     -- Tracking
     actual_date DATE,
     prediction_error_days INTEGER,
     recorded_at TIMESTAMPTZ,
-    
+
     -- Audit
     created_at TIMESTAMPTZ DEFAULT NOW(),
     model_version TEXT,
@@ -392,7 +412,7 @@ CREATE INDEX IF NOT EXISTS idx_reg_signals_therapeutic ON cortex.regulatory_sign
 CREATE INDEX IF NOT EXISTS idx_reg_signals_source ON cortex.regulatory_signals(source_atom_id);
 CREATE INDEX IF NOT EXISTS idx_reg_signals_severity ON cortex.regulatory_signals(severity, preceded_rejection_rate DESC);
 -- NOTE: Skip index for 3072-dim embeddings (pgvector index dimension limit).
-CREATE INDEX IF NOT EXISTS idx_reg_signals_embedding_1536 ON cortex.regulatory_signals 
+CREATE INDEX IF NOT EXISTS idx_reg_signals_embedding_1536 ON cortex.regulatory_signals
     USING hnsw (signal_embedding_1536 vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- Rejection patterns indexes
@@ -407,7 +427,7 @@ CREATE INDEX IF NOT EXISTS idx_intuition_org_submission ON cortex.intuition_pred
 CREATE INDEX IF NOT EXISTS idx_intuition_program ON cortex.intuition_predictions(program_id, prediction_date DESC);
 CREATE INDEX IF NOT EXISTS idx_intuition_risk ON cortex.intuition_predictions(crl_probability DESC, rtf_probability DESC);
 CREATE INDEX IF NOT EXISTS idx_intuition_patterns ON cortex.intuition_predictions USING GIN (matched_pattern_ids);
-CREATE INDEX IF NOT EXISTS idx_intuition_outcome_tracking ON cortex.intuition_predictions(actual_outcome) 
+CREATE INDEX IF NOT EXISTS idx_intuition_outcome_tracking ON cortex.intuition_predictions(actual_outcome)
     WHERE actual_outcome IS NOT NULL;
 
 -- Soft signals indexes
@@ -417,7 +437,7 @@ CREATE INDEX IF NOT EXISTS idx_soft_signals_category ON cortex.soft_signals(sign
 -- Timeline predictions indexes
 CREATE INDEX IF NOT EXISTS idx_timeline_submission ON cortex.timeline_predictions(submission_id, milestone_type);
 CREATE INDEX IF NOT EXISTS idx_timeline_program ON cortex.timeline_predictions(program_id, predicted_date);
-CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON cortex.timeline_predictions(actual_date) 
+CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON cortex.timeline_predictions(actual_date)
     WHERE actual_date IS NOT NULL;
 
 -- ============================================================================
@@ -491,11 +511,11 @@ BEGIN
     -- Get document content
     SELECT content, metadata INTO v_content, v_metadata
     FROM cortex.atoms WHERE id = p_atom_id;
-    
+
     IF v_content IS NULL THEN
         RAISE EXCEPTION 'Atom not found: %', p_atom_id;
     END IF;
-    
+
     -- This is a placeholder for AI-powered extraction
     -- In production, this would call an LLM or specialized NLP model
     -- For now, return empty set - actual extraction happens in application layer
@@ -540,7 +560,7 @@ BEGIN
           AND rs.is_active = TRUE
     ),
     pattern_matches AS (
-        SELECT 
+        SELECT
             rp.id AS pattern_id,
             rp.pattern_name,
             rp.predicted_outcome,
@@ -551,7 +571,7 @@ BEGIN
                 SELECT COUNT(*)::NUMERIC / GREATEST(array_length(rp.signal_sequence, 1), 1)
                 FROM unnest(rp.signal_sequence) seq_type
                 WHERE EXISTS (
-                    SELECT 1 FROM submission_signals ss 
+                    SELECT 1 FROM submission_signals ss
                     WHERE ss.signal_type = seq_type
                 )
             ) AS match_score,
@@ -563,7 +583,7 @@ BEGIN
         WHERE rp.is_active = TRUE
           AND (rp.org_id = p_org_id OR rp.org_id IS NULL)
     )
-    SELECT 
+    SELECT
         pm.pattern_id,
         pm.pattern_name,
         pm.match_score,
@@ -603,12 +623,12 @@ DECLARE
     v_risk_factors JSONB := '[]'::JSONB;
 BEGIN
     -- Get pattern matches
-    FOR v_pattern_matches IN 
+    FOR v_pattern_matches IN
         SELECT * FROM cortex.match_rejection_patterns(p_submission_id, p_org_id, 0.3)
     LOOP
         v_matched_patterns := array_append(v_matched_patterns, v_pattern_matches.pattern_id);
         v_pattern_scores := array_append(v_pattern_scores, v_pattern_matches.match_score);
-        
+
         -- Adjust probabilities based on patterns
         IF v_pattern_matches.predicted_outcome = 'crl' THEN
             v_crl_prob := v_crl_prob + (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.3);
@@ -617,7 +637,7 @@ BEGIN
             v_rtf_prob := v_rtf_prob + (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.2);
             v_approval_prob := v_approval_prob - (v_pattern_matches.outcome_probability * v_pattern_matches.match_score * 0.2);
         END IF;
-        
+
         -- Add to risk factors
         v_risk_factors := v_risk_factors || jsonb_build_object(
             'factor', v_pattern_matches.pattern_name,
@@ -625,7 +645,7 @@ BEGIN
             'pattern_id', v_pattern_matches.pattern_id
         );
     END LOOP;
-    
+
     -- Normalize probabilities
     DECLARE
         v_total NUMERIC := v_approval_prob + v_crl_prob + v_rtf_prob;
@@ -634,7 +654,7 @@ BEGIN
         v_crl_prob := v_crl_prob / v_total;
         v_rtf_prob := v_rtf_prob / v_total;
     END;
-    
+
     -- Insert prediction
     INSERT INTO cortex.intuition_predictions (
         org_id, submission_id, prediction_type,
@@ -649,7 +669,7 @@ BEGIN
         'v1.0.0'
     )
     RETURNING id INTO v_prediction_id;
-    
+
     RETURN v_prediction_id;
 END;
 $$;
@@ -677,8 +697,8 @@ DECLARE
     v_brier_score NUMERIC;
 BEGIN
     -- Get prediction
-    SELECT 
-        CASE 
+    SELECT
+        CASE
             WHEN approval_probability >= crl_probability AND approval_probability >= rtf_probability THEN 'approval'
             WHEN crl_probability >= approval_probability AND crl_probability >= rtf_probability THEN 'crl'
             ELSE 'rtf'
@@ -687,7 +707,7 @@ BEGIN
     INTO v_predicted_outcome, v_approval_prob, v_crl_prob, v_rtf_prob
     FROM cortex.intuition_predictions
     WHERE id = p_prediction_id;
-    
+
     -- Calculate Brier score component
     v_brier_score := CASE p_actual_outcome
         WHEN 'approval' THEN POWER(1 - v_approval_prob, 2)
@@ -695,7 +715,7 @@ BEGIN
         WHEN 'rtf' THEN POWER(1 - v_rtf_prob, 2)
         ELSE 0.25 -- Unknown outcome
     END;
-    
+
     -- Update prediction record
     UPDATE cortex.intuition_predictions
     SET actual_outcome = p_actual_outcome,
@@ -703,27 +723,27 @@ BEGIN
         outcome_recorded_at = NOW(),
         prediction_error = v_brier_score
     WHERE id = p_prediction_id;
-    
+
     -- Update pattern statistics
     UPDATE cortex.rejection_patterns rp
-    SET 
-        true_positive_count = CASE 
-            WHEN rp.predicted_outcome = p_actual_outcome THEN true_positive_count + 1 
-            ELSE true_positive_count 
+    SET
+        true_positive_count = CASE
+            WHEN rp.predicted_outcome = p_actual_outcome THEN true_positive_count + 1
+            ELSE true_positive_count
         END,
-        false_positive_count = CASE 
-            WHEN rp.predicted_outcome != p_actual_outcome THEN false_positive_count + 1 
-            ELSE false_positive_count 
+        false_positive_count = CASE
+            WHEN rp.predicted_outcome != p_actual_outcome THEN false_positive_count + 1
+            ELSE false_positive_count
         END,
         last_observed = NOW(),
-        precision_score = CASE 
-            WHEN (true_positive_count + false_positive_count) > 0 
+        precision_score = CASE
+            WHEN (true_positive_count + false_positive_count) > 0
             THEN true_positive_count::NUMERIC / (true_positive_count + false_positive_count)
             ELSE NULL
         END
     WHERE rp.id = ANY(
-        SELECT unnest(matched_pattern_ids) 
-        FROM cortex.intuition_predictions 
+        SELECT unnest(matched_pattern_ids)
+        FROM cortex.intuition_predictions
         WHERE id = p_prediction_id
     );
 END;
