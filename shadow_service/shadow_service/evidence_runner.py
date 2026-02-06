@@ -109,6 +109,9 @@ async def create_claim(
 
             # Provenance entry if request context available
             if request_id:
+                idem_key = _compute_idempotency_key(
+                    program_id, "claim_created", claim_id=row["id"],
+                )
                 await conn.fetchrow(
                     sql.INSERT_PROVENANCE,
                     program_id,
@@ -121,6 +124,7 @@ async def create_claim(
                     actor,
                     request_id,
                     json.dumps({"claim_type": claim_type}),
+                    idem_key,
                 )
 
             logger.info("Created claim %s type=%s program=%s", row["id"], claim_type, program_id)
@@ -224,6 +228,9 @@ async def create_source(
 
             # Provenance
             if request_id:
+                idem_key = _compute_idempotency_key(
+                    program_id, "source_captured", source_id=row["id"],
+                )
                 await conn.fetchrow(
                     sql.INSERT_PROVENANCE,
                     program_id,
@@ -234,6 +241,7 @@ async def create_source(
                     actor,
                     request_id,
                     json.dumps({"source_type": source_type}),
+                    idem_key,
                 )
 
             logger.info("Created source %s type=%s program=%s", row["id"], source_type, program_id)
@@ -371,8 +379,31 @@ async def get_derivation_chain(
 
 
 # =============================================================================
-# 5) Provenance
+# 5) Provenance (idempotent)
 # =============================================================================
+
+def _compute_idempotency_key(
+    program_id: UUID,
+    event_type: str,
+    step_run_id: Optional[UUID] = None,
+    batch_id: Optional[UUID] = None,
+    claim_id: Optional[UUID] = None,
+    source_id: Optional[UUID] = None,
+) -> str:
+    """Deterministic key for provenance dedup.
+
+    Format: program:event:step:batch:claim:source
+    Ensures at-least-once safe inserts.
+    """
+    return ":".join([
+        str(program_id),
+        event_type,
+        str(step_run_id) if step_run_id else "_",
+        str(batch_id) if batch_id else "_",
+        str(claim_id) if claim_id else "_",
+        str(source_id) if source_id else "_",
+    ])
+
 
 async def create_provenance(
     program_id: UUID,
@@ -386,7 +417,13 @@ async def create_provenance(
     request_id: Optional[str] = None,
     metadata: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Record an execution → evidence provenance link."""
+    """Record an execution → evidence provenance link.
+
+    Idempotent: ON CONFLICT DO NOTHING. If duplicate, returns existing row.
+    """
+    idem_key = _compute_idempotency_key(
+        program_id, event_type, step_run_id, batch_id, claim_id, source_id,
+    )
     conn = await db.acquire_connection()
     try:
         await _set_rls(conn, program_id)
@@ -403,7 +440,13 @@ async def create_provenance(
                 actor,
                 request_id,
                 json.dumps(metadata or {}),
+                idem_key,
             )
+            if row is None:
+                # ON CONFLICT — fetch existing
+                row = await conn.fetchrow(
+                    sql.SELECT_PROVENANCE_BY_IDEM_KEY, idem_key,
+                )
             return dict(row)
     finally:
         await db.release_connection(conn)
