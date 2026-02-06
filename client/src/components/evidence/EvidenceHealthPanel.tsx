@@ -67,7 +67,7 @@ interface HealthSummary {
 
 interface EvidenceHealthPanelProps {
   programId: string;
-  adminToken: string;
+  /** Base URL for the BFF proxy (default: /api/evidence-fabric). No auth token needed — the Node server injects it. */
   baseUrl?: string;
   onViewScanDetail?: (scanId: string) => void;
 }
@@ -132,8 +132,7 @@ function severityBadge(count: number) {
 
 export function EvidenceHealthPanel({
   programId,
-  adminToken,
-  baseUrl = '/api/evidence',
+  baseUrl = '/api/evidence-fabric',
   onViewScanDetail,
 }: EvidenceHealthPanelProps) {
   const queryClient = useQueryClient();
@@ -143,9 +142,7 @@ export function EvidenceHealthPanel({
   const { data, isLoading, error, refetch } = useQuery<HealthSummary>({
     queryKey: ['evidence-health', programId],
     queryFn: async () => {
-      const res = await fetch(`${baseUrl}/health-summary?program_id=${programId}`, {
-        headers: { 'X-Admin-Token': adminToken },
-      });
+      const res = await fetch(`${baseUrl}/health-summary?program_id=${programId}`);
       if (!res.ok) throw new Error(`Health summary failed: ${res.status}`);
       return res.json();
     },
@@ -158,10 +155,7 @@ export function EvidenceHealthPanel({
     mutationFn: async () => {
       const res = await fetch(
         `${baseUrl}/contradiction-scans?program_id=${programId}&triggered_by=manual`,
-        {
-          method: 'POST',
-          headers: { 'X-Admin-Token': adminToken },
-        }
+        { method: 'POST' }
       );
       if (!res.ok) throw new Error(`Scan failed: ${res.status}`);
       return res.json();
