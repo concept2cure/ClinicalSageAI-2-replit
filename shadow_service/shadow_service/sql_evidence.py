@@ -359,6 +359,70 @@ GROUP BY status
 """
 
 # =============================================================================
+# Defense Packet — full-export queries for regulatory defense ZIP
+# =============================================================================
+
+EXPORT_ALL_CLAIMS = """
+SELECT id, program_id, claim_type, claim_text, structured, section_ref,
+       version, supersedes_id, status, confidence, created_by,
+       created_at, updated_at
+FROM evidence.claims
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+EXPORT_ALL_SOURCES = """
+SELECT id, program_id, source_type, source_ref, source_uri,
+       content_hash, metadata, captured_at, created_at
+FROM evidence.sources
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+EXPORT_ALL_SUPPORT_LINKS = """
+SELECT s.id, s.claim_id, s.source_id, s.program_id, s.support_type,
+       s.strength, s.span_start, s.span_end, s.annotation,
+       s.created_by, s.created_at
+FROM evidence.support s
+WHERE s.program_id = $1
+ORDER BY s.created_at
+"""
+
+EXPORT_ALL_DERIVATIONS = """
+SELECT id, program_id, derived_claim_id, source_claim_id,
+       derivation_type, reasoning, model_id, created_by, created_at
+FROM evidence.derivations
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+EXPORT_ALL_PROVENANCE = """
+SELECT id, program_id, claim_id, source_id, workflow_run_id,
+       step_run_id, batch_id, event_type, actor, request_id,
+       metadata, created_at
+FROM evidence.provenance
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+EXPORT_HASH_LEDGER = """
+SELECT id, program_id, entity_type, entity_id, content_hash,
+       prev_hash, algorithm, created_at
+FROM evidence.hash_ledger
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+EXPORT_ALL_SCANS = """
+SELECT id, program_id, scan_type, section_ref, status, total_claims,
+       contradictions_found, results, triggered_by, actor,
+       error_message, started_at, completed_at, created_at
+FROM evidence.contradiction_scans
+WHERE program_id = $1
+ORDER BY created_at
+"""
+
+# =============================================================================
 # RLS GUC helpers — reuse orchestration pattern
 # =============================================================================
 
