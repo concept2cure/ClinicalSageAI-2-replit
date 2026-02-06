@@ -29,6 +29,7 @@ import {
   Link2,
   ChevronRight,
   Activity,
+  Download,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -137,6 +138,31 @@ export function EvidenceHealthPanel({
 }: EvidenceHealthPanelProps) {
   const queryClient = useQueryClient();
   const [scanTriggered, setScanTriggered] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  // Download defense packet as ZIP
+  async function handleDownload() {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const res = await fetch(`${baseUrl}/defense-packet?program_id=${programId}`);
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `defense-packet-${programId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setDownloadError(err.message || 'Download failed');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   // Fetch health summary
   const { data, isLoading, error, refetch } = useQuery<HealthSummary>({
@@ -332,26 +358,48 @@ export function EvidenceHealthPanel({
           </div>
         </div>
 
-        {/* ── Run Scan Button ────────────────────────────────── */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => runScan.mutate()}
-          disabled={runScan.isPending || scanTriggered}
-        >
-          {runScan.isPending || scanTriggered ? (
-            <>
-              <Activity className="h-3.5 w-3.5 mr-1.5 animate-pulse" />
-              Running Scan...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-              Run Scan Now
-            </>
-          )}
-        </Button>
+        {/* ── Action Buttons ────────────────────────────────── */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => runScan.mutate()}
+            disabled={runScan.isPending || scanTriggered}
+          >
+            {runScan.isPending || scanTriggered ? (
+              <>
+                <Activity className="h-3.5 w-3.5 mr-1.5 animate-pulse" />
+                Running Scan...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Run Scan Now
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleDownload}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <>
+                <Download className="h-3.5 w-3.5 mr-1.5 animate-bounce" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Defense Packet
+              </>
+            )}
+          </Button>
+        </div>
+        {downloadError && <p className="text-xs text-red-500 mt-1">{downloadError}</p>}
 
         {/* ── Scan History Summary ───────────────────────────── */}
         {hasScans && (
