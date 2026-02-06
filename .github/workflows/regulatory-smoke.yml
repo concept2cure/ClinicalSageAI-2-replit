@@ -75,10 +75,10 @@ jobs:
 
       - name: Check No Legacy 3.2.2 Artifacts
         run: |
-          # Fail if anyone accidentally commits m2- filenames or index.xml
-          if grep -r "m2-[0-9]" ind_automation/ --include="*.py" || \
-             grep -r "index\.xml" ind_automation/ --include="*.py"; then
-            echo "❌ Legacy eCTD 3.2.2 artifacts detected in main branch"
+          # Fail if anyone commits m2- filenames (eCTD 3.2.2 naming convention)
+          # Note: index.xml is legitimately used by eCTD GA assembly (ectd_ga.py)
+          if grep -r "m2-[0-9]" ind_automation/ --include="*.py"; then
+            echo "❌ Legacy eCTD 3.2.2 module naming (m2-*) detected"
             exit 1
           fi
           echo "✅ No legacy 3.2.2 code detected"
