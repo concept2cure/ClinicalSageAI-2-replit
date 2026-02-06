@@ -75,13 +75,27 @@ jobs:
 
       - name: Check No Legacy 3.2.2 Artifacts
         run: |
-          # Fail if anyone commits m2- filenames (eCTD 3.2.2 naming convention)
-          # Note: index.xml is legitimately used by eCTD GA assembly (ectd_ga.py)
-          if grep -r "m2-[0-9]" ind_automation/ --include="*.py"; then
-            echo "❌ Legacy eCTD 3.2.2 module naming (m2-*) detected"
-            exit 1
+          # Scan GENERATED output for forbidden legacy eCTD 3.2.2 patterns.
+          # We check the build artifacts (reality), not source code (vibes).
+          LEGACY=0
+          # 1. Legacy m2-* module filenames in output
+          if find ./test-artifacts -name "m2-*" 2>/dev/null | grep -q .; then
+            echo "❌ Legacy eCTD 3.2.2 m2-* filenames found in output"
+            find ./test-artifacts -name "m2-*"
+            LEGACY=1
           fi
-          echo "✅ No legacy 3.2.2 code detected"
+          # 2. Old-style regional.xml (3.2.2 uses this, 4.0 uses us-regional.xml or JSON)
+          if find ./test-artifacts -name "regional.xml" -not -name "us-regional.xml" 2>/dev/null | grep -q .; then
+            echo "❌ Legacy regional.xml found (expected us-regional.xml or JSON)"
+            LEGACY=1
+          fi
+          # 3. eCTD backbone as XML instead of JSON (3.2.2 = XML, 4.0 = JSON)
+          if find ./test-artifacts -name "ectd.xml" 2>/dev/null | grep -q .; then
+            echo "❌ Legacy ectd.xml backbone found (expected ectd.json)"
+            LEGACY=1
+          fi
+          if [ "$LEGACY" -eq 1 ]; then exit 1; fi
+          echo "✅ No legacy 3.2.2 artifacts in generated output"
 
   integration-smoke:
     name: End-to-End Document Generation
