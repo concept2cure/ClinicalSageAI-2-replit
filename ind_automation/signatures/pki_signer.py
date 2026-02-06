@@ -170,6 +170,11 @@ class Part11Signature:
                 {"type": "timestamp-rfc3161", "valueInstant": tsa.get('timestamp')}
             ])
 
+        # Include HSM/KMS key reference for traceability
+        hsm_key = signature_result.get('hsm_key_id')
+        if hsm_key:
+            details.append({"type": "hsm-kms-key-id", "valueString": hsm_key})
+
         return {
             "resourceType": "AuditEvent",
             "id": f"sig-{uuid.uuid4().hex[:8]}",
