@@ -63,13 +63,17 @@ BEGIN
 END $$;
 
 -- Handle old UUID-type current_version_id column from legacy implementation
+-- Must drop dependent views first (they will be recreated by migration 006)
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_schema='prose' AND table_name='smart_fragments' 
+    WHERE table_schema='prose' AND table_name='smart_fragments'
     AND column_name='current_version_id' AND data_type='uuid'
   ) THEN
+    -- Drop views that depend on current_version_id before altering the column
+    DROP VIEW IF EXISTS prose.v_fragment_latest CASCADE;
+    DROP VIEW IF EXISTS audit.v_fragment_latest_risk CASCADE;
     ALTER TABLE prose.smart_fragments DROP COLUMN current_version_id;
   END IF;
 END $$;
@@ -120,7 +124,7 @@ CREATE TABLE prose.smart_fragment_versions (
   request_id TEXT,
 
   CONSTRAINT smart_fragment_versions_version_positive CHECK (version_id >= 1),
-  CONSTRAINT smart_fragment_versions_objectivity_range 
+  CONSTRAINT smart_fragment_versions_objectivity_range
     CHECK (objectivity_score IS NULL OR (objectivity_score >= 0 AND objectivity_score <= 1)),
   CONSTRAINT smart_fragment_versions_confidence_valid
     CHECK (confidence_rating IS NULL OR confidence_rating IN ('Conclusive', 'Interpretive', 'Ambiguous'))
@@ -149,7 +153,7 @@ CREATE INDEX IF NOT EXISTS smart_fragment_versions_created_by_idx
 
 -- HNSW index for searching historical versions by embedding
 CREATE INDEX IF NOT EXISTS smart_fragment_versions_embedding_hnsw
-  ON prose.smart_fragment_versions 
+  ON prose.smart_fragment_versions
   USING hnsw (embedding vector_cosine_ops);
 
 -- ============================================================================
@@ -160,7 +164,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  RAISE EXCEPTION 
+  RAISE EXCEPTION
     'COMPLIANCE VIOLATION: prose.smart_fragment_versions is append-only (immutable version history). '
     'UPDATE and DELETE operations are prohibited to maintain 21 CFR Part 11 audit trail integrity. '
     'Attempted operation: % on row ID: %',
@@ -381,39 +385,39 @@ ALTER TABLE audit.concomitant_audit_logs
 CREATE INDEX IF NOT EXISTS audit_logs_interrogated_version_idx
   ON audit.concomitant_audit_logs (fragment_id, interrogated_version_id);
 
-COMMENT ON COLUMN audit.concomitant_audit_logs.interrogated_version_id IS 
+COMMENT ON COLUMN audit.concomitant_audit_logs.interrogated_version_id IS
   'Version ID of the fragment that was interrogated (enables version-specific risk tracking)';
 
 -- ============================================================================
 -- COMMENTS (for documentation)
 -- ============================================================================
-COMMENT ON TABLE prose.smart_fragment_versions IS 
+COMMENT ON TABLE prose.smart_fragment_versions IS
   'Immutable version history for prose fragments - 21 CFR Part 11 audit trail. '
   'Each row represents a specific point-in-time snapshot of a fragment.';
 
-COMMENT ON COLUMN prose.smart_fragment_versions.fragment_id IS 
+COMMENT ON COLUMN prose.smart_fragment_versions.fragment_id IS
   'References the parent smart_fragments header row';
 
-COMMENT ON COLUMN prose.smart_fragment_versions.version_id IS 
+COMMENT ON COLUMN prose.smart_fragment_versions.version_id IS
   'Sequential version number (1, 2, 3...) for this fragment';
 
-COMMENT ON COLUMN prose.smart_fragment_versions.created_by IS 
+COMMENT ON COLUMN prose.smart_fragment_versions.created_by IS
   'User/system that created this version - populated from app.user session setting';
 
-COMMENT ON COLUMN prose.smart_fragment_versions.change_reason IS 
+COMMENT ON COLUMN prose.smart_fragment_versions.change_reason IS
   'Why this version was created - populated from app.reason session setting';
 
-COMMENT ON COLUMN prose.smart_fragment_versions.request_id IS 
+COMMENT ON COLUMN prose.smart_fragment_versions.request_id IS
   'External change request ID - populated from app.request_id session setting';
 
-COMMENT ON FUNCTION prose.tg_smart_fragments_before_versioning() IS 
+COMMENT ON FUNCTION prose.tg_smart_fragments_before_versioning() IS
   'BEFORE trigger: computes version_id increment and updates pointer fields on smart_fragments';
 
-COMMENT ON FUNCTION prose.tg_smart_fragments_after_versioning() IS 
+COMMENT ON FUNCTION prose.tg_smart_fragments_after_versioning() IS
   'AFTER trigger: writes immutable version row to smart_fragment_versions';
 
-COMMENT ON TRIGGER trg_no_update_delete_smart_fragment_versions 
-  ON prose.smart_fragment_versions IS 
+COMMENT ON TRIGGER trg_no_update_delete_smart_fragment_versions
+  ON prose.smart_fragment_versions IS
   'Append-only enforcement: prevents UPDATE/DELETE to maintain 21 CFR Part 11 compliance';
 
 COMMIT;
