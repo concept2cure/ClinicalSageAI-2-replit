@@ -433,3 +433,13 @@ SELECT set_config('app.current_program_id', $1::TEXT, TRUE)
 SET_BYPASS_RLS = """
 SELECT set_config('app.bypass_rls', 'true', TRUE)
 """
+
+# =============================================================================
+# Nightly scan — cross-tenant program enumeration
+# =============================================================================
+
+SELECT_ACTIVE_PROGRAM_IDS = """
+SELECT id FROM regulatory_programs
+WHERE status = 'active'
+ORDER BY id
+"""
