@@ -1,78 +1,118 @@
 # Next Agent Instructions — Continuation Playbook
 
-> **Updated:** 2026-02-06 | **Status:** Phase 4 split into clean PRs
+> **Updated:** 2026-02-06 | **Status:** Phases 4–5.3A complete, Phase 6 next
 
 ---
 
 ## Current State
 
-### Open PRs (merge in order)
+### Merged PRs (most recent first)
 
-| PR                                                                       | Branch                        | Scope                                           | Status  |
-| ------------------------------------------------------------------------ | ----------------------------- | ----------------------------------------------- | ------- |
-| [#110](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/110) | `phase4/orchestration-schema` | Schema DDL only (6 tables, RLS, indexes, views) | 🟡 Open |
-| [#112](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/112) | `phase4/orchestration-runner` | Runner + API + tests (no schema)                | 🟡 Open |
-| [#113](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/113) | `phase4/orchestration-seeds`  | Seed workflow templates (no code)               | 🟡 Open |
-| [#114](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/114) | `docs/roadmap-phase4`         | Roadmap docs + index (no runtime)               | 🟡 Open |
+| PR   | Branch                         | Scope                                                 | Status        |
+| ---- | ------------------------------ | ----------------------------------------------------- | ------------- |
+| #120 | `phase5/contradiction-scanner` | Contradiction Scanner — A8 batch + REST + eCTD fix    | 🔄 CI running |
+| #119 | `phase5/idempotent-provenance` | Idempotent provenance — ON CONFLICT DO NOTHING        | ✅ Merged     |
+| #118 | `phase5/event-bridge`          | Event Bridge — orchestration → evidence provenance    | ✅ Merged     |
+| #117 | `phase5/evidence-fabric`       | Evidence Fabric — schema + service + 52 tests         | ✅ Merged     |
+| #116 | `fix/ectd-headers`             | eCTD regulatory audit headers for Phase 4 migrations  | ✅ Merged     |
+| #115 | `phase4/hardening`             | Auth gate, audit attribution, concurrency, pagination | ✅ Merged     |
+| #114 | `docs/roadmap-phase4`          | Roadmap docs + index updates                          | ✅ Merged     |
+| #113 | `phase4/orchestration-seeds`   | Seed workflow templates                               | ✅ Merged     |
+| #112 | `phase4/orchestration-runner`  | Runner + API + tests                                  | ✅ Merged     |
+| #110 | `phase4/orchestration-schema`  | Schema DDL (6 tables, RLS, indexes, views)            | ✅ Merged     |
 
-**Merge order:** #110 → #112 → #113 → #114 (schema first, then code, then data, then docs)
+**`main`** is at commit `b3943f02` (PR #119 merge). PR #120 is the active work item.
 
 ### What Has Been Built
 
-| Component                                                         | Status | Location                                                 | PR   |
-| ----------------------------------------------------------------- | ------ | -------------------------------------------------------- | ---- |
-| Orchestration schema (6 tables, RLS, indexes, views)              | ✅     | `db/migrations/20260206_phase4_orchestration_kernel.sql` | #110 |
-| SQL query module                                                  | ✅     | `shadow_service/shadow_service/sql_orchestration.py`     | #112 |
-| Pydantic models                                                   | ✅     | `shadow_service/shadow_service/models_orchestration.py`  | #112 |
-| Runner service (start, advance, claim, complete, fail, A8 bridge) | ✅     | `shadow_service/shadow_service/orchestration_runner.py`  | #112 |
-| FastAPI router (9 endpoints)                                      | ✅     | `shadow_service/shadow_service/router_orchestration.py`  | #112 |
-| Router registered in main.py                                      | ✅     | `shadow_service/shadow_service/main.py`                  | #112 |
-| Unit tests                                                        | ✅     | `shadow_service/tests/test_orchestration.py`             | #112 |
-| Seed workflow templates (IND Intake + DOCX Gen)                   | ✅     | `db/migrations/20260207_phase4_seed_templates.sql`       | #113 |
-| Roadmap documentation                                             | ✅     | `docs/roadmap/`                                          | #114 |
+| Component                                                         | Status | Location                                                  | PR   |
+| ----------------------------------------------------------------- | ------ | --------------------------------------------------------- | ---- |
+| **Phase 4: Orchestration Kernel**                                 |        |                                                           |      |
+| Orchestration schema (6 tables, RLS, indexes, views)              | ✅     | `db/migrations/20260206_phase4_orchestration_kernel.sql`  | #110 |
+| SQL query module                                                  | ✅     | `shadow_service/shadow_service/sql_orchestration.py`      | #112 |
+| Pydantic models                                                   | ✅     | `shadow_service/shadow_service/models_orchestration.py`   | #112 |
+| Runner service (start, advance, claim, complete, fail, A8 bridge) | ✅     | `shadow_service/shadow_service/orchestration_runner.py`   | #112 |
+| FastAPI router (9 endpoints, auth-gated)                          | ✅     | `shadow_service/shadow_service/router_orchestration.py`   | #112 |
+| Seed workflow templates (IND Intake + DOCX Gen)                   | ✅     | `db/migrations/20260207_phase4_seed_templates.sql`        | #113 |
+| Hardening (auth, audit, concurrency, pagination)                  | ✅     | PR #115                                                   | #115 |
+| Unit tests (45 tests)                                             | ✅     | `shadow_service/tests/test_orchestration.py`              | #112 |
+| **Phase 5: Evidence Fabric**                                      |        |                                                           |      |
+| Evidence schema (sources, claims, claim_links, provenance, etc.)  | ✅     | `db/migrations/20260206_phase5_evidence_fabric.sql`       | #117 |
+| SQL query module (parameterized)                                  | ✅     | `shadow_service/shadow_service/sql_evidence.py`           | #117 |
+| Pydantic models                                                   | ✅     | `shadow_service/shadow_service/models_evidence.py`        | #117 |
+| Evidence runner (CRUD, detect_contradictions, score)              | ✅     | `shadow_service/shadow_service/evidence_runner.py`        | #117 |
+| FastAPI router (13+ endpoints)                                    | ✅     | `shadow_service/shadow_service/router_evidence.py`        | #117 |
+| Unit tests (52 tests)                                             | ✅     | `shadow_service/tests/test_evidence_fabric.py`            | #117 |
+| **Phase 5.2: Event Bridge**                                       |        |                                                           |      |
+| Bridge hooks (on_step_completed, on_step_failed, on_batch)        | ✅     | `shadow_service/shadow_service/event_bridge.py`           | #118 |
+| Orchestration runner bridge integration                           | ✅     | `shadow_service/shadow_service/orchestration_runner.py`   | #118 |
+| Unit tests (25 tests)                                             | ✅     | `shadow_service/tests/test_event_bridge.py`               | #118 |
+| **Phase 5.2.1: Idempotent Provenance**                            |        |                                                           |      |
+| Idempotency key + unique partial index                            | ✅     | `db/migrations/20260206_phase5_idempotent_provenance.sql` | #119 |
+| INSERT ON CONFLICT DO NOTHING (11 params)                         | ✅     | `shadow_service/shadow_service/sql_evidence.py`           | #119 |
+| `_compute_idempotency_key()` + `create_provenance` ON CONFLICT    | ✅     | `shadow_service/shadow_service/evidence_runner.py`        | #119 |
+| Unit tests (41 tests)                                             | ✅     | `shadow_service/tests/test_idempotent_provenance.py`      | #119 |
+| **Phase 5.3.A: Contradiction Scanner**                            |        |                                                           |      |
+| Contradiction scans table + RLS                                   | ✅     | `db/migrations/20260206_phase5_contradiction_scanner.sql` | #120 |
+| Scanner lifecycle (run_scan, get_scan, list_scans)                | ✅     | `shadow_service/shadow_service/contradiction_scanner.py`  | #120 |
+| Router endpoints (POST/GET/GET by ID)                             | ✅     | `shadow_service/shadow_service/router_evidence.py`        | #120 |
+| Unit tests (40 tests)                                             | ✅     | `shadow_service/tests/test_contradiction_scanner.py`      | #120 |
+| **eCTD Compliance Fixes**                                         |        |                                                           |      |
+| Fix 3 eCTD test failures (TSA timestamp, HSM docx save, any())    | ✅     | `ind_automation/compilers/ectd4_compiler.py` + tests      | #120 |
 
-### Base State
+### Test Coverage
 
-- **`main`** has all 6 prior PRs (#104-#109) merged
-- All Phase 4 branches fork from `main` + schema commit
+| Test File                       | Tests    | Phase          |
+| ------------------------------- | -------- | -------------- |
+| `test_orchestration.py`         | 45       | Phase 4        |
+| `test_evidence_fabric.py`       | 52       | Phase 5        |
+| `test_event_bridge.py`          | 25       | Phase 5.2      |
+| `test_idempotent_provenance.py` | 41       | Phase 5.2.1    |
+| `test_contradiction_scanner.py` | 40       | Phase 5.3.A    |
+| **Total**                       | **203+** | **All phases** |
 
 ---
 
 ## What to Do Next
 
-### Immediate: Merge Phase 4 PRs
+### Immediate: Merge PR #120
 
-1. Merge #110 (schema) — verify CI, merge
-2. Rebase #112 onto updated main, fix any conflicts, merge
-3. Rebase #113 onto updated main, merge
-4. Merge #114 (docs — no conflicts expected)
-
-### Phase 4.2 Hardening Checklist (before merging #112)
-
-- [ ] **Auth gate** orchestration endpoints (admin token or service auth — same as A8 ops)
-- [ ] **Audit trail** on every state transition includes `request_id` + `actor` headers
-- [ ] **DB session GUC** — verify `set_config('app.current_program_id', ...)` is called before every RLS-scoped query
-- [ ] **Error handling** — runner functions catch DB errors and return meaningful HTTP status codes
-
-### Phase 5: Evidence Fabric
-
-See [EVIDENCE_FABRIC.md](./EVIDENCE_FABRIC.md) for full spec. Key tasks:
-
-1. **Schema migration** — `evidence` schema with sources, claims, claim_links, compliance_scores
-2. **Claim extraction service** — AI-powered extraction from source documents
-3. **Traceability engine** — Link management + RTM generation
-4. **API endpoints** — Source ingestion, claim management, RTM export
-5. **Tests** — Claim linking, propagation, scoring accuracy
+1. Wait for CI to pass (eCTD fix pushed, Lint/Test/Security/Build were already green)
+2. Squash-merge PR #120 into main
 
 ### Phase 6: DOCX Factory
 
 See [DOCX_FACTORY.md](./DOCX_FACTORY.md) for full spec. Key tasks:
 
-1. **Template registry** — DOCX/Jinja2 templates for eCTD sections
-2. **Rendering engine** — python-docx + Jinja2 pipeline
-3. **Artifact versioning** — Content-hashed output with provenance
-4. **Export packaging** — eCTD XML generation
-5. **Integration** — Wire `document_gen` step type to renderer
+1. **Schema migration** — `documents` schema: templates, template_sections, artifacts, artifact_versions, artifact_sections
+2. **Template registry** — CRUD for DOCX/Jinja2 templates per submission type (IND, NDA, 510(k), BLA)
+3. **Rendering engine** — python-docx + Jinja2 pipeline gathering inputs from Evidence Fabric
+4. **Artifact versioning** — Content-hashed output with provenance, linked to step_runs
+5. **Export packaging** — eCTD XML generation for submission
+6. **Integration** — Wire `document_gen` step type in orchestration to the renderer
+7. **Tests** — Template rendering, hash verification, version tracking, RLS isolation
+
+### Suggested Phase 6 PR Split
+
+| PR # | Branch                     | Scope                                    |
+| ---- | -------------------------- | ---------------------------------------- |
+| 1    | `phase6/documents-schema`  | Schema DDL: templates + artifacts tables |
+| 2    | `phase6/template-registry` | Template CRUD + seed templates           |
+| 3    | `phase6/render-engine`     | Jinja2 + python-docx rendering pipeline  |
+| 4    | `phase6/artifact-store`    | Versioned storage with content_hash      |
+| 5    | `phase6/export-packaging`  | eCTD XML assembly + submission packaging |
+
+### Cleanup: Stale PRs
+
+These older copilot-authored PRs may be stale and should be evaluated for closing:
+
+| PR   | Branch                                        | Age |
+| ---- | --------------------------------------------- | --- |
+| #103 | `copilot/fix-ectd-header-compliance-a97ff...` | old |
+| #86  | `copilot/fix-batch-worker-test-timeout`       | old |
+| #83  | `copilot/fix-build-failures`                  | old |
+| #75  | `copilot/fix-terminal-verify-ci`              | old |
+| #69  | `copilot/fix-env-assessment-workflow`         | old |
 
 ---
 
@@ -84,15 +124,17 @@ See [DOCX_FACTORY.md](./DOCX_FACTORY.md) for full spec. Key tasks:
 phase{N}/{feature-slug}
 ```
 
-Examples: `phase5/evidence-fabric`, `phase6/docx-factory`
+Examples: `phase6/documents-schema`, `phase6/render-engine`
 
 ### PR Convention
 
-Each phase ships in 1-3 PRs:
+Each phase ships in 1-5 PRs:
 
 1. **Schema PR** — Database migration only
 2. **Kernel PR** — Backend services + API + tests
 3. **Seed PR** — Templates/seed data (if separate from kernel)
+4. **Integration PR** — Wire to existing systems
+5. **Export PR** — Output packaging
 
 ### File Organization
 
@@ -111,8 +153,9 @@ docs/roadmap/                              — Planning docs
 ```
 feat(schema): Phase N description
 feat(api): Phase N.M description
-test(orchestration): add XYZ coverage
+test(module): add XYZ coverage
 docs(roadmap): add Phase N spec
+fix(ectd): description of fix
 ```
 
 ### Code Style
@@ -123,6 +166,7 @@ docs(roadmap): add Phase N spec
 - **Events:** Emit `step_run_events` for every status transition
 - **Idempotency:** All schema DDL uses `IF NOT EXISTS` / `ON CONFLICT DO NOTHING`
 - **Tests:** Mock `db.acquire_connection` for unit tests, use real DB for integration
+- **eCTD headers:** All migration SQL files need eCTD regulatory audit headers
 
 ### Database Patterns
 
@@ -156,6 +200,8 @@ finally:
 | `truth`         | Clinical truth store              | —                        |
 | `audit`         | Immutable audit log               | —                        |
 | `orchestration` | Workflow engine (Phase 4)         | `app.current_program_id` |
+| `evidence`      | Evidence Fabric (Phase 5)         | `app.current_program_id` |
+| `documents`     | DOCX Factory (Phase 6, planned)   | `app.current_program_id` |
 
 ### Shadow Service Routers
 
@@ -170,13 +216,17 @@ finally:
 | `router_transparency`  | `/transparency`  | Data transparency         |
 | `router_training`      | `/training`      | Training compliance       |
 | `router_orchestration` | `/orchestration` | Workflow engine (Phase 4) |
+| `router_evidence`      | `/evidence`      | Evidence Fabric (Phase 5) |
 
 ---
 
 ## Warnings & Gotchas
 
-1. **Dual PK systems** — `public.*` uses INTEGER PKs (Drizzle), `core/vault/orchestration.*` uses UUID. Don't mix.
-2. **Soft FKs** — Cross-schema FKs (orchestration → core.programs, orchestration → vault.review_batches) are added conditionally. Migrations can run in any order.
+1. **Dual PK systems** — `public.*` uses INTEGER PKs (Drizzle), `core/vault/orchestration/evidence.*` uses UUID. Don't mix.
+2. **Soft FKs** — Cross-schema FKs are added conditionally. Migrations can run in any order.
 3. **Lite mode** — Shadow service can run without a database (`_lite_mode = True`). All DB-dependent routes return 503 in this mode.
 4. **RLS leakage** — `set_config` is transaction-local (`TRUE` param). Always use `acquire_connection` + `try/finally release_connection` to prevent session bleed.
 5. **Immutable events** — `orchestration.step_run_events` has an immutability trigger. UPDATE/DELETE will raise an exception. INSERT only.
+6. **Idempotent provenance** — `evidence.provenance` uses ON CONFLICT DO NOTHING with `idempotency_key`. Duplicate bridge events are safe.
+7. **eCTD CI** — eCTD 4.0 Compliance Validation runs `ind_automation/tests/test_ectd4_compiler.py`. All migration SQL needs eCTD headers.
+8. **Neon preview_db** — Known flaky CI check. Not blocking for merges.
