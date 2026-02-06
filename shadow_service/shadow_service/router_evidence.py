@@ -52,8 +52,11 @@ from .models_evidence import (
     HashEntryResponse,
     ClaimScoreBreakdown,
 )
+from fastapi.responses import StreamingResponse
+
 from . import evidence_runner as runner
 from . import contradiction_scanner as scanner
+from . import defense_packet
 
 logger = logging.getLogger(__name__)
 
@@ -459,5 +462,32 @@ async def get_contradiction_scan(
         if not result:
             raise HTTPException(status_code=404, detail="Scan not found")
         return result
+    except LiteModeError as e:
+        _handle_lite_mode(e)
+
+
+# =============================================================================
+# Defense Packet — regulatory export ZIP
+# =============================================================================
+
+@router.get("/defense-packet")
+async def download_defense_packet(
+    program_id: UUID = Query(...),
+    ctx: EvidenceAdminContext = Depends(require_evidence_admin),
+):
+    """Generate and download a Regulatory Defense Packet (ZIP).
+
+    Returns a self-contained ZIP archive containing all evidence data,
+    integrity hashes, contradiction scan snapshots, and a manifest.
+    Actor fields are SHA-256 prefix hashed (8 chars) — no PII in export.
+    """
+    try:
+        buf = await defense_packet.build_defense_packet(program_id)
+        filename = f"defense-packet-{program_id}.zip"
+        return StreamingResponse(
+            buf,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
     except LiteModeError as e:
         _handle_lite_mode(e)
