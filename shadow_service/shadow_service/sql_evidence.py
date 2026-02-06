@@ -192,11 +192,22 @@ ORDER BY ch.depth
 INSERT_PROVENANCE = """
 INSERT INTO evidence.provenance
     (program_id, claim_id, source_id, workflow_run_id, step_run_id,
-     batch_id, event_type, actor, request_id, metadata)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     batch_id, event_type, actor, request_id, metadata, idempotency_key)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
 RETURNING id, program_id, claim_id, source_id, workflow_run_id,
           step_run_id, batch_id, event_type, actor, request_id,
           metadata, created_at
+"""
+
+# Fetch existing provenance by idempotency key (for ON CONFLICT fallback)
+SELECT_PROVENANCE_BY_IDEM_KEY = """
+SELECT id, program_id, claim_id, source_id, workflow_run_id,
+       step_run_id, batch_id, event_type, actor, request_id,
+       metadata, created_at
+FROM evidence.provenance
+WHERE idempotency_key = $1
+LIMIT 1
 """
 
 SELECT_PROVENANCE_FOR_CLAIM = """
