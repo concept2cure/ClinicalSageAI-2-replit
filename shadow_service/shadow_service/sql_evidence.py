@@ -320,6 +320,45 @@ WHERE id = $1
 """
 
 # =============================================================================
+# Health Summary — aggregated view for the Evidence Health Panel
+# =============================================================================
+
+SELECT_LATEST_COMPLETED_SCAN = """
+SELECT id, scan_type, status, total_claims, contradictions_found,
+       results, triggered_by, actor, started_at, completed_at, created_at
+FROM evidence.contradiction_scans
+WHERE program_id = $1 AND status = 'completed'
+ORDER BY completed_at DESC
+LIMIT 1
+"""
+
+COUNT_CLAIMS_BY_STATUS = """
+SELECT status, COUNT(*) AS cnt
+FROM evidence.claims
+WHERE program_id = $1
+GROUP BY status
+"""
+
+COUNT_SOURCES = """
+SELECT COUNT(*) AS cnt
+FROM evidence.sources
+WHERE program_id = $1
+"""
+
+COUNT_PROVENANCE_ENTRIES = """
+SELECT COUNT(*) AS cnt
+FROM evidence.provenance
+WHERE program_id = $1
+"""
+
+COUNT_SCANS_BY_STATUS = """
+SELECT status, COUNT(*) AS cnt
+FROM evidence.contradiction_scans
+WHERE program_id = $1
+GROUP BY status
+"""
+
+# =============================================================================
 # RLS GUC helpers — reuse orchestration pattern
 # =============================================================================
 

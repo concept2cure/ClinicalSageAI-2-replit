@@ -701,3 +701,234 @@ class TestScannerEdgeCases:
             parsed = json.loads(results_arg)
             assert len(parsed) == 1
             assert parsed[0]["entity_field"] == "AE:count"
+
+
+# =============================================================================
+# 7) Health Summary — aggregated dashboard data
+# =============================================================================
+
+
+class TestHealthSummary:
+    """Test health_summary() aggregation logic."""
+
+    def _make_claims_rows(self):
+        return [
+            FakeRecord({"status": "active", "cnt": 12}),
+            FakeRecord({"status": "superseded", "cnt": 3}),
+        ]
+
+    def _make_scans_rows(self):
+        return [
+            FakeRecord({"status": "completed", "cnt": 5}),
+            FakeRecord({"status": "failed", "cnt": 1}),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_health_summary_with_scan(self):
+        """Returns full summary when a completed scan exists."""
+        from shadow_service import contradiction_scanner as scanner
+
+        program_id = uuid4()
+        scan_row = _make_scan_row(
+            program_id=program_id,
+            total_claims=8,
+            contradictions_found=2,
+            results=json.dumps([
+                {"entity": "AE", "field": "count", "claim_count": 3, "values": ["0", "2"]},
+                {"entity": "PK", "field": "cmax", "claim_count": 2, "values": ["10", "20"]},
+            ]),
+        )
+
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(side_effect=[
+            scan_row,                                   # SELECT_LATEST_COMPLETED_SCAN
+            FakeRecord({"cnt": 7}),                     # COUNT_SOURCES
+            FakeRecord({"cnt": 15}),                    # COUNT_PROVENANCE_ENTRIES
+        ])
+        mock_conn.fetch = AsyncMock(side_effect=[
+            self._make_claims_rows(),                   # COUNT_CLAIMS_BY_STATUS
+            self._make_scans_rows(),                    # COUNT_SCANS_BY_STATUS
+        ])
+        mock_conn.execute = AsyncMock()
+
+        with patch.object(scanner.db, "acquire_connection", return_value=mock_conn), \
+             patch.object(scanner.db, "release_connection", new_callable=AsyncMock):
+            result = await scanner.health_summary(program_id)
+
+        assert result["program_id"] == str(program_id)
+        assert result["latest_scan"] is not None
+        assert "results" not in result["latest_scan"]   # stripped from summary
+        assert result["claims"] == {"active": 12, "superseded": 3}
+        assert result["sources_count"] == 7
+        assert result["provenance_count"] == 15
+        assert result["scans"] == {"completed": 5, "failed": 1}
+        assert len(result["top_contradictions"]) == 2
+        assert result["top_contradictions"][0]["entity"] == "AE"
+
+    @pytest.mark.asyncio
+    async def test_health_summary_no_scans(self):
+        """Returns clean empty state when no scans exist."""
+        from shadow_service import contradiction_scanner as scanner
+
+        program_id = uuid4()
+
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(side_effect=[
+            None,                                       # No completed scan
+            FakeRecord({"cnt": 0}),                     # COUNT_SOURCES
+            FakeRecord({"cnt": 0}),                     # COUNT_PROVENANCE_ENTRIES
+        ])
+        mock_conn.fetch = AsyncMock(side_effect=[
+            [],                                         # No claims
+            [],                                         # No scans
+        ])
+        mock_conn.execute = AsyncMock()
+
+        with patch.object(scanner.db, "acquire_connection", return_value=mock_conn), \
+             patch.object(scanner.db, "release_connection", new_callable=AsyncMock):
+            result = await scanner.health_summary(program_id)
+
+        assert result["latest_scan"] is None
+        assert result["claims"] == {}
+        assert result["sources_count"] == 0
+        assert result["provenance_count"] == 0
+        assert result["scans"] == {}
+        assert result["top_contradictions"] == []
+
+    @pytest.mark.asyncio
+    async def test_health_summary_caps_contradictions_at_five(self):
+        """Only the top 5 contradictions are returned."""
+        from shadow_service import contradiction_scanner as scanner
+
+        program_id = uuid4()
+        ten_contradictions = [
+            {"entity": f"E{i}", "field": "f", "claim_count": 10 - i, "values": ["a", "b"]}
+            for i in range(10)
+        ]
+        scan_row = _make_scan_row(
+            program_id=program_id,
+            results=json.dumps(ten_contradictions),
+        )
+
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(side_effect=[
+            scan_row,
+            FakeRecord({"cnt": 0}),
+            FakeRecord({"cnt": 0}),
+        ])
+        mock_conn.fetch = AsyncMock(side_effect=[[], []])
+        mock_conn.execute = AsyncMock()
+
+        with patch.object(scanner.db, "acquire_connection", return_value=mock_conn), \
+             patch.object(scanner.db, "release_connection", new_callable=AsyncMock):
+            result = await scanner.health_summary(program_id)
+
+        assert len(result["top_contradictions"]) == 5
+
+    @pytest.mark.asyncio
+    async def test_health_summary_connection_always_released(self):
+        """Connection is released even when health_summary fails."""
+        from shadow_service import contradiction_scanner as scanner
+
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(side_effect=RuntimeError("DB down"))
+
+        release_mock = AsyncMock()
+        with patch.object(scanner.db, "acquire_connection", return_value=mock_conn), \
+             patch.object(scanner.db, "release_connection", release_mock):
+            with pytest.raises(RuntimeError, match="DB down"):
+                await scanner.health_summary(uuid4())
+            release_mock.assert_called_once_with(mock_conn)
+
+
+# =============================================================================
+# 8) Health Summary SQL structure
+# =============================================================================
+
+
+class TestHealthSummarySQL:
+    """Validate SQL query strings for health summary."""
+
+    def test_latest_scan_query_exists(self):
+        from shadow_service import sql_evidence as sql
+        assert isinstance(sql.SELECT_LATEST_COMPLETED_SCAN, str)
+        assert "completed" in sql.SELECT_LATEST_COMPLETED_SCAN.lower()
+        assert "LIMIT" in sql.SELECT_LATEST_COMPLETED_SCAN.upper()
+
+    def test_count_claims_by_status_exists(self):
+        from shadow_service import sql_evidence as sql
+        assert isinstance(sql.COUNT_CLAIMS_BY_STATUS, str)
+        assert "GROUP BY" in sql.COUNT_CLAIMS_BY_STATUS.upper()
+        assert "status" in sql.COUNT_CLAIMS_BY_STATUS.lower()
+
+    def test_count_sources_exists(self):
+        from shadow_service import sql_evidence as sql
+        assert isinstance(sql.COUNT_SOURCES, str)
+        assert "count" in sql.COUNT_SOURCES.lower()
+
+    def test_count_provenance_exists(self):
+        from shadow_service import sql_evidence as sql
+        assert isinstance(sql.COUNT_PROVENANCE_ENTRIES, str)
+        assert "count" in sql.COUNT_PROVENANCE_ENTRIES.lower()
+
+    def test_count_scans_by_status_exists(self):
+        from shadow_service import sql_evidence as sql
+        assert isinstance(sql.COUNT_SCANS_BY_STATUS, str)
+        assert "GROUP BY" in sql.COUNT_SCANS_BY_STATUS.upper()
+
+
+# =============================================================================
+# 9) Health Summary endpoint
+# =============================================================================
+
+
+class TestHealthSummaryEndpoint:
+    """Test the GET /evidence/health-summary router endpoint."""
+
+    def _get_client(self):
+        os.environ["REVIEW_ADMIN_TOKEN"] = "test-token-scanner"
+        from fastapi import FastAPI
+        from shadow_service.router_evidence import router
+
+        app = FastAPI()
+        app.include_router(router)
+        from fastapi.testclient import TestClient
+        return TestClient(app)
+
+    def test_get_health_summary_success(self):
+        """GET /evidence/health-summary returns aggregated data."""
+        from shadow_service import contradiction_scanner as scanner
+
+        summary = {
+            "program_id": str(uuid4()),
+            "latest_scan": None,
+            "claims": {"active": 5},
+            "sources_count": 3,
+            "provenance_count": 10,
+            "scans": {"completed": 2},
+            "top_contradictions": [],
+        }
+
+        client = self._get_client()
+        with patch.object(scanner, "health_summary",
+                         new_callable=AsyncMock, return_value=summary):
+            resp = client.get(
+                "/evidence/health-summary",
+                params={"program_id": str(uuid4())},
+                headers={"X-Admin-Token": "test-token-scanner"},
+            )
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["claims"] == {"active": 5}
+            assert data["sources_count"] == 3
+            assert data["top_contradictions"] == []
+
+    def test_get_health_summary_requires_program_id(self):
+        """GET /evidence/health-summary without program_id → 422."""
+        client = self._get_client()
+        resp = client.get(
+            "/evidence/health-summary",
+            headers={"X-Admin-Token": "test-token-scanner"},
+        )
+        assert resp.status_code == 422

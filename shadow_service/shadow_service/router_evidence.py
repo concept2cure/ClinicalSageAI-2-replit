@@ -14,6 +14,7 @@ Endpoints:
   GET   /evidence/provenance?claim_id=...  — provenance trail
   GET   /evidence/claims/{claim_id}/verify — hash integrity check
   GET   /evidence/contradictions           — contradiction detector
+  GET   /evidence/health-summary           — dashboard health panel data
   POST  /evidence/contradiction-scans      — run a contradiction scan
   GET   /evidence/contradiction-scans      — list scan results
   GET   /evidence/contradiction-scans/{scan_id} — get specific scan
@@ -378,6 +379,27 @@ async def detect_contradictions(
     try:
         results = await runner.detect_contradictions(program_id, section_ref)
         return {"contradictions": results, "total": len(results)}
+    except LiteModeError as e:
+        _handle_lite_mode(e)
+
+
+# =============================================================================
+# Evidence Health Summary — dashboard panel data
+# =============================================================================
+
+@router.get("/health-summary")
+async def get_health_summary(
+    program_id: UUID = Query(...),
+):
+    """Aggregated evidence health for the dashboard panel.
+
+    Returns latest scan info, claims breakdown, source/provenance counts,
+    and the top 5 contradictions from the latest completed scan.
+    Loads in <1s — all data from indexed queries.
+    """
+    try:
+        result = await scanner.health_summary(program_id)
+        return result
     except LiteModeError as e:
         _handle_lite_mode(e)
 

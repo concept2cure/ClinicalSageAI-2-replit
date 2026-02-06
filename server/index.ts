@@ -805,6 +805,19 @@ try {
   console.error('❌ Failed to mount Evidence Management routes:', error);
 }
 
+// Mount Evidence Fabric BFF proxy (Phase 5.3.B — Truth Machine)
+// Proxies browser calls to Shadow Service with admin token injected server-side
+try {
+  const evidenceFabricModule = await import('./routes/evidence-fabric.js');
+  const evidenceFabricRoutes = evidenceFabricModule.default;
+  app.use('/api/evidence-fabric', evidenceFabricRoutes);
+  console.log(
+    '✅ Evidence Fabric BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
+  );
+} catch (error) {
+  console.error('❌ Failed to mount Evidence Fabric BFF proxy routes:', error);
+}
+
 // Mount Demo Seed routes (for creating demo projects)
 try {
   const seedDemoModule = await import('./routes/seed-demo.js');
