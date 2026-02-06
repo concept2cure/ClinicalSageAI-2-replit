@@ -135,11 +135,9 @@ class RetentionSweepJob:
         conn = await db.get_connection()
         try:
             async with conn.transaction():
-                # Set attribution
-                await conn.execute(f"SET LOCAL app.user = '{self.actor}'")
-                await conn.execute(
-                    f"SET LOCAL app.request_id = 'RETENTION-SWEEP-{datetime.utcnow().strftime(\"%Y%m%d-%H%M%S\")}'"
-                )
+                # Set attribution using parameterized queries
+                request_id = f"RETENTION-SWEEP-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+                await db.set_session_context(conn, user=self.actor, request_id=request_id)
                 
                 reason = (
                     f"Automated retention sweep: Record retention period expired on "

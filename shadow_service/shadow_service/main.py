@@ -1050,7 +1050,7 @@ async def create_snapshot(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 record = await conn.fetchrow(
                     sql_heatmap.INSERT_SNAPSHOT,
@@ -1132,7 +1132,7 @@ async def update_snapshot_status(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 record = await conn.fetchrow(
                     sql_heatmap.UPDATE_SNAPSHOT_STATUS,
@@ -1202,7 +1202,7 @@ async def add_fragment_to_snapshot(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 record = await conn.fetchrow(
                     sql_heatmap.INSERT_SNAPSHOT_FRAGMENT,
@@ -1242,7 +1242,7 @@ async def add_fragments_batch(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 records = await conn.fetch(
                     sql_heatmap.INSERT_SNAPSHOT_FRAGMENTS_BATCH,
@@ -1309,7 +1309,7 @@ async def add_fragments_to_snapshot(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 if has_ids:
                     # Mode 1: Explicit fragment IDs
@@ -1439,7 +1439,7 @@ async def freeze_snapshot_gated(
         # 4. Freeze the snapshot
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
+                await db.set_session_context(conn, user=user)
                 
                 result = await conn.fetchrow(
                     sql_heatmap.UPDATE_SNAPSHOT_FREEZE_IF_GATE_PASS,
@@ -1561,8 +1561,7 @@ async def create_automated_snapshot(
     try:
         async with db.get_connection() as conn:
             async with conn.transaction():
-                await conn.execute(f"SET LOCAL app.user = '{user}'")
-                await conn.execute(f"SET LOCAL app.request_id = '{request_id}'")
+                await db.set_session_context(conn, user=user, request_id=request_id)
                 
                 # 1. Create snapshot
                 snapshot_record = await conn.fetchrow(
@@ -1617,7 +1616,7 @@ async def create_automated_snapshot(
             if gate_metrics and gate_metrics.gate_pass_recommended:
                 async with db.get_connection() as conn:
                     async with conn.transaction():
-                        await conn.execute(f"SET LOCAL app.user = '{user}'")
+                        await db.set_session_context(conn, user=user)
                         freeze_result = await conn.fetchrow(
                             sql_heatmap.UPDATE_SNAPSHOT_FREEZE_IF_GATE_PASS,
                             snapshot_id,
@@ -1832,8 +1831,7 @@ async def freeze_snapshot_with_gate(
             # Force freeze with override
             async with db.get_connection() as conn:
                 async with conn.transaction():
-                    await conn.execute(f"SET LOCAL app.user = '{user}'")
-                    await conn.execute(f"SET LOCAL app.reason = 'FORCE_FREEZE: {data.override_reason}'")
+                    await db.set_session_context(conn, user=user, reason=f"FORCE_FREEZE: {data.override_reason}")
                     
                     result = await conn.fetchrow(
                         sql_heatmap.UPDATE_SNAPSHOT_FORCE_FREEZE,
@@ -1860,7 +1858,7 @@ async def freeze_snapshot_with_gate(
             # Normal freeze (gate passed)
             async with db.get_connection() as conn:
                 async with conn.transaction():
-                    await conn.execute(f"SET LOCAL app.user = '{user}'")
+                    await db.set_session_context(conn, user=user)
                     
                     result = await conn.fetchrow(
                         sql_heatmap.UPDATE_SNAPSHOT_FREEZE_IF_GATE_PASS,
