@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Seed standard workflow templates (IND intake, DOCX generation)
+--          for orchestration kernel bootstrap.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (admin/IND), Module 5 (clinical study reports)
+--   - Integrity Risk Addressed: Missing default templates would leave
+--     orchestration inoperable post-deploy.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Idempotent via ON CONFLICT DO NOTHING on (code, version) constraint.
+--   - RLS policies on orchestration schema enforce program_id isolation.
+-- =============================================================================
+
 -- ============================================================================
 -- Seed: Workflow Templates for Phase 4 Orchestration Kernel
 -- Migration: 20260206_phase4_seed_templates.sql
