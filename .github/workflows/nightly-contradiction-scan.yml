@@ -7,19 +7,37 @@ on:
   workflow_dispatch:
     # Allow manual trigger from GitHub Actions UI
     inputs:
+      program_id:
+        description: 'Optional single program UUID to scan'
+        required: false
+      max_programs:
+        description: 'Optional cap on number of programs to scan'
+        required: false
       dry_run:
         description: 'Dry run (log only, no scans)'
         required: false
         default: 'false'
 
+concurrency:
+  group: nightly-contradiction-scan
+  cancel-in-progress: true
+
 permissions:
   contents: read
+
+defaults:
+  run:
+    working-directory: shadow_service
 
 jobs:
   nightly-scan:
     name: 'A8 Nightly Contradiction Scan'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      REVIEW_ADMIN_TOKEN: ${{ secrets.REVIEW_ADMIN_TOKEN }}
 
     steps:
       - name: Checkout
@@ -33,14 +51,14 @@ jobs:
       - name: Install dependencies
         run: |
           pip install asyncpg pydantic
-        working-directory: shadow_service
 
       - name: Run nightly scans
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PROGRAM_ID: ${{ inputs.program_id }}
+          MAX_PROGRAMS: ${{ inputs.max_programs }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           python -m shadow_service.nightly_scan
-        working-directory: .
 
       - name: Summary
         if: always()
