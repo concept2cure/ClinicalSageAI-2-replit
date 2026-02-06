@@ -219,3 +219,70 @@ async def health_summary(program_id: UUID) -> dict[str, Any]:
 
     finally:
         await db.release_connection(conn)
+
+
+# =============================================================================
+# Nightly A8 scan — cross-tenant batch
+# =============================================================================
+
+async def run_nightly_scans() -> dict[str, Any]:
+    """Run contradiction scans for ALL active programs.
+
+    Queries the regulatory_programs table directly (cross-tenant) and
+    runs a full scan for each with triggered_by='a8_nightly'.
+
+    Returns a summary of scan results per-program.
+    """
+    conn = await db.acquire_connection()
+    try:
+        rows = await conn.fetch(sql.SELECT_ACTIVE_PROGRAM_IDS)
+    finally:
+        await db.release_connection(conn)
+
+    program_ids = [r["id"] for r in rows]
+    logger.info("Nightly scan: found %d active programs", len(program_ids))
+
+    results: list[dict[str, Any]] = []
+    succeeded = 0
+    failed = 0
+
+    for pid in program_ids:
+        try:
+            result = await run_scan(
+                program_id=pid,
+                scan_type="full",
+                triggered_by="a8_nightly",
+                actor="system",
+            )
+            status = result.get("status", "unknown")
+            results.append({
+                "program_id": str(pid),
+                "scan_id": str(result.get("id", "")),
+                "status": status,
+                "contradictions_found": result.get("contradictions_found", 0),
+            })
+            if status == "completed":
+                succeeded += 1
+            else:
+                failed += 1
+        except Exception as e:
+            logger.error("Nightly scan failed for program %s: %s", pid, e)
+            results.append({
+                "program_id": str(pid),
+                "scan_id": None,
+                "status": "error",
+                "error": str(e)[:200],
+            })
+            failed += 1
+
+    summary = {
+        "total_programs": len(program_ids),
+        "succeeded": succeeded,
+        "failed": failed,
+        "results": results,
+    }
+    logger.info(
+        "Nightly scan complete: %d programs, %d succeeded, %d failed",
+        len(program_ids), succeeded, failed,
+    )
+    return summary

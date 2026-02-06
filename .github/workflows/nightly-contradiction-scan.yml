@@ -1,0 +1,51 @@
+name: 'Nightly Contradiction Scan'
+
+on:
+  schedule:
+    # Run at 3:00 AM UTC every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+    inputs:
+      dry_run:
+        description: 'Dry run (log only, no scans)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  nightly-scan:
+    name: 'A8 Nightly Contradiction Scan'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install asyncpg pydantic
+        working-directory: shadow_service
+
+      - name: Run nightly scans
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python -m shadow_service.nightly_scan
+        working-directory: .
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### 🛡️ Nightly Contradiction Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Triggered by: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Time: \`$(date -u)\`" >> $GITHUB_STEP_SUMMARY
