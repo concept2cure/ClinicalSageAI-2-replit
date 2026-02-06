@@ -7,6 +7,7 @@
  *  3. 422 when program_id is missing
  *  4. Proxy forwards correctly to Shadow Service
  *  5. 502 when Shadow Service is unreachable
+ *  6. IDOR prevention — 403 when org doesn't own the program
  *
  * @phase 5.3.B — Truth Machine UI
  */
@@ -15,6 +16,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Hoisted mock state — mutable so tests can control DB results
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const { dbMockResult } = vi.hoisted(() => ({
+  dbMockResult: {
+    value: [{ id: '00000000-0000-0000-0000-000000000001' }] as any[],
+  },
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Mock auth middleware — simulates dev-mode auto-auth for unit tests.
@@ -37,6 +48,22 @@ vi.mock('../../middleware/auth.js', () => ({
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Mock DB — chainable drizzle-like API for requireProgramAccess
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../db.js', () => ({
+  db: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => dbMockResult.value,
+        }),
+      }),
+    }),
+  },
+}));
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Test setup — env vars are read at request time, so we set them per-test
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -51,6 +78,9 @@ beforeEach(async () => {
   // Default: token set, shadow at an unreachable port
   process.env.REVIEW_ADMIN_TOKEN = 'test-token-secret';
   process.env.SHADOW_SERVICE_URL = 'http://localhost:1'; // nothing listening
+
+  // Default: program exists and belongs to the user's org
+  dbMockResult.value = [{ id: PROGRAM_ID }];
 
   const mod = await import('../../routes/evidence-fabric.js');
   app = express();
@@ -173,6 +203,77 @@ describe('Evidence Fabric BFF Proxy', () => {
         .get('/api/evidence-fabric/contradiction-scans/some-uuid')
         .query({ program_id: PROGRAM_ID });
       expect(res.status).not.toBe(404);
+    });
+
+    it('has GET /defense-packet endpoint', async () => {
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).not.toBe(404);
+    });
+  });
+
+  // 6) Defense Packet specific
+  describe('Defense Packet', () => {
+    it('GET /defense-packet without program_id → 422', async () => {
+      const res = await request(app).get('/api/evidence-fabric/defense-packet');
+      expect(res.status).toBe(422);
+      expect(res.body.error).toContain('program_id');
+    });
+
+    it('GET /defense-packet returns 503 when token not configured', async () => {
+      process.env.REVIEW_ADMIN_TOKEN = '';
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(503);
+      expect(res.body.error).toContain('not configured');
+    });
+
+    it('GET /defense-packet returns 502 when shadow service unreachable', async () => {
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('unreachable');
+    });
+  });
+
+  // 7) IDOR prevention — program ownership guard
+  describe('Program ownership guard (IDOR prevention)', () => {
+    it('returns 403 when user org does not own the program', async () => {
+      dbMockResult.value = []; // no matching program → org mismatch
+      const res = await request(app)
+        .get('/api/evidence-fabric/health-summary')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Access denied');
+    });
+
+    it('returns 403 for defense-packet when org does not own program', async () => {
+      dbMockResult.value = [];
+      const res = await request(app)
+        .get('/api/evidence-fabric/defense-packet')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(403);
+      expect(res.body.detail).toContain('do not have access');
+    });
+
+    it('returns 403 for POST contradiction-scans when org mismatch', async () => {
+      dbMockResult.value = [];
+      const res = await request(app)
+        .post('/api/evidence-fabric/contradiction-scans')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(403);
+    });
+
+    it('allows access when org owns the program (502 = proxy reached)', async () => {
+      dbMockResult.value = [{ id: PROGRAM_ID }]; // program owned
+      const res = await request(app)
+        .get('/api/evidence-fabric/health-summary')
+        .query({ program_id: PROGRAM_ID });
+      // 502 means we passed auth + ownership and tried to reach shadow
+      expect(res.status).toBe(502);
     });
   });
 });
