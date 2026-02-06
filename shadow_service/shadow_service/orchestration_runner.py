@@ -23,6 +23,20 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
+# Event Bridge — lazy import to avoid circular deps
+# =============================================================================
+
+async def _fire_bridge_event(handler_name: str, **kwargs) -> None:
+    """Fire-and-forget bridge event. Failures are logged, never block."""
+    try:
+        from . import event_bridge
+        handler = getattr(event_bridge, handler_name)
+        await handler(**kwargs)
+    except Exception as e:
+        logger.warning("Event bridge %s failed (non-blocking): %s", handler_name, e)
+
+
+# =============================================================================
 # RLS Context helpers
 # =============================================================================
 
@@ -299,7 +313,20 @@ async def complete_step(
                 conn, row["workflow_run_id"], program_id, actor, request_id
             )
 
-            return dict(row)
+            completed_row = dict(row)
+
+        # Fire bridge event (outside transaction — fire-and-forget)
+        await _fire_bridge_event(
+            "on_step_completed",
+            step_run_id=step_run_id,
+            workflow_run_id=completed_row["workflow_run_id"],
+            program_id=program_id,
+            output=output,
+            actor=actor,
+            request_id=request_id,
+        )
+
+        return completed_row
     finally:
         await db.release_connection(conn)
 
@@ -403,14 +430,22 @@ async def fail_step(
                 conn, row["workflow_run_id"], program_id, actor, request_id
             )
 
-            return dict(row)
+            failed_row = dict(row)
+
+        # Fire bridge event (outside transaction — fire-and-forget)
+        await _fire_bridge_event(
+            "on_step_failed",
+            step_run_id=step_run_id,
+            workflow_run_id=failed_row["workflow_run_id"],
+            program_id=program_id,
+            error=error,
+            actor=actor,
+            request_id=request_id,
+        )
+
+        return failed_row
     finally:
         await db.release_connection(conn)
-
-
-# =============================================================================
-# 6) A8 Bridge — delegate batch_job steps to vault.review_batches
-# =============================================================================
 
 async def create_batch_for_step(
     step_run_id: UUID,
@@ -533,7 +568,23 @@ async def on_batch_complete(
                 await _advance_within_txn(
                     conn, step_run["workflow_run_id"], program_id, actor, request_id
                 )
-            return dict(row) if row else None
+
+            batch_result = dict(row) if row else None
+
+        # Fire bridge event (outside transaction — fire-and-forget)
+        if batch_result and step_run:
+            await _fire_bridge_event(
+                "on_batch_completed",
+                batch_id=batch_id,
+                step_run_id=step_run["id"],
+                workflow_run_id=step_run["workflow_run_id"],
+                program_id=program_id,
+                output=output,
+                actor=actor,
+                request_id=request_id,
+            )
+
+        return batch_result
     finally:
         await db.release_connection(conn)
 
