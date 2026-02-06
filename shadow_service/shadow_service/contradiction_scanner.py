@@ -219,3 +219,103 @@ async def health_summary(program_id: UUID) -> dict[str, Any]:
 
     finally:
         await db.release_connection(conn)
+
+
+# =============================================================================
+# Nightly A8 scan — cross-tenant batch
+# =============================================================================
+
+async def run_nightly_scans(
+    *,
+    program_id: Optional[UUID] = None,
+    max_programs: Optional[int] = None,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Run contradiction scans for ALL active programs.
+
+    Queries the regulatory_programs table directly (cross-tenant) and
+    runs a full scan for each with triggered_by='a8_nightly'.
+
+    Args:
+        program_id:   If set, scan only this single program.
+        max_programs: Cap the number of programs to scan (safety valve).
+        dry_run:      If True, log what would be scanned but skip execution.
+
+    Returns a summary of scan results per-program.
+    """
+    # --- Resolve program list ---
+    if program_id:
+        program_ids = [program_id]
+        logger.info("Nightly scan: single-program override → %s", program_id)
+    else:
+        conn = await db.acquire_connection()
+        try:
+            rows = await conn.fetch(sql.SELECT_ACTIVE_PROGRAM_IDS)
+        finally:
+            await db.release_connection(conn)
+        program_ids = [r["id"] for r in rows]
+
+    if max_programs and len(program_ids) > max_programs:
+        logger.info(
+            "Nightly scan: capping %d programs to max_programs=%d",
+            len(program_ids), max_programs,
+        )
+        program_ids = program_ids[:max_programs]
+
+    logger.info("Nightly scan: found %d active programs", len(program_ids))
+
+    if dry_run:
+        logger.info("DRY RUN — skipping actual scans")
+        return {
+            "total_programs": len(program_ids),
+            "succeeded": 0,
+            "failed": 0,
+            "dry_run": True,
+            "program_ids": [str(p) for p in program_ids],
+            "results": [],
+        }
+
+    results: list[dict[str, Any]] = []
+    succeeded = 0
+    failed = 0
+
+    for pid in program_ids:
+        try:
+            result = await run_scan(
+                program_id=pid,
+                scan_type="full",
+                triggered_by="a8_nightly",
+                actor="system",
+            )
+            status = result.get("status", "unknown")
+            results.append({
+                "program_id": str(pid),
+                "scan_id": str(result.get("id", "")),
+                "status": status,
+                "contradictions_found": result.get("contradictions_found", 0),
+            })
+            if status == "completed":
+                succeeded += 1
+            else:
+                failed += 1
+        except Exception as e:
+            logger.error("Nightly scan failed for program %s: %s", pid, e)
+            results.append({
+                "program_id": str(pid),
+                "scan_id": None,
+                "status": "error",
+                "error": str(e)[:200],
+            })
+            failed += 1
+
+    summary = {
+        "total_programs": len(program_ids),
+        "succeeded": succeeded,
+        "failed": failed,
+        "results": results,
+    }
+    logger.info(
+        "Nightly scan complete: %d programs, %d succeeded, %d failed",
+        len(program_ids), succeeded, failed,
+    )
+    return summary
