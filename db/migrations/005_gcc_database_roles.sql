@@ -80,27 +80,60 @@ GRANT USAGE ON SCHEMA audit TO gcc_app_reader, gcc_app_writer, gcc_auditor, gcc_
 -- ============================================================================
 -- gcc_app_reader GRANTS (SELECT only)
 -- ============================================================================
+-- Note: Use conditional grants for tables that may be created in later migrations
 
 -- Truth schema
-GRANT SELECT ON truth.clinical_truth_store TO gcc_app_reader;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='truth' AND table_name='clinical_truth_store') THEN
+    EXECUTE 'GRANT SELECT ON truth.clinical_truth_store TO gcc_app_reader';
+  END IF;
+END $$;
 
--- Prose schema
-GRANT SELECT ON prose.smart_fragments TO gcc_app_reader;
-GRANT SELECT ON prose.smart_fragment_versions TO gcc_app_reader;
-GRANT SELECT ON prose.fragment_truth_links TO gcc_app_reader;
-GRANT SELECT ON prose.submission_snapshots TO gcc_app_reader;
-GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_app_reader;
+-- Prose schema (conditional for future migrations)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragments TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragment_versions') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragment_versions TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='fragment_truth_links') THEN
+    EXECUTE 'GRANT SELECT ON prose.fragment_truth_links TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshots') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshots TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshot_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_app_reader';
+  END IF;
+END $$;
 
 -- Adversarial schema
-GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_app_reader;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='adversarial' AND table_name='regulatory_adversarial_precedents') THEN
+    EXECUTE 'GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_app_reader';
+  END IF;
+END $$;
 
 -- Audit schema (read-only)
-GRANT SELECT ON audit.concomitant_audit_logs TO gcc_app_reader;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='audit' AND table_name='concomitant_audit_logs') THEN
+    EXECUTE 'GRANT SELECT ON audit.concomitant_audit_logs TO gcc_app_reader';
+  END IF;
+END $$;
 
--- Views
-GRANT SELECT ON prose.v_citation_appendix TO gcc_app_reader;
-GRANT SELECT ON prose.v_unlinked_fragments TO gcc_app_reader;
-GRANT SELECT ON truth.v_citation_coverage TO gcc_app_reader;
+-- Views (conditional)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='prose' AND table_name='v_citation_appendix') THEN
+    EXECUTE 'GRANT SELECT ON prose.v_citation_appendix TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='prose' AND table_name='v_unlinked_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.v_unlinked_fragments TO gcc_app_reader';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='truth' AND table_name='v_citation_coverage') THEN
+    EXECUTE 'GRANT SELECT ON truth.v_citation_coverage TO gcc_app_reader';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- gcc_app_writer GRANTS (INSERT/UPDATE on data tables, SELECT all)
@@ -109,50 +142,83 @@ GRANT SELECT ON truth.v_citation_coverage TO gcc_app_reader;
 -- Inherit reader privileges
 GRANT gcc_app_reader TO gcc_app_writer;
 
--- Truth schema: INSERT only (append-only)
--- UPDATE/DELETE blocked by trigger, but explicitly deny anyway
-GRANT INSERT ON truth.clinical_truth_store TO gcc_app_writer;
-
--- Prose schema: INSERT/UPDATE on fragments and links
-GRANT INSERT, UPDATE ON prose.smart_fragments TO gcc_app_writer;
-GRANT INSERT ON prose.smart_fragment_versions TO gcc_app_writer;  -- Auto-created by trigger
-GRANT INSERT, UPDATE ON prose.fragment_truth_links TO gcc_app_writer;
-GRANT INSERT, UPDATE ON prose.submission_snapshots TO gcc_app_writer;
-GRANT INSERT ON prose.submission_snapshot_fragments TO gcc_app_writer;
-
--- Adversarial schema: INSERT for adding precedents
-GRANT INSERT ON adversarial.regulatory_adversarial_precedents TO gcc_app_writer;
-
--- Audit schema: INSERT only (append-only logs)
--- UPDATE/DELETE blocked by trigger
-GRANT INSERT ON audit.concomitant_audit_logs TO gcc_app_writer;
+-- Conditional grants for writer role
+DO $$ BEGIN
+  -- Truth schema: INSERT only (append-only)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='truth' AND table_name='clinical_truth_store') THEN
+    EXECUTE 'GRANT INSERT ON truth.clinical_truth_store TO gcc_app_writer';
+  END IF;
+  -- Prose schema
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragments') THEN
+    EXECUTE 'GRANT INSERT, UPDATE ON prose.smart_fragments TO gcc_app_writer';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragment_versions') THEN
+    EXECUTE 'GRANT INSERT ON prose.smart_fragment_versions TO gcc_app_writer';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='fragment_truth_links') THEN
+    EXECUTE 'GRANT INSERT, UPDATE ON prose.fragment_truth_links TO gcc_app_writer';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshots') THEN
+    EXECUTE 'GRANT INSERT, UPDATE ON prose.submission_snapshots TO gcc_app_writer';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshot_fragments') THEN
+    EXECUTE 'GRANT INSERT ON prose.submission_snapshot_fragments TO gcc_app_writer';
+  END IF;
+  -- Adversarial schema
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='adversarial' AND table_name='regulatory_adversarial_precedents') THEN
+    EXECUTE 'GRANT INSERT ON adversarial.regulatory_adversarial_precedents TO gcc_app_writer';
+  END IF;
+  -- Audit schema
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='audit' AND table_name='concomitant_audit_logs') THEN
+    EXECUTE 'GRANT INSERT ON audit.concomitant_audit_logs TO gcc_app_writer';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- gcc_auditor GRANTS (Read audit/versions, no data modification)
 -- ============================================================================
 
--- Full read on audit trail
-GRANT SELECT ON audit.concomitant_audit_logs TO gcc_auditor;
-
--- Full read on version history
-GRANT SELECT ON prose.smart_fragment_versions TO gcc_auditor;
-
--- Read fragments for context
-GRANT SELECT ON prose.smart_fragments TO gcc_auditor;
-GRANT SELECT ON prose.fragment_truth_links TO gcc_auditor;
-GRANT SELECT ON prose.submission_snapshots TO gcc_auditor;
-GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_auditor;
-
--- Read truth for context
-GRANT SELECT ON truth.clinical_truth_store TO gcc_auditor;
-
--- Read precedents for context
-GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_auditor;
-
--- Views
-GRANT SELECT ON prose.v_citation_appendix TO gcc_auditor;
-GRANT SELECT ON prose.v_unlinked_fragments TO gcc_auditor;
-GRANT SELECT ON truth.v_citation_coverage TO gcc_auditor;
+DO $$ BEGIN
+  -- Audit trail
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='audit' AND table_name='concomitant_audit_logs') THEN
+    EXECUTE 'GRANT SELECT ON audit.concomitant_audit_logs TO gcc_auditor';
+  END IF;
+  -- Version history
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragment_versions') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragment_versions TO gcc_auditor';
+  END IF;
+  -- Fragments for context
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='smart_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.smart_fragments TO gcc_auditor';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='fragment_truth_links') THEN
+    EXECUTE 'GRANT SELECT ON prose.fragment_truth_links TO gcc_auditor';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshots') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshots TO gcc_auditor';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='prose' AND table_name='submission_snapshot_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.submission_snapshot_fragments TO gcc_auditor';
+  END IF;
+  -- Truth for context
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='truth' AND table_name='clinical_truth_store') THEN
+    EXECUTE 'GRANT SELECT ON truth.clinical_truth_store TO gcc_auditor';
+  END IF;
+  -- Precedents for context
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='adversarial' AND table_name='regulatory_adversarial_precedents') THEN
+    EXECUTE 'GRANT SELECT ON adversarial.regulatory_adversarial_precedents TO gcc_auditor';
+  END IF;
+  -- Views
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='prose' AND table_name='v_citation_appendix') THEN
+    EXECUTE 'GRANT SELECT ON prose.v_citation_appendix TO gcc_auditor';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='prose' AND table_name='v_unlinked_fragments') THEN
+    EXECUTE 'GRANT SELECT ON prose.v_unlinked_fragments TO gcc_auditor';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema='truth' AND table_name='v_citation_coverage') THEN
+    EXECUTE 'GRANT SELECT ON truth.v_citation_coverage TO gcc_auditor';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- gcc_admin_migrator GRANTS (DDL operations)
@@ -181,13 +247,13 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA audit TO gcc_admin_migrator;
 -- ============================================================================
 
 -- Ensure new tables get appropriate grants
-ALTER DEFAULT PRIVILEGES IN SCHEMA truth 
+ALTER DEFAULT PRIVILEGES IN SCHEMA truth
     GRANT SELECT ON TABLES TO gcc_app_reader;
-ALTER DEFAULT PRIVILEGES IN SCHEMA prose 
+ALTER DEFAULT PRIVILEGES IN SCHEMA prose
     GRANT SELECT ON TABLES TO gcc_app_reader;
-ALTER DEFAULT PRIVILEGES IN SCHEMA adversarial 
+ALTER DEFAULT PRIVILEGES IN SCHEMA adversarial
     GRANT SELECT ON TABLES TO gcc_app_reader;
-ALTER DEFAULT PRIVILEGES IN SCHEMA audit 
+ALTER DEFAULT PRIVILEGES IN SCHEMA audit
     GRANT SELECT ON TABLES TO gcc_app_reader;
 
 -- ============================================================================
@@ -213,7 +279,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA audit
 -- ============================================================================
 -- Run this to verify role configuration:
 /*
-SELECT 
+SELECT
     r.rolname,
     ARRAY_AGG(DISTINCT m.rolname) AS member_of,
     r.rolcanlogin,
@@ -230,16 +296,16 @@ GROUP BY r.rolname, r.rolcanlogin, r.rolcreatedb, r.rolcreaterole;
 -- COMMENTS
 -- ============================================================================
 
-COMMENT ON ROLE gcc_app_reader IS 
+COMMENT ON ROLE gcc_app_reader IS
     'Read-only access to GCC schemas for dashboards and reporting';
 
-COMMENT ON ROLE gcc_app_writer IS 
+COMMENT ON ROLE gcc_app_writer IS
     'Standard application access: INSERT/UPDATE on data, INSERT-only on audit';
 
-COMMENT ON ROLE gcc_auditor IS 
+COMMENT ON ROLE gcc_auditor IS
     'Compliance auditor: read audit logs and version history';
 
-COMMENT ON ROLE gcc_admin_migrator IS 
+COMMENT ON ROLE gcc_admin_migrator IS
     'Schema migration role: DDL operations only, controlled access';
 
 COMMIT;
