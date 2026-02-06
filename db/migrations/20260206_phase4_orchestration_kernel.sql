@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Orchestration Kernel schema — workflow/step templates, runs, events,
+--          RLS-isolated execution graph for regulatory program lifecycle.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (admin), Module 2 (summaries), Module 5 (clinical)
+--   - Integrity Risk Addressed: Untracked workflow state, missing audit trail,
+--     tenant isolation gaps in multi-program orchestration.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies enforce program_id isolation via app.current_program_id GUC.
+--   - Migration is idempotent (IF NOT EXISTS on schema, tables, indexes).
+-- =============================================================================
+
 -- ============================================================================
 -- Phase 4 — Orchestration Kernel: Domain Spine + Work Graph
 -- Migration: 20260206_phase4_orchestration_kernel.sql
