@@ -47,6 +47,7 @@ async def start_workflow(
     context: Optional[dict[str, Any]] = None,
     priority: int = 0,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """Start a new workflow run from a template.
 
@@ -127,7 +128,7 @@ async def start_workflow(
             )
 
             # 5. Advance — queue any steps whose deps are satisfied
-            await _advance_within_txn(conn, run_id, program_id, actor)
+            await _advance_within_txn(conn, run_id, program_id, actor, request_id)
 
             logger.info(
                 "Started workflow run=%s template=%s program=%s",
@@ -148,6 +149,7 @@ async def advance_workflow(
     workflow_run_id: UUID,
     program_id: UUID,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Compute runnable steps and queue them.
 
@@ -158,7 +160,7 @@ async def advance_workflow(
         await _set_rls(conn, program_id)
         async with conn.transaction():
             return await _advance_within_txn(
-                conn, workflow_run_id, program_id, actor
+                conn, workflow_run_id, program_id, actor, request_id
             )
     finally:
         await db.release_connection(conn)
@@ -169,6 +171,7 @@ async def _advance_within_txn(
     workflow_run_id: UUID,
     program_id: UUID,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Inner advance logic (must be inside a transaction)."""
     runnable = await conn.fetch(sql.SELECT_RUNNABLE_STEPS, workflow_run_id)
@@ -184,7 +187,7 @@ async def _advance_within_txn(
                 "status_change",
                 "pending",
                 "queued",
-                json.dumps({}),
+                json.dumps({"request_id": request_id} if request_id else {}),
                 actor,
             )
             queued.append(dict(step))
@@ -218,6 +221,7 @@ async def claim_step(
     worker_id: str,
     program_id: UUID,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
     """Attempt to claim a queued step for processing.
 
@@ -238,7 +242,7 @@ async def claim_step(
                 "status_change",
                 "queued",
                 "running",
-                json.dumps({"worker_id": worker_id}),
+                json.dumps({"worker_id": worker_id, "request_id": request_id}),
                 actor,
             )
             return dict(row)
@@ -255,6 +259,7 @@ async def complete_step(
     output: dict[str, Any],
     program_id: UUID,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
     """Mark a running step as completed and advance the workflow.
 
@@ -278,7 +283,7 @@ async def complete_step(
                 "status_change",
                 "running",
                 "completed",
-                json.dumps({"output_keys": list(output.keys())}),
+                json.dumps({"output_keys": list(output.keys()), "request_id": request_id}),
                 actor,
             )
 
@@ -291,7 +296,7 @@ async def complete_step(
 
             # Advance workflow — queue next steps
             await _advance_within_txn(
-                conn, row["workflow_run_id"], program_id, actor
+                conn, row["workflow_run_id"], program_id, actor, request_id
             )
 
             return dict(row)
@@ -308,6 +313,7 @@ async def fail_step(
     error: str,
     program_id: UUID,
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
     """Mark a running step as failed.
 
@@ -330,7 +336,7 @@ async def fail_step(
                 "status_change",
                 "running",
                 "failed",
-                json.dumps({"error": error}),
+                json.dumps({"error": error, "request_id": request_id}),
                 actor,
             )
 
@@ -394,7 +400,7 @@ async def fail_step(
 
             # Advance workflow (may mark workflow failed if all done)
             await _advance_within_txn(
-                conn, row["workflow_run_id"], program_id, actor
+                conn, row["workflow_run_id"], program_id, actor, request_id
             )
 
             return dict(row)
@@ -480,6 +486,7 @@ async def on_batch_complete(
     program_id: UUID,
     output: dict[str, Any],
     actor: str = "system",
+    request_id: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
     """Called when an A8 batch completes — marks the linked step_run as completed.
 
@@ -519,11 +526,12 @@ async def on_batch_complete(
                     json.dumps({
                         "batch_id": str(batch_id),
                         "trigger": "a8_batch_complete",
+                        "request_id": request_id,
                     }),
                     actor,
                 )
                 await _advance_within_txn(
-                    conn, step_run["workflow_run_id"], program_id, actor
+                    conn, step_run["workflow_run_id"], program_id, actor, request_id
                 )
             return dict(row) if row else None
     finally:
