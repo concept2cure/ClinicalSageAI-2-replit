@@ -183,6 +183,14 @@ SELECT id, render_id, file_type, storage_key, sha256, size_bytes, created_at
  WHERE id = $1
 """
 
+SELECT_ARTIFACT_BY_ID_WITH_PROGRAM = """
+SELECT a.id, a.render_id, a.file_type, a.storage_key, a.sha256,
+       a.size_bytes, a.created_at
+  FROM documents.artifacts a
+  JOIN documents.renders r ON r.id = a.render_id
+ WHERE a.id = $1 AND r.program_id = $2
+"""
+
 
 # =============================================================================
 # Template version with parent template (for rendering)
