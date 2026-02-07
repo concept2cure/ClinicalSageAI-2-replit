@@ -188,7 +188,7 @@ class TestRunScan:
                 section_ref="m5.3.5.1",
             )
             # detect_contradictions called with section_ref
-            scanner.evidence_runner.detect_contradictions.assert_called_once_with(
+            scanner.evidence_runner.detect_contradictions.assert_called_once_with(  # type: ignore[attr-defined]
                 program_id, "m5.3.5.1",
             )
 
@@ -331,7 +331,7 @@ class TestGetAndListScans:
         with patch.object(scanner.db, "acquire_connection", return_value=mock_conn), \
              patch.object(scanner.db, "release_connection", new_callable=AsyncMock):
             result = await scanner.get_scan(scan_id, program_id)
-            assert result["id"] == scan_id
+            assert result["id"] == scan_id  # type: ignore[index]
 
     @pytest.mark.asyncio
     async def test_get_scan_not_found_returns_none(self):
@@ -459,7 +459,7 @@ class TestScanEndpoints:
             )
             assert resp.status_code == 200
             # Verify run_scan was called with section params
-            call_kwargs = scanner.run_scan.call_args[1]
+            call_kwargs = scanner.run_scan.call_args[1]  # type: ignore[attr-defined]
             assert call_kwargs["scan_type"] == "section"
             assert call_kwargs["section_ref"] == "m5.3.5.1"
 

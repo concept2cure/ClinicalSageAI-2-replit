@@ -58,5 +58,6 @@
   "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
-  }
+  },
+  "python.analysis.extraPaths": ["shadow_service"]
 }

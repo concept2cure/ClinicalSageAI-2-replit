@@ -29,7 +29,7 @@ const BASE = '/api/predicate-intelligence';
 // Fetch helper (mirrors docxFetch pattern)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function predicateFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function predicateFetch<T>(path: string, options: Record<string, unknown> = {}): Promise<T> {
   const orgId = localStorage.getItem('organizationId') || '1';
   const headers: Record<string, string> = {
     'x-organization-id': orgId,

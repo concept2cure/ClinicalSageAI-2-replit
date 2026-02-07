@@ -36,12 +36,18 @@ Template Catalog (19 templates):
     19. State of the Art Report
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+if TYPE_CHECKING:
+    from docx.document import Document as DocumentClass
 
 
 TEMPLATES_DIR = Path(__file__).parent / "demo_templates"
@@ -51,11 +57,11 @@ TEMPLATES_DIR = Path(__file__).parent / "demo_templates"
 # Helpers
 # =============================================================================
 
-def _add_heading(doc: Document, text: str, level: int = 0) -> None:
+def _add_heading(doc: DocumentClass, text: str, level: int = 0) -> None:
     doc.add_heading(text, level=level)
 
 
-def _add_para(doc: Document, text: str, bold: bool = False) -> None:
+def _add_para(doc: DocumentClass, text: str, bold: bool = False) -> None:
     p = doc.add_paragraph()
     run = p.add_run(text)
     run.bold = bold
@@ -67,7 +73,7 @@ def _add_table_row(table, cells: list[str]) -> None:
         row.cells[i].text = val
 
 
-def _make_table(doc: Document, headers: list[str], rows: list[list[str]]) -> None:
+def _make_table(doc: DocumentClass, headers: list[str], rows: list[list[str]]) -> None:
     """Add a table with headers + data rows."""
     table = doc.add_table(rows=1, cols=len(headers))
     table.style = "Table Grid"
@@ -77,7 +83,7 @@ def _make_table(doc: Document, headers: list[str], rows: list[list[str]]) -> Non
         _add_table_row(table, row_data)
 
 
-def _add_signature_block(doc: Document, prefix: str = "") -> None:
+def _add_signature_block(doc: DocumentClass, prefix: str = "") -> None:
     """Standard regulatory signature block."""
     _add_para(doc, "")
     _add_para(doc, "Respectfully submitted,")
@@ -87,7 +93,7 @@ def _add_signature_block(doc: Document, prefix: str = "") -> None:
     _add_para(doc, f"Date: {{{{ {prefix}signature_date }}}}")
 
 
-def _add_doc_control_footer(doc: Document, doc_id_var: str = "document_id") -> None:
+def _add_doc_control_footer(doc: DocumentClass, doc_id_var: str = "document_id") -> None:
     """Controlled document footer with provenance."""
     _add_para(doc, "")
     _add_para(doc, "─" * 60)

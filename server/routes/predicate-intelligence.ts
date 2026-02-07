@@ -122,7 +122,7 @@ async function proxyToShadow(
   }
 
   const headers: Record<string, string> = { 'X-Admin-Token': token };
-  const fetchOptions: RequestInit = { method: options.method || 'GET', headers };
+  const fetchOptions: Record<string, unknown> = { method: options.method || 'GET', headers };
 
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json';

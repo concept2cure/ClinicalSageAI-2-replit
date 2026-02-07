@@ -314,7 +314,7 @@ async def seed_for_program(
                     existing = await conn.fetchrow(
                         _SELECT_TEMPLATE_BY_NAME, program_id, template_name,
                     )
-                    template_id = existing["id"]
+                    template_id = existing["id"]  # type: ignore[index]
                     stats["templates_skipped"] += 1
                     logger.info("Template exists: %s (%s)", template_name, template_id)
             else:
@@ -343,13 +343,13 @@ async def seed_for_program(
 
                     # Get next version number
                     ver_row = await conn.fetchrow(_SELECT_NEXT_VERSION, template_id)
-                    next_ver = ver_row["next_version"]
+                    next_ver = ver_row["next_version"]  # type: ignore[index]
 
                     ver = await conn.fetchrow(
                         _INSERT_VERSION,
                         template_id, next_ver, storage_key, file_sha256,
                     )
-                    version_id = ver["id"]
+                    version_id = ver["id"]  # type: ignore[index]
                     stats["versions_created"] += 1
                     logger.info(
                         "Created version %d for %s (sha256=%s)",

@@ -77,7 +77,7 @@ async def run_scan(
                 triggered_by,
                 actor,
             )
-        scan_id = scan_row["id"]
+        scan_id = scan_row["id"]  # type: ignore[index]
 
         # 2. Run the actual scan (reuse existing logic)
         try:
@@ -103,7 +103,7 @@ async def run_scan(
                 "Scan completed: scan=%s program=%s contradictions=%d claims=%d",
                 scan_id, program_id, contradictions_found, total_claims,
             )
-            return dict(completed_row)
+            return dict(completed_row)  # type: ignore[arg-type]
 
         except Exception as e:
             # Scan failed — record the error

@@ -154,6 +154,7 @@ const EXPECTED_TEMPLATES = [
 ];
 
 // Placeholder regex (matches {{ variable_name }})
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PLACEHOLDER_RE = /\{\{\s*(\w+)\s*\}\}/g;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -241,7 +242,7 @@ describe('Demo input packs', () => {
 
         it('all input values are strings', () => {
           const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-          for (const [key, value] of Object.entries(content.inputs)) {
+          for (const [, value] of Object.entries(content.inputs)) {
             expect(typeof value).toBe('string');
           }
         });

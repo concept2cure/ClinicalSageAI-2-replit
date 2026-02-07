@@ -121,7 +121,7 @@ async def start_workflow(
                     return dict(existing)
                 raise
 
-            run_id = run["id"]
+            run_id = run["id"]  # type: ignore[index]
 
             # 3. Fetch step templates + materialize step_runs
             steps = await conn.fetch(
@@ -150,7 +150,7 @@ async def start_workflow(
                 template_code,
                 program_id,
             )
-            return dict(run)
+            return dict(run)  # type: ignore[arg-type]
     finally:
         await db.release_connection(conn)
 
@@ -407,7 +407,7 @@ async def fail_step(
                     )
                     await conn.fetchrow(
                         sql.INSERT_STEP_RUN_EVENT,
-                        new_sr["id"],
+                        new_sr["id"],  # type: ignore[index]
                         program_id,
                         "retry",
                         "failed",
@@ -489,7 +489,7 @@ async def create_batch_for_step(
                 json.dumps(batch_config),
                 actor,
             )
-            batch_id = batch_row["batch_id"]
+            batch_id = batch_row["batch_id"]  # type: ignore[index]
 
             # Link to step_run
             await conn.fetchrow(

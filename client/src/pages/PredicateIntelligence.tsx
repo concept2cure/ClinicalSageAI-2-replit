@@ -53,7 +53,6 @@ import {
   XCircle,
   AlertCircle,
   ArrowRight,
-  TrendingUp,
   Eye,
 } from 'lucide-react';
 import {
@@ -66,8 +65,6 @@ import {
 } from '@/hooks/use-predicate-intelligence';
 import type {
   PredicateCandidate,
-  SEMatrixRow,
-  DefensePreview,
   EquivalenceStatus,
   AnticipatedQuestion,
   EvidenceGap,

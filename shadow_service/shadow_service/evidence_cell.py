@@ -34,6 +34,10 @@ from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
 from docx.enum.text import WD_COLOR_INDEX
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from docx.oxml.xmlchemy import BaseOxmlElement
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Confidence thresholds
@@ -102,7 +106,7 @@ class EvidenceCell:
 
     # ─── DOCX Rendering ───────────────────────────────────────────────────
 
-    def to_docx_sdt(self, paragraph: Paragraph) -> OxmlElement:
+    def to_docx_sdt(self, paragraph: Paragraph) -> "BaseOxmlElement":
         """Create a Word Structured Document Tag (Content Control).
 
         The SDT contains:
