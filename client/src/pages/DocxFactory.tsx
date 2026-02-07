@@ -23,11 +23,14 @@ import {
   useCreateRender,
   useExecuteRender,
   useRenderEvents,
+  useSeedTemplates,
+  useDemoPacks,
   downloadArtifact,
   computeSHA256,
   type DocxTemplate,
   type DocxRender,
   type DocxArtifact,
+  type DemoPack,
   type DownloadResult,
 } from '@/hooks/use-docx-factory';
 
@@ -79,6 +82,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   Hash,
+  PackagePlus,
+  Beaker,
 } from 'lucide-react';
 
 // =============================================================================
@@ -504,7 +509,13 @@ function CreateRenderDialog({
   const [open, setOpen] = useState(false);
   const [templateVersionId, setTemplateVersionId] = useState('');
   const [inputsRaw, setInputsRaw] = useState('{}');
+  const [demoDocType, setDemoDocType] = useState('');
   const createRender = useCreateRender(programId);
+  const { data: demoPacks, isLoading: demoLoading } = useDemoPacks(demoDocType);
+
+  const handleSelectDemoPack = useCallback((pack: DemoPack) => {
+    setInputsRaw(JSON.stringify(pack.inputs, null, 2));
+  }, []);
 
   const handleSubmit = useCallback(() => {
     if (!templateVersionId) return;
@@ -575,6 +586,59 @@ function CreateRenderDialog({
               </p>
             )}
           </div>
+
+          {/* Use Demo Inputs */}
+          <div className="space-y-2" data-testid="demo-packs-section">
+            <label className="text-sm font-medium flex items-center gap-1">
+              <Beaker className="h-3.5 w-3.5" />
+              Use Demo Inputs
+            </label>
+            <Select value={demoDocType} onValueChange={setDemoDocType}>
+              <SelectTrigger data-testid="demo-doc-type-select">
+                <SelectValue placeholder="Select doc type for demo inputs…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ectd_cover_letter">eCTD Cover Letter</SelectItem>
+                <SelectItem value="fda_1571_narrative">Form FDA 1571 Narrative</SelectItem>
+                <SelectItem value="ib_change_summary">IB Change Summary</SelectItem>
+                <SelectItem value="cmc_drug_substance">CMC Drug Substance (3.2.S)</SelectItem>
+                <SelectItem value="clinical_benefit_risk">Clinical Benefit/Risk (2.5)</SelectItem>
+                <SelectItem value="510k_cover_letter">510(k) Cover Letter</SelectItem>
+              </SelectContent>
+            </Select>
+            {demoLoading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading demo packs…
+              </div>
+            )}
+            {demoPacks && demoPacks.length > 0 && (
+              <div className="space-y-1">
+                {demoPacks.map(pack => (
+                  <Button
+                    key={pack.file}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-left h-auto py-1.5"
+                    onClick={() => handleSelectDemoPack(pack)}
+                    data-testid={`demo-pack-${pack.file}`}
+                  >
+                    <div>
+                      <span className="text-xs font-medium">{pack.label}</span>
+                      {pack.description && (
+                        <span className="text-[10px] text-muted-foreground ml-2">
+                          {pack.description}
+                        </span>
+                      )}
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            )}
+            {demoPacks && demoPacks.length === 0 && demoDocType && (
+              <p className="text-xs text-muted-foreground">No demo packs for this doc type.</p>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
@@ -598,7 +662,12 @@ function CreateRenderDialog({
 
 function TemplatesTab({ programId }: { programId: string }) {
   const { data, isLoading, error, refetch } = useTemplates(programId);
+  const seedTemplates = useSeedTemplates(programId);
   const templates = data?.items || [];
+
+  const handleSeed = useCallback(() => {
+    seedTemplates.mutate(undefined);
+  }, [seedTemplates]);
 
   if (isLoading) {
     return (
@@ -626,11 +695,55 @@ function TemplatesTab({ programId }: { programId: string }) {
 
   return (
     <div className="space-y-4">
+      {/* Seed success banner */}
+      {seedTemplates.isSuccess && (
+        <Card className="border-green-500 bg-green-50 dark:bg-green-950/30">
+          <CardContent className="py-3 px-4">
+            <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Starter templates installed — {(seedTemplates.data as any).templates_created ??
+                0}{' '}
+              created, {(seedTemplates.data as any).templates_skipped ?? 0} skipped.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Seed error banner — friendly messages for known HTTP codes */}
+      {seedTemplates.isError && (
+        <Card className="border-destructive">
+          <CardContent className="py-3 px-4">
+            <p className="text-sm text-destructive flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {seedTemplates.error.message.startsWith('403')
+                ? "Access denied — you don't have access to this program."
+                : seedTemplates.error.message.startsWith('503')
+                  ? 'DOCX Factory admin token not configured. Contact your administrator.'
+                  : `Seed failed: ${seedTemplates.error.message}`}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSeed}
+            disabled={seedTemplates.isPending}
+            data-testid="seed-templates-btn"
+          >
+            {seedTemplates.isPending ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <PackagePlus className="h-3 w-3 mr-1" />
+            )}
+            {seedTemplates.isPending ? 'Installing…' : 'Install Starter Templates'}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-3 w-3" />
           </Button>
@@ -643,9 +756,23 @@ function TemplatesTab({ programId }: { programId: string }) {
           <CardContent className="py-12 text-center">
             <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm font-medium">No templates yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Create a template to get started with document generation.
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
+              Create a template to get started, or install starter templates with demo inputs.
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeed}
+              disabled={seedTemplates.isPending}
+              data-testid="seed-templates-empty-btn"
+            >
+              {seedTemplates.isPending ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <PackagePlus className="h-3 w-3 mr-1" />
+              )}
+              {seedTemplates.isPending ? 'Installing…' : 'Install Starter Templates'}
+            </Button>
           </CardContent>
         </Card>
       ) : (

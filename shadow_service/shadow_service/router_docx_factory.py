@@ -17,6 +17,7 @@ from fastapi.responses import StreamingResponse
 
 from . import docx_factory_runner as runner
 from . import docx_renderer
+from . import seed_docx_templates as seeder
 from .blob_store import get_blob_store
 from .models_docx_factory import (
     ArtifactResponse,
@@ -266,3 +267,32 @@ async def download_artifact(artifact_id: UUID, program_id: UUID = Query(...)):
     except Exception as e:
         _handle_lite_mode(e)
         raise
+
+
+# ── Seed Templates ───────────────────────────────────────────────────────────
+
+@router.post("/seed")
+async def seed_templates(program_id: UUID = Query(...)):
+    """Seed starter templates into a program (idempotent).
+
+    Creates 6 regulatory-real templates + versions + demo input packs.
+    Safe to call multiple times — duplicates are skipped.
+    """
+    try:
+        result = await seeder.seed_for_program(program_id)
+        return result
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+@router.get("/demo-packs")
+async def list_demo_packs(doc_type: str | None = Query(default=None)):
+    """List available demo input packs (no DB required).
+
+    If doc_type is provided, returns packs for that template type only.
+    Otherwise returns all packs grouped by template.
+    """
+    if doc_type:
+        return seeder.get_demo_packs_for_template(doc_type)
+    return seeder.get_all_demo_packs()
