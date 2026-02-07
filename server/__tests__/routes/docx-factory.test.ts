@@ -150,9 +150,7 @@ describe('DOCX Factory BFF Proxy', () => {
     });
 
     it('POST /renders without program_id → 422', async () => {
-      const res = await request(app)
-        .post('/api/docx-factory/renders')
-        .send({});
+      const res = await request(app).post('/api/docx-factory/renders').send({});
       expect(res.status).toBe(422);
     });
 
@@ -167,14 +165,12 @@ describe('DOCX Factory BFF Proxy', () => {
     });
 
     it('POST /renders/:id/execute without program_id → 422', async () => {
-      const res = await request(app)
-        .post(`/api/docx-factory/renders/${RENDER_ID}/execute`);
+      const res = await request(app).post(`/api/docx-factory/renders/${RENDER_ID}/execute`);
       expect(res.status).toBe(422);
     });
 
     it('GET /artifacts/:id/download without program_id → 422', async () => {
-      const res = await request(app)
-        .get(`/api/docx-factory/artifacts/${ARTIFACT_ID}/download`);
+      const res = await request(app).get(`/api/docx-factory/artifacts/${ARTIFACT_ID}/download`);
       expect(res.status).toBe(422);
     });
 

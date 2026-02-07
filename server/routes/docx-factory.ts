@@ -306,9 +306,10 @@ router.post(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     try {
+      const programId = String(req.query.program_id || req.body?.program_id || '');
       const result = await proxyToShadow(
         `/docx/renders/${encodeURIComponent(req.params.renderId)}/execute`,
-        { method: 'POST' }
+        { method: 'POST', query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
@@ -336,10 +337,12 @@ router.get(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     try {
+      const programId = String(req.query.program_id || '');
       const url = new URL(
         `/docx/artifacts/${encodeURIComponent(req.params.artifactId)}/download`,
         getShadowUrl()
       );
+      url.searchParams.set('program_id', programId);
 
       const response = await fetch(url.toString(), {
         method: 'GET',
