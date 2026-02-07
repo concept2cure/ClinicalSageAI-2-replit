@@ -1,0 +1,22 @@
+{
+  "label": "CMC-Lite Early Phase — Drug Substance Overview",
+  "description": "Module 3.2.S drug substance overview for an early-phase small molecule program.",
+  "inputs": {
+    "product_name": "Velorix",
+    "generic_name": "velorixin hydrochloride",
+    "chemical_name": "(S)-2-(4-((3-(4-chlorophenyl)-2-oxopyrrolidin-1-yl)methyl)phenoxy)-2-methylpropanoic acid hydrochloride",
+    "molecular_formula": "C₂₂H₂₄ClNO₄·HCl",
+    "molecular_weight": "438.35 g/mol",
+    "structural_class": "Pyrrolidinone-based PPARα/δ dual agonist",
+    "cas_number": "XXXXXXX-XX-X (assigned pending)",
+    "manufacturer": "Asymchem Laboratories (Tianjin) Co., Ltd.",
+    "manufacturing_site": "No. 71 7th Avenue, TEDA, Tianjin 300457, China",
+    "process_description": "Five-step convergent synthesis from commercially available starting materials. Key steps include asymmetric reduction (>99% ee), Williamson ether synthesis, and salt formation. Process qualified at 10 kg scale for Phase 1/2 supply.",
+    "characterization_summary": "Structure confirmed by ¹H/¹³C NMR, HRMS, single-crystal X-ray diffraction, and FT-IR. Polymorphic screen identified Form I (thermodynamically stable) as the intended commercial form. No evidence of solvates or hydrates under standard conditions.",
+    "specification_summary": "Appearance (white to off-white crystalline powder), identification (IR, HPLC-RT), assay (≥98.0% by HPLC), chiral purity (≥99.0% S-enantiomer), related substances (any individual ≤0.15%, total ≤0.5%), residual solvents (ICH Q3C limits), water content (≤0.5% by KF), heavy metals (ICH Q3D).",
+    "analytical_methods": "HPLC-UV (assay, related substances, chiral), KF titration (water), ICP-MS (elemental impurities), GC-FID (residual solvents). Methods qualified per ICH Q2(R2).",
+    "reference_standards": "Primary reference standard characterized by absolute quantitative NMR. Working standards calibrated against primary. Certificate of analysis available.",
+    "container_closure": "Double polyethylene bags within an HDPE drum with tamper-evident seal. Qualified for storing up to 25 kg per container.",
+    "stability_summary": "24-month data at 25°C/60% RH and 6-month data at 40°C/75% RH demonstrate no significant trends in assay, related substances, or physical properties. Proposed retest period: 24 months when stored at 15-25°C protected from light."
+  }
+}
