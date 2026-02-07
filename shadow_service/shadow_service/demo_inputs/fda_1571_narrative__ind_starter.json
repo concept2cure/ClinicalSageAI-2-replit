@@ -1,0 +1,24 @@
+{
+  "label": "Small Biotech IND Starter — FDA 1571 Narrative",
+  "description": "Narrative companion to Form FDA 1571 for a Phase 1 IND from a small biotech.",
+  "inputs": {
+    "sponsor_name": "Luminos Therapeutics, Inc.",
+    "sponsor_address": "200 Innovation Drive, Suite 300, Cambridge, MA 02142",
+    "ind_number": "IND-XXXXXX (to be assigned)",
+    "submission_date": "2026-02-07",
+    "product_name": "NovaTide-1",
+    "generic_name": "novatide alfa",
+    "phase": "Phase 1",
+    "drug_class": "bispecific T-cell engager antibody",
+    "indication": "relapsed/refractory diffuse large B-cell lymphoma (DLBCL)",
+    "study_design": "a first-in-human, open-label, dose-escalation study evaluating safety, tolerability, pharmacokinetics, and preliminary efficacy in adult patients with R/R DLBCL who have received ≥2 prior lines of therapy",
+    "manufacturer": "Catalent Biologics",
+    "manufacturing_site": "Madison, WI, USA",
+    "dosage_form": "lyophilized powder for injection",
+    "dosage_strength": "50 mg/vial",
+    "nonclinical_summary": "Nonclinical evaluation included in vitro binding and cytotoxicity assays, in vivo efficacy in DLBCL xenograft models, and GLP toxicology studies in cynomolgus monkeys (4-week repeat dose). Key findings: dose-dependent tumor regression in xenograft models; NOAEL of 10 mg/kg in monkey studies with cytokine release at ≥30 mg/kg.",
+    "previous_human_experience": "No prior human experience. This is a first-in-human study.",
+    "principal_investigator": "Dr. Emily Nakamura, MD, PhD",
+    "clinical_site": "Massachusetts General Hospital Cancer Center, Boston, MA"
+  }
+}
