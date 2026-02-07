@@ -90,6 +90,7 @@ from .router_cybersecurity import router as cybersecurity_router
 from .router_transparency import router as transparency_router
 from .router_training import router as training_router
 from .router_orchestration import router as orchestration_router
+from .router_docx_factory import router as docx_factory_router
 
 # Configure logging
 logging.basicConfig(
@@ -150,6 +151,7 @@ app.include_router(cybersecurity_router)  # Cybersecurity (SBOM, VEX, Section 52
 app.include_router(transparency_router)   # Data Transparency (EMA 0070, PDF/A-3, GAMP 5)
 app.include_router(training_router)       # Training Compliance (xAPI, Part 11)
 app.include_router(orchestration_router)  # Phase 4 Orchestration Kernel
+app.include_router(docx_factory_router)   # Phase 6 DOCX Factory
 
 
 # =============================================================================
