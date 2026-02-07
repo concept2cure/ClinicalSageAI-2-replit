@@ -831,6 +831,17 @@ try {
   console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
 }
 
+// Mount Predicate Intelligence BFF proxy (Phase 6.6 — Predicate Intelligence)
+// Proxies browser calls to Shadow Service /predicate/* with admin token injected server-side
+try {
+  const predicateIntelModule = await import('./routes/predicate-intelligence.js');
+  const predicateIntelRoutes = predicateIntelModule.default;
+  app.use('/api/predicate-intelligence', predicateIntelRoutes);
+  console.log('✅ Predicate Intelligence BFF proxy routes mounted (Phase 6.6)');
+} catch (error) {
+  console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
+}
+
 // Mount Demo Seed routes (for creating demo projects)
 try {
   const seedDemoModule = await import('./routes/seed-demo.js');

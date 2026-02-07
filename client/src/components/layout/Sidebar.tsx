@@ -20,6 +20,7 @@ import {
   Briefcase,
   AlertTriangle,
   Target,
+  Radar,
   Beaker,
   GraduationCap,
   BarChart,
@@ -157,6 +158,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 <NavItem href="/competitive-intelligence" icon={<Target />}>
                   Strategic Intelligence
                 </NavItem>
+                <NavItem href="/predicate-intelligence" icon={<Radar />}>
+                  Predicate Intelligence
+                </NavItem>
               </div>
             </div>
 
@@ -244,6 +248,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               <div className="space-y-1">
                 <NavItem href="/competitive-intelligence" icon={<Target />}>
                   Strategic Intelligence
+                </NavItem>
+                <NavItem href="/predicate-intelligence" icon={<Radar />}>
+                  Predicate Intelligence
                 </NavItem>
               </div>
             </div>
