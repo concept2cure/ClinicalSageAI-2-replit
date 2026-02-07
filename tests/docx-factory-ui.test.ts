@@ -377,8 +377,9 @@ describe('computeSHA256', () => {
   it('returns 64-char lowercase hex string', async () => {
     const blob = new Blob(['hello world'], { type: 'text/plain' });
     const hash = await computeSHA256(blob);
-    expect(hash).toHaveLength(64);
-    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(hash).not.toBeNull();
+    expect(hash!).toHaveLength(64);
+    expect(hash!).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('returns consistent hash for same input', async () => {
@@ -399,12 +400,35 @@ describe('computeSHA256', () => {
   it('can be used for match/mismatch comparison', async () => {
     const blob = new Blob(['artifact-bytes'], { type: 'application/octet-stream' });
     const clientSha = await computeSHA256(blob);
+    expect(clientSha).not.toBeNull();
     // Simulate a matching server hash
-    const match = clientSha.toLowerCase() === clientSha.toLowerCase();
+    const match = clientSha!.toLowerCase() === clientSha!.toLowerCase();
     expect(match).toBe(true);
     // Simulate a mismatching server hash
-    const mismatch = clientSha.toLowerCase() === 'aaaa'.repeat(16);
+    const mismatch = clientSha!.toLowerCase() === 'aaaa'.repeat(16);
     expect(mismatch).toBe(false);
+  });
+
+  it('returns null when crypto.subtle is unavailable', async () => {
+    // Save original
+    const origCrypto = globalThis.crypto;
+    try {
+      // Simulate locked-down browser: crypto exists but subtle doesn't
+      Object.defineProperty(globalThis, 'crypto', {
+        value: { subtle: undefined },
+        writable: true,
+        configurable: true,
+      });
+      const blob = new Blob(['test'], { type: 'text/plain' });
+      const hash = await computeSHA256(blob);
+      expect(hash).toBeNull();
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        value: origCrypto,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 });
 

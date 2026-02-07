@@ -724,15 +724,28 @@ function RendersTab({ programId }: { programId: string }) {
         if (result.serverSha256) {
           setHashStates(prev => ({ ...prev, [artifactId]: { phase: 'hashing' } }));
           const clientSha = await computeSHA256(result.blob);
-          setHashStates(prev => ({
-            ...prev,
-            [artifactId]: {
-              phase: 'done',
-              serverSha: result.serverSha256!,
-              clientSha: clientSha,
-              match: result.serverSha256!.toLowerCase() === clientSha.toLowerCase(),
-            },
-          }));
+          if (clientSha === null) {
+            // SubtleCrypto unavailable (locked-down browser / non-HTTPS)
+            setHashStates(prev => ({
+              ...prev,
+              [artifactId]: {
+                phase: 'error',
+                message:
+                  'Local hash verification unavailable in this browser. Server SHA-256: ' +
+                  result.serverSha256,
+              },
+            }));
+          } else {
+            setHashStates(prev => ({
+              ...prev,
+              [artifactId]: {
+                phase: 'done',
+                serverSha: result.serverSha256!,
+                clientSha: clientSha,
+                match: result.serverSha256!.toLowerCase() === clientSha.toLowerCase(),
+              },
+            }));
+          }
         } else {
           setHashStates(prev => ({
             ...prev,

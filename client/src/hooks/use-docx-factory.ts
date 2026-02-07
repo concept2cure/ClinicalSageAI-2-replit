@@ -307,9 +307,13 @@ export async function downloadArtifact(
 
 /**
  * Compute SHA-256 of a Blob in the browser using SubtleCrypto.
- * Returns a lowercase hex string.
+ * Returns a lowercase hex string, or null if SubtleCrypto is unavailable
+ * (e.g. locked-down corporate browsers, non-HTTPS contexts).
  */
-export async function computeSHA256(blob: Blob): Promise<string> {
+export async function computeSHA256(blob: Blob): Promise<string | null> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    return null;
+  }
   // Use Response.arrayBuffer() for broader jsdom/browser compat
   const buffer = await new Response(blob).arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
