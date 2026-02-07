@@ -120,8 +120,14 @@ def _normalize_core_properties(doc: Document) -> None:
 # Orchestrator
 # =============================================================================
 
-async def render_document(render_id: UUID) -> dict[str, Any]:
+async def render_document(render_id: UUID, *, program_id: UUID | None = None) -> dict[str, Any]:
     """Execute a full render: template fill → artifact storage → DB update.
+
+    Args:
+        render_id: The render to execute.
+        program_id: If provided, enforces that the render belongs to this
+            program.  Returns a ValueError on mismatch (used by the router
+            to prevent cross-program access).
 
     Returns the artifact record on success.
     Raises on failure (caller should handle / the router catches).
@@ -141,6 +147,10 @@ async def render_document(render_id: UUID) -> dict[str, Any]:
             if not row:
                 raise ValueError(f"Render {render_id} not found")
             render = dict(row)
+
+            # Cross-program ownership check
+            if program_id is not None and render["program_id"] != program_id:
+                raise ValueError(f"Render {render_id} not found")
         finally:
             await db.release_connection(conn)
 

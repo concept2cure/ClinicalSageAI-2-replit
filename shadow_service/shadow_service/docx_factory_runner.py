@@ -299,6 +299,27 @@ async def get_artifact(artifact_id: UUID) -> Optional[dict[str, Any]]:
         await db.release_connection(conn)
 
 
+async def get_artifact_for_program(
+    artifact_id: UUID,
+    program_id: UUID,
+) -> Optional[dict[str, Any]]:
+    """Get an artifact by ID, scoped to a specific program.
+
+    JOINs artifacts → renders to verify the artifact's render belongs
+    to the claimed program_id.  Returns None on mismatch (404-safe).
+    """
+    conn = await db.acquire_connection()
+    try:
+        row = await conn.fetchrow(
+            sql.SELECT_ARTIFACT_BY_ID_WITH_PROGRAM,
+            artifact_id,
+            program_id,
+        )
+        return dict(row) if row else None
+    finally:
+        await db.release_connection(conn)
+
+
 async def list_artifacts(render_id: UUID) -> list[dict[str, Any]]:
     """List all artifacts for a render."""
     conn = await db.acquire_connection()
