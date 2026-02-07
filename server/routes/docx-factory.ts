@@ -404,4 +404,53 @@ router.get(
   }
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Routes — Seed Templates + Demo Packs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/docx-factory/seed?program_id=...
+ *
+ * Seed starter templates into a program (idempotent).
+ * Creates 6 regulatory-real templates + versions + demo input packs.
+ */
+router.post(
+  '/seed',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const programId = String(req.query.program_id || req.body?.program_id || '');
+      const result = await proxyToShadow('/docx/seed', {
+        method: 'POST',
+        query: { program_id: programId },
+      });
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[docx-factory] seed proxy error:', err.message);
+      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    }
+  }
+);
+
+/**
+ * GET /api/docx-factory/demo-packs?doc_type=...
+ *
+ * List available demo input packs. No DB required — reads from static JSON files.
+ * Optionally filter by doc_type.
+ */
+router.get('/demo-packs', requireConfigured, async (req: Request, res: Response) => {
+  try {
+    const query: Record<string, string> = {};
+    if (req.query.doc_type) {
+      query.doc_type = String(req.query.doc_type);
+    }
+    const result = await proxyToShadow('/docx/demo-packs', { query });
+    res.status(result.status).type(result.contentType).send(result.body);
+  } catch (err: any) {
+    console.error('[docx-factory] demo-packs proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+  }
+});
+
 export default router;

@@ -75,6 +75,24 @@ export interface DownloadResult {
   serverSha256: string | null;
 }
 
+/** Result from POST /seed — counts of created/skipped resources */
+export interface SeedResult {
+  templates_created: number;
+  templates_skipped: number;
+  versions_created: number;
+  versions_skipped: number;
+  demo_packs_count: number;
+  templates: DocxTemplate[];
+}
+
+/** A single demo input pack returned by GET /demo-packs */
+export interface DemoPack {
+  file: string;
+  label: string;
+  description: string;
+  inputs: Record<string, unknown>;
+}
+
 interface ListResponse<T> {
   items: T[];
   total: number;
@@ -137,6 +155,7 @@ export const docxKeys = {
     ['docx-factory', 'render', programId, renderId] as const,
   renderEvents: (programId: string, renderId: string) =>
     ['docx-factory', 'render-events', programId, renderId] as const,
+  demoPacks: (docType: string) => ['docx-factory', 'demo-packs', docType] as const,
 };
 
 // =============================================================================
@@ -259,6 +278,33 @@ export function useRenderEvents(programId: string, renderId: string) {
     queryFn: () => docxFetch<RenderEvent[]>(`/renders/${renderId}/events?program_id=${programId}`),
     enabled: !!programId && !!renderId,
     staleTime: 30_000,
+  });
+}
+
+// =============================================================================
+// Seed Templates
+// =============================================================================
+
+export function useSeedTemplates(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => docxFetch<SeedResult>(`/seed?program_id=${programId}`, { method: 'POST' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: docxKeys.templates(programId) });
+    },
+  });
+}
+
+// =============================================================================
+// Demo Packs
+// =============================================================================
+
+export function useDemoPacks(docType: string) {
+  return useQuery<DemoPack[]>({
+    queryKey: docxKeys.demoPacks(docType),
+    queryFn: () => docxFetch<DemoPack[]>(`/demo-packs?doc_type=${encodeURIComponent(docType)}`),
+    enabled: !!docType,
+    staleTime: 60_000,
   });
 }
 
