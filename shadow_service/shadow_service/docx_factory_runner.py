@@ -1,8 +1,7 @@
 """Phase 6 — DOCX Factory: Runner (lifecycle management).
 
 Manages the full lifecycle of templates, template versions, renders,
-artifacts, and render events.  **No rendering logic yet** — that comes
-in PR 6.2.  This module handles:
+artifacts, and render events.  This module handles:
 
   - create_template / get_template
   - create_template_version (register metadata + sha256 + storage key)
@@ -286,12 +285,46 @@ async def create_artifact(
         await db.release_connection(conn)
 
 
+async def get_artifact(artifact_id: UUID) -> Optional[dict[str, Any]]:
+    """Get an artifact by ID (for download).
+
+    No RLS check — artifact access is validated at the router layer
+    by joining back to the render's program_id.
+    """
+    conn = await db.acquire_connection()
+    try:
+        row = await conn.fetchrow(sql.SELECT_ARTIFACT_BY_ID, artifact_id)
+        return dict(row) if row else None
+    finally:
+        await db.release_connection(conn)
+
+
 async def list_artifacts(render_id: UUID) -> list[dict[str, Any]]:
     """List all artifacts for a render."""
     conn = await db.acquire_connection()
     try:
         rows = await conn.fetch(sql.SELECT_ARTIFACTS_BY_RENDER, render_id)
         return [dict(r) for r in rows]
+    finally:
+        await db.release_connection(conn)
+
+
+async def get_template_version_with_template(
+    template_version_id: UUID,
+) -> Optional[dict[str, Any]]:
+    """Get template version joined with parent template info.
+
+    Returns: version_id, template_id, version, storage_key, sha256,
+             program_id, template_name, doc_type.
+    Used by the renderer to resolve everything in one query.
+    """
+    conn = await db.acquire_connection()
+    try:
+        row = await conn.fetchrow(
+            sql.SELECT_TEMPLATE_VERSION_WITH_TEMPLATE,
+            template_version_id,
+        )
+        return dict(row) if row else None
     finally:
         await db.release_connection(conn)
 

@@ -2,6 +2,7 @@
 
 Auth: same fail-closed REVIEW_ADMIN_TOKEN pattern as Evidence Fabric.
 All endpoints delegate to docx_factory_runner for DB logic.
+Render execution delegates to docx_renderer.
 """
 
 import hashlib
@@ -12,9 +13,13 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from . import docx_factory_runner as runner
+from . import docx_renderer
+from .blob_store import get_blob_store
 from .models_docx_factory import (
+    ArtifactResponse,
     CreateRenderRequest,
     CreateTemplateRequest,
     CreateTemplateVersionRequest,
@@ -169,6 +174,68 @@ async def list_renders(program_id: UUID = Query(...)):
     try:
         items = await runner.list_renders(program_id)
         return {"items": items, "total": len(items)}
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+# ── Render Execution ─────────────────────────────────────────────────────────
+
+@router.post("/renders/{render_id}/execute", response_model=ArtifactResponse)
+async def execute_render(render_id: UUID):
+    """Execute a queued render: fill template → produce artifact.
+
+    Transitions: queued → running → completed (or failed).
+    Returns the produced artifact metadata on success.
+    """
+    try:
+        artifact = await docx_renderer.render_document(render_id)
+        return artifact
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+# ── Artifact Download ────────────────────────────────────────────────────────
+
+DOCX_MEDIA_TYPE = (
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+
+
+@router.get("/artifacts/{artifact_id}/download")
+async def download_artifact(artifact_id: UUID):
+    """Stream a rendered artifact's bytes (DOCX).
+
+    Returns a streaming download with Content-Disposition attachment header.
+    """
+    try:
+        artifact = await runner.get_artifact(artifact_id)
+        if not artifact:
+            raise HTTPException(
+                status_code=404, detail=f"Artifact {artifact_id} not found"
+            )
+
+        store = get_blob_store()
+        stream = await store.get_stream(artifact["storage_key"])
+
+        filename = f"artifact-{artifact_id}.{artifact['file_type']}"
+        return StreamingResponse(
+            stream,
+            media_type=DOCX_MEDIA_TYPE,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Artifact-SHA256": artifact["sha256"],
+            },
+        )
+    except HTTPException:
+        raise
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404, detail="Artifact file not found in storage"
+        )
     except Exception as e:
         _handle_lite_mode(e)
         raise
