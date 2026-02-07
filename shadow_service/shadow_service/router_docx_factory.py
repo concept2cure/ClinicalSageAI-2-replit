@@ -23,6 +23,7 @@ from .models_docx_factory import (
     CreateRenderRequest,
     CreateTemplateRequest,
     CreateTemplateVersionRequest,
+    RenderEventResponse,
     RenderListResponse,
     RenderResponse,
     TemplateListResponse,
@@ -194,6 +195,30 @@ async def execute_render(render_id: UUID, program_id: UUID = Query(...)):
         return artifact
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+# ── Render Events (read-only) ────────────────────────────────────────────────
+
+@router.get("/renders/{render_id}/events", response_model=list[RenderEventResponse])
+async def list_render_events(render_id: UUID, program_id: UUID = Query(...)):
+    """List all events for a render, chronologically.
+
+    Requires program_id to enforce cross-program ownership.
+    """
+    try:
+        # Verify render belongs to program
+        render = await runner.get_render(program_id, render_id)
+        if not render:
+            raise HTTPException(
+                status_code=404, detail=f"Render {render_id} not found"
+            )
+        events = await runner.list_render_events(render_id)
+        return events
+    except HTTPException:
+        raise
     except Exception as e:
         _handle_lite_mode(e)
         raise
