@@ -398,11 +398,30 @@ function CreateTemplateDialog({ programId }: { programId: string }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="generic">Generic</SelectItem>
-                <SelectItem value="ind_clinical_overview">IND Clinical Overview</SelectItem>
-                <SelectItem value="ind_nonclinical_overview">IND Nonclinical Overview</SelectItem>
-                <SelectItem value="ind_quality_overview">IND Quality Overview</SelectItem>
-                <SelectItem value="csr_synopsis">CSR Synopsis</SelectItem>
-                <SelectItem value="protocol_summary">Protocol Summary</SelectItem>
+                {/* IND Templates */}
+                <SelectItem value="ectd_cover_letter">eCTD Cover Letter (Module 1)</SelectItem>
+                <SelectItem value="ind_1571_narrative">FDA 1571 Narrative Summary</SelectItem>
+                <SelectItem value="ib_change_summary">IB Change Summary</SelectItem>
+                <SelectItem value="cmc_drug_substance">CMC Drug Substance (3.2.S)</SelectItem>
+                <SelectItem value="cmc_drug_product">CMC Drug Product (3.2.P)</SelectItem>
+                <SelectItem value="clinical_benefit_risk">Clinical Benefit/Risk (2.5)</SelectItem>
+                <SelectItem value="nonclinical_overview">Nonclinical Overview (2.4)</SelectItem>
+                <SelectItem value="quality_overall_summary">
+                  Quality Overall Summary (2.3)
+                </SelectItem>
+                <SelectItem value="csr_synopsis">CSR Synopsis (5.3)</SelectItem>
+                <SelectItem value="protocol_synopsis">Protocol Synopsis</SelectItem>
+                {/* 510(k) Templates */}
+                <SelectItem value="510k_cover_letter">510(k) Cover Letter</SelectItem>
+                <SelectItem value="510k_se_comparison">510(k) SE Comparison</SelectItem>
+                <SelectItem value="510k_device_description">510(k) Device Description</SelectItem>
+                <SelectItem value="510k_summary">510(k) Summary (§807.92)</SelectItem>
+                <SelectItem value="510k_biocompatibility">510(k) Biocompatibility</SelectItem>
+                {/* CER eCTD 4.0 Templates */}
+                <SelectItem value="cer_evaluation_plan">CER Evaluation Plan</SelectItem>
+                <SelectItem value="cer_literature_analysis">CER Literature Analysis</SelectItem>
+                <SelectItem value="cer_benefit_risk_pmcf">CER Benefit-Risk &amp; PMCF</SelectItem>
+                <SelectItem value="cer_state_of_art">CER State of the Art</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -598,12 +617,30 @@ function CreateRenderDialog({
                 <SelectValue placeholder="Select doc type for demo inputs…" />
               </SelectTrigger>
               <SelectContent>
+                {/* IND Templates */}
                 <SelectItem value="ectd_cover_letter">eCTD Cover Letter</SelectItem>
-                <SelectItem value="fda_1571_narrative">Form FDA 1571 Narrative</SelectItem>
+                <SelectItem value="ind_1571_narrative">FDA 1571 Narrative</SelectItem>
                 <SelectItem value="ib_change_summary">IB Change Summary</SelectItem>
                 <SelectItem value="cmc_drug_substance">CMC Drug Substance (3.2.S)</SelectItem>
+                <SelectItem value="cmc_drug_product">CMC Drug Product (3.2.P)</SelectItem>
                 <SelectItem value="clinical_benefit_risk">Clinical Benefit/Risk (2.5)</SelectItem>
+                <SelectItem value="nonclinical_overview">Nonclinical Overview (2.4)</SelectItem>
+                <SelectItem value="quality_overall_summary">
+                  Quality Overall Summary (2.3)
+                </SelectItem>
+                <SelectItem value="csr_synopsis">CSR Synopsis (5.3)</SelectItem>
+                <SelectItem value="protocol_synopsis">Protocol Synopsis</SelectItem>
+                {/* 510(k) Templates */}
                 <SelectItem value="510k_cover_letter">510(k) Cover Letter</SelectItem>
+                <SelectItem value="510k_se_comparison">510(k) SE Comparison</SelectItem>
+                <SelectItem value="510k_device_description">510(k) Device Description</SelectItem>
+                <SelectItem value="510k_summary">510(k) Summary (§807.92)</SelectItem>
+                <SelectItem value="510k_biocompatibility">510(k) Biocompatibility</SelectItem>
+                {/* CER eCTD 4.0 Templates */}
+                <SelectItem value="cer_evaluation_plan">CER Evaluation Plan</SelectItem>
+                <SelectItem value="cer_literature_analysis">CER Literature Analysis</SelectItem>
+                <SelectItem value="cer_benefit_risk_pmcf">CER Benefit-Risk &amp; PMCF</SelectItem>
+                <SelectItem value="cer_state_of_art">CER State of the Art</SelectItem>
               </SelectContent>
             </Select>
             {demoLoading && (

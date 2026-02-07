@@ -1,17 +1,17 @@
 /**
- * Tests for Phase 6.5 — Seed Templates + Demo Render Packs
+ * Tests for Phase 6.6 — Premium Templates + Demo Render Packs
  *
  * Validates:
- *  1. SEED_CATALOG structure — all 6 templates defined with required fields
+ *  1. SEED_CATALOG structure — all 19 templates defined with required fields
  *  2. Demo input packs — JSON files exist and have valid structure
- *  3. DOCX template files — all 6 .docx files exist and are non-empty
+ *  3. DOCX template files — all 19 .docx files exist and are non-empty
  *  4. Template variable coverage — every demo pack has inputs for its template
  *  5. Seed script module exports — seed_for_program, get_demo_packs, get_all_demo_packs
  *  6. BFF route existence — POST /seed, GET /demo-packs
  *  7. Seed idempotency — catalog uses ON CONFLICT DO NOTHING pattern
  *  8. Smoke render — demo inputs can fill placeholders without errors
  *
- * @phase 6.5 — Seed Templates + Demo Render Packs
+ * @phase 6.6 — Premium Templates + Demo Render Packs
  */
 
 import { describe, it, expect } from 'vitest';
@@ -34,6 +34,7 @@ const SEED_SCRIPT = path.resolve(
 
 // Template catalog (must match Python SEED_CATALOG)
 const EXPECTED_TEMPLATES = [
+  // IND Templates (10)
   {
     name: 'eCTD Cover Letter',
     doc_type: 'ectd_cover_letter',
@@ -59,16 +60,96 @@ const EXPECTED_TEMPLATES = [
     inputs: ['cmc_drug_substance__cmc_lite.json'],
   },
   {
+    name: 'CMC Drug Product Overview (3.2.P)',
+    doc_type: 'cmc_drug_product',
+    file: 'cmc_drug_product.docx',
+    inputs: ['cmc_drug_product__cmc_lite.json'],
+  },
+  {
     name: 'Clinical Overview — Benefit/Risk Summary (2.5)',
     doc_type: 'clinical_benefit_risk',
     file: 'clinical_benefit_risk.docx',
     inputs: ['clinical_benefit_risk__ind_starter.json'],
   },
   {
-    name: '510(k) Cover Letter + Administrative Summary',
+    name: 'Nonclinical Overview (2.4)',
+    doc_type: 'nonclinical_overview',
+    file: 'nonclinical_overview.docx',
+    inputs: ['nonclinical_overview__ind_starter.json'],
+  },
+  {
+    name: 'Quality Overall Summary (2.3)',
+    doc_type: 'quality_overall_summary',
+    file: 'quality_overall_summary.docx',
+    inputs: ['quality_overall_summary__ind_starter.json'],
+  },
+  {
+    name: 'CSR Synopsis (5.3)',
+    doc_type: 'csr_synopsis',
+    file: 'csr_synopsis.docx',
+    inputs: ['csr_synopsis__ind_starter.json'],
+  },
+  {
+    name: 'Protocol Synopsis',
+    doc_type: 'protocol_synopsis',
+    file: 'protocol_synopsis.docx',
+    inputs: ['protocol_synopsis__ind_starter.json'],
+  },
+  // 510(k) Templates (5)
+  {
+    name: '510(k) Cover Letter',
     doc_type: '510k_cover_letter',
     file: '510k_cover_letter.docx',
     inputs: ['510k_cover_letter__device_pack.json'],
+  },
+  {
+    name: '510(k) Substantial Equivalence Comparison',
+    doc_type: '510k_se_comparison',
+    file: '510k_se_comparison.docx',
+    inputs: ['510k_se_comparison__device_pack.json'],
+  },
+  {
+    name: '510(k) Device Description',
+    doc_type: '510k_device_description',
+    file: '510k_device_description.docx',
+    inputs: ['510k_device_description__device_pack.json'],
+  },
+  {
+    name: '510(k) Summary (§807.92)',
+    doc_type: '510k_summary',
+    file: '510k_summary.docx',
+    inputs: ['510k_summary__device_pack.json'],
+  },
+  {
+    name: '510(k) Biocompatibility Evaluation',
+    doc_type: '510k_biocompatibility',
+    file: '510k_biocompatibility.docx',
+    inputs: ['510k_biocompatibility__device_pack.json'],
+  },
+  // CER eCTD 4.0 Templates (4)
+  {
+    name: 'CER — Clinical Evaluation Plan',
+    doc_type: 'cer_evaluation_plan',
+    file: 'cer_evaluation_plan.docx',
+    inputs: ['cer_evaluation_plan__cer_pack.json'],
+  },
+  {
+    name: 'CER — Literature Analysis',
+    doc_type: 'cer_literature_analysis',
+    file: 'cer_literature_analysis.docx',
+    inputs: ['cer_literature_analysis__cer_pack.json'],
+  },
+  {
+    name: 'CER — Benefit-Risk & PMCF',
+    doc_type: 'cer_benefit_risk_pmcf',
+    file: 'cer_benefit_risk_pmcf.docx',
+    inputs: ['cer_benefit_risk_pmcf__cer_pack.json'],
+  },
+  {
+    name: 'CER — State of the Art',
+    doc_type: 'cer_state_of_art',
+    file: 'cer_state_of_art.docx',
+    inputs: ['cer_state_of_art__cer_pack.json'],
   },
 ];
 
@@ -80,8 +161,8 @@ const PLACEHOLDER_RE = /\{\{\s*(\w+)\s*\}\}/g;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('SEED_CATALOG structure', () => {
-  it('defines exactly 6 starter templates', () => {
-    expect(EXPECTED_TEMPLATES).toHaveLength(6);
+  it('defines exactly 19 premium templates', () => {
+    expect(EXPECTED_TEMPLATES).toHaveLength(19);
   });
 
   it('each template has unique doc_type', () => {
@@ -119,9 +200,9 @@ describe('DOCX template files', () => {
     });
   }
 
-  it('all 6 DOCX files are present', () => {
+  it('all 19 DOCX files are present', () => {
     const files = fs.readdirSync(DEMO_TEMPLATES_DIR).filter(f => f.endsWith('.docx'));
-    expect(files.length).toBe(6);
+    expect(files.length).toBe(19);
   });
 });
 
@@ -168,9 +249,9 @@ describe('Demo input packs', () => {
     }
   }
 
-  it('all 6 JSON packs are present', () => {
+  it('all 19 JSON packs are present', () => {
     const files = fs.readdirSync(DEMO_INPUTS_DIR).filter(f => f.endsWith('.json'));
-    expect(files.length).toBe(6);
+    expect(files.length).toBe(19);
   });
 });
 
@@ -208,7 +289,7 @@ describe('Seed script', () => {
     expect(content).toContain('def get_all_demo_packs');
   });
 
-  it('catalogs all 6 templates', () => {
+  it('catalogs all 19 templates', () => {
     const content = fs.readFileSync(SEED_SCRIPT, 'utf-8');
     for (const t of EXPECTED_TEMPLATES) {
       expect(content).toContain(t.doc_type);
