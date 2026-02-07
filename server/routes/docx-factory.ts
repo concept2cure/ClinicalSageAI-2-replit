@@ -292,6 +292,34 @@ router.get(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Routes — Render Events (read-only audit trail)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/docx-factory/renders/:renderId/events?program_id=...
+ *
+ * List all events for a render, chronologically. Read-only audit trail.
+ */
+router.get(
+  '/renders/:renderId/events',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
+    try {
+      const result = await proxyToShadow(
+        `/docx/renders/${encodeURIComponent(req.params.renderId)}/events`,
+        { query: { program_id: programId } }
+      );
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[docx-factory] list render events proxy error:', err.message);
+      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Routes — Render Execution
 // ═══════════════════════════════════════════════════════════════════════════════
 
