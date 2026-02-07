@@ -1,18 +1,20 @@
 /**
- * DOCX Factory Page — Phase 6.4.A
+ * DOCX Factory Page — Phase 6.4.A + 6.4.B
  *
  * Full document generation lifecycle:
  *   Tab 1 "Templates" — list, create template, upload/create version
- *   Tab 2 "Renders"   — list, create render, execute, download artifact
+ *   Tab 2 "Renders"   — list, create render, execute, download artifact,
+ *                        render event timeline, hash verification
  *
  * Reads program_id from URL search params (?program_id=UUID).
  * Falls back to a program selector if not provided.
  *
  * @phase 6.4.A — DOCX Factory UI
+ * @phase 6.4.B — Status pill, event timeline, hash verification, polling cleanup
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 import {
   useTemplates,
   useCreateTemplate,
@@ -20,13 +22,16 @@ import {
   useRenders,
   useCreateRender,
   useExecuteRender,
+  useRenderEvents,
   downloadArtifact,
+  computeSHA256,
   type DocxTemplate,
   type DocxRender,
   type DocxArtifact,
+  type DownloadResult,
 } from '@/hooks/use-docx-factory';
 
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -56,7 +61,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Plus, Play, Download, RefreshCw, Upload, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  FileText,
+  Plus,
+  Play,
+  Download,
+  RefreshCw,
+  Upload,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  ShieldAlert,
+  Hash,
+} from 'lucide-react';
 
 // =============================================================================
 // Helpers
@@ -73,17 +96,245 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function formatTimestamp(dateStr: string): string {
+  return new Date(dateStr).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+// Legacy helper — delegates to StatusPill for templates
 function statusBadge(status: string) {
-  const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    active: 'default',
-    queued: 'secondary',
-    running: 'outline',
-    completed: 'default',
-    failed: 'destructive',
-    draft: 'outline',
-    archived: 'secondary',
-  };
-  return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
+  return <StatusPill status={status} />;
+}
+
+// =============================================================================
+// StatusPill — color-coded render/template status badge
+// =============================================================================
+
+/** Status → variant + icon mapping for the full pill */
+const STATUS_CONFIG: Record<
+  string,
+  {
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    icon: React.ReactNode;
+    className?: string;
+  }
+> = {
+  queued: {
+    variant: 'secondary',
+    icon: <Clock className="h-3 w-3 mr-1" />,
+  },
+  running: {
+    variant: 'outline',
+    icon: <Loader2 className="h-3 w-3 mr-1 animate-spin" />,
+    className: 'animate-pulse border-blue-400 text-blue-600',
+  },
+  completed: {
+    variant: 'default',
+    icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
+    className: 'bg-green-600 hover:bg-green-700',
+  },
+  failed: {
+    variant: 'destructive',
+    icon: <XCircle className="h-3 w-3 mr-1" />,
+  },
+  active: { variant: 'default', icon: null },
+  draft: { variant: 'outline', icon: null },
+  archived: { variant: 'secondary', icon: null },
+};
+
+export function StatusPill({
+  status,
+  errorMessage,
+}: {
+  status: string;
+  errorMessage?: string | null;
+}) {
+  const config = STATUS_CONFIG[status] || { variant: 'secondary' as const, icon: null };
+
+  const pill = (
+    <Badge variant={config.variant} className={config.className}>
+      {config.icon}
+      {status}
+    </Badge>
+  );
+
+  if (status === 'failed' && errorMessage) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{pill}</TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <p className="text-xs break-words">{errorMessage}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return pill;
+}
+
+// =============================================================================
+// RenderEventTimeline — chronological audit trail
+// =============================================================================
+
+function RenderEventTimeline({ programId, renderId }: { programId: string; renderId: string }) {
+  const { data: events, isLoading, error } = useRenderEvents(programId, renderId);
+  const [expandedPayloads, setExpandedPayloads] = useState<Set<string>>(new Set());
+
+  const togglePayload = useCallback((eventId: string) => {
+    setExpandedPayloads(prev => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 py-2">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-8 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <p className="text-xs text-destructive py-2 flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" />
+        Failed to load events: {error.message}
+      </p>
+    );
+  }
+
+  if (!events?.length) {
+    return <p className="text-xs text-muted-foreground py-2 italic">No events recorded yet.</p>;
+  }
+
+  return (
+    <div className="space-y-0 border-l-2 border-muted ml-3 mt-2">
+      {events.map(evt => {
+        const hasPayload = evt.payload_json && Object.keys(evt.payload_json).length > 0;
+        const isExpanded = expandedPayloads.has(evt.id);
+
+        return (
+          <div key={evt.id} className="relative pl-6 pb-3">
+            {/* Timeline dot */}
+            <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-muted-foreground" />
+
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold">{evt.event_type}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatTimestamp(evt.created_at)}
+                  </span>
+                </div>
+                {hasPayload && (
+                  <button
+                    onClick={() => togglePayload(evt.id)}
+                    className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5 mt-0.5"
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="h-3 w-3" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3" />
+                    )}
+                    {isExpanded ? 'hide payload' : 'show payload'}
+                  </button>
+                )}
+                {isExpanded && hasPayload && (
+                  <pre className="mt-1 text-[10px] bg-muted rounded p-2 overflow-x-auto max-h-32 whitespace-pre-wrap break-all">
+                    {JSON.stringify(evt.payload_json, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// =============================================================================
+// HashVerificationPanel — SHA-256 match/mismatch after download
+// =============================================================================
+
+export type HashVerifyState =
+  | { phase: 'idle' }
+  | { phase: 'downloading' }
+  | { phase: 'hashing' }
+  | { phase: 'done'; serverSha: string; clientSha: string; match: boolean }
+  | { phase: 'error'; message: string };
+
+function HashVerificationPanel({ state }: { state: HashVerifyState }) {
+  if (state.phase === 'idle') return null;
+
+  if (state.phase === 'downloading') {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Downloading artifact…
+      </div>
+    );
+  }
+
+  if (state.phase === 'hashing') {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+        <Hash className="h-3 w-3 animate-pulse" />
+        Computing SHA-256…
+      </div>
+    );
+  }
+
+  if (state.phase === 'error') {
+    return (
+      <div className="flex items-center gap-2 text-xs text-destructive mt-2">
+        <AlertCircle className="h-3 w-3" />
+        {state.message}
+      </div>
+    );
+  }
+
+  // phase === 'done'
+  return (
+    <Card className={`mt-2 ${state.match ? 'border-green-500' : 'border-destructive'}`}>
+      <CardContent className="py-3 px-4">
+        <div className="flex items-center gap-2 mb-2">
+          {state.match ? (
+            <ShieldCheck className="h-4 w-4 text-green-600" />
+          ) : (
+            <ShieldAlert className="h-4 w-4 text-destructive" />
+          )}
+          <span
+            className={`text-sm font-semibold ${state.match ? 'text-green-600' : 'text-destructive'}`}
+          >
+            {state.match ? 'INTEGRITY MATCH' : 'INTEGRITY MISMATCH'}
+          </span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-start gap-2 text-[10px]">
+            <span className="text-muted-foreground w-14 shrink-0 font-medium">Server:</span>
+            <code className="break-all font-mono">{state.serverSha}</code>
+          </div>
+          <div className="flex items-start gap-2 text-[10px]">
+            <span className="text-muted-foreground w-14 shrink-0 font-medium">Browser:</span>
+            <code className="break-all font-mono">{state.clientSha}</code>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // =============================================================================
@@ -245,7 +496,7 @@ function UploadVersionDialog({ templateId, programId }: { templateId: string; pr
 
 function CreateRenderDialog({
   programId,
-  templates,
+  templates: _templates,
 }: {
   programId: string;
   templates: DocxTemplate[];
@@ -450,6 +701,8 @@ function RendersTab({ programId }: { programId: string }) {
   const { data, isLoading, error, refetch } = useRenders(programId);
   const executeRender = useExecuteRender(programId);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [expandedRenderId, setExpandedRenderId] = useState<string | null>(null);
+  const [hashStates, setHashStates] = useState<Record<string, HashVerifyState>>({});
 
   const renders = data?.items || [];
   const templates = templatesData?.items || [];
@@ -461,19 +714,50 @@ function RendersTab({ programId }: { programId: string }) {
     [executeRender]
   );
 
-  const handleDownload = useCallback(
+  const handleDownloadWithHash = useCallback(
     async (artifactId: string) => {
       setDownloadingId(artifactId);
+      setHashStates(prev => ({ ...prev, [artifactId]: { phase: 'downloading' } }));
       try {
-        await downloadArtifact(artifactId, programId);
-      } catch (err) {
+        const result: DownloadResult = await downloadArtifact(artifactId, programId);
+
+        if (result.serverSha256) {
+          setHashStates(prev => ({ ...prev, [artifactId]: { phase: 'hashing' } }));
+          const clientSha = await computeSHA256(result.blob);
+          setHashStates(prev => ({
+            ...prev,
+            [artifactId]: {
+              phase: 'done',
+              serverSha: result.serverSha256!,
+              clientSha: clientSha,
+              match: result.serverSha256!.toLowerCase() === clientSha.toLowerCase(),
+            },
+          }));
+        } else {
+          setHashStates(prev => ({
+            ...prev,
+            [artifactId]: {
+              phase: 'error',
+              message: 'Server did not provide SHA-256 header for verification.',
+            },
+          }));
+        }
+      } catch (err: any) {
         console.error('Download failed:', err);
+        setHashStates(prev => ({
+          ...prev,
+          [artifactId]: { phase: 'error', message: err.message || 'Download failed' },
+        }));
       } finally {
         setDownloadingId(null);
       }
     },
     [programId]
   );
+
+  const toggleTimeline = useCallback((renderId: string) => {
+    setExpandedRenderId(prev => (prev === renderId ? null : renderId));
+  }, []);
 
   if (isLoading) {
     return (
@@ -499,12 +783,23 @@ function RendersTab({ programId }: { programId: string }) {
     );
   }
 
+  // Polling indicator
+  const hasPending = renders.some(r => r.status === 'queued' || r.status === 'running');
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {renders.length} render{renders.length !== 1 ? 's' : ''}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            {renders.length} render{renders.length !== 1 ? 's' : ''}
+          </p>
+          {hasPending && (
+            <Badge variant="outline" className="text-[10px] animate-pulse">
+              <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
+              polling
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-3 w-3" />
@@ -524,35 +819,49 @@ function RendersTab({ programId }: { programId: string }) {
           </CardContent>
         </Card>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Render ID</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Template Version</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {renders.map(r => (
-              <RenderRow
-                key={r.id}
-                render={r}
-                programId={programId}
-                onExecute={handleExecute}
-                onDownload={handleDownload}
-                isExecuting={executeRender.isPending && executeRender.variables === r.id}
-                downloadingId={downloadingId}
-                lastArtifact={
+        <div className="space-y-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Render ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Template Version</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {renders.map(r => {
+                // Use artifact from execute response if available, otherwise look at render data
+                const execArtifact =
                   executeRender.isSuccess && executeRender.variables === r.id
                     ? (executeRender.data as DocxArtifact)
-                    : undefined
-                }
-              />
-            ))}
-          </TableBody>
-        </Table>
+                    : undefined;
+                const artifactForDownload = execArtifact;
+
+                return (
+                  <RenderRow
+                    key={r.id}
+                    render={r}
+                    programId={programId}
+                    onExecute={handleExecute}
+                    onDownload={handleDownloadWithHash}
+                    onToggleTimeline={toggleTimeline}
+                    isExecuting={executeRender.isPending && executeRender.variables === r.id}
+                    downloadingId={downloadingId}
+                    lastArtifact={artifactForDownload}
+                    isTimelineExpanded={expandedRenderId === r.id}
+                    hashState={
+                      artifactForDownload
+                        ? hashStates[artifactForDownload.id] || { phase: 'idle' as const }
+                        : { phase: 'idle' as const }
+                    }
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {executeRender.isError && (
@@ -576,74 +885,108 @@ function RenderRow({
   programId,
   onExecute,
   onDownload,
+  onToggleTimeline,
   isExecuting,
   downloadingId,
   lastArtifact,
+  isTimelineExpanded,
+  hashState,
 }: {
   render: DocxRender;
   programId: string;
   onExecute: (id: string) => void;
   onDownload: (artifactId: string) => void;
+  onToggleTimeline: (renderId: string) => void;
   isExecuting: boolean;
   downloadingId: string | null;
   lastArtifact?: DocxArtifact;
+  isTimelineExpanded: boolean;
+  hashState: HashVerifyState;
 }) {
   return (
-    <TableRow>
-      <TableCell>
-        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{r.id.slice(0, 8)}…</code>
-      </TableCell>
-      <TableCell>{statusBadge(r.status)}</TableCell>
-      <TableCell>
-        <code className="text-xs text-muted-foreground">{r.template_version_id.slice(0, 8)}…</code>
-      </TableCell>
-      <TableCell className="text-muted-foreground text-sm">{timeAgo(r.created_at)}</TableCell>
-      <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-1">
-          {r.status === 'queued' && (
+    <>
+      <TableRow className={isTimelineExpanded ? 'border-b-0' : ''}>
+        <TableCell>
+          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{r.id.slice(0, 8)}…</code>
+        </TableCell>
+        <TableCell>
+          <StatusPill status={r.status} errorMessage={r.error} />
+        </TableCell>
+        <TableCell>
+          <code className="text-xs text-muted-foreground">
+            {r.template_version_id.slice(0, 8)}…
+          </code>
+        </TableCell>
+        <TableCell className="text-muted-foreground text-sm">{timeAgo(r.created_at)}</TableCell>
+        <TableCell className="text-right">
+          <div className="flex items-center justify-end gap-1">
+            {/* Timeline toggle — always visible */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => onExecute(r.id)}
-              disabled={isExecuting}
+              onClick={() => onToggleTimeline(r.id)}
+              title="Show event timeline"
             >
-              {isExecuting ? (
-                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-              ) : (
-                <Play className="h-3 w-3 mr-1" />
-              )}
-              Execute
+              <Clock className="h-3 w-3" />
             </Button>
-          )}
-          {r.status === 'running' && (
-            <Badge variant="outline" className="animate-pulse">
-              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-              Running
-            </Badge>
-          )}
-          {r.status === 'completed' && lastArtifact && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDownload(lastArtifact.id)}
-              disabled={downloadingId === lastArtifact.id}
-            >
-              {downloadingId === lastArtifact.id ? (
-                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-              ) : (
-                <Download className="h-3 w-3 mr-1" />
+
+            {r.status === 'queued' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onExecute(r.id)}
+                disabled={isExecuting}
+              >
+                {isExecuting ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Play className="h-3 w-3 mr-1" />
+                )}
+                Execute
+              </Button>
+            )}
+            {r.status === 'completed' && lastArtifact && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDownload(lastArtifact.id)}
+                disabled={downloadingId === lastArtifact.id}
+              >
+                {downloadingId === lastArtifact.id ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3 mr-1" />
+                )}
+                Download
+              </Button>
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+      {/* Expanded row — event timeline + hash verification */}
+      {isTimelineExpanded && (
+        <TableRow>
+          <TableCell colSpan={5} className="bg-muted/30 pt-0 pb-4 px-6">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Audit Trail
+                </p>
+                <RenderEventTimeline programId={programId} renderId={r.id} />
+              </div>
+              {lastArtifact && hashState.phase !== 'idle' && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Integrity Verification
+                  </p>
+                  <HashVerificationPanel state={hashState} />
+                </div>
               )}
-              Download
-            </Button>
-          )}
-          {r.status === 'failed' && r.error && (
-            <span className="text-xs text-destructive truncate max-w-[200px]" title={r.error}>
-              {r.error.slice(0, 50)}
-            </span>
-          )}
-        </div>
-      </TableCell>
-    </TableRow>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 

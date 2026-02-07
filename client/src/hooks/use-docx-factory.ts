@@ -60,6 +60,21 @@ export interface DocxArtifact {
   created_at: string;
 }
 
+export interface RenderEvent {
+  id: string;
+  render_id: string;
+  event_type: string;
+  payload_json: Record<string, unknown>;
+  created_at: string;
+}
+
+/** Result from downloadArtifact — includes blob + server SHA for verification */
+export interface DownloadResult {
+  blob: Blob;
+  filename: string;
+  serverSha256: string | null;
+}
+
 interface ListResponse<T> {
   items: T[];
   total: number;
@@ -120,6 +135,8 @@ export const docxKeys = {
   renders: (programId: string) => ['docx-factory', 'renders', programId] as const,
   render: (programId: string, renderId: string) =>
     ['docx-factory', 'render', programId, renderId] as const,
+  renderEvents: (programId: string, renderId: string) =>
+    ['docx-factory', 'render-events', programId, renderId] as const,
 };
 
 // =============================================================================
@@ -195,7 +212,13 @@ export function useRenders(programId: string) {
     queryFn: () => docxFetch(`/renders?program_id=${programId}`),
     enabled: !!programId,
     staleTime: 10_000,
-    refetchInterval: 15_000, // poll for status changes
+    refetchInterval: query => {
+      // Stop polling once all renders are in terminal state
+      const data = query.state.data as ListResponse<DocxRender> | undefined;
+      if (!data?.items?.length) return 15_000;
+      const hasPending = data.items.some(r => r.status === 'queued' || r.status === 'running');
+      return hasPending ? 10_000 : false;
+    },
   });
 }
 
@@ -227,10 +250,26 @@ export function useExecuteRender(programId: string) {
 }
 
 // =============================================================================
+// Render Events
+// =============================================================================
+
+export function useRenderEvents(programId: string, renderId: string) {
+  return useQuery<RenderEvent[]>({
+    queryKey: docxKeys.renderEvents(programId, renderId),
+    queryFn: () => docxFetch<RenderEvent[]>(`/renders/${renderId}/events?program_id=${programId}`),
+    enabled: !!programId && !!renderId,
+    staleTime: 30_000,
+  });
+}
+
+// =============================================================================
 // Artifact Download
 // =============================================================================
 
-export async function downloadArtifact(artifactId: string, programId: string): Promise<void> {
+export async function downloadArtifact(
+  artifactId: string,
+  programId: string
+): Promise<DownloadResult> {
   const orgId = localStorage.getItem('organizationId') || '1';
 
   const res = await fetch(`${BASE}/artifacts/${artifactId}/download?program_id=${programId}`, {
@@ -243,12 +282,13 @@ export async function downloadArtifact(artifactId: string, programId: string): P
     throw new Error(`Download failed: ${res.status} — ${body}`);
   }
 
-  // Trigger browser download
+  const serverSha256 = res.headers.get('x-artifact-sha256');
   const blob = await res.blob();
   const disposition = res.headers.get('content-disposition') || '';
   const match = disposition.match(/filename="?([^"]+)"?/);
   const filename = match?.[1] || `artifact-${artifactId}.docx`;
 
+  // Trigger browser download
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -257,4 +297,22 @@ export async function downloadArtifact(artifactId: string, programId: string): P
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+
+  return { blob, filename, serverSha256 };
+}
+
+// =============================================================================
+// Browser-side SHA-256 compute
+// =============================================================================
+
+/**
+ * Compute SHA-256 of a Blob in the browser using SubtleCrypto.
+ * Returns a lowercase hex string.
+ */
+export async function computeSHA256(blob: Blob): Promise<string> {
+  // Use Response.arrayBuffer() for broader jsdom/browser compat
+  const buffer = await new Response(blob).arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
