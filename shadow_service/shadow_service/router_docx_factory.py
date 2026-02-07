@@ -182,14 +182,15 @@ async def list_renders(program_id: UUID = Query(...)):
 # ── Render Execution ─────────────────────────────────────────────────────────
 
 @router.post("/renders/{render_id}/execute", response_model=ArtifactResponse)
-async def execute_render(render_id: UUID):
+async def execute_render(render_id: UUID, program_id: UUID = Query(...)):
     """Execute a queued render: fill template → produce artifact.
 
     Transitions: queued → running → completed (or failed).
+    Requires program_id query param to enforce cross-program ownership.
     Returns the produced artifact metadata on success.
     """
     try:
-        artifact = await docx_renderer.render_document(render_id)
+        artifact = await docx_renderer.render_document(render_id, program_id=program_id)
         return artifact
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -206,13 +207,14 @@ DOCX_MEDIA_TYPE = (
 
 
 @router.get("/artifacts/{artifact_id}/download")
-async def download_artifact(artifact_id: UUID):
+async def download_artifact(artifact_id: UUID, program_id: UUID = Query(...)):
     """Stream a rendered artifact's bytes (DOCX).
 
+    Requires program_id query param to enforce cross-program ownership.
     Returns a streaming download with Content-Disposition attachment header.
     """
     try:
-        artifact = await runner.get_artifact(artifact_id)
+        artifact = await runner.get_artifact_for_program(artifact_id, program_id)
         if not artifact:
             raise HTTPException(
                 status_code=404, detail=f"Artifact {artifact_id} not found"

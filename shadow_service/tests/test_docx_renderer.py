@@ -478,6 +478,86 @@ class TestRenderDocumentLifecycle:
             call_args = mock_runner.transition_render_failed.call_args
             assert call_args[0][0] == render_id
 
+    @pytest.mark.asyncio
+    async def test_render_cross_program_rejected(self):
+        """render_document rejects when program_id doesn't match the render's."""
+        from shadow_service.docx_renderer import render_document
+
+        render_id = uuid4()
+        actual_program = uuid4()
+        claimed_program = uuid4()
+
+        render_row = _make_render_row(
+            id=render_id, program_id=actual_program, status="queued",
+        )
+
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(return_value=render_row)
+
+        mock_store = AsyncMock()
+
+        with patch("shadow_service.docx_renderer.db") as mock_db, \
+             patch("shadow_service.docx_renderer.runner") as mock_runner, \
+             patch("shadow_service.docx_renderer.get_blob_store", return_value=mock_store):
+
+            mock_db.acquire_connection = AsyncMock(return_value=mock_conn)
+            mock_db.release_connection = AsyncMock()
+            mock_runner.transition_render_failed = AsyncMock(
+                return_value=_make_render_row(status="failed")
+            )
+
+            with pytest.raises(ValueError, match="not found"):
+                await render_document(render_id, program_id=claimed_program)
+
+    @pytest.mark.asyncio
+    async def test_render_same_program_allowed(self):
+        """render_document proceeds when program_id matches the render's."""
+        from shadow_service.docx_renderer import render_document
+
+        render_id = uuid4()
+        program_id = uuid4()
+        tv_id = uuid4()
+        template_bytes = _make_test_docx()
+
+        render_row = _make_render_row(
+            id=render_id, program_id=program_id,
+            template_version_id=tv_id, status="queued",
+        )
+        tv_row = _make_tv_with_template_row(
+            version_id=tv_id, program_id=program_id,
+        )
+        artifact_row = _make_artifact_row(render_id=render_id)
+
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(return_value=render_row)
+
+        mock_store = AsyncMock()
+        mock_store.get_bytes = AsyncMock(return_value=template_bytes)
+        mock_store.put_bytes = AsyncMock(return_value={
+            "sha256": "x" * 64, "size_bytes": 12345,
+            "key": f"renders/{render_id}/output.docx",
+        })
+
+        with patch("shadow_service.docx_renderer.db") as mock_db, \
+             patch("shadow_service.docx_renderer.runner") as mock_runner, \
+             patch("shadow_service.docx_renderer.get_blob_store", return_value=mock_store):
+
+            mock_db.acquire_connection = AsyncMock(return_value=mock_conn)
+            mock_db.release_connection = AsyncMock()
+            mock_runner.transition_render_running = AsyncMock(
+                return_value=FakeRecord({**dict(render_row), "status": "running"})
+            )
+            mock_runner.get_template_version_with_template = AsyncMock(return_value=tv_row)
+            mock_runner.create_artifact = AsyncMock(return_value=artifact_row)
+            mock_runner.transition_render_completed = AsyncMock(
+                return_value=FakeRecord({**dict(render_row), "status": "completed"})
+            )
+
+            result = await render_document(render_id, program_id=program_id)
+            assert result["id"] == artifact_row["id"]
+
 
 # =============================================================================
 # 4. Runner — new functions
@@ -511,6 +591,52 @@ class TestRunnerGetArtifact:
 
             result = await runner.get_artifact(uuid4())
             assert result is None
+
+
+class TestRunnerGetArtifactForProgram:
+    """Test get_artifact_for_program function (cross-program safe)."""
+
+    @pytest.mark.asyncio
+    async def test_returns_artifact_when_program_matches(self):
+        artifact_row = _make_artifact_row()
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(return_value=artifact_row)
+
+        with patch("shadow_service.docx_factory_runner.db") as mock_db:
+            mock_db.acquire_connection = AsyncMock(return_value=mock_conn)
+            mock_db.release_connection = AsyncMock()
+
+            result = await runner.get_artifact_for_program(artifact_row["id"], uuid4())
+            assert result["id"] == artifact_row["id"]
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_program_mismatch(self):
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(return_value=None)  # JOIN finds nothing
+
+        with patch("shadow_service.docx_factory_runner.db") as mock_db:
+            mock_db.acquire_connection = AsyncMock(return_value=mock_conn)
+            mock_db.release_connection = AsyncMock()
+
+            result = await runner.get_artifact_for_program(uuid4(), uuid4())
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_uses_correct_sql_query(self):
+        mock_conn = AsyncMock()
+        mock_conn.fetchrow = AsyncMock(return_value=None)
+
+        aid = uuid4()
+        pid = uuid4()
+
+        with patch("shadow_service.docx_factory_runner.db") as mock_db:
+            mock_db.acquire_connection = AsyncMock(return_value=mock_conn)
+            mock_db.release_connection = AsyncMock()
+
+            await runner.get_artifact_for_program(aid, pid)
+            mock_conn.fetchrow.assert_called_once_with(
+                sql.SELECT_ARTIFACT_BY_ID_WITH_PROGRAM, aid, pid,
+            )
 
 
 class TestRunnerGetTemplateVersionWithTemplate:
@@ -563,6 +689,7 @@ class TestRouterExecuteRender:
         app.include_router(router)
         self.client = TestClient(app)
         self.headers = {"X-Admin-Token": "test-token-62"}
+        self.program_id = uuid4()
         yield
         os.environ.pop("REVIEW_ADMIN_TOKEN", None)
 
@@ -572,11 +699,15 @@ class TestRouterExecuteRender:
             mock_renderer.render_document = AsyncMock(return_value=dict(artifact))
             resp = self.client.post(
                 f"/docx/renders/{uuid4()}/execute",
+                params={"program_id": str(self.program_id)},
                 headers=self.headers,
             )
             assert resp.status_code == 200
             data = resp.json()
             assert data["file_type"] == "docx"
+            # Verify program_id was forwarded
+            call_kwargs = mock_renderer.render_document.call_args
+            assert call_kwargs.kwargs["program_id"] == self.program_id
 
     def test_execute_render_bad_request(self, _client):
         with patch("shadow_service.router_docx_factory.docx_renderer") as mock_renderer:
@@ -585,14 +716,40 @@ class TestRouterExecuteRender:
             )
             resp = self.client.post(
                 f"/docx/renders/{uuid4()}/execute",
+                params={"program_id": str(self.program_id)},
                 headers=self.headers,
             )
             assert resp.status_code == 400
             assert "expected 'queued'" in resp.json()["detail"]
 
     def test_execute_render_no_auth(self, _client):
-        resp = self.client.post(f"/docx/renders/{uuid4()}/execute")
+        resp = self.client.post(
+            f"/docx/renders/{uuid4()}/execute",
+            params={"program_id": str(self.program_id)},
+        )
         assert resp.status_code == 403
+
+    def test_execute_render_requires_program_id(self, _client):
+        """422 when program_id query param is missing."""
+        resp = self.client.post(
+            f"/docx/renders/{uuid4()}/execute",
+            headers=self.headers,
+        )
+        assert resp.status_code == 422
+
+    def test_execute_render_cross_program_rejected(self, _client):
+        """Render belonging to program B is rejected when program A is claimed."""
+        with patch("shadow_service.router_docx_factory.docx_renderer") as mock_renderer:
+            mock_renderer.render_document = AsyncMock(
+                side_effect=ValueError("Render abc not found")
+            )
+            resp = self.client.post(
+                f"/docx/renders/{uuid4()}/execute",
+                params={"program_id": str(uuid4())},
+                headers=self.headers,
+            )
+            assert resp.status_code == 400
+            assert "not found" in resp.json()["detail"]
 
 
 class TestRouterDownloadArtifact:
@@ -609,6 +766,7 @@ class TestRouterDownloadArtifact:
         app.include_router(router)
         self.client = TestClient(app)
         self.headers = {"X-Admin-Token": "test-token-62"}
+        self.program_id = uuid4()
         yield
         os.environ.pop("REVIEW_ADMIN_TOKEN", None)
 
@@ -619,13 +777,14 @@ class TestRouterDownloadArtifact:
         with patch("shadow_service.router_docx_factory.runner") as mock_runner, \
              patch("shadow_service.router_docx_factory.get_blob_store") as mock_get_store:
 
-            mock_runner.get_artifact = AsyncMock(return_value=dict(artifact))
+            mock_runner.get_artifact_for_program = AsyncMock(return_value=dict(artifact))
             mock_store = AsyncMock()
             mock_store.get_stream = AsyncMock(return_value=io.BytesIO(docx_bytes))
             mock_get_store.return_value = mock_store
 
             resp = self.client.get(
                 f"/docx/artifacts/{artifact['id']}/download",
+                params={"program_id": str(self.program_id)},
                 headers=self.headers,
             )
             assert resp.status_code == 200
@@ -634,9 +793,10 @@ class TestRouterDownloadArtifact:
 
     def test_download_artifact_not_found(self, _client):
         with patch("shadow_service.router_docx_factory.runner") as mock_runner:
-            mock_runner.get_artifact = AsyncMock(return_value=None)
+            mock_runner.get_artifact_for_program = AsyncMock(return_value=None)
             resp = self.client.get(
                 f"/docx/artifacts/{uuid4()}/download",
+                params={"program_id": str(self.program_id)},
                 headers=self.headers,
             )
             assert resp.status_code == 404
@@ -646,21 +806,45 @@ class TestRouterDownloadArtifact:
         with patch("shadow_service.router_docx_factory.runner") as mock_runner, \
              patch("shadow_service.router_docx_factory.get_blob_store") as mock_get_store:
 
-            mock_runner.get_artifact = AsyncMock(return_value=dict(artifact))
+            mock_runner.get_artifact_for_program = AsyncMock(return_value=dict(artifact))
             mock_store = AsyncMock()
             mock_store.get_stream = AsyncMock(side_effect=FileNotFoundError("gone"))
             mock_get_store.return_value = mock_store
 
             resp = self.client.get(
                 f"/docx/artifacts/{artifact['id']}/download",
+                params={"program_id": str(self.program_id)},
                 headers=self.headers,
             )
             assert resp.status_code == 404
             assert "not found in storage" in resp.json()["detail"]
 
     def test_download_artifact_no_auth(self, _client):
-        resp = self.client.get(f"/docx/artifacts/{uuid4()}/download")
+        resp = self.client.get(
+            f"/docx/artifacts/{uuid4()}/download",
+            params={"program_id": str(self.program_id)},
+        )
         assert resp.status_code == 403
+
+    def test_download_artifact_requires_program_id(self, _client):
+        """422 when program_id query param is missing."""
+        resp = self.client.get(
+            f"/docx/artifacts/{uuid4()}/download",
+            headers=self.headers,
+        )
+        assert resp.status_code == 422
+
+    def test_download_artifact_cross_program_rejected(self, _client):
+        """Artifact belonging to a different program returns 404."""
+        with patch("shadow_service.router_docx_factory.runner") as mock_runner:
+            # Simulate cross-program: get_artifact_for_program returns None
+            mock_runner.get_artifact_for_program = AsyncMock(return_value=None)
+            resp = self.client.get(
+                f"/docx/artifacts/{uuid4()}/download",
+                params={"program_id": str(uuid4())},
+                headers=self.headers,
+            )
+            assert resp.status_code == 404
 
 
 # =============================================================================
@@ -677,6 +861,15 @@ class TestNewSQLQueries:
     def test_select_artifact_by_id_returns_expected_columns(self):
         for col in ["id", "render_id", "file_type", "storage_key", "sha256", "size_bytes"]:
             assert col in sql.SELECT_ARTIFACT_BY_ID
+
+    def test_select_artifact_by_id_with_program_has_join(self):
+        query = sql.SELECT_ARTIFACT_BY_ID_WITH_PROGRAM
+        assert "JOIN" in query
+        assert "documents.artifacts" in query
+        assert "documents.renders" in query
+        assert "program_id" in query
+        assert "$1" in query
+        assert "$2" in query
 
     def test_select_tv_with_template_has_join(self):
         query = sql.SELECT_TEMPLATE_VERSION_WITH_TEMPLATE

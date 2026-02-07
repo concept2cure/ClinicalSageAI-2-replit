@@ -818,6 +818,19 @@ try {
   console.error('❌ Failed to mount Evidence Fabric BFF proxy routes:', error);
 }
 
+// Mount DOCX Factory BFF proxy (Phase 6.3 — Document Factory)
+// Proxies browser calls to Shadow Service /docx/* with admin token injected server-side
+try {
+  const docxFactoryModule = await import('./routes/docx-factory.js');
+  const docxFactoryRoutes = docxFactoryModule.default;
+  app.use('/api/docx-factory', docxFactoryRoutes);
+  console.log(
+    '✅ DOCX Factory BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
+  );
+} catch (error) {
+  console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
+}
+
 // Mount Demo Seed routes (for creating demo projects)
 try {
   const seedDemoModule = await import('./routes/seed-demo.js');
