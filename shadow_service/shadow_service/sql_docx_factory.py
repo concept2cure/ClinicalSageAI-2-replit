@@ -171,3 +171,27 @@ SELECT id, render_id, event_type, payload_json, created_at
  WHERE render_id = $1
  ORDER BY created_at
 """
+
+
+# =============================================================================
+# Artifact by ID (for download)
+# =============================================================================
+
+SELECT_ARTIFACT_BY_ID = """
+SELECT id, render_id, file_type, storage_key, sha256, size_bytes, created_at
+  FROM documents.artifacts
+ WHERE id = $1
+"""
+
+
+# =============================================================================
+# Template version with parent template (for rendering)
+# =============================================================================
+
+SELECT_TEMPLATE_VERSION_WITH_TEMPLATE = """
+SELECT tv.id AS version_id, tv.template_id, tv.version, tv.storage_key, tv.sha256,
+       t.program_id, t.name AS template_name, t.doc_type
+  FROM documents.template_versions tv
+  JOIN documents.templates t ON t.id = tv.template_id
+ WHERE tv.id = $1
+"""
