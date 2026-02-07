@@ -179,6 +179,9 @@ const ValidationDashboard = lazy(() => import('./pages/ValidationDashboard'));
 const DocumentTemplates = lazy(() => import('./pages/DocumentTemplates'));
 const DocumentViewer = lazy(() => import('./pages/DocumentViewer'));
 
+// DOCX Factory — Phase 6.4.A
+const DocxFactory = lazy(() => import('./pages/DocxFactory'));
+
 // Regulatory-related pages (excluding Regulatory Submissions Hub)
 const RegulatoryRiskDashboard = lazy(() => import('./pages/RegulatoryRiskDashboard'));
 const EnhancedRegulatoryDashboard = lazy(() => import('./pages/EnhancedRegulatoryDashboard'));
@@ -1507,6 +1510,14 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <SimpleDocumentCreator />
+                </Suspense>
+              )}
+            </Route>{' '}
+            {/* DOCX Factory — Phase 6.4.A */}
+            <Route path="/docx-factory">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <DocxFactory />
                 </Suspense>
               )}
             </Route>{' '}
