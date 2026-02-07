@@ -31,6 +31,8 @@ import {
   type DocxArtifact,
   type RenderEvent,
   type DownloadResult,
+  type SeedResult,
+  type DemoPack,
 } from '../client/src/hooks/use-docx-factory';
 
 // =============================================================================
@@ -494,5 +496,237 @@ describe('Render events', () => {
     );
     const content = readFileSync(routerPath, 'utf-8');
     expect(content).toContain('/renders/{render_id}/events');
+  });
+});
+
+// =============================================================================
+// 10. Seed Templates — hook + query key (Phase 6.5.C)
+// =============================================================================
+
+describe('useSeedTemplates hook', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn();
+    global.fetch = fetchSpy;
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => '1'),
+      setItem: vi.fn(),
+    });
+  });
+
+  function createWrapper() {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children);
+  }
+
+  it('calls POST /seed with program_id', async () => {
+    const mockSeedResult: SeedResult = {
+      templates_created: 6,
+      templates_skipped: 0,
+      versions_created: 6,
+      versions_skipped: 0,
+      demo_packs_count: 6,
+      templates: [],
+    };
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockSeedResult),
+    });
+
+    const { useSeedTemplates } = await import('../client/src/hooks/use-docx-factory');
+    const { result } = renderHook(() => useSeedTemplates('prog-seed'), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(undefined);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockSeedResult);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/docx-factory/seed?program_id=prog-seed',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+      })
+    );
+  });
+
+  it('reports error on seed failure', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: () => Promise.resolve('Service Unavailable'),
+    });
+
+    const { useSeedTemplates } = await import('../client/src/hooks/use-docx-factory');
+    const { result } = renderHook(() => useSeedTemplates('prog-fail'), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(undefined);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toContain('503');
+  });
+});
+
+// =============================================================================
+// 11. Demo Packs — hook + query key (Phase 6.5.C)
+// =============================================================================
+
+describe('useDemoPacks hook', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn();
+    global.fetch = fetchSpy;
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => '1'),
+      setItem: vi.fn(),
+    });
+  });
+
+  function createWrapper() {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children);
+  }
+
+  it('fetches demo packs for a doc_type', async () => {
+    const mockPacks: DemoPack[] = [
+      {
+        file: 'ectd_cover_letter_01.json',
+        label: 'eCTD Cover Letter — initial',
+        description: 'Standard initial submission',
+        inputs: { sponsor_name: 'Acme Pharma', submission_type: 'Original' },
+      },
+    ];
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockPacks),
+    });
+
+    const { useDemoPacks } = await import('../client/src/hooks/use-docx-factory');
+    const { result } = renderHook(() => useDemoPacks('ectd_cover_letter'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockPacks);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/docx-factory/demo-packs?doc_type=ectd_cover_letter',
+      expect.objectContaining({ credentials: 'include' })
+    );
+  });
+
+  it('does not fetch when docType is empty', async () => {
+    fetchSpy.mockResolvedValueOnce({ ok: true, status: 200, json: () => ({}) });
+
+    const { useDemoPacks } = await import('../client/src/hooks/use-docx-factory');
+    const { result } = renderHook(() => useDemoPacks(''), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// 12. Query key completeness — demoPacks (Phase 6.5.C)
+// =============================================================================
+
+describe('docxKeys — demoPacks', () => {
+  it('demoPacks key includes docType', () => {
+    const key = docxKeys.demoPacks('ectd_cover_letter');
+    expect(key).toEqual(['docx-factory', 'demo-packs', 'ectd_cover_letter']);
+  });
+
+  it('different doc types produce different keys', () => {
+    const k1 = docxKeys.demoPacks('ectd_cover_letter');
+    const k2 = docxKeys.demoPacks('cmc_drug_substance');
+    expect(k1).not.toEqual(k2);
+  });
+});
+
+// =============================================================================
+// 13. Type shape validation — SeedResult + DemoPack (Phase 6.5.C)
+// =============================================================================
+
+describe('Type shapes — Phase 6.5.C', () => {
+  it('SeedResult has required fields', () => {
+    const s: SeedResult = {
+      templates_created: 6,
+      templates_skipped: 0,
+      versions_created: 6,
+      versions_skipped: 0,
+      demo_packs_count: 6,
+      templates: [],
+    };
+    expect(s.templates_created).toBe(6);
+    expect(s.demo_packs_count).toBe(6);
+    expect(s.templates).toEqual([]);
+  });
+
+  it('DemoPack has required fields', () => {
+    const d: DemoPack = {
+      file: 'ectd_cover_letter_01.json',
+      label: 'eCTD Cover Letter',
+      description: 'Standard initial submission',
+      inputs: { sponsor_name: 'Acme' },
+    };
+    expect(d.file).toBe('ectd_cover_letter_01.json');
+    expect(d.inputs).toHaveProperty('sponsor_name');
+  });
+});
+
+// =============================================================================
+// 14. UI file presence — seed templates hooks export (Phase 6.5.C)
+// =============================================================================
+
+describe('Seed UI file checks', () => {
+  it('hooks file exports useSeedTemplates', async () => {
+    const { readFileSync } = await import('fs');
+    const { resolve } = await import('path');
+    const hookPath = resolve(__dirname, '../client/src/hooks/use-docx-factory.ts');
+    const content = readFileSync(hookPath, 'utf-8');
+    expect(content).toContain('export function useSeedTemplates');
+    expect(content).toContain('export function useDemoPacks');
+  });
+
+  it('page file imports useSeedTemplates and useDemoPacks', async () => {
+    const { readFileSync } = await import('fs');
+    const { resolve } = await import('path');
+    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
+    const content = readFileSync(pagePath, 'utf-8');
+    expect(content).toContain('useSeedTemplates');
+    expect(content).toContain('useDemoPacks');
+  });
+
+  it('page file has Install Starter Templates button', async () => {
+    const { readFileSync } = await import('fs');
+    const { resolve } = await import('path');
+    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
+    const content = readFileSync(pagePath, 'utf-8');
+    expect(content).toContain('Install Starter Templates');
+    expect(content).toContain('seed-templates-btn');
+  });
+
+  it('page file has Use Demo Inputs section', async () => {
+    const { readFileSync } = await import('fs');
+    const { resolve } = await import('path');
+    const pagePath = resolve(__dirname, '../client/src/pages/DocxFactory.tsx');
+    const content = readFileSync(pagePath, 'utf-8');
+    expect(content).toContain('Use Demo Inputs');
+    expect(content).toContain('demo-packs-section');
+    expect(content).toContain('demo-doc-type-select');
   });
 });

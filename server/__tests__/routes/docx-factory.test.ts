@@ -353,4 +353,49 @@ describe('DOCX Factory BFF Proxy', () => {
       expect(res.status).toBe(502);
     });
   });
+
+  // ── 6. Seed + Demo-Packs routes (Phase 6.5) ────────────────────────────
+
+  describe('Seed + Demo-Packs routes', () => {
+    it('POST /seed returns 502 when shadow unreachable (route exists)', async () => {
+      const res = await request(app)
+        .post('/api/docx-factory/seed')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('Shadow service unreachable');
+    });
+
+    it('POST /seed returns 503 when token not configured', async () => {
+      process.env.REVIEW_ADMIN_TOKEN = '';
+      const res = await request(app)
+        .post('/api/docx-factory/seed')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(503);
+    });
+
+    it('POST /seed returns 422 without program_id', async () => {
+      const res = await request(app).post('/api/docx-factory/seed');
+      expect(res.status).toBe(422);
+    });
+
+    it('POST /seed returns 403 when org mismatch', async () => {
+      dbMockResult.value = [];
+      const res = await request(app)
+        .post('/api/docx-factory/seed')
+        .query({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(403);
+    });
+
+    it('GET /demo-packs returns 502 when shadow unreachable (route exists)', async () => {
+      const res = await request(app).get('/api/docx-factory/demo-packs');
+      expect(res.status).toBe(502);
+    });
+
+    it('GET /demo-packs?doc_type= forwards query param', async () => {
+      const res = await request(app)
+        .get('/api/docx-factory/demo-packs')
+        .query({ doc_type: 'cmc_drug_substance' });
+      expect(res.status).toBe(502);
+    });
+  });
 });
