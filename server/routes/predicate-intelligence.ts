@@ -311,4 +311,85 @@ router.post('/generate-510k-preview', requireConfigured, requireProgramAccess, a
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.B — Predicate Suggestion (Strategy Engine)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/device/predicate-suggest',
+  requireConfigured,
+  requireProgramAccess,
+  async (req, res) => {
+    try {
+      const result = await proxyToShadow('/predicate/device/predicate-suggest', {
+        method: 'POST',
+        body: req.body,
+      });
+      sendProxyResponse(res, result);
+    } catch (err: any) {
+      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C — Generate SE Matrix (auto-populated)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/generate-se-matrix', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/generate-se-matrix', {
+      method: 'POST',
+      body: req.body,
+    });
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.A — Predicate Universe Health Check
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/health', requireConfigured, async (_req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/health');
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.B — Deterministic Reviewer Questions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/reviewer-questions', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/reviewer-questions', {
+      method: 'POST',
+      body: req.body,
+    });
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.A — Toxic Predicate Detail (with signal citations)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/toxic-detail/:kNumber', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow(`/predicate/toxic-detail/${req.params.kNumber}`, {
+      query: { program_id: String(req.query.program_id) },
+    });
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
 export default router;

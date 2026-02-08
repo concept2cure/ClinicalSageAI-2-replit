@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 from . import db
 from . import sql_predicate as sql
+from . import sql_fda_universe as fda_sql
 from .predicate_analyzer import PredicateAnalyzer
 from .shadow_510k_reviewer import Shadow510kReviewer
 from .models_predicate import (
@@ -451,3 +452,345 @@ async def generate_510k_preview(req: Generate510kPreviewRequest):
         }
     finally:
         await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.B — Predicate Suggestion (Strategy Engine)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class PredicateSuggestRequestBody(BaseModel):
+    program_id: UUID
+    product_code: str
+    intended_use: str
+    technology: Optional[str] = None
+    materials: Optional[str] = None
+    energy_source: Optional[str] = None
+    tissue_contact: Optional[str] = None
+    sterilization: Optional[str] = None
+    max_results: int = Field(default=5, ge=1, le=20)
+
+
+@router.post("/device/predicate-suggest")
+async def suggest_predicates(req: PredicateSuggestRequestBody):
+    """Return ranked predicates with strategy recommendations.
+
+    The "killer demo": Upload device description → returns 3-5 predicates →
+    one flagged "TOXIC: Class I recall lineage" → pick the safe one.
+    """
+    from .scoring.strategy_engine import StrategyEngine
+    from .models_fda_universe import PredicateSuggestRequest
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        engine = StrategyEngine(db._pool)
+        suggest_req = PredicateSuggestRequest(
+            program_id=req.program_id,
+            product_code=req.product_code,
+            intended_use=req.intended_use,
+            technology=req.technology,
+            materials=req.materials,
+            energy_source=req.energy_source,
+            tissue_contact=req.tissue_contact,
+            sterilization=req.sterilization,
+            max_results=req.max_results,
+        )
+        response = await engine.suggest_predicates(suggest_req)
+        return response.model_dump()
+    finally:
+        await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C — Generate SE Matrix (Auto-populated from predicate + subject)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class GenerateSEMatrixRequest(BaseModel):
+    program_id: UUID
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/generate-se-matrix")
+async def generate_se_matrix(req: GenerateSEMatrixRequest):
+    """Auto-generate SE comparison matrix from subject device + predicate.
+
+    Returns structured payload with evidence-linked cells, diff analysis,
+    and defense readiness score — ready for DOCX rendering.
+    """
+    from .generators.se_matrix_generator import SEMatrixGenerator
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        # Fetch predicate data from FDA clearances table
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+
+        if predicate_row:
+            predicate_data = dict(predicate_row)
+        else:
+            # Fallback: check candidates table
+            candidate = await conn.fetchrow(
+                sql.SELECT_CANDIDATE_BY_K_NUMBER,
+                req.selected_predicate_k_number,
+                req.program_id,
+            )
+            predicate_data = dict(candidate) if candidate else {
+                "k_number": req.selected_predicate_k_number,
+                "device_name": "Unknown Predicate",
+            }
+
+        generator = SEMatrixGenerator()
+        payload = generator.generate_payload(
+            subject_device=req.subject_device,
+            selected_predicate=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        return {
+            "se_matrix_payload": payload,
+            "defense_readiness_score": payload["defense_readiness_score"],
+            "row_count": len(payload["comparison_rows"]),
+            "discussion_required_count": sum(
+                1 for r in payload["comparison_rows"]
+                if r["equivalence_status"] == "DISCUSSION_REQUIRED"
+            ),
+            "generation_timestamp": payload["generation_timestamp"],
+        }
+    finally:
+        await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.A — Health / Stats Endpoint
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/health")
+async def predicate_universe_health():
+    """Return ingestion stats: total clearances, embeddings %, signals %.
+
+    Acceptance criteria: one query, <200ms, proves data layer is alive.
+    """
+    conn = await db.acquire_connection()
+    try:
+        row = await conn.fetchrow(fda_sql.HEALTH_STATS)
+        if row:
+            return {
+                "status": "ok",
+                "total_clearances": row["total_clearances"],
+                "total_embeddings": row["total_embeddings"],
+                "total_signals": row["total_signals"],
+                "total_lineage_edges": row["total_lineage_edges"],
+                "total_rollups": row["total_rollups"],
+                "pct_with_embeddings": float(row["pct_with_embeddings"]),
+                "pct_with_signals": float(row["pct_with_signals"]),
+            }
+        return {"status": "empty", "total_clearances": 0}
+    except Exception as exc:
+        logger.warning("Health check failed: %s", exc)
+        return {"status": "degraded", "error": str(exc)}
+    finally:
+        await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.B — Deterministic Reviewer Questions (the Shadow Reviewer magic)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# These are generated deterministically from characteristic diffs — no LLM vibes.
+REVIEWER_QUESTION_RULES: list[dict[str, Any]] = [
+    {
+        "trigger_field": "materials",
+        "condition": "differs",
+        "severity": "high",
+        "question": "Biocompatibility assessment per ISO 10993-1 required. "
+                    "Provide biological evaluation data for the changed materials.",
+        "citation": "ISO 10993-1:2018; FDA Guidance: Use of ISO 10993-1",
+        "required_evidence": ["ISO10993", "MaterialCharacterization", "ChemicalAnalysis"],
+    },
+    {
+        "trigger_field": "energy_source",
+        "condition": "differs",
+        "severity": "high",
+        "question": "Bench testing, electrical safety (IEC 60601-1), and EMC "
+                    "testing required for the changed energy source.",
+        "citation": "IEC 60601-1:2005+AMD2:2020; IEC 60601-1-2:2014+AMD1:2020",
+        "required_evidence": ["BenchTestReport", "IEC60601Report", "EMCReport"],
+    },
+    {
+        "trigger_field": "tissue_contact",
+        "condition": "differs",
+        "severity": "high",
+        "question": "Risk management justification required for different tissue "
+                    "contact characteristics. Updated risk analysis per ISO 14971.",
+        "citation": "ISO 14971:2019; FDA Guidance: Factors to Consider Regarding Benefit-Risk",
+        "required_evidence": ["RiskAnalysis", "ISO14971", "BiocompatibilityReport"],
+    },
+    {
+        "trigger_field": "sterilization",
+        "condition": "differs",
+        "severity": "medium",
+        "question": "Sterility validation, SAL demonstration, and packaging "
+                    "integrity testing required for the changed sterilization method.",
+        "citation": "ISO 11135, ISO 11137, ISO 17665; ISO 11607",
+        "required_evidence": ["SterilizationValidation", "PackagingValidation"],
+    },
+    {
+        "trigger_field": "software",
+        "condition": "present",
+        "severity": "high",
+        "question": "IEC 62304 software lifecycle documentation, cybersecurity "
+                    "assessment, and PCCP required if AI/ML-enabled (SaMD).",
+        "citation": "IEC 62304:2015; FDA Guidance: Cybersecurity in Medical Devices; "
+                    "FDA PCCP Guidance (AI/ML)",
+        "required_evidence": ["IEC62304", "CybersecurityDoc", "PCCP"],
+    },
+    {
+        "trigger_field": "duration",
+        "condition": "differs",
+        "severity": "medium",
+        "question": "Extended duration of contact may require additional "
+                    "biocompatibility and chronic toxicity testing.",
+        "citation": "ISO 10993-1:2018 Table A.1; FDA Guidance: Use of ISO 10993-1",
+        "required_evidence": ["ChronicToxicity", "ISO10993"],
+    },
+    {
+        "trigger_field": "intended_use",
+        "condition": "differs",
+        "severity": "critical",
+        "question": "Intended use/indications differ significantly. FDA may "
+                    "require De Novo classification or PMA pathway instead of 510(k).",
+        "citation": "21 CFR 807.87(f); FDA Guidance: The 510(k) Program",
+        "required_evidence": ["IntendedUseComparison", "PredicateJustification"],
+    },
+    {
+        "trigger_field": "technology",
+        "condition": "differs",
+        "severity": "medium",
+        "question": "Technological differences require detailed comparison "
+                    "showing equivalence in safety and effectiveness.",
+        "citation": "FDA Guidance: The 510(k) Program; 21 CFR 807.87",
+        "required_evidence": ["TechComparison", "BenchTestReport"],
+    },
+]
+
+
+class ReviewerQuestionsRequest(BaseModel):
+    program_id: UUID
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    predicate_device: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/reviewer-questions")
+async def generate_reviewer_questions(req: ReviewerQuestionsRequest):
+    """Deterministic FDA reviewer question generation from device diffs.
+
+    No LLM. Pure regulatory logic.
+    Returns questions ranked by severity with citations and required evidence.
+    """
+    questions: list[dict[str, Any]] = []
+    subj = req.subject_device
+    pred = req.predicate_device
+
+    for rule in REVIEWER_QUESTION_RULES:
+        field = rule["trigger_field"]
+        subj_val = str(subj.get(field, "")).strip().lower()
+        pred_val = str(pred.get(field, "")).strip().lower()
+
+        triggered = False
+        if rule["condition"] == "differs":
+            # Trigger if values are different and at least one is non-empty
+            if subj_val and pred_val and subj_val != pred_val:
+                triggered = True
+            elif subj_val and not pred_val:
+                triggered = True
+            elif pred_val and not subj_val:
+                triggered = True
+        elif rule["condition"] == "present":
+            # Trigger if subject has this characteristic
+            if subj_val and subj_val not in ("n/a", "none", "no", "false", ""):
+                triggered = True
+
+        if triggered:
+            questions.append({
+                "field": field,
+                "severity": rule["severity"],
+                "question": rule["question"],
+                "citation": rule["citation"],
+                "required_evidence": rule["required_evidence"],
+                "subject_value": subj.get(field, "N/A"),
+                "predicate_value": pred.get(field, "N/A"),
+            })
+
+    # Sort: critical → high → medium → low
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    questions.sort(key=lambda q: severity_order.get(q["severity"], 3))
+
+    return {
+        "questions": questions,
+        "total_questions": len(questions),
+        "critical_count": sum(1 for q in questions if q["severity"] == "critical"),
+        "high_count": sum(1 for q in questions if q["severity"] == "high"),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.A — Toxic Predicate Detail (with signal citations)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/toxic-detail/{k_number}")
+async def get_toxic_detail(k_number: str, program_id: UUID = Query(...)):
+    """Return why a predicate is toxic — citing specific signals with dates.
+
+    Enterprise edge: red badge → click → see 'Class I Recall on 2024-03-15,
+    Recall #Z-1234-2024, reason: patient injury reports.'
+    """
+    conn = await db.acquire_connection()
+    try:
+        # Get signals
+        signals = await conn.fetch(fda_sql.SELECT_SIGNALS_BY_K_NUMBER, k_number)
+
+        # Get rollup
+        rollup = await conn.fetchrow(fda_sql.SELECT_RISK_ROLLUP, k_number)
+
+        # Get family safety
+        family = await conn.fetchrow(fda_sql.CHECK_FAMILY_SAFETY, k_number)
+
+        signal_list = []
+        for s in signals:
+            signal_list.append({
+                "signal_type": s["signal_type"],
+                "signal_date": str(s["signal_date"]) if s["signal_date"] else None,
+                "severity_score": float(s["severity_score"]),
+                "description": s["description"],
+                "recall_number": s.get("recall_number"),
+                "source_url": s.get("source_url"),
+            })
+
+        return {
+            "k_number": k_number,
+            "signals": signal_list,
+            "toxicity_score": float(rollup["toxicity_score"]) if rollup else 0.0,
+            "family_toxicity_score": float(rollup["family_toxicity_score"]) if rollup else 0.0,
+            "mdr_rate_bucket": rollup["mdr_rate_bucket"] if rollup else "NONE",
+            "family_recall_count": family["family_recall_count"] if family else 0,
+            "is_toxic": any(
+                s["severity_score"] > 0.6 for s in signals
+            ) if signals else False,
+            "toxic_because": [
+                f"{s['signal_type']} on {s['signal_date']}"
+                + (f" (Recall #{s['recall_number']})" if s.get("recall_number") else "")
+                + f": {(s['description'] or '')[:200]}"
+                for s in signals
+                if s["severity_score"] > 0.5
+            ],
+        }
+    finally:
+        await db.release_connection(conn)
+

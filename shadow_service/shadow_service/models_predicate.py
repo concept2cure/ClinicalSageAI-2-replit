@@ -54,11 +54,14 @@ class SECategory(str, Enum):
     INTENDED_USE = "intended_use"
     TECHNOLOGY = "technology"
     MATERIAL = "material"
+    MATERIALS = "materials"
     PERFORMANCE = "performance"
     DESIGN = "design"
     SOFTWARE = "software"
     ENERGY = "energy"
+    ENERGY_SOURCE = "energy_source"
     BIOCOMPATIBILITY = "biocompatibility"
+    STERILIZATION = "sterilization"
     GENERAL = "general"
 
 

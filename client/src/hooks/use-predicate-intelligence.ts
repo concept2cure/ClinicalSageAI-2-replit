@@ -17,6 +17,13 @@ import type {
   RadarPoint,
   Generate510kPreviewRequest,
   Generate510kPreviewResponse,
+  PredicateSuggestRequest,
+  PredicateSuggestResponse,
+  GenerateSEMatrixRequest,
+  GenerateSEMatrixResponse,
+  PredicateUniverseHealth,
+  ReviewerQuestionsResponse,
+  ToxicPredicateDetail,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -74,6 +81,15 @@ export const predicateKeys = {
   defensePreview: (programId: string, candidateId?: string) =>
     [...predicateKeys.all, 'defense', programId, candidateId || 'all'] as const,
   radar: (programId: string) => [...predicateKeys.all, 'radar', programId] as const,
+  predicateSuggest: (programId: string) =>
+    [...predicateKeys.all, 'predicate-suggest', programId] as const,
+  generatedSEMatrix: (programId: string) =>
+    [...predicateKeys.all, 'generated-se-matrix', programId] as const,
+  health: () => [...predicateKeys.all, 'health'] as const,
+  reviewerQuestions: (programId: string) =>
+    [...predicateKeys.all, 'reviewer-questions', programId] as const,
+  toxicDetail: (programId: string, kNumber: string) =>
+    [...predicateKeys.all, 'toxic-detail', programId, kNumber] as const,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -222,5 +238,89 @@ export function useGenerate510kPreview(programId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: predicateKeys.all });
     },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.B — Predicate Suggestion (Strategy Engine)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useSuggestPredicates(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: Omit<PredicateSuggestRequest, 'program_id'>) =>
+      predicateFetch<PredicateSuggestResponse>('/device/predicate-suggest', {
+        method: 'POST',
+        body: JSON.stringify({ program_id: programId, ...params }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: predicateKeys.predicateSuggest(programId) });
+      qc.invalidateQueries({ queryKey: predicateKeys.candidates(programId) });
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C — Generate SE Matrix (Auto-populated)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useGenerateSEMatrix(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: Omit<GenerateSEMatrixRequest, 'program_id'>) =>
+      predicateFetch<GenerateSEMatrixResponse>('/generate-se-matrix', {
+        method: 'POST',
+        body: JSON.stringify({ program_id: programId, ...params }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: predicateKeys.generatedSEMatrix(programId) });
+      qc.invalidateQueries({ queryKey: predicateKeys.seMatrix(programId) });
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.A — Predicate Universe Health
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function usePredicateHealth() {
+  return useQuery<PredicateUniverseHealth>({
+    queryKey: predicateKeys.health(),
+    queryFn: () => predicateFetch('/health'),
+    staleTime: 60_000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.B — Deterministic Reviewer Questions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useReviewerQuestions(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: {
+      subject_device: Record<string, string>;
+      predicate_device: Record<string, string>;
+    }) =>
+      predicateFetch<ReviewerQuestionsResponse>('/reviewer-questions', {
+        method: 'POST',
+        body: JSON.stringify({ program_id: programId, ...params }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: predicateKeys.reviewerQuestions(programId) });
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.A — Toxic Predicate Detail
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useToxicDetail(programId: string, kNumber: string) {
+  return useQuery<ToxicPredicateDetail>({
+    queryKey: predicateKeys.toxicDetail(programId, kNumber),
+    queryFn: () => predicateFetch(`/toxic-detail/${kNumber}?program_id=${programId}`),
+    enabled: !!programId && !!kNumber,
+    staleTime: 30_000,
   });
 }
