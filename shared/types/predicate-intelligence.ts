@@ -481,3 +481,56 @@ export interface DefenseManifest {
   reviewer_questions: ReviewerQuestion[];
   toxicity_warnings: ToxicSignalDetail[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C — DOCX Render Request/Response
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface RenderSEDocxRequest {
+  program_id: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  design_control_ids?: Record<string, string>;
+  include_reviewer_questions?: boolean;
+  include_toxicity_warnings?: boolean;
+}
+
+export interface DownloadDefensePacketRequest {
+  program_id: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  design_control_ids?: Record<string, string>;
+}
+
+export interface SEMatrixRenderPlan {
+  table_header: string[];
+  table_rows: Array<{
+    index: number;
+    characteristic: string;
+    category: string;
+    subject_text: string;
+    predicate_text: string;
+    diff_flag: string;
+    discussion: string;
+    evidence_status: string;
+    diff_severity: string;
+    severity_badge: string;
+  }>;
+  bookmarks: Array<{
+    name: string;
+    row: number;
+    column: 'subject' | 'predicate';
+    evidence_id: string;
+  }>;
+  color_map: Array<{
+    row: number;
+    subject_bg: string;
+    predicate_bg: string;
+    status_bg: string;
+    diff_flag_bg: string;
+  }>;
+  total_rows: number;
+  equivalent_count: number;
+  discussion_count: number;
+  not_equivalent_count: number;
+}

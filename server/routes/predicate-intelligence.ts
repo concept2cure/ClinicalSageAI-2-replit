@@ -392,4 +392,57 @@ router.get('/toxic-detail/:kNumber', requireConfigured, requireProgramAccess, as
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C — Render SE Matrix DOCX (binary stream)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/render-se-docx', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/render-se-docx', {
+      method: 'POST',
+      body: req.body,
+      responseType: 'stream',
+    });
+    // Forward the binary stream directly
+    if (result.headers) {
+      const cd = result.headers['content-disposition'];
+      if (cd) res.set('Content-Disposition', cd);
+    }
+    res.set(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D — Download Defense Packet (ZIP stream)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/download-defense-packet',
+  requireConfigured,
+  requireProgramAccess,
+  async (req, res) => {
+    try {
+      const result = await proxyToShadow('/predicate/download-defense-packet', {
+        method: 'POST',
+        body: req.body,
+        responseType: 'stream',
+      });
+      if (result.headers) {
+        const cd = result.headers['content-disposition'];
+        if (cd) res.set('Content-Disposition', cd);
+      }
+      res.set('Content-Type', 'application/zip');
+      sendProxyResponse(res, result);
+    } catch (err: any) {
+      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
 export default router;

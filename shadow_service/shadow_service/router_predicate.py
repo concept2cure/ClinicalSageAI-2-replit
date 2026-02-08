@@ -794,3 +794,206 @@ async def get_toxic_detail(k_number: str, program_id: UUID = Query(...)):
     finally:
         await db.release_connection(conn)
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C — Render SE Matrix DOCX (real python-docx output)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class RenderSEDocxRequest(BaseModel):
+    program_id: UUID
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+    include_reviewer_questions: bool = True
+    include_toxicity_warnings: bool = True
+
+
+@router.post("/render-se-docx")
+async def render_se_docx(req: RenderSEDocxRequest):
+    """Render SE Matrix as a downloadable DOCX file.
+
+    Produces a professional 510(k) Substantial Equivalence comparison document
+    with color-coded evidence cells, EV_ bookmarks, discussion sections,
+    reviewer questions appendix, and toxicity warnings appendix.
+
+    Returns: StreamingResponse with application/vnd.openxmlformats DOCX.
+    """
+    from fastapi.responses import StreamingResponse
+    from .generators.se_matrix_generator import SEMatrixGenerator
+    from .generators.docx_factory import SEMatrixDocxFactory
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        # Fetch predicate data
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+        predicate_data = dict(predicate_row) if predicate_row else {
+            "k_number": req.selected_predicate_k_number,
+            "device_name": "Unknown Predicate",
+        }
+
+        # Generate SE matrix payload
+        generator = SEMatrixGenerator()
+        se_payload = generator.generate_payload(
+            subject_device=req.subject_device,
+            selected_predicate=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        # Optional: generate reviewer questions
+        reviewer_questions = []
+        if req.include_reviewer_questions:
+            for rule in REVIEWER_QUESTION_RULES:
+                field = rule["trigger_field"]
+                subj_val = str(req.subject_device.get(field, "")).strip().lower()
+                pred_val = str(predicate_data.get(field, "")).strip().lower()
+                triggered = False
+                if rule["condition"] == "differs" and subj_val and pred_val and subj_val != pred_val:
+                    triggered = True
+                elif rule["condition"] == "differs" and (subj_val and not pred_val or pred_val and not subj_val):
+                    triggered = True
+                elif rule["condition"] == "present" and subj_val and subj_val not in ("n/a", "none", "no", "false", ""):
+                    triggered = True
+                if triggered:
+                    reviewer_questions.append(rule)
+
+        # Optional: get toxicity warnings
+        toxicity_warnings = []
+        if req.include_toxicity_warnings:
+            signals = await conn.fetch(fda_sql.SELECT_SIGNALS_BY_K_NUMBER, req.selected_predicate_k_number)
+            for s in signals:
+                if s["severity_score"] > 0.3:
+                    toxicity_warnings.append({
+                        "k_number": req.selected_predicate_k_number,
+                        "signal_type": s["signal_type"],
+                        "signal_date": str(s["signal_date"]) if s["signal_date"] else None,
+                        "severity_score": float(s["severity_score"]),
+                        "description": s["description"],
+                    })
+
+        # Render DOCX
+        factory = SEMatrixDocxFactory()
+        docx_buf = factory.render(
+            se_payload=se_payload,
+            reviewer_questions=reviewer_questions,
+            toxicity_warnings=toxicity_warnings,
+        )
+
+        k_num = req.selected_predicate_k_number
+        filename = f"SE_Matrix_{k_num}.docx"
+
+        return StreamingResponse(
+            docx_buf,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        logger.exception("DOCX render failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"DOCX render failed: {exc}")
+    finally:
+        await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.D — Download Defense Packet (ZIP: DOCX + manifest + questions)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class DownloadDefensePacketRequest(BaseModel):
+    program_id: UUID
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/download-defense-packet")
+async def download_defense_packet(req: DownloadDefensePacketRequest):
+    """Build and download the complete defense packet as a ZIP.
+
+    Contains:
+      - SE Matrix DOCX with evidence-linked cells
+      - defense_manifest.json (SHA-256 chain-of-custody)
+      - reviewer_questions.json (deterministic)
+      - toxicity_warnings.json (if any)
+      - README.txt
+
+    Returns: StreamingResponse with application/zip.
+    """
+    from fastapi.responses import StreamingResponse
+    from .generators.se_matrix_generator import SEMatrixGenerator
+    from .generators.defense_packet_builder import DefensePacketBuilder
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        # Fetch predicate data
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+        predicate_data = dict(predicate_row) if predicate_row else {
+            "k_number": req.selected_predicate_k_number,
+            "device_name": "Unknown Predicate",
+        }
+
+        # Generate SE matrix payload
+        generator = SEMatrixGenerator()
+        se_payload = generator.generate_payload(
+            subject_device=req.subject_device,
+            selected_predicate=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        # Generate reviewer questions
+        reviewer_questions = []
+        for rule in REVIEWER_QUESTION_RULES:
+            field = rule["trigger_field"]
+            subj_val = str(req.subject_device.get(field, "")).strip().lower()
+            pred_val = str(predicate_data.get(field, "")).strip().lower()
+            triggered = False
+            if rule["condition"] == "differs" and subj_val and pred_val and subj_val != pred_val:
+                triggered = True
+            elif rule["condition"] == "differs" and (subj_val and not pred_val or pred_val and not subj_val):
+                triggered = True
+            elif rule["condition"] == "present" and subj_val and subj_val not in ("n/a", "none", "no", "false", ""):
+                triggered = True
+            if triggered:
+                reviewer_questions.append(rule)
+
+        # Get toxicity warnings
+        toxicity_warnings = []
+        signals = await conn.fetch(fda_sql.SELECT_SIGNALS_BY_K_NUMBER, req.selected_predicate_k_number)
+        for s in signals:
+            if s["severity_score"] > 0.3:
+                toxicity_warnings.append({
+                    "k_number": req.selected_predicate_k_number,
+                    "signal_type": s["signal_type"],
+                    "signal_date": str(s["signal_date"]) if s["signal_date"] else None,
+                    "severity_score": float(s["severity_score"]),
+                    "description": s["description"],
+                })
+
+        # Build defense packet ZIP
+        builder = DefensePacketBuilder()
+        zip_buf = builder.build(
+            se_payload=se_payload,
+            reviewer_questions=reviewer_questions,
+            toxicity_warnings=toxicity_warnings,
+        )
+        zip_filename = builder.get_zip_filename(se_payload)
+
+        return StreamingResponse(
+            zip_buf,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{zip_filename}"'},
+        )
+    except Exception as exc:
+        logger.exception("Defense packet build failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Defense packet build failed: {exc}")
+    finally:
+        await db.release_connection(conn)
+

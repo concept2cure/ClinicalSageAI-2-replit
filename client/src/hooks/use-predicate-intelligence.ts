@@ -24,6 +24,8 @@ import type {
   PredicateUniverseHealth,
   ReviewerQuestionsResponse,
   ToxicPredicateDetail,
+  RenderSEDocxRequest,
+  DownloadDefensePacketRequest,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -322,5 +324,49 @@ export function useToxicDetail(programId: string, kNumber: string) {
     queryFn: () => predicateFetch(`/toxic-detail/${kNumber}?program_id=${programId}`),
     enabled: !!programId && !!kNumber,
     staleTime: 30_000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C — Render SE Matrix DOCX (binary download)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useRenderSEDocx() {
+  return useMutation({
+    mutationFn: async (params: RenderSEDocxRequest) => {
+      const res = await fetch(`${API_BASE}/render-se-docx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error(`DOCX render failed: ${res.statusText}`);
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition');
+      const filename = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'SE_Matrix.docx';
+      return { blob, filename };
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D — Download Defense Packet (ZIP)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useDownloadDefensePacket() {
+  return useMutation({
+    mutationFn: async (params: DownloadDefensePacketRequest) => {
+      const res = await fetch(`${API_BASE}/download-defense-packet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error(`Defense packet download failed: ${res.statusText}`);
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition');
+      const filename = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'defense_packet.zip';
+      return { blob, filename };
+    },
   });
 }

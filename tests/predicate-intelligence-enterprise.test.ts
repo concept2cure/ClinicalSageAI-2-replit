@@ -32,6 +32,9 @@ const DB_MIGRATIONS = path.join(ROOT, 'db', 'migrations');
 const ROLLUPS_MIGRATION = path.join(DB_MIGRATIONS, '20260208_phase6_6a_risk_rollups.sql');
 const DEFENSE_MANIFEST = path.join(SHADOW, 'generators', 'defense_manifest.py');
 const EVIDENCE_RENDERER = path.join(SHADOW, 'generators', 'evidence_cell_renderer.py');
+const DOCX_FACTORY = path.join(SHADOW, 'generators', 'docx_factory.py');
+const DEFENSE_PACKET_BUILDER = path.join(SHADOW, 'generators', 'defense_packet_builder.py');
+const GENERATORS_INIT = path.join(SHADOW, 'generators', '__init__.py');
 
 // Existing files with new content
 const SQL_FDA_UNIVERSE = path.join(SHADOW, 'sql_fda_universe.py');
@@ -483,5 +486,434 @@ describe('Phase 6.6.A — FDA Migration pg_trgm Fix', () => {
 
   it('enables vector extension', () => {
     expect(content).toContain('CREATE EXTENSION IF NOT EXISTS vector');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 12. DOCX Factory (real python-docx renderer)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C — SE Matrix DOCX Factory', () => {
+  it('docx_factory.py file exists', () => {
+    expect(exists(DOCX_FACTORY)).toBe(true);
+  });
+
+  it('defines SEMatrixDocxFactory class', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('class SEMatrixDocxFactory');
+  });
+
+  it('has render() method returning BytesIO', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('def render(');
+    expect(content).toContain('io.BytesIO');
+  });
+
+  it('imports python-docx Document', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('from docx import Document');
+  });
+
+  it('imports Pt, Inches, RGBColor from docx.shared', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('from docx.shared import');
+    expect(content).toContain('Pt');
+    expect(content).toContain('RGBColor');
+  });
+
+  it('renders cover page with device info', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_cover_page');
+    expect(content).toContain('510(k) Substantial Equivalence Comparison');
+  });
+
+  it('renders executive summary with readiness interpretation', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_executive_summary');
+    expect(content).toContain('Executive Summary');
+  });
+
+  it('renders main comparison matrix table', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_matrix_table');
+    expect(content).toContain('Substantial Equivalence Comparison Matrix');
+  });
+
+  it('renders per-characteristic discussion', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_discussions');
+    expect(content).toContain('Detailed Discussion by Characteristic');
+  });
+
+  it('renders reviewer questions appendix', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_reviewer_questions');
+    expect(content).toContain('Appendix A: Anticipated FDA Reviewer Questions');
+  });
+
+  it('renders toxicity warnings appendix', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_toxicity_warnings');
+    expect(content).toContain('Appendix B: Predicate Toxicity Warnings');
+  });
+
+  it('renders evidence traceability index', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_evidence_index');
+    expect(content).toContain('Evidence Traceability Index');
+  });
+
+  it('renders footer with manifest hash', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_render_footer');
+    expect(content).toContain('Manifest SHA-256');
+  });
+
+  it('applies color-coded cell shading (green/yellow/red)', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_set_cell_shading');
+    expect(content).toContain('C6EFCE'); // green
+    expect(content).toContain('FFEB9C'); // yellow
+    expect(content).toContain('FFC7CE'); // red
+  });
+
+  it('adds EV_ bookmarks for evidence extraction', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('_add_bookmark');
+    expect(content).toContain('EV_');
+  });
+
+  it('sets landscape orientation for wide table', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('WD_ORIENT.LANDSCAPE');
+  });
+
+  it('has color legend after matrix table', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('Legend:');
+    expect(content).toContain('Equivalent + Evidence');
+    expect(content).toContain('Discussion Required');
+  });
+
+  it('has readiness assessment interpretation logic', () => {
+    const content = read(DOCX_FACTORY);
+    expect(content).toContain('strong substantial equivalence');
+    expect(content).toContain('moderate substantial equivalence');
+    expect(content).toContain('Significant gaps');
+    expect(content).toContain('incomplete');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 13. Evidence Cell Renderer — Upgraded with python-docx rendering
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C — Evidence Cell Renderer Upgrade', () => {
+  const content = read(EVIDENCE_RENDERER);
+
+  it('has render_to_docx_table function', () => {
+    expect(content).toContain('def render_to_docx_table(');
+  });
+
+  it('has _render_value_cell helper', () => {
+    expect(content).toContain('def _render_value_cell(');
+  });
+
+  it('imports python-docx Document', () => {
+    expect(content).toContain('from docx import Document');
+  });
+
+  it('imports OxmlElement for bookmarks and shading', () => {
+    expect(content).toContain('from docx.oxml import OxmlElement');
+  });
+
+  it('has _apply_cell_shading function', () => {
+    expect(content).toContain('def _apply_cell_shading(');
+  });
+
+  it('has _apply_cell_borders function', () => {
+    expect(content).toContain('def _apply_cell_borders(');
+  });
+
+  it('has _insert_bookmark function', () => {
+    expect(content).toContain('def _insert_bookmark(');
+  });
+
+  it('has _status_column_color function', () => {
+    expect(content).toContain('def _status_column_color(');
+  });
+
+  it('has SEVERITY_BADGES mapping', () => {
+    expect(content).toContain('SEVERITY_BADGES');
+    expect(content).toContain('Critical');
+    expect(content).toContain('Medium');
+  });
+
+  it('still exports render_se_matrix_table (backward compatible)', () => {
+    expect(content).toContain('def render_se_matrix_table(');
+  });
+
+  it('still exports get_cell_highlight (backward compatible)', () => {
+    expect(content).toContain('def get_cell_highlight(');
+  });
+
+  it('render plan includes severity_badge field', () => {
+    expect(content).toContain('"severity_badge"');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 14. Defense Packet ZIP Builder
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.D — Defense Packet ZIP Builder', () => {
+  it('defense_packet_builder.py file exists', () => {
+    expect(exists(DEFENSE_PACKET_BUILDER)).toBe(true);
+  });
+
+  it('defines DefensePacketBuilder class', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('class DefensePacketBuilder');
+  });
+
+  it('has build() method returning BytesIO', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('def build(');
+    expect(content).toContain('io.BytesIO');
+  });
+
+  it('uses zipfile module for ZIP creation', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('import zipfile');
+    expect(content).toContain('zipfile.ZipFile');
+    expect(content).toContain('ZIP_DEFLATED');
+  });
+
+  it('includes SE Matrix DOCX in ZIP', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('SE_Matrix_');
+    expect(content).toContain('.docx');
+  });
+
+  it('includes defense_manifest.json in ZIP', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('defense_manifest.json');
+  });
+
+  it('includes reviewer_questions.json in ZIP', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('reviewer_questions.json');
+  });
+
+  it('includes toxicity_warnings.json in ZIP', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('toxicity_warnings.json');
+  });
+
+  it('includes README.txt in ZIP', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('README.txt');
+  });
+
+  it('has get_zip_filename method', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('def get_zip_filename(');
+  });
+
+  it('imports from docx_factory and defense_manifest', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('from .defense_manifest import');
+    expect(content).toContain('from .docx_factory import');
+  });
+
+  it('README contains chain-of-custody info', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('chain-of-custody');
+    expect(content).toContain('manifest_hash');
+  });
+
+  it('sanitizes filenames for safety', () => {
+    const content = read(DEFENSE_PACKET_BUILDER);
+    expect(content).toContain('_sanitize_filename');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 15. Router — New DOCX Download Endpoints
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C/D — Router DOCX Download Endpoints', () => {
+  const content = read(ROUTER_PY);
+
+  it('defines POST /render-se-docx endpoint', () => {
+    expect(content).toContain('/render-se-docx');
+    expect(content).toContain('RenderSEDocxRequest');
+  });
+
+  it('defines POST /download-defense-packet endpoint', () => {
+    expect(content).toContain('/download-defense-packet');
+    expect(content).toContain('DownloadDefensePacketRequest');
+  });
+
+  it('render-se-docx returns StreamingResponse with DOCX media type', () => {
+    expect(content).toContain('StreamingResponse');
+    expect(content).toContain(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+  });
+
+  it('download-defense-packet returns StreamingResponse with ZIP media type', () => {
+    expect(content).toContain('application/zip');
+  });
+
+  it('render-se-docx imports SEMatrixDocxFactory', () => {
+    expect(content).toContain('SEMatrixDocxFactory');
+  });
+
+  it('download-defense-packet imports DefensePacketBuilder', () => {
+    expect(content).toContain('DefensePacketBuilder');
+  });
+
+  it('render-se-docx has include_reviewer_questions option', () => {
+    expect(content).toContain('include_reviewer_questions');
+  });
+
+  it('render-se-docx has include_toxicity_warnings option', () => {
+    expect(content).toContain('include_toxicity_warnings');
+  });
+
+  it('download-defense-packet collects signals from DB', () => {
+    expect(content).toContain('SELECT_SIGNALS_BY_K_NUMBER');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 16. BFF — New DOCX Download Routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C/D — BFF DOCX Download Routes', () => {
+  const content = read(BFF_ROUTE);
+
+  it('has /render-se-docx route', () => {
+    expect(content).toContain('/render-se-docx');
+  });
+
+  it('has /download-defense-packet route', () => {
+    expect(content).toContain('/download-defense-packet');
+  });
+
+  it('render-se-docx sets DOCX content type', () => {
+    expect(content).toContain(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+  });
+
+  it('download-defense-packet sets ZIP content type', () => {
+    expect(content).toContain('application/zip');
+  });
+
+  it('both routes use POST method', () => {
+    // Should have router.post for both
+    expect(content).toContain('/render-se-docx');
+    expect(content).toContain('/download-defense-packet');
+    // Both are POST routes
+    expect(content).toContain('router.post');
+  });
+
+  it('both routes require authentication', () => {
+    expect(content).toContain('requireProgramAccess');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 17. Shared Types — New DOCX Interfaces
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C/D — Shared Types for DOCX', () => {
+  const content = read(SHARED_TYPES);
+
+  it('has RenderSEDocxRequest interface', () => {
+    expect(content).toContain('RenderSEDocxRequest');
+    expect(content).toContain('include_reviewer_questions');
+    expect(content).toContain('include_toxicity_warnings');
+  });
+
+  it('has DownloadDefensePacketRequest interface', () => {
+    expect(content).toContain('DownloadDefensePacketRequest');
+    expect(content).toContain('selected_predicate_k_number');
+  });
+
+  it('has SEMatrixRenderPlan interface', () => {
+    expect(content).toContain('SEMatrixRenderPlan');
+    expect(content).toContain('table_header');
+    expect(content).toContain('table_rows');
+    expect(content).toContain('bookmarks');
+    expect(content).toContain('color_map');
+    expect(content).toContain('severity_badge');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 18. React Hooks — DOCX Download Hooks
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C/D — React Hooks for DOCX Download', () => {
+  const content = read(HOOKS);
+
+  it('has useRenderSEDocx hook', () => {
+    expect(content).toContain('useRenderSEDocx');
+  });
+
+  it('has useDownloadDefensePacket hook', () => {
+    expect(content).toContain('useDownloadDefensePacket');
+  });
+
+  it('useRenderSEDocx uses fetch for binary download', () => {
+    expect(content).toContain('res.blob()');
+    expect(content).toContain('/render-se-docx');
+  });
+
+  it('useDownloadDefensePacket uses fetch for ZIP download', () => {
+    expect(content).toContain('/download-defense-packet');
+  });
+
+  it('both hooks extract filename from Content-Disposition', () => {
+    expect(content).toContain('Content-Disposition');
+  });
+
+  it('imports RenderSEDocxRequest type', () => {
+    expect(content).toContain('RenderSEDocxRequest');
+  });
+
+  it('imports DownloadDefensePacketRequest type', () => {
+    expect(content).toContain('DownloadDefensePacketRequest');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 19. Generators __init__.py Documentation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.C — Generators Package __init__', () => {
+  const content = read(GENERATORS_INIT);
+
+  it('documents docx_factory module', () => {
+    expect(content).toContain('docx_factory');
+  });
+
+  it('documents defense_packet_builder module', () => {
+    expect(content).toContain('defense_packet_builder');
+  });
+
+  it('documents evidence_cell_renderer module', () => {
+    expect(content).toContain('evidence_cell_renderer');
+  });
+
+  it('documents se_matrix_generator module', () => {
+    expect(content).toContain('se_matrix_generator');
+  });
+
+  it('documents defense_manifest module', () => {
+    expect(content).toContain('defense_manifest');
   });
 });
