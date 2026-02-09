@@ -17,7 +17,7 @@ concept2cure-v2
 - ❌ **DO NOT**: Suggest branching strategies unless explicitly asked
 
 ### Development Flow:
-1. Always verify you're on `concept2cure-v2`: `git branch`
+1. Always verify you're on `concept2cure-v2`: `git branch --show-current`
 2. If not, switch immediately: `git checkout concept2cure-v2`
 3. Pull latest: `git pull origin concept2cure-v2`
 4. Do your work
@@ -26,6 +26,26 @@ concept2cure-v2
 ### Exception Handling:
 - If asked to create a branch, **ASK THE USER FIRST** why they don't want to use `concept2cure-v2`
 - If a hotfix is needed, branch FROM `concept2cure-v2` and merge BACK to `concept2cure-v2`
+
+### 🤖 GitHub Copilot Agent Delegation
+**CRITICAL for Copilot Workspace/Agent Users:**
+
+When using GitHub Copilot's delegation features:
+1. **BEFORE starting**: Ensure you're on `concept2cure-v2` branch
+2. **DO NOT** allow Copilot to create `copilot/*` branches automatically
+3. **ALL delegated work** must happen on `concept2cure-v2`
+4. If Copilot creates a `copilot/*` branch by mistake:
+   - Immediately switch to `concept2cure-v2`: `git checkout concept2cure-v2`
+   - Cherry-pick any changes: `git cherry-pick <commit-hash>`
+   - Delete the copilot branch: `git branch -D copilot/<branch-name>`
+   - Push to origin: `git push origin --delete copilot/<branch-name>` (if pushed)
+5. When creating PRs via delegation, ensure base branch is `concept2cure-v2`, not a copilot/* branch
+
+**Why This Matters:**
+- The repository has strict branch governance for regulatory compliance
+- Multiple `copilot/*` branches create chaos and violate audit requirements
+- PRs from `copilot/*` branches may be rejected or not findable after delegation
+- All work must be traceable to `concept2cure-v2` for compliance
 
 ## 🚫 DO NOT REBUILD AUTHENTICATION OR PORTAL
 
