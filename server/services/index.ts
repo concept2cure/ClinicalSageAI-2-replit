@@ -132,6 +132,25 @@ export {
 } from './foresight-feedback-orchestrator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export { 
+  ArtifactSkeletonGenerator, 
+  artifactSkeletonGenerator 
+} from './documents/ArtifactSkeletonGenerator';
+
+export { 
+  ECTDScaffoldingService, 
+  ectdScaffoldingService 
+} from './ectd/ECTDScaffoldingService';
+
+export { 
+  ReleaseHashGenerator, 
+  releaseHashGenerator 
+} from './export/ReleaseHashGenerator';
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // GRDHE (Global Regulatory Data Harmonization Engine)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -177,6 +196,12 @@ export const SERVICE_REGISTRY = {
   'infra.storage': 's3-storage',
   'infra.export': 'export-service',
   'infra.notify': 'notify',
+
+  // Phase 6 - eCTD Co-Author + Document Drafting
+  'documents.skeleton': 'documents/ArtifactSkeletonGenerator',
+  'ectd.scaffolding': 'ectd/ECTDScaffoldingService',
+  'export.hash': 'export/ReleaseHashGenerator',
+  'collaboration.council': 'multi-agent-council',
 } as const;
 
 export type ServiceCapability = keyof typeof SERVICE_REGISTRY;
