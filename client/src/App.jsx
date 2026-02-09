@@ -182,6 +182,9 @@ const DocumentViewer = lazy(() => import('./pages/DocumentViewer'));
 // DOCX Factory — Phase 6.4.A
 const DocxFactory = lazy(() => import('./pages/DocxFactory'));
 
+// Predicate Intelligence — Phase 6.6
+const PredicateIntelligence = lazy(() => import('./pages/PredicateIntelligence'));
+
 // Regulatory-related pages (excluding Regulatory Submissions Hub)
 const RegulatoryRiskDashboard = lazy(() => import('./pages/RegulatoryRiskDashboard'));
 const EnhancedRegulatoryDashboard = lazy(() => import('./pages/EnhancedRegulatoryDashboard'));
@@ -1518,6 +1521,14 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <DocxFactory />
+                </Suspense>
+              )}
+            </Route>{' '}
+            {/* Predicate Intelligence — Phase 6.6 */}
+            <Route path="/predicate-intelligence">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <PredicateIntelligence />
                 </Suspense>
               )}
             </Route>{' '}

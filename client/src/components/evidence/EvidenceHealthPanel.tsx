@@ -238,7 +238,6 @@ export function EvidenceHealthPanel({
 
   // ─── Data Available ─────────────────────────────────────────────────────
   const scan = data.latest_scan;
-  const totalClaims = Object.values(data.claims).reduce((s, n) => s + n, 0);
   const activeClaims = data.claims['active'] ?? 0;
   const contradictions = scan?.contradictions_found ?? 0;
   const hasScans = (data.scans['completed'] ?? 0) > 0;

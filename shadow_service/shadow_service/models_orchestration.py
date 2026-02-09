@@ -54,7 +54,7 @@ class StartWorkflowRequest(BaseModel):
     """POST /orchestration/runs/start"""
     program_id: UUID
     template_code: str = Field(..., description="Workflow template code (latest active version)")
-    idempotency_key: Optional[str] = Field(None, description="Deduplicate duplicate starts")
+    idempotency_key: Optional[str] = Field(default=None, description="Deduplicate duplicate starts")
     context: dict[str, Any] = Field(default_factory=dict, description="Initial context payload")
     priority: int = Field(default=0, description="Higher = more urgent")
 
