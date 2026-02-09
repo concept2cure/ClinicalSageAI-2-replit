@@ -13,6 +13,11 @@
   "github.copilot.chat.maxDuration": 600000,
   "github.copilot.chat.welcomeMessage": "never",
   "github.copilot.chat.agent.enabled": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "ALWAYS work on the concept2cure-v2 branch. DO NOT create copilot/* branches. Before any work, verify you are on concept2cure-v2 with 'git branch --show-current'."
+    }
+  ],
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "javascript.suggest.autoImports": true,
@@ -54,6 +59,9 @@
   "git.enableSmartCommit": true,
   "git.autofetch": true,
   "git.confirmSync": false,
+  "git.defaultBranchName": "concept2cure-v2",
+  "git.branchProtection": ["main", "concept2cure-v2"],
+  "git.branchValidationRegex": "^(concept2cure-v2|main)$",
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.env.linux": {
