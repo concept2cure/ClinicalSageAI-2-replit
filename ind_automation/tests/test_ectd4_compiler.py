@@ -121,11 +121,11 @@ from ind_automation.signatures.pki_signer import Part11Signature
 
 class TestDigitalSignatures:
     """21 CFR Part 11 compliance tests."""
-    
+
     def test_document_signature_creates_xades(self, tmp_path):
         """Signed documents must contain XAdES signature XML."""
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
-        
+
         # Use existing sample data pattern from earlier tests
         class MockCanvas:
             def __init__(self):
@@ -139,12 +139,12 @@ class TestDigitalSignatures:
                     {"text": "Cmax was 125.5 ng/mL", "sdt_tag": "pkCmaxValue"}
                 ]
                 self.events = []
-        
+
         canvas_doc = MockCanvas()
         compiler = ECTD4Compiler(output_dir=str(tmp_path))
         doc = compiler.compile(canvas_doc)
         docx = compiler.generate_docx(doc, canvas_doc)
-        
+
         signer = Part11Signature()  # Test keys
         signed = signer.sign_document(docx, {
             "name": "Dr. Jane Smith",
@@ -152,31 +152,31 @@ class TestDigitalSignatures:
             "user_id": "mon_001",
             "meaning": "Approved for IND submission"
         })
-        
+
         with zipfile.ZipFile(signed) as z:
             assert '_signatures/signatures.xml' in z.namelist()
             sig_xml = z.read('_signatures/signatures.xml')
             assert b'XAdES' in sig_xml or b'XAdESSignatures' in sig_xml
             assert b'DigestValue' in sig_xml
             assert b'SignatureValue' in sig_xml
-    
+
     def test_signature_tamper_detection(self, tmp_path):
         """Changing document after signing must invalidate signature."""
         signer = Part11Signature()
-        
+
         # Create minimal docx for testing
         from docx import Document
         docx_path = tmp_path / "test.docx"
         doc = Document()
         doc.add_paragraph("Test content")
         doc.save(docx_path)
-        
+
         signed = signer.sign_document(docx_path, {"name": "Test", "role": "QA"})
-        
+
         # Verify initially valid
         initial_check = signer.verify_signature(signed)
         assert initial_check["document_hash_match"] is True
-        
+
         # Tamper with document
         tampered_path = tmp_path / "tampered.docx"
         with zipfile.ZipFile(signed, 'r') as zin:
@@ -186,7 +186,7 @@ class TestDigitalSignatures:
                     if item.endswith('.xml') and 'document' in item:
                         content = content.replace(b'Test content', b'TAMPERED')
                     zout.writestr(item, content)
-        
+
         tamper_check = signer.verify_signature(tampered_path)
         assert tamper_check["document_hash_match"] is False
         assert tamper_check["valid"] is False
@@ -453,5 +453,6 @@ class TestHSMSignatures:
             details = sig_events[0]['entity'][0]['detail']
             assert any(d.get('type') == 'certificate-fingerprint' for d in details)
             # HSM key id should be discoverable somewhere in the audit event payload
-            assert any('hsm' in json.dumps(d).lower() or 'kms' in json.dumps(d).lower() for d in details)
+            details_json = json.dumps(details).lower()
+            assert 'hsm' in details_json or 'kms' in details_json
 

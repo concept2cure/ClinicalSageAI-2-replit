@@ -54,7 +54,7 @@ export async function initializeAssistant() {
 /**
  * Create a conversation with the Concept2Cure assistant
  */
-export async function createAssistantThread() {
+export async function createAssistantThread(): Promise<string> {
   try {
     const thread = await createThread();
     return thread.id;
@@ -136,17 +136,17 @@ export async function generateProtocolFromEvidence(
 
   // Enhanced system prompt for more evidence-based, regulatory-compliant protocol design
   const systemPrompt = `
-    You are Concept2Cure, an expert AI specialized in clinical trial protocol design with deep knowledge of regulatory requirements, 
-    scientific literature, and evidence-based medicine. Generate a detailed clinical trial protocol for the given indication and phase 
+    You are Concept2Cure, an expert AI specialized in clinical trial protocol design with deep knowledge of regulatory requirements,
+    scientific literature, and evidence-based medicine. Generate a detailed clinical trial protocol for the given indication and phase
     that would be suitable for submission to regulatory agencies.
-    
+
     Guidelines:
     - Use the most current evidence-based approaches for the specific indication
     - Incorporate appropriate sample size calculations based on statistical power considerations
     - Include detailed eligibility criteria that account for specific disease characteristics
     - Provide comprehensive safety monitoring plans with appropriate stopping rules
     - Suggest optimal endpoints that are clinically meaningful and regulatory-acceptable
-    
+
     Your response should be a JSON object with these fields:
     1. recommendation - A comprehensive protocol outline with these sections:
        - Title and Overview
@@ -157,7 +157,7 @@ export async function generateProtocolFromEvidence(
        - Safety Assessments
        - Statistical Considerations
     2. citations - An array of real clinical study reports (CSRs) that informed this protocol
-    
+
     Base your protocol on evidence from similar clinical trials. Be specific, practical, and focused on regulatory success.
   `;
 
@@ -165,7 +165,7 @@ export async function generateProtocolFromEvidence(
   const userPrompt = `
     Please develop a comprehensive, evidence-based clinical trial protocol for a ${phase} trial investigating treatments for ${indication}.
     ${primaryEndpoint ? `The primary endpoint should be: ${primaryEndpoint}` : ''}
-    
+
     Include detailed specifics on:
     1. Study design (randomization strategy, blinding approach, control group details)
     2. Precise eligibility criteria with clear inclusion/exclusion parameters
@@ -174,7 +174,7 @@ export async function generateProtocolFromEvidence(
     5. Visit schedule with exact timing and procedures per visit
     6. Statistical analysis plan including sample size calculation and handling of missing data
     7. Safety monitoring approach with DSMB criteria
-    
+
     Use the most recent evidence and guidelines available for ${indication}.
   `;
 
@@ -191,7 +191,7 @@ export async function generateProtocolFromEvidence(
         thread_id,
         `Please generate a clinical trial protocol for ${indication} (${phase})
         ${primaryEndpoint ? `with primary endpoint: ${primaryEndpoint}` : ''}
-        
+
         Include all key sections:
         - Study design details
         - Patient eligibility
@@ -199,7 +199,7 @@ export async function generateProtocolFromEvidence(
         - Treatment plan
         - Safety monitoring
         - Statistical approach
-        
+
         Format the response with clear sections and cite evidence sources.`
       );
 
@@ -228,10 +228,10 @@ export async function generateProtocolFromEvidence(
       await getAssistantResponse(
         thread_id,
         `This thread is for a clinical trial protocol on ${indication} (${phase}).
-        The generated protocol is: 
-        
+        The generated protocol is:
+
         ${recommendation}
-        
+
         Please maintain this context for future questions about this protocol.`
       );
     }
@@ -251,7 +251,7 @@ export async function generateProtocolFromEvidence(
       citations = citationSection[1]
         .split(/\n/)
         .filter(line => line.trim().length > 0)
-        .map(line => line.replace(/^[•\-*\d\.]\s*/, '').trim());
+        .map(line => line.replace(/^[•\-*\d.]\s*/, '').trim());
 
       recommendation = textResponse
         .replace(/(?:Citations|References|Evidence Base):[\s\S]*/i, '')
@@ -268,10 +268,10 @@ export async function generateProtocolFromEvidence(
         await getAssistantResponse(
           thread_id,
           `This thread is for a clinical trial protocol on ${indication} (${phase}).
-          The generated protocol is: 
-          
+          The generated protocol is:
+
           ${recommendation}
-          
+
           Please maintain this context for future questions about this protocol.`
         );
       } catch (threadError) {
@@ -286,22 +286,22 @@ export async function generateProtocolFromEvidence(
   const ind25SystemPrompt = `
     You are Concept2Cure, an expert AI specializing in IND (Investigational New Drug) application preparation.
     Generate comprehensive content for IND Module 2.5 (Clinical Overview) based on the provided protocol information.
-    
+
     Your response should follow FDA guidance for Module 2.5 with these key sections:
     - Overview of Clinical Pharmacology
     - Overview of Clinical Efficacy
     - Overview of Clinical Safety
     - Benefit-Risk Conclusions
-    
+
     Use precise regulatory language and focus on supporting the rationale for the proposed investigation.
   `;
 
   const ind25UserPrompt = `
-    Please generate a detailed IND Module 2.5 (Clinical Overview) for a drug investigation in ${indication} 
+    Please generate a detailed IND Module 2.5 (Clinical Overview) for a drug investigation in ${indication}
     based on this protocol:
-    
+
     ${recommendation}
-    
+
     Structure the response according to ICH M4E guidelines with appropriate headings and subheadings.
     Focus on the scientific rationale, risk-benefit assessment, and dose selection justification.
     Format as a submission-ready document that will satisfy regulatory reviewers.
@@ -312,28 +312,28 @@ export async function generateProtocolFromEvidence(
     You are Concept2Cure, an expert AI regulatory consultant specialized in clinical trial risk assessment.
     Based on the provided protocol information, identify potential regulatory concerns or reviewer questions
     that might arise during FDA/IRB review.
-    
+
     Your response should follow this structure:
     1. Executive Summary of Risks
     2. Identified Risks (categorized as High/Medium/Low)
     3. Specific Mitigation Strategies for each risk
     4. Recommended Protocol Modifications
-    
+
     Focus on specific aspects of the protocol that might raise concerns with clear rationale and solutions.
   `;
 
   const riskUserPrompt = `
     Conduct a thorough regulatory risk assessment for this ${phase} protocol in ${indication}:
-    
+
     ${recommendation}
-    
+
     Identify specific risks related to:
     - Patient safety concerns
     - Endpoint selection and justification
     - Statistical approach and sample size
     - Inclusion/exclusion criteria appropriateness
     - Procedural or ethical considerations
-    
+
     For each risk, provide a practical mitigation strategy that could be implemented.
   `;
 
@@ -382,7 +382,7 @@ function processAssistantResponse(response: string): { content: string; citation
     const citations = citationsMatch[1]
       .split(/\n/)
       .filter(line => line.trim().length > 0)
-      .map(line => line.replace(/^[•\-*\d\.]\s*/, '').trim());
+      .map(line => line.replace(/^[•\-*\d.]\s*/, '').trim());
 
     // Extract the main content without the citations section
     const content = response
@@ -422,20 +422,20 @@ export async function justifyEndpointChoice(
   const systemPrompt = `
     You are Concept2Cure, an expert AI assisting with clinical trial endpoint selection.
     Provide a detailed justification for the chosen endpoint for the given indication.
-    
+
     Your response should be a JSON object with these fields:
     1. justification - A detailed explanation of why this endpoint is appropriate
     2. evidence - An array of evidence items that support this endpoint choice
        Each evidence item should contain: source, description, and relevance
-    
-    Base your justification on regulatory precedent, clinical relevance, statistical 
+
+    Base your justification on regulatory precedent, clinical relevance, statistical
     considerations, and historical usage.
   `;
 
   const userPrompt = `
     Justify the choice of "${endpoint}" as an endpoint for clinical trials in ${indication}
     ${phase ? `for ${phase} studies` : ''}.
-    
+
     Explain the regulatory precedent, clinical relevance, and historical usage of this endpoint.
     Provide specific examples of trials that successfully used this endpoint.
   `;
@@ -479,11 +479,11 @@ export async function buildINDModuleDraft(
   const systemPrompt = `
     You are Concept2Cure, an expert AI assisting with IND (Investigational New Drug) application preparation.
     Generate content for the specified section of an IND application.
-    
+
     Your response should be a JSON object with these fields:
     1. content - The detailed content for the specified IND section
     2. references - An array of reference items that support this content
-    
+
     Structure the content according to FDA guidance for IND applications.
   `;
 
@@ -491,7 +491,7 @@ export async function buildINDModuleDraft(
     Generate content for the "${section}" section of an IND application for a drug to treat ${indication}
     ${drugMechanism ? `with the following mechanism of action: ${drugMechanism}` : ''}.
     ${relevantTrials && relevantTrials.length ? `These trials may be relevant: ${relevantTrials.join(', ')}` : ''}
-    
+
     Make the content specific, detailed, and aligned with FDA expectations.
     Include appropriate regulatory references and scientific citations.
   `;
@@ -533,11 +533,11 @@ export async function generateWeeklyIntelligenceBrief(
   const systemPrompt = `
     You are Concept2Cure, an expert AI providing intelligence on clinical trial developments.
     Generate a weekly intelligence brief summarizing recent developments in clinical trials.
-    
+
     Your response should be a JSON object with these fields:
     1. brief - A comprehensive intelligence summary with executive overview and detailed updates
     2. highlights - An array of key highlights, each containing: area, finding, and implication
-    
+
     Focus on emerging trends, regulatory insights, and competitive analysis.
   `;
 
@@ -548,7 +548,7 @@ export async function generateWeeklyIntelligenceBrief(
   const userPrompt = `
     Generate a weekly intelligence brief ${areasText}.
     Include up to ${maxTrials} significant trial updates.
-    
+
     The brief should summarize key trial updates, emerging trends, regulatory insights,
     and competitive analysis. Conclude with strategic recommendations.
   `;
@@ -600,7 +600,7 @@ export async function compareProtocols(
     You are Concept2Cure, an expert AI assisting with clinical trial protocol analysis.
     Compare two clinical trial protocols and provide detailed analysis of their differences,
     strengths, weaknesses, and recommendations for improvement.
-    
+
     Your response should be a JSON object with these fields:
     1. comparison - A comprehensive comparison highlighting key differences
     2. strengths - An object with study IDs as keys and arrays of strengths as values
@@ -610,13 +610,13 @@ export async function compareProtocols(
 
   const userPrompt = `
     Compare these two clinical trial protocols:
-    
+
     Protocol 1 (${studyIds[0]}):
     ${studySummaries[0]}
-    
+
     Protocol 2 (${studyIds[1]}):
     ${studySummaries[1]}
-    
+
     Focus on study design, endpoints, inclusion/exclusion criteria, statistical approaches,
     and other critical elements. Provide specific, actionable recommendations for improvement.
   `;
@@ -663,9 +663,9 @@ export async function answerProtocolQuestion(
 ): Promise<string> {
   const systemPrompt = `
     You are Concept2Cure, an expert AI assisting with clinical trial protocol design and regulatory questions.
-    Provide detailed, evidence-based answers to questions about clinical trial design, methodology, 
+    Provide detailed, evidence-based answers to questions about clinical trial design, methodology,
     regulatory considerations, and best practices.
-    
+
     Base your answers on regulatory guidelines, scientific literature, and established best practices.
     Be specific, practical, and actionable in your responses.
   `;
@@ -677,9 +677,9 @@ export async function answerProtocolQuestion(
   const userPrompt = `
     Question about clinical trial protocols:
     ${question}
-    
+
     ${studiesContext}
-    
+
     Please provide a comprehensive answer with specific recommendations where applicable.
   `;
 
@@ -703,22 +703,25 @@ export async function generateIndSection(
   threadId?: string
 ): Promise<{ section: string; content: string }> {
   // Create new thread if one isn't provided
+  let activeThreadId: string;
   if (!threadId) {
-    threadId = await createAssistantThread();
+    activeThreadId = await createAssistantThread();
+  } else {
+    activeThreadId = threadId;
   }
 
   const prompt = `
     Generate content for IND module section "${section}" for study ${studyId}.
-    
+
     Additional context: ${context}
-    
+
     Ensure the content aligns with FDA guidance for this IND section.
     Include appropriate level of detail, regulatory references, and justifications.
   `;
 
   try {
     // Use the assistant's thread persistence capability
-    const response = await getAssistantResponse(threadId, prompt);
+    const response = await getAssistantResponse(activeThreadId, prompt);
 
     return {
       section,

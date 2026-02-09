@@ -153,20 +153,13 @@ class ECTD4Compiler:
         # Generate the physical document
         docx_path = self.generate_docx(ectd_doc, canvas_document)
 
-        # Perform cryptographic signing (use TSA-enabled signing if available and required)
-        if self.sig_config and self.sig_config.is_production():
-            if hasattr(signer, 'sign_with_timestamp'):
-                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
-            else:
-                raise RuntimeError("Production requires TSA timestamping on signatures")
+        # Perform cryptographic signing (use TSA-enabled signing if available)
+        if hasattr(signer, 'sign_with_timestamp'):
+            signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+        elif hasattr(signer, 'sign_document'):
+            signed_path = signer.sign_document(docx_path, signer_info)
         else:
-            # Prefer TSA-enabled signing when available, even outside production
-            if hasattr(signer, 'sign_with_timestamp'):
-                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
-            elif hasattr(signer, 'sign_document'):
-                signed_path = signer.sign_document(docx_path, signer_info)
-            else:
-                raise RuntimeError("Signer does not implement sign_document")
+            raise RuntimeError("Signer must implement sign_document() or sign_with_timestamp()")
 
         # Build signature audit event and append
         signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}

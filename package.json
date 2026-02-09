@@ -95,7 +95,6 @@
     "@stripe/react-stripe-js": "^3.6.0",
     "@stripe/stripe-js": "^7.0.0",
     "@tanstack/react-query": "^5.60.5",
-    "@tensorflow/tfjs-node": "^4.22.0",
     "@prisma/client": "^6.4.1",
     "@tiptap/extension-character-count": "3.8.0",
     "@tiptap/extension-color": "3.7.2",
@@ -252,6 +251,7 @@
     "tar": "7.5.7"
   },
   "optionalDependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
     "bufferutil": "^4.0.8",
     "pino": "^8.18.0"
   }
