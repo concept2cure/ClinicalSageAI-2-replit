@@ -66,5 +66,14 @@
   "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
-  }
+  },
+  "python.analysis.extraPaths": ["shadow_service"],
+  "files.associations": {
+    "*.sql": "plaintext"
+  },
+  "mssql.intelliSense.enableIntellisense": false,
+  "mssql.intelliSense.enableSuggestions": false,
+  "mssql.intelliSense.enableQuickInfo": false,
+  "mssql.intelliSense.enableErrorChecking": false,
+  "mssql.ignorePlatformWarning": true
 }

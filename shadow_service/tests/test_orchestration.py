@@ -807,8 +807,8 @@ class TestPaginationCaps:
                     headers={"X-Admin-Token": "test-token"},
                 )
                 assert resp.status_code == 200
-                runner.list_workflow_runs.assert_called_once()
-                call_args = runner.list_workflow_runs.call_args
+                runner.list_workflow_runs.assert_called_once()  # type: ignore[attr-defined]
+                call_args = runner.list_workflow_runs.call_args  # type: ignore[attr-defined]
                 assert call_args[0][1] == 25  # default limit
 
                 # Over-limit capped by validation (le=100)

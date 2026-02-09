@@ -1,31 +1,40 @@
 // Compliance Evidence module: CloudTrail + S3 WORM bucket for infrastructure evidence
 
 resource "aws_s3_bucket" "evidence" {
-  bucket = var.bucket_name
-
-  versioning {
-    enabled = true
-  }
-
-  object_lock_configuration {
-    rule {
-      default_retention {
-        mode = var.object_lock_mode
-        days = var.retention_days
-      }
-    }
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm     = "aws:kms"
-        kms_master_key_id = var.kms_key_id
-      }
-    }
-  }
+  bucket              = var.bucket_name
+  object_lock_enabled = true
 
   tags = merge(var.tags, { ComplianceFramework = "21CFR11", RetentionRequirement = "7Years" })
+}
+
+resource "aws_s3_bucket_versioning" "evidence" {
+  bucket = aws_s3_bucket.evidence.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_object_lock_configuration" "evidence" {
+  bucket = aws_s3_bucket.evidence.id
+
+  rule {
+    default_retention {
+      mode = var.object_lock_mode
+      days = var.retention_days
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "evidence" {
+  bucket = aws_s3_bucket.evidence.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = var.kms_key_id
+    }
+  }
 }
 
 resource "aws_kms_key" "cloudtrail_encryption" {

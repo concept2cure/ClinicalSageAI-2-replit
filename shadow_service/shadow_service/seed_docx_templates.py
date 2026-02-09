@@ -1,15 +1,31 @@
-"""Phase 6.5 — Seed DOCX Factory: Starter Templates + Demo Render Packs.
+"""Phase 6.6 — Seed DOCX Factory: Premium Templates + Demo Render Packs.
 
-Idempotent seed script that populates the DOCX Factory with regulatory-real
-starter templates and demo input payloads.  Safe to run multiple times.
+Idempotent seed script that populates the DOCX Factory with 19 enterprise-grade
+regulatory templates and demo input payloads.  Safe to run multiple times.
 
-Templates seeded:
-  1. eCTD Cover Letter
-  2. Form FDA 1571 Narrative Summary
-  3. Investigator Brochure Change Summary
-  4. CMC Drug Substance Overview (Module 3.2.S)
-  5. Clinical Overview: Benefit/Risk Summary (Module 2.5)
-  6. 510(k) Cover Letter + Administrative Summary
+Template Families (19 total):
+  IND (10):
+    1.  eCTD Cover Letter (Module 1.0)
+    2.  Form FDA 1571 Narrative Summary
+    3.  Investigator Brochure Change Summary
+    4.  CMC Drug Substance Overview (3.2.S)
+    5.  CMC Drug Product Overview (3.2.P)
+    6.  Clinical Benefit/Risk Summary (2.5)
+    7.  Nonclinical Overview (2.4)
+    8.  Quality Overall Summary (2.3)
+    9.  CSR Synopsis (5.3)
+    10. Protocol Synopsis
+  510(k) (5):
+    11. 510(k) Cover Letter
+    12. Substantial Equivalence Comparison
+    13. Device Description
+    14. 510(k) Summary (§807.92)
+    15. Biocompatibility Evaluation
+  CER — eCTD 4.0 (4):
+    16. Clinical Evaluation Plan
+    17. Literature Analysis
+    18. Benefit-Risk & PMCF
+    19. State of the Art
 
 Each template gets:
   - 1 version (DOCX file stored via BlobStore)
@@ -50,6 +66,9 @@ _INPUTS_DIR = _THIS_DIR / "demo_inputs"
 # =============================================================================
 
 SEED_CATALOG: list[dict[str, Any]] = [
+    # =========================================================================
+    # IND Templates (10)
+    # =========================================================================
     {
         "name": "eCTD Cover Letter",
         "doc_type": "ectd_cover_letter",
@@ -79,6 +98,13 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "tags": ["cmc", "module-3", "drug-substance", "quality"],
     },
     {
+        "name": "CMC Drug Product Overview (3.2.P)",
+        "doc_type": "cmc_drug_product",
+        "template_file": "cmc_drug_product.docx",
+        "demo_inputs": ["cmc_drug_product__cmc_lite.json"],
+        "tags": ["cmc", "module-3", "drug-product", "quality"],
+    },
+    {
         "name": "Clinical Overview — Benefit/Risk Summary (2.5)",
         "doc_type": "clinical_benefit_risk",
         "template_file": "clinical_benefit_risk.docx",
@@ -86,11 +112,101 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "tags": ["clinical", "module-2", "benefit-risk", "overview"],
     },
     {
-        "name": "510(k) Cover Letter + Administrative Summary",
+        "name": "Nonclinical Overview (2.4)",
+        "doc_type": "nonclinical_overview",
+        "template_file": "nonclinical_overview.docx",
+        "demo_inputs": ["nonclinical_overview__ind_starter.json"],
+        "tags": ["nonclinical", "module-2", "pharmacology", "toxicology"],
+    },
+    {
+        "name": "Quality Overall Summary (2.3)",
+        "doc_type": "quality_overall_summary",
+        "template_file": "quality_overall_summary.docx",
+        "demo_inputs": ["quality_overall_summary__ind_starter.json"],
+        "tags": ["quality", "module-2", "qos", "cmc-summary"],
+    },
+    {
+        "name": "CSR Synopsis (5.3)",
+        "doc_type": "csr_synopsis",
+        "template_file": "csr_synopsis.docx",
+        "demo_inputs": ["csr_synopsis__ind_starter.json"],
+        "tags": ["clinical", "module-5", "csr", "ich-e3"],
+    },
+    {
+        "name": "Protocol Synopsis",
+        "doc_type": "protocol_synopsis",
+        "template_file": "protocol_synopsis.docx",
+        "demo_inputs": ["protocol_synopsis__ind_starter.json"],
+        "tags": ["clinical", "protocol", "study-design", "phase-2"],
+    },
+    # =========================================================================
+    # 510(k) Templates (5)
+    # =========================================================================
+    {
+        "name": "510(k) Cover Letter",
         "doc_type": "510k_cover_letter",
         "template_file": "510k_cover_letter.docx",
         "demo_inputs": ["510k_cover_letter__device_pack.json"],
         "tags": ["510k", "device", "cover-letter", "premarket"],
+    },
+    {
+        "name": "510(k) Substantial Equivalence Comparison",
+        "doc_type": "510k_se_comparison",
+        "template_file": "510k_se_comparison.docx",
+        "demo_inputs": ["510k_se_comparison__device_pack.json"],
+        "tags": ["510k", "device", "se-comparison", "predicate"],
+    },
+    {
+        "name": "510(k) Device Description",
+        "doc_type": "510k_device_description",
+        "template_file": "510k_device_description.docx",
+        "demo_inputs": ["510k_device_description__device_pack.json"],
+        "tags": ["510k", "device", "description", "technical"],
+    },
+    {
+        "name": "510(k) Summary (§807.92)",
+        "doc_type": "510k_summary",
+        "template_file": "510k_summary.docx",
+        "demo_inputs": ["510k_summary__device_pack.json"],
+        "tags": ["510k", "device", "summary", "807-92"],
+    },
+    {
+        "name": "510(k) Biocompatibility Evaluation",
+        "doc_type": "510k_biocompatibility",
+        "template_file": "510k_biocompatibility.docx",
+        "demo_inputs": ["510k_biocompatibility__device_pack.json"],
+        "tags": ["510k", "device", "biocompatibility", "iso-10993"],
+    },
+    # =========================================================================
+    # CER — eCTD 4.0 Templates (4)
+    # =========================================================================
+    {
+        "name": "CER — Clinical Evaluation Plan",
+        "doc_type": "cer_evaluation_plan",
+        "template_file": "cer_evaluation_plan.docx",
+        "demo_inputs": ["cer_evaluation_plan__cer_pack.json"],
+        "tags": ["cer", "ectd-4", "eu-mdr", "evaluation-plan"],
+    },
+    {
+        "name": "CER — Literature Analysis",
+        "doc_type": "cer_literature_analysis",
+        "template_file": "cer_literature_analysis.docx",
+        "demo_inputs": ["cer_literature_analysis__cer_pack.json"],
+        "tags": ["cer", "ectd-4", "eu-mdr", "literature-review"],
+    },
+    {
+        "name": "CER — Benefit-Risk & PMCF",
+        "doc_type": "cer_benefit_risk_pmcf",
+        "template_file": "cer_benefit_risk_pmcf.docx",
+        "demo_inputs": ["cer_benefit_risk_pmcf__cer_pack.json"],
+        "tags": ["cer", "ectd-4", "eu-mdr", "benefit-risk", "pmcf"],
+    },
+    {
+        "name": "CER — State of the Art",
+        "doc_type": "cer_state_of_art",
+        "template_file": "cer_state_of_art.docx",
+        "demo_inputs": ["cer_state_of_art__cer_pack.json"],
+        "tags": ["cer", "ectd-4", "eu-mdr", "state-of-art"],
     },
 ]
 
@@ -198,7 +314,7 @@ async def seed_for_program(
                     existing = await conn.fetchrow(
                         _SELECT_TEMPLATE_BY_NAME, program_id, template_name,
                     )
-                    template_id = existing["id"]
+                    template_id = existing["id"]  # type: ignore[index]
                     stats["templates_skipped"] += 1
                     logger.info("Template exists: %s (%s)", template_name, template_id)
             else:
@@ -227,13 +343,13 @@ async def seed_for_program(
 
                     # Get next version number
                     ver_row = await conn.fetchrow(_SELECT_NEXT_VERSION, template_id)
-                    next_ver = ver_row["next_version"]
+                    next_ver = ver_row["next_version"]  # type: ignore[index]
 
                     ver = await conn.fetchrow(
                         _INSERT_VERSION,
                         template_id, next_ver, storage_key, file_sha256,
                     )
-                    version_id = ver["id"]
+                    version_id = ver["id"]  # type: ignore[index]
                     stats["versions_created"] += 1
                     logger.info(
                         "Created version %d for %s (sha256=%s)",
