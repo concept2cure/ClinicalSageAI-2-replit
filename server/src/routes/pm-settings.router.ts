@@ -235,19 +235,19 @@ router.put('/:organizationId', async (req, res) => {
         .update(pmSettings)
         .set({
           aiSettings: updates.aiSettings 
-            ? { ...current.aiSettings, ...updates.aiSettings }
+            ? { ...(current.aiSettings || {}), ...updates.aiSettings }
             : current.aiSettings,
           workflowSettings: updates.workflowSettings
-            ? { ...current.workflowSettings, ...updates.workflowSettings }
+            ? { ...(current.workflowSettings || {}), ...updates.workflowSettings }
             : current.workflowSettings,
           notificationSettings: updates.notificationSettings
-            ? { ...current.notificationSettings, ...updates.notificationSettings }
+            ? { ...(current.notificationSettings || {}), ...updates.notificationSettings }
             : current.notificationSettings,
           complianceSettings: updates.complianceSettings
-            ? { ...current.complianceSettings, ...updates.complianceSettings }
+            ? { ...(current.complianceSettings || {}), ...updates.complianceSettings }
             : current.complianceSettings,
           therapeuticAreaSettings: updates.therapeuticAreaSettings
-            ? { ...current.therapeuticAreaSettings, ...updates.therapeuticAreaSettings }
+            ? { ...(current.therapeuticAreaSettings || {}), ...updates.therapeuticAreaSettings }
             : current.therapeuticAreaSettings,
           updatedBy: userId,
           updatedAt: new Date(),
