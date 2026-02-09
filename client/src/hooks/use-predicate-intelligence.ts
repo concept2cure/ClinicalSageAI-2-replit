@@ -138,7 +138,12 @@ export function useCreateCandidate(programId: string) {
 export function useAnalyze(programId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (params: { device_name: string; product_code: string; manufacturer?: string }) =>
+    mutationFn: (params: {
+      device_description: string;
+      product_code?: string;
+      similarity_threshold?: number;
+      max_candidates?: number;
+    }) =>
       predicateFetch<PredicateCandidate[]>('/analyze', {
         method: 'POST',
         body: JSON.stringify({ program_id: programId, ...params }),
@@ -199,14 +204,14 @@ export function useDefensePreview(programId: string, candidateId?: string) {
 export function useGenerateDefensePreview(programId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (params: { candidate_id: string; subject_device: Record<string, unknown> }) =>
+    mutationFn: (params: { predicate_k_number: string; subject_device: Record<string, unknown> }) =>
       predicateFetch<DefensePreview>('/defense-preview', {
         method: 'POST',
         body: JSON.stringify({ program_id: programId, ...params }),
       }),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({
-        queryKey: predicateKeys.defensePreview(programId, vars.candidate_id),
+        queryKey: predicateKeys.defensePreview(programId, vars.predicate_k_number),
       });
     },
   });
@@ -334,9 +339,10 @@ export function useToxicDetail(programId: string, kNumber: string) {
 export function useRenderSEDocx() {
   return useMutation({
     mutationFn: async (params: RenderSEDocxRequest) => {
-      const res = await fetch(`${API_BASE}/render-se-docx`, {
+      const orgId = localStorage.getItem('organizationId') || '1';
+      const res = await fetch(`${BASE}/render-se-docx`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-organization-id': orgId },
         credentials: 'include',
         body: JSON.stringify(params),
       });
@@ -356,9 +362,10 @@ export function useRenderSEDocx() {
 export function useDownloadDefensePacket() {
   return useMutation({
     mutationFn: async (params: DownloadDefensePacketRequest) => {
-      const res = await fetch(`${API_BASE}/download-defense-packet`, {
+      const orgId = localStorage.getItem('organizationId') || '1';
+      const res = await fetch(`${BASE}/download-defense-packet`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-organization-id': orgId },
         credentials: 'include',
         body: JSON.stringify(params),
       });

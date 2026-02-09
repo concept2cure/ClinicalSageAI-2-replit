@@ -110,8 +110,15 @@ async function proxyToShadow(
     method?: string;
     query?: Record<string, string>;
     body?: unknown;
+    binary?: boolean;
   } = {}
-): Promise<{ status: number; body: string; contentType: string }> {
+): Promise<{
+  status: number;
+  body: string;
+  contentType: string;
+  rawBuffer?: Buffer;
+  rawHeaders?: Record<string, string>;
+}> {
   const url = new URL(shadowPath, getShadowUrl());
   const token = getAdminToken();
 
@@ -130,16 +137,41 @@ async function proxyToShadow(
   }
 
   const response = await fetch(url.toString(), fetchOptions);
-  const body = await response.text();
   const contentType = response.headers.get('content-type') || 'application/json';
 
+  // Binary mode: return raw buffer for DOCX/ZIP downloads
+  if (options.binary) {
+    const arrayBuf = await response.arrayBuffer();
+    const rawHeaders: Record<string, string> = {};
+    const cd = response.headers.get('content-disposition');
+    if (cd) rawHeaders['content-disposition'] = cd;
+    return {
+      status: response.status,
+      body: '',
+      contentType,
+      rawBuffer: Buffer.from(arrayBuf),
+      rawHeaders,
+    };
+  }
+
+  const body = await response.text();
   return { status: response.status, body, contentType };
 }
 
 function sendProxyResponse(
   res: Response,
-  result: { status: number; body: string; contentType: string }
+  result: { status: number; body: string; contentType: string; rawBuffer?: Buffer; rawHeaders?: Record<string, string> }
 ) {
+  // Binary responses: forward buffer directly
+  if (result.rawBuffer) {
+    if (result.rawHeaders) {
+      for (const [k, v] of Object.entries(result.rawHeaders)) {
+        res.set(k, v);
+      }
+    }
+    res.status(result.status).set('Content-Type', result.contentType).send(result.rawBuffer);
+    return;
+  }
   res.status(result.status).set('Content-Type', result.contentType).send(result.body);
 }
 
