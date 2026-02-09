@@ -4,6 +4,13 @@
 
 set -e
 
+# Check if script has execute permissions
+if [ ! -x "$0" ]; then
+    echo "Error: This script needs execute permissions."
+    echo "Run: chmod +x $0"
+    exit 1
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
