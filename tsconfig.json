@@ -4,6 +4,8 @@
     "noImplicitAny": true,
     "target": "ES2020",
     "module": "esnext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": ["node", "react", "react-dom"],
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -22,7 +24,7 @@
       "@shared/*": ["shared/*"]
     }
   },
-  "include": ["client/src/**/*", "server/**/*", "shared/**/*"],
+  "include": ["client/src/**/*", "server/**/*", "shared/**/*", "agents/**/*"],
   "exclude": [
     "node_modules",
     "dist",
