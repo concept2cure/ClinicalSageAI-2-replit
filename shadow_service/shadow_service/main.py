@@ -90,6 +90,7 @@ from .router_cybersecurity import router as cybersecurity_router
 from .router_transparency import router as transparency_router
 from .router_training import router as training_router
 from .router_orchestration import router as orchestration_router
+from .router_evidence import router as evidence_router
 from .router_docx_factory import router as docx_factory_router
 from .router_predicate import router as predicate_router
 
@@ -152,6 +153,7 @@ app.include_router(cybersecurity_router)  # Cybersecurity (SBOM, VEX, Section 52
 app.include_router(transparency_router)   # Data Transparency (EMA 0070, PDF/A-3, GAMP 5)
 app.include_router(training_router)       # Training Compliance (xAPI, Part 11)
 app.include_router(orchestration_router)  # Phase 4 Orchestration Kernel
+app.include_router(evidence_router)       # Phase 5 Evidence Fabric
 app.include_router(docx_factory_router)   # Phase 6 DOCX Factory
 app.include_router(predicate_router)     # Phase 6.6 Predicate Intelligence
 
@@ -195,7 +197,14 @@ async def comprehensive_health_check():
                 "drift",
                 "regulatory",
                 "ectd",
-                "governance"
+                "governance",
+                "aiml",
+                "cybersecurity",
+                "transparency",
+                "training",
+                "orchestration",
+                "evidence",
+                "docx_factory"
             ],
             "cors_enabled": True,
             "cors_origins": settings.cors_origins[:3] if len(settings.cors_origins) > 3 else settings.cors_origins,
