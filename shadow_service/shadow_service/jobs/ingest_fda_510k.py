@@ -64,29 +64,85 @@ class FDA510kIngestor:
         self,
         product_codes: Optional[list[str]] = None,
         max_clearances: int = 5_000,
+        triggered_by: str = "manual",
     ) -> dict[str, Any]:
-        """Full ingestion pipeline.  Idempotent (upsert)."""
+        """Full ingestion pipeline.  Idempotent (upsert).
+
+        Writes a row to predicate.fda_ingest_runs at start (status=running)
+        and updates it on completion/failure with final stats.
+        """
         start = datetime.now(timezone.utc)
         logger.info("FDA 510(k) ingestion started")
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            # 1. Fetch clearances
-            clearances = await self._fetch_clearances(
-                client, product_codes, max_clearances,
-            )
-            await self._upsert_clearances(clearances)
+        # ── Record run start ──
+        run_fingerprint = hashlib.sha256(
+            f"{product_codes}:{max_clearances}:{start.date()}".encode()
+        ).hexdigest()
+        run_id = None
+        try:
+            async with self.pool.acquire() as conn:
+                run_id = await conn.fetchval(
+                    sql.INSERT_INGEST_RUN,
+                    "ingest_fda_510k",          # $1 job_name
+                    product_codes,              # $2 product_codes_filter
+                    max_clearances,             # $3 max_clearances_limit
+                    triggered_by,               # $4 triggered_by
+                    run_fingerprint,            # $5 run_fingerprint
+                )
+        except Exception as exc:
+            logger.warning("Could not log ingest run start: %s", exc)
 
-            # 2. Fetch enforcement (recall) data → safety signals
-            await self._fetch_and_flag_enforcement(client)
+        final_status = "completed"
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                # 1. Fetch clearances
+                clearances = await self._fetch_clearances(
+                    client, product_codes, max_clearances,
+                )
+                await self._upsert_clearances(clearances)
+
+                # 2. Fetch enforcement (recall) data → safety signals
+                await self._fetch_and_flag_enforcement(client)
+        except Exception as exc:
+            final_status = "failed"
+            self.stats["errors"].append(f"Pipeline error: {exc}")
+            logger.error("FDA ingestion failed: %s", exc)
 
         elapsed = (datetime.now(timezone.utc) - start).total_seconds()
         self.stats["duration_seconds"] = elapsed
+
+        if self.stats["errors"] and final_status == "completed":
+            final_status = "partial"
+
+        # ── Record run completion ──
+        if run_id:
+            try:
+                import json as _json
+                async with self.pool.acquire() as conn:
+                    await conn.execute(
+                        sql.UPDATE_INGEST_RUN_COMPLETED,
+                        run_id,                                     # $1
+                        final_status,                               # $2
+                        elapsed,                                    # $3
+                        self.stats["clearances_processed"],         # $4
+                        self.stats["clearances_upserted"],          # $5
+                        self.stats["signals_processed"],            # $6
+                        self.stats["signals_upserted"],             # $7
+                        len(self.stats["errors"]),                  # $8
+                        _json.dumps(self.stats["errors"][:50]),     # $9 (cap at 50)
+                    )
+            except Exception as exc:
+                logger.warning("Could not log ingest run completion: %s", exc)
+
         logger.info(
-            "FDA ingestion complete in %.1fs — %d clearances, %d signals",
+            "FDA ingestion %s in %.1fs — %d clearances, %d signals",
+            final_status,
             elapsed,
             self.stats["clearances_upserted"],
             self.stats["signals_upserted"],
         )
+        self.stats["run_id"] = str(run_id) if run_id else None
+        self.stats["status"] = final_status
         return self.stats
 
     # ─────────────────────────────────────────────────────────────────────
@@ -366,16 +422,45 @@ def content_hash(text: str) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def _main() -> None:
-    """Run ingestion from CLI."""
+    """Run ingestion from CLI.
+
+    Usage:
+        python -m shadow_service.jobs.ingest_fda_510k
+        python -m shadow_service.jobs.ingest_fda_510k --dry-run
+        python -m shadow_service.jobs.ingest_fda_510k --limit 200
+        python -m shadow_service.jobs.ingest_fda_510k --limit 200 --codes QEI QGO
+    """
+    import argparse
     import os
     import asyncpg  # type: ignore[import-untyped]
 
+    parser = argparse.ArgumentParser(description="FDA 510(k) Clearance Ingestor")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Validate config and print plan without writing to DB")
+    parser.add_argument("--limit", type=int, default=5_000,
+                        help="Max clearances to fetch (default: 5000)")
+    parser.add_argument("--codes", nargs="*", default=None,
+                        help="Product codes to filter (e.g., QEI QGO)")
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO)
+    logger.info("FDA 510(k) ingestor — limit=%d, codes=%s, dry_run=%s",
+                args.limit, args.codes, args.dry_run)
+
+    if args.dry_run:
+        logger.info("DRY RUN — would fetch up to %d clearances for codes=%s. Exiting.",
+                     args.limit, args.codes or "ALL")
+        return
+
     dsn = os.environ.get("DATABASE_URL", "postgresql://localhost:5432/clinicalsage")
     pool = await asyncpg.create_pool(dsn, min_size=2, max_size=5)
     try:
         ingestor = FDA510kIngestor(pool, api_key=os.environ.get("OPENFDA_API_KEY"))
-        stats = await ingestor.run()
+        stats = await ingestor.run(
+            product_codes=args.codes,
+            max_clearances=args.limit,
+            triggered_by="cli",
+        )
         print(f"Done: {stats}")  # noqa: T201
     finally:
         await pool.close()

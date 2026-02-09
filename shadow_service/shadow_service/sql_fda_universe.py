@@ -326,6 +326,44 @@ LIMIT $2;
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Ingestion Run Log (fda_ingest_runs)
+# ─────────────────────────────────────────────────────────────────────────────
+
+INSERT_INGEST_RUN = """
+INSERT INTO predicate.fda_ingest_runs
+    (job_name, status, started_at, product_codes_filter, max_clearances_limit,
+     triggered_by, run_fingerprint)
+VALUES ($1, 'running', now(), $2, $3, $4, $5)
+RETURNING id;
+"""
+
+UPDATE_INGEST_RUN_COMPLETED = """
+UPDATE predicate.fda_ingest_runs
+SET status              = $2,
+    completed_at        = now(),
+    duration_seconds    = $3,
+    clearances_processed = $4,
+    clearances_upserted  = $5,
+    signals_processed    = $6,
+    signals_upserted     = $7,
+    errors_count         = $8,
+    errors_detail        = $9::jsonb
+WHERE id = $1;
+"""
+
+SELECT_LAST_INGEST_RUN = """
+SELECT * FROM predicate.fda_ingest_runs
+ORDER BY started_at DESC
+LIMIT 1;
+"""
+
+SELECT_INGEST_RUNS_RECENT = """
+SELECT * FROM predicate.fda_ingest_runs
+ORDER BY started_at DESC
+LIMIT $1;
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Health / Stats (6.6.A acceptance criteria)
 # ─────────────────────────────────────────────────────────────────────────────
 

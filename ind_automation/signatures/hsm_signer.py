@@ -10,8 +10,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-import boto3
-
 from ind_automation.signatures.pki_signer import Part11Signature
 
 
@@ -23,6 +21,8 @@ class HSMSignature(Part11Signature):
     """
 
     def __init__(self, kms_key_id: str, region: str = "us-east-1", certificate_path: Optional[str] = None):
+        import boto3  # lazy import — keeps module importable without AWS SDK
+
         # Do not call super().__init__ to avoid generating dev keys
         self.kms_client = boto3.client('kms', region_name=region)
         self.kms_key_id = kms_key_id

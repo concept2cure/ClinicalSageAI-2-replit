@@ -84,7 +84,8 @@ class ECTD4Compiler:
             signer_cls = signer_conf.get('class')
             signer_params = signer_conf.get('params', {})
             # Instantiate signer (deferred errors in tests will be more explicit)
-            self.signer = signer_cls(**{k: v for k, v in signer_params.items() if v})
+            if signer_cls is not None:
+                self.signer = signer_cls(**{k: v for k, v in signer_params.items() if v})
             self._audit_config = self.sig_config.get_audit_metadata()
 
     def compile(self, canvas_document) -> ECTD4Document:
@@ -143,6 +144,8 @@ class ECTD4Compiler:
 
         Uses provided signer if given, otherwise the configured signer from init.
         Enforces production requirements (e.g., TSA timestamping) when running in production mode.
+
+        Emits structured audit events: SIGN_ATTEMPTED → SIGN_SUCCEEDED / SIGN_FAILED.
         """
         signer = signer or self.signer
         signer_info = signer_info or {}
@@ -150,23 +153,69 @@ class ECTD4Compiler:
         if signer is None:
             raise RuntimeError("No signer available. Provide a signer or configure SignatureConfig.")
 
+        # ── Determine signature metadata for audit trail ──
+        is_hsm = hasattr(signer, 'kms_key_id') and getattr(signer, 'kms_key_id', None)
+        sig_method = "HSM-KMS-DIGEST" if is_hsm else "DEV-RSA"
+        key_id = getattr(signer, 'kms_key_id', None) or "local-dev-key"
+        attempt_ts = datetime.now(timezone.utc).isoformat()
+
+        # ── Emit SIGN_ATTEMPTED ──
+        attempt_event = {
+            "resourceType": "AuditEvent",
+            "id": f"sign-attempt-{uuid.uuid4().hex[:8]}",
+            "recorded": attempt_ts,
+            "type": {"code": "110106", "display": "SIGN_ATTEMPTED"},
+            "agent": [{"who": {"display": signer_info.get("name", "unknown")}, "requestor": True}],
+            "entity": [{
+                "what": {"reference": f"urn:uuid:{ectd_doc.document_id}"},
+                "detail": [
+                    {"type": "signature-method", "valueString": sig_method},
+                    {"type": "key-id", "valueString": key_id},
+                ]
+            }]
+        }
+        ectd_doc.modification_history.append(attempt_event)
+
         # Generate the physical document
         docx_path = self.generate_docx(ectd_doc, canvas_document)
 
-        # Perform cryptographic signing (use TSA-enabled signing if available)
-        if hasattr(signer, 'sign_with_timestamp'):
-            signed_path = signer.sign_with_timestamp(docx_path, signer_info)
-        elif hasattr(signer, 'sign_document'):
-            signed_path = signer.sign_document(docx_path, signer_info)
-        else:
-            raise RuntimeError("Signer must implement sign_document() or sign_with_timestamp()")
+        try:
+            # Perform cryptographic signing (use TSA-enabled signing if available)
+            if hasattr(signer, 'sign_with_timestamp') and getattr(signer, 'tsa_url', None):
+                signed_path = signer.sign_with_timestamp(docx_path, signer_info)
+            elif hasattr(signer, 'sign_document'):
+                signed_path = signer.sign_document(docx_path, signer_info)
+            else:
+                raise RuntimeError("Signer must implement sign_document() or sign_with_timestamp()")
+        except Exception as exc:
+            # ── Emit SIGN_FAILED ──
+            fail_event = {
+                "resourceType": "AuditEvent",
+                "id": f"sign-fail-{uuid.uuid4().hex[:8]}",
+                "recorded": datetime.now(timezone.utc).isoformat(),
+                "type": {"code": "110107", "display": "SIGN_FAILED"},
+                "outcomeDesc": str(exc)[:500],
+                "agent": [{"who": {"display": signer_info.get("name", "unknown")}, "requestor": True}],
+                "entity": [{
+                    "what": {"reference": f"urn:uuid:{ectd_doc.document_id}"},
+                    "detail": [
+                        {"type": "signature-method", "valueString": sig_method},
+                        {"type": "key-id", "valueString": key_id},
+                        {"type": "error", "valueString": type(exc).__name__},
+                    ]
+                }]
+            }
+            ectd_doc.modification_history.append(fail_event)
+            raise  # Re-raise so callers know signing failed
 
         # Build signature audit event and append
-        signature_result = {"document_hash": signer.calculate_document_hash(docx_path)}
-        if hasattr(signer, 'last_tsa_info') and getattr(signer, 'last_tsa_info'):
+        doc_hash = signer.calculate_document_hash(docx_path)
+        signature_result = {"document_hash": doc_hash}
+        has_tsa = hasattr(signer, 'last_tsa_info') and getattr(signer, 'last_tsa_info')
+        if has_tsa:
             signature_result['tsa'] = signer.last_tsa_info
         # Include HSM/KMS metadata when signer exposes it
-        if hasattr(signer, 'kms_key_id') and signer.kms_key_id:
+        if is_hsm:
             signature_result['hsm_key_id'] = signer.kms_key_id
 
         try:
@@ -176,7 +225,7 @@ class ECTD4Compiler:
             tsa = signature_result.get('tsa', {})
             entity = {
                 "what": {"reference": f"urn:uuid:{ectd_doc.document_id}", "identifier": {"system": "https://concept2cure.io/ectd4", "value": ectd_doc.document_id}},
-                "detail": [{"type": "hash-preimage", "valueString": signature_result["document_hash"]}]
+                "detail": [{"type": "hash-preimage", "valueString": doc_hash}]
             }
             if tsa.get('present'):
                 entity['detail'].extend([
@@ -192,6 +241,15 @@ class ECTD4Compiler:
                 "agent": [],
                 "entity": [entity]
             }
+
+        # ── Enrich with stable machine-checkable fields ──
+        sig_event["type"]["display"] = "SIGN_SUCCEEDED"
+        sig_event.setdefault("entity", [{}])[0].setdefault("detail", []).extend([
+            {"type": "signature-method", "valueString": sig_method},
+            {"type": "key-id", "valueString": key_id},
+            {"type": "doc-hash-sha256", "valueString": doc_hash},
+            {"type": "tsa-timestamp-present", "valueBoolean": bool(has_tsa)},
+        ])
 
         # Attach config metadata to audit event when available
         if hasattr(self, '_audit_config') and self._audit_config:

@@ -5,8 +5,10 @@ Validates: FHIR AuditEvents, XMP metadata, 2-6-2 filenames, JSON backbone.
 
 import pytest
 import json
+import importlib.util
 from datetime import datetime
 from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
+from ind_automation.tests.conftest import NO_SIGNER
 
 
 @pytest.fixture
@@ -43,7 +45,7 @@ class TestECTD4Compiler:
     """eCTD 4.0 native compliance."""
 
     def test_filename_no_m_prefix(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         result = compiler.compile(sample_canvas_doc)
 
         assert not result.file_name.startswith("m"), f"Legacy 3.2.2 'm' prefix detected: {result.file_name}"
@@ -51,7 +53,7 @@ class TestECTD4Compiler:
         assert result.file_name.endswith("-en.docx")
 
     def test_fhir_audit_event_structure(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         result = compiler.compile(sample_canvas_doc)
 
         assert len(result.modification_history) == 1
@@ -68,7 +70,7 @@ class TestECTD4Compiler:
         assert confidence[0]["valueDecimal"] == 0.94
 
     def test_xmp_not_custom_xml(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         ectd_doc = compiler.compile(sample_canvas_doc)
         docx_path = compiler.generate_docx(ectd_doc, sample_canvas_doc)
 
@@ -81,7 +83,7 @@ class TestECTD4Compiler:
             assert 'sha256' in xmp
 
     def test_json_backbone_not_xml(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         ectd_doc = compiler.compile(sample_canvas_doc)
         backbone = compiler.generate_backbone([ectd_doc])
 
@@ -92,14 +94,14 @@ class TestECTD4Compiler:
         assert "modificationHistory" in backbone["documents"][0]
 
     def test_content_hash_integrity(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         result = compiler.compile(sample_canvas_doc)
 
         assert len(result.content_hash) == 64
         assert all(c in '0123456789abcdef' for c in result.content_hash)
 
     def test_alcoa_plus_flags(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         result = compiler.compile(sample_canvas_doc)
 
         assert result.data_integrity["attributable"] is True
@@ -108,7 +110,7 @@ class TestECTD4Compiler:
         assert result.data_integrity["schemaVersion"] == "ALCOA-v2-ectd4"
 
     def test_specification_level_2(self, sample_canvas_doc, tmp_path):
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         result = compiler.compile(sample_canvas_doc)
 
         assert result.specification_level == "2"
@@ -122,7 +124,7 @@ from ind_automation.signatures.pki_signer import Part11Signature
 class TestDigitalSignatures:
     """21 CFR Part 11 compliance tests."""
 
-    def test_document_signature_creates_xades(self, tmp_path):
+    def test_document_signature_creates_xades(self, tmp_path, shared_signer):
         """Signed documents must contain XAdES signature XML."""
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
 
@@ -141,11 +143,11 @@ class TestDigitalSignatures:
                 self.events = []
 
         canvas_doc = MockCanvas()
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
         doc = compiler.compile(canvas_doc)
         docx = compiler.generate_docx(doc, canvas_doc)
 
-        signer = Part11Signature()  # Test keys
+        signer = shared_signer
         signed = signer.sign_document(docx, {
             "name": "Dr. Jane Smith",
             "role": "Medical Monitor",
@@ -160,9 +162,9 @@ class TestDigitalSignatures:
             assert b'DigestValue' in sig_xml
             assert b'SignatureValue' in sig_xml
 
-    def test_signature_tamper_detection(self, tmp_path):
+    def test_signature_tamper_detection(self, tmp_path, shared_signer):
         """Changing document after signing must invalidate signature."""
-        signer = Part11Signature()
+        signer = shared_signer
 
         # Create minimal docx for testing
         from docx import Document
@@ -191,12 +193,12 @@ class TestDigitalSignatures:
         assert tamper_check["document_hash_match"] is False
         assert tamper_check["valid"] is False
 
-    def test_signature_creates_fhir_audit_event(self, tmp_path, sample_canvas_doc):
+    def test_signature_creates_fhir_audit_event(self, tmp_path, sample_canvas_doc, shared_signer):
         """Signature must create traceable FHIR AuditEvent in backbone."""
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
 
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
-        signer = Part11Signature()
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
+        signer = shared_signer
 
         ectd_doc = compiler.compile(sample_canvas_doc)
         signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, sample_canvas_doc, signer, {
@@ -218,12 +220,12 @@ class TestDigitalSignatures:
         assert len(hash_pre) == 1
         assert len(hash_pre[0]["valueString"]) == 64
 
-    def test_signature_audit_references_correct_document(self, tmp_path, sample_canvas_doc):
+    def test_signature_audit_references_correct_document(self, tmp_path, sample_canvas_doc, shared_signer):
         """Signature AuditEvent must reference actual document UUID."""
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
 
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
-        signer = Part11Signature()
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
+        signer = shared_signer
 
         ectd_doc = compiler.compile(sample_canvas_doc)
         signed_path, audited_doc = compiler.sign_and_audit(ectd_doc, sample_canvas_doc, signer, {
@@ -233,7 +235,7 @@ class TestDigitalSignatures:
         sig_event = [e for e in audited_doc.modification_history if isinstance(e.get('type'), dict) and e['type'].get('code') == '110107'][0]
         assert sig_event["entity"][0]["what"]["reference"] == f"urn:uuid:{audited_doc.document_id}"
 
-    def test_signature_includes_tsa_timestamp(self, tmp_path, monkeypatch):
+    def test_signature_includes_tsa_timestamp(self, tmp_path, monkeypatch, shared_signer):
         """TSA token must be embedded in XAdES and AuditEvent must record TSA info."""
         from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
         from ind_automation.signatures.pki_signer import TSASignature
@@ -258,8 +260,13 @@ class TestDigitalSignatures:
             return FakeResp(encoder.encode(resp))
         monkeypatch.setattr('requests.post', fake_post)
 
-        compiler = ECTD4Compiler(output_dir=str(tmp_path))
-        signer = TSASignature(tsa_url='http://timestamp.digicert.com')
+        compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
+        # Build TSASignature from shared keys to avoid 100s keygen
+        signer = TSASignature.__new__(TSASignature)
+        signer.pub_key = shared_signer.pub_key
+        signer.priv_key = shared_signer.priv_key
+        signer.certificate = None
+        signer.tsa_url = 'http://timestamp.digicert.com'
 
         # Create a minimal canvas doc
         class Canvas:
@@ -302,7 +309,9 @@ class TestDigitalSignatures:
         from pyasn1_modules import rfc3161
         from pyasn1.type import univ
 
-        signer = TSASignature()
+        # Use __new__ to skip slow RSA keygen — only testing ASN.1 methods
+        signer = TSASignature.__new__(TSASignature)
+        signer.tsa_url = 'http://example.com'
         test_data = b"test signature xml"
         tsq = signer._create_tsa_query(test_data)
 
@@ -318,7 +327,9 @@ class TestDigitalSignatures:
         from ind_automation.signatures.pki_signer import TSASignature
         from pyasn1_modules import rfc3161, rfc5652
 
-        signer = TSASignature()
+        # Use __new__ to skip slow RSA keygen — only testing ASN.1 methods
+        signer = TSASignature.__new__(TSASignature)
+        signer.tsa_url = 'http://example.com'
         # Build minimal granted TimeStampResp
         from pyasn1.codec.der import encoder
         resp = rfc3161.TimeStampResp()
@@ -386,6 +397,10 @@ class TestSignatureConfiguration:
         os.environ.pop('KMS_KEY_CUSTODY_SOP', None)
 
 
+_boto3_available = importlib.util.find_spec("boto3") is not None
+
+
+@pytest.mark.skipif(not _boto3_available, reason="boto3 not installed — HSM tests require AWS SDK")
 class TestHSMSignatures:
     """Requires AWS credentials (mocked for CI)."""
 
@@ -430,7 +445,7 @@ class TestHSMSignatures:
 
         with patch('boto3.client', return_value=mock_kms):
             signer = HSMSignature(kms_key_id='alias/fda-signing-key')
-            compiler = ECTD4Compiler(output_dir=str(tmp_path))
+            compiler = ECTD4Compiler(output_dir=str(tmp_path), signature_config=NO_SIGNER)
 
             class Canvas:
                 def __init__(self):
