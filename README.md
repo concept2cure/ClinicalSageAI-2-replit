@@ -234,6 +234,17 @@ Proprietary - Concept2Cure, Inc.
 - **Documentation:** [docs/](docs/)
 - **Issues:** [GitHub Issues](https://github.com/concept2cure/ClinicalSageAI-2-replit/issues)
 
+### Common Issues
+
+#### GitHub Copilot Branch Conflicts
+If you encounter issues with GitHub Copilot creating `copilot/*` branches or PRs not being found after delegation, see the [Copilot Branch Delegation Fix Guide](docs/fixes/COPILOT_BRANCH_DELEGATION_FIX.md).
+
+**Quick Fix:**
+```bash
+# If you're on a copilot/* branch by mistake:
+./scripts/fix-copilot-branch.sh
+```
+
 ---
 
 *ClinicalSageAI - Accelerating the Path from Concept to Cure*
