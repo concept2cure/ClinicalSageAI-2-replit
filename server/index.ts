@@ -92,6 +92,9 @@ import foresightFeedbackRoutes from './routes/foresight-feedback.ts';
 import intelligentDocsRoutes from './routes/intelligentDocs.ts';
 import { testAssemblyRoutes } from './routes/test-assembly';
 
+// Import Phase 5: PM Settings & Configuration routes
+import pmSettingsRouter from './src/routes/pm-settings.router';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -487,6 +490,14 @@ try {
   console.log('✅ Phase 5: Intelligent Document System API routes mounted');
 } catch (error) {
   console.error('❌ Failed to mount Intelligent Docs routes:', error);
+}
+
+// Mount Phase 5: PM Settings & Configuration routes
+try {
+  app.use('/api/pm-settings', pmSettingsRouter);
+  console.log('✅ Phase 5: PM Settings & Configuration API routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
 // Mount Lumen Cortex (formerly ForesightAI) routes
