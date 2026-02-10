@@ -88,11 +88,46 @@ export interface Objection {
 /** Legacy alias */
 export type AnticipatedObjection = Objection;
 
-export interface DefensePacketSeed {
+export interface EvidenceTaskSeed {
   evidence_type: string;
   description: string;
   source_objection: string;
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+/** Legacy alias */
+export type DefensePacketSeedLegacy = EvidenceTaskSeed;
+
+export type EvidenceCategory =
+  | 'BenchTesting'
+  | 'Biocompatibility'
+  | 'RiskManagement'
+  | 'SoftwareLifecycle'
+  | 'Cybersecurity'
+  | 'SterilizationValidation'
+  | 'ClinicalEvidence'
+  | 'LabelingIFU'
+  | 'StandardsConformance'
+  | 'PostMarketSurveillance';
+
+export interface EvidenceTask {
+  task_id: string;
+  category: EvidenceCategory;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  rationale: string;
+  trigger: string;
+  recommended_artifacts: string[];
+  mapping: Record<string, unknown>;
+}
+
+export interface DefensePacketSeed {
+  subject_hash: string;
+  generated_at: string;
+  program_id: string;
+  product_code: string;
+  tasks: EvidenceTask[];
+  readiness_score: number;
+  top_risks: string[];
 }
 
 export interface MatchSnippet {
@@ -153,8 +188,8 @@ export interface PredicateSuggestion {
   risk_flags: RiskFlag[];
   match_snippets: MatchSnippet[];
   anticipated_objections: Objection[];
-  // Defense Packet Seed (jaw-drop stub)
-  defense_packet_seed: DefensePacketSeed[];
+  // Per-suggestion evidence seeds (legacy compat)
+  defense_packet_seed: EvidenceTaskSeed[];
   // Legacy compat
   matched_terms: string[];
   recency_years?: number | null;
@@ -192,6 +227,8 @@ export interface PredicateSuggestResponse {
   generated_at: string;
   weights_version: string;
   cached: boolean;
+  // Response-level Defense Packet Seed
+  defense_packet_seed: DefensePacketSeed | null;
 }
 
 export interface FDA510kClearance {

@@ -1770,48 +1770,52 @@ function StrategyTab({
             </CardContent>
           </Card>
 
-          {/* Defense Packet Seed — the "jaw-drop" */}
-          {suggestMut.data.suggestions.some((s: any) => s.defense_packet_seed?.length > 0) && (
+          {/* Defense Packet Seed — enterprise-grade evidence fix list */}
+          {suggestMut.data.defense_packet_seed?.tasks?.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-blue-600" /> Defense Packet Seed
+                  <Badge variant="outline" className="text-[10px] ml-2">
+                    Readiness: {suggestMut.data.defense_packet_seed.readiness_score}/100
+                  </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Structured evidence needs derived from anticipated objections. Not just scoring — prescribing the fix list.
+                  Machine-readable evidence fix list — bridges predicate ranking to regulatory workflow.
+                  {suggestMut.data.defense_packet_seed.top_risks?.length > 0 && (
+                    <span className="ml-2">
+                      Top risks:{' '}
+                      {suggestMut.data.defense_packet_seed.top_risks.map((r: string, i: number) => (
+                        <Badge key={i} variant="destructive" className="text-[9px] ml-1">{r}</Badge>
+                      ))}
+                    </span>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {suggestMut.data.suggestions
-                    .filter((s: any) => s.defense_packet_seed?.length > 0)
-                    .slice(0, 3)
-                    .map((s: any) => (
-                      <div key={s.k_number} className="p-3 rounded-md border bg-muted/30">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-mono text-sm font-semibold">{s.k_number}</span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {s.defense_packet_seed.length} evidence items
-                          </Badge>
-                        </div>
-                        <div className="space-y-1">
-                          {s.defense_packet_seed.map((seed: any, i: number) => (
-                            <div key={i} className="flex items-start gap-2 text-sm">
-                              <Badge
-                                variant={seed.priority === 'HIGH' ? 'destructive' : 'secondary'}
-                                className="text-[10px] shrink-0"
-                              >
-                                {seed.priority}
-                              </Badge>
-                              <span className="font-mono text-xs text-muted-foreground shrink-0">
-                                [{seed.evidence_type}]
-                              </span>
-                              <span className="text-muted-foreground">{seed.description}</span>
-                            </div>
+                <div className="space-y-2">
+                  {suggestMut.data.defense_packet_seed.tasks.map((task: any) => (
+                    <div key={task.task_id} className="p-3 rounded-md border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge
+                          variant={task.severity === 'HIGH' ? 'destructive' : task.severity === 'MEDIUM' ? 'default' : 'secondary'}
+                          className="text-[10px] shrink-0"
+                        >
+                          {task.severity}
+                        </Badge>
+                        <span className="font-mono text-xs text-blue-600 shrink-0">[{task.category}]</span>
+                        <span className="text-xs text-muted-foreground font-mono">{task.trigger}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">{task.rationale}</p>
+                      {task.recommended_artifacts?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {task.recommended_artifacts.map((art: string, i: number) => (
+                            <Badge key={i} variant="outline" className="text-[9px]">{art}</Badge>
                           ))}
                         </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

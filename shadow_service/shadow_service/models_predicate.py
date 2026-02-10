@@ -398,16 +398,69 @@ class ScoreBreakdown(BaseModel):
     )
 
 
-class DefensePacketSeed(BaseModel):
-    """Structured evidence needs derived from anticipated objections.
+class EvidenceTaskSeed(BaseModel):
+    """Simple per-suggestion evidence need (legacy compat).
 
-    The "jaw-drop" stub: not full Truth Machine integration, but a structured
-    list of evidence items the submitter needs to prepare.
+    For the rich response-level Defense Packet Seed, see DefensePacketSeed.
     """
     evidence_type: str = Field(description="e.g. bench, biocomp, sw_lifecycle")
     description: str = Field(description="What needs to be prepared")
     source_objection: str = Field(description="Which objection triggered this")
     priority: str = Field("MEDIUM", description="HIGH / MEDIUM / LOW")
+
+
+class EvidenceCategory(str, Enum):
+    """10 canonical evidence categories for regulatory workflow."""
+    BENCH_TESTING = "BenchTesting"
+    BIOCOMPATIBILITY = "Biocompatibility"
+    RISK_MANAGEMENT = "RiskManagement"
+    SOFTWARE_LIFECYCLE = "SoftwareLifecycle"
+    CYBERSECURITY = "Cybersecurity"
+    STERILIZATION_VALIDATION = "SterilizationValidation"
+    CLINICAL_EVIDENCE = "ClinicalEvidence"
+    LABELING_IFU = "LabelingIFU"
+    STANDARDS_CONFORMANCE = "StandardsConformance"
+    POST_MARKET_SURVEILLANCE = "PostMarketSurveillance"
+
+
+class EvidenceTask(BaseModel):
+    """A single evidence task in the Defense Packet Seed.
+
+    Machine-readable 'fix list' item — deterministic, no LLM.
+    task_id is a stable hash so downstream systems can persist/track.
+    """
+    task_id: str = Field(description="Stable hash-based id (sha256[:12] of category+trigger)")
+    category: str = Field(description="One of EvidenceCategory values")
+    severity: str = Field("MEDIUM", description="LOW / MEDIUM / HIGH")
+    rationale: str = Field(description="Human-readable explanation")
+    trigger: str = Field(description="e.g. MATERIAL_MISMATCH")
+    recommended_artifacts: list[str] = Field(
+        default_factory=list,
+        description="Specific docs/tests needed, e.g. ['ISO 10993-1 plan', 'Cytotoxicity report']",
+    )
+    mapping: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured mapping for future linkage (Truth Machine, SE Matrix cells, eCTD)",
+    )
+
+
+class DefensePacketSeed(BaseModel):
+    """Response-level aggregated defense packet — the enterprise-grade 'fix list'.
+
+    Bridges predicate ranking → Shadow FDA Reviewer → Evidence-linked SE Matrix
+    without rewriting anything later. Can become:
+      - Truth Machine evidence placeholders
+      - EvidenceCell IDs in the SE Matrix
+      - Document task list in workflow UI
+      - Audit-traceable review plan
+    """
+    subject_hash: str = Field(description="SHA-256 of normalized input")
+    generated_at: str = Field(description="ISO 8601 timestamp")
+    program_id: str
+    product_code: str
+    tasks: list[EvidenceTask] = Field(default_factory=list, description="Deduped + sorted evidence tasks")
+    readiness_score: int = Field(0, ge=0, le=100, description="Composite DRS across suggestions")
+    top_risks: list[str] = Field(default_factory=list, description="Risk flag codes for UI badges")
 
 
 class PredicateSuggestion(BaseModel):
@@ -443,10 +496,10 @@ class PredicateSuggestion(BaseModel):
         default_factory=list,
         description="Predicted reviewer objections with fixes",
     )
-    # ── Defense Packet Seed (jaw-drop stub) ──
-    defense_packet_seed: list[DefensePacketSeed] = Field(
+    # ── Per-suggestion evidence seeds (legacy compat) ──
+    defense_packet_seed: list[EvidenceTaskSeed] = Field(
         default_factory=list,
-        description="Structured evidence needs derived from objections",
+        description="Simple per-suggestion evidence needs (see response-level DefensePacketSeed for rich version)",
     )
     # ── Legacy compat ──
     matched_terms: list[str] = Field(default_factory=list)
@@ -469,3 +522,8 @@ class PredicateSuggestResponse(BaseModel):
     latency_ms: int = Field(0, description="Server-side latency in milliseconds")
     weights_version: str = Field("v2.0", description="Scoring algorithm version")
     cached: bool = Field(False, description="True if served from cache")
+    # ── Response-level Defense Packet Seed ──
+    defense_packet_seed: Optional[DefensePacketSeed] = Field(
+        None,
+        description="Aggregated evidence fix-list across all suggestions — enterprise-grade bridge to Truth Machine / DOCX / eCTD",
+    )

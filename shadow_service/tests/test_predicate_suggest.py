@@ -37,12 +37,17 @@ from shadow_service.scoring.predicate_strategy import (
     find_matched_terms,
     generate_additional_objections,
     build_defense_packet_seed,
+    build_evidence_tasks,
+    build_response_defense_packet_seed,
     years_since,
     _token_overlap,
     _recency_boost,
     _tokenize,
 )
 from shadow_service.models_predicate import (
+    DefensePacketSeed,
+    EvidenceTask,
+    EvidenceTaskSeed,
     Objection,
     ObjectionSeverity,
     ObjectionTrigger,
@@ -446,7 +451,9 @@ class TestGenerateAdditionalObjections:
 # Unit tests: Defense Packet Seed
 # ─────────────────────────────────────────────────────────────────────────────
 
-class TestDefensePacketSeed:
+class TestDefensePacketSeedLegacy:
+    """Tests for per-suggestion EvidenceTaskSeed (legacy build_defense_packet_seed)."""
+
     def test_generates_seeds_from_objections(self):
         objs = [
             Objection(
@@ -459,6 +466,7 @@ class TestDefensePacketSeed:
         ]
         seeds = build_defense_packet_seed(objs)
         assert len(seeds) == 2
+        assert isinstance(seeds[0], EvidenceTaskSeed)
         assert seeds[0].evidence_type == "biocomp"
         assert seeds[0].priority == "HIGH"
 
@@ -485,6 +493,172 @@ class TestDefensePacketSeed:
     def test_empty_when_no_objections(self):
         seeds = build_defense_packet_seed([])
         assert seeds == []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unit tests: EvidenceTask + response-level DefensePacketSeed
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestEvidenceTaskAndResponseSeed:
+    """Tests for the enterprise-grade response-level Defense Packet Seed."""
+
+    def test_build_evidence_tasks_from_objections(self):
+        objs = [
+            Objection(
+                trigger=ObjectionTrigger.MATERIAL_CHANGE.value,
+                severity=ObjectionSeverity.HIGH,
+                question="Materials differ",
+                recommended_fix="Submit ISO 10993-1 eval",
+                evidence_types=["biocomp", "bench"],
+            ),
+        ]
+        tasks = build_evidence_tasks(objs, [])
+        assert len(tasks) == 2
+        for t in tasks:
+            assert isinstance(t, EvidenceTask)
+            assert t.task_id  # stable hash
+            assert len(t.task_id) == 12
+            assert t.category  # mapped from evidence_type
+            assert t.severity == "HIGH"
+            assert t.trigger == ObjectionTrigger.MATERIAL_CHANGE.value
+            assert len(t.recommended_artifacts) > 0
+            assert t.mapping.get("truth_machine_placeholder") is True
+            assert t.mapping.get("se_matrix_linkable") is True
+
+    def test_tasks_sorted_by_severity(self):
+        objs = [
+            Objection(
+                trigger=ObjectionTrigger.STERILIZATION_CHANGE.value,
+                severity=ObjectionSeverity.MEDIUM,
+                question="q1",
+                recommended_fix="fix1",
+                evidence_types=["sterilization_validation"],
+            ),
+            Objection(
+                trigger=ObjectionTrigger.TISSUE_CONTACT_DRIFT.value,
+                severity=ObjectionSeverity.HIGH,
+                question="q2",
+                recommended_fix="fix2",
+                evidence_types=["biocomp"],
+            ),
+        ]
+        tasks = build_evidence_tasks(objs, [])
+        assert tasks[0].severity == "HIGH"  # HIGH sorts first
+        assert tasks[1].severity == "MEDIUM"
+
+    def test_tasks_deduped_by_category_trigger(self):
+        objs = [
+            Objection(
+                trigger=ObjectionTrigger.MATERIAL_CHANGE.value,
+                severity=ObjectionSeverity.HIGH,
+                question="q1",
+                recommended_fix="fix1",
+                evidence_types=["biocomp"],
+            ),
+            Objection(
+                trigger=ObjectionTrigger.MATERIAL_CHANGE.value,
+                severity=ObjectionSeverity.HIGH,
+                question="q2",
+                recommended_fix="fix2",
+                evidence_types=["biocomp"],
+            ),
+        ]
+        tasks = build_evidence_tasks(objs, [])
+        assert len(tasks) == 1  # same category + trigger
+
+    def test_task_id_is_deterministic(self):
+        objs = [
+            Objection(
+                trigger=ObjectionTrigger.MATERIAL_CHANGE.value,
+                severity=ObjectionSeverity.HIGH,
+                question="q1",
+                recommended_fix="fix1",
+                evidence_types=["biocomp"],
+            ),
+        ]
+        tasks1 = build_evidence_tasks(objs, [])
+        tasks2 = build_evidence_tasks(objs, [])
+        assert tasks1[0].task_id == tasks2[0].task_id
+
+    def test_empty_tasks_when_no_objections(self):
+        tasks = build_evidence_tasks([], [])
+        assert tasks == []
+
+    def test_build_response_defense_packet_seed_structure(self):
+        """Response-level seed has all required fields."""
+        from shadow_service.models_predicate import PredicateSuggestion, ScoreBreakdown
+        # Minimal suggestion mock
+        s = PredicateSuggestion(
+            k_number="K230001",
+            device_name="Test",
+            product_code="DXN",
+            similarity_score=0.8,
+            defense_readiness_score=85.0,
+            strategy_recommendation=StrategyRecommendation.BALANCED,
+            reasoning="test",
+            score_breakdown=ScoreBreakdown(),
+            anticipated_objections=[
+                Objection(
+                    trigger=ObjectionTrigger.MATERIAL_CHANGE.value,
+                    severity=ObjectionSeverity.HIGH,
+                    question="q",
+                    recommended_fix="fix",
+                    evidence_types=["biocomp"],
+                ),
+            ],
+            risk_flags=[
+                RiskFlag(code="MATERIAL_MISMATCH", severity=RiskFlagSeverity.HIGH, message="test"),
+            ],
+        )
+        seed = build_response_defense_packet_seed(
+            suggestions=[s],
+            subject_hash="abc123" * 10 + "abcd",
+            program_id="prog-1",
+            product_code="DXN",
+        )
+        assert isinstance(seed, DefensePacketSeed)
+        assert seed.subject_hash.startswith("abc123")
+        assert seed.program_id == "prog-1"
+        assert seed.product_code == "DXN"
+        assert seed.generated_at  # ISO timestamp
+        assert seed.readiness_score == 85
+        assert len(seed.tasks) == 1
+        assert seed.tasks[0].task_id
+        assert seed.tasks[0].category == "Biocompatibility"
+        assert "MATERIAL_MISMATCH" in seed.top_risks
+
+    def test_readiness_score_is_avg_drs(self):
+        from shadow_service.models_predicate import PredicateSuggestion, ScoreBreakdown
+        s1 = PredicateSuggestion(
+            k_number="K1", device_name="A", product_code="DXN",
+            similarity_score=0.8, defense_readiness_score=80.0,
+            strategy_recommendation=StrategyRecommendation.BALANCED,
+            reasoning="r", score_breakdown=ScoreBreakdown(),
+        )
+        s2 = PredicateSuggestion(
+            k_number="K2", device_name="B", product_code="DXN",
+            similarity_score=0.7, defense_readiness_score=100.0,
+            strategy_recommendation=StrategyRecommendation.AGGRESSIVE,
+            reasoning="r", score_breakdown=ScoreBreakdown(),
+        )
+        seed = build_response_defense_packet_seed(
+            suggestions=[s1, s2],
+            subject_hash="hash",
+            program_id="p",
+            product_code="DXN",
+        )
+        assert seed.readiness_score == 90  # (80+100)/2
+
+    def test_empty_seed_when_no_suggestions(self):
+        seed = build_response_defense_packet_seed(
+            suggestions=[],
+            subject_hash="hash",
+            program_id="p",
+            product_code="DXN",
+        )
+        assert seed.tasks == []
+        assert seed.readiness_score == 0
+        assert seed.top_risks == []
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -659,7 +833,7 @@ class TestSuggestPredicates:
         assert resp.total_candidates_scanned == 0
 
     def test_defense_packet_seed_generated(self):
-        """When objections are present, defense_packet_seed should be populated."""
+        """When objections are present, per-suggestion defense_packet_seed should be populated."""
         # Force material mismatch → objection → defense seed
         rows = [_make_row(txt_content="stainless steel device")]
         pool = FakePool(rows, count=1)
@@ -668,7 +842,40 @@ class TestSuggestPredicates:
         s = resp.suggestions[0]
         if s.anticipated_objections:
             assert len(s.defense_packet_seed) > 0
+            assert all(isinstance(seed, EvidenceTaskSeed) for seed in s.defense_packet_seed)
             assert all(seed.evidence_type for seed in s.defense_packet_seed)
+
+    def test_response_level_defense_packet_seed(self):
+        """Response has a rich DefensePacketSeed with tasks/readiness/top_risks."""
+        rows = [_make_row(txt_content="stainless steel device")]
+        pool = FakePool(rows, count=1)
+        req = _make_request(materials=["titanium", "PEEK"])
+        resp = self._run(pool, req)
+        seed = resp.defense_packet_seed
+        assert seed is not None
+        assert isinstance(seed, DefensePacketSeed)
+        assert seed.subject_hash
+        assert seed.program_id == "test-program"
+        assert seed.product_code == "DXN"
+        assert seed.generated_at
+        assert 0 <= seed.readiness_score <= 100
+        if resp.suggestions[0].anticipated_objections:
+            assert len(seed.tasks) > 0
+            for task in seed.tasks:
+                assert isinstance(task, EvidenceTask)
+                assert len(task.task_id) == 12
+                assert task.category
+                assert task.severity in ["LOW", "MEDIUM", "HIGH"]
+                assert len(task.recommended_artifacts) > 0
+                assert task.mapping.get("truth_machine_placeholder") is True
+
+    def test_response_defense_seed_empty_when_no_candidates(self):
+        pool = FakePool([], count=0)
+        resp = self._run(pool)
+        seed = resp.defense_packet_seed
+        assert seed is not None
+        assert seed.tasks == []
+        assert seed.readiness_score == 0
 
     def test_latency_ms_in_response(self):
         rows = [_make_row()]

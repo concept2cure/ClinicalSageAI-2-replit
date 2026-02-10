@@ -21,12 +21,16 @@ DRS: starts at 100, subtracts penalties per spec.
 
 from __future__ import annotations
 
+import hashlib
 import re
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any, Optional
 
 from ..models_predicate import (
     DefensePacketSeed,
+    EvidenceCategory,
+    EvidenceTask,
+    EvidenceTaskSeed,
     EvidenceType,
     MatchSnippet,
     Objection,
@@ -333,12 +337,13 @@ def generate_additional_objections(
     return objections
 
 
-def build_defense_packet_seed(objections: list[Objection]) -> list[DefensePacketSeed]:
-    """Derive structured evidence needs from anticipated objections.
+def build_defense_packet_seed(objections: list[Objection]) -> list[EvidenceTaskSeed]:
+    """Derive simple per-suggestion evidence needs from anticipated objections.
 
-    The "jaw-drop" stub: prescribes the fix list, not just scoring.
+    Returns list[EvidenceTaskSeed] — the legacy per-suggestion seeds.
+    For the rich response-level DefensePacketSeed, see build_response_defense_packet_seed().
     """
-    seeds: list[DefensePacketSeed] = []
+    seeds: list[EvidenceTaskSeed] = []
     seen: set[str] = set()
 
     for obj in objections:
@@ -349,7 +354,7 @@ def build_defense_packet_seed(objections: list[Objection]) -> list[DefensePacket
             seen.add(key)
 
             priority = "HIGH" if obj.severity == ObjectionSeverity.HIGH else "MEDIUM"
-            seeds.append(DefensePacketSeed(
+            seeds.append(EvidenceTaskSeed(
                 evidence_type=ev_type,
                 description=obj.recommended_fix,
                 source_objection=obj.trigger,
@@ -357,6 +362,162 @@ def build_defense_packet_seed(objections: list[Objection]) -> list[DefensePacket
             ))
 
     return seeds
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Response-level Defense Packet Seed (enterprise-grade)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Map EvidenceType → EvidenceCategory
+_EVIDENCE_CATEGORY_MAP: dict[str, str] = {
+    EvidenceType.BENCH.value: EvidenceCategory.BENCH_TESTING.value,
+    EvidenceType.BIOCOMP.value: EvidenceCategory.BIOCOMPATIBILITY.value,
+    EvidenceType.CLINICAL.value: EvidenceCategory.CLINICAL_EVIDENCE.value,
+    EvidenceType.SW_LIFECYCLE.value: EvidenceCategory.SOFTWARE_LIFECYCLE.value,
+    EvidenceType.CYBERSECURITY.value: EvidenceCategory.CYBERSECURITY.value,
+    EvidenceType.STERILIZATION_VALIDATION.value: EvidenceCategory.STERILIZATION_VALIDATION.value,
+    EvidenceType.RISK_ANALYSIS.value: EvidenceCategory.RISK_MANAGEMENT.value,
+    EvidenceType.PERFORMANCE_DATA.value: EvidenceCategory.BENCH_TESTING.value,
+}
+
+# Map EvidenceCategory → recommended artifacts
+_ARTIFACT_MAP: dict[str, list[str]] = {
+    EvidenceCategory.BENCH_TESTING.value: [
+        "Performance testing protocol",
+        "Bench test report with acceptance criteria",
+    ],
+    EvidenceCategory.BIOCOMPATIBILITY.value: [
+        "ISO 10993-1 evaluation plan",
+        "Cytotoxicity report",
+        "Sensitization / irritation testing",
+    ],
+    EvidenceCategory.RISK_MANAGEMENT.value: [
+        "ISO 14971 risk management file",
+        "Hazard analysis with mitigations",
+    ],
+    EvidenceCategory.SOFTWARE_LIFECYCLE.value: [
+        "IEC 62304 software lifecycle plan",
+        "Software verification & validation report",
+    ],
+    EvidenceCategory.CYBERSECURITY.value: [
+        "Cybersecurity risk assessment",
+        "SBOM (Software Bill of Materials)",
+        "Threat model documentation",
+    ],
+    EvidenceCategory.STERILIZATION_VALIDATION.value: [
+        "Sterilization validation protocol (ISO 11135/11137/17665)",
+        "Sterility assurance level (SAL) report",
+    ],
+    EvidenceCategory.CLINICAL_EVIDENCE.value: [
+        "Clinical literature review",
+        "Clinical performance data comparison",
+    ],
+    EvidenceCategory.LABELING_IFU.value: [
+        "Labeling comparison (subject vs predicate)",
+        "Instructions for Use (IFU) update",
+    ],
+    EvidenceCategory.STANDARDS_CONFORMANCE.value: [
+        "Standards conformance matrix",
+        "Applicable standards gap analysis",
+    ],
+    EvidenceCategory.POST_MARKET_SURVEILLANCE.value: [
+        "Post-market surveillance plan",
+        "Complaint / MDR trend analysis",
+    ],
+}
+
+
+def _task_id(category: str, trigger: str) -> str:
+    """Stable hash-based task_id (first 12 hex chars of sha256)."""
+    raw = f"{category}:{trigger}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
+
+
+def build_evidence_tasks(
+    all_objections: list[Objection],
+    all_risk_flags: list[RiskFlag],
+) -> list[EvidenceTask]:
+    """Build deduped + sorted EvidenceTask list from objections across all suggestions.
+
+    This is the core 'fix list' — deterministic, no LLM.
+    """
+    tasks: list[EvidenceTask] = []
+    seen: set[str] = set()
+
+    for obj in all_objections:
+        for ev_type in obj.evidence_types:
+            category = _EVIDENCE_CATEGORY_MAP.get(ev_type, EvidenceCategory.STANDARDS_CONFORMANCE.value)
+            key = f"{category}:{obj.trigger}"
+            if key in seen:
+                continue
+            seen.add(key)
+
+            tasks.append(EvidenceTask(
+                task_id=_task_id(category, obj.trigger),
+                category=category,
+                severity=obj.severity.value,
+                rationale=obj.recommended_fix,
+                trigger=obj.trigger,
+                recommended_artifacts=_ARTIFACT_MAP.get(category, ["Supporting documentation"]),
+                mapping={
+                    "source_evidence_type": ev_type,
+                    "objection_trigger": obj.trigger,
+                    "truth_machine_placeholder": True,
+                    "se_matrix_linkable": True,
+                },
+            ))
+
+    # Sort: HIGH first, then MEDIUM, then LOW — stable within same severity
+    _SEV_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+    tasks.sort(key=lambda t: _SEV_ORDER.get(t.severity, 9))
+    return tasks
+
+
+def build_response_defense_packet_seed(
+    suggestions: list[Any],
+    subject_hash: str,
+    program_id: str,
+    product_code: str,
+) -> DefensePacketSeed:
+    """Build the response-level Defense Packet Seed from all scored suggestions.
+
+    Aggregates objections + risk flags across all suggestions, dedupes,
+    computes composite readiness_score, and returns the enterprise-grade
+    fix list that bridges ranking → workflow.
+    """
+    # Collect all objections + risk flags from all suggestions
+    all_objections: list[Objection] = []
+    all_risk_flags: list[RiskFlag] = []
+    drs_values: list[float] = []
+
+    for s in suggestions:
+        all_objections.extend(s.anticipated_objections)
+        all_risk_flags.extend(s.risk_flags)
+        drs_values.append(s.defense_readiness_score)
+
+    # Build deduped tasks
+    tasks = build_evidence_tasks(all_objections, all_risk_flags)
+
+    # Composite readiness = avg DRS (rounded), 0 if no suggestions
+    readiness_score = round(sum(drs_values) / len(drs_values)) if drs_values else 0
+
+    # Top risk codes (deduped, ordered by first appearance)
+    seen_risks: set[str] = set()
+    top_risks: list[str] = []
+    for f in all_risk_flags:
+        if f.code not in seen_risks:
+            seen_risks.add(f.code)
+            top_risks.append(f.code)
+
+    return DefensePacketSeed(
+        subject_hash=subject_hash,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        program_id=program_id,
+        product_code=product_code,
+        tasks=tasks,
+        readiness_score=readiness_score,
+        top_risks=top_risks,
+    )
 
 
 def extract_match_snippets(

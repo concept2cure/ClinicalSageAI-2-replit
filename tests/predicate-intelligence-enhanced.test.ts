@@ -43,6 +43,8 @@ const EMBEDDING_JOB = path.join(SHADOW, 'jobs', 'build_predicate_embeddings.py')
 
 // Phase 6.6.B files
 const PREDICATE_SUGGEST = path.join(SHADOW, 'predicate_suggest.py');
+const SCORING_MODULE = path.join(SHADOW, 'scoring', 'predicate_strategy.py');
+const MODELS_PREDICATE = path.join(SHADOW, 'models_predicate.py');
 
 // Phase 6.6.C files
 const GENERATORS_INIT = path.join(SHADOW, 'generators', '__init__.py');
@@ -1037,5 +1039,143 @@ describe('Phase 6.6.D — PredicateIntelligence.tsx enhancements', () => {
     expect(content).toContain('Technology');
     expect(content).toContain('Materials');
     expect(content).toContain('Energy Source');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 13. Defense Packet Seed — Enterprise Enhancement
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Defense Packet Seed — Enterprise Enhancement', () => {
+  describe('Python models (models_predicate.py)', () => {
+    it('defines EvidenceTask model', () => {
+      const content = readFileContent(MODELS_PREDICATE);
+      expect(content).toContain('class EvidenceTask(BaseModel)');
+      expect(content).toContain('task_id');
+      expect(content).toContain('category');
+      expect(content).toContain('recommended_artifacts');
+      expect(content).toContain('mapping');
+    });
+
+    it('defines EvidenceCategory enum with 10 categories', () => {
+      const content = readFileContent(MODELS_PREDICATE);
+      expect(content).toContain('class EvidenceCategory');
+      expect(content).toContain('BenchTesting');
+      expect(content).toContain('Biocompatibility');
+      expect(content).toContain('RiskManagement');
+      expect(content).toContain('SoftwareLifecycle');
+      expect(content).toContain('Cybersecurity');
+      expect(content).toContain('SterilizationValidation');
+      expect(content).toContain('ClinicalEvidence');
+      expect(content).toContain('LabelingIFU');
+      expect(content).toContain('StandardsConformance');
+      expect(content).toContain('PostMarketSurveillance');
+    });
+
+    it('defines response-level DefensePacketSeed with tasks/readiness/top_risks', () => {
+      const content = readFileContent(MODELS_PREDICATE);
+      expect(content).toContain('class DefensePacketSeed(BaseModel)');
+      expect(content).toContain('tasks: list[EvidenceTask]');
+      expect(content).toContain('readiness_score');
+      expect(content).toContain('top_risks');
+    });
+
+    it('preserves legacy EvidenceTaskSeed for per-suggestion compat', () => {
+      const content = readFileContent(MODELS_PREDICATE);
+      expect(content).toContain('class EvidenceTaskSeed(BaseModel)');
+    });
+
+    it('adds defense_packet_seed to PredicateSuggestResponse', () => {
+      const content = readFileContent(MODELS_PREDICATE);
+      // Response-level field
+      expect(content).toContain('defense_packet_seed: Optional[DefensePacketSeed]');
+    });
+  });
+
+  describe('Scoring module (predicate_strategy.py)', () => {
+    it('defines build_evidence_tasks function', () => {
+      const content = readFileContent(SCORING_MODULE);
+      expect(content).toContain('def build_evidence_tasks(');
+    });
+
+    it('defines build_response_defense_packet_seed function', () => {
+      const content = readFileContent(SCORING_MODULE);
+      expect(content).toContain('def build_response_defense_packet_seed(');
+    });
+
+    it('has artifact mapping for recommended docs', () => {
+      const content = readFileContent(SCORING_MODULE);
+      expect(content).toContain('_ARTIFACT_MAP');
+      expect(content).toContain('ISO 10993-1');
+      expect(content).toContain('IEC 62304');
+      expect(content).toContain('SBOM');
+    });
+
+    it('generates stable hash-based task_id', () => {
+      const content = readFileContent(SCORING_MODULE);
+      expect(content).toContain('def _task_id(');
+      expect(content).toContain('sha256');
+    });
+
+    it('maps evidence types to categories', () => {
+      const content = readFileContent(SCORING_MODULE);
+      expect(content).toContain('_EVIDENCE_CATEGORY_MAP');
+    });
+  });
+
+  describe('TypeScript types', () => {
+    it('defines EvidenceTask interface', () => {
+      const content = readFileContent(SHARED_TYPES);
+      expect(content).toContain('interface EvidenceTask');
+      expect(content).toContain('task_id: string');
+      expect(content).toContain('recommended_artifacts: string[]');
+    });
+
+    it('defines EvidenceCategory type', () => {
+      const content = readFileContent(SHARED_TYPES);
+      expect(content).toContain('EvidenceCategory');
+      expect(content).toContain('BenchTesting');
+      expect(content).toContain('PostMarketSurveillance');
+    });
+
+    it('defines response-level DefensePacketSeed with tasks', () => {
+      const content = readFileContent(SHARED_TYPES);
+      expect(content).toContain('tasks: EvidenceTask[]');
+      expect(content).toContain('readiness_score: number');
+      expect(content).toContain('top_risks: string[]');
+    });
+
+    it('response has defense_packet_seed field', () => {
+      const content = readFileContent(SHARED_TYPES);
+      expect(content).toContain('defense_packet_seed: DefensePacketSeed | null');
+    });
+  });
+
+  describe('Engine integration (predicate_suggest.py)', () => {
+    it('imports build_response_defense_packet_seed', () => {
+      const content = readFileContent(PREDICATE_SUGGEST);
+      expect(content).toContain('build_response_defense_packet_seed');
+    });
+
+    it('builds defense_packet_seed in response construction', () => {
+      const content = readFileContent(PREDICATE_SUGGEST);
+      expect(content).toContain('defense_packet_seed=defense_seed');
+    });
+  });
+
+  describe('UI (PredicateIntelligence.tsx)', () => {
+    it('renders response-level defense packet seed', () => {
+      const content = readFileContent(PAGE_FILE);
+      expect(content).toContain('defense_packet_seed');
+      expect(content).toContain('readiness_score');
+      expect(content).toContain('top_risks');
+    });
+
+    it('renders evidence task details', () => {
+      const content = readFileContent(PAGE_FILE);
+      expect(content).toContain('task.category');
+      expect(content).toContain('task.severity');
+      expect(content).toContain('recommended_artifacts');
+    });
   });
 });

@@ -45,6 +45,7 @@ from .models_predicate import (
 from .scoring.predicate_strategy import (
     build_defense_packet_seed,
     build_reasoning,
+    build_response_defense_packet_seed,
     classify_strategy,
     compute_drs,
     compute_similarity,
@@ -153,6 +154,14 @@ async def suggest_predicates(
     scored.sort(key=lambda s: (-s.similarity_score, -s.defense_readiness_score, s.k_number))
     top = scored[:MAX_SUGGESTIONS]
 
+    # Build response-level Defense Packet Seed (aggregated across all top suggestions)
+    defense_seed = build_response_defense_packet_seed(
+        suggestions=top,
+        subject_hash=subject_hash,
+        program_id=req.program_id,
+        product_code=req.product_code,
+    )
+
     latency_ms = int((time.monotonic() - t0) * 1000)
 
     response = PredicateSuggestResponse(
@@ -164,6 +173,7 @@ async def suggest_predicates(
         latency_ms=latency_ms,
         weights_version=WEIGHTS_VERSION,
         cached=False,
+        defense_packet_seed=defense_seed,
     )
 
     # B5 — Store in cache
