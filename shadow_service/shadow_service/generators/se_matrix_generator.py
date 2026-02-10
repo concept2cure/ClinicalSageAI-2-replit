@@ -141,6 +141,9 @@ class SEMatrixGenerator:
 
         readiness = self.calculate_readiness(rows)
 
+        # C0 enhancement: evidence manifest mapping row_id → placeholders
+        evidence_manifest = self._build_evidence_manifest(rows)
+
         return {
             "template_id": "510k_se_matrix_v2",
             "version": "6.6.0",
@@ -152,7 +155,53 @@ class SEMatrixGenerator:
             "evidence_linkage": True,
             "regulatory_standard": "FDA_510k_SE",
             "generation_timestamp": datetime.now(timezone.utc).isoformat(),
+            "evidence_manifest": evidence_manifest,
         }
+
+    # ─────────────────────────────────────────────────────────────────
+    # C0 — Evidence Manifest (row_id → evidence_placeholders[])
+    # ─────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _build_evidence_manifest(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Build JSON manifest mapping each row to evidence placeholders.
+
+        This enables downstream truth-machine evidence attachment
+        without redesign — each row knows what evidence it needs.
+        """
+        manifest: list[dict[str, Any]] = []
+        for row in rows:
+            row_id = f"row_{row['sort_order']}"
+            placeholders: list[str] = []
+
+            # Subject evidence
+            sv = row.get("subject_value", {})
+            if isinstance(sv, dict):
+                for eid in sv.get("evidence_ids", []):
+                    placeholders.append(f"EV_{eid}")
+                if not sv.get("evidence_ids") and sv.get("value") not in ("N/A", "n/a", ""):
+                    placeholders.append(f"EV_NEEDED_subject_{row['category']}")
+
+            # Predicate evidence
+            pv = row.get("predicate_value", {})
+            if isinstance(pv, dict):
+                for eid in pv.get("evidence_ids", []):
+                    placeholders.append(f"EV_{eid}")
+
+            # Suggested tests as evidence placeholders
+            for test in row.get("suggested_tests", []):
+                placeholders.append(f"TEST_{test.replace(' ', '_')[:40]}")
+
+            manifest.append({
+                "row_id": row_id,
+                "category": row.get("category", ""),
+                "characteristic": row.get("characteristic", ""),
+                "equivalence_status": row.get("equivalence_status", "PENDING"),
+                "diff_flag": row.get("equivalence_status", "PENDING"),
+                "evidence_placeholders": placeholders,
+                "highlight": row.get("equivalence_status") == "DISCUSSION_REQUIRED",
+            })
+        return manifest
 
     # ─────────────────────────────────────────────────────────────────
     # Difference Analysis

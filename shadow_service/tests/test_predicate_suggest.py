@@ -1,8 +1,7 @@
-"""Tests for Phase 6.6.B — Predicate Suggestion Engine.
+"""Tests for Phase 6.6.B v2 — Predicate Suggestion Engine (Shadow FDA Reviewer MVP).
 
-Tests the scoring, ranking, and explainability logic with mocked DB rows
-(same pattern as test_ingest_fda_510k.py — sync wrappers, fake pool, no
-pytest-asyncio dependency).
+Tests the scoring, ranking, DRS, objections, AVOID gating, caching,
+and explainability logic with mocked DB rows.
 """
 from __future__ import annotations
 
@@ -17,16 +16,21 @@ from shadow_service.predicate_suggest import (
     MAX_SUGGESTIONS,
     build_subject_text,
     suggest_predicates,
-    _classify_strategy,
+    _classify_strategy_v2,
+    _compute_drs,
     _compute_flags,
     _compute_reviewer_heat,
+    _extract_match_snippets,
+    _generate_objections,
     _name_overlap,
     _normalize_fts,
     _recency_boost,
     _tokenize,
     _years_since,
+    _cache,
 )
 from shadow_service.models_predicate import (
+    ObjectionTrigger,
     PredicateFlag,
     PredicateSuggestRequest,
     StrategyRecommendation,
@@ -107,7 +111,9 @@ def _make_request(**overrides) -> PredicateSuggestRequest:
     defaults = {
         "program_id": "prog-001",
         "product_code": "QEI",
-        "device_description": "Spinal fusion interbody cage titanium",
+        "device_name": "Spinal Fusion Cage",
+        "intended_use": "Spinal stabilization in skeletally mature patients",
+        "technology_description": "Titanium interbody cage for spinal fusion",
     }
     defaults.update(overrides)
     return PredicateSuggestRequest(**defaults)
@@ -176,16 +182,48 @@ class TestRecencyBoost:
 
 class TestClassifyStrategy:
     def test_aggressive(self):
-        assert _classify_strategy(1.0) == StrategyRecommendation.AGGRESSIVE
+        req = _make_request()
+        row = _fake_clearance_row(txt_content="spinal fusion cage")
+        assert _classify_strategy_v2(1.0, 0.5, True, req, row) == StrategyRecommendation.AGGRESSIVE
 
     def test_balanced(self):
-        assert _classify_strategy(4.0) == StrategyRecommendation.BALANCED
+        req = _make_request()
+        row = _fake_clearance_row(txt_content="spinal fusion cage")
+        assert _classify_strategy_v2(4.0, 0.5, True, req, row) == StrategyRecommendation.BALANCED
 
     def test_conservative(self):
-        assert _classify_strategy(8.0) == StrategyRecommendation.CONSERVATIVE
+        req = _make_request()
+        row = _fake_clearance_row(txt_content="spinal fusion cage")
+        assert _classify_strategy_v2(8.0, 0.5, True, req, row) == StrategyRecommendation.CONSERVATIVE
 
     def test_none(self):
-        assert _classify_strategy(None) == StrategyRecommendation.BALANCED
+        req = _make_request()
+        row = _fake_clearance_row(txt_content="spinal fusion cage")
+        assert _classify_strategy_v2(None, 0.5, True, req, row) == StrategyRecommendation.BALANCED
+
+    def test_avoid_old_missing_text_low_fts(self):
+        """B4: AVOID gate 1 — old + no text + low FTS."""
+        req = _make_request()
+        row = _fake_clearance_row(txt_content=None)
+        result = _classify_strategy_v2(13.0, 0.05, False, req, row)
+        assert result == StrategyRecommendation.AVOID
+
+    def test_avoid_tissue_contact_mismatch(self):
+        """B4: AVOID gate 2 — implant contact mismatch."""
+        req = _make_request(tissue_contact="implant")
+        row = _fake_clearance_row(txt_content="external monitoring device", device_name="Monitor")
+        result = _classify_strategy_v2(3.0, 0.5, True, req, row)
+        assert result == StrategyRecommendation.AVOID
+
+    def test_avoid_software_cyber_gap(self):
+        """B4: AVOID gate 3 — software present but predicate has no cyber keywords."""
+        req = _make_request(
+            software_present=True,
+            technology_description="AI-powered software algorithm for diagnostics",
+        )
+        row = _fake_clearance_row(txt_content="manual blood pressure cuff", device_name="Cuff")
+        result = _classify_strategy_v2(3.0, 0.5, True, req, row)
+        assert result == StrategyRecommendation.AVOID
 
 
 class TestComputeFlags:
@@ -228,6 +266,7 @@ def test_suggest_returns_max_5():
     """Even with 20 DB rows, only top 5 are returned."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row(f"K24{i:04d}", fts_rank=0.3 - i * 0.01) for i in range(10)]
         pool = FakePool(rows=rows, total_count=100)
         req = _make_request()
@@ -242,6 +281,7 @@ def test_suggest_sorted_by_score_desc():
     """Suggestions are sorted by similarity_score descending."""
 
     async def _run():
+        _cache._store.clear()
         rows = [
             _fake_clearance_row("K240001", fts_rank=0.05),
             _fake_clearance_row("K240002", fts_rank=0.25),
@@ -261,6 +301,7 @@ def test_suggest_strategy_populated():
     """Every suggestion has a strategy_recommendation."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row("K240001")]
         pool = FakePool(rows=rows)
         req = _make_request()
@@ -271,6 +312,7 @@ def test_suggest_strategy_populated():
                 StrategyRecommendation.AGGRESSIVE,
                 StrategyRecommendation.BALANCED,
                 StrategyRecommendation.CONSERVATIVE,
+                StrategyRecommendation.AVOID,
             )
 
     asyncio.run(_run())
@@ -280,6 +322,7 @@ def test_suggest_reasoning_nonempty():
     """Reasoning is non-empty and deterministic for same input."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row("K240001")]
         pool = FakePool(rows=rows)
         req = _make_request()
@@ -297,6 +340,7 @@ def test_suggest_flags_old_predicate():
     """Old predicate (>8y) gets OLD_PREDICATE flag."""
 
     async def _run():
+        _cache._store.clear()
         old_date = date.today() - timedelta(days=365 * 9)
         rows = [_fake_clearance_row("K160001", decision_date=old_date)]
         pool = FakePool(rows=rows)
@@ -312,6 +356,7 @@ def test_suggest_flags_missing_text():
     """Predicate without txt_content gets MISSING_SUMMARY_TEXT flag."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row("K240001", txt_content=None, summary_url=None)]
         pool = FakePool(rows=rows)
         req = _make_request()
@@ -326,6 +371,7 @@ def test_suggest_subject_hash_stable():
     """Same input produces same subject_hash."""
 
     async def _run():
+        _cache._store.clear()
         pool = FakePool(rows=[_fake_clearance_row("K240001")])
         req = _make_request()
         resp1 = await suggest_predicates(pool, req)
@@ -341,6 +387,7 @@ def test_suggest_score_breakdown_present():
     """Every suggestion has a full score_breakdown."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row("K240001")]
         pool = FakePool(rows=rows)
         req = _make_request()
@@ -360,6 +407,7 @@ def test_suggest_reviewer_heat_range():
     """reviewer_heat is 0–100."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row("K240001")]
         pool = FakePool(rows=rows)
         req = _make_request()
@@ -375,6 +423,7 @@ def test_suggest_empty_db():
     """Returns empty suggestions when DB has no matches."""
 
     async def _run():
+        _cache._store.clear()
         pool = FakePool(rows=[], total_count=0)
         req = _make_request()
         resp = await suggest_predicates(pool, req)
@@ -397,24 +446,219 @@ def test_build_subject_text():
     assert "titanium" in text
     assert "PEEK" in text
     assert "none" in text
+    # v2: device_name should be in subject text
+    assert "Spinal Fusion Cage" in text
 
 
 def test_suggest_matched_terms():
     """matched_terms shows which subject tokens matched the predicate."""
 
     async def _run():
+        _cache._store.clear()
         rows = [_fake_clearance_row(
             "K240001",
             device_name="Spinal Fusion Cage",
             txt_content="titanium interbody fusion cage for spinal stabilization",
         )]
         pool = FakePool(rows=rows)
-        req = _make_request(device_description="spinal fusion interbody cage titanium")
+        req = _make_request(
+            technology_description="spinal fusion interbody cage titanium",
+        )
         resp = await suggest_predicates(pool, req)
 
         terms = resp.suggestions[0].matched_terms
         assert len(terms) > 0
-        # At least some overlap terms should appear
         assert any(t in ["spinal", "fusion", "cage", "titanium"] for t in terms)
 
     asyncio.run(_run())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# v2 tests — DRS, snippets, objections, AVOID, cache
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_suggest_drs_present():
+    """Every suggestion has defense_readiness_score 0–100."""
+
+    async def _run():
+        _cache._store.clear()
+        rows = [_fake_clearance_row("K240001")]
+        pool = FakePool(rows=rows)
+        req = _make_request()
+        resp = await suggest_predicates(pool, req)
+
+        for s in resp.suggestions:
+            assert 0 <= s.defense_readiness_score <= 100
+
+    asyncio.run(_run())
+
+
+def test_suggest_match_snippets():
+    """Predicate with matching txt_content produces match_snippets."""
+
+    async def _run():
+        _cache._store.clear()
+        rows = [_fake_clearance_row(
+            "K240001",
+            txt_content=(
+                "This device is a titanium interbody cage intended for spinal fusion. "
+                "The cage is designed for stabilization of the spine during fusion procedures. "
+                "Materials include titanium alloy Ti-6Al-4V conforming to ASTM F136."
+            ),
+        )]
+        pool = FakePool(rows=rows)
+        req = _make_request(
+            technology_description="titanium interbody cage for spinal fusion",
+        )
+        resp = await suggest_predicates(pool, req)
+
+        snippets = resp.suggestions[0].match_snippets
+        # Should have some snippets since there's keyword overlap
+        assert len(snippets) >= 1
+        assert all(hasattr(sn, 'text') for sn in snippets)
+
+    asyncio.run(_run())
+
+
+def test_suggest_anticipated_objections_material():
+    """Material mismatch triggers MATERIAL_CHANGE objection."""
+
+    async def _run():
+        _cache._store.clear()
+        rows = [_fake_clearance_row(
+            "K240001",
+            txt_content="stainless steel orthopedic implant",
+            device_name="Steel Implant",
+        )]
+        pool = FakePool(rows=rows)
+        req = _make_request(materials=["titanium", "PEEK"])
+        resp = await suggest_predicates(pool, req)
+
+        objections = resp.suggestions[0].anticipated_objections
+        triggers = [o.trigger for o in objections]
+        assert ObjectionTrigger.MATERIAL_CHANGE in triggers
+
+    asyncio.run(_run())
+
+
+def test_suggest_anticipated_objections_software():
+    """Software present with non-SW predicate triggers SOFTWARE_CYBER_GAP."""
+
+    async def _run():
+        _cache._store.clear()
+        rows = [_fake_clearance_row(
+            "K240001",
+            txt_content="manual blood glucose meter",
+            device_name="Manual Meter",
+        )]
+        pool = FakePool(rows=rows)
+        req = _make_request(software_present=True)
+        resp = await suggest_predicates(pool, req)
+
+        objections = resp.suggestions[0].anticipated_objections
+        triggers = [o.trigger for o in objections]
+        assert ObjectionTrigger.SOFTWARE_CYBER_GAP in triggers
+
+    asyncio.run(_run())
+
+
+def test_suggest_weights_version():
+    """Response includes weights_version for audit."""
+
+    async def _run():
+        _cache._store.clear()
+        pool = FakePool(rows=[_fake_clearance_row("K240001")])
+        req = _make_request()
+        resp = await suggest_predicates(pool, req)
+        assert resp.weights_version == "v2.0"
+
+    asyncio.run(_run())
+
+
+def test_suggest_cache_hit():
+    """Second call with same inputs returns cached=True."""
+
+    async def _run():
+        # Clear cache first
+        _cache._store.clear()
+
+        pool = FakePool(rows=[_fake_clearance_row("K240001")])
+        req = _make_request()
+        resp1 = await suggest_predicates(pool, req)
+        assert resp1.cached is False
+
+        resp2 = await suggest_predicates(pool, req)
+        assert resp2.cached is True
+        assert resp2.subject_hash == resp1.subject_hash
+
+        # Clear cache after test
+        _cache._store.clear()
+
+    asyncio.run(_run())
+
+
+def test_suggest_deterministic_ordering():
+    """Results use stable tie-breaking: similarity DESC, DRS DESC, k_number ASC."""
+
+    async def _run():
+        _cache._store.clear()
+        rows = [
+            _fake_clearance_row("K240003", fts_rank=0.15),
+            _fake_clearance_row("K240001", fts_rank=0.15),
+            _fake_clearance_row("K240002", fts_rank=0.25),
+        ]
+        pool = FakePool(rows=rows)
+        req = _make_request()
+        resp = await suggest_predicates(pool, req)
+
+        k_numbers = [s.k_number for s in resp.suggestions]
+        # K240002 has higher FTS so comes first, then K240001/K240003 tie on score → k_number ASC
+        assert k_numbers[0] == "K240002"
+        # The tied ones should be k_number ASC
+        tied = k_numbers[1:]
+        assert tied == sorted(tied)
+        _cache._store.clear()
+
+    asyncio.run(_run())
+
+
+def test_compute_drs_with_text_and_overlap():
+    """DRS is higher when predicate has summary text + good overlap."""
+    req = _make_request(intended_use="spinal fusion stabilization")
+    row_with_text = _fake_clearance_row(
+        txt_content="Intended for spinal fusion stabilization in adults",
+        decision_date=date.today() - timedelta(days=365 * 2),
+    )
+    row_no_text = _fake_clearance_row(
+        txt_content=None,
+        decision_date=date.today() - timedelta(days=365 * 2),
+    )
+    drs_good = _compute_drs(row_with_text, req, 0.5, 2.0)
+    drs_bad = _compute_drs(row_no_text, req, 0.05, 2.0)
+    assert drs_good > drs_bad
+
+
+def test_extract_match_snippets_basic():
+    """Extract snippets from predicate text matching subject terms."""
+    row = _fake_clearance_row(
+        txt_content=(
+            "This device is a titanium interbody cage. "
+            "It is intended for spinal fusion procedures. "
+            "The cage promotes bone growth through fenestrations."
+        ),
+    )
+    snippets = _extract_match_snippets("titanium interbody cage spinal fusion", row)
+    assert len(snippets) >= 1
+    assert any("titanium" in s.text.lower() or "cage" in s.text.lower() for s in snippets)
+
+
+def test_generate_objections_intended_use_drift():
+    """Low intended use overlap triggers INTENDED_USE_DRIFT objection."""
+    req = _make_request(intended_use="continuous glucose monitoring for pediatric patients")
+    row = _fake_clearance_row(
+        txt_content="manual blood pressure measurement device for adults",
+        device_name="BP Monitor",
+    )
+    objections = _generate_objections(req, row, 0.5, 3.0)
+    triggers = [o.trigger for o in objections]
+    assert ObjectionTrigger.INTENDED_USE_DRIFT in triggers

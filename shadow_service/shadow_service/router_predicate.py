@@ -130,20 +130,40 @@ class Generate510kPreviewRequest(BaseModel):
 
 @router.post("/suggest", response_model=PredicateSuggestResponse)
 async def suggest_predicate_candidates(req: PredicateSuggestRequest):
-    """Return top 5 predicate suggestions with explainability.
+    """Return top 5 predicate suggestions with full Shadow Reviewer Scorecard.
+
+    v2 enhancements:
+      - B0: Structured input (device_name, intended_use, technology_description required)
+      - B1: FTS + match_snippets[]
+      - B2: Defense Readiness Score (DRS) per suggestion
+      - B3: Anticipated objections with typed triggers
+      - B4: AVOID gating for undefendable predicates
+      - B5: 15-min cache + audit event
 
     Filters by product_code + SE decision, scores via FTS + name overlap +
-    recency + completeness. Returns deterministic reasoning (no LLM).
+    recency + completeness + DRS. Returns deterministic reasoning (no LLM).
     """
-    if not req.product_code or not req.device_description:
-        raise HTTPException(
-            status_code=422,
-            detail="product_code and device_description are required",
-        )
+    # B0: Validate structured input
+    if not req.product_code:
+        raise HTTPException(status_code=422, detail="product_code is required")
+    if not req.device_name:
+        raise HTTPException(status_code=422, detail="device_name is required")
+    if not req.intended_use:
+        raise HTTPException(status_code=422, detail="intended_use is required")
+    tech = req.technology_description or req.device_description
+    if not tech:
+        raise HTTPException(status_code=422, detail="technology_description is required")
 
     try:
         pool = await db.get_pool()
         response = await suggest_predicates(pool, req)
+
+        # B5: Emit audit event (best-effort, non-blocking)
+        try:
+            await _emit_audit_event(pool, req, response)
+        except Exception as audit_err:
+            logger.warning("Audit event emission failed: %s", audit_err)
+
         return response
     except db.LiteModeError:
         raise HTTPException(
@@ -153,6 +173,30 @@ async def suggest_predicate_candidates(req: PredicateSuggestRequest):
     except Exception as exc:
         logger.exception("Predicate suggestion failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+async def _emit_audit_event(pool, req: PredicateSuggestRequest, response: PredicateSuggestResponse):
+    """Log predicate_suggest AuditEvent for Part 11 traceability (B5)."""
+    import json as _json
+    async with pool.acquire() as conn:
+        top_k = [s.k_number for s in response.suggestions[:5]]
+        await conn.execute(
+            """INSERT INTO predicate.fda_ingest_runs
+               (job_name, status, started_at, product_codes_filter, max_clearances_limit,
+                triggered_by, run_fingerprint)
+               VALUES ($1, $2, NOW(), $3, $4, $5, $6)""",
+            "predicate_suggest",
+            "completed",
+            [req.product_code],
+            response.total_candidates_scanned,
+            f"program:{req.program_id}",
+            _json.dumps({
+                "subject_hash": response.subject_hash,
+                "top_selections": top_k,
+                "weights_version": response.weights_version,
+                "cached": response.cached,
+            }),
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -548,6 +592,7 @@ async def generate_se_matrix(req: GenerateSEMatrixRequest):
                 if r["equivalence_status"] == "DISCUSSION_REQUIRED"
             ),
             "generation_timestamp": payload["generation_timestamp"],
+            "evidence_manifest": payload.get("evidence_manifest", []),
         }
     finally:
         await db.release_connection(conn)

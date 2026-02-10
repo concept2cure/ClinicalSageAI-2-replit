@@ -468,26 +468,27 @@ docs/audits/
 
 #### Build Health
 
-| Ecosystem | Status | Detail |
-|-----------|--------|--------|
-| Node / Vitest | ✅ Green | 39 files, 1127 tests, 0 failures |
-| Python / Pytest (core) | ✅ Green | 17 passed, 0 failures |
-| Python / HSM tests | ⏭ Skipped | `boto3` not in default env; `pytest.importorskip` gate added |
-| Lint / Typecheck | 🔲 Pending | `npm run lint` / `tsc --noEmit` — add to CI gate |
+| Ecosystem              | Status     | Detail                                                       |
+| ---------------------- | ---------- | ------------------------------------------------------------ |
+| Node / Vitest          | ✅ Green   | 39 files, 1127 tests, 0 failures                             |
+| Python / Pytest (core) | ✅ Green   | 17 passed, 0 failures                                        |
+| Python / HSM tests     | ⏭ Skipped | `boto3` not in default env; `pytest.importorskip` gate added |
+| Lint / Typecheck       | 🔲 Pending | `npm run lint` / `tsc --noEmit` — add to CI gate             |
 
 **Actions taken:**
+
 - `hsm_signer.py`: moved `import boto3` to lazy (inside `__init__`) — module importable without AWS SDK
 - `test_ectd4_compiler.py`: added `pytest.importorskip("boto3")` before HSM test class — clean skip, not red
 - `sign_and_audit()`: hardened with SIGN_ATTEMPTED / SIGN_SUCCEEDED / SIGN_FAILED events + stable metadata fields
 
 #### Immediate Next PRs
 
-| PR | Scope | Status |
-|----|-------|--------|
+| PR        | Scope                                                                                   | Status         |
+| --------- | --------------------------------------------------------------------------------------- | -------------- |
 | **6.6.A** | FDA Predicate data layer: `fda_ingest_runs` migration + ingest run logging + smoke test | 🚧 In Progress |
-| **6.6.B** | predicate-suggest endpoint + toxicity scoring v1 | 🔲 Not Started |
-| **6.6.C** | SE Matrix v2 template + payload generator | 🔲 Not Started |
-| **6.6.D** | Defense Preview UI | 🔲 Not Started |
+| **6.6.B** | predicate-suggest endpoint + toxicity scoring v1                                        | 🔲 Not Started |
+| **6.6.C** | SE Matrix v2 template + payload generator                                               | 🔲 Not Started |
+| **6.6.D** | Defense Preview UI                                                                      | 🔲 Not Started |
 
 #### Non-negotiable Gates
 

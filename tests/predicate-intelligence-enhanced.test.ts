@@ -649,7 +649,6 @@ describe('Shared Types — Phase 6.6 Enhanced', () => {
     expect(content).toContain("'CONSERVATIVE'");
     expect(content).toContain("'AGGRESSIVE'");
     expect(content).toContain("'BALANCED'");
-    expect(content).toContain("'RISKY'");
     expect(content).toContain("'AVOID'");
   });
 
@@ -685,9 +684,9 @@ describe('Shared Types — Phase 6.6 Enhanced', () => {
   it('exports PredicateSuggestion interface', () => {
     const content = readFileContent(SHARED_TYPES);
     expect(content).toContain('interface PredicateSuggestion');
-    expect(content).toContain('composite_score');
+    expect(content).toContain('similarity_score');
+    expect(content).toContain('defense_readiness_score');
     expect(content).toContain('strategy_recommendation');
-    expect(content).toContain('lineage_safety');
     expect(content).toContain('reasoning');
   });
 
@@ -696,14 +695,13 @@ describe('Shared Types — Phase 6.6 Enhanced', () => {
     expect(content).toContain('interface PredicateSuggestRequest');
     expect(content).toContain('product_code');
     expect(content).toContain('intended_use');
-    expect(content).toContain('max_results');
   });
 
   it('exports PredicateSuggestResponse interface', () => {
     const content = readFileContent(SHARED_TYPES);
     expect(content).toContain('interface PredicateSuggestResponse');
     expect(content).toContain('suggestions');
-    expect(content).toContain('total_candidates_evaluated');
+    expect(content).toContain('total_candidates_scanned');
   });
 
   it('exports GenerateSEMatrixRequest interface', () => {
@@ -963,7 +961,7 @@ describe('Phase 6.6.D — PredicateIntelligence.tsx enhancements', () => {
   it('StrategyTab renders ranked suggestions table', () => {
     const content = readFileContent(PAGE_FILE);
     expect(content).toContain('Ranked Predicate Suggestions');
-    expect(content).toContain('composite_score');
+    expect(content).toContain('similarity_score');
   });
 
   it('StrategyTab renders strategy reasoning', () => {

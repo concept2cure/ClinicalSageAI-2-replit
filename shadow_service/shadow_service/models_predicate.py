@@ -272,6 +272,7 @@ class StrategyRecommendation(str, Enum):
     CONSERVATIVE = "CONSERVATIVE"
     BALANCED = "BALANCED"
     AGGRESSIVE = "AGGRESSIVE"
+    AVOID = "AVOID"
 
 
 class PredicateFlag(str, Enum):
@@ -281,17 +282,67 @@ class PredicateFlag(str, Enum):
     VERY_NEW = "VERY_NEW"                     # cleared < 6 months ago
 
 
+class ObjectionTrigger(str, Enum):
+    """Typed triggers for anticipated reviewer objections."""
+    INTENDED_USE_DRIFT = "INTENDED_USE_DRIFT"
+    MATERIAL_CHANGE = "MATERIAL_CHANGE"
+    ENERGY_SOURCE_CHANGE = "ENERGY_SOURCE_CHANGE"
+    STERILIZATION_CHANGE = "STERILIZATION_CHANGE"
+    SOFTWARE_CYBER_GAP = "SOFTWARE_CYBER_GAP"
+    TISSUE_CONTACT_DRIFT = "TISSUE_CONTACT_DRIFT"
+    DURATION_MISMATCH = "DURATION_MISMATCH"
+    OLD_PREDICATE_GAP = "OLD_PREDICATE_GAP"
+    MISSING_SUMMARY = "MISSING_SUMMARY"
+
+
+class EvidenceType(str, Enum):
+    """Suggested evidence types for objection resolution."""
+    BENCH = "bench"
+    BIOCOMP = "biocomp"
+    CLINICAL = "clinical"
+    SW_LIFECYCLE = "sw_lifecycle"
+    CYBERSECURITY = "cybersecurity"
+    STERILIZATION_VALIDATION = "sterilization_validation"
+    RISK_ANALYSIS = "risk_analysis"
+    PERFORMANCE_DATA = "performance_data"
+
+
+class AnticipatedObjection(BaseModel):
+    """A structured reviewer objection with actionable fix."""
+    question: str
+    severity: str = Field(description="High / Med / Low")
+    trigger: ObjectionTrigger
+    recommended_fix: str = Field(description="One-liner actionable fix")
+    suggested_evidence_types: list[str] = Field(default_factory=list)
+
+
+class MatchSnippet(BaseModel):
+    """A short excerpt from predicate text that matched the subject."""
+    text: str = Field(description="Short excerpt (≤200 chars)")
+    source: str = Field("txt_content", description="Field the snippet came from")
+
+
 class PredicateSuggestRequest(BaseModel):
-    """Input for POST /predicate/suggest — the subject device to find predicates for."""
+    """Input for POST /predicate/suggest — the subject device to find predicates for.
+
+    Required: product_code, device_name, intended_use, technology_description.
+    Strongly recommended: materials, energy_source, tissue_contact, duration, software_present.
+    """
     program_id: str
+    # ── Required (B0) ──
     product_code: str
-    device_description: str
-    intended_use: Optional[str] = None
+    device_name: str
+    intended_use: str
+    technology_description: str
+    # ── Strongly recommended (B0) ──
     materials: Optional[list[str]] = None
     energy_source: Optional[str] = None
-    tissue_contact: Optional[str] = None
-    duration: Optional[str] = None
-    software_flag: Optional[bool] = None
+    tissue_contact: Optional[str] = None  # none / intact_skin / breached / blood / implant
+    duration: Optional[str] = None        # transient / short / long (ISO 10993 buckets)
+    software_present: Optional[bool] = None
+    # ── Legacy compat ──
+    device_description: Optional[str] = None  # fallback if technology_description empty
+    software_flag: Optional[bool] = None      # alias for software_present
 
 
 class ScoreBreakdown(BaseModel):
@@ -308,19 +359,36 @@ class ScoreBreakdown(BaseModel):
 
 
 class PredicateSuggestion(BaseModel):
-    """A single predicate suggestion with explainability."""
+    """A single predicate suggestion with full Shadow Reviewer Scorecard."""
     k_number: str
     device_name: str
     applicant: Optional[str] = None
     product_code: str
     decision_date: Optional[date] = None
     summary_url: Optional[str] = None
+    # ── Scoring (B2) ──
     similarity_score: float = Field(ge=0.0, le=1.0)
-    recency_years: Optional[float] = None
+    defense_readiness_score: float = Field(
+        0.0, ge=0.0, le=100.0,
+        description="DRS: evidence completeness metric (0–100)",
+    )
     strategy_recommendation: StrategyRecommendation
+    risk_flags: list[PredicateFlag] = Field(default_factory=list)
     reasoning: str
     score_breakdown: ScoreBreakdown
+    # ── Match evidence (B1) ──
     matched_terms: list[str] = Field(default_factory=list)
+    match_snippets: list[MatchSnippet] = Field(
+        default_factory=list,
+        description="Top 3 short excerpts from predicate text",
+    )
+    # ── Objections (B3) ──
+    anticipated_objections: list[AnticipatedObjection] = Field(
+        default_factory=list,
+        description="Predicted reviewer objections with fixes",
+    )
+    # ── Legacy compat ──
+    recency_years: Optional[float] = None
     flags: list[PredicateFlag] = Field(default_factory=list)
     reviewer_heat: int = Field(0, ge=0, le=100, description="Triage signal 0-100")
     next_evidence: list[str] = Field(
@@ -330,9 +398,11 @@ class PredicateSuggestion(BaseModel):
 
 
 class PredicateSuggestResponse(BaseModel):
-    """Response from POST /predicate/suggest — top 5 predicates with explanations."""
+    """Response from POST /predicate/suggest — top 5 predicates with full scorecards."""
     suggestions: list[PredicateSuggestion]
     generated_at: datetime
     subject_hash: str = Field(description="SHA-256 of normalized input for dedup/caching")
     product_code: str
     total_candidates_scanned: int = 0
+    weights_version: str = Field("v2.0", description="Scoring algorithm version")
+    cached: bool = Field(False, description="True if served from cache")

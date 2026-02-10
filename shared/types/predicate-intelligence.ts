@@ -32,7 +32,47 @@ export type QuestionSeverity = 'high' | 'medium' | 'low' | 'critical';
 // Phase 6.6.A/B — Strategy & FDA Universe Types
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type StrategyRecommendation = 'CONSERVATIVE' | 'AGGRESSIVE' | 'BALANCED' | 'RISKY' | 'AVOID';
+export type StrategyRecommendation = 'CONSERVATIVE' | 'AGGRESSIVE' | 'BALANCED' | 'AVOID';
+
+export type ObjectionTrigger =
+  | 'INTENDED_USE_DRIFT'
+  | 'MATERIAL_CHANGE'
+  | 'ENERGY_SOURCE_CHANGE'
+  | 'STERILIZATION_CHANGE'
+  | 'SOFTWARE_CYBER_GAP'
+  | 'TISSUE_CONTACT_DRIFT'
+  | 'DURATION_MISMATCH'
+  | 'OLD_PREDICATE_GAP'
+  | 'MISSING_SUMMARY';
+
+export type SuggestedEvidenceType =
+  | 'bench'
+  | 'biocomp'
+  | 'clinical'
+  | 'sw_lifecycle'
+  | 'cybersecurity'
+  | 'sterilization_validation'
+  | 'risk_analysis'
+  | 'performance_data';
+
+export type PredicateFlag =
+  | 'OLD_PREDICATE'
+  | 'LOW_TEXT_MATCH'
+  | 'MISSING_SUMMARY_TEXT'
+  | 'VERY_NEW';
+
+export interface AnticipatedObjection {
+  question: string;
+  severity: 'High' | 'Med' | 'Low';
+  trigger: ObjectionTrigger;
+  recommended_fix: string;
+  suggested_evidence_types: SuggestedEvidenceType[];
+}
+
+export interface MatchSnippet {
+  text: string;
+  source: string;
+}
 
 export type LineageSafety = 'CLEAN' | 'COMPROMISED' | 'UNKNOWN';
 
@@ -66,34 +106,60 @@ export interface PredicateSuggestion {
   k_number: string;
   device_name: string;
   applicant?: string | null;
-  clearance_date?: string | null;
-  product_code?: string | null;
+  product_code: string;
+  decision_date?: string | null;
+  summary_url?: string | null;
+  // Scoring (B2)
   similarity_score: number;
-  toxicity_score: number;
-  lineage_safety: LineageSafety;
+  defense_readiness_score: number;
   strategy_recommendation: StrategyRecommendation;
+  risk_flags: PredicateFlag[];
   reasoning: string;
-  composite_score: number;
-  semantic_distance?: number | null;
+  score_breakdown: {
+    fts_score: number;
+    name_match: number;
+    recency_boost: number;
+    completeness_bonus: number;
+    weights: Record<string, number>;
+  };
+  // Match evidence (B1)
+  matched_terms: string[];
+  match_snippets: MatchSnippet[];
+  // Objections (B3)
+  anticipated_objections: AnticipatedObjection[];
+  // Legacy compat
+  recency_years?: number | null;
+  flags: PredicateFlag[];
+  reviewer_heat: number;
+  next_evidence: string[];
 }
 
 export interface PredicateSuggestRequest {
   program_id: string;
+  // Required (B0)
   product_code: string;
+  device_name: string;
   intended_use: string;
-  technology?: string;
-  materials?: string;
+  technology_description: string;
+  // Strongly recommended
+  materials?: string[];
   energy_source?: string;
-  tissue_contact?: string;
-  sterilization?: string;
-  max_results?: number;
+  tissue_contact?: string; // none / intact_skin / breached / blood / implant
+  duration?: string; // transient / short / long (ISO 10993)
+  software_present?: boolean;
+  // Legacy compat
+  device_description?: string;
+  software_flag?: boolean;
 }
 
 export interface PredicateSuggestResponse {
   suggestions: PredicateSuggestion[];
-  subject_device_hash: string;
-  total_candidates_evaluated: number;
+  subject_hash: string;
+  product_code: string;
+  total_candidates_scanned: number;
   generated_at: string;
+  weights_version: string;
+  cached: boolean;
 }
 
 export interface FDA510kClearance {
@@ -176,12 +242,23 @@ export interface SEMatrixPayload {
   generation_timestamp: string;
 }
 
+export interface EvidenceManifestEntry {
+  row_id: string;
+  category: string;
+  characteristic: string;
+  equivalence_status: EquivalenceStatus;
+  diff_flag: string;
+  evidence_placeholders: string[];
+  highlight: boolean;
+}
+
 export interface GenerateSEMatrixResponse {
   se_matrix_payload: SEMatrixPayload;
   defense_readiness_score: number;
   row_count: number;
   discussion_required_count: number;
   generation_timestamp: string;
+  evidence_manifest: EvidenceManifestEntry[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
