@@ -52,7 +52,5 @@
   
   "remoteEnv": {
     "NODE_ENV": "development"
-  },
-  
-  "remoteUser": "node"
+  }
 }
