@@ -464,6 +464,7 @@ docs/audits/
 - **PRs #133 and #137 merged**: Phase 6 audit completion (confirmed via git history).
 - **PR #132 closed**: Predicate Intelligence scope deferred to Phase 6.6.
 - **Branch state**: `concept2cure-v2` and `main` at parity (zero diff). Branch is not long-lived shadow — it’s synced.
+- **Docs refreshed**: Added Phase 6.2–6.6 roadmap files in docs/ (see docs/CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md and docs/PHASE6_DOCX_FACTORY_AND_PREDICATE_INTEL.md).
 
 #### Build Health
 
