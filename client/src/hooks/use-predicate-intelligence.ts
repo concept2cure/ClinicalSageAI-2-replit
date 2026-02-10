@@ -256,7 +256,7 @@ export function useSuggestPredicates(programId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (params: Omit<PredicateSuggestRequest, 'program_id'>) =>
-      predicateFetch<PredicateSuggestResponse>('/device/predicate-suggest', {
+      predicateFetch<PredicateSuggestResponse>('/suggest', {
         method: 'POST',
         body: JSON.stringify({ program_id: programId, ...params }),
       }),

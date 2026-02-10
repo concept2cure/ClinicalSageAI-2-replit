@@ -23,9 +23,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { eq, and } from 'drizzle-orm';
-import { db } from '../../db';
-import { regulatoryPrograms } from '@shared/schema';
-import { authenticateToken } from '../middleware/auth';
+import { db } from '../db.js';
+import { regulatoryPrograms } from '../../shared/schema/programs.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 

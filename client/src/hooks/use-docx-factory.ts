@@ -193,13 +193,10 @@ export function useTemplateVersions(templateId: string, programId: string) {
   return useQuery<TemplateVersion[]>({
     queryKey: docxKeys.templateVersions(templateId),
     queryFn: async () => {
-      // The Shadow endpoint returns versions nested under the template
-      // but the BFF proxies to the list endpoint
+      // Versions are returned as a list response from the BFF.
       const res = await docxFetch<ListResponse<TemplateVersion>>(
         `/templates/${templateId}/versions?program_id=${programId}`
       );
-      // If the endpoint doesn't exist yet (6.1 didn't expose list-versions via BFF),
-      // fall back gracefully
       return Array.isArray(res) ? res : (res as any).items || [];
     },
     enabled: !!templateId && !!programId,

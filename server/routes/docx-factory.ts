@@ -14,6 +14,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { Readable } from 'stream';
 import { eq, and } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth.js';
 import { db } from '../db.js';
@@ -217,6 +218,30 @@ router.post(
   }
 );
 
+/**
+ * GET /api/docx-factory/templates/:templateId/versions?program_id=...
+ *
+ * List all versions for a template.
+ */
+router.get(
+  '/templates/:templateId/versions',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
+    try {
+      const result = await proxyToShadow(
+        `/docx/templates/${encodeURIComponent(req.params.templateId)}/versions`,
+        { query: { program_id: programId } }
+      );
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[docx-factory] list versions proxy error:', err.message);
+      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    }
+  }
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Routes — Renders
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -393,6 +418,13 @@ router.get(
       res.setHeader('Content-Disposition', contentDisposition);
       if (sha256Header) {
         res.setHeader('X-Artifact-SHA256', sha256Header);
+      }
+
+      if (response.body) {
+        const stream = Readable.fromWeb(response.body as any);
+        res.status(200);
+        stream.pipe(res);
+        return;
       }
 
       const buffer = Buffer.from(await response.arrayBuffer());

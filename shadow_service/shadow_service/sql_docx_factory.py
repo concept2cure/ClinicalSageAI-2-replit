@@ -79,6 +79,14 @@ SELECT id, template_id, version, storage_key, sha256, created_at
  ORDER BY version DESC
 """
 
+SELECT_TEMPLATE_VERSIONS_FOR_PROGRAM = """
+SELECT tv.id, tv.template_id, tv.version, tv.storage_key, tv.sha256, tv.created_at
+  FROM documents.template_versions tv
+  JOIN documents.templates t ON t.id = tv.template_id
+ WHERE tv.template_id = $1 AND t.program_id = $2
+ ORDER BY tv.version DESC
+"""
+
 SELECT_NEXT_VERSION_NUMBER = """
 SELECT COALESCE(MAX(version), 0) + 1 AS next_version
   FROM documents.template_versions

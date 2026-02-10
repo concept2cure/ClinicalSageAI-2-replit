@@ -133,6 +133,24 @@ async def get_template_version(template_version_id: UUID) -> Optional[dict[str, 
         await db.release_connection(conn)
 
 
+async def list_template_versions(
+    program_id: UUID,
+    template_id: UUID,
+) -> list[dict[str, Any]]:
+    """List all versions for a template, scoped to a program."""
+    conn = await db.acquire_connection()
+    try:
+        await _set_rls(conn, program_id)
+        rows = await conn.fetch(
+            sql.SELECT_TEMPLATE_VERSIONS_FOR_PROGRAM,
+            template_id,
+            program_id,
+        )
+        return [dict(r) for r in rows]
+    finally:
+        await db.release_connection(conn)
+
+
 # =============================================================================
 # Renders
 # =============================================================================

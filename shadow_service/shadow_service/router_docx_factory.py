@@ -29,6 +29,7 @@ from .models_docx_factory import (
     RenderResponse,
     TemplateListResponse,
     TemplateResponse,
+    TemplateVersionListResponse,
     TemplateVersionResponse,
 )
 
@@ -131,6 +132,26 @@ async def create_template_version(template_id: UUID, req: CreateTemplateVersionR
             sha256=req.sha256,
         )
         return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+@router.get(
+    "/templates/{template_id}/versions",
+    response_model=TemplateVersionListResponse,
+)
+async def list_template_versions(template_id: UUID, program_id: UUID = Query(...)):
+    """List all versions for a template (scoped to program)."""
+    try:
+        template = await runner.get_template(program_id, template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+
+        items = await runner.list_template_versions(program_id, template_id)
+        return {"items": items, "total": len(items)}
     except HTTPException:
         raise
     except Exception as e:

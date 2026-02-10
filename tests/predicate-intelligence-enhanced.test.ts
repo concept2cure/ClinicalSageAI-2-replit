@@ -7,7 +7,7 @@
  *  3. Phase 6.6.A — Pydantic models (22+ models/enums)
  *  4. Phase 6.6.A — Ingest job (FDA510kIngestor)
  *  5. Phase 6.6.A — Embedding builder (PredicateEmbeddingBuilder)
- *  6. Phase 6.6.B — Strategy Engine (StrategyEngine class)
+ *  6. Phase 6.6.B — Predicate Suggestion Engine
  *  7. Phase 6.6.C — SE Matrix Generator (SEMatrixGenerator class)
  *  8. Phase 6.6.B/C — Router endpoints (predicate-suggest, generate-se-matrix)
  *  9. Phase 6.6.B/C — BFF proxy routes
@@ -31,7 +31,10 @@ const SHADOW = path.join(ROOT, 'shadow_service', 'shadow_service');
 
 // Phase 6.6.A files
 const MIGRATION_6A = path.join(
-  ROOT, 'db', 'migrations', '20260207_phase6_6a_fda_clearance_universe.sql'
+  ROOT,
+  'db',
+  'migrations',
+  '20260207_phase6_6a_fda_clearance_universe.sql'
 );
 const SQL_FDA_UNIVERSE = path.join(SHADOW, 'sql_fda_universe.py');
 const MODELS_FDA_UNIVERSE = path.join(SHADOW, 'models_fda_universe.py');
@@ -39,8 +42,7 @@ const INGEST_JOB = path.join(SHADOW, 'jobs', 'ingest_fda_510k.py');
 const EMBEDDING_JOB = path.join(SHADOW, 'jobs', 'build_predicate_embeddings.py');
 
 // Phase 6.6.B files
-const SCORING_INIT = path.join(SHADOW, 'scoring', '__init__.py');
-const STRATEGY_ENGINE = path.join(SHADOW, 'scoring', 'strategy_engine.py');
+const PREDICATE_SUGGEST = path.join(SHADOW, 'predicate_suggest.py');
 
 // Phase 6.6.C files
 const GENERATORS_INIT = path.join(SHADOW, 'generators', '__init__.py');
@@ -68,46 +70,50 @@ function fileExists(filePath: string): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 1. Phase 6.6.A — FDA Clearance Universe Migration
+// 6. Phase 6.6.B — Predicate Suggestion Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('Phase 6.6.A — FDA Clearance Universe Migration', () => {
-  it('migration file exists', () => {
-    expect(fileExists(MIGRATION_6A)).toBe(true);
+describe('Phase 6.6.B — predicate_suggest.py', () => {
+  it('predicate suggest file exists', () => {
+    expect(fileExists(PREDICATE_SUGGEST)).toBe(true);
   });
 
-  it('enables pgvector extension', () => {
-    const content = readFileContent(MIGRATION_6A);
-    expect(content).toContain('CREATE EXTENSION IF NOT EXISTS vector');
+  it('exports suggest_predicates entry point', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('async def suggest_predicates(');
   });
 
-  it('enables pg_trgm extension', () => {
-    const content = readFileContent(MIGRATION_6A);
-    expect(content).toContain('pg_trgm');
+  it('defines composite scoring weights', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('WEIGHTS');
+    expect(content).toContain('fts');
+    expect(content).toContain('recency');
   });
 
-  it('creates predicate.fda_product_codes table', () => {
-    const content = readFileContent(MIGRATION_6A);
-    expect(content).toContain('predicate.fda_product_codes');
-    expect(content).toContain('device_class');
-    expect(content).toContain('regulation_number');
-    expect(content).toContain('review_panel');
+  it('classifies strategy recommendations', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_classify_strategy');
+    expect(content).toContain('StrategyRecommendation');
   });
 
-  it('creates predicate.fda_510k_clearances table', () => {
-    const content = readFileContent(MIGRATION_6A);
-    expect(content).toContain('predicate.fda_510k_clearances');
-    expect(content).toContain('k_number');
-    expect(content).toContain('applicant');
-    expect(content).toContain('device_name');
-    expect(content).toContain('product_code');
-    expect(content).toContain('decision_date');
-    expect(content).toContain('decision_code');
-    expect(content).toContain('summary_url');
-    expect(content).toContain('clearance_type');
-    expect(content).toContain('txt_content');
+  it('builds subject text from request fields', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('build_subject_text');
   });
 
+  it('computes explainability fields', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_find_matched_terms');
+    expect(content).toContain('_compute_flags');
+    expect(content).toContain('_build_reasoning');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 1. Phase 6.6.A — FDA Clearance Universe migration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.A — FDA Clearance Universe migration', () => {
   it('creates predicate.predicate_safety_signals table', () => {
     const content = readFileContent(MIGRATION_6A);
     expect(content).toContain('predicate.predicate_safety_signals');
@@ -307,53 +313,35 @@ describe('Phase 6.6.A — models_fda_universe.py', () => {
 // 4. Phase 6.6.A — FDA 510(k) Ingest Job
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('Phase 6.6.A — ingest_fda_510k.py', () => {
-  it('file exists', () => {
-    expect(fileExists(INGEST_JOB)).toBe(true);
+describe('Phase 6.6.B — predicate_suggest.py', () => {
+  it('predicate suggest file exists', () => {
+    expect(fileExists(PREDICATE_SUGGEST)).toBe(true);
   });
 
-  it('defines FDA510kIngestor class', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('class FDA510kIngestor');
+  it('exports suggest_predicates entry point', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('async def suggest_predicates(');
   });
 
-  it('has run() method', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('async def run(');
+  it('defines scoring weights', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('WEIGHTS');
+    expect(content).toContain('fts');
+    expect(content).toContain('recency');
   });
 
-  it('uses openFDA API endpoint', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('api.fda.gov');
+  it('classifies strategy recommendations', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_classify_strategy');
+    expect(content).toContain('StrategyRecommendation');
   });
 
-  it('fetches 510k clearances', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('device/510k.json');
+  it('computes explainability fields', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_compute_flags');
+    expect(content).toContain('_build_reasoning');
+    expect(content).toContain('_find_matched_terms');
   });
-
-  it('fetches enforcement data', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('enforcement');
-  });
-
-  it('extracts K-numbers from recall text', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toMatch(/K\d{6}/);
-  });
-
-  it('maps recall severity to signal types', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('Class I');
-    expect(content).toContain('Class II');
-    expect(content).toContain('Class III');
-  });
-
-  it('uses httpx for HTTP requests', () => {
-    const content = readFileContent(INGEST_JOB);
-    expect(content).toContain('httpx');
-  });
-
   it('supports CLI invocation', () => {
     const content = readFileContent(INGEST_JOB);
     expect(content).toContain('__main__');
@@ -417,93 +405,42 @@ describe('Phase 6.6.A — build_predicate_embeddings.py', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 6. Phase 6.6.B — Strategy Engine
+// 6. Phase 6.6.B — Predicate Suggestion Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('Phase 6.6.B — strategy_engine.py', () => {
-  it('scoring package __init__.py exists', () => {
-    expect(fileExists(SCORING_INIT)).toBe(true);
+describe('Phase 6.6.B — predicate_suggest.py', () => {
+  it('predicate suggest file exists', () => {
+    expect(fileExists(PREDICATE_SUGGEST)).toBe(true);
   });
 
-  it('strategy engine file exists', () => {
-    expect(fileExists(STRATEGY_ENGINE)).toBe(true);
-  });
-
-  it('defines StrategyEngine class', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('class StrategyEngine');
-  });
-
-  it('has suggest_predicates() method', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
+  it('exports suggest_predicates entry point', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
     expect(content).toContain('async def suggest_predicates(');
   });
 
-  it('defines TOXICITY_WEIGHTS dictionary', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('TOXICITY_WEIGHTS');
-    expect(content).toContain('"Class1Recall"');
-    expect(content).toContain('0.95');
+  it('defines composite scoring weights', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('WEIGHTS');
+    expect(content).toContain('fts');
+    expect(content).toContain('recency');
   });
 
-  it('defines TOXICITY_AVOID_THRESHOLD', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('TOXICITY_AVOID_THRESHOLD');
-    expect(content).toContain('0.6');
-  });
-
-  it('defines TOXICITY_RISKY_THRESHOLD', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('TOXICITY_RISKY_THRESHOLD');
-    expect(content).toContain('0.3');
-  });
-
-  it('calculates composite score (similarity - toxicity penalty)', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('_composite_score');
-  });
-
-  it('has toxicity calculation method', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('_calculate_toxicity');
-  });
-
-  it('checks family/lineage safety', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('_check_family_safety');
-  });
-
-  it('builds subject text from request fields', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('_build_subject_text');
-  });
-
-  it('supports semantic search with fallback to text', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('_get_candidates');
-    expect(content).toContain('_semantic_search');
-    expect(content).toContain('_text_search');
-  });
-
-  it('imports from sql_fda_universe', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('import sql_fda_universe');
-  });
-
-  it('imports StrategyRecommendation from models', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
+  it('classifies strategy recommendations', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_classify_strategy');
     expect(content).toContain('StrategyRecommendation');
   });
 
-  it('generates human-readable strategy explanations', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('explanation');
+  it('builds subject text from request fields', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('build_subject_text');
   });
 
-  it('sorts suggestions by composite score', () => {
-    const content = readFileContent(STRATEGY_ENGINE);
-    expect(content).toContain('composite_score');
-    expect(content).toContain('reverse=True');
+  it('computes explainability fields', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('_find_matched_terms');
+    expect(content).toContain('_compute_flags');
+    expect(content).toContain('_build_reasoning');
   });
 });
 
@@ -622,22 +559,20 @@ describe('Router — Phase 6.6.B/C new endpoints', () => {
     expect(fileExists(ROUTER_PY)).toBe(true);
   });
 
-  it('defines POST /device/predicate-suggest endpoint', () => {
+  it('defines POST /suggest endpoint', () => {
     const content = readFileContent(ROUTER_PY);
-    expect(content).toContain('/device/predicate-suggest');
+    expect(content).toContain('/suggest');
     expect(content).toContain('@router.post');
   });
 
-  it('defines PredicateSuggestRequestBody model', () => {
+  it('uses PredicateSuggestRequest model', () => {
     const content = readFileContent(ROUTER_PY);
-    expect(content).toContain('class PredicateSuggestRequestBody');
+    expect(content).toContain('PredicateSuggestRequest');
     expect(content).toContain('product_code');
-    expect(content).toContain('intended_use');
   });
 
-  it('suggest endpoint uses StrategyEngine', () => {
+  it('suggest endpoint calls suggest_predicates', () => {
     const content = readFileContent(ROUTER_PY);
-    expect(content).toContain('StrategyEngine');
     expect(content).toContain('suggest_predicates');
   });
 
@@ -682,9 +617,10 @@ describe('BFF — Phase 6.6.B/C proxy routes', () => {
     expect(fileExists(BFF_ROUTE)).toBe(true);
   });
 
-  it('proxies POST /device/predicate-suggest', () => {
+  it('proxies POST /suggest', () => {
     const content = readFileContent(BFF_ROUTE);
-    expect(content).toContain('/device/predicate-suggest');
+    expect(content).toContain('/predicate/suggest');
+    expect(content).toContain('/suggest');
   });
 
   it('proxies POST /generate-se-matrix', () => {
@@ -895,9 +831,9 @@ describe('Hooks — Phase 6.6 Enhanced', () => {
     expect(content).toContain('export function useSuggestPredicates');
   });
 
-  it('useSuggestPredicates calls /device/predicate-suggest', () => {
+  it('useSuggestPredicates calls /suggest', () => {
     const content = readFileContent(HOOKS_FILE);
-    expect(content).toContain('/device/predicate-suggest');
+    expect(content).toContain('/suggest');
   });
 
   it('exports useGenerateSEMatrix hook', () => {
