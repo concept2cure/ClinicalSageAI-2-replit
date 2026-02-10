@@ -1176,3 +1176,200 @@ async def download_defense_packet(req: DownloadDefensePacketRequest):
     finally:
         await db.release_connection(conn)
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C-V2 — Evidence-Linked SE Matrix (risk_code + evidence_task_ids)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class GenerateSEMatrixV2Request(BaseModel):
+    """Request for the V2 SE matrix generator with risk_code linkage."""
+    program_id: UUID
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/generate-se-matrix-v2")
+async def generate_se_matrix_v2(req: GenerateSEMatrixV2Request):
+    """Generate Evidence-Linked SE Matrix with risk_code → evidence_task_ids.
+
+    V2 improvements over /generate-se-matrix:
+      - Deterministic risk_code assignment per diff category
+      - evidence_task_ids linked to each comparison row
+      - defense_readiness_score (0-100)
+      - Stable sha256 task hashes for idempotency
+      - risk_code_map_version for audit trail
+
+    Returns: SEMatrixPayloadV2 with comparison_rows, evidence_tasks, score.
+    """
+    from .generators.se_matrix_payload import generate_se_matrix_payload
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        # Fetch predicate data from FDA clearances table
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+
+        if predicate_row:
+            predicate_data = dict(predicate_row)
+        else:
+            # Fallback: check candidates table
+            candidate = await conn.fetchrow(
+                sql.SELECT_CANDIDATE_BY_K_NUMBER,
+                req.selected_predicate_k_number,
+                req.program_id,
+            )
+            predicate_data = dict(candidate) if candidate else {
+                "k_number": req.selected_predicate_k_number,
+                "device_name": "Unknown Predicate",
+            }
+
+        payload = generate_se_matrix_payload(
+            program_id=str(req.program_id),
+            subject_device=req.subject_device,
+            predicate_record=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        return {
+            "se_matrix_payload": payload.model_dump(),
+            "defense_readiness_score": payload.defense_readiness_score,
+            "row_count": len(payload.comparison_rows),
+            "discussion_required_count": sum(
+                1 for r in payload.comparison_rows
+                if r.diff_flag == "DISCUSSION_REQUIRED"
+            ),
+            "significant_count": sum(
+                1 for r in payload.comparison_rows
+                if r.diff_flag == "SIGNIFICANT"
+            ),
+            "evidence_task_count": len(payload.evidence_tasks),
+            "risk_code_map_version": payload.risk_code_map_version,
+            "generation_timestamp": payload.generated_at,
+        }
+    except Exception as exc:
+        logger.exception("SE matrix V2 generation failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"SE matrix V2 generation failed: {exc}")
+    finally:
+        await db.release_connection(conn)
+
+
+class RenderSEDocxV2Request(BaseModel):
+    """Request for V2 DOCX rendering with evidence footnotes + risk badges."""
+    program_id: UUID
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+    include_reviewer_questions: bool = True
+    include_toxicity_warnings: bool = True
+
+
+@router.post("/render-se-docx-v2")
+async def render_se_docx_v2(req: RenderSEDocxV2Request):
+    """Render V2 Evidence-Linked SE Matrix as downloadable DOCX.
+
+    Improvements over /render-se-docx:
+      - [EV:task_id] footnote markers in matrix cells
+      - Risk_code badges in discussion sections
+      - Yellow highlighted cells for missing evidence
+      - Evidence Tasks Appendix with artifact checklists
+      - defense_readiness_score in executive summary
+
+    Returns: StreamingResponse with DOCX.
+    """
+    from fastapi.responses import StreamingResponse
+    from .generators.se_matrix_payload import generate_se_matrix_payload
+    from .generators.docx_factory import SEMatrixDocxFactory
+
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        # Fetch predicate data
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+        predicate_data = dict(predicate_row) if predicate_row else {
+            "k_number": req.selected_predicate_k_number,
+            "device_name": "Unknown Predicate",
+        }
+
+        # Generate V2 payload
+        v2_payload = generate_se_matrix_payload(
+            program_id=str(req.program_id),
+            subject_device=req.subject_device,
+            predicate_record=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        # Optional: reviewer questions (reuse existing rules)
+        reviewer_questions = []
+        if req.include_reviewer_questions:
+            for rule in REVIEWER_QUESTION_RULES:
+                field = rule["trigger_field"]
+                subj_val = str(req.subject_device.get(field, "")).strip().lower()
+                pred_val = str(predicate_data.get(field, "")).strip().lower()
+                triggered = False
+                if rule["condition"] == "differs" and subj_val and pred_val and subj_val != pred_val:
+                    triggered = True
+                elif rule["condition"] == "differs" and (subj_val and not pred_val or pred_val and not subj_val):
+                    triggered = True
+                elif rule["condition"] == "present" and subj_val and subj_val not in ("n/a", "none", "no", "false", ""):
+                    triggered = True
+                if triggered:
+                    reviewer_questions.append(rule)
+
+        # Toxicity warnings
+        toxicity_warnings = []
+        if req.include_toxicity_warnings:
+            signals = await conn.fetch(fda_sql.SELECT_SIGNALS_BY_K_NUMBER, req.selected_predicate_k_number)
+            for s in signals:
+                if s["severity_score"] > 0.3:
+                    toxicity_warnings.append({
+                        "k_number": req.selected_predicate_k_number,
+                        "signal_type": s["signal_type"],
+                        "signal_date": str(s["signal_date"]) if s["signal_date"] else None,
+                        "severity_score": float(s["severity_score"]),
+                        "description": s["description"],
+                    })
+
+        # Render V2 DOCX
+        factory = SEMatrixDocxFactory()
+        docx_buf = factory.render_v2(
+            v2_payload=v2_payload,
+            reviewer_questions=reviewer_questions,
+            toxicity_warnings=toxicity_warnings,
+        )
+
+        # Audit event (best-effort)
+        try:
+            pool = await db.get_pool()
+            await _emit_se_matrix_render_event(
+                pool=pool,
+                program_id=req.program_id,
+                predicate_k_number=req.selected_predicate_k_number,
+                subject_device=req.subject_device,
+                row_count=len(v2_payload.comparison_rows),
+            )
+        except Exception as audit_err:
+            logger.warning("SE matrix V2 render audit failed: %s", audit_err)
+
+        k_num = req.selected_predicate_k_number
+        filename = f"SE_Matrix_V2_{k_num}.docx"
+
+        return StreamingResponse(
+            docx_buf,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        logger.exception("DOCX V2 render failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"DOCX V2 render failed: {exc}")
+    finally:
+        await db.release_connection(conn)
+

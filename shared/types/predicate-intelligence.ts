@@ -680,3 +680,111 @@ export interface SEMatrixRenderPlan {
   discussion_count: number;
   not_equivalent_count: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C-V2 — Evidence-Linked SE Matrix Types (risk_code + evidence_task_ids)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Canonical risk_code enum — mirrors shadow_service RiskCode.
+ * 24 deterministic risk codes covering all SE comparison categories.
+ */
+export type RiskCode =
+  | 'IU_MISMATCH'
+  | 'IU_POPULATION_CHANGE'
+  | 'IU_INDICATION_CHANGE'
+  | 'MATERIAL_CHANGE'
+  | 'MATERIAL_BIOCOMPAT_GAP'
+  | 'ENERGY_SOURCE_CHANGE'
+  | 'ENERGY_OUTPUT_CHANGE'
+  | 'STERILIZATION_METHOD_CHANGE'
+  | 'STERILIZATION_VALIDATION_GAP'
+  | 'SOFTWARE_PRESENT_NEW'
+  | 'SOFTWARE_MAJOR_CHANGE'
+  | 'SOFTWARE_CYBERSECURITY_GAP'
+  | 'TISSUE_CONTACT_CHANGE'
+  | 'TISSUE_DURATION_CHANGE'
+  | 'TECHNOLOGY_PRINCIPLE_CHANGE'
+  | 'TECHNOLOGY_MECHANISM_CHANGE'
+  | 'PERFORMANCE_ENDPOINT_CHANGE'
+  | 'PERFORMANCE_STANDARD_GAP'
+  | 'LABELING_IFU_GAP'
+  | 'LABELING_WARNINGS_GAP'
+  | 'SHELF_LIFE_CHANGE'
+  | 'PACKAGING_CHANGE'
+  | 'CLINICAL_DATA_GAP'
+  | 'OLD_PREDICATE_RISK';
+
+/** Diff flag for V2 SE matrix rows. */
+export type DiffFlagV2 = 'EQUIVALENT' | 'DISCUSSION_REQUIRED' | 'SIGNIFICANT';
+
+/** V2 SE matrix comparison row with risk_code linkage. */
+export interface SEMatrixRowV2 {
+  sort_order: number;
+  characteristic: string;
+  category: string;
+  subject_value: string;
+  predicate_value: string;
+  diff_flag: DiffFlagV2;
+  discussion_text: string;
+  risk_code: RiskCode | null;
+  evidence_task_ids: string[];
+  requires_citation: boolean;
+  suggested_tests: string[];
+  diff_severity: string;
+  subject_evidence_ids: string[];
+  predicate_evidence_ids: string[];
+  subject_confidence: number;
+  predicate_confidence: number;
+}
+
+/** V2 Evidence task with deterministic mapping. */
+export interface EvidenceTaskV2 {
+  task_id: string;
+  category: string;
+  risk_code: string;
+  label: string;
+  severity: string;
+  recommended_artifacts: string[];
+  mapping: {
+    truth_machine_placeholder: boolean;
+    se_matrix_linkable: boolean;
+    ectd_section: string;
+  };
+}
+
+/** Full V2 SE matrix payload returned by /generate-se-matrix-v2. */
+export interface SEMatrixPayloadV2 {
+  template_id: string;
+  version: string;
+  device_name: string;
+  predicate_k_number: string;
+  predicate_device_name: string;
+  comparison_rows: SEMatrixRowV2[];
+  evidence_tasks: EvidenceTaskV2[];
+  defense_readiness_score: number;
+  generated_at: string;
+  risk_code_map_version: string;
+  evidence_linkage: boolean;
+  regulatory_standard: string;
+}
+
+/** Response shape from POST /generate-se-matrix-v2. */
+export interface GenerateSEMatrixV2Response {
+  se_matrix_payload: SEMatrixPayloadV2;
+  defense_readiness_score: number;
+  row_count: number;
+  discussion_required_count: number;
+  significant_count: number;
+  evidence_task_count: number;
+  risk_code_map_version: string;
+  generation_timestamp: string;
+}
+
+/** Request body for POST /generate-se-matrix-v2. */
+export interface GenerateSEMatrixV2Request {
+  program_id: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  design_control_ids?: Record<string, string>;
+}

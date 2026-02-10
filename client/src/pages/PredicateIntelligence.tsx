@@ -65,6 +65,7 @@ import {
   useSuggestPredicates,
   useGenerateSEMatrix,
 } from '@/hooks/use-predicate-intelligence';
+import { SEMatrixV2Panel } from '@/components/predicate/SEMatrixV2Panel';
 import type {
   PredicateCandidate,
   EquivalenceStatus,
@@ -1409,6 +1410,9 @@ export default function PredicateIntelligencePage({
             <TabsTrigger value="defense" className="flex items-center gap-1">
               <Shield className="h-4 w-4" /> Defense Meter
             </TabsTrigger>
+            <TabsTrigger value="se-matrix-v2" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" /> SE Matrix V2
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="radar" className="mt-4">
@@ -1425,6 +1429,13 @@ export default function PredicateIntelligencePage({
 
           <TabsContent value="defense" className="mt-4">
             <DefenseMeterTab programId={programId} selectedCandidate={selectedCandidate} />
+          </TabsContent>
+
+          <TabsContent value="se-matrix-v2" className="mt-4">
+            <SEMatrixV2Panel
+              programId={programId}
+              predicateKNumber={selectedCandidate?.k_number}
+            />
           </TabsContent>
         </Tabs>
       )}

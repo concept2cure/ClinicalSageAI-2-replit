@@ -377,3 +377,57 @@ export function useDownloadDefensePacket() {
     },
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C-V2 — Evidence-Linked SE Matrix Hooks
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import type {
+  GenerateSEMatrixV2Request,
+  GenerateSEMatrixV2Response,
+} from '../../shared/types/predicate-intelligence';
+
+/**
+ * Generate V2 Evidence-Linked SE Matrix with risk_code → evidence_task_ids.
+ *
+ * Returns the full payload including comparison_rows, evidence_tasks,
+ * defense_readiness_score, and risk_code_map_version.
+ */
+export function useGenerateSEMatrixV2() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: GenerateSEMatrixV2Request) => {
+      return predicateFetch<GenerateSEMatrixV2Response>(`${BASE}/generate-se-matrix-v2`, {
+        method: 'POST',
+        body: JSON.stringify(params),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: predicateKeys.all });
+    },
+  });
+}
+
+/**
+ * Render V2 SE Matrix as downloadable DOCX with evidence footnotes,
+ * risk_code badges, and yellow-highlighted missing evidence cells.
+ */
+export function useRenderSEDocxV2() {
+  return useMutation({
+    mutationFn: async (params: GenerateSEMatrixV2Request) => {
+      const orgId = localStorage.getItem('organizationId') || '1';
+      const res = await fetch(`${BASE}/render-se-docx-v2`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-organization-id': orgId },
+        credentials: 'include',
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error(`DOCX V2 render failed: ${res.statusText}`);
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition');
+      const filename = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'SE_Matrix_V2.docx';
+      return { blob, filename };
+    },
+  });
+}

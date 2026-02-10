@@ -841,3 +841,421 @@ class SEMatrixDocxFactory:
         run.font.size = Pt(7)
         run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         run.italic = True
+    # ─────────────────────────────────────────────────────────────────
+    # V2 Render — Evidence-Linked SE Matrix (Phase 6.6.C)
+    # ─────────────────────────────────────────────────────────────────
+
+    def render_v2(
+        self,
+        se_payload_v2: Any,
+        reviewer_questions: list[dict[str, Any]] | None = None,
+        toxicity_warnings: list[dict[str, Any]] | None = None,
+        manifest_hash: str = "",
+    ) -> io.BytesIO:
+        """Render a V2 SE matrix payload with evidence footnotes and risk_code badges.
+
+        Adds:
+          - [EV:task_id] footnote markers for evidence_task_ids
+          - Yellow highlight on discussion cells when evidence is missing
+          - Risk code badge in discussion section
+          - Evidence task summary appendix
+        """
+        reviewer_questions = reviewer_questions or []
+        toxicity_warnings = toxicity_warnings or []
+
+        # Convert V2 payload to V1-compatible dict for shared render methods
+        v1_payload = self._v2_to_v1_payload(se_payload_v2)
+
+        doc = Document()
+        self._setup_styles(doc)
+
+        # 1. Cover page
+        self._render_cover_page(doc, v1_payload)
+
+        # 2. Executive summary (V2)
+        self._render_executive_summary_v2(doc, se_payload_v2)
+
+        # 3. SE comparison matrix table (V2 with evidence footnotes)
+        self._render_matrix_table_v2(doc, se_payload_v2)
+
+        # 4. Per-characteristic discussion (V2 with risk_code badges)
+        self._render_discussions_v2(doc, se_payload_v2)
+
+        # 5. Evidence tasks appendix (NEW in V2)
+        if se_payload_v2.evidence_tasks:
+            self._render_evidence_tasks_appendix(doc, se_payload_v2)
+
+        # 6. Reviewer questions appendix
+        if reviewer_questions:
+            self._render_reviewer_questions(doc, reviewer_questions)
+
+        # 7. Toxicity warnings appendix
+        if toxicity_warnings:
+            self._render_toxicity_warnings(doc, toxicity_warnings)
+
+        # 8. Evidence traceability index
+        self._render_evidence_index(doc, v1_payload)
+
+        # 9. Footer metadata
+        self._render_footer(doc, v1_payload, manifest_hash)
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return buf
+
+    def _v2_to_v1_payload(self, v2: Any) -> dict[str, Any]:
+        """Convert V2 payload to V1-compatible dict for shared render methods."""
+        comparison_rows = []
+        for row in v2.comparison_rows:
+            comparison_rows.append({
+                "sort_order": row.sort_order,
+                "category": row.category,
+                "characteristic": row.characteristic,
+                "subject_value": {
+                    "value": row.subject_value,
+                    "evidence_ids": row.subject_evidence_ids,
+                    "confidence": row.subject_confidence,
+                },
+                "predicate_value": {
+                    "value": row.predicate_value,
+                    "evidence_ids": row.predicate_evidence_ids,
+                    "confidence": row.predicate_confidence,
+                },
+                "equivalence_status": (
+                    "NOT_EQUIVALENT" if row.diff_flag == "SIGNIFICANT"
+                    else row.diff_flag
+                ),
+                "diff_severity": row.diff_severity,
+                "discussion_text": row.discussion_text,
+                "requires_citation": row.requires_citation,
+                "suggested_tests": row.suggested_tests,
+            })
+
+        return {
+            "template_id": v2.template_id,
+            "version": v2.version,
+            "device_name": v2.device_name,
+            "predicate_k_number": v2.predicate_k_number,
+            "predicate_device_name": v2.predicate_device_name,
+            "comparison_rows": comparison_rows,
+            "defense_readiness_score": v2.defense_readiness_score,
+            "generation_timestamp": v2.generated_at,
+            "evidence_linkage": v2.evidence_linkage,
+            "regulatory_standard": v2.regulatory_standard,
+        }
+
+    def _render_executive_summary_v2(
+        self, doc: Document, payload: Any,
+    ) -> None:
+        """Enhanced executive summary with risk code counts."""
+        doc.add_heading("Executive Summary", level=1)
+
+        rows = payload.comparison_rows
+        total = len(rows)
+        equiv = sum(1 for r in rows if r.diff_flag == "EQUIVALENT")
+        disc = sum(1 for r in rows if r.diff_flag == "DISCUSSION_REQUIRED")
+        sig = sum(1 for r in rows if r.diff_flag == "SIGNIFICANT")
+
+        task_count = len(payload.evidence_tasks)
+        high_tasks = sum(1 for t in payload.evidence_tasks if t.severity == "HIGH")
+
+        summary = doc.add_table(rows=7, cols=2)
+        summary.alignment = WD_TABLE_ALIGNMENT.CENTER
+        stats = [
+            ("Total Characteristics", str(total)),
+            ("Equivalent", str(equiv)),
+            ("Discussion Required", str(disc)),
+            ("Significant Differences", str(sig)),
+            ("Defense Readiness Score", f"{payload.defense_readiness_score}/100"),
+            ("Evidence Tasks", str(task_count)),
+            ("High-Priority Tasks", str(high_tasks)),
+        ]
+        stat_colors = [
+            COLORS["light_gray"], COLORS["green"], COLORS["yellow"],
+            COLORS["red"], COLORS["light_gray"], COLORS["light_gray"],
+            COLORS["red"] if high_tasks > 0 else COLORS["green"],
+        ]
+        for idx, ((label, value), bg) in enumerate(zip(stats, stat_colors)):
+            row = summary.rows[idx]
+            row.cells[0].text = label
+            row.cells[1].text = value
+            for c in row.cells:
+                _set_cell_borders(c)
+                for para in c.paragraphs:
+                    for rn in para.runs:
+                        rn.font.size = Pt(10)
+            row.cells[0].paragraphs[0].runs[0].bold = True
+            _set_cell_shading(row.cells[1], bg)
+
+        doc.add_paragraph("")
+
+    def _render_matrix_table_v2(
+        self, doc: Document, payload: Any,
+    ) -> None:
+        """SE matrix table with evidence footnote markers [EV:xxx]."""
+        doc.add_heading("Substantial Equivalence Comparison Matrix", level=1)
+
+        rows = payload.comparison_rows
+        headers = [
+            "#",
+            "Characteristic",
+            f"Subject: {payload.device_name}",
+            f"Predicate: {payload.predicate_device_name}\n({payload.predicate_k_number})",
+            "Diff Flag",
+            "Discussion",
+        ]
+
+        table = doc.add_table(rows=1 + len(rows), cols=len(headers))
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        table.autofit = True
+
+        # Header row
+        header_row = table.rows[0]
+        for idx, header_text in enumerate(headers):
+            cell = header_row.cells[idx]
+            cell.text = header_text
+            _set_cell_shading(cell, COLORS["header_bg"])
+            _set_cell_borders(cell, "002060")
+            for para in cell.paragraphs:
+                para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for rn in para.runs:
+                    rn.bold = True
+                    rn.font.size = Pt(9)
+                    rn.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+        _V2_FLAG_LABELS = {
+            "EQUIVALENT": "≡ Equivalent",
+            "DISCUSSION_REQUIRED": "⚠ Discussion Required",
+            "SIGNIFICANT": "⚠⚠ Significant",
+        }
+        _V2_FLAG_COLORS = {
+            "EQUIVALENT": COLORS["green"],
+            "DISCUSSION_REQUIRED": COLORS["yellow"],
+            "SIGNIFICANT": COLORS["red"],
+        }
+
+        for row_idx, row_data in enumerate(rows):
+            table_row = table.rows[row_idx + 1]
+            has_evidence = bool(row_data.subject_evidence_ids)
+
+            # Col 0: Row number
+            table_row.cells[0].text = str(row_data.sort_order)
+            table_row.cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # Col 1: Characteristic
+            cell_char = table_row.cells[1]
+            cell_char.text = row_data.characteristic
+            if cell_char.paragraphs[0].runs:
+                cell_char.paragraphs[0].runs[0].bold = True
+
+            # Col 2: Subject value + evidence footnotes
+            cell_subj = table_row.cells[2]
+            p = cell_subj.paragraphs[0]
+            p.clear()
+            rn = p.add_run(row_data.subject_value)
+            rn.font.size = Pt(9)
+            if row_data.evidence_task_ids:
+                ev_markers = ", ".join(f"EV:{tid}" for tid in row_data.evidence_task_ids)
+                ev_run = p.add_run(f"\n[{ev_markers}]")
+                ev_run.font.size = Pt(7)
+                ev_run.font.color.rgb = RGBColor(0x00, 0x70, 0xC0)
+                for tid in row_data.evidence_task_ids:
+                    _add_bookmark(p, f"EV_{tid}")
+            if row_data.diff_flag != "EQUIVALENT" and not has_evidence:
+                _set_cell_shading(cell_subj, COLORS["yellow"])
+            elif row_data.diff_flag == "EQUIVALENT":
+                _set_cell_shading(cell_subj, COLORS["green"])
+            else:
+                _set_cell_shading(cell_subj, COLORS["green"])
+
+            # Col 3: Predicate value
+            cell_pred = table_row.cells[3]
+            p = cell_pred.paragraphs[0]
+            p.clear()
+            rn = p.add_run(row_data.predicate_value)
+            rn.font.size = Pt(9)
+            if row_data.predicate_evidence_ids:
+                ev_run = p.add_run(f"\n[{', '.join(row_data.predicate_evidence_ids)}]")
+                ev_run.font.size = Pt(7)
+                ev_run.font.color.rgb = RGBColor(0x00, 0x70, 0xC0)
+
+            # Col 4: Diff Flag
+            cell_flag = table_row.cells[4]
+            cell_flag.text = _V2_FLAG_LABELS.get(row_data.diff_flag, row_data.diff_flag)
+            cell_flag.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _set_cell_shading(cell_flag, _V2_FLAG_COLORS.get(
+                row_data.diff_flag, COLORS["light_gray"],
+            ))
+            for rn in cell_flag.paragraphs[0].runs:
+                rn.bold = True
+                rn.font.size = Pt(9)
+
+            # Col 5: Discussion (truncated) + risk_code badge
+            cell_disc = table_row.cells[5]
+            p = cell_disc.paragraphs[0]
+            p.clear()
+            disc_text = row_data.discussion_text
+            if len(disc_text) > 120:
+                disc_text = disc_text[:117] + "…"
+            rn = p.add_run(disc_text)
+            rn.font.size = Pt(8)
+            if row_data.risk_code:
+                rc_run = p.add_run(f"\n[{row_data.risk_code}]")
+                rc_run.font.size = Pt(7)
+                rc_run.bold = True
+                rc_run.font.color.rgb = RGBColor(0x9C, 0x00, 0x06)
+            if row_data.evidence_task_ids and not has_evidence:
+                _set_cell_shading(cell_disc, COLORS["yellow"])
+
+            for cell in table_row.cells:
+                _set_cell_borders(cell)
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+            if row_idx % 2 == 1:
+                for ci in (0, 1):
+                    _set_cell_shading(table_row.cells[ci], COLORS["light_gray"])
+
+        doc.add_paragraph("")
+
+        legend = doc.add_paragraph()
+        legend.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        rn = legend.add_run("Legend: ")
+        rn.bold = True
+        rn.font.size = Pt(8)
+        for label, color in [
+            ("■ Equivalent", COLORS["green"]),
+            ("  ■ Discussion Required", COLORS["yellow"]),
+            ("  ■ Significant / Needs Evidence", COLORS["red"]),
+        ]:
+            rn = legend.add_run(label)
+            rn.font.size = Pt(8)
+            rn.font.color.rgb = RGBColor(
+                int(color[:2], 16), int(color[2:4], 16), int(color[4:6], 16),
+            )
+        rn = legend.add_run(
+            "\n[EV:xxxxx] = Evidence Task ID bookmark — "
+            "link to Truth Machine evidence when available"
+        )
+        rn.font.size = Pt(7)
+        rn.italic = True
+
+        doc.add_paragraph("")
+
+    def _render_discussions_v2(
+        self, doc: Document, payload: Any,
+    ) -> None:
+        """Discussion section with risk_code badges and evidence task links."""
+        needs_discussion = [
+            r for r in payload.comparison_rows if r.diff_flag != "EQUIVALENT"
+        ]
+        if not needs_discussion:
+            return
+
+        doc.add_heading("Detailed Discussion by Characteristic", level=1)
+
+        for row in needs_discussion:
+            doc.add_heading(row.characteristic, level=2)
+
+            p = doc.add_paragraph()
+            flag_text = {
+                "DISCUSSION_REQUIRED": "Discussion Required",
+                "SIGNIFICANT": "Significant Difference",
+            }.get(row.diff_flag, row.diff_flag)
+            rn = p.add_run(f"Status: {flag_text}")
+            rn.bold = True
+            rn.font.size = Pt(10)
+            if row.diff_flag == "SIGNIFICANT":
+                rn.font.color.rgb = RGBColor(0x9C, 0x00, 0x06)
+            else:
+                rn.font.color.rgb = RGBColor(0x9C, 0x65, 0x00)
+
+            if row.risk_code:
+                rc_run = p.add_run(f"  |  Risk Code: {row.risk_code}")
+                rc_run.bold = True
+                rc_run.font.size = Pt(9)
+                rc_run.font.color.rgb = RGBColor(0x00, 0x20, 0x60)
+
+            if row.discussion_text:
+                p = doc.add_paragraph()
+                rn = p.add_run(row.discussion_text)
+                rn.font.size = Pt(10)
+
+            if row.evidence_task_ids:
+                p = doc.add_paragraph()
+                rn = p.add_run("Linked Evidence Tasks:")
+                rn.bold = True
+                rn.font.size = Pt(10)
+                for tid in row.evidence_task_ids:
+                    bp = doc.add_paragraph(f"  • [EV:{tid}]", style="List Bullet")
+                    _add_bookmark(bp, f"EV_{tid}")
+
+            if row.suggested_tests:
+                p = doc.add_paragraph()
+                rn = p.add_run("Recommended Evidence/Testing:")
+                rn.bold = True
+                rn.font.size = Pt(10)
+                for test in row.suggested_tests:
+                    doc.add_paragraph(f"  • {test}", style="List Bullet")
+
+            doc.add_paragraph("")
+
+    def _render_evidence_tasks_appendix(
+        self, doc: Document, payload: Any,
+    ) -> None:
+        """Appendix: Evidence Task Summary — the deterministic 'fix list'."""
+        doc.add_page_break()
+        doc.add_heading("Appendix: Evidence Task Summary", level=1)
+
+        p = doc.add_paragraph()
+        rn = p.add_run(
+            "The following evidence tasks have been deterministically generated "
+            "from the SE matrix analysis. Each task maps to a specific risk code "
+            "and evidence category. Task IDs are stable hashes for audit traceability."
+        )
+        rn.font.size = Pt(9)
+        rn.italic = True
+
+        doc.add_paragraph("")
+
+        tasks = payload.evidence_tasks
+        table = doc.add_table(rows=1 + len(tasks), cols=5)
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+        for idx, text in enumerate(["Task ID", "Category", "Risk Code", "Severity", "Artifacts"]):
+            cell = table.rows[0].cells[idx]
+            cell.text = text
+            _set_cell_shading(cell, COLORS["header_bg"])
+            _set_cell_borders(cell, "002060")
+            for para in cell.paragraphs:
+                para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for rn in para.runs:
+                    rn.bold = True
+                    rn.font.size = Pt(9)
+                    rn.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+
+        for idx, task in enumerate(tasks):
+            row = table.rows[idx + 1]
+            row.cells[0].text = task.task_id
+            row.cells[1].text = task.category
+            row.cells[2].text = task.risk_code
+            row.cells[3].text = task.severity
+
+            artifacts_text = "\n".join(f"• {a}" for a in task.recommended_artifacts[:3])
+            if len(task.recommended_artifacts) > 3:
+                artifacts_text += f"\n  (+{len(task.recommended_artifacts) - 3} more)"
+            row.cells[4].text = artifacts_text
+
+            sev_color = {
+                "HIGH": COLORS["red"],
+                "MEDIUM": COLORS["yellow"],
+                "LOW": COLORS["light_gray"],
+            }.get(task.severity, COLORS["white"])
+            _set_cell_shading(row.cells[3], sev_color)
+
+            for cell in row.cells:
+                _set_cell_borders(cell)
+                for para in cell.paragraphs:
+                    for rn in para.runs:
+                        rn.font.size = Pt(8)

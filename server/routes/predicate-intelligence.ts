@@ -543,4 +543,81 @@ router.post('/programs/:programId/suggestions', requireConfigured, async (req, r
   });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C-V2 — Evidence-Linked SE Matrix (risk_code + evidence_task_ids)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/predicate-intelligence/generate-se-matrix-v2
+ *
+ * Generate V2 SE matrix with risk_code → evidence_task_ids linkage.
+ * Returns: SEMatrixPayloadV2 with comparison_rows, evidence_tasks, score.
+ */
+router.post('/generate-se-matrix-v2', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/generate-se-matrix-v2', {
+      method: 'POST',
+      body: req.body,
+    });
+
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate Intelligence not ready',
+          detail: parsed.detail || 'Shadow service degraded',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate Intelligence not ready' });
+      }
+    }
+
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] SE matrix V2 generation error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+/**
+ * POST /api/predicate-intelligence/render-se-docx-v2
+ *
+ * Render V2 Evidence-Linked SE Matrix as downloadable DOCX with evidence
+ * footnotes, risk_code badges, and yellow-highlighted missing evidence cells.
+ */
+router.post('/render-se-docx-v2', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/render-se-docx-v2', {
+      method: 'POST',
+      body: req.body,
+      binary: true,
+    });
+
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate Intelligence not ready',
+          detail: parsed.detail || 'Shadow service degraded',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate Intelligence not ready' });
+      }
+    }
+
+    if (result.rawBuffer && result.contentType?.includes('openxmlformats')) {
+      const disposition =
+        result.rawHeaders?.['content-disposition'] || 'attachment; filename="SE_Matrix_V2.docx"';
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Content-Disposition', disposition);
+      return res.status(result.status).send(result.rawBuffer);
+    }
+
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] SE DOCX V2 render error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
 export default router;
