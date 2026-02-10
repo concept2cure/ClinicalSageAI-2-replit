@@ -112,7 +112,7 @@ class TestRiskCodeMap:
 
     def test_all_28_risk_codes_exist(self):
         """Every RiskCode enum value is in ALL_RISK_CODES."""
-        assert len(ALL_RISK_CODES) == 24  # 24 risk codes in the enum
+        assert len(ALL_RISK_CODES) == 28  # 28 canonical risk codes
         for rc in RiskCode:
             assert rc.value in ALL_RISK_CODES
 

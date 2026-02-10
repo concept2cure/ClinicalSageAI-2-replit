@@ -73,7 +73,13 @@ class RiskCode(str, Enum):
     # ── G. Standards / Labeling / PMS ──
     STANDARDS_GAP = "STANDARDS_GAP"
     LABELING_IFU_GAP = "LABELING_IFU_GAP"
+    LABELING_WARNINGS_GAP = "LABELING_WARNINGS_GAP"
     PMS_SIGNAL_RISK = "PMS_SIGNAL_RISK"
+
+    # ── I. Manufacturing / Packaging / Aging ──
+    AGING_STUDY_GAP = "AGING_STUDY_GAP"
+    MANUFACTURING_PROCESS_CHANGE = "MANUFACTURING_PROCESS_CHANGE"
+    BIOBURDEN_CHANGE = "BIOBURDEN_CHANGE"
 
     # ── H. Predicate Safety Lineage (from 6.6.A/6.6.B) ──
     PREDICATE_TOXICITY_HIGH = "PREDICATE_TOXICITY_HIGH"
@@ -186,6 +192,10 @@ RISK_CODE_TO_CATEGORY: dict[str, list[str]] = {
     RiskCode.LABELING_IFU_GAP.value: [
         EvidenceCategory.LABELING_IFU.value,
     ],
+    RiskCode.LABELING_WARNINGS_GAP.value: [
+        EvidenceCategory.LABELING_IFU.value,
+        EvidenceCategory.RISK_MANAGEMENT.value,
+    ],
     RiskCode.PMS_SIGNAL_RISK.value: [
         EvidenceCategory.POST_MARKET_SURVEILLANCE.value,
     ],
@@ -197,6 +207,19 @@ RISK_CODE_TO_CATEGORY: dict[str, list[str]] = {
     RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: [
         EvidenceCategory.POST_MARKET_SURVEILLANCE.value,
         EvidenceCategory.RISK_MANAGEMENT.value,
+    ],
+
+    # I. Manufacturing / Packaging / Aging
+    RiskCode.AGING_STUDY_GAP.value: [
+        EvidenceCategory.BENCH_TESTING.value,
+    ],
+    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: [
+        EvidenceCategory.BENCH_TESTING.value,
+        EvidenceCategory.RISK_MANAGEMENT.value,
+    ],
+    RiskCode.BIOBURDEN_CHANGE.value: [
+        EvidenceCategory.STERILIZATION_VALIDATION.value,
+        EvidenceCategory.BIOCOMPATIBILITY.value,
     ],
 }
 
@@ -324,6 +347,11 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "IFU Draft",
         "Warnings / Precautions Update",
     ],
+    RiskCode.LABELING_WARNINGS_GAP.value: [
+        "Warnings / Precautions Update",
+        "IFU Draft",
+        "Residual Risk / Benefit-Risk Justification",
+    ],
     RiskCode.PMS_SIGNAL_RISK.value: [
         "Recall / Safety Signal Summary",
         "Complaint Trending",
@@ -340,6 +368,24 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "Recall / Safety Signal Summary",
         "ISO 14971 Risk Management Plan",
         "CAPA Summary",
+    ],
+
+    # I. Manufacturing / Packaging / Aging
+    RiskCode.AGING_STUDY_GAP.value: [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "Performance Verification Summary",
+    ],
+    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "ISO 14971 Risk Management Plan",
+        "FMEA / Hazard Analysis",
+    ],
+    RiskCode.BIOBURDEN_CHANGE.value: [
+        "Sterilization Validation (SAL)",
+        "ISO 10993-1 Biological Evaluation Plan",
+        "Chemical Characterization Report",
     ],
 }
 
@@ -370,9 +416,13 @@ RISK_CODE_LABELS: dict[str, str] = {
     RiskCode.HUMAN_FACTORS_CHANGE.value: "Human Factors Change",
     RiskCode.STANDARDS_GAP.value: "Standards Conformance Gap",
     RiskCode.LABELING_IFU_GAP.value: "Labeling / IFU Gap",
+    RiskCode.LABELING_WARNINGS_GAP.value: "Labeling Warnings Gap",
     RiskCode.PMS_SIGNAL_RISK.value: "Post-Market Signal Risk",
     RiskCode.PREDICATE_TOXICITY_HIGH.value: "High Predicate Toxicity",
     RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: "Compromised Predicate Lineage",
+    RiskCode.AGING_STUDY_GAP.value: "Aging Study Gap",
+    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: "Manufacturing Process Change",
+    RiskCode.BIOBURDEN_CHANGE.value: "Bioburden Change",
 }
 
 
@@ -415,11 +465,17 @@ RISK_CODE_SEVERITY_DEFAULT: dict[str, str] = {
     # G. Standards / Labeling / PMS
     RiskCode.STANDARDS_GAP.value: Severity.MEDIUM.value,
     RiskCode.LABELING_IFU_GAP.value: Severity.LOW.value,
+    RiskCode.LABELING_WARNINGS_GAP.value: Severity.LOW.value,
     RiskCode.PMS_SIGNAL_RISK.value: Severity.MEDIUM.value,
 
     # H. Predicate Safety Lineage
     RiskCode.PREDICATE_TOXICITY_HIGH.value: Severity.HIGH.value,
     RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: Severity.HIGH.value,
+
+    # I. Manufacturing / Packaging / Aging
+    RiskCode.AGING_STUDY_GAP.value: Severity.MEDIUM.value,
+    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: Severity.MEDIUM.value,
+    RiskCode.BIOBURDEN_CHANGE.value: Severity.MEDIUM.value,
 }
 
 

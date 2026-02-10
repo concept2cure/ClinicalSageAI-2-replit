@@ -398,7 +398,7 @@ export function useGenerateSEMatrixV2() {
 
   return useMutation({
     mutationFn: async (params: GenerateSEMatrixV2Request) => {
-      return predicateFetch<GenerateSEMatrixV2Response>(`${BASE}/generate-se-matrix-v2`, {
+      return predicateFetch<GenerateSEMatrixV2Response>('/generate-se-matrix-v2', {
         method: 'POST',
         body: JSON.stringify(params),
       });

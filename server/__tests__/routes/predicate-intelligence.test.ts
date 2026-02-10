@@ -330,4 +330,152 @@ describe('Predicate Intelligence BFF Proxy', () => {
       expect(res.status).not.toBe(422);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7) Phase 6.6.C-V2 — Evidence-Linked SE Matrix endpoints
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('V2 SE Matrix endpoints', () => {
+    it('POST /generate-se-matrix-v2 exists (not 404)', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: { intended_use: 'Blood glucose monitoring' },
+        });
+      expect(res.status).not.toBe(404);
+    });
+
+    it('POST /generate-se-matrix-v2 returns 503 when token is empty', async () => {
+      process.env.REVIEW_ADMIN_TOKEN = '';
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).toBe(503);
+      expect(res.body.error).toContain('not configured');
+    });
+
+    it('POST /generate-se-matrix-v2 without program_id → 422', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .send({
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).toBe(422);
+      expect(res.body.error).toContain('program_id');
+    });
+
+    it('POST /generate-se-matrix-v2 IDOR → 403 when org does not own program', async () => {
+      dbMockResult.value = [];
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Access denied');
+    });
+
+    it('POST /generate-se-matrix-v2 returns 502 when shadow unreachable', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: { intended_use: 'test' },
+        });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('unavailable');
+    });
+
+    it('POST /render-se-docx-v2 exists (not 404)', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/render-se-docx-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).not.toBe(404);
+    });
+
+    it('POST /render-se-docx-v2 returns 503 when token is empty', async () => {
+      process.env.REVIEW_ADMIN_TOKEN = '';
+      const res = await request(app)
+        .post('/api/predicate-intelligence/render-se-docx-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).toBe(503);
+      expect(res.body.error).toContain('not configured');
+    });
+
+    it('POST /render-se-docx-v2 without program_id → 422', async () => {
+      const res = await request(app).post('/api/predicate-intelligence/render-se-docx-v2').send({
+        selected_predicate_k_number: 'K123456',
+        subject_device: {},
+      });
+      expect(res.status).toBe(422);
+      expect(res.body.error).toContain('program_id');
+    });
+
+    it('POST /render-se-docx-v2 IDOR → 403 when org does not own program', async () => {
+      dbMockResult.value = [];
+      const res = await request(app)
+        .post('/api/predicate-intelligence/render-se-docx-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: {},
+        });
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Access denied');
+    });
+
+    it('POST /render-se-docx-v2 returns 502 when shadow unreachable', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/render-se-docx-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: { intended_use: 'test' },
+        });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('unavailable');
+    });
+
+    it('V2 endpoints inject admin token server-side (no client token needed)', async () => {
+      const res = await request(app)
+        .post('/api/predicate-intelligence/generate-se-matrix-v2')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          program_id: PROGRAM_ID,
+          selected_predicate_k_number: 'K123456',
+          subject_device: { intended_use: 'Blood glucose monitoring' },
+        });
+      // Not 401/403 — token is injected server-side
+      expect(res.status).not.toBe(401);
+      expect(res.status).not.toBe(403);
+      // 502 = proxy tried to reach shadow → auth passed correctly
+      expect(res.status).toBe(502);
+    });
+  });
 });

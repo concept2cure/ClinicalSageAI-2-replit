@@ -687,33 +687,46 @@ export interface SEMatrixRenderPlan {
 
 /**
  * Canonical risk_code enum — mirrors shadow_service RiskCode.
- * 24 deterministic risk codes covering all SE comparison categories.
+ * 28 deterministic risk codes covering all SE comparison categories.
  */
 export type RiskCode =
+  // A. Intended Use / Indications
   | 'IU_MISMATCH'
-  | 'IU_POPULATION_CHANGE'
-  | 'IU_INDICATION_CHANGE'
-  | 'MATERIAL_CHANGE'
-  | 'MATERIAL_BIOCOMPAT_GAP'
+  | 'INDICATIONS_EXPANDED'
+  // B. Technology / Design / Energy Source
+  | 'TECH_DIFFERENCE'
   | 'ENERGY_SOURCE_CHANGE'
-  | 'ENERGY_OUTPUT_CHANGE'
-  | 'STERILIZATION_METHOD_CHANGE'
-  | 'STERILIZATION_VALIDATION_GAP'
-  | 'SOFTWARE_PRESENT_NEW'
-  | 'SOFTWARE_MAJOR_CHANGE'
-  | 'SOFTWARE_CYBERSECURITY_GAP'
+  | 'DESIGN_ARCH_CHANGE'
+  // C. Materials / Bio / Contact
+  | 'MATERIAL_CHANGE'
   | 'TISSUE_CONTACT_CHANGE'
-  | 'TISSUE_DURATION_CHANGE'
-  | 'TECHNOLOGY_PRINCIPLE_CHANGE'
-  | 'TECHNOLOGY_MECHANISM_CHANGE'
-  | 'PERFORMANCE_ENDPOINT_CHANGE'
-  | 'PERFORMANCE_STANDARD_GAP'
+  | 'CONTACT_DURATION_CHANGE'
+  // D. Sterilization / Shelf-life / Packaging
+  | 'STERILIZATION_METHOD_CHANGE'
+  | 'PACKAGING_SYSTEM_CHANGE'
+  | 'SHELF_LIFE_CHANGE'
+  // E. Software / Cyber / Interop
+  | 'SOFTWARE_PRESENT_NEW'
+  | 'SOFTWARE_SAFETY_CLASS_DIFF'
+  | 'CYBERSECURITY_SURFACE_INCREASED'
+  | 'INTEROPERABILITY_CLAIM'
+  | 'ML_ADAPTIVITY'
+  // F. Clinical / Performance
+  | 'PERFORMANCE_CLAIM_CHANGE'
+  | 'CLINICAL_EVIDENCE_GAP'
+  | 'HUMAN_FACTORS_CHANGE'
+  // G. Standards / Labeling / PMS
+  | 'STANDARDS_GAP'
   | 'LABELING_IFU_GAP'
   | 'LABELING_WARNINGS_GAP'
-  | 'SHELF_LIFE_CHANGE'
-  | 'PACKAGING_CHANGE'
-  | 'CLINICAL_DATA_GAP'
-  | 'OLD_PREDICATE_RISK';
+  | 'PMS_SIGNAL_RISK'
+  // H. Predicate Safety Lineage
+  | 'PREDICATE_TOXICITY_HIGH'
+  | 'PREDICATE_LINEAGE_COMPROMISED'
+  // I. Manufacturing / Packaging / Aging
+  | 'AGING_STUDY_GAP'
+  | 'MANUFACTURING_PROCESS_CHANGE'
+  | 'BIOBURDEN_CHANGE';
 
 /** Diff flag for V2 SE matrix rows. */
 export type DiffFlagV2 = 'EQUIVALENT' | 'DISCUSSION_REQUIRED' | 'SIGNIFICANT';

@@ -1341,7 +1341,7 @@ async def render_se_docx_v2(req: RenderSEDocxV2Request):
         # Render V2 DOCX
         factory = SEMatrixDocxFactory()
         docx_buf = factory.render_v2(
-            v2_payload=v2_payload,
+            se_payload_v2=v2_payload,
             reviewer_questions=reviewer_questions,
             toxicity_warnings=toxicity_warnings,
         )
