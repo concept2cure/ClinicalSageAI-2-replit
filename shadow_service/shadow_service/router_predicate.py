@@ -33,11 +33,14 @@ from . import sql_predicate as sql
 from . import sql_fda_universe as fda_sql
 from .predicate_analyzer import PredicateAnalyzer
 from .shadow_510k_reviewer import Shadow510kReviewer
+from .predicate_suggest import suggest_predicates
 from .models_predicate import (
     CandidateStatus,
     DiffSeverity,
     EquivalenceStatus,
     PredicateRadarPoint,
+    PredicateSuggestRequest,
+    PredicateSuggestResponse,
     RouteType,
     SECategory,
 )
@@ -119,6 +122,37 @@ class Generate510kPreviewRequest(BaseModel):
     program_id: UUID
     predicate_k_number: str
     subject_device: dict[str, Any] = Field(default_factory=dict)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Suggest — Phase 6.6.B Predicate Suggestion Engine
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/suggest", response_model=PredicateSuggestResponse)
+async def suggest_predicate_candidates(req: PredicateSuggestRequest):
+    """Return top 5 predicate suggestions with explainability.
+
+    Filters by product_code + SE decision, scores via FTS + name overlap +
+    recency + completeness. Returns deterministic reasoning (no LLM).
+    """
+    if not req.product_code or not req.device_description:
+        raise HTTPException(
+            status_code=422,
+            detail="product_code and device_description are required",
+        )
+
+    try:
+        pool = await db.get_pool()
+        response = await suggest_predicates(pool, req)
+        return response
+    except db.LiteModeError:
+        raise HTTPException(
+            status_code=503,
+            detail="Database not available. Service running in lite mode.",
+        )
+    except Exception as exc:
+        logger.exception("Predicate suggestion failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -450,54 +484,6 @@ async def generate_510k_preview(req: Generate510kPreviewRequest):
             "readiness_score": defense["readiness_score"],
             "docx_url": None,  # DOCX rendering integrated in next iteration
         }
-    finally:
-        await db.release_connection(conn)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Phase 6.6.B — Predicate Suggestion (Strategy Engine)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class PredicateSuggestRequestBody(BaseModel):
-    program_id: UUID
-    product_code: str
-    intended_use: str
-    technology: Optional[str] = None
-    materials: Optional[str] = None
-    energy_source: Optional[str] = None
-    tissue_contact: Optional[str] = None
-    sterilization: Optional[str] = None
-    max_results: int = Field(default=5, ge=1, le=20)
-
-
-@router.post("/device/predicate-suggest")
-async def suggest_predicates(req: PredicateSuggestRequestBody):
-    """Return ranked predicates with strategy recommendations.
-
-    The "killer demo": Upload device description → returns 3-5 predicates →
-    one flagged "TOXIC: Class I recall lineage" → pick the safe one.
-    """
-    from .scoring.strategy_engine import StrategyEngine
-    from .models_fda_universe import PredicateSuggestRequest
-
-    conn = await db.acquire_connection()
-    try:
-        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
-
-        engine = StrategyEngine(db._pool)
-        suggest_req = PredicateSuggestRequest(
-            program_id=req.program_id,
-            product_code=req.product_code,
-            intended_use=req.intended_use,
-            technology=req.technology,
-            materials=req.materials,
-            energy_source=req.energy_source,
-            tissue_contact=req.tissue_contact,
-            sterilization=req.sterilization,
-            max_results=req.max_results,
-        )
-        response = await engine.suggest_predicates(suggest_req)
-        return response.model_dump()
     finally:
         await db.release_connection(conn)
 

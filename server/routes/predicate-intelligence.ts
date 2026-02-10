@@ -160,7 +160,13 @@ async function proxyToShadow(
 
 function sendProxyResponse(
   res: Response,
-  result: { status: number; body: string; contentType: string; rawBuffer?: Buffer; rawHeaders?: Record<string, string> }
+  result: {
+    status: number;
+    body: string;
+    contentType: string;
+    rawBuffer?: Buffer;
+    rawHeaders?: Record<string, string>;
+  }
 ) {
   // Binary responses: forward buffer directly
   if (result.rawBuffer) {
@@ -174,6 +180,29 @@ function sendProxyResponse(
   }
   res.status(result.status).set('Content-Type', result.contentType).send(result.body);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Suggest — Phase 6.6.B Predicate Suggestion Engine
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/predicate-intelligence/suggest?program_id=...
+ *
+ * Returns top 5 predicate suggestions with explainability.
+ * Body: { program_id, product_code, device_description, ...optional fields }
+ */
+router.post('/suggest', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/suggest', {
+      method: 'POST',
+      body: req.body,
+    });
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] suggest proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Candidates
@@ -342,27 +371,6 @@ router.post('/generate-510k-preview', requireConfigured, requireProgramAccess, a
     res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
   }
 });
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.B — Predicate Suggestion (Strategy Engine)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.post(
-  '/device/predicate-suggest',
-  requireConfigured,
-  requireProgramAccess,
-  async (req, res) => {
-    try {
-      const result = await proxyToShadow('/predicate/device/predicate-suggest', {
-        method: 'POST',
-        body: req.body,
-      });
-      sendProxyResponse(res, result);
-    } catch (err: any) {
-      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
-    }
-  }
-);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Phase 6.6.C — Generate SE Matrix (auto-populated)

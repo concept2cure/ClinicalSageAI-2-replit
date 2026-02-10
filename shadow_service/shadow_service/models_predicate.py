@@ -262,3 +262,77 @@ class PredicateRadarPoint(BaseModel):
     recommended: bool = False
     route_type: Optional[RouteType] = None
     has_recall: bool = False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.B — Predicate Suggestion Engine (v1)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class StrategyRecommendation(str, Enum):
+    CONSERVATIVE = "CONSERVATIVE"
+    BALANCED = "BALANCED"
+    AGGRESSIVE = "AGGRESSIVE"
+
+
+class PredicateFlag(str, Enum):
+    OLD_PREDICATE = "OLD_PREDICATE"           # age > 8 years
+    LOW_TEXT_MATCH = "LOW_TEXT_MATCH"          # fts rank below threshold
+    MISSING_SUMMARY_TEXT = "MISSING_SUMMARY_TEXT"  # txt_content is null
+    VERY_NEW = "VERY_NEW"                     # cleared < 6 months ago
+
+
+class PredicateSuggestRequest(BaseModel):
+    """Input for POST /predicate/suggest — the subject device to find predicates for."""
+    program_id: str
+    product_code: str
+    device_description: str
+    intended_use: Optional[str] = None
+    materials: Optional[list[str]] = None
+    energy_source: Optional[str] = None
+    tissue_contact: Optional[str] = None
+    duration: Optional[str] = None
+    software_flag: Optional[bool] = None
+
+
+class ScoreBreakdown(BaseModel):
+    """Transparent scoring weights — trust builder for regulatory teams."""
+    fts_score: float = Field(0.0, description="Postgres full-text rank (0–1)")
+    name_match: float = Field(0.0, description="Device name token overlap (0–1)")
+    recency_boost: float = Field(0.0, description="Recency bonus (0–1)")
+    completeness_bonus: float = Field(0.0, description="Has summary text + URL (0–1)")
+    weights: dict[str, float] = Field(
+        default_factory=lambda: {
+            "fts": 0.65, "name": 0.20, "recency": 0.10, "completeness": 0.05,
+        }
+    )
+
+
+class PredicateSuggestion(BaseModel):
+    """A single predicate suggestion with explainability."""
+    k_number: str
+    device_name: str
+    applicant: Optional[str] = None
+    product_code: str
+    decision_date: Optional[date] = None
+    summary_url: Optional[str] = None
+    similarity_score: float = Field(ge=0.0, le=1.0)
+    recency_years: Optional[float] = None
+    strategy_recommendation: StrategyRecommendation
+    reasoning: str
+    score_breakdown: ScoreBreakdown
+    matched_terms: list[str] = Field(default_factory=list)
+    flags: list[PredicateFlag] = Field(default_factory=list)
+    reviewer_heat: int = Field(0, ge=0, le=100, description="Triage signal 0-100")
+    next_evidence: list[str] = Field(
+        default_factory=list,
+        description="Rule-based hints for evidence to gather",
+    )
+
+
+class PredicateSuggestResponse(BaseModel):
+    """Response from POST /predicate/suggest — top 5 predicates with explanations."""
+    suggestions: list[PredicateSuggestion]
+    generated_at: datetime
+    subject_hash: str = Field(description="SHA-256 of normalized input for dedup/caching")
+    product_code: str
+    total_candidates_scanned: int = 0

@@ -389,3 +389,61 @@ SELECT
         )
     END AS pct_with_signals;
 """
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Predicate Suggestion — Full-Text Search + Scoring (Phase 6.6.B)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# FTS search: product_code filter + full-text rank on txt_content + device_name.
+# Returns raw rows with fts_rank for Python-side composite scoring.
+# $1 = product_code, $2 = plainto_tsquery subject text, $3 = limit
+SUGGEST_PREDICATES_FTS = """
+SELECT
+    c.k_number,
+    c.device_name,
+    c.applicant,
+    c.product_code,
+    c.decision_date,
+    c.decision_code,
+    c.summary_url,
+    c.txt_content,
+    c.clearance_type,
+    ts_rank_cd(
+        to_tsvector('english', coalesce(c.txt_content, '') || ' ' || coalesce(c.device_name, '')),
+        plainto_tsquery('english', $2)
+    ) AS fts_rank
+FROM predicate.fda_510k_clearances c
+WHERE c.product_code = $1
+  AND c.decision_code = 'SE'
+  AND c.decision_date >= NOW() - INTERVAL '10 years'
+ORDER BY fts_rank DESC, c.decision_date DESC
+LIMIT $3;
+"""
+
+# Fallback when subject text is empty / FTS returns nothing — pure recency sort.
+SUGGEST_PREDICATES_FALLBACK = """
+SELECT
+    c.k_number,
+    c.device_name,
+    c.applicant,
+    c.product_code,
+    c.decision_date,
+    c.decision_code,
+    c.summary_url,
+    c.txt_content,
+    c.clearance_type,
+    0.0 AS fts_rank
+FROM predicate.fda_510k_clearances c
+WHERE c.product_code = $1
+  AND c.decision_code = 'SE'
+ORDER BY c.decision_date DESC
+LIMIT $2;
+"""
+
+# Count total SE clearances for a product code (for response metadata).
+COUNT_SE_CLEARANCES = """
+SELECT COUNT(*) AS total
+FROM predicate.fda_510k_clearances
+WHERE product_code = $1
+  AND decision_code = 'SE';
+"""
