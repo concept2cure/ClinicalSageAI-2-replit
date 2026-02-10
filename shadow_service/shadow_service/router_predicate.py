@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
@@ -30,6 +32,7 @@ from pydantic import BaseModel, Field
 
 from . import db
 from . import sql_predicate as sql
+from . import sql_predicates as sql_pred
 from . import sql_fda_universe as fda_sql
 from .predicate_analyzer import PredicateAnalyzer
 from .shadow_510k_reviewer import Shadow510kReviewer
@@ -44,6 +47,9 @@ from .models_predicate import (
     RouteType,
     SECategory,
 )
+
+# Configurable freshness threshold (spec: 14 days default)
+INGEST_FRESHNESS_DAYS = int(__import__('os').environ.get('INGEST_FRESHNESS_DAYS', '14'))
 
 logger = logging.getLogger(__name__)
 
@@ -132,18 +138,22 @@ class Generate510kPreviewRequest(BaseModel):
 async def suggest_predicate_candidates(req: PredicateSuggestRequest):
     """Return top 5 predicate suggestions with full Shadow Reviewer Scorecard.
 
+    Spec gates:
+      - 422: Missing required fields (product_code, device_name, intended_use, technology_description)
+      - 503: FDA predicate universe not populated or stale (freshness check)
+      - 403: Program access denied (handled by BFF)
+
     v2 enhancements:
       - B0: Structured input (device_name, intended_use, technology_description required)
       - B1: FTS + match_snippets[]
       - B2: Defense Readiness Score (DRS) per suggestion
       - B3: Anticipated objections with typed triggers
       - B4: AVOID gating for undefendable predicates
-      - B5: 15-min cache + audit event
-
-    Filters by product_code + SE decision, scores via FTS + name overlap +
-    recency + completeness + DRS. Returns deterministic reasoning (no LLM).
+      - B5: 15-min cache + audit event (PREDICATE_SUGGEST_REQUESTED/SUCCEEDED/FAILED)
     """
-    # B0: Validate structured input
+    t0 = time.monotonic()
+
+    # B0: Validate structured input (422)
     if not req.product_code:
         raise HTTPException(status_code=422, detail="product_code is required")
     if not req.device_name:
@@ -156,11 +166,31 @@ async def suggest_predicate_candidates(req: PredicateSuggestRequest):
 
     try:
         pool = await db.get_pool()
-        response = await suggest_predicates(pool, req)
 
-        # B5: Emit audit event (best-effort, non-blocking)
+        # Data freshness gate (503 if stale per spec)
         try:
-            await _emit_audit_event(pool, req, response)
+            await _check_ingest_freshness(pool)
+        except HTTPException:
+            raise
+        except Exception as fe:
+            logger.warning("Freshness check failed (proceeding): %s", fe)
+
+        # Emit PREDICATE_SUGGEST_REQUESTED
+        try:
+            await _emit_audit_event(
+                pool, "PREDICATE_SUGGEST_REQUESTED", req, None, 0
+            )
+        except Exception:
+            pass
+
+        response = await suggest_predicates(pool, req)
+        latency_ms = int((time.monotonic() - t0) * 1000)
+
+        # Emit PREDICATE_SUGGEST_SUCCEEDED
+        try:
+            await _emit_audit_event(
+                pool, "PREDICATE_SUGGEST_SUCCEEDED", req, response, latency_ms
+            )
         except Exception as audit_err:
             logger.warning("Audit event emission failed: %s", audit_err)
 
@@ -170,31 +200,136 @@ async def suggest_predicate_candidates(req: PredicateSuggestRequest):
             status_code=503,
             detail="Database not available. Service running in lite mode.",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
+        latency_ms = int((time.monotonic() - t0) * 1000)
         logger.exception("Predicate suggestion failed: %s", exc)
+        # Emit PREDICATE_SUGGEST_FAILED
+        try:
+            pool = await db.get_pool()
+            await _emit_audit_event(
+                pool, "PREDICATE_SUGGEST_FAILED", req, None, latency_ms,
+                error_code=type(exc).__name__,
+            )
+        except Exception:
+            pass
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-async def _emit_audit_event(pool, req: PredicateSuggestRequest, response: PredicateSuggestResponse):
-    """Log predicate_suggest AuditEvent for Part 11 traceability (B5)."""
+async def _check_ingest_freshness(pool):
+    """Data freshness gate per spec: 503 if no recent successful ingest.
+
+    Checks fda_ingest_runs for latest successful completion within threshold.
+    If not found or stale → 503.
+    """
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(sql_pred.CHECK_INGEST_FRESHNESS)
+            if row is None or row["latest_success_at"] is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="FDA predicate universe not populated. No successful ingest run found.",
+                )
+            latest = row["latest_success_at"]
+            if hasattr(latest, 'tzinfo') and latest.tzinfo is None:
+                latest = latest.replace(tzinfo=timezone.utc)
+            threshold = datetime.now(timezone.utc) - timedelta(days=INGEST_FRESHNESS_DAYS)
+            if latest < threshold:
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"FDA predicate universe stale. Last successful ingest: {latest.isoformat()}",
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        # If freshness table doesn't exist yet, log and proceed
+        logger.warning("Ingest freshness check skipped (table may not exist): %s", e)
+
+
+async def _emit_audit_event(
+    pool,
+    event_type: str,
+    req: PredicateSuggestRequest,
+    response: Optional[PredicateSuggestResponse],
+    latency_ms: int,
+    error_code: str = "",
+):
+    """Log predicate_suggest audit event per spec.
+
+    Events: PREDICATE_SUGGEST_REQUESTED / SUCCEEDED / FAILED
+    Payload: program_id, user_id, subject_hash, product_code,
+             candidate_count, returned_count, top_k_number, latency_ms, error_code
+    """
     import json as _json
+    from .predicate_suggest import compute_subject_hash
+
+    subject_hash = compute_subject_hash(req)
+    top_k = ""
+    returned_count = 0
+    candidate_count = 0
+
+    if response:
+        returned_count = len(response.suggestions)
+        candidate_count = response.total_candidates_scanned
+        top_k = response.suggestions[0].k_number if response.suggestions else ""
+
+    fingerprint = _json.dumps({
+        "event_type": event_type,
+        "subject_hash": subject_hash,
+        "product_code": req.product_code,
+        "candidate_count": candidate_count,
+        "returned_count": returned_count,
+        "top_k_number": top_k,
+        "latency_ms": latency_ms,
+        "error_code": error_code,
+        "weights_version": response.weights_version if response else "v2.0",
+        "cached": response.cached if response else False,
+    })
+
     async with pool.acquire() as conn:
-        top_k = [s.k_number for s in response.suggestions[:5]]
         await conn.execute(
-            """INSERT INTO predicate.fda_ingest_runs
-               (job_name, status, started_at, product_codes_filter, max_clearances_limit,
-                triggered_by, run_fingerprint)
-               VALUES ($1, $2, NOW(), $3, $4, $5, $6)""",
-            "predicate_suggest",
-            "completed",
+            sql_pred.INSERT_AUDIT_EVENT,
+            event_type,
+            "completed" if not error_code else "failed",
             [req.product_code],
-            response.total_candidates_scanned,
+            candidate_count,
             f"program:{req.program_id}",
+            fingerprint,
+        )
+
+
+async def _emit_se_matrix_render_event(
+    pool,
+    program_id: UUID,
+    predicate_k_number: str,
+    subject_device: dict[str, Any],
+    row_count: int,
+):
+    """Log SE matrix render audit event (C0 audit gate)."""
+    import hashlib
+    import json as _json
+
+    fingerprint = _json.dumps(
+        {
+            "predicate_k_number": predicate_k_number,
+            "subject_device": subject_device,
+        },
+        sort_keys=True,
+    )
+    subject_hash = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
+
+    async with pool.acquire() as conn:
+        await conn.execute(
+            sql_pred.INSERT_AUDIT_EVENT,
+            "SE_MATRIX_RENDER",
+            "completed",
+            [],
+            row_count,
+            f"program:{program_id}",
             _json.dumps({
-                "subject_hash": response.subject_hash,
-                "top_selections": top_k,
-                "weights_version": response.weights_version,
-                "cached": response.cached,
+                "subject_hash": subject_hash,
+                "predicate_k_number": predicate_k_number,
             }),
         )
 
@@ -913,6 +1048,19 @@ async def render_se_docx(req: RenderSEDocxRequest):
             reviewer_questions=reviewer_questions,
             toxicity_warnings=toxicity_warnings,
         )
+
+        # Audit event (best-effort)
+        try:
+            pool = await db.get_pool()
+            await _emit_se_matrix_render_event(
+                pool=pool,
+                program_id=req.program_id,
+                predicate_k_number=req.selected_predicate_k_number,
+                subject_device=req.subject_device,
+                row_count=len(se_payload.get("comparison_rows", [])),
+            )
+        except Exception as audit_err:
+            logger.warning("SE matrix render audit failed: %s", audit_err)
 
         k_num = req.selected_predicate_k_number
         filename = f"SE_Matrix_{k_num}.docx"

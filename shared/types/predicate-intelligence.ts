@@ -59,14 +59,40 @@ export type PredicateFlag =
   | 'OLD_PREDICATE'
   | 'LOW_TEXT_MATCH'
   | 'MISSING_SUMMARY_TEXT'
-  | 'VERY_NEW';
+  | 'VERY_NEW'
+  | 'MATERIAL_MISMATCH'
+  | 'CONTACT_MISMATCH'
+  | 'WEAK_SUMMARY_TEXT'
+  | 'ENERGY_MISMATCH'
+  | 'SOFTWARE_MISMATCH'
+  | 'STERILIZATION_MISMATCH';
 
-export interface AnticipatedObjection {
+export type RiskFlagSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface RiskFlag {
+  code: string;
+  severity: RiskFlagSeverity;
+  message: string;
+}
+
+export type ObjectionSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface Objection {
+  trigger: string;
+  severity: ObjectionSeverity;
   question: string;
-  severity: 'High' | 'Med' | 'Low';
-  trigger: ObjectionTrigger;
   recommended_fix: string;
-  suggested_evidence_types: SuggestedEvidenceType[];
+  evidence_types: SuggestedEvidenceType[];
+}
+
+/** Legacy alias */
+export type AnticipatedObjection = Objection;
+
+export interface DefensePacketSeed {
+  evidence_type: string;
+  description: string;
+  source_objection: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface MatchSnippet {
@@ -109,11 +135,13 @@ export interface PredicateSuggestion {
   product_code: string;
   decision_date?: string | null;
   summary_url?: string | null;
-  // Scoring (B2)
+  // Scores (B2)
   similarity_score: number;
   defense_readiness_score: number;
+  toxicity_score?: number | null; // placeholder until 6.6.A safety signals
+  // Strategy
   strategy_recommendation: StrategyRecommendation;
-  risk_flags: PredicateFlag[];
+  // Explainability
   reasoning: string;
   score_breakdown: {
     fts_score: number;
@@ -122,14 +150,15 @@ export interface PredicateSuggestion {
     completeness_bonus: number;
     weights: Record<string, number>;
   };
-  // Match evidence (B1)
-  matched_terms: string[];
+  risk_flags: RiskFlag[];
   match_snippets: MatchSnippet[];
-  // Objections (B3)
-  anticipated_objections: AnticipatedObjection[];
+  anticipated_objections: Objection[];
+  // Defense Packet Seed (jaw-drop stub)
+  defense_packet_seed: DefensePacketSeed[];
   // Legacy compat
+  matched_terms: string[];
   recency_years?: number | null;
-  flags: PredicateFlag[];
+  flags: string[];
   reviewer_heat: number;
   next_evidence: string[];
 }
@@ -147,6 +176,8 @@ export interface PredicateSuggestRequest {
   tissue_contact?: string; // none / intact_skin / breached / blood / implant
   duration?: string; // transient / short / long (ISO 10993)
   software_present?: boolean;
+  sterilization?: string; // EO, gamma, steam, none
+  patient_population?: string; // pediatric, adult, geriatric
   // Legacy compat
   device_description?: string;
   software_flag?: boolean;
@@ -157,6 +188,7 @@ export interface PredicateSuggestResponse {
   subject_hash: string;
   product_code: string;
   total_candidates_scanned: number;
+  latency_ms: number;
   generated_at: string;
   weights_version: string;
   cached: boolean;

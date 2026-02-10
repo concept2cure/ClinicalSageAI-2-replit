@@ -275,11 +275,35 @@ class StrategyRecommendation(str, Enum):
     AVOID = "AVOID"
 
 
-class PredicateFlag(str, Enum):
-    OLD_PREDICATE = "OLD_PREDICATE"           # age > 8 years
-    LOW_TEXT_MATCH = "LOW_TEXT_MATCH"          # fts rank below threshold
-    MISSING_SUMMARY_TEXT = "MISSING_SUMMARY_TEXT"  # txt_content is null
-    VERY_NEW = "VERY_NEW"                     # cleared < 6 months ago
+class PredicateFlagCode(str, Enum):
+    """Enum codes for typed risk flags."""
+    OLD_PREDICATE = "OLD_PREDICATE"
+    LOW_TEXT_MATCH = "LOW_TEXT_MATCH"
+    MISSING_SUMMARY_TEXT = "MISSING_SUMMARY_TEXT"
+    VERY_NEW = "VERY_NEW"
+    MATERIAL_MISMATCH = "MATERIAL_MISMATCH"
+    CONTACT_MISMATCH = "CONTACT_MISMATCH"
+    WEAK_SUMMARY_TEXT = "WEAK_SUMMARY_TEXT"
+    ENERGY_MISMATCH = "ENERGY_MISMATCH"
+    SOFTWARE_MISMATCH = "SOFTWARE_MISMATCH"
+    STERILIZATION_MISMATCH = "STERILIZATION_MISMATCH"
+
+
+# Keep legacy alias for backward compat
+PredicateFlag = PredicateFlagCode
+
+
+class RiskFlagSeverity(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class RiskFlag(BaseModel):
+    """Typed risk flag per spec: code + severity + message."""
+    code: str
+    severity: RiskFlagSeverity
+    message: str
 
 
 class ObjectionTrigger(str, Enum):
@@ -295,6 +319,12 @@ class ObjectionTrigger(str, Enum):
     MISSING_SUMMARY = "MISSING_SUMMARY"
 
 
+class ObjectionSeverity(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
 class EvidenceType(str, Enum):
     """Suggested evidence types for objection resolution."""
     BENCH = "bench"
@@ -307,13 +337,17 @@ class EvidenceType(str, Enum):
     PERFORMANCE_DATA = "performance_data"
 
 
-class AnticipatedObjection(BaseModel):
-    """A structured reviewer objection with actionable fix."""
+class Objection(BaseModel):
+    """A structured reviewer objection per spec (trigger/severity/question/recommended_fix/evidence_types)."""
+    trigger: str
+    severity: ObjectionSeverity
     question: str
-    severity: str = Field(description="High / Med / Low")
-    trigger: ObjectionTrigger
-    recommended_fix: str = Field(description="One-liner actionable fix")
-    suggested_evidence_types: list[str] = Field(default_factory=list)
+    recommended_fix: str
+    evidence_types: list[str] = Field(default_factory=list)
+
+
+# Keep legacy alias
+AnticipatedObjection = Objection
 
 
 class MatchSnippet(BaseModel):
@@ -325,8 +359,8 @@ class MatchSnippet(BaseModel):
 class PredicateSuggestRequest(BaseModel):
     """Input for POST /predicate/suggest — the subject device to find predicates for.
 
-    Required: product_code, device_name, intended_use, technology_description.
-    Strongly recommended: materials, energy_source, tissue_contact, duration, software_present.
+    Required: program_id, product_code, device_name, intended_use, technology_description.
+    Strongly recommended: materials, energy_source, tissue_contact, duration, software_present, sterilization, patient_population.
     """
     program_id: str
     # ── Required (B0) ──
@@ -340,6 +374,8 @@ class PredicateSuggestRequest(BaseModel):
     tissue_contact: Optional[str] = None  # none / intact_skin / breached / blood / implant
     duration: Optional[str] = None        # transient / short / long (ISO 10993 buckets)
     software_present: Optional[bool] = None
+    sterilization: Optional[str] = None   # e.g. EO, gamma, steam, none
+    patient_population: Optional[str] = None  # e.g. pediatric, adult, geriatric
     # ── Legacy compat ──
     device_description: Optional[str] = None  # fallback if technology_description empty
     software_flag: Optional[bool] = None      # alias for software_present
@@ -353,43 +389,69 @@ class ScoreBreakdown(BaseModel):
     completeness_bonus: float = Field(0.0, description="Has summary text + URL (0–1)")
     weights: dict[str, float] = Field(
         default_factory=lambda: {
-            "fts": 0.65, "name": 0.20, "recency": 0.10, "completeness": 0.05,
+            "fts": 0.55,
+            "name": 0.20,
+            "recency": 0.10,
+            "completeness": 0.05,
+            "drs": 0.10,
         }
     )
 
 
+class DefensePacketSeed(BaseModel):
+    """Structured evidence needs derived from anticipated objections.
+
+    The "jaw-drop" stub: not full Truth Machine integration, but a structured
+    list of evidence items the submitter needs to prepare.
+    """
+    evidence_type: str = Field(description="e.g. bench, biocomp, sw_lifecycle")
+    description: str = Field(description="What needs to be prepared")
+    source_objection: str = Field(description="Which objection triggered this")
+    priority: str = Field("MEDIUM", description="HIGH / MEDIUM / LOW")
+
+
 class PredicateSuggestion(BaseModel):
     """A single predicate suggestion with full Shadow Reviewer Scorecard."""
+    # ── Identity + metadata ──
     k_number: str
     device_name: str
     applicant: Optional[str] = None
     product_code: str
     decision_date: Optional[date] = None
     summary_url: Optional[str] = None
-    # ── Scoring (B2) ──
+    # ── Scores (B2) ──
     similarity_score: float = Field(ge=0.0, le=1.0)
     defense_readiness_score: float = Field(
         0.0, ge=0.0, le=100.0,
         description="DRS: evidence completeness metric (0–100)",
     )
+    toxicity_score: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Placeholder until 6.6.A safety signals pipeline is live",
+    )
+    # ── Strategy ──
     strategy_recommendation: StrategyRecommendation
-    risk_flags: list[PredicateFlag] = Field(default_factory=list)
+    # ── Explainability ──
     reasoning: str
     score_breakdown: ScoreBreakdown
-    # ── Match evidence (B1) ──
-    matched_terms: list[str] = Field(default_factory=list)
+    risk_flags: list[RiskFlag] = Field(default_factory=list)
     match_snippets: list[MatchSnippet] = Field(
         default_factory=list,
         description="Top 3 short excerpts from predicate text",
     )
-    # ── Objections (B3) ──
-    anticipated_objections: list[AnticipatedObjection] = Field(
+    anticipated_objections: list[Objection] = Field(
         default_factory=list,
         description="Predicted reviewer objections with fixes",
     )
+    # ── Defense Packet Seed (jaw-drop stub) ──
+    defense_packet_seed: list[DefensePacketSeed] = Field(
+        default_factory=list,
+        description="Structured evidence needs derived from objections",
+    )
     # ── Legacy compat ──
+    matched_terms: list[str] = Field(default_factory=list)
     recency_years: Optional[float] = None
-    flags: list[PredicateFlag] = Field(default_factory=list)
+    flags: list[str] = Field(default_factory=list)
     reviewer_heat: int = Field(0, ge=0, le=100, description="Triage signal 0-100")
     next_evidence: list[str] = Field(
         default_factory=list,
@@ -404,5 +466,6 @@ class PredicateSuggestResponse(BaseModel):
     subject_hash: str = Field(description="SHA-256 of normalized input for dedup/caching")
     product_code: str
     total_candidates_scanned: int = 0
+    latency_ms: int = Field(0, description="Server-side latency in milliseconds")
     weights_version: str = Field("v2.0", description="Scoring algorithm version")
     cached: bool = Field(False, description="True if served from cache")

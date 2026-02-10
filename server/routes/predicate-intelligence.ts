@@ -189,7 +189,13 @@ function sendProxyResponse(
  * POST /api/predicate-intelligence/suggest?program_id=...
  *
  * Returns top 5 predicate suggestions with explainability.
- * Body: { program_id, product_code, device_description, ...optional fields }
+ * Body: { program_id, product_code, device_name, intended_use, technology_description, ...optional fields }
+ *
+ * Error normalization per spec:
+ *   403 → "You don't have access to this program."
+ *   503 → "Predicate universe not configured or stale."
+ *   422 → validation errors passthrough
+ *   others → passthrough
  */
 router.post('/suggest', requireConfigured, requireProgramAccess, async (req, res) => {
   try {
@@ -197,6 +203,20 @@ router.post('/suggest', requireConfigured, requireProgramAccess, async (req, res
       method: 'POST',
       body: req.body,
     });
+
+    // Normalize shadow errors per spec
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate universe not configured or stale',
+          detail: parsed.detail || 'FDA universe not ready',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate universe not configured or stale' });
+      }
+    }
+
     sendProxyResponse(res, result);
   } catch (err: any) {
     console.error('[predicate-intel] suggest proxy error:', err.message);
@@ -484,5 +504,43 @@ router.post(
     }
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Program-scoped convenience route per spec 6.6.B.2
+// POST /api/predicate-intelligence/programs/:programId/suggestions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/programs/:programId/suggestions', requireConfigured, async (req, res, next) => {
+  // Inject programId into body and query for downstream middleware/proxy
+  const programId = req.params.programId;
+  req.body = { ...req.body, program_id: programId };
+  req.query = { ...req.query, program_id: programId };
+  // Run through program access check then forward to suggest
+  requireProgramAccess(req, res, async () => {
+    try {
+      const result = await proxyToShadow('/predicate/suggest', {
+        method: 'POST',
+        body: req.body,
+      });
+
+      if (result.status === 503) {
+        try {
+          const parsed = JSON.parse(result.body);
+          return res.status(503).json({
+            error: 'Predicate universe not configured or stale',
+            detail: parsed.detail || 'FDA universe not ready',
+          });
+        } catch {
+          return res.status(503).json({ error: 'Predicate universe not configured or stale' });
+        }
+      }
+
+      sendProxyResponse(res, result);
+    } catch (err: any) {
+      console.error('[predicate-intel] program-scoped suggest error:', err.message);
+      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  });
+});
 
 export default router;

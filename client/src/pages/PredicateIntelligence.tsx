@@ -546,15 +546,26 @@ function PredicateRadarTab({
                         <StrategyBadge
                           recommendation={s.strategy_recommendation as StrategyRecommendation}
                         />
-                        {s.risk_flags?.map((f: string) => (
-                          <Badge
-                            key={f}
-                            variant="outline"
-                            className="text-[10px] text-orange-700 border-orange-300"
-                          >
-                            {f.replace(/_/g, ' ')}
-                          </Badge>
-                        ))}
+                        {s.risk_flags?.map((f: any, idx: number) => {
+                          const code = typeof f === 'string' ? f : f.code;
+                          const sev = typeof f === 'string' ? 'MEDIUM' : f.severity;
+                          const sevColor =
+                            sev === 'HIGH'
+                              ? 'text-red-700 border-red-300'
+                              : sev === 'MEDIUM'
+                                ? 'text-orange-700 border-orange-300'
+                                : 'text-yellow-700 border-yellow-300';
+                          return (
+                            <Badge
+                              key={`${code}-${idx}`}
+                              variant="outline"
+                              className={`text-[10px] ${sevColor}`}
+                              title={typeof f === 'object' ? f.message : ''}
+                            >
+                              {code.replace(/_/g, ' ')}
+                            </Badge>
+                          );
+                        })}
                       </div>
                       <p className="font-medium">{s.device_name}</p>
                       {s.applicant && (
@@ -1434,33 +1445,50 @@ function StrategyTab({
 }) {
   const suggestMut = useSuggestPredicates(programId);
   const [productCode, setProductCode] = useState('');
+  const [deviceName, setDeviceName] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
   const [technology, setTechnology] = useState('');
   const [materials, setMaterials] = useState('');
   const [energySource, setEnergySource] = useState('');
   const [tissueContact, setTissueContact] = useState('');
+  const [duration, setDuration] = useState('');
+  const [softwarePresent, setSoftwarePresent] = useState(false);
   const [sterilization, setSterilization] = useState('');
+  const [patientPopulation, setPatientPopulation] = useState('');
 
   const handleSuggest = useCallback(() => {
-    if (!productCode.trim() || !intendedUse.trim()) return;
+    if (!productCode.trim() || !deviceName.trim() || !intendedUse.trim() || !technology.trim()) {
+      return;
+    }
+    const materialList = materials
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
     suggestMut.mutate({
       product_code: productCode,
+      device_name: deviceName,
       intended_use: intendedUse,
-      technology: technology || undefined,
-      materials: materials || undefined,
+      technology_description: technology,
+      materials: materialList.length ? materialList : undefined,
       energy_source: energySource || undefined,
       tissue_contact: tissueContact || undefined,
+      duration: duration || undefined,
+      software_present: softwarePresent || undefined,
       sterilization: sterilization || undefined,
-      max_results: 10,
+      patient_population: patientPopulation || undefined,
     });
   }, [
     productCode,
+    deviceName,
     intendedUse,
     technology,
     materials,
     energySource,
     tissueContact,
+    duration,
+    softwarePresent,
     sterilization,
+    patientPopulation,
     suggestMut,
   ]);
 
@@ -1474,18 +1502,25 @@ function StrategyTab({
           </CardTitle>
           <CardDescription>
             Enter your subject device details to find the safest, most defensible predicate. The
-            strategy engine scores predicates on toxicity, lineage safety, recency, and regulatory
-            history — not just text similarity.
+            strategy engine scores predicates on similarity, defense readiness, and objection risk.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Product Code *</label>
               <Input
                 value={productCode}
                 onChange={e => setProductCode(e.target.value)}
                 placeholder="e.g. DQA, NBW, QKQ"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Device Name *</label>
+              <Input
+                value={deviceName}
+                onChange={e => setDeviceName(e.target.value)}
+                placeholder="e.g. Spinal Fusion Cage"
               />
             </div>
             <div>
@@ -1499,11 +1534,11 @@ function StrategyTab({
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Technology</label>
+              <label className="text-sm font-medium mb-1 block">Technology Description *</label>
               <Input
                 value={technology}
                 onChange={e => setTechnology(e.target.value)}
-                placeholder="e.g. Electrochemical sensor"
+                placeholder="e.g. Titanium interbody cage for spinal fusion"
               />
             </div>
             <div>
@@ -1511,7 +1546,7 @@ function StrategyTab({
               <Input
                 value={materials}
                 onChange={e => setMaterials(e.target.value)}
-                placeholder="e.g. Titanium alloy"
+                placeholder="e.g. Titanium alloy, PEEK"
               />
             </div>
             <div>
@@ -1523,27 +1558,81 @@ function StrategyTab({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-sm font-medium mb-1 block">Tissue Contact</label>
-              <Input
+              <select
                 value={tissueContact}
                 onChange={e => setTissueContact(e.target.value)}
-                placeholder="e.g. Intact skin, blood contact"
-              />
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="none">None</option>
+                <option value="intact_skin">Intact Skin</option>
+                <option value="breached">Breached / Mucosal</option>
+                <option value="blood">Blood Path</option>
+                <option value="implant">Implant</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Duration (ISO 10993)</label>
+              <select
+                value={duration}
+                onChange={e => setDuration(e.target.value)}
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="transient">≤24h (Transient)</option>
+                <option value="short">24h–30d (Short)</option>
+                <option value="long">>30d (Long / Permanent)</option>
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Sterilization</label>
-              <Input
+              <select
                 value={sterilization}
                 onChange={e => setSterilization(e.target.value)}
-                placeholder="e.g. EO sterilization, radiation"
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="EO">EO (Ethylene Oxide)</option>
+                <option value="gamma">Gamma Irradiation</option>
+                <option value="steam">Steam (Autoclave)</option>
+                <option value="ebeam">E-Beam</option>
+                <option value="none">None / Non-sterile</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Patient Population</label>
+              <Input
+                value={patientPopulation}
+                onChange={e => setPatientPopulation(e.target.value)}
+                placeholder="e.g. Adult, Pediatric, Geriatric"
               />
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 h-10">
+                <input
+                  type="checkbox"
+                  checked={softwarePresent}
+                  onChange={e => setSoftwarePresent(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm font-medium">Software Present</span>
+              </label>
             </div>
           </div>
           <Button
             onClick={handleSuggest}
-            disabled={!productCode.trim() || !intendedUse.trim() || suggestMut.isPending}
+            disabled={
+              !productCode.trim()
+              || !deviceName.trim()
+              || !intendedUse.trim()
+              || !technology.trim()
+              || suggestMut.isPending
+            }
             className="bg-purple-600 hover:bg-purple-700"
           >
             {suggestMut.isPending ? (
@@ -1680,6 +1769,53 @@ function StrategyTab({
               </Table>
             </CardContent>
           </Card>
+
+          {/* Defense Packet Seed — the "jaw-drop" */}
+          {suggestMut.data.suggestions.some((s: any) => s.defense_packet_seed?.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" /> Defense Packet Seed
+                </CardTitle>
+                <CardDescription>
+                  Structured evidence needs derived from anticipated objections. Not just scoring — prescribing the fix list.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {suggestMut.data.suggestions
+                    .filter((s: any) => s.defense_packet_seed?.length > 0)
+                    .slice(0, 3)
+                    .map((s: any) => (
+                      <div key={s.k_number} className="p-3 rounded-md border bg-muted/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-mono text-sm font-semibold">{s.k_number}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {s.defense_packet_seed.length} evidence items
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          {s.defense_packet_seed.map((seed: any, i: number) => (
+                            <div key={i} className="flex items-start gap-2 text-sm">
+                              <Badge
+                                variant={seed.priority === 'HIGH' ? 'destructive' : 'secondary'}
+                                className="text-[10px] shrink-0"
+                              >
+                                {seed.priority}
+                              </Badge>
+                              <span className="font-mono text-xs text-muted-foreground shrink-0">
+                                [{seed.evidence_type}]
+                              </span>
+                              <span className="text-muted-foreground">{seed.description}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Reasoning details */}
           <Card>

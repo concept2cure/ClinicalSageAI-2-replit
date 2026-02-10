@@ -68,6 +68,7 @@
     "NODE_ENV": "development"
   },
   "python.analysis.extraPaths": ["shadow_service"],
+  "python.defaultInterpreterPath": "/workspaces/ClinicalSageAI-2-replit/.venv/bin/python",
   "files.associations": {
     "*.sql": "plaintext"
   },

@@ -86,13 +86,13 @@ describe('Phase 6.6.B — predicate_suggest.py', () => {
   it('defines composite scoring weights', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
     expect(content).toContain('WEIGHTS');
-    expect(content).toContain('fts');
+    expect(content).toContain('FTS');
     expect(content).toContain('recency');
   });
 
   it('classifies strategy recommendations', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_classify_strategy');
+    expect(content).toContain('classify_strategy');
     expect(content).toContain('StrategyRecommendation');
   });
 
@@ -103,9 +103,25 @@ describe('Phase 6.6.B — predicate_suggest.py', () => {
 
   it('computes explainability fields', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_find_matched_terms');
-    expect(content).toContain('_compute_flags');
-    expect(content).toContain('_build_reasoning');
+    expect(content).toContain('find_matched_terms');
+    expect(content).toContain('compute_drs');
+    expect(content).toContain('build_reasoning');
+  });
+
+  it('imports from scoring module', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('.scoring.predicate_strategy import');
+  });
+
+  it('imports from sql_predicates module', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('import sql_predicates');
+  });
+
+  it('tracks latency', () => {
+    const content = readFileContent(PREDICATE_SUGGEST);
+    expect(content).toContain('latency_ms');
+    expect(content).toContain('time.monotonic');
   });
 });
 
@@ -326,21 +342,21 @@ describe('Phase 6.6.B — predicate_suggest.py', () => {
   it('defines scoring weights', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
     expect(content).toContain('WEIGHTS');
-    expect(content).toContain('fts');
+    expect(content).toContain('FTS');
     expect(content).toContain('recency');
   });
 
   it('classifies strategy recommendations', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_classify_strategy');
+    expect(content).toContain('classify_strategy');
     expect(content).toContain('StrategyRecommendation');
   });
 
   it('computes explainability fields', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_compute_flags');
-    expect(content).toContain('_build_reasoning');
-    expect(content).toContain('_find_matched_terms');
+    expect(content).toContain('compute_drs');
+    expect(content).toContain('build_reasoning');
+    expect(content).toContain('find_matched_terms');
   });
   it('supports CLI invocation', () => {
     const content = readFileContent(INGEST_JOB);
@@ -421,13 +437,13 @@ describe('Phase 6.6.B — predicate_suggest.py', () => {
   it('defines composite scoring weights', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
     expect(content).toContain('WEIGHTS');
-    expect(content).toContain('fts');
+    expect(content).toContain('FTS');
     expect(content).toContain('recency');
   });
 
   it('classifies strategy recommendations', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_classify_strategy');
+    expect(content).toContain('classify_strategy');
     expect(content).toContain('StrategyRecommendation');
   });
 
@@ -438,9 +454,9 @@ describe('Phase 6.6.B — predicate_suggest.py', () => {
 
   it('computes explainability fields', () => {
     const content = readFileContent(PREDICATE_SUGGEST);
-    expect(content).toContain('_find_matched_terms');
-    expect(content).toContain('_compute_flags');
-    expect(content).toContain('_build_reasoning');
+    expect(content).toContain('find_matched_terms');
+    expect(content).toContain('compute_drs');
+    expect(content).toContain('build_reasoning');
   });
 });
 
@@ -952,10 +968,11 @@ describe('Phase 6.6.D — PredicateIntelligence.tsx enhancements', () => {
     expect(content).toContain('useSuggestPredicates(programId)');
   });
 
-  it('StrategyTab has tissue contact and sterilization fields', () => {
+  it('StrategyTab has tissue contact and duration fields', () => {
     const content = readFileContent(PAGE_FILE);
     expect(content).toContain('tissueContact');
-    expect(content).toContain('sterilization');
+    expect(content).toContain('duration');
+    expect(content).toContain('softwarePresent');
   });
 
   it('StrategyTab renders ranked suggestions table', () => {
