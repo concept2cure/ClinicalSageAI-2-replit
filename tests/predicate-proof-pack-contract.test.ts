@@ -122,7 +122,7 @@ describe('ProofStrip UI Component', () => {
 
   it('renders Freshness badge with color-coded status', () => {
     expect(src).toContain('proof.ingest_freshness.status');
-    expect(src).toContain('FDA Data:');
+    expect(src).toContain('FDA data updated:');
   });
 
   it('renders Audit badge with signer type + key id', () => {
@@ -194,6 +194,32 @@ describe('Replay Determinism UI (SEMatrixV2Panel)', () => {
     expect(src).toContain('ShieldCheck');
     expect(src).toContain('ShieldAlert');
   });
+
+  it('download button disabled prop includes drift check (GAP 1 — CRITICAL)', () => {
+    // The Download button must be disabled when replayResult is non-null and not deterministic
+    expect(src).toContain('replayResult !== null && !replayResult.deterministic');
+    // The disabled prop must reference this condition
+    expect(src).toMatch(/disabled=\{[^}]*replayResult/);
+  });
+
+  it('download button has data-testid for testing', () => {
+    expect(src).toContain('data-testid="download-docx-btn"');
+  });
+
+  it('download button shows "Download Blocked" label on drift', () => {
+    expect(src).toContain('Download Blocked (Drift)');
+  });
+
+  it('replay button is in the same container as generate and download buttons', () => {
+    // The action buttons div should contain both Download and Replay
+    // Both should be in the flex container, not separated into different sections
+    const actionSection = src.slice(
+      src.indexOf('Action buttons'),
+      src.indexOf('Error states') !== -1 ? src.indexOf('Error states') : src.indexOf('Results')
+    );
+    expect(actionSection).toContain('download-docx-btn');
+    expect(actionSection).toContain('replay-determinism-btn');
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -215,6 +241,10 @@ describe('BFF Defense Packet Routes', () => {
 
   it('proof-pack route proxies to Shadow Service', () => {
     expect(src).toContain('/predicate/proof-pack');
+  });
+
+  it('proof-pack route emits Part 11 audit event', () => {
+    expect(src).toContain('PROOF_PACK_ACCESSED');
   });
 
   it('replay-determinism emits Part 11 audit event', () => {
@@ -357,6 +387,21 @@ describe('PredicateIntelligence page wiring', () => {
   it('renders ProofStrip with programId', () => {
     expect(src).toContain('<ProofStrip');
     expect(src).toContain('programId={programId}');
+  });
+
+  it('ProofStrip is positioned top-right (in header flex container)', () => {
+    const headerSection = src.slice(
+      src.indexOf('Header + Proof Strip'),
+      src.indexOf('Program ID selector') !== -1
+        ? src.indexOf('Program ID selector')
+        : src.indexOf('Summary stats')
+    );
+    expect(headerSection).toContain('justify-between');
+    expect(headerSection).toContain('ProofStrip');
+  });
+
+  it('passes subjectHash to ProofStrip', () => {
+    expect(src).toMatch(/ProofStrip[\s\S]*?subjectHash/);
   });
 });
 

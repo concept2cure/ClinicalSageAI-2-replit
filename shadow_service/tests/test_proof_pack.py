@@ -74,7 +74,9 @@ VALID_SIGNATURE_METHODS = {"HSM", "PKI", "DEV"}
 
 def build_proof_pack(
     *,
+    program_id: str = "test-program",
     subject_hash: str = "abc123",
+    manifest_hash: str = "manifest_abc123",
     ingest_completed: datetime | None = None,
     ingest_status: str | None = None,
 ) -> dict:
@@ -102,14 +104,14 @@ def build_proof_pack(
     if ingest_status:
         freshness["status"] = ingest_status
 
-    doc_content = f"prog:{subject_hash}:manifest:{risk_vocab_hash}"
+    doc_content = f"{program_id}:{subject_hash}:{manifest_hash}:{risk_vocab_hash}"
     doc_hash = hashlib.sha256(doc_content.encode("utf-8")).hexdigest()
 
     return {
         "subject_hash": subject_hash,
         "risk_vocab_version": "2.0.0",
         "risk_vocab_hash": risk_vocab_hash,
-        "manifest_hash": "manifest_abc123",
+        "manifest_hash": manifest_hash,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "ingest_freshness": freshness,
         "audit": {

@@ -1301,15 +1301,23 @@ export default function PredicateIntelligencePage({
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Radar className="h-6 w-6" /> Predicate Intelligence
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Find the safest, most defensible predicate — not just the most similar. Toxic Predicate
-          Detection + Shadow 510(k) Review + Defense Readiness Scoring.
-        </p>
+      {/* Header + Proof Strip (top-right) */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Radar className="h-6 w-6" /> Predicate Intelligence
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Find the safest, most defensible predicate — not just the most similar. Toxic Predicate
+            Detection + Shadow 510(k) Review + Defense Readiness Scoring.
+          </p>
+        </div>
+        {/* E1: Proof Strip — zero-drift compliance badges (top-right) */}
+        {programId && (
+          <div className="flex-shrink-0">
+            <ProofStrip programId={programId} subjectHash={selectedCandidate?.k_number || ''} />
+          </div>
+        )}
       </div>
 
       {/* Program ID selector (fallback if no prop or URL param) */}
@@ -1333,9 +1341,6 @@ export default function PredicateIntelligencePage({
 
       {/* Summary stats */}
       {programId && <SummaryCards programId={programId} selectedCandidate={selectedCandidate} />}
-
-      {/* E1: Proof Strip — zero-drift compliance badges */}
-      {programId && <ProofStrip programId={programId} />}
 
       {/* Main Tabs */}
       {programId && (

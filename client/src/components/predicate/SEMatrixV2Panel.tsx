@@ -258,8 +258,8 @@ export function SEMatrixV2Panel({
             ))}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-3">
+          {/* Action buttons — Generate + Download + Replay (side-by-side) */}
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               onClick={handleGenerate}
               disabled={!kNumber.trim() || generateMutation.isPending}
@@ -272,11 +272,88 @@ export function SEMatrixV2Panel({
               <Button
                 variant="outline"
                 onClick={handleDownloadDocx}
-                disabled={renderDocxMutation.isPending}
+                disabled={
+                  renderDocxMutation.isPending ||
+                  (replayResult !== null && !replayResult.deterministic)
+                }
+                data-testid="download-docx-btn"
               >
                 <Download className="h-4 w-4 mr-1" />
-                {renderDocxMutation.isPending ? 'Rendering...' : 'Download V2 DOCX'}
+                {renderDocxMutation.isPending
+                  ? 'Rendering...'
+                  : replayResult !== null && !replayResult.deterministic
+                    ? 'Download Blocked (Drift)'
+                    : 'Download V2 DOCX'}
               </Button>
+            )}
+
+            {/* E2: Replay / Verify Determinism — next to Download */}
+            {result?.manifest_hash && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayMutation.isPending}
+                      data-testid="replay-determinism-btn"
+                      onClick={() => {
+                        setReplayResult(null);
+                        replayMutation.mutate(
+                          {
+                            productCode: payload?.comparison_rows?.[0]?.product_code || '',
+                            subjectDevice: subjectDevice,
+                            selectedPredicate: { k_number: kNumber },
+                            originalManifestHash: result.manifest_hash!,
+                          },
+                          { onSuccess: data => setReplayResult(data) }
+                        );
+                      }}
+                    >
+                      <RefreshCw
+                        className={`h-3.5 w-3.5 mr-1.5 ${replayMutation.isPending ? 'animate-spin' : ''}`}
+                      />
+                      {replayMutation.isPending ? 'Replaying…' : 'Replay / Verify Determinism'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-xs max-w-xs">
+                      Re-submits the same inputs and asserts identical manifest hash, risk vocab
+                      hash, and triggered risk codes. Converts &quot;trust me&quot; into &quot;watch
+                      it verify itself.&quot;
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {/* Replay result badge (inline with buttons) */}
+            {replayResult && (
+              <Badge
+                variant="outline"
+                data-testid="replay-result-badge"
+                className={
+                  replayResult.deterministic
+                    ? 'bg-green-100 text-green-800 border-green-300'
+                    : 'bg-red-100 text-red-800 border-red-300 animate-pulse'
+                }
+              >
+                {replayResult.deterministic ? (
+                  <>
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Deterministic — Verified
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="h-3.5 w-3.5 mr-1" /> RED DRIFT DETECTED
+                  </>
+                )}
+              </Badge>
+            )}
+
+            {replayMutation.isError && (
+              <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                Replay failed: {replayMutation.error?.message?.slice(0, 60) || 'unknown error'}
+              </Badge>
             )}
           </div>
         </CardContent>
@@ -447,79 +524,8 @@ export function SEMatrixV2Panel({
             </Card>
           )}
 
-          {/* E2: Replay Determinism + Metadata footer */}
+          {/* Drift details + Metadata footer */}
           <div className="flex flex-col gap-3">
-            {/* Replay Determinism — the mic drop */}
-            {result.manifest_hash && (
-              <div className="flex items-center gap-3">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={replayMutation.isPending}
-                        data-testid="replay-determinism-btn"
-                        onClick={() => {
-                          setReplayResult(null);
-                          replayMutation.mutate(
-                            {
-                              productCode: payload.comparison_rows?.[0]?.product_code || '',
-                              subjectDevice: subjectDevice,
-                              selectedPredicate: { k_number: kNumber },
-                              originalManifestHash: result.manifest_hash!,
-                            },
-                            { onSuccess: data => setReplayResult(data) }
-                          );
-                        }}
-                      >
-                        <RefreshCw
-                          className={`h-3.5 w-3.5 mr-1.5 ${replayMutation.isPending ? 'animate-spin' : ''}`}
-                        />
-                        {replayMutation.isPending ? 'Replaying…' : 'Replay / Verify Determinism'}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p className="text-xs max-w-xs">
-                        Re-submits the same inputs and asserts identical manifest hash, risk vocab
-                        hash, and triggered risk codes. Converts "trust me" into "watch it verify
-                        itself."
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Replay result badge */}
-                {replayResult && (
-                  <Badge
-                    variant="outline"
-                    data-testid="replay-result-badge"
-                    className={
-                      replayResult.deterministic
-                        ? 'bg-green-100 text-green-800 border-green-300'
-                        : 'bg-red-100 text-red-800 border-red-300 animate-pulse'
-                    }
-                  >
-                    {replayResult.deterministic ? (
-                      <>
-                        <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Deterministic — Verified
-                      </>
-                    ) : (
-                      <>
-                        <ShieldAlert className="h-3.5 w-3.5 mr-1" /> RED DRIFT DETECTED
-                      </>
-                    )}
-                  </Badge>
-                )}
-
-                {replayMutation.isError && (
-                  <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
-                    Replay failed: {replayMutation.error?.message?.slice(0, 60) || 'unknown error'}
-                  </Badge>
-                )}
-              </div>
-            )}
-
             {/* Drift detail lines (if any) */}
             {replayResult &&
               !replayResult.deterministic &&

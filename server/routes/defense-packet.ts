@@ -880,6 +880,8 @@ router.get(
   async (req: Request, res: Response) => {
     const { programId } = req.params;
     const subjectHash = (req.query.subject_hash as string) || '';
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
@@ -889,6 +891,27 @@ router.get(
 
       if (result.status !== 200) {
         return res.status(result.status).json(result.data);
+      }
+
+      // Part 11 audit event: PROOF_PACK_ACCESSED
+      try {
+        await logAuditEvent({
+          category: 'compliance',
+          severity: 'info',
+          action: 'PROOF_PACK_ACCESSED',
+          userId,
+          organizationId,
+          resourceType: 'proof_pack',
+          resourceId: programId,
+          success: true,
+          metadata: {
+            program_id: programId,
+            subject_hash: subjectHash,
+            accessed_at: new Date().toISOString(),
+          },
+        });
+      } catch {
+        /* best-effort audit */
       }
 
       return res.status(200).json(result.data);

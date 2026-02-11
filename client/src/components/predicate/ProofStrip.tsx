@@ -143,7 +143,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
       {/* Freshness badge */}
       <div className="flex items-center gap-1.5">
         <RefreshCw className="h-3.5 w-3.5 text-green-600" />
-        <span className="font-medium">FDA Data:</span>
+        <span className="font-medium">FDA data updated:</span>
         <Badge variant="outline" className={`text-xs px-1.5 py-0 ${freshnessClass}`}>
           {freshnessLabel}
         </Badge>

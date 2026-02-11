@@ -1977,6 +1977,7 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
     original_manifest_hash = payload.original_manifest_hash
     original_risk_vocab_hash = ""
     original_risk_codes: list[str] = []
+    original_loaded = False
     pool = await db.get_pool()
 
     if pool:
@@ -1995,8 +1996,19 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                     original_risk_codes = sorted(codes_raw)
                 elif isinstance(codes_raw, dict):
                     original_risk_codes = sorted(codes_raw.keys())
+                original_loaded = True
         except Exception as exc:
             logger.warning("replay-determinism: failed to read original packet: %s", exc)
+    
+    if not original_loaded:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Cannot verify determinism: original packet not found in database "
+                f"for manifest_hash={original_manifest_hash[:24]}…  "
+                "Please regenerate the defense packet first."
+            ),
+        )
 
     # ── Replay: rebuild using the same deterministic pipeline ──
     from .predicate_intel.defense_packet import (
