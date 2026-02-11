@@ -1,7 +1,9 @@
-"""Pydantic models for Phase 6.6.C — Evidence-Linked SE Matrix.
+"""Pydantic models for Phase 6.6.C/C2 — Evidence-Linked SE Matrix + Manifest.
 
 Enhanced SE matrix payload models with risk_code mapping, evidence_task_ids,
-and defense readiness scoring.  These models are the output contract between
+defense readiness scoring, and regulatory intelligence manifest.
+
+These models are the output contract between
 the SE Matrix Generator and downstream consumers (DOCX Factory, BFF, UI).
 
 Complements (does not replace) models_predicate.py SE row models — those are
@@ -131,3 +133,53 @@ class SEMatrixGenerateResponse(BaseModel):
     significant_count: int = 0
     evidence_tasks: list[EvidenceTaskV2] = Field(default_factory=list)
     generation_timestamp: str
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C2 — Regulatory Intelligence Manifest
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class RegulatoryIntelManifest(BaseModel):
+    """Deterministic manifest for SE Matrix payload — Part 11 audit ready.
+
+    Every field is either input-derived or computed via deterministic hash.
+    manifest_hash excludes generated_at for stability.
+    """
+    subject_hash: str
+    program_id: str
+    product_code: str
+    predicate_k_number: str
+
+    generator_version: str          # app version or commit SHA
+    risk_code_map_version: str      # "2.0.0"
+    risk_vocab_hash: str            # sha256[:12] of risk_vocab.yml bytes
+    manifest_hash: str              # sha256 of canonicalized manifest JSON
+
+    generated_at: str               # ISO UTC
+
+    risk_codes_used: list[str] = Field(default_factory=list)
+    evidence_task_ids: list[str] = Field(default_factory=list)
+    defense_readiness_score: int = Field(ge=0, le=100)
+    top_risks: list[str] = Field(default_factory=list)  # max 5
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C2 — SE Matrix Payload Request / Response (manifest-bearing)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class SEMatrixPayloadRequest(BaseModel):
+    """Request for the SE Matrix payload endpoint with manifest generation."""
+    program_id: str
+    product_code: str = ""
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    selected_predicate_k_number: str
+    selected_predicate: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+    include_explainability: bool = True
+
+
+class SEMatrixPayloadResponse(BaseModel):
+    """Response from SE Matrix payload endpoint — manifest + payload + tasks."""
+    manifest: RegulatoryIntelManifest
+    payload: SEMatrixPayloadV2
+    evidence_tasks: list[EvidenceTaskV2] = Field(default_factory=list)

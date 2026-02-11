@@ -853,6 +853,17 @@ try {
   console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
 }
 
+// Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
+// POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
+try {
+  const seMatrixModule = await import('./routes/se-matrix.js');
+  const seMatrixRoutes = seMatrixModule.default;
+  app.use('/api/programs', seMatrixRoutes);
+  console.log('✅ SE Matrix render orchestration routes mounted (Phase 6.6.C2)');
+} catch (error) {
+  console.error('❌ Failed to mount SE Matrix render routes:', error);
+}
+
 // Mount Demo Seed routes (for creating demo projects)
 try {
   const seedDemoModule = await import('./routes/seed-demo.js');

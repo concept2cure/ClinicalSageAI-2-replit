@@ -1,23 +1,24 @@
-"""SE Matrix Payload Generator — Phase 6.6.C (Evidence-Linked).
+"""SE Matrix Payload Generator — Phase 6.6.C2 (Manifest + Evidence-Linked).
 
 Generates the SE comparison matrix with:
   - Deterministic diff analysis via config-driven scorer
   - risk_code + triggered_risk_codes per row
   - evidence_task_ids linkage via canonical map
   - Defense readiness scoring
+  - RegulatoryIntelManifest (deterministic, hashable)
   - DOCX Factory-ready payload
 
 No LLM generation.  Every diff flag and risk_code comes from explicit
 rule maps — reviewable, testable, defensible in regulated environments.
 
 Usage:
-    from shadow_service.generators.se_matrix_payload import generate_se_matrix_payload
-
-    payload = generate_se_matrix_payload(
-        program_id="...",
-        subject_device={...},
-        predicate_record={...},
+    from shadow_service.generators.se_matrix_payload import (
+        generate_se_matrix_payload,
+        generate_se_matrix_with_manifest,
     )
+
+    payload = generate_se_matrix_payload(...)
+    response = generate_se_matrix_with_manifest(...)
 """
 
 from __future__ import annotations
@@ -35,12 +36,18 @@ from ..models_se_matrix import (
 from ..scoring.risk_code_map import (
     ALL_RISK_CODES,
     RISK_CODE_MAP_VERSION,
+    RISK_CODE_SEVERITY_DEFAULT,
     RISK_CODE_TO_ARTIFACTS,
     RISK_CODE_TO_CATEGORY,
     get_label_for_risk_code,
     get_severity_for_risk_code,
 )
 from ..predicate_intel.se_risk_codes import assign_se_row_risks, load_vocab
+from ..predicate_intel.manifest import (
+    build_manifest,
+    canonical_sort,
+    extract_top_risks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +77,21 @@ SE_CHARACTERISTICS: list[tuple[str, str]] = [
 def _stable_task_id(category: str, risk_code: str) -> str:
     """SHA-256[:12] of category + risk_code — deterministic and stable."""
     raw = f"{category}:{risk_code}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
+
+
+def _hardened_task_id(
+    subject_hash: str,
+    characteristic: str,
+    category: str,
+    triggered_risk_codes: list[str],
+) -> str:
+    """Hardened task_id: sha256(subject_hash|characteristic|category|sorted(codes))[:12].
+
+    Per spec §3: includes subject context for per-device uniqueness.
+    """
+    sorted_codes = ",".join(sorted(triggered_risk_codes))
+    raw = f"{subject_hash}|{characteristic}|{category}|{sorted_codes}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
 
 
@@ -177,6 +199,76 @@ def generate_se_matrix_payload(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Phase 6.6.C2: Manifest-bearing generator
+# ─────────────────────────────────────────────────────────────────────────────
+
+def generate_se_matrix_with_manifest(
+    *,
+    program_id: str,
+    product_code: str = "",
+    subject_device: dict[str, Any],
+    predicate_record: dict[str, Any],
+    design_control_ids: Optional[dict[str, str]] = None,
+) -> dict[str, Any]:
+    """Generate SE matrix payload + RegulatoryIntelManifest.
+
+    Returns dict matching SEMatrixPayloadResponse:
+        {manifest, payload, evidence_tasks}
+    """
+    payload = generate_se_matrix_payload(
+        program_id=program_id,
+        subject_device=subject_device,
+        predicate_record=predicate_record,
+        product_code=product_code,
+        design_control_ids=design_control_ids,
+    )
+
+    # Collect all triggered risk codes (dedupe, canonical sort)
+    all_triggered: list[str] = []
+    for row in payload.comparison_rows:
+        all_triggered.extend(row.triggered_risk_codes)
+    risk_codes_used = canonical_sort(list(dict.fromkeys(all_triggered)))
+
+    # Compute subject_hash for hardened task IDs (spec §3)
+    from ..predicate_intel.manifest import compute_subject_hash
+    subject_hash = compute_subject_hash(subject_device)
+
+    # Re-derive evidence task IDs using hardened formula (per-device unique)
+    hardened_task_ids: list[str] = []
+    for row in payload.comparison_rows:
+        if row.triggered_risk_codes:
+            htid = _hardened_task_id(
+                subject_hash, row.characteristic, row.category,
+                row.triggered_risk_codes,
+            )
+            hardened_task_ids.append(htid)
+    # Dedupe while preserving order
+    evidence_task_ids = list(dict.fromkeys(hardened_task_ids))
+
+    # Top risks by severity
+    top_risks = extract_top_risks(risk_codes_used, RISK_CODE_SEVERITY_DEFAULT)
+
+    # Build manifest
+    manifest = build_manifest(
+        program_id=program_id,
+        product_code=product_code,
+        subject_device=subject_device,
+        predicate_k_number=payload.predicate_k_number,
+        risk_codes_used=risk_codes_used,
+        evidence_task_ids=evidence_task_ids,
+        defense_readiness_score=payload.defense_readiness_score,
+        top_risks=top_risks,
+        generated_at=payload.generated_at,
+    )
+
+    return {
+        "manifest": manifest,
+        "payload": payload.model_dump(),
+        "evidence_tasks": [t.model_dump() for t in payload.evidence_tasks],
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Backward-compatible analyze_diff wrapper
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -259,9 +351,9 @@ def build_evidence_tasks_from_risk_codes(
                 },
             ))
 
-    # Sort: HIGH first, then MEDIUM, then LOW
+    # Sort: severity DESC (High > Medium > Low), category ASC, risk_code ASC
     _SEV_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
-    tasks.sort(key=lambda t: _SEV_ORDER.get(t.severity, 9))
+    tasks.sort(key=lambda t: (_SEV_ORDER.get(t.severity, 9), t.category, t.risk_code))
     return tasks
 
 

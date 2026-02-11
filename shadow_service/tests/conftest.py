@@ -10,7 +10,7 @@ pytestmark = pytest.mark.asyncio
 def has_db() -> bool:
     """Check if database connection is available."""
     return bool(
-        os.environ.get("DATABASE_URL") or 
+        os.environ.get("DATABASE_URL") or
         os.environ.get("DATABASE_NEON_NEW_SECRET")
     )
 
@@ -25,21 +25,25 @@ def database_url() -> str:
 
 
 @pytest.fixture(autouse=True)
-async def reset_db_pool():
-    """Reset the database pool before each test to avoid event loop issues."""
-    from shadow_service import db
-    # Reset pool state
-    db._pool = None
-    db._lite_mode = False
+def reset_db_pool():
+    """Reset the database pool before each test to avoid event loop issues.
+
+    Note: The db module requires asyncpg at import time, which may not
+    be available in lightweight test environments.  Guard the import
+    so pure-unit tests (risk codes, manifest, etc.) can run regardless.
+    """
+    try:
+        from shadow_service import db
+        db._pool = None
+        db._lite_mode = False
+    except (ImportError, ModuleNotFoundError):
+        db = None  # type: ignore[assignment]
+
     yield
-    # Cleanup after test
-    if db._pool is not None:
-        try:
-            await db.close_pool()
-        except Exception:
-            pass
-    db._pool = None
-    db._lite_mode = False
+
+    if db is not None:
+        db._pool = None
+        db._lite_mode = False
 
 
 @pytest.fixture

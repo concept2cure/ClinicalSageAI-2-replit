@@ -1373,3 +1373,86 @@ async def render_se_docx_v2(req: RenderSEDocxV2Request):
     finally:
         await db.release_connection(conn)
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.C2 — SE Matrix Payload + Manifest Endpoint
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class SEMatrixPayloadReq(BaseModel):
+    """Request for the manifest-bearing SE matrix payload endpoint."""
+    program_id: UUID
+    product_code: str = ""
+    selected_predicate_k_number: str
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    selected_predicate: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+    include_explainability: bool = True
+
+
+@router.post("/device/se-matrix-payload")
+async def se_matrix_payload_endpoint(req: SEMatrixPayloadReq):
+    """Generate SE Matrix payload with RegulatoryIntelManifest.
+
+    Phase 6.6.C2 endpoint. Returns:
+      - manifest: deterministic, hashable RegulatoryIntelManifest
+      - payload: SEMatrixPayloadV2 (comparison rows + evidence tasks)
+      - evidence_tasks: ordered evidence task list
+
+    The manifest enables Part 11 audit traceability, downstream eCTD
+    integration, and Truth Machine linkage.
+    """
+    from .generators.se_matrix_payload import generate_se_matrix_with_manifest
+
+    # Fast path: if selected_predicate dict contains k_number, skip DB entirely
+    if req.selected_predicate and req.selected_predicate.get("k_number"):
+        predicate_data = dict(req.selected_predicate)
+        result = generate_se_matrix_with_manifest(
+            program_id=str(req.program_id),
+            product_code=req.product_code,
+            subject_device=req.subject_device,
+            predicate_record=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+        return result
+
+    # Slow path: fetch predicate from DB
+    conn = await db.acquire_connection()
+    try:
+        await conn.execute(sql.SET_PROGRAM_CONTEXT, str(req.program_id))
+
+        from . import sql_fda_universe as fda_sql
+        predicate_row = await conn.fetchrow(
+            fda_sql.SELECT_CLEARANCE, req.selected_predicate_k_number,
+        )
+        if predicate_row:
+            predicate_data = dict(predicate_row)
+        else:
+            candidate = await conn.fetchrow(
+                sql.SELECT_CANDIDATE_BY_K_NUMBER,
+                req.selected_predicate_k_number,
+                req.program_id,
+            )
+            predicate_data = dict(candidate) if candidate else {
+                "k_number": req.selected_predicate_k_number,
+                "device_name": "Unknown Predicate",
+            }
+
+        result = generate_se_matrix_with_manifest(
+            program_id=str(req.program_id),
+            product_code=req.product_code,
+            subject_device=req.subject_device,
+            predicate_record=predicate_data,
+            design_control_ids=req.design_control_ids,
+        )
+
+        return result
+
+    except Exception as exc:
+        logger.exception("SE matrix payload+manifest generation failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"SE matrix payload generation failed: {exc}",
+        )
+    finally:
+        await db.release_connection(conn)
+

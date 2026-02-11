@@ -1,0 +1,36 @@
+{
+  "$comment": "Canonical locked risk codes — Phase 6.6.C. One artifact, all layers reference it. Do NOT edit by hand without bumping risk_code_map_version.",
+  "version": "2.0.0",
+  "risk_codes": [
+    "IU_MISMATCH",
+    "INDICATIONS_EXPANDED",
+    "TECH_DIFFERENCE",
+    "ENERGY_SOURCE_CHANGE",
+    "DESIGN_ARCH_CHANGE",
+    "MATERIAL_CHANGE",
+    "TISSUE_CONTACT_CHANGE",
+    "CONTACT_DURATION_CHANGE",
+    "STERILIZATION_METHOD_CHANGE",
+    "PACKAGING_SYSTEM_CHANGE",
+    "SHELF_LIFE_CHANGE",
+    "SOFTWARE_PRESENT_NEW",
+    "SOFTWARE_SAFETY_CLASS_DIFF",
+    "CYBERSECURITY_SURFACE_INCREASED",
+    "INTEROPERABILITY_CLAIM",
+    "ML_ADAPTIVITY",
+    "PERFORMANCE_CLAIM_CHANGE",
+    "CLINICAL_EVIDENCE_GAP",
+    "HUMAN_FACTORS_CHANGE",
+    "STANDARDS_GAP",
+    "LABELING_IFU_GAP",
+    "PMS_SIGNAL_RISK",
+    "PREDICATE_TOXICITY_HIGH",
+    "PREDICATE_LINEAGE_COMPROMISED"
+  ],
+  "significant_risk_codes": [
+    "ENERGY_SOURCE_CHANGE",
+    "IU_MISMATCH",
+    "TECH_DIFFERENCE",
+    "PREDICATE_TOXICITY_HIGH"
+  ]
+}

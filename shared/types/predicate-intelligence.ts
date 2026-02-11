@@ -797,3 +797,73 @@ export interface GenerateSEMatrixV2Request {
   subject_device: Record<string, string>;
   design_control_ids?: Record<string, string>;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C2 — Manifest + Payload + Render Types
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Part 11-grade manifest emitted with every SE matrix generation.
+ * All hash fields are SHA-256 hex digests (truncated to 12 chars for subject/vocab).
+ */
+export interface RegulatoryIntelManifest {
+  subject_hash: string;
+  program_id: string;
+  product_code: string;
+  predicate_k_number: string;
+  generator_version: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  manifest_hash: string;
+  generated_at: string;
+  risk_codes_used: string[];
+  evidence_task_ids: string[];
+  defense_readiness_score: number;
+  top_risks: string[];
+}
+
+/** Request body for POST /api/programs/:programId/se-matrix/render. */
+export interface SEMatrixRenderRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: {
+    kNumber: string;
+    [key: string]: unknown;
+  };
+  designControlIds?: Record<string, string>;
+}
+
+/**
+ * Response from POST /api/programs/:programId/se-matrix/render.
+ * Contains the full manifest, evidence tasks, and a render job ID.
+ */
+export interface SEMatrixRenderResponse {
+  renderJobId: string;
+  manifest: RegulatoryIntelManifest;
+  evidenceTasks: EvidenceTaskV2[];
+  payload: SEMatrixPayloadV2;
+}
+
+/**
+ * Request body for Shadow Service POST /device/se-matrix-payload.
+ * Internal — used by BFF only.
+ */
+export interface SEMatrixPayloadRequest {
+  program_id: string;
+  product_code: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  selected_predicate: Record<string, unknown>;
+  design_control_ids?: Record<string, string>;
+  include_explainability?: boolean;
+}
+
+/**
+ * Response from Shadow Service POST /device/se-matrix-payload.
+ * Internal — used by BFF only.
+ */
+export interface SEMatrixPayloadResponse {
+  manifest: RegulatoryIntelManifest;
+  payload: SEMatrixPayloadV2;
+  evidence_tasks: EvidenceTaskV2[];
+}
