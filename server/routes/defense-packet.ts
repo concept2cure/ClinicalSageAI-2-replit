@@ -419,9 +419,12 @@ router.post(
             success: true,
             metadata: {
               program_id: programId,
+              packet_id: packetId,
               reasons: result.data.reasons,
               current_risk_vocab_hash: result.data.current_risk_vocab_hash,
+              current_risk_code_map_version: result.data.current_risk_code_map_version,
               packet_risk_vocab_hash: result.data.packet_risk_vocab_hash,
+              packet_risk_code_map_version: result.data.packet_risk_code_map_version,
             },
           });
         } catch {
@@ -548,13 +551,13 @@ router.post(
         });
       }
 
-      // ── Audit: DEFENSE_PACKET_BUILT ──
+      // ── Audit: DEFENSE_PACKET_CREATED ──
       try {
         const packet = (shadowResult.data as any)?.defense_packet || {};
         await logAuditEvent({
           category: 'document',
           severity: 'info',
-          action: 'DEFENSE_PACKET_BUILT',
+          action: 'DEFENSE_PACKET_CREATED',
           userId,
           organizationId,
           resourceType: 'defense_packet',
@@ -562,6 +565,7 @@ router.post(
           success: true,
           metadata: {
             program_id: programId,
+            packet_id: packet.packet_id,
             manifest_hash: packet.manifest_hash,
             readiness_score: packet.readiness_score,
             risk_code_map_version: packet.risk_code_map_version,

@@ -1,4 +1,4 @@
-"""Pydantic models for Phase 6.6.D+ — Defense Packets + Evidence Ops.
+"""Pydantic models for Phase 6.6.D1 — Defense Packets + Evidence Ops.
 
 First-class compliance artifact: versioned, signed, lifecycle-managed.
 The "receipt" that links SE Matrix → Evidence Tasks → DOCX → eCTD → Truth Machine.
@@ -6,6 +6,11 @@ The "receipt" that links SE Matrix → Evidence Tasks → DOCX → eCTD → Trut
 Two model tiers:
   1. DB-persistence (DefensePacketRecord) — thin, matches predicate.defense_packets DDL
   2. Domain-level (DefensePacket, EvidenceTask) — rich, deterministic, ops-complete
+
+Spec-aligned aliases (added Phase 6.6.D1):
+  EvidenceTask           = EvidenceTaskFull
+  DefensePacket          = DefensePacketFull
+  DefensePacketOpsStatus = PacketOpsStatus
 """
 
 from __future__ import annotations
@@ -165,7 +170,7 @@ class DefensePacketFull(BaseModel):
     Key invariant: packet_id == manifest_hash.
     Deterministic ordering for tasks, risk codes, artifact targets.
     """
-    packet_version: str = "6.6.D+"
+    packet_version: str = "6.6.D1"
     packet_id: str  # stable == manifest_hash
     manifest_hash: str
     subject_hash: str
@@ -293,3 +298,13 @@ class StalenessCheckResult(BaseModel):
     current_risk_code_map_version: str = ""
     packet_risk_vocab_hash: str = ""
     packet_risk_code_map_version: str = ""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Spec-Aligned Aliases (Phase 6.6.D1 Naming Convention)
+# ═══════════════════════════════════════════════════════════════════════════════
+# The spec uses shorter names; *Full variants kept for backward compatibility.
+
+EvidenceTask = EvidenceTaskFull
+DefensePacket = DefensePacketFull
+DefensePacketOpsStatus = PacketOpsStatus

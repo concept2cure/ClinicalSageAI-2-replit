@@ -1,4 +1,4 @@
-"""Defense Packet Deterministic Builder — Phase 6.6.D+.
+"""Defense Packet Deterministic Builder — Phase 6.6.D1.
 
 Builds a response-level DefensePacket from a manifest + risk analysis.
 All 24 canonical risk codes mapped to operationally complete evidence tasks.
@@ -52,7 +52,7 @@ from .risk_vocab import load_risk_vocab_hash
 # Constants
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PACKET_VERSION = "6.6.D+"
+PACKET_VERSION = "6.6.D1"
 
 # Severity enum mapping from risk_code_map strings to EvidenceSeverity
 _SEV_MAP: Dict[str, EvidenceSeverity] = {

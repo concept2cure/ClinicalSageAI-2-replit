@@ -1,4 +1,4 @@
-"""Tests for Phase 6.6.D+ — Defense Packet Builder + Evidence Ops.
+"""Tests for Phase 6.6.D1 — Defense Packet Builder + Evidence Ops.
 
 Tests:
   1. Determinism: same input → same packet JSON (except generated_at)

@@ -967,7 +967,7 @@ export interface DefensePacketRecord {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.D+ — Defense Packet Evidence Ops (Rich Domain Types)
+// Phase 6.6.D1 — Defense Packet Evidence Ops (Rich Domain Types)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type EvidenceSeverity = 'High' | 'Medium' | 'Low';
@@ -1078,7 +1078,7 @@ export interface BuildDefensePacketRequest {
 }
 
 /**
- * Request for POST /defense-packet/:packetId/waive-task (6.6.D+).
+ * Request for POST /defense-packet/:packetId/waive-task (6.6.D1).
  */
 export interface WaiveTaskRequest {
   taskId: string;
@@ -1086,7 +1086,7 @@ export interface WaiveTaskRequest {
 }
 
 /**
- * Response from POST /defense-packet/:packetId/waive-task (6.6.D+).
+ * Response from POST /defense-packet/:packetId/waive-task (6.6.D1).
  */
 export interface WaiveTaskResponse {
   task_id: string;
@@ -1095,3 +1095,12 @@ export interface WaiveTaskResponse {
   waived_by: string;
   waived_at: string;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Spec-Aligned Aliases (Phase 6.6.D1 Naming Convention)
+// ═══════════════════════════════════════════════════════════════════════════════
+// The spec uses shorter names; *Full variants kept for backward compatibility.
+
+export type EvidenceTask = EvidenceTaskFull;
+export type DefensePacket = DefensePacketFull;
+export type DefensePacketOpsStatus = PacketOpsStatus;
