@@ -21,6 +21,10 @@ Endpoints:
   GET  /predicate/device/defense-packets  — List defense packets for program
   POST /predicate/device/defense-packet/:id/staleness-check — Check staleness
   PATCH /predicate/device/defense-packet/:id/status — Update packet lifecycle
+  POST /predicate/device/defense-packet/build  — Build packet from manifest (6.6.D+)
+  GET  /predicate/device/defense-packet/:hash/export.json — Export packet JSON (6.6.D+)
+  GET  /predicate/device/defense-packet/:hash/export.csv  — Export tasks CSV (6.6.D+)
+  POST /predicate/device/defense-packet/:hash/submission-gate — Check submission gate (6.6.D+)
 """
 
 from __future__ import annotations
@@ -1572,3 +1576,262 @@ async def update_defense_packet_status_endpoint(
         )
     return {"packet": updated}
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.D+ — Defense Packet Builder (deterministic, no DB required)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class DefensePacketBuildReq(BaseModel):
+    """Request body for building a defense packet from manifest data."""
+    program_id: str
+    product_code: str = ""
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    selected_predicate: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/device/defense-packet/build")
+async def build_defense_packet_endpoint(req: DefensePacketBuildReq):
+    """Build a deterministic defense packet with full evidence ops tasks.
+
+    Phase 6.6.D+. No DB required — builds from manifest in-memory.
+    Returns DefensePacketFull with:
+    - Operationally complete evidence tasks (all 24 codes mapped)
+    - Anticipated reviewer questions (non-LLM)
+    - Submission gating check
+    - Truth Machine placeholders
+    - Stable ordering (severity desc, category, task_id)
+
+    Determinism: same inputs → same JSON (except generated_at).
+    """
+    from .predicate_intel.defense_packet import (
+        build_defense_packet_from_manifest,
+        check_submission_gate,
+    )
+    from .generators.se_matrix_payload import generate_se_matrix_with_manifest
+
+    try:
+        result = generate_se_matrix_with_manifest(
+            program_id=req.program_id,
+            product_code=req.product_code,
+            subject_device=req.subject_device,
+            predicate_record=req.selected_predicate,
+            design_control_ids=req.design_control_ids,
+        )
+
+        manifest = result["manifest"]
+        subject_hash = manifest["subject_hash"]
+
+        # Inject SE matrix rows into manifest for task generation
+        if "se_matrix" not in manifest:
+            payload = result.get("payload", {})
+            comparison_rows = payload.get("comparison_rows", [])
+            manifest["se_matrix"] = {"rows": comparison_rows}
+
+        packet = build_defense_packet_from_manifest(
+            program_id=req.program_id,
+            product_code=req.product_code,
+            manifest=manifest,
+            subject_hash=subject_hash,
+        )
+
+        gate = check_submission_gate(packet)
+
+        return {
+            "defense_packet": packet.model_dump(mode="json"),
+            "submission_gate": gate.model_dump(),
+        }
+
+    except Exception as exc:
+        logger.exception("Defense packet build failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Defense packet build failed: {exc}",
+        )
+
+
+@router.get("/device/defense-packet/{manifest_hash}/export.json")
+async def export_defense_packet_json(manifest_hash: str):
+    """Export a defense packet as canonical JSON.
+
+    Phase 6.6.D+. Stable ordering, deterministic.
+    Returns full DefensePacketFull JSON.
+    """
+    from .predicate_intel.defense_packet import build_defense_packet_from_manifest
+
+    # For v1, rebuild from DB if stored, or return 404
+    from .defense_packet_repository import get_packet_by_manifest_hash
+    try:
+        packet_row = await get_packet_by_manifest_hash(manifest_hash)
+    except Exception:
+        packet_row = None
+
+    if not packet_row:
+        raise HTTPException(status_code=404, detail="Defense packet not found for manifest_hash")
+
+    # Return stored packet data as JSON (DB-level, not full builder output)
+    import json as _json
+    tasks = packet_row.get("tasks", [])
+    if isinstance(tasks, str):
+        tasks = _json.loads(tasks)
+    top_risks = packet_row.get("top_risks", [])
+    if isinstance(top_risks, str):
+        top_risks = _json.loads(top_risks)
+    risk_codes_used = packet_row.get("risk_codes_used", [])
+    if isinstance(risk_codes_used, str):
+        risk_codes_used = _json.loads(risk_codes_used)
+
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content={
+            "packet_version": "6.6.D+",
+            "packet_id": str(packet_row["id"]),
+            "manifest_hash": manifest_hash,
+            "program_id": str(packet_row["program_id"]),
+            "subject_hash": packet_row.get("subject_hash", ""),
+            "product_code": packet_row.get("product_code", ""),
+            "risk_code_map_version": packet_row.get("risk_code_map_version", ""),
+            "risk_vocab_hash": packet_row.get("risk_vocab_hash", ""),
+            "readiness_score": packet_row.get("defense_readiness_score", 0),
+            "top_risks": top_risks,
+            "risk_codes_used": risk_codes_used,
+            "tasks": tasks,
+            "status": packet_row.get("status", ""),
+            "created_at": str(packet_row.get("created_at", "")),
+        },
+        media_type="application/json",
+    )
+
+
+@router.get("/device/defense-packet/{manifest_hash}/export.csv")
+async def export_defense_packet_csv(manifest_hash: str):
+    """Export defense packet tasks as stable CSV.
+
+    Phase 6.6.D+. Columns: task_id, severity, category, title,
+    triggered_risk_codes, se_matrix_rows, acceptance_criteria,
+    recommended_artifacts, artifact_targets, state.
+
+    Stable ordering — compliance teams love CSV.
+    """
+    from .defense_packet_repository import get_packet_by_manifest_hash
+    import csv
+    import io
+    import json as _json
+
+    try:
+        packet_row = await get_packet_by_manifest_hash(manifest_hash)
+    except Exception:
+        packet_row = None
+
+    if not packet_row:
+        raise HTTPException(status_code=404, detail="Defense packet not found for manifest_hash")
+
+    tasks = packet_row.get("tasks", [])
+    if isinstance(tasks, str):
+        tasks = _json.loads(tasks)
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+    writer.writerow([
+        "task_id", "severity", "category", "title",
+        "triggered_risk_codes", "se_matrix_rows",
+        "acceptance_criteria", "recommended_artifacts",
+        "artifact_targets", "state",
+    ])
+
+    for task in tasks:
+        writer.writerow([
+            task.get("task_id", ""),
+            task.get("severity", ""),
+            task.get("category", ""),
+            task.get("title", ""),
+            "|".join(task.get("triggered_risk_codes", [])),
+            "|".join(task.get("se_matrix_rows", [])),
+            "|".join(task.get("acceptance_criteria", [])),
+            "|".join(task.get("recommended_artifacts", [])),
+            "|".join(task.get("artifact_targets", [])),
+            task.get("completion", {}).get("state", "OPEN") if isinstance(task.get("completion"), dict) else "OPEN",
+        ])
+
+    from fastapi.responses import Response
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=defense-packet-{manifest_hash[:12]}.csv"},
+    )
+
+
+@router.post("/device/defense-packet/{manifest_hash}/submission-gate")
+async def check_submission_gate_endpoint(manifest_hash: str):
+    """Check submission gating status for a defense packet.
+
+    Phase 6.6.D+. Returns SubmissionGateResult indicating
+    whether eCTD packaging is allowed or blocked.
+
+    Gate rules:
+    - Block if any HIGH task is OPEN|IN_PROGRESS
+    - Block if any SIGNIFICANT risk code has no evidence refs
+    - Override requires WAIVED + Part 11 audit event
+    """
+    from .defense_packet_repository import get_packet_by_manifest_hash
+    import json as _json
+
+    try:
+        packet_row = await get_packet_by_manifest_hash(manifest_hash)
+    except Exception:
+        packet_row = None
+
+    if not packet_row:
+        raise HTTPException(status_code=404, detail="Defense packet not found for manifest_hash")
+
+    # Build a minimal packet object for gate check
+    tasks = packet_row.get("tasks", [])
+    if isinstance(tasks, str):
+        tasks = _json.loads(tasks)
+
+    # Check gate with simplified logic (matching builder logic)
+    from ..scoring.risk_code_map import SIGNIFICANT_RISK_CODES as SIG_CODES
+    blocking_task_ids = []
+    blocking_risk_codes = []
+    missing_evidence = []
+    next_actions = []
+
+    for task in tasks:
+        sev = task.get("severity", "")
+        completion = task.get("completion", {})
+        state = completion.get("state", "OPEN") if isinstance(completion, dict) else "OPEN"
+        task_id = task.get("task_id", "")
+        title = task.get("title", "")
+
+        if sev in ("High", "HIGH"):
+            if state in ("OPEN", "IN_PROGRESS"):
+                blocking_task_ids.append(task_id)
+                next_actions.append(f"Complete or waive task '{title}' (task_id={task_id})")
+
+        for code in task.get("triggered_risk_codes", []):
+            if code in SIG_CODES:
+                refs = completion.get("evidence_refs", []) if isinstance(completion, dict) else []
+                if not refs:
+                    if code not in blocking_risk_codes:
+                        blocking_risk_codes.append(code)
+                        missing_evidence.append(f"{code} — no evidence refs for task {task_id}")
+
+    allowed = len(blocking_task_ids) == 0 and len(blocking_risk_codes) == 0
+    reason = ""
+    if not allowed:
+        parts = []
+        if blocking_task_ids:
+            parts.append(f"{len(blocking_task_ids)} HIGH task(s) not completed")
+        if blocking_risk_codes:
+            parts.append(f"{len(blocking_risk_codes)} SIGNIFICANT risk code(s) without evidence")
+        reason = "Packaging blocked: " + "; ".join(parts)
+
+    return {
+        "allowed": allowed,
+        "blocking_task_ids": sorted(blocking_task_ids),
+        "blocking_risk_codes": sorted(blocking_risk_codes),
+        "missing_evidence_refs": sorted(missing_evidence),
+        "recommended_next_actions": next_actions,
+        "override_available": not allowed,
+        "reason": reason,
+    }

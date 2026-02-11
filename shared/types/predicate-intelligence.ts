@@ -965,3 +965,133 @@ export interface DefensePacketRecord {
   updated_at: string;
   rendered_at: string | null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D+ — Defense Packet Evidence Ops (Rich Domain Types)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type EvidenceSeverity = 'High' | 'Medium' | 'Low';
+export type EvidenceTaskState = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'WAIVED';
+export type PacketOpsStatus = 'CREATED' | 'IN_PROGRESS' | 'READY' | 'BLOCKED' | 'STALE' | 'FAILED';
+
+export type EvidenceRefType =
+  | 'TRUTH_PLACEHOLDER'
+  | 'PROGRAM_DOC'
+  | 'DOCX_RENDER'
+  | 'PDF_RENDER'
+  | 'ECTD_LEAF'
+  | 'URL';
+
+export interface EvidenceRef {
+  ref_type: EvidenceRefType;
+  ref_id: string;
+  label?: string | null;
+}
+
+export interface EvidenceTaskCompletion {
+  state: EvidenceTaskState;
+  waiver_reason?: string | null;
+  completed_by?: string | null;
+  completed_at?: string | null;
+  evidence_refs: EvidenceRef[];
+}
+
+export interface ReviewerQuestionSeed {
+  question: string;
+  recommended_sections: string[];
+  recommended_artifacts: string[];
+}
+
+/**
+ * Operationally complete evidence task — Phase 6.6.D+.
+ * Deterministic, with full ops fields for tracking, assignment, and verification.
+ */
+export interface EvidenceTaskFull {
+  task_id: string;
+  severity: EvidenceSeverity;
+  category: EvidenceCategory;
+  triggered_risk_codes: string[];
+  se_matrix_rows: string[];
+  title: string;
+  why_it_matters: string;
+  acceptance_criteria: string[];
+  recommended_artifacts: string[];
+  artifact_targets: string[];
+  truth_machine_placeholder_id?: string | null;
+  anticipated_questions: ReviewerQuestionSeed[];
+  completion: EvidenceTaskCompletion;
+}
+
+/**
+ * Full Defense Packet — Phase 6.6.D+ response-level artifact.
+ *
+ * Key invariant: packet_id == manifest_hash.
+ * Deterministic ordering for tasks, risk codes, artifact targets.
+ */
+export interface DefensePacketFull {
+  packet_version: string;
+  packet_id: string;
+  manifest_hash: string;
+  subject_hash: string;
+  program_id: string;
+  product_code: string;
+  generated_at: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  readiness_score: number;
+  status: PacketOpsStatus;
+  stale_reasons: string[];
+  top_risks: string[];
+  tasks: EvidenceTaskFull[];
+}
+
+/**
+ * Submission gating result — Phase 6.6.D+.
+ * Determines if eCTD packaging is allowed or blocked.
+ */
+export interface SubmissionGateResult {
+  allowed: boolean;
+  blocking_task_ids: string[];
+  blocking_risk_codes: string[];
+  missing_evidence_refs: string[];
+  recommended_next_actions: string[];
+  override_available: boolean;
+  reason: string;
+}
+
+/**
+ * Response from POST /defense-packet/build (6.6.D+).
+ */
+export interface BuildDefensePacketResponse {
+  defense_packet: DefensePacketFull;
+  submission_gate: SubmissionGateResult;
+}
+
+/**
+ * Request for POST /defense-packet/build (6.6.D+).
+ */
+export interface BuildDefensePacketRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: Record<string, unknown>;
+  designControlIds?: Record<string, string>;
+}
+
+/**
+ * Request for POST /defense-packet/:packetId/waive-task (6.6.D+).
+ */
+export interface WaiveTaskRequest {
+  taskId: string;
+  waiverReason: string;
+}
+
+/**
+ * Response from POST /defense-packet/:packetId/waive-task (6.6.D+).
+ */
+export interface WaiveTaskResponse {
+  task_id: string;
+  waiver_recorded: boolean;
+  waiver_reason: string;
+  waived_by: string;
+  waived_at: string;
+}

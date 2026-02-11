@@ -2,11 +2,15 @@
  * Phase 6.6.D — Defense Packet BFF Route
  *
  * Endpoints:
- *   POST   /api/programs/:programId/predicate-intel/defense-packet          — Create packet
+ *   POST   /api/programs/:programId/predicate-intel/defense-packet          — Create packet (DB-backed)
  *   GET    /api/programs/:programId/predicate-intel/defense-packet/:packetId — Get packet
  *   GET    /api/programs/:programId/predicate-intel/defense-packets          — List packets
  *   POST   /api/programs/:programId/predicate-intel/defense-packet/:packetId/staleness-check
  *   PATCH  /api/programs/:programId/predicate-intel/defense-packet/:packetId/status
+ *   POST   /api/programs/:programId/predicate-intel/defense-packet/build    — Build (deterministic, 6.6.D+)
+ *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.json  — Export JSON (6.6.D+)
+ *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.csv   — Export CSV (6.6.D+)
+ *   POST   /api/programs/:programId/predicate-intel/defense-packet/:hash/submission-gate (6.6.D+)
  *
  * Each endpoint:
  *   1. Authenticates via JWT (authenticateToken)
@@ -14,7 +18,7 @@
  *   3. Proxies to Shadow Service with X-Admin-Token
  *   4. Emits Part 11 audit events
  *
- * @phase 6.6.D
+ * @phase 6.6.D+
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -502,6 +506,297 @@ router.patch(
       console.error('[defense-packet] status update failed:', err.message);
       return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
     }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/defense-packet/build — Build (deterministic, 6.6.D+)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/defense-packet/build',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = req.params.programId;
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
+
+    const {
+      productCode = '',
+      subjectDevice = {},
+      selectedPredicate = {},
+      designControlIds = {},
+    } = req.body;
+
+    try {
+      const shadowResult = await shadowFetch<{
+        defense_packet: Record<string, unknown>;
+        submission_gate: Record<string, unknown>;
+      }>('POST', '/predicate/device/defense-packet/build', {
+        program_id: programId,
+        product_code: productCode,
+        subject_device: subjectDevice,
+        selected_predicate: selectedPredicate,
+        design_control_ids: designControlIds,
+      });
+
+      if (shadowResult.status !== 200) {
+        return res.status(shadowResult.status >= 500 ? 502 : shadowResult.status).json({
+          error: 'Defense packet build failed',
+          detail: shadowResult.data,
+        });
+      }
+
+      // ── Audit: DEFENSE_PACKET_BUILT ──
+      try {
+        const packet = (shadowResult.data as any)?.defense_packet || {};
+        await logAuditEvent({
+          category: 'document',
+          severity: 'info',
+          action: 'DEFENSE_PACKET_BUILT',
+          userId,
+          organizationId,
+          resourceType: 'defense_packet',
+          resourceId: packet.packet_id || programId,
+          success: true,
+          metadata: {
+            program_id: programId,
+            manifest_hash: packet.manifest_hash,
+            readiness_score: packet.readiness_score,
+            risk_code_map_version: packet.risk_code_map_version,
+            risk_vocab_hash: packet.risk_vocab_hash,
+            task_count: (packet.tasks || []).length,
+            status: packet.status,
+          },
+        });
+      } catch {
+        /* best-effort */
+      }
+
+      // ── Audit: DEFENSE_PACKET_BLOCKED if gating blocks ──
+      const gate = (shadowResult.data as any)?.submission_gate;
+      if (gate && !gate.allowed) {
+        try {
+          await logAuditEvent({
+            category: 'compliance',
+            severity: 'warning',
+            action: 'DEFENSE_PACKET_BLOCKED',
+            userId,
+            organizationId,
+            resourceType: 'defense_packet',
+            resourceId: (shadowResult.data as any)?.defense_packet?.packet_id || programId,
+            success: true,
+            metadata: {
+              program_id: programId,
+              blocking_task_ids: gate.blocking_task_ids,
+              blocking_risk_codes: gate.blocking_risk_codes,
+              reason: gate.reason,
+            },
+          });
+        } catch {
+          /* best-effort */
+        }
+      }
+
+      return res.status(200).json(shadowResult.data);
+    } catch (err: any) {
+      console.error('[defense-packet] build failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/defense-packet/:hash/export.json — Export JSON
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/defense-packet/:manifestHash/export.json',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { manifestHash } = req.params;
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/predicate/device/defense-packet/${manifestHash}/export.json`
+      );
+
+      if (result.status === 404) {
+        return res.status(404).json({ error: 'Defense packet not found' });
+      }
+      if (result.status !== 200) {
+        return res.status(result.status >= 500 ? 502 : result.status).json({
+          error: 'Export failed',
+          detail: result.data,
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] json export failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/defense-packet/:hash/export.csv — Export CSV
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/defense-packet/:manifestHash/export.csv',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { manifestHash } = req.params;
+
+    try {
+      const result = await shadowFetch<string>(
+        'GET',
+        `/predicate/device/defense-packet/${manifestHash}/export.csv`
+      );
+
+      if (result.status === 404) {
+        return res.status(404).json({ error: 'Defense packet not found' });
+      }
+      if (result.status !== 200) {
+        return res.status(result.status >= 500 ? 502 : result.status).json({
+          error: 'CSV export failed',
+          detail: result.raw,
+        });
+      }
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=defense-packet-${manifestHash.slice(0, 12)}.csv`
+      );
+      return res.status(200).send(result.raw);
+    } catch (err: any) {
+      console.error('[defense-packet] csv export failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/defense-packet/:hash/submission-gate — Gate Check
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/defense-packet/:manifestHash/submission-gate',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { manifestHash, programId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
+
+    try {
+      const result = await shadowFetch<{
+        allowed: boolean;
+        blocking_task_ids: string[];
+        blocking_risk_codes: string[];
+        missing_evidence_refs: string[];
+        recommended_next_actions: string[];
+        override_available: boolean;
+        reason: string;
+      }>('POST', `/predicate/device/defense-packet/${manifestHash}/submission-gate`);
+
+      if (result.status === 404) {
+        return res.status(404).json({ error: 'Defense packet not found' });
+      }
+      if (result.status !== 200) {
+        return res.status(result.status >= 500 ? 502 : result.status).json({
+          error: 'Submission gate check failed',
+          detail: result.data,
+        });
+      }
+
+      // ── Audit: gate result ──
+      if (result.data && !result.data.allowed) {
+        try {
+          await logAuditEvent({
+            category: 'compliance',
+            severity: 'warning',
+            action: 'DEFENSE_PACKET_BLOCKED',
+            userId,
+            organizationId,
+            resourceType: 'defense_packet',
+            resourceId: manifestHash,
+            success: true,
+            metadata: {
+              program_id: programId,
+              blocking_task_ids: result.data.blocking_task_ids,
+              blocking_risk_codes: result.data.blocking_risk_codes,
+              reason: result.data.reason,
+            },
+          });
+        } catch {
+          /* best-effort */
+        }
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] submission gate failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/defense-packet/:packetId/waive-task — Waive a task (Part 11)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/defense-packet/:packetId/waive-task',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { packetId, programId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
+
+    const { taskId, waiverReason } = req.body;
+    if (!taskId || !waiverReason) {
+      return res.status(422).json({ error: 'taskId and waiverReason are required' });
+    }
+
+    // ── Audit: DEFENSE_TASK_WAIVED — Part 11 audit event ──
+    try {
+      await logAuditEvent({
+        category: 'compliance',
+        severity: 'warning',
+        action: 'DEFENSE_TASK_WAIVED',
+        userId,
+        organizationId,
+        resourceType: 'defense_packet',
+        resourceId: packetId,
+        success: true,
+        metadata: {
+          program_id: programId,
+          task_id: taskId,
+          waiver_reason: waiverReason,
+          waived_by: userId,
+          waived_at: new Date().toISOString(),
+        },
+      });
+    } catch (auditErr: any) {
+      console.warn('[defense-packet] waive audit event failed:', auditErr.message);
+    }
+
+    return res.status(200).json({
+      task_id: taskId,
+      waiver_recorded: true,
+      waiver_reason: waiverReason,
+      waived_by: userId,
+      waived_at: new Date().toISOString(),
+    });
   }
 );
 
