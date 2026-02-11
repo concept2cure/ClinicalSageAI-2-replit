@@ -864,6 +864,18 @@ try {
   console.error('❌ Failed to mount SE Matrix render routes:', error);
 }
 
+// Mount Defense Packet routes (Phase 6.6.D — Versioned, Signed Compliance Artifacts)
+// POST /api/programs/:programId/predicate-intel/defense-packet → Create packet
+// GET  /api/programs/:programId/predicate-intel/defense-packets → List packets
+try {
+  const defensePacketModule = await import('./routes/defense-packet.js');
+  const defensePacketRoutes = defensePacketModule.default;
+  app.use('/api/programs', defensePacketRoutes);
+  console.log('✅ Defense Packet routes mounted (Phase 6.6.D)');
+} catch (error) {
+  console.error('❌ Failed to mount Defense Packet routes:', error);
+}
+
 // Mount Demo Seed routes (for creating demo projects)
 try {
   const seedDemoModule = await import('./routes/seed-demo.js');

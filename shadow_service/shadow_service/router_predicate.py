@@ -16,6 +16,11 @@ Endpoints:
   PATCH /predicate/se-matrix/:id          — Update SE row equivalence
   GET  /predicate/radar                   — Get Predicate Radar data (scatter plot)
   POST /predicate/generate-510k-preview   — Full pipeline: analyze + SE + defense + DOCX
+  POST /predicate/device/defense-packet   — Create defense packet (6.6.D)
+  GET  /predicate/device/defense-packet/:id — Get defense packet by ID
+  GET  /predicate/device/defense-packets  — List defense packets for program
+  POST /predicate/device/defense-packet/:id/staleness-check — Check staleness
+  PATCH /predicate/device/defense-packet/:id/status — Update packet lifecycle
 """
 
 from __future__ import annotations
@@ -1455,4 +1460,115 @@ async def se_matrix_payload_endpoint(req: SEMatrixPayloadReq):
         )
     finally:
         await db.release_connection(conn)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.D — Defense Packet (Versioned, Signed Artifact)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class DefensePacketCreateReq(BaseModel):
+    """Request body for creating a defense packet."""
+    program_id: UUID
+    product_code: str = ""
+    subject_device: dict[str, Any] = Field(default_factory=dict)
+    predicate_record: dict[str, Any] = Field(default_factory=dict)
+    design_control_ids: dict[str, str] = Field(default_factory=dict)
+    render: bool = True
+    created_by_user_id: str = "system"
+
+
+@router.post("/device/defense-packet")
+async def create_defense_packet_endpoint(req: DefensePacketCreateReq):
+    """Create a Defense Packet — first-class versioned compliance artifact.
+
+    Phase 6.6.D. Generates SE matrix + manifest, persists to
+    predicate.defense_packets, optionally kicks render.
+
+    Idempotent: if the manifest_hash already exists, returns existing packet.
+
+    Returns CreateDefensePacketResponse with diff_summary if previous packet
+    exists for the same program+subject.
+    """
+    from .defense_packet_repository import create_defense_packet
+
+    try:
+        result = await create_defense_packet(
+            program_id=str(req.program_id),
+            product_code=req.product_code,
+            subject_device=req.subject_device,
+            predicate_record=req.predicate_record,
+            design_control_ids=req.design_control_ids,
+            render=req.render,
+            created_by_user_id=req.created_by_user_id,
+        )
+        return result
+    except Exception as exc:
+        logger.exception("Defense packet creation failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Defense packet creation failed: {exc}",
+        )
+
+
+@router.get("/device/defense-packet/{packet_id}")
+async def get_defense_packet_endpoint(packet_id: UUID):
+    """Get a defense packet by ID."""
+    from .defense_packet_repository import get_packet_by_id
+
+    packet = await get_packet_by_id(str(packet_id))
+    if not packet:
+        raise HTTPException(status_code=404, detail="Defense packet not found")
+    return {"packet": packet}
+
+
+@router.get("/device/defense-packets")
+async def list_defense_packets_endpoint(
+    program_id: UUID = Query(...),
+):
+    """List all defense packets for a program (newest first)."""
+    from .defense_packet_repository import get_packets_for_program
+
+    packets = await get_packets_for_program(str(program_id))
+    return {"packets": packets, "count": len(packets)}
+
+
+@router.post("/device/defense-packet/{packet_id}/staleness-check")
+async def check_packet_staleness_endpoint(packet_id: UUID):
+    """Check if a defense packet is stale (upstream data has changed)."""
+    from .defense_packet_repository import check_staleness, get_packet_by_id
+
+    packet = await get_packet_by_id(str(packet_id))
+    if not packet:
+        raise HTTPException(status_code=404, detail="Defense packet not found")
+
+    result = check_staleness(packet)
+    return result.model_dump()
+
+
+@router.patch("/device/defense-packet/{packet_id}/status")
+async def update_defense_packet_status_endpoint(
+    packet_id: UUID,
+    status: str = Query(...),
+    render_job_id: Optional[str] = Query(None),
+    error_code: Optional[str] = Query(None),
+    error_detail: Optional[str] = Query(None),
+    staleness_reason: Optional[str] = Query(None),
+):
+    """Update a defense packet's lifecycle status with validation."""
+    from .defense_packet_repository import update_packet_status
+
+    updated = await update_packet_status(
+        str(packet_id),
+        status,
+        render_job_id=render_job_id,
+        error_code=error_code,
+        error_detail=error_detail,
+        staleness_reason=staleness_reason,
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Invalid status transition to '{status}' or packet not found",
+        )
+    return {"packet": updated}
 

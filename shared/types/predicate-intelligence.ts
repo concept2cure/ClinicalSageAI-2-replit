@@ -867,3 +867,101 @@ export interface SEMatrixPayloadResponse {
   payload: SEMatrixPayloadV2;
   evidence_tasks: EvidenceTaskV2[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D — Defense Packet (Versioned, Signed Compliance Artifact)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Lifecycle status of a defense packet.
+ * CREATED → RENDERING → RENDERED (happy path)
+ * CREATED/RENDERING → FAILED (terminal)
+ * RENDERED → STALE (staleness detected)
+ */
+export type DefensePacketStatus = 'CREATED' | 'RENDERING' | 'RENDERED' | 'FAILED' | 'STALE';
+
+/**
+ * Diff summary comparing two successive defense packets for the same
+ * program + subject combination.
+ */
+export interface DefensePacketDiffSummary {
+  previous_manifest_hash: string;
+  current_manifest_hash: string;
+  readiness_score_delta: number;
+  risk_codes_added: string[];
+  risk_codes_removed: string[];
+  evidence_tasks_added: number;
+  evidence_tasks_removed: number;
+  top_risks_changed: boolean;
+}
+
+/**
+ * Result of a staleness check on a defense packet.
+ */
+export interface DefensePacketStalenessResult {
+  is_stale: boolean;
+  reasons: string[];
+  current_risk_vocab_hash: string;
+  current_risk_code_map_version: string;
+  packet_risk_vocab_hash: string;
+  packet_risk_code_map_version: string;
+}
+
+/**
+ * Request body for POST /api/programs/:programId/predicate-intel/defense-packet.
+ */
+export interface CreateDefensePacketRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  predicateRecord: Record<string, unknown>;
+  designControlIds?: Record<string, string>;
+  render?: boolean;
+}
+
+/**
+ * Response from POST /api/programs/:programId/predicate-intel/defense-packet.
+ */
+export interface CreateDefensePacketResponse {
+  defense_packet_id: string;
+  manifest_hash: string;
+  defense_readiness_score: number;
+  top_risks: string[];
+  risk_codes_used: string[];
+  tasks: unknown[];
+  render_job_id: string | null;
+  status: DefensePacketStatus;
+  subject_hash: string;
+  previous_packet_id: string | null;
+  diff_summary: DefensePacketDiffSummary | null;
+}
+
+/**
+ * Full defense packet record as returned by GET endpoints.
+ */
+export interface DefensePacketRecord {
+  id: string;
+  program_id: string;
+  subject_hash: string;
+  predicate_k_number: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  generator_version: string;
+  defense_readiness_score: number;
+  top_risks: string[];
+  tasks: unknown[];
+  se_payload: Record<string, unknown>;
+  subject_device: Record<string, string>;
+  risk_codes_used: string[];
+  product_code: string;
+  manifest_hash: string;
+  status: DefensePacketStatus;
+  staleness_reason: string | null;
+  render_job_id: string | null;
+  error_code: string | null;
+  error_detail: string | null;
+  created_by_user_id: string;
+  previous_packet_id: string | null;
+  created_at: string;
+  updated_at: string;
+  rendered_at: string | null;
+}
