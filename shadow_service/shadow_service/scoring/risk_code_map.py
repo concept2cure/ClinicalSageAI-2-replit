@@ -1,9 +1,10 @@
 """Canonical Risk Code Map — Phase 6.6.C (Source of Truth).
 
-28 risk_code enums with their EvidenceCategory, recommended artifacts,
-display labels, and default severity.  This is the ONE source of truth
-for risk-code-to-evidence mapping.  UI mirrors labels only — never
-invents categories.
+24 risk_code enums with their EvidenceCategory, recommended artifacts,
+display labels, default severity, and canned discussion templates.
+
+This is the ONE source of truth for risk-code-to-evidence mapping.
+UI mirrors labels only — never invents categories.
 
 Compliance:
   - Stable strings: never change once shipped
@@ -16,6 +17,7 @@ Usage:
         RISK_CODE_TO_ARTIFACTS,
         RISK_CODE_LABELS,
         RISK_CODE_SEVERITY_DEFAULT,
+        RISK_CODE_DISCUSSION_TEMPLATE,
         ALL_RISK_CODES,
         CANONICAL_ARTIFACTS,
     )
@@ -29,11 +31,11 @@ from typing import Any
 from ..models_predicate import EvidenceCategory
 
 # Map version — bump on any change to the map
-RISK_CODE_MAP_VERSION = "1.0.0"
+RISK_CODE_MAP_VERSION = "2.0.0"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Canonical Risk Codes (28 total — treat as enum, never change once shipped)
+# Canonical Risk Codes (24 total — treat as enum, never change once shipped)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class RiskCode(str, Enum):
@@ -73,13 +75,7 @@ class RiskCode(str, Enum):
     # ── G. Standards / Labeling / PMS ──
     STANDARDS_GAP = "STANDARDS_GAP"
     LABELING_IFU_GAP = "LABELING_IFU_GAP"
-    LABELING_WARNINGS_GAP = "LABELING_WARNINGS_GAP"
     PMS_SIGNAL_RISK = "PMS_SIGNAL_RISK"
-
-    # ── I. Manufacturing / Packaging / Aging ──
-    AGING_STUDY_GAP = "AGING_STUDY_GAP"
-    MANUFACTURING_PROCESS_CHANGE = "MANUFACTURING_PROCESS_CHANGE"
-    BIOBURDEN_CHANGE = "BIOBURDEN_CHANGE"
 
     # ── H. Predicate Safety Lineage (from 6.6.A/6.6.B) ──
     PREDICATE_TOXICITY_HIGH = "PREDICATE_TOXICITY_HIGH"
@@ -101,7 +97,7 @@ class Severity(str, Enum):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Risk Code → Primary + Secondary EvidenceCategory
+# Risk Code → Primary + Secondary EvidenceCategory (truth table §3)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 RISK_CODE_TO_CATEGORY: dict[str, list[str]] = {
@@ -192,10 +188,6 @@ RISK_CODE_TO_CATEGORY: dict[str, list[str]] = {
     RiskCode.LABELING_IFU_GAP.value: [
         EvidenceCategory.LABELING_IFU.value,
     ],
-    RiskCode.LABELING_WARNINGS_GAP.value: [
-        EvidenceCategory.LABELING_IFU.value,
-        EvidenceCategory.RISK_MANAGEMENT.value,
-    ],
     RiskCode.PMS_SIGNAL_RISK.value: [
         EvidenceCategory.POST_MARKET_SURVEILLANCE.value,
     ],
@@ -208,24 +200,11 @@ RISK_CODE_TO_CATEGORY: dict[str, list[str]] = {
         EvidenceCategory.POST_MARKET_SURVEILLANCE.value,
         EvidenceCategory.RISK_MANAGEMENT.value,
     ],
-
-    # I. Manufacturing / Packaging / Aging
-    RiskCode.AGING_STUDY_GAP.value: [
-        EvidenceCategory.BENCH_TESTING.value,
-    ],
-    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: [
-        EvidenceCategory.BENCH_TESTING.value,
-        EvidenceCategory.RISK_MANAGEMENT.value,
-    ],
-    RiskCode.BIOBURDEN_CHANGE.value: [
-        EvidenceCategory.STERILIZATION_VALIDATION.value,
-        EvidenceCategory.BIOCOMPATIBILITY.value,
-    ],
 }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Risk Code → Recommended Artifacts (from canonical list only)
+# Risk Code → Recommended Artifacts (canonical list only — §3 truth table)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
@@ -257,7 +236,6 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "Bench Test Protocol",
         "Bench Test Report",
         "FMEA / Hazard Analysis",
-        "Residual Risk / Benefit-Risk Justification",
     ],
 
     # C. Materials / Bio / Contact
@@ -268,7 +246,6 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
     ],
     RiskCode.TISSUE_CONTACT_CHANGE.value: [
         "ISO 10993-1 Biological Evaluation Plan",
-        "ISO 14971 Risk Management Plan",
         "Residual Risk / Benefit-Risk Justification",
     ],
     RiskCode.CONTACT_DURATION_CHANGE.value: [
@@ -304,7 +281,6 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
     ],
     RiskCode.CYBERSECURITY_SURFACE_INCREASED.value: [
         "SBOM",
-        "Threat Model",
         "Vulnerability Assessment Summary",
         "Patch / Update Process",
     ],
@@ -315,8 +291,8 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
     ],
     RiskCode.ML_ADAPTIVITY.value: [
         "IEC 62304 Software Development Plan",
-        "ISO 14971 Risk Management Plan",
         "Verification & Validation Evidence",
+        "ISO 14971 Risk Management Plan",
     ],
 
     # F. Clinical / Performance
@@ -327,9 +303,9 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "Clinical Bridging Analysis",
     ],
     RiskCode.CLINICAL_EVIDENCE_GAP.value: [
+        "Clinical Protocol / Study Plan",
         "Clinical Rationale Memo",
         "Literature Review",
-        "Clinical Protocol / Study Plan",
     ],
     RiskCode.HUMAN_FACTORS_CHANGE.value: [
         "Human Factors Validation Summary",
@@ -347,15 +323,9 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "IFU Draft",
         "Warnings / Precautions Update",
     ],
-    RiskCode.LABELING_WARNINGS_GAP.value: [
-        "Warnings / Precautions Update",
-        "IFU Draft",
-        "Residual Risk / Benefit-Risk Justification",
-    ],
     RiskCode.PMS_SIGNAL_RISK.value: [
-        "Recall / Safety Signal Summary",
-        "Complaint Trending",
         "CAPA Summary",
+        "Complaint Trending",
         "PSUR / PMCF Trigger Memo",
     ],
 
@@ -368,24 +338,6 @@ RISK_CODE_TO_ARTIFACTS: dict[str, list[str]] = {
         "Recall / Safety Signal Summary",
         "ISO 14971 Risk Management Plan",
         "CAPA Summary",
-    ],
-
-    # I. Manufacturing / Packaging / Aging
-    RiskCode.AGING_STUDY_GAP.value: [
-        "Bench Test Protocol",
-        "Bench Test Report",
-        "Performance Verification Summary",
-    ],
-    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: [
-        "Bench Test Protocol",
-        "Bench Test Report",
-        "ISO 14971 Risk Management Plan",
-        "FMEA / Hazard Analysis",
-    ],
-    RiskCode.BIOBURDEN_CHANGE.value: [
-        "Sterilization Validation (SAL)",
-        "ISO 10993-1 Biological Evaluation Plan",
-        "Chemical Characterization Report",
     ],
 }
 
@@ -416,13 +368,9 @@ RISK_CODE_LABELS: dict[str, str] = {
     RiskCode.HUMAN_FACTORS_CHANGE.value: "Human Factors Change",
     RiskCode.STANDARDS_GAP.value: "Standards Conformance Gap",
     RiskCode.LABELING_IFU_GAP.value: "Labeling / IFU Gap",
-    RiskCode.LABELING_WARNINGS_GAP.value: "Labeling Warnings Gap",
     RiskCode.PMS_SIGNAL_RISK.value: "Post-Market Signal Risk",
     RiskCode.PREDICATE_TOXICITY_HIGH.value: "High Predicate Toxicity",
     RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: "Compromised Predicate Lineage",
-    RiskCode.AGING_STUDY_GAP.value: "Aging Study Gap",
-    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: "Manufacturing Process Change",
-    RiskCode.BIOBURDEN_CHANGE.value: "Bioburden Change",
 }
 
 
@@ -465,22 +413,133 @@ RISK_CODE_SEVERITY_DEFAULT: dict[str, str] = {
     # G. Standards / Labeling / PMS
     RiskCode.STANDARDS_GAP.value: Severity.MEDIUM.value,
     RiskCode.LABELING_IFU_GAP.value: Severity.LOW.value,
-    RiskCode.LABELING_WARNINGS_GAP.value: Severity.LOW.value,
     RiskCode.PMS_SIGNAL_RISK.value: Severity.MEDIUM.value,
 
     # H. Predicate Safety Lineage
     RiskCode.PREDICATE_TOXICITY_HIGH.value: Severity.HIGH.value,
     RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: Severity.HIGH.value,
-
-    # I. Manufacturing / Packaging / Aging
-    RiskCode.AGING_STUDY_GAP.value: Severity.MEDIUM.value,
-    RiskCode.MANUFACTURING_PROCESS_CHANGE.value: Severity.MEDIUM.value,
-    RiskCode.BIOBURDEN_CHANGE.value: Severity.MEDIUM.value,
 }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Canonical Artifacts List (finite — don't add casually, version changes)
+# Risk Code → Canned Discussion Template (no LLM — per risk_code)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+RISK_CODE_DISCUSSION_TEMPLATE: dict[str, str] = {
+    RiskCode.IU_MISMATCH.value: (
+        "Intended use misalignment increases regulatory risk; "
+        "consider alternate predicate or clinical/bench bridging rationale."
+    ),
+    RiskCode.INDICATIONS_EXPANDED.value: (
+        "Broader indications require clinical evidence supporting "
+        "expanded patient population or use environment."
+    ),
+    RiskCode.TECH_DIFFERENCE.value: (
+        "Core technology difference requires bench testing and risk analysis "
+        "to demonstrate substantial equivalence."
+    ),
+    RiskCode.ENERGY_SOURCE_CHANGE.value: (
+        "Energy source difference may change safety profile; provide "
+        "verification/validation evidence and applicable standards testing."
+    ),
+    RiskCode.DESIGN_ARCH_CHANGE.value: (
+        "Design architecture change requires verification/validation "
+        "demonstrating equivalent performance and safety."
+    ),
+    RiskCode.MATERIAL_CHANGE.value: (
+        "Material difference requires biocompatibility assessment per "
+        "ISO 10993-1 and justification of equivalence."
+    ),
+    RiskCode.TISSUE_CONTACT_CHANGE.value: (
+        "Change in tissue contact type requires updated biocompatibility "
+        "evaluation per ISO 10993-1."
+    ),
+    RiskCode.CONTACT_DURATION_CHANGE.value: (
+        "Change in contact duration category may require additional "
+        "biocompatibility endpoints per ISO 10993-1."
+    ),
+    RiskCode.STERILIZATION_METHOD_CHANGE.value: (
+        "Sterilization method change requires revalidation and review "
+        "of residual/bioburden limits."
+    ),
+    RiskCode.PACKAGING_SYSTEM_CHANGE.value: (
+        "Packaging system change requires integrity testing and "
+        "may affect sterile barrier claims."
+    ),
+    RiskCode.SHELF_LIFE_CHANGE.value: (
+        "New shelf-life claim requires accelerated and/or real-time "
+        "aging study data."
+    ),
+    RiskCode.SOFTWARE_PRESENT_NEW.value: (
+        "Subject introduces software not present in predicate; "
+        "full IEC 62304 lifecycle documentation and cybersecurity review required."
+    ),
+    RiskCode.SOFTWARE_SAFETY_CLASS_DIFF.value: (
+        "Software safety classification differs; provide classification "
+        "justification and appropriate V&V evidence per IEC 62304."
+    ),
+    RiskCode.CYBERSECURITY_SURFACE_INCREASED.value: (
+        "Increased network/cloud/mobile connectivity increases cybersecurity "
+        "attack surface; provide SBOM, threat model, and vulnerability assessment."
+    ),
+    RiskCode.INTEROPERABILITY_CLAIM.value: (
+        "New interoperability claims require interface testing "
+        "and data integrity evidence."
+    ),
+    RiskCode.ML_ADAPTIVITY.value: (
+        "ML/AI model adaptivity requires predetermined change control plan "
+        "(PCCP) and performance monitoring evidence."
+    ),
+    RiskCode.PERFORMANCE_CLAIM_CHANGE.value: (
+        "Performance claim changes require bench testing with defined "
+        "acceptance criteria and may require clinical bridging."
+    ),
+    RiskCode.CLINICAL_EVIDENCE_GAP.value: (
+        "Bench data alone may not support claim differences; clinical "
+        "evidence or literature review likely needed."
+    ),
+    RiskCode.HUMAN_FACTORS_CHANGE.value: (
+        "Changes to user interface or workflow require human factors "
+        "validation and updated IFU."
+    ),
+    RiskCode.STANDARDS_GAP.value: (
+        "No recognized consensus standard covers the identified differences; "
+        "provide rationale or alternative test evidence."
+    ),
+    RiskCode.LABELING_IFU_GAP.value: (
+        "Labeling or IFU requires updates to reflect device differences, "
+        "warnings, or contraindications."
+    ),
+    RiskCode.PMS_SIGNAL_RISK.value: (
+        "Post-market signals suggest heightened scrutiny; provide "
+        "complaint trending and CAPA documentation."
+    ),
+    RiskCode.PREDICATE_TOXICITY_HIGH.value: (
+        "Predicate has elevated safety signals; provide risk justification "
+        "or consider alternate predicate."
+    ),
+    RiskCode.PREDICATE_LINEAGE_COMPROMISED.value: (
+        "Predicate family tree shows safety concerns; document risk controls "
+        "and consider alternate lineage."
+    ),
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Diff flag upgrade set — these risk_codes can produce SIGNIFICANT flag
+# Per spec: "Upgrade to SIGNIFICANT only for these codes"
+# ═══════════════════════════════════════════════════════════════════════════════
+
+SIGNIFICANT_RISK_CODES: frozenset[str] = frozenset({
+    RiskCode.ENERGY_SOURCE_CHANGE.value,
+    RiskCode.IU_MISMATCH.value,
+    RiskCode.TECH_DIFFERENCE.value,
+    RiskCode.PREDICATE_TOXICITY_HIGH.value,
+})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Canonical Artifacts List (finite — §4, don't add casually, version changes)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 CANONICAL_ARTIFACTS: dict[str, list[str]] = {
@@ -542,10 +601,8 @@ CANONICAL_ARTIFACTS: dict[str, list[str]] = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SE category → risk code mapping (for the 6 default SE rows)
+# SE category → risk code mapping (for the 9 default SE rows)
 # ═══════════════════════════════════════════════════════════════════════════════
-# These map SE comparison categories to their most likely risk_code
-# when a mismatch is detected.
 
 SE_CATEGORY_RISK_CODE_MAP: dict[str, str] = {
     "intended_use": RiskCode.IU_MISMATCH.value,
@@ -590,3 +647,8 @@ def get_severity_for_risk_code(code: str) -> str:
 def get_label_for_risk_code(code: str) -> str:
     """Get the human-readable label for a risk_code."""
     return RISK_CODE_LABELS.get(code, code)
+
+
+def get_discussion_template(code: str) -> str:
+    """Get the canned discussion template for a risk_code."""
+    return RISK_CODE_DISCUSSION_TEMPLATE.get(code, "")

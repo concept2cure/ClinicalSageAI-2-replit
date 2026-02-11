@@ -98,13 +98,9 @@
         "HUMAN_FACTORS_CHANGE",
         "STANDARDS_GAP",
         "LABELING_IFU_GAP",
-        "LABELING_WARNINGS_GAP",
         "PMS_SIGNAL_RISK",
         "PREDICATE_TOXICITY_HIGH",
-        "PREDICATE_LINEAGE_COMPROMISED",
-        "AGING_STUDY_GAP",
-        "MANUFACTURING_PROCESS_CHANGE",
-        "BIOBURDEN_CHANGE"
+        "PREDICATE_LINEAGE_COMPROMISED"
       ]
     },
     "DiffFlag": {
@@ -160,6 +156,11 @@
         },
         "risk_code": {
           "oneOf": [{ "$ref": "#/$defs/RiskCode" }, { "type": "null" }]
+        },
+        "triggered_risk_codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RiskCode" },
+          "description": "All risk codes triggered by this row (may include secondary codes)"
         },
         "evidence_task_ids": {
           "type": "array",

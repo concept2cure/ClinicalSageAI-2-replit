@@ -1,8 +1,9 @@
 """SE Matrix Payload Generator — Phase 6.6.C (Evidence-Linked).
 
 Generates the SE comparison matrix with:
-  - Deterministic diff analysis → risk_code assignment
-  - risk_code → evidence_task_ids linkage via canonical map
+  - Deterministic diff analysis via config-driven scorer
+  - risk_code + triggered_risk_codes per row
+  - evidence_task_ids linkage via canonical map
   - Defense readiness scoring
   - DOCX Factory-ready payload
 
@@ -36,10 +37,10 @@ from ..scoring.risk_code_map import (
     RISK_CODE_MAP_VERSION,
     RISK_CODE_TO_ARTIFACTS,
     RISK_CODE_TO_CATEGORY,
-    SE_CATEGORY_RISK_CODE_MAP,
     get_label_for_risk_code,
     get_severity_for_risk_code,
 )
+from ..predicate_intel.se_risk_codes import assign_se_row_risks, load_vocab
 
 logger = logging.getLogger(__name__)
 
@@ -60,25 +61,6 @@ SE_CHARACTERISTICS: list[tuple[str, str]] = [
     ("software", "Software/Firmware"),
     ("general", "Labeling / General"),
 ]
-
-# Significant material changes (regulatory-relevant material families)
-SIGNIFICANT_MATERIAL_CHANGES = frozenset({
-    "titanium", "stainless steel", "cobalt chromium", "nitinol",
-    "silicone", "polyethylene", "peek", "ptfe", "latex",
-    "ceramic", "hydroxyapatite", "pyrolytic carbon",
-})
-
-# ISO standards for auto-generated discussion text
-ISO_STANDARDS: dict[str, str] = {
-    "materials": "ISO 10993-1 (Biological evaluation of medical devices)",
-    "biocompatibility": "ISO 10993-5 (Cytotoxicity), ISO 10993-10 (Sensitization)",
-    "sterilization": "ISO 11135 (EO), ISO 11137 (Radiation), ISO 17665 (Steam)",
-    "software": "IEC 62304 (Medical device software life cycle)",
-    "energy_source": "IEC 60601-1 (Electrical safety), IEC 60601-1-2 (EMC)",
-    "intended_use": "21 CFR 807.87(f) (Substantial Equivalence Determination)",
-    "technology": "FDA Guidance: The 510(k) Program",
-    "performance": "ISO 14155 (Clinical investigation), device-specific guidance",
-}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -119,26 +101,40 @@ def generate_se_matrix_payload(
     """
     design_control_ids = design_control_ids or {}
     k_number = predicate_record.get("k_number", "UNKNOWN")
+    vocab = load_vocab()
     rows: list[SEMatrixRowV2] = []
-    all_risk_codes_found: list[str] = []
+    all_triggered_codes: list[str] = []
 
     for idx, (category_key, char_name) in enumerate(SE_CHARACTERISTICS):
         subj_val = str(subject_device.get(category_key, "N/A"))
         pred_val = str(predicate_record.get(category_key, "N/A"))
 
-        # Deterministic diff analysis
-        diff_flag, discussion, risk_code, severity = analyze_diff(
-            category_key, subj_val, pred_val,
-        )
+        # Deterministic scorer for all rows
+        result = assign_se_row_risks(category_key, subj_val, pred_val, vocab)
 
-        # Map risk_code → evidence_task_ids
+        risk_code = result["risk_code"]
+        triggered_risk_codes: list[str] = result["triggered_risk_codes"]
+        diff_flag = result["diff_flag"]
+        discussion_text = result["discussion_text"]
+        requires_citation = result["requires_citation"]
+
+        # Compute diff_severity from risk_code default severity
+        if not risk_code:
+            diff_severity = "none" if diff_flag == "EQUIVALENT" else "low"
+        else:
+            diff_severity = get_severity_for_risk_code(risk_code).lower()
+
+        # Map ALL triggered_risk_codes → evidence_task_ids
         evidence_task_ids: list[str] = []
-        if risk_code:
-            all_risk_codes_found.append(risk_code)
-            evidence_task_ids = map_risk_code_to_evidence_task_ids(risk_code)
+        for trc in triggered_risk_codes:
+            evidence_task_ids.extend(map_risk_code_to_evidence_task_ids(trc))
+        # Deduplicate while preserving order
+        evidence_task_ids = list(dict.fromkeys(evidence_task_ids))
+
+        all_triggered_codes.extend(triggered_risk_codes)
 
         # Evidence cell metadata
-        subject_evidence_ids = []
+        subject_evidence_ids: list[str] = []
         if design_control_ids.get(category_key):
             subject_evidence_ids.append(design_control_ids[category_key])
 
@@ -149,20 +145,21 @@ def generate_se_matrix_payload(
             subject_value=subj_val,
             predicate_value=pred_val,
             diff_flag=diff_flag,
-            discussion_text=discussion,
+            discussion_text=discussion_text,
             risk_code=risk_code,
+            triggered_risk_codes=triggered_risk_codes,
             evidence_task_ids=evidence_task_ids,
-            requires_citation=diff_flag != "EQUIVALENT",
+            requires_citation=requires_citation,
             suggested_tests=_get_suggested_tests(category_key, diff_flag, risk_code),
-            diff_severity=severity,
+            diff_severity=diff_severity,
             subject_evidence_ids=subject_evidence_ids,
             predicate_evidence_ids=[f"FDA_510k_{k_number}"],
             subject_confidence=0.95 if subject_evidence_ids else 0.50,
             predicate_confidence=0.90,
         ))
 
-    # Build deduplicated evidence tasks from all risk codes
-    evidence_tasks = build_evidence_tasks_from_risk_codes(all_risk_codes_found)
+    # Build deduplicated evidence tasks from ALL triggered codes
+    evidence_tasks = build_evidence_tasks_from_risk_codes(all_triggered_codes)
 
     # Calculate defense readiness score
     readiness = calculate_defense_readiness(rows)
@@ -180,7 +177,7 @@ def generate_se_matrix_payload(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Diff Analysis (deterministic, no LLM)
+# Backward-compatible analyze_diff wrapper
 # ─────────────────────────────────────────────────────────────────────────────
 
 def analyze_diff(
@@ -190,209 +187,20 @@ def analyze_diff(
 ) -> tuple[str, str, Optional[str], str]:
     """Deterministic diff analysis for one SE row.
 
+    Backward-compatible wrapper — delegates to assign_se_row_risks().
+
     Returns:
-        (diff_flag, discussion_text, risk_code, severity)
-
-    Rules (v1):
-        - Identical text → EQUIVALENT
-        - Material mismatch → DISCUSSION_REQUIRED, MATERIAL_CHANGE
-        - Energy source mismatch → SIGNIFICANT, ENERGY_SOURCE_CHANGE
-        - Tissue contact/duration mismatch → DISCUSSION_REQUIRED, BIOCONTACT_CHANGE
-        - Sterilization mismatch → DISCUSSION_REQUIRED, STERILIZATION_CHANGE
-        - Intended use mismatch → SIGNIFICANT (if low overlap), DISCUSSION_REQUIRED otherwise
-        - Software mismatch → SIGNIFICANT (if new), DISCUSSION_REQUIRED otherwise
+        (diff_flag, discussion_text, risk_code, diff_severity)
     """
-    subj_norm = subject.strip().lower()
-    pred_norm = predicate.strip().lower()
+    result = assign_se_row_risks(category, subject, predicate)
+    risk_code = result["risk_code"]
 
-    # Identical = Equivalent
-    if subj_norm == pred_norm:
-        return "EQUIVALENT", "Identical characteristics — no discussion required.", None, "none"
+    if not risk_code:
+        severity = "none" if result["diff_flag"] == "EQUIVALENT" else "low"
+    else:
+        severity = get_severity_for_risk_code(risk_code).lower()
 
-    # N/A on both sides
-    if subj_norm in ("n/a", "", "none") and pred_norm in ("n/a", "", "none"):
-        return "EQUIVALENT", "Not applicable for both devices.", None, "none"
-
-    # Category-specific analysis
-    if category == "intended_use":
-        return _analyze_intended_use(subject, predicate)
-    if category in ("materials", "material"):
-        return _analyze_materials(subject, predicate)
-    if category in ("energy_source", "energy"):
-        return _analyze_energy(subject, predicate)
-    if category == "sterilization":
-        return _analyze_sterilization(subject, predicate)
-    if category == "software":
-        return _analyze_software(subject, predicate)
-    if category == "biocompatibility":
-        return _analyze_biocompatibility(subject, predicate)
-    if category == "technology":
-        return _analyze_technology(subject, predicate)
-    if category == "performance":
-        return _analyze_performance(subject, predicate)
-
-    # Default: discussion required with category-mapped risk_code
-    risk_code = SE_CATEGORY_RISK_CODE_MAP.get(category)
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Differences noted between subject ({subject}) and predicate ({predicate}). "
-        "Discussion provided below.",
-        risk_code,
-        "low",
-    )
-
-
-def _analyze_intended_use(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Intended use: word overlap determines severity."""
-    subj_words = set(subj.lower().split())
-    pred_words = set(pred.lower().split())
-    total = max(len(subj_words | pred_words), 1)
-    overlap = len(subj_words & pred_words) / total
-
-    if overlap > 0.8:
-        return (
-            "EQUIVALENT",
-            "Intended use is substantially similar. Minor wording differences "
-            "do not affect equivalence.",
-            None,
-            "none",
-        )
-    if overlap > 0.5:
-        return (
-            "DISCUSSION_REQUIRED",
-            "Intended use overlap is moderate. Discussion addresses differences "
-            f"in scope and patient population. Ref: {ISO_STANDARDS['intended_use']}.",
-            "IU_MISMATCH",
-            "medium",
-        )
-    return (
-        "SIGNIFICANT",
-        "Significant difference in intended use. FDA may not accept this "
-        f"predicate for SE comparison. Ref: {ISO_STANDARDS['intended_use']}.",
-        "IU_MISMATCH",
-        "critical",
-    )
-
-
-def _analyze_materials(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Material changes are always discussion-required at minimum."""
-    subj_mats = {w.strip().lower() for w in subj.replace(",", " ").split()}
-    pred_mats = {w.strip().lower() for w in pred.replace(",", " ").split()}
-
-    significant = bool(
-        (subj_mats - pred_mats) & SIGNIFICANT_MATERIAL_CHANGES
-        or (pred_mats - subj_mats) & SIGNIFICANT_MATERIAL_CHANGES
-    )
-
-    if significant:
-        return (
-            "DISCUSSION_REQUIRED",
-            f"Change from {pred} to {subj} requires biocompatibility assessment "
-            f"per {ISO_STANDARDS['materials']}. See biocompatibility evaluation report.",
-            "MATERIAL_CHANGE",
-            "high",
-        )
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Material difference noted ({pred} → {subj}). Materials are within "
-        "the same family — biocompatibility data supports equivalence.",
-        "MATERIAL_CHANGE",
-        "medium",
-    )
-
-
-def _analyze_energy(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Energy source changes are significant."""
-    if subj.strip().lower() in ("n/a", "none", "") and pred.strip().lower() in ("n/a", "none", ""):
-        return "EQUIVALENT", "Neither device uses external energy source.", None, "none"
-
-    return (
-        "SIGNIFICANT",
-        f"Different energy source ({pred} → {subj}). May affect safety profile "
-        f"per {ISO_STANDARDS['energy_source']}. Requires bench testing verification.",
-        "ENERGY_SOURCE_CHANGE",
-        "high",
-    )
-
-
-def _analyze_sterilization(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Sterilization method changes."""
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Sterilization method differs ({pred} → {subj}). Validation required "
-        f"per {ISO_STANDARDS['sterilization']}.",
-        "STERILIZATION_METHOD_CHANGE",
-        "medium",
-    )
-
-
-def _analyze_software(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Software/firmware: new software is significant."""
-    subj_has_sw = subj.strip().lower() not in ("n/a", "none", "")
-    pred_has_sw = pred.strip().lower() not in ("n/a", "none", "")
-
-    if subj_has_sw and not pred_has_sw:
-        return (
-            "SIGNIFICANT",
-            "Subject device includes software not present in predicate. "
-            f"Requires documentation per {ISO_STANDARDS['software']}. "
-            "FDA may request additional software review.",
-            "SOFTWARE_PRESENT_NEW",
-            "critical",
-        )
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Software differences noted ({pred} → {subj}). "
-        f"Review per {ISO_STANDARDS['software']}.",
-        "SOFTWARE_SAFETY_CLASS_DIFF",
-        "medium",
-    )
-
-
-def _analyze_biocompatibility(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Biocompatibility / tissue contact differences."""
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Biocompatibility characteristics differ ({pred} → {subj}). "
-        f"Assessment per {ISO_STANDARDS['biocompatibility']} required.",
-        "TISSUE_CONTACT_CHANGE",
-        "high",
-    )
-
-
-def _analyze_technology(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Technology characteristic differences."""
-    subj_words = set(subj.lower().split())
-    pred_words = set(pred.lower().split())
-    total = max(len(subj_words | pred_words), 1)
-    overlap = len(subj_words & pred_words) / total
-
-    if overlap > 0.7:
-        return (
-            "DISCUSSION_REQUIRED",
-            f"Technology mostly aligned with minor differences. "
-            f"Ref: {ISO_STANDARDS['technology']}.",
-            "TECH_DIFFERENCE",
-            "low",
-        )
-    return (
-        "SIGNIFICANT",
-        f"Core technology differs ({pred} → {subj}). "
-        f"May require additional bench testing. Ref: {ISO_STANDARDS['technology']}.",
-        "TECH_DIFFERENCE",
-        "high",
-    )
-
-
-def _analyze_performance(subj: str, pred: str) -> tuple[str, str, Optional[str], str]:
-    """Performance characteristic differences."""
-    return (
-        "DISCUSSION_REQUIRED",
-        f"Performance characteristics differ ({pred} → {subj}). "
-        f"Ref: {ISO_STANDARDS['performance']}.",
-        "PERFORMANCE_CLAIM_CHANGE",
-        "medium",
-    )
+    return (result["diff_flag"], result["discussion_text"], risk_code, severity)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -406,11 +214,7 @@ def map_risk_code_to_evidence_task_ids(risk_code: str) -> list[str]:
     stable task_ids via hashing.
     """
     categories = RISK_CODE_TO_CATEGORY.get(risk_code, [])
-    task_ids = []
-    for cat in categories:
-        tid = _stable_task_id(cat, risk_code)
-        task_ids.append(tid)
-    return task_ids
+    return [_stable_task_id(cat, risk_code) for cat in categories]
 
 
 def build_evidence_tasks_from_risk_codes(
@@ -439,9 +243,6 @@ def build_evidence_tasks_from_risk_codes(
                 continue
             seen.add(key)
 
-            # Filter artifacts to those relevant to this category
-            cat_artifacts = [a for a in artifacts]  # all artifacts for the risk_code
-
             tasks.append(EvidenceTaskV2(
                 task_id=_stable_task_id(cat, rc),
                 category=cat,
@@ -449,7 +250,7 @@ def build_evidence_tasks_from_risk_codes(
                 severity=severity,
                 label=label,
                 rationale=f"{label}: evidence required for regulatory review.",
-                recommended_artifacts=cat_artifacts,
+                recommended_artifacts=list(artifacts),
                 mapping={
                     "truth_machine_placeholder": True,
                     "se_matrix_linkable": True,

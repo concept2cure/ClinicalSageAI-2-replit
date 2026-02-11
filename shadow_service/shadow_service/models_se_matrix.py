@@ -41,6 +41,7 @@ class SEMatrixRowV2(BaseModel):
     diff_flag: DiffFlag
     discussion_text: str
     risk_code: Optional[str] = None
+    triggered_risk_codes: list[str] = Field(default_factory=list)
     evidence_task_ids: list[str] = Field(default_factory=list)
     requires_citation: bool = False
     suggested_tests: list[str] = Field(default_factory=list)

@@ -24,16 +24,19 @@ from typing import Any
 from shadow_service.scoring.risk_code_map import (
     ALL_RISK_CODES,
     CANONICAL_ARTIFACTS,
+    RISK_CODE_DISCUSSION_TEMPLATE,
     RISK_CODE_LABELS,
     RISK_CODE_MAP_VERSION,
     RISK_CODE_SEVERITY_DEFAULT,
     RISK_CODE_TO_ARTIFACTS,
     RISK_CODE_TO_CATEGORY,
     SE_CATEGORY_RISK_CODE_MAP,
+    SIGNIFICANT_RISK_CODES,
     RiskCode,
     Severity,
     get_artifacts_for_risk_code,
     get_categories_for_risk_code,
+    get_discussion_template,
     get_label_for_risk_code,
     get_severity_for_risk_code,
     validate_risk_code,
@@ -110,9 +113,9 @@ def _make_predicate_record(**overrides) -> dict[str, Any]:
 class TestRiskCodeMap:
     """Tests for the canonical risk_code map (source of truth)."""
 
-    def test_all_28_risk_codes_exist(self):
+    def test_all_24_risk_codes_exist(self):
         """Every RiskCode enum value is in ALL_RISK_CODES."""
-        assert len(ALL_RISK_CODES) == 28  # 28 canonical risk codes
+        assert len(ALL_RISK_CODES) == 24  # 24 canonical risk codes (groups A-H)
         for rc in RiskCode:
             assert rc.value in ALL_RISK_CODES
 
@@ -224,19 +227,21 @@ class TestAnalyzeDiff:
         assert flag == "DISCUSSION_REQUIRED"
         assert rc == "STERILIZATION_METHOD_CHANGE"
 
-    def test_software_new_is_significant(self):
-        """New software (subject has, predicate doesn't) → SIGNIFICANT."""
+    def test_software_new_is_discussion_required(self):
+        """New software (subject has, predicate doesn't) → DISCUSSION_REQUIRED.
+        Per spec: SIGNIFICANT only for ENERGY_SOURCE_CHANGE, IU_MISMATCH,
+        TECH_DIFFERENCE, PREDICATE_TOXICITY_HIGH."""
         flag, _, rc, sev = analyze_diff("software", "Embedded firmware v2.0", "N/A")
-        assert flag == "SIGNIFICANT"
+        assert flag == "DISCUSSION_REQUIRED"
         assert rc == "SOFTWARE_PRESENT_NEW"
-        assert sev == "critical"
+        assert sev == "high"
 
     def test_intended_use_high_overlap_equivalent(self):
         """Intended use with >80% word overlap → EQUIVALENT."""
         text = "Continuous glucose monitoring in adult patients with diabetes"
         flag, _, rc, _ = analyze_diff("intended_use", text, text + " mellitus")
-        # Very high overlap
-        assert flag in ("EQUIVALENT", "DISCUSSION_REQUIRED")
+        # Very high overlap (8/9 tokens) → EQUIVALENT
+        assert flag == "EQUIVALENT"
 
     def test_intended_use_low_overlap_significant(self):
         """Intended use with low word overlap → SIGNIFICANT."""

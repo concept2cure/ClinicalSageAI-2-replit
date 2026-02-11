@@ -687,7 +687,7 @@ export interface SEMatrixRenderPlan {
 
 /**
  * Canonical risk_code enum — mirrors shadow_service RiskCode.
- * 28 deterministic risk codes covering all SE comparison categories.
+ * 24 deterministic risk codes covering all SE comparison categories.
  */
 export type RiskCode =
   // A. Intended Use / Indications
@@ -718,15 +718,10 @@ export type RiskCode =
   // G. Standards / Labeling / PMS
   | 'STANDARDS_GAP'
   | 'LABELING_IFU_GAP'
-  | 'LABELING_WARNINGS_GAP'
   | 'PMS_SIGNAL_RISK'
   // H. Predicate Safety Lineage
   | 'PREDICATE_TOXICITY_HIGH'
-  | 'PREDICATE_LINEAGE_COMPROMISED'
-  // I. Manufacturing / Packaging / Aging
-  | 'AGING_STUDY_GAP'
-  | 'MANUFACTURING_PROCESS_CHANGE'
-  | 'BIOBURDEN_CHANGE';
+  | 'PREDICATE_LINEAGE_COMPROMISED';
 
 /** Diff flag for V2 SE matrix rows. */
 export type DiffFlagV2 = 'EQUIVALENT' | 'DISCUSSION_REQUIRED' | 'SIGNIFICANT';
@@ -741,6 +736,7 @@ export interface SEMatrixRowV2 {
   diff_flag: DiffFlagV2;
   discussion_text: string;
   risk_code: RiskCode | null;
+  triggered_risk_codes: string[];
   evidence_task_ids: string[];
   requires_citation: boolean;
   suggested_tests: string[];
