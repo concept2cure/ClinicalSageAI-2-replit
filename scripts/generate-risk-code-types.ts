@@ -23,7 +23,7 @@
 
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve } from 'node:path';
 
 // ── Paths ──────────────────────────────────────────────────────────────────
 const ROOT = resolve(import.meta.dirname ?? __dirname, '..');
@@ -52,7 +52,7 @@ const pyMap = readFileSync(PY_MAP_PATH, 'utf-8');
 function extractPyDict(varName: string): Record<string, string> {
   // Matches: VARNAME: dict[...] = { ... }  across multiple lines
   // Use [^=]* instead of dict[] match to handle nested generics like dict[str, list[str]]
-  const re = new RegExp(`${varName}\\s*(?::[^=]*)?\s*=\\s*\\{([\\s\\S]*?)\\n\\}`);
+  const re = new RegExp(`${varName}\\s*(?::[^=]*)?\\s*=\\s*\\{([\\s\\S]*?)\\n\\}`);
   const m = pyMap.match(re);
   if (!m) throw new Error(`Could not find ${varName} in risk_code_map.py`);
   const body = m[1];
@@ -78,7 +78,7 @@ function extractPyDict(varName: string): Record<string, string> {
 }
 
 function extractPyDictLists(varName: string): Record<string, string[]> {
-  const re = new RegExp(`${varName}\\s*(?::[^=]*)?\s*=\\s*\\{([\\s\\S]*?)\\n\\}`);
+  const re = new RegExp(`${varName}\\s*(?::[^=]*)?\\s*=\\s*\\{([\\s\\S]*?)\\n\\}`);
   const m = pyMap.match(re);
   if (!m) throw new Error(`Could not find ${varName} in risk_code_map.py`);
   const body = m[1];

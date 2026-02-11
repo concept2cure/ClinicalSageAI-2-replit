@@ -512,3 +512,134 @@ describe('Phase 6.6.D1 — Spec Alias Parity', () => {
     expect(builder).toContain('Phase 6.6.D1');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. UI ↔ Type Contract — Field Name Consistency
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Phase 6.6.D UI ↔ Type Contract', () => {
+  const DEFENSE_PANEL = resolve(
+    __dirname,
+    '../client/src/components/predicate/DefensePacketPanel.tsx'
+  );
+  const DOWNLOAD_PANEL = resolve(
+    __dirname,
+    '../client/src/components/predicate/DownloadVerifyPanel.tsx'
+  );
+  const RADAR_PLOT = resolve(
+    __dirname,
+    '../client/src/components/predicate/PredicateRadarPlot.tsx'
+  );
+  const SE_MATRIX_V2 = resolve(__dirname, '../client/src/components/predicate/SEMatrixV2Panel.tsx');
+  const MAIN_PAGE = resolve(__dirname, '../client/src/pages/PredicateIntelligence.tsx');
+
+  const ts = loadFile(TS_TYPES);
+
+  it('DefensePacketFull uses "tasks" not "evidence_tasks"', () => {
+    // Type must have: tasks: EvidenceTaskFull[]
+    expect(ts).toMatch(/tasks:\s*EvidenceTaskFull\[\]/);
+  });
+
+  it('DefensePacketPanel never references packet.evidence_tasks', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).not.toContain('packet.evidence_tasks');
+  });
+
+  it('DefensePacketPanel uses packet.tasks (correct field)', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).toContain('packet.tasks');
+  });
+
+  it('DefensePacketFull uses "generated_at" not "created_at"', () => {
+    expect(ts).toMatch(/generated_at:\s*string/);
+  });
+
+  it('DefensePacketPanel uses packet.generated_at', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).toContain('packet.generated_at');
+  });
+
+  it('DefensePacketPanel never casts "as any" for lock_hash or built_by', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).not.toContain('(packet as any).lock_hash');
+    expect(ui).not.toContain('(packet as any).built_by');
+  });
+
+  it('DefensePacketPanel uses packet.risk_vocab_hash for lock verification', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).toContain('packet.risk_vocab_hash');
+  });
+
+  it('BuildDefensePacketRequest uses "selectedPredicate" not "predicateRecord"', () => {
+    expect(ts).toContain('selectedPredicate: Record<string, unknown>');
+  });
+
+  it('DefensePacketPanel build mutation sends "selectedPredicate"', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).toContain('selectedPredicate:');
+    expect(ui).not.toContain('predicateRecord:');
+  });
+
+  it('DownloadVerifyPanel exports DownloadVerifyPanel component', () => {
+    const ui = loadFile(DOWNLOAD_PANEL);
+    expect(ui).toContain('export function DownloadVerifyPanel');
+  });
+
+  it('DownloadVerifyPanel uses RISK_CODES_LOCK_HASH from generated types', () => {
+    const ui = loadFile(DOWNLOAD_PANEL);
+    expect(ui).toContain('RISK_CODES_LOCK_HASH');
+  });
+
+  it('PredicateRadarPlot imports PredicateCandidate type', () => {
+    const ui = loadFile(RADAR_PLOT);
+    expect(ui).toContain('PredicateCandidate');
+  });
+
+  it('PredicateRadarPlot uses similarity_score and toxicity_score fields', () => {
+    const ui = loadFile(RADAR_PLOT);
+    expect(ui).toContain('similarity_score');
+    expect(ui).toContain('toxicity_score');
+  });
+
+  it('SEMatrixV2Panel imports RISK_CODE_LABELS from generated types', () => {
+    const ui = loadFile(SE_MATRIX_V2);
+    expect(ui).toContain('RISK_CODE_LABELS');
+    expect(ui).toContain('shared/types/generated');
+  });
+
+  it('SEMatrixV2Panel displays RISK_CODES_LOCK_HASH in metadata footer', () => {
+    const ui = loadFile(SE_MATRIX_V2);
+    expect(ui).toContain('RISK_CODES_LOCK_HASH');
+  });
+
+  it('Main page imports DefensePacketPanel and wires as tab', () => {
+    const page = loadFile(MAIN_PAGE);
+    expect(page).toContain('import { DefensePacketPanel }');
+    expect(page).toContain('value="defense-packet"');
+    expect(page).toContain('<DefensePacketPanel');
+  });
+
+  it('Main page imports PredicateRadarPlot and wires into radar tab', () => {
+    const page = loadFile(MAIN_PAGE);
+    expect(page).toContain('import { PredicateRadarPlot }');
+    expect(page).toContain('<PredicateRadarPlot');
+  });
+
+  it('Main page passes selectedCandidate to PredicateRadarPlot (not null)', () => {
+    const page = loadFile(MAIN_PAGE);
+    // Should contain a reference to selectedCandidateInTab, NOT hard-coded null
+    expect(page).toContain('selectedCandidateInTab');
+    expect(page).not.toMatch(/selectedCandidate=\{null\}/);
+  });
+
+  it('BFF waive-task route logs DEFENSE_TASK_WAIVED audit event', () => {
+    const bff = loadFile(BFF_ROUTES);
+    expect(bff).toContain('DEFENSE_TASK_WAIVED');
+  });
+
+  it('DefensePacketPanel imports DownloadVerifyPanel', () => {
+    const ui = loadFile(DEFENSE_PANEL);
+    expect(ui).toContain('import { DownloadVerifyPanel }');
+    expect(ui).toContain('<DownloadVerifyPanel');
+  });
+});

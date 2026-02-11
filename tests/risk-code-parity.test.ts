@@ -37,7 +37,6 @@ const PY_VALIDATOR = resolve(
 const TS_GENERATED = resolve(ROOT, 'shared/types/generated/risk-codes.generated.ts');
 const TS_TYPES = resolve(ROOT, 'shared/types/predicate-intelligence.ts');
 const PY_BUILDER = resolve(ROOT, 'shadow_service/shadow_service/predicate_intel/defense_packet.py');
-const PY_ROUTER = resolve(ROOT, 'shadow_service/shadow_service/router_predicate.py');
 const BFF_ROUTES = resolve(ROOT, 'server/routes/defense-packet.ts');
 const PY_MODELS = resolve(ROOT, 'shadow_service/shadow_service/models_defense_packet.py');
 

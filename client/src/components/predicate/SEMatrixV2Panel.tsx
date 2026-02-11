@@ -43,6 +43,7 @@ import type {
   DiffFlagV2,
   RiskCode,
 } from '../../../shared/types/predicate-intelligence';
+import { RISK_CODE_LABELS, RISK_CODES_LOCK_HASH } from '../../../shared/types/generated';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Constants
@@ -129,8 +130,9 @@ function DiffFlagBadge({ flag }: { flag: DiffFlagV2 }) {
 
 function RiskCodeBadge({ code }: { code: RiskCode | null }) {
   if (!code) return null;
+  const label = RISK_CODE_LABELS[code as keyof typeof RISK_CODE_LABELS];
   return (
-    <Badge variant="secondary" className="text-xs font-mono">
+    <Badge variant="secondary" className="text-xs font-mono" title={label || code}>
       {code}
     </Badge>
   );
@@ -438,6 +440,7 @@ export function SEMatrixV2Panel({
           <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
             <span>Version: {payload.version}</span>
             <span>Risk Map: {result.risk_code_map_version}</span>
+            <span>Lock: {RISK_CODES_LOCK_HASH.slice(0, 12)}…</span>
             <span>Generated: {new Date(result.generation_timestamp).toLocaleString()}</span>
             <span>Standard: {payload.regulatory_standard}</span>
           </div>

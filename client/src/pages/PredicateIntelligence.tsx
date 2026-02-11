@@ -246,6 +246,7 @@ function PredicateRadarTab({
   const addMut = useCreateCandidate(programId);
   const suggestMut = useSuggestPredicates(programId);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedCandidateInTab, setSelectedCandidateInTab] = useState<string | null>(null);
   const [searchDevice, setSearchDevice] = useState('');
   const [searchCode, setSearchCode] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
@@ -694,8 +695,11 @@ function PredicateRadarTab({
       {sorted.length > 0 && (
         <PredicateRadarPlot
           candidates={sorted}
-          selectedCandidate={null}
-          onSelectCandidate={onSelectCandidate}
+          selectedCandidate={sorted.find(c => c.id === selectedCandidateInTab) ?? null}
+          onSelectCandidate={(c) => {
+            setSelectedCandidateInTab(c.id);
+            onSelectCandidate(c);
+          }}
         />
       )}
 

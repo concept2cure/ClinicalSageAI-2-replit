@@ -502,7 +502,7 @@ export function DefensePacketPanel({
       {
         productCode: productCode || 'UNKNOWN',
         subjectDevice,
-        predicateRecord: { k_number: kNumber.trim() },
+        selectedPredicate: { k_number: kNumber.trim() },
       },
       {
         onSuccess: data => {
@@ -803,11 +803,10 @@ export function DefensePacketPanel({
           <DownloadVerifyPanel
             programId={programId}
             manifestHash={packet.manifest_hash}
-            lockHash={(packet as any).lock_hash}
-            builtAt={packet.created_at}
-            builtBy={(packet as any).built_by}
+            lockHash={packet.risk_vocab_hash}
+            builtAt={packet.generated_at}
             readinessScore={packet.readiness_score}
-            taskCount={packet.evidence_tasks?.length}
+            taskCount={packet.tasks.length}
           />
 
           {/* Action Bar — Gate Check */}
