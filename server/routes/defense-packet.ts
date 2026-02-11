@@ -7,10 +7,10 @@
  *   GET    /api/programs/:programId/predicate-intel/defense-packets          — List packets
  *   POST   /api/programs/:programId/predicate-intel/defense-packet/:packetId/staleness-check
  *   PATCH  /api/programs/:programId/predicate-intel/defense-packet/:packetId/status
- *   POST   /api/programs/:programId/predicate-intel/defense-packet/build    — Build (deterministic, 6.6.D+)
- *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.json  — Export JSON (6.6.D+)
- *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.csv   — Export CSV (6.6.D+)
- *   POST   /api/programs/:programId/predicate-intel/defense-packet/:hash/submission-gate (6.6.D+)
+ *   POST   /api/programs/:programId/predicate-intel/defense-packet/build    — Build (deterministic, 6.6.D1)
+ *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.json  — Export JSON (6.6.D1)
+ *   GET    /api/programs/:programId/predicate-intel/defense-packet/:hash/export.csv   — Export CSV (6.6.D1)
+ *   POST   /api/programs/:programId/predicate-intel/defense-packet/:hash/submission-gate (6.6.D1)
  *
  * Each endpoint:
  *   1. Authenticates via JWT (authenticateToken)
@@ -18,7 +18,7 @@
  *   3. Proxies to Shadow Service with X-Admin-Token
  *   4. Emits Part 11 audit events
  *
- * @phase 6.6.D+
+ * @phase 6.6.D1
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -134,6 +134,35 @@ async function shadowFetch<T = unknown>(
   return { status: res.status, data, raw: text };
 }
 
+type PacketAuditMetadata = {
+  manifest_hash?: string;
+  packet_id?: string;
+  risk_code_map_version?: string;
+  risk_vocab_hash?: string;
+};
+
+async function fetchPacketAuditMetadata(manifestHash: string): Promise<PacketAuditMetadata> {
+  try {
+    const result = await shadowFetch<Record<string, unknown>>(
+      'GET',
+      `/predicate/device/defense-packet/${manifestHash}/export.json`
+    );
+    if (result.status !== 200 || !result.data || typeof result.data !== 'object') {
+      return {};
+    }
+
+    const packet = result.data as Record<string, unknown>;
+    return {
+      manifest_hash: (packet.manifest_hash as string) || manifestHash,
+      packet_id: (packet.packet_id as string) || manifestHash,
+      risk_code_map_version: packet.risk_code_map_version as string,
+      risk_vocab_hash: packet.risk_vocab_hash as string,
+    };
+  } catch {
+    return {};
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /:programId/predicate-intel/defense-packet — Create Defense Packet
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -216,6 +245,7 @@ router.post(
             errorMessage: `Shadow returned ${shadowResult.status}`,
             metadata: {
               program_id: programId,
+              user_id: userId,
               shadow_status: shadowResult.status,
             },
           });
@@ -230,6 +260,9 @@ router.post(
       }
 
       const packet = shadowResult.data;
+      const auditMeta = packet?.manifest_hash
+        ? await fetchPacketAuditMetadata(packet.manifest_hash)
+        : {};
 
       // ── Audit: DEFENSE_PACKET_CREATED ──
       try {
@@ -244,7 +277,11 @@ router.post(
           success: true,
           metadata: {
             program_id: programId,
+            user_id: userId,
             manifest_hash: packet.manifest_hash,
+            packet_id: auditMeta.packet_id,
+            risk_code_map_version: auditMeta.risk_code_map_version,
+            risk_vocab_hash: auditMeta.risk_vocab_hash,
             defense_readiness_score: packet.defense_readiness_score,
             render_job_id: packet.render_job_id,
             status: packet.status,
@@ -270,8 +307,13 @@ router.post(
             resourceId: packet.defense_packet_id,
             success: true,
             metadata: {
+              program_id: programId,
+              user_id: userId,
+              packet_id: auditMeta.packet_id || packet.defense_packet_id,
               render_job_id: packet.render_job_id,
               manifest_hash: packet.manifest_hash,
+              risk_code_map_version: auditMeta.risk_code_map_version,
+              risk_vocab_hash: auditMeta.risk_vocab_hash,
             },
           });
         } catch {
@@ -293,7 +335,7 @@ router.post(
           resourceId: programId,
           success: false,
           errorMessage: err.message,
-          metadata: { program_id: programId },
+          metadata: { program_id: programId, user_id: userId },
         });
       } catch {
         /* best-effort */
@@ -419,8 +461,12 @@ router.post(
             success: true,
             metadata: {
               program_id: programId,
+              user_id: userId,
               packet_id: packetId,
+              manifest_hash: packetId,
               reasons: result.data.reasons,
+              risk_code_map_version: result.data.packet_risk_code_map_version,
+              risk_vocab_hash: result.data.packet_risk_vocab_hash,
               current_risk_vocab_hash: result.data.current_risk_vocab_hash,
               current_risk_code_map_version: result.data.current_risk_code_map_version,
               packet_risk_vocab_hash: result.data.packet_risk_vocab_hash,
@@ -513,7 +559,7 @@ router.patch(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:programId/predicate-intel/defense-packet/build — Build (deterministic, 6.6.D+)
+// POST /:programId/predicate-intel/defense-packet/build — Build (deterministic, 6.6.D1)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post(
@@ -565,6 +611,7 @@ router.post(
           success: true,
           metadata: {
             program_id: programId,
+            user_id: userId,
             packet_id: packet.packet_id,
             manifest_hash: packet.manifest_hash,
             readiness_score: packet.readiness_score,
@@ -582,6 +629,7 @@ router.post(
       const gate = (shadowResult.data as any)?.submission_gate;
       if (gate && !gate.allowed) {
         try {
+          const packet = (shadowResult.data as any)?.defense_packet || {};
           await logAuditEvent({
             category: 'compliance',
             severity: 'warning',
@@ -593,6 +641,11 @@ router.post(
             success: true,
             metadata: {
               program_id: programId,
+              user_id: userId,
+              packet_id: packet.packet_id,
+              manifest_hash: packet.manifest_hash,
+              risk_code_map_version: packet.risk_code_map_version,
+              risk_vocab_hash: packet.risk_vocab_hash,
               blocking_task_ids: gate.blocking_task_ids,
               blocking_risk_codes: gate.blocking_risk_codes,
               reason: gate.reason,
@@ -724,6 +777,7 @@ router.post(
       // ── Audit: gate result ──
       if (result.data && !result.data.allowed) {
         try {
+          const auditMeta = await fetchPacketAuditMetadata(manifestHash);
           await logAuditEvent({
             category: 'compliance',
             severity: 'warning',
@@ -735,6 +789,11 @@ router.post(
             success: true,
             metadata: {
               program_id: programId,
+              user_id: userId,
+              packet_id: auditMeta.packet_id || manifestHash,
+              manifest_hash: auditMeta.manifest_hash || manifestHash,
+              risk_code_map_version: auditMeta.risk_code_map_version,
+              risk_vocab_hash: auditMeta.risk_vocab_hash,
               blocking_task_ids: result.data.blocking_task_ids,
               blocking_risk_codes: result.data.blocking_risk_codes,
               reason: result.data.reason,
@@ -773,6 +832,7 @@ router.post(
 
     // ── Audit: DEFENSE_TASK_WAIVED — Part 11 audit event ──
     try {
+      const auditMeta = await fetchPacketAuditMetadata(packetId);
       await logAuditEvent({
         category: 'compliance',
         severity: 'warning',
@@ -784,6 +844,11 @@ router.post(
         success: true,
         metadata: {
           program_id: programId,
+          user_id: userId,
+          packet_id: auditMeta.packet_id || packetId,
+          manifest_hash: auditMeta.manifest_hash || packetId,
+          risk_code_map_version: auditMeta.risk_code_map_version,
+          risk_vocab_hash: auditMeta.risk_vocab_hash,
           task_id: taskId,
           waiver_reason: waiverReason,
           waived_by: userId,

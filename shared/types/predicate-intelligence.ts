@@ -878,7 +878,7 @@ export interface SEMatrixPayloadResponse {
  * CREATED/RENDERING → FAILED (terminal)
  * RENDERED → STALE (staleness detected)
  */
-export type DefensePacketStatus = 'CREATED' | 'RENDERING' | 'RENDERED' | 'FAILED' | 'STALE';
+export type DefensePacketRenderStatus = 'CREATED' | 'RENDERING' | 'RENDERED' | 'FAILED' | 'STALE';
 
 /**
  * Diff summary comparing two successive defense packets for the same
@@ -929,7 +929,7 @@ export interface CreateDefensePacketResponse {
   risk_codes_used: string[];
   tasks: unknown[];
   render_job_id: string | null;
-  status: DefensePacketStatus;
+  status: DefensePacketRenderStatus;
   subject_hash: string;
   previous_packet_id: string | null;
   diff_summary: DefensePacketDiffSummary | null;
@@ -954,7 +954,7 @@ export interface DefensePacketRecord {
   risk_codes_used: string[];
   product_code: string;
   manifest_hash: string;
-  status: DefensePacketStatus;
+  status: DefensePacketRenderStatus;
   staleness_reason: string | null;
   render_job_id: string | null;
   error_code: string | null;
@@ -973,6 +973,8 @@ export interface DefensePacketRecord {
 export type EvidenceSeverity = 'High' | 'Medium' | 'Low';
 export type EvidenceTaskState = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'WAIVED';
 export type PacketOpsStatus = 'CREATED' | 'IN_PROGRESS' | 'READY' | 'BLOCKED' | 'STALE' | 'FAILED';
+export type DefensePacketStatus = PacketOpsStatus;
+export type DefensePacketDBStatus = DefensePacketRenderStatus;
 
 export type EvidenceRefType =
   | 'TRUTH_PLACEHOLDER'
@@ -1003,7 +1005,7 @@ export interface ReviewerQuestionSeed {
 }
 
 /**
- * Operationally complete evidence task — Phase 6.6.D+.
+ * Operationally complete evidence task — Phase 6.6.D1.
  * Deterministic, with full ops fields for tracking, assignment, and verification.
  */
 export interface EvidenceTaskFull {
@@ -1023,7 +1025,7 @@ export interface EvidenceTaskFull {
 }
 
 /**
- * Full Defense Packet — Phase 6.6.D+ response-level artifact.
+ * Full Defense Packet — Phase 6.6.D1 response-level artifact.
  *
  * Key invariant: packet_id == manifest_hash.
  * Deterministic ordering for tasks, risk codes, artifact targets.
@@ -1046,7 +1048,7 @@ export interface DefensePacketFull {
 }
 
 /**
- * Submission gating result — Phase 6.6.D+.
+ * Submission gating result — Phase 6.6.D1.
  * Determines if eCTD packaging is allowed or blocked.
  */
 export interface SubmissionGateResult {
@@ -1060,7 +1062,7 @@ export interface SubmissionGateResult {
 }
 
 /**
- * Response from POST /defense-packet/build (6.6.D+).
+ * Response from POST /defense-packet/build (6.6.D1).
  */
 export interface BuildDefensePacketResponse {
   defense_packet: DefensePacketFull;
@@ -1068,7 +1070,7 @@ export interface BuildDefensePacketResponse {
 }
 
 /**
- * Request for POST /defense-packet/build (6.6.D+).
+ * Request for POST /defense-packet/build (6.6.D1).
  */
 export interface BuildDefensePacketRequest {
   productCode: string;

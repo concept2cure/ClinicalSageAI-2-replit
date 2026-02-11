@@ -1,7 +1,7 @@
 """Tests for Phase 6.6.D — Defense Packet Models, Staleness, and Diff Engine.
 
 Tests:
-  ✅ DefensePacketStatus — valid literal values
+    ✅ DefensePacketRenderStatus — valid literal values
   ✅ VALID_STATUS_TRANSITIONS — covers all lifecycle edges
   ✅ is_valid_transition — happy path transitions
   ✅ is_valid_transition — rejects invalid transitions

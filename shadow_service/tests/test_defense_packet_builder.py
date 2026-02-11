@@ -78,6 +78,7 @@ from shadow_service.models_defense_packet import (
     ReviewerQuestionSeed,
     SubmissionGateResult,
     DefensePacketRenderStatus,
+    DefensePacketDBStatus,
     DefensePacketStatus,
     DefensePacketRecord,
     CreateDefensePacketRequest,
@@ -716,14 +717,19 @@ class TestBackwardCompatibility:
     """Verify existing DB persistence models are not broken."""
 
     def test_defense_packet_status_alias(self):
-        """DefensePacketStatus alias still works."""
-        status: DefensePacketStatus = "CREATED"
-        assert status == "CREATED"
+        """DefensePacketStatus alias maps to ops lifecycle."""
+        status: DefensePacketStatus = PacketOpsStatus.CREATED
+        assert status == PacketOpsStatus.CREATED
 
     def test_render_status_literal(self):
         """DefensePacketRenderStatus still accepts valid values."""
         s: DefensePacketRenderStatus = "RENDERING"
         assert s == "RENDERING"
+
+    def test_db_status_alias_literal(self):
+        """DefensePacketDBStatus still accepts render pipeline values."""
+        s: DefensePacketDBStatus = "RENDERED"
+        assert s == "RENDERED"
 
     def test_valid_transitions_unchanged(self):
         assert is_valid_transition("CREATED", "RENDERING")

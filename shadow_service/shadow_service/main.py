@@ -107,6 +107,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     # Startup
     logger.info("Starting Shadow Interrogation Service...")
+
+    # Gate 2 — Risk-code contract validation (zero drift enforcement)
+    try:
+        from .scoring.risk_code_contract_validator import validate_risk_code_contract
+        contract = validate_risk_code_contract()
+        logger.info(
+            "Risk-code contract: %s (v%s, %d codes)",
+            contract["status"],
+            contract["lock_version"],
+            contract["risk_code_count"],
+        )
+    except Exception as exc:
+        logger.critical("Risk-code contract validation failed: %s", exc)
+        raise SystemExit(1) from exc
+
     pool = await db.get_pool()  # Initialize connection pool (may return None in lite mode)
     if pool is None:
         logger.warning("Service started in LITE MODE - no database connection")

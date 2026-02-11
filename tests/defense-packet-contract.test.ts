@@ -124,15 +124,19 @@ describe('Defense Packet — Drizzle Schema', () => {
 describe('Defense Packet — TS Shared Types', () => {
   const types = loadFile(TS_TYPES_PATH);
 
-  it('exports DefensePacketStatus type', () => {
-    expect(types).toContain('export type DefensePacketStatus');
+  it('exports DefensePacketRenderStatus type', () => {
+    expect(types).toContain('export type DefensePacketRenderStatus');
   });
 
-  it('DefensePacketStatus has all 5 values', () => {
+  it('DefensePacketRenderStatus has all 5 values', () => {
     const statuses = ['CREATED', 'RENDERING', 'RENDERED', 'FAILED', 'STALE'];
     for (const s of statuses) {
       expect(types).toContain(`'${s}'`);
     }
+  });
+
+  it('exports DefensePacketDBStatus alias', () => {
+    expect(types).toContain('export type DefensePacketDBStatus');
   });
 
   it('exports CreateDefensePacketRequest interface', () => {

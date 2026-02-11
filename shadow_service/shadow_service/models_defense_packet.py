@@ -8,9 +8,10 @@ Two model tiers:
   2. Domain-level (DefensePacket, EvidenceTask) — rich, deterministic, ops-complete
 
 Spec-aligned aliases (added Phase 6.6.D1):
-  EvidenceTask           = EvidenceTaskFull
-  DefensePacket          = DefensePacketFull
-  DefensePacketOpsStatus = PacketOpsStatus
+    EvidenceTask           = EvidenceTaskFull
+    DefensePacket          = DefensePacketFull
+    DefensePacketOpsStatus = PacketOpsStatus
+    DefensePacketStatus    = PacketOpsStatus
 """
 
 from __future__ import annotations
@@ -28,8 +29,8 @@ from pydantic import BaseModel, Field, field_validator
 
 DefensePacketRenderStatus = Literal["CREATED", "RENDERING", "RENDERED", "FAILED", "STALE"]
 
-# Legacy alias kept so existing code doesn't break
-DefensePacketStatus = DefensePacketRenderStatus
+# Legacy alias kept so existing DB/render code doesn't break
+DefensePacketDBStatus = DefensePacketRenderStatus
 
 VALID_STATUS_TRANSITIONS: dict[str, set[str]] = {
     "CREATED": {"RENDERING", "FAILED"},
@@ -308,3 +309,4 @@ class StalenessCheckResult(BaseModel):
 EvidenceTask = EvidenceTaskFull
 DefensePacket = DefensePacketFull
 DefensePacketOpsStatus = PacketOpsStatus
+DefensePacketStatus = PacketOpsStatus

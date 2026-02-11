@@ -432,6 +432,10 @@ describe('Phase 6.6.D1 — Backward Compatibility', () => {
     expect(py).toContain('DefensePacketRenderStatus');
   });
 
+  it('DefensePacketDBStatus alias still defined', () => {
+    expect(py).toContain('DefensePacketDBStatus');
+  });
+
   it('DefensePacketStatus alias still defined', () => {
     expect(py).toContain('DefensePacketStatus');
   });
@@ -473,6 +477,10 @@ describe('Phase 6.6.D1 — Spec Alias Parity', () => {
     expect(py).toContain('DefensePacketOpsStatus = PacketOpsStatus');
   });
 
+  it('Python exports DefensePacketStatus ops alias', () => {
+    expect(py).toContain('DefensePacketStatus = PacketOpsStatus');
+  });
+
   it('TS exports EvidenceTask alias', () => {
     expect(ts).toContain('export type EvidenceTask = EvidenceTaskFull');
   });
@@ -483,6 +491,10 @@ describe('Phase 6.6.D1 — Spec Alias Parity', () => {
 
   it('TS exports DefensePacketOpsStatus alias', () => {
     expect(ts).toContain('export type DefensePacketOpsStatus = PacketOpsStatus');
+  });
+
+  it('TS exports DefensePacketStatus ops alias', () => {
+    expect(ts).toContain('export type DefensePacketStatus = PacketOpsStatus');
   });
 
   it('BFF emits DEFENSE_PACKET_STALE_DETECTED audit event', () => {

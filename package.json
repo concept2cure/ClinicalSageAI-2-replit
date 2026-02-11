@@ -46,7 +46,9 @@
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "storybook:test": "test-storybook",
-    "prepare": "[ -n \"$CI\" ] || husky"
+    "prepare": "[ -n \"$CI\" ] || husky",
+    "generate:risk-codes": "tsx scripts/generate-risk-code-types.ts",
+    "ci:risk-codes": "tsx scripts/generate-risk-code-types.ts --check"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
