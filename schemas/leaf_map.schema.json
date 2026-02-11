@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clinicalsage.ai/schemas/leaf_map.schema.json",
+  "title": "eCTD Leaf Map",
+  "description": "Maps proof-pack artifact paths to eCTD leaf IDs for Module 4/5 placement. Each entry maps a ZIP-internal artifact path to its target eCTD module, section, and leaf identifier.",
+  "type": "object",
+  "required": ["version", "leaves"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "leaves": {
+      "type": "array",
+      "description": "List of leaf mappings",
+      "items": {
+        "type": "object",
+        "required": ["leaf_id", "title", "module", "section", "artifact_path"],
+        "properties": {
+          "leaf_id": {
+            "type": "string",
+            "description": "Unique leaf identifier (e.g. m4-2-1-se-matrix)",
+            "pattern": "^m[1-5](-[a-z0-9-]+)+$"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title for this leaf"
+          },
+          "module": {
+            "type": "integer",
+            "enum": [1, 2, 3, 4, 5],
+            "description": "eCTD module number"
+          },
+          "section": {
+            "type": "string",
+            "description": "eCTD section path (e.g. 4.2.1)"
+          },
+          "artifact_path": {
+            "type": "string",
+            "description": "Path within the proof-pack ZIP to the artifact file"
+          },
+          "checksum_sha256": {
+            "type": "string",
+            "description": "SHA-256 checksum of the artifact at time of leaf map creation",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type of the artifact",
+            "default": "application/json"
+          }
+        }
+      }
+    }
+  }
+}

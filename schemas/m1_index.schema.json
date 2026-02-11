@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clinicalsage.ai/schemas/m1_index.schema.json",
+  "title": "eCTD Module 1 Index",
+  "description": "Index for Module 1 (Administrative) of an eCTD submission. Contains cover letter references, form references, and regional information.",
+  "type": "object",
+  "required": ["version", "module", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "module": {
+      "type": "integer",
+      "const": 1,
+      "description": "eCTD module number (always 1 for this schema)"
+    },
+    "region": {
+      "type": "string",
+      "enum": ["us", "eu", "jp", "ca", "au"],
+      "description": "Regional authority"
+    },
+    "entries": {
+      "type": "array",
+      "description": "Module 1 administrative entries",
+      "items": {
+        "type": "object",
+        "required": ["section", "title"],
+        "properties": {
+          "section": {
+            "type": "string",
+            "description": "Module 1 section number (e.g. 1.1, 1.2, 1.3)",
+            "pattern": "^1\\.\\d+(\\.\\d+)*$"
+          },
+          "title": {
+            "type": "string",
+            "description": "Section title"
+          },
+          "leaf_id": {
+            "type": "string",
+            "description": "Leaf ID if a document is attached"
+          },
+          "artifact_path": {
+            "type": "string",
+            "description": "Path to the artifact within proof pack"
+          },
+          "form_type": {
+            "type": "string",
+            "description": "FDA form type if applicable (e.g. FDA-3514, FDA-3674)"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether this entry is required for submission",
+            "default": false
+          },
+          "placeholder": {
+            "type": "boolean",
+            "description": "Whether this is a placeholder awaiting final content",
+            "default": true
+          }
+        }
+      }
+    }
+  }
+}

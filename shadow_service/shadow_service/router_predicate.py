@@ -948,11 +948,15 @@ async def get_toxic_detail(k_number: str, program_id: UUID = Query(...)):
                 "source_url": s.get("source_url"),
             })
 
+        tox_score = float(rollup["toxicity_score"]) if rollup else 0.0
+        fam_tox_score = float(rollup["family_toxicity_score"]) if rollup else 0.0
+
         return {
             "k_number": k_number,
             "signals": signal_list,
-            "toxicity_score": float(rollup["toxicity_score"]) if rollup else 0.0,
-            "family_toxicity_score": float(rollup["family_toxicity_score"]) if rollup else 0.0,
+            "toxicity_score": tox_score,
+            "family_toxicity_score": fam_tox_score,
+            "badge": _badge(tox_score, fam_tox_score),
             "mdr_rate_bucket": rollup["mdr_rate_bucket"] if rollup else "NONE",
             "family_recall_count": family["family_recall_count"] if family else 0,
             "is_toxic": any(
@@ -2044,7 +2048,10 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
         )
 
     replay_manifest_hash = replay_data.get("manifest_hash", "") if isinstance(replay_data, dict) else ""
-    replay_risk_vocab_hash = _compute_lock_hash()
+
+    from .contract_hashes import get_contract_snapshot, compute_drift_severity, should_block_download
+    _replay_contract = get_contract_snapshot()
+    replay_risk_vocab_hash = _replay_contract["risk_vocab_hash"]
 
     # Extract risk codes from replay tasks
     replay_tasks = replay_data.get("tasks", []) if isinstance(replay_data, dict) else []
@@ -2164,10 +2171,11 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
         elif path == "readiness_score":
             drift_reason_codes.append("READINESS_CHANGED")
 
-    # block_download = True if any HIGH severity drift
-    block_download = any(ds["severity"] == "HIGH" for ds in diff_summary)
+    # block_download = True if any HIGH severity drift (6.6.G deterministic mapping)
+    drift_severity = compute_drift_severity(drift_reason_codes)
+    block_download = should_block_download(drift_severity)
 
-    # Audit: PROOF_PACK_DRIFT_DETECTED (if not deterministic)
+    # Audit: PROOF_PACK_DRIFT_DETECTED (if not deterministic) + UPDATE drift severity
     if not deterministic and pool:
         try:
             from . import sql_proof_pack as pp_sql
@@ -2176,6 +2184,14 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                 original_manifest_hash,
             )
             if pp_row:
+                # Update drift severity on proof pack record
+                await pool.fetchrow(
+                    pp_sql.UPDATE_PROOF_PACK_DRIFT,
+                    pp_row["id"],       # $1 proof_pack_id
+                    drift_severity,     # $2 drift_severity
+                    block_download,     # $3 block_download
+                )
+                # Audit event with expanded parameters (6.6.G)
                 await pool.fetchrow(
                     pp_sql.INSERT_AUDIT_EVENT,
                     pp_row["id"],
@@ -2184,9 +2200,15 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                     "PROOF_PACK_DRIFT_DETECTED",
                     pp_row["subject_hash"],
                     original_manifest_hash,
-                    replay_risk_vocab_hash,
+                    _replay_contract["risk_vocab_hash"],
+                    _replay_contract["risk_codes_lock_hash"],
+                    _replay_contract["schema_hash"],
+                    _replay_contract["generator_version"],
+                    "",  # request_id
+                    _json.dumps(dict(_replay_contract)),
                     _json.dumps({
                         "drift_reason_codes": drift_reason_codes,
+                        "drift_severity": drift_severity,
                         "diff_summary_count": len(diff_summary),
                         "block_download": block_download,
                     }),
@@ -2205,12 +2227,13 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
         "drift_details": drift_details,
         "diff_summary": diff_summary,
         "drift_reason_codes": drift_reason_codes,
+        "drift_severity": drift_severity,
         "block_download": block_download,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Phase 6.6.E1 — Proof Pack ZIP Export (Enterprise Artifact)
+# Phase 6.6.G — Proof Pack ZIP Export (Submission-Grade Trust Chain)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
@@ -2219,15 +2242,17 @@ async def persist_proof_pack(
     program_id: str = Query(..., description="Regulatory program UUID"),
     manifest_hash: str = Query(..., description="Manifest hash of the defense packet"),
     user_id: str = Query("system", description="User who triggered persistence"),
+    request_id: str = Query("", description="Traceability request ID"),
 ):
-    """Persist a proof pack export record from an existing defense packet.
+    """Persist a proof pack export record (6.6.G — idempotent with full contract hashes).
 
-    This freezes the manifest + payload JSON so downloads never regenerate.
-    Called automatically after SE Matrix generation.
+    Freezes manifest + payload + contract snapshot. Returns proof_pack_id.
+    Called automatically after SE Matrix generation. Idempotent: same inputs → same ID.
     """
     import json as _json
+    import uuid as _uuid
 
-    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    from .contract_hashes import get_contract_snapshot
     from . import sql_defense_packets as dp_sql
     from . import sql_proof_pack as pp_sql
 
@@ -2245,87 +2270,119 @@ async def persist_proof_pack(
 
     # Verify program ownership
     if str(row["program_id"]) != str(program_id):
-        raise HTTPException(
-            status_code=403,
-            detail="Defense packet does not belong to the specified program",
-        )
+        raise HTTPException(status_code=403, detail="Defense packet does not belong to the specified program")
 
-    risk_vocab_hash = _compute_lock_hash()
+    contract = get_contract_snapshot()
 
-    # Build frozen manifest JSON
+    # Compute zip_manifest_hash from frozen manifest content
     manifest_json = {
         "manifest_hash": manifest_hash,
-        "risk_vocab_hash": risk_vocab_hash,
-        "risk_code_lock_hash": risk_vocab_hash,
+        "risk_vocab_hash": contract["risk_vocab_hash"],
+        "risk_codes_lock_hash": contract["risk_codes_lock_hash"],
+        "schema_hash": contract["schema_hash"],
+        "generator_version": contract["generator_version"],
         "subject_hash": row["subject_hash"],
         "program_id": str(row["program_id"]),
         "predicate_k_number": row["predicate_k_number"],
         "risk_code_map_version": row["risk_code_map_version"],
         "defense_readiness_score": row["defense_readiness_score"],
         "generated_at": row["created_at"].isoformat() if hasattr(row["created_at"], "isoformat") else str(row["created_at"]),
-        "generator_version": row.get("generator_version", "6.6.C2"),
     }
+    import hashlib as _hl
+    zip_manifest_hash = _hl.sha256(
+        _json.dumps(manifest_json, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
     # Freeze payload JSON
     payload_json = _json.loads(row["se_payload"]) if isinstance(row["se_payload"], str) else dict(row["se_payload"]) if row["se_payload"] else {}
 
-    result = await pool.fetchrow(
-        pp_sql.INSERT_PROOF_PACK_EXPORT,
-        row["program_id"],         # $1
-        row["subject_hash"],       # $2
-        manifest_hash,             # $3
-        risk_vocab_hash,           # $4
-        risk_vocab_hash,           # $5 risk_code_lock_hash
-        _json.dumps(manifest_json),  # $6
-        _json.dumps(payload_json),   # $7
-        _json.dumps([]),             # $8 artifact_index
-        row["id"],                   # $9 defense_packet_id
-        user_id,                     # $10
-    )
+    req_id = request_id or str(_uuid.uuid4())
+
+    try:
+        result = await pool.fetchrow(
+            pp_sql.INSERT_PROOF_PACK_EXPORT,
+            row["program_id"],                      # $1 program_id
+            row["subject_hash"],                     # $2 subject_hash
+            manifest_hash,                           # $3 manifest_hash
+            contract["risk_vocab_hash"],              # $4 risk_vocab_hash
+            contract["risk_codes_lock_hash"],          # $5 risk_code_lock_hash
+            contract["schema_hash"],                  # $6 schema_hash
+            contract["generator_version"],             # $7 generator_version
+            zip_manifest_hash,                        # $8 zip_manifest_hash
+            _json.dumps(manifest_json),               # $9 manifest_json
+            _json.dumps(payload_json),                # $10 payload_json
+            _json.dumps([]),                           # $11 artifact_index
+            row["id"],                                # $12 defense_packet_id
+            user_id,                                  # $13 created_by
+            False,                                    # $14 block_download
+            "NONE",                                   # $15 drift_severity
+            req_id,                                   # $16 request_id
+        )
+    except Exception as exc:
+        # Audit: PROOF_PACK_PERSIST_FAILED
+        try:
+            await pool.fetchrow(
+                pp_sql.INSERT_AUDIT_EVENT,
+                None, row["program_id"], user_id, "PROOF_PACK_PERSIST_FAILED",
+                row["subject_hash"], manifest_hash, contract["risk_vocab_hash"],
+                contract["risk_codes_lock_hash"], contract["schema_hash"],
+                contract["generator_version"], req_id,
+                _json.dumps(contract), _json.dumps({"error": str(exc)}),
+            )
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=500,
+            detail={"error_code": "PROOF_PACK_PERSIST_FAILED", "message": f"Persist failed: {exc}"},
+        )
+
+    # Determine if this was a reuse (updated_at != created_at means ON CONFLICT fired)
+    is_reuse = result["updated_at"] != result["created_at"]
+    audit_action = "PROOF_PACK_REUSED" if is_reuse else "PROOF_PACK_CREATED"
 
     # Audit event
     try:
         await pool.fetchrow(
             pp_sql.INSERT_AUDIT_EVENT,
-            result["id"],
-            row["program_id"],
-            user_id,
-            "PROOF_PACK_CREATED",
-            row["subject_hash"],
-            manifest_hash,
-            risk_vocab_hash,
-            _json.dumps({"action": "persist", "defense_packet_id": str(row["id"])}),
+            result["id"], row["program_id"], user_id, audit_action,
+            row["subject_hash"], manifest_hash, contract["risk_vocab_hash"],
+            contract["risk_codes_lock_hash"], contract["schema_hash"],
+            contract["generator_version"], req_id,
+            _json.dumps(contract),
+            _json.dumps({"defense_packet_id": str(row["id"]), "zip_manifest_hash": zip_manifest_hash}),
         )
     except Exception:
-        pass  # best-effort audit
+        pass
 
     return {
         "proof_pack_id": str(result["id"]),
         "manifest_hash": manifest_hash,
-        "status": result["status"],
+        "status": "REUSED" if is_reuse else result["status"],
+        "zip_manifest_hash": zip_manifest_hash,
+        "contract": contract,
+        "block_download": result["block_download"],
         "created_at": result["created_at"].isoformat(),
     }
 
 
-@router.get("/proof-pack/{manifest_hash}/download")
+@router.get("/proof-pack/{proof_pack_id}/download")
 async def download_proof_pack_zip(
-    manifest_hash: str,
+    proof_pack_id: str,
     program_id: str = Query(..., description="Regulatory program UUID"),
     user_id: str = Query("system", description="User requesting download"),
+    request_id: str = Query("", description="Traceability request ID"),
 ):
-    """Download a proof-pack ZIP. Pure packaging — never regenerates.
+    """Download a proof-pack ZIP by proof_pack_id only (6.6.G — server-authoritative).
 
-    Returns a ZIP containing:
-      manifest.json, se_matrix_payload.json, risk_codes.lock.json,
-      checksums.sha256, audit_events.jsonl, outputs/
-
-    Returns 409 if stored hashes mismatch computed hashes.
-    Returns 404 if proof pack not found.
+    Returns 404 if proof_pack_id not found.
+    Returns 409 if block_download=true (drift) or contract mismatch.
+    Returns ZIP with v1.1 eCTD-drop-in layout.
     """
     import json as _json
+    import uuid as _uuid
     from starlette.responses import Response as StarletteResponse
 
-    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    from .contract_hashes import get_contract_snapshot, check_contract_mismatch, ContractSnapshot
     from .proof_pack_zip import ProofPackZipBuilder
     from . import sql_proof_pack as pp_sql
 
@@ -2333,31 +2390,79 @@ async def download_proof_pack_zip(
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    # Load proof pack + defense packet data in one join
-    row = await pool.fetchrow(
-        pp_sql.SELECT_PROOF_PACK_FOR_DOWNLOAD,
-        manifest_hash,
-        program_id,
-    )
+    req_id = request_id or str(_uuid.uuid4())
+
+    # ── Load proof pack by ID ──
+    row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_FOR_DOWNLOAD_BY_ID, proof_pack_id)
     if not row:
         raise HTTPException(
             status_code=404,
-            detail=f"Proof pack not found for manifest_hash={manifest_hash[:24]}… in program={program_id}",
+            detail={"error_code": "PROOF_PACK_NOT_FOUND", "message": f"Proof pack not found: {proof_pack_id[:24]}"},
         )
 
-    # ── Verify stored hashes match current contract ──
-    current_lock_hash = _compute_lock_hash()
-    stored_risk_vocab_hash = row["risk_vocab_hash"]
+    # Verify program ownership
+    if program_id and str(row["program_id"]) != str(program_id):
+        raise HTTPException(status_code=403, detail="Program mismatch")
 
-    if stored_risk_vocab_hash != current_lock_hash:
+    # ── B3: Check block_download (drift block) ──
+    if row["block_download"]:
+        # Audit
+        try:
+            contract = get_contract_snapshot()
+            await pool.fetchrow(
+                pp_sql.INSERT_AUDIT_EVENT,
+                row["id"], row["program_id"], user_id, "PROOF_PACK_DOWNLOAD_BLOCKED",
+                row["subject_hash"], row["manifest_hash"], contract["risk_vocab_hash"],
+                contract["risk_codes_lock_hash"], contract["schema_hash"],
+                contract["generator_version"], req_id,
+                _json.dumps(contract),
+                _json.dumps({"drift_severity": row.get("drift_severity", "HIGH"), "block_download": True}),
+            )
+        except Exception:
+            pass
         raise HTTPException(
             status_code=409,
             detail={
-                "error": "hash_mismatch",
-                "field": "risk_vocab_hash",
-                "stored": stored_risk_vocab_hash[:24],
-                "current": current_lock_hash[:24],
-                "message": "Risk vocabulary contract has changed since this proof pack was created. Regenerate the defense packet first.",
+                "error_code": "PROOF_PACK_DOWNLOAD_BLOCKED",
+                "drift_severity": row.get("drift_severity", "HIGH"),
+                "drift_reason_codes": [],
+                "block_download": True,
+                "message": "Download blocked due to detected drift. Re-persist after resolving.",
+            },
+        )
+
+    # ── B4: Check contract mismatch ──
+    contract = get_contract_snapshot()
+    stored_contract = ContractSnapshot(
+        risk_vocab_hash=row["risk_vocab_hash"] or "",
+        risk_codes_lock_hash=row["risk_code_lock_hash"] or "",
+        schema_hash=row.get("schema_hash") or "",
+        generator_version=row.get("generator_version") or "",
+    )
+    mismatches = check_contract_mismatch(stored_contract)
+    if mismatches:
+        # Audit
+        try:
+            await pool.fetchrow(
+                pp_sql.INSERT_AUDIT_EVENT,
+                row["id"], row["program_id"], user_id, "PROOF_PACK_CONTRACT_MISMATCH",
+                row["subject_hash"], row["manifest_hash"], contract["risk_vocab_hash"],
+                contract["risk_codes_lock_hash"], contract["schema_hash"],
+                contract["generator_version"], req_id,
+                _json.dumps(contract),
+                _json.dumps({"mismatches": mismatches}),
+            )
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "PROOF_PACK_CONTRACT_MISMATCH",
+                "mismatches": mismatches,
+                "expected_contract": dict(stored_contract),
+                "actual_contract": dict(contract),
+                "block_download": True,
+                "message": "Contract hash mismatch. Re-generate with current contract.",
             },
         )
 
@@ -2366,10 +2471,7 @@ async def download_proof_pack_zip(
     payload_json = _json.loads(row["payload_json"]) if isinstance(row["payload_json"], str) else dict(row["payload_json"])
 
     # ── Load audit events ──
-    audit_rows = await pool.fetch(
-        pp_sql.SELECT_AUDIT_EVENTS_BY_MANIFEST,
-        manifest_hash,
-    )
+    audit_rows = await pool.fetch(pp_sql.SELECT_AUDIT_EVENTS_BY_PROOF_PACK, row["id"])
     audit_events = []
     for ar in audit_rows:
         evt = dict(ar)
@@ -2380,42 +2482,51 @@ async def download_proof_pack_zip(
                 evt[k] = str(v)
         audit_events.append(evt)
 
-    # Add the download event to the audit trail
+    # Add download event
     download_event = {
         "action": "PROOF_PACK_DOWNLOADED",
         "program_id": str(row["program_id"]),
         "user_id": user_id,
-        "manifest_hash": manifest_hash,
-        "risk_vocab_hash": stored_risk_vocab_hash,
-        "subject_hash": row["subject_hash"],
+        "proof_pack_id": proof_pack_id,
+        "manifest_hash": row["manifest_hash"],
+        "contract": dict(contract),
+        "request_id": req_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     audit_events.append(download_event)
 
-    # ── Assemble ZIP ──
+    # ── Build defense_packet_seed from joined row ──
+    defense_seed = None
+    try:
+        tasks_raw = row.get("tasks")
+        if tasks_raw:
+            tasks = _json.loads(tasks_raw) if isinstance(tasks_raw, str) else list(tasks_raw)
+            defense_seed = {
+                "predicate_k_number": row.get("predicate_k_number"),
+                "defense_readiness_score": row.get("defense_readiness_score"),
+                "risk_codes_used": list(row.get("risk_codes_used", [])) if row.get("risk_codes_used") else [],
+                "top_risks": list(row.get("top_risks", [])) if row.get("top_risks") else [],
+                "task_count": len(tasks),
+            }
+    except Exception:
+        pass
+
+    # ── Assemble ZIP v1.1 ──
     builder = ProofPackZipBuilder(
         manifest_json=manifest_json,
         payload_json=payload_json,
         audit_events=audit_events,
-        artifacts={},  # v1: outputs/ structure exists but DOCX included in v2
+        contract_snapshot=dict(contract),
+        defense_packet_seed=defense_seed,
+        artifacts={},
     )
-    zip_bytes, checksums, artifact_index = builder.build()
+    zip_bytes, checksums, artifact_index, zip_mh = builder.build()
     zip_hash = hashlib.sha256(zip_bytes).hexdigest()
 
     # ── Update proof pack record ──
     try:
-        await pool.fetchrow(
-            pp_sql.UPDATE_PROOF_PACK_ASSEMBLED,
-            row["id"],
-            zip_hash,
-            len(zip_bytes),
-            _json.dumps(artifact_index),
-        )
-        await pool.fetchrow(
-            pp_sql.UPDATE_PROOF_PACK_DOWNLOADED,
-            row["id"],
-            user_id,
-        )
+        await pool.fetchrow(pp_sql.UPDATE_PROOF_PACK_ASSEMBLED, row["id"], zip_hash, len(zip_bytes), _json.dumps(artifact_index))
+        await pool.fetchrow(pp_sql.UPDATE_PROOF_PACK_DOWNLOADED, row["id"], user_id)
     except Exception as exc:
         logger.warning("proof-pack download: failed to update record: %s", exc)
 
@@ -2423,62 +2534,118 @@ async def download_proof_pack_zip(
     try:
         await pool.fetchrow(
             pp_sql.INSERT_AUDIT_EVENT,
-            row["id"],
-            row["program_id"],
-            user_id,
-            "PROOF_PACK_DOWNLOADED",
-            row["subject_hash"],
-            manifest_hash,
-            stored_risk_vocab_hash,
+            row["id"], row["program_id"], user_id, "PROOF_PACK_DOWNLOADED",
+            row["subject_hash"], row["manifest_hash"], contract["risk_vocab_hash"],
+            contract["risk_codes_lock_hash"], contract["schema_hash"],
+            contract["generator_version"], req_id,
+            _json.dumps(contract),
             _json.dumps({"zip_hash": zip_hash, "zip_size_bytes": len(zip_bytes)}),
         )
     except Exception:
-        pass  # best-effort
+        pass
 
-    filename = f"proof-pack-{manifest_hash[:12]}.zip"
+    filename = f"proof-pack-{proof_pack_id[:12]}.zip"
 
     return StarletteResponse(
         content=zip_bytes,
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Proof-Pack-Id": proof_pack_id,
             "X-Proof-Pack-Hash": zip_hash,
-            "X-Manifest-Hash": manifest_hash,
+            "X-Manifest-Hash": row["manifest_hash"],
+            "X-Contract-Version": contract["risk_codes_lock_hash"][:16],
         },
     )
 
 
-@router.get("/proof-pack/{manifest_hash}/verify")
+@router.get("/proof-pack/{manifest_hash_legacy}/download-legacy")
+async def download_proof_pack_legacy(manifest_hash_legacy: str):
+    """B5: Legacy download endpoint — returns 410 Gone."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error_code": "ENDPOINT_REMOVED_USE_PROOF_PACK_ID",
+            "message": "This endpoint is removed. Use GET /proof-pack/{proof_pack_id}/download instead.",
+        },
+    )
+
+
+@router.get("/proof-pack/{proof_pack_id}/verify")
 async def verify_proof_pack(
-    manifest_hash: str,
+    proof_pack_id: str,
     program_id: str = Query(..., description="Regulatory program UUID"),
+    request_id: str = Query("", description="Traceability request ID"),
 ):
-    """Verify a proof pack exists and hashes are consistent (no download)."""
-    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    """Verify a proof pack exists and all hashes are consistent (6.6.G — C1/C2).
+
+    Returns verified=true/false with detailed checksum comparison.
+    """
+    import json as _json
+    import uuid as _uuid
+
+    from .contract_hashes import get_contract_snapshot, check_contract_mismatch, ContractSnapshot
     from . import sql_proof_pack as pp_sql
 
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_BY_MANIFEST_HASH, manifest_hash)
+    req_id = request_id or str(_uuid.uuid4())
+
+    row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_BY_ID, proof_pack_id)
     if not row:
-        raise HTTPException(status_code=404, detail="Proof pack not found")
+        raise HTTPException(
+            status_code=404,
+            detail={"error_code": "PROOF_PACK_NOT_FOUND", "message": "Proof pack not found"},
+        )
 
     if str(row["program_id"]) != str(program_id):
         raise HTTPException(status_code=403, detail="Program mismatch")
 
-    current_lock_hash = _compute_lock_hash()
-    stored_hash = row["risk_vocab_hash"]
-    hashes_match = stored_hash == current_lock_hash
+    contract = get_contract_snapshot()
+    stored_contract = ContractSnapshot(
+        risk_vocab_hash=row["risk_vocab_hash"] or "",
+        risk_codes_lock_hash=row["risk_code_lock_hash"] or "",
+        schema_hash=row.get("schema_hash") or "",
+        generator_version=row.get("generator_version") or "",
+    )
+    mismatches = check_contract_mismatch(stored_contract)
+    contracts_match = len(mismatches) == 0
+
+    # Determine verification status
+    verified = contracts_match and not row.get("block_download", False)
+    failures = [{"path": m["field"], "expected_sha256": m["expected"], "actual_sha256": m["actual"]} for m in mismatches]
+
+    audit_action = "PROOF_PACK_VERIFY_PASSED" if verified else "PROOF_PACK_VERIFY_FAILED"
+
+    # Audit
+    try:
+        await pool.fetchrow(
+            pp_sql.INSERT_AUDIT_EVENT,
+            row["id"], row["program_id"], "system", audit_action,
+            row["subject_hash"], row["manifest_hash"], contract["risk_vocab_hash"],
+            contract["risk_codes_lock_hash"], contract["schema_hash"],
+            contract["generator_version"], req_id,
+            _json.dumps(contract),
+            _json.dumps({"verified": verified, "failure_count": len(failures)}),
+        )
+    except Exception:
+        pass
 
     return {
-        "proof_pack_id": str(row["id"]),
-        "manifest_hash": manifest_hash,
+        "proof_pack_id": proof_pack_id,
+        "manifest_hash": row["manifest_hash"],
         "status": row["status"],
-        "hashes_consistent": hashes_match,
-        "stored_risk_vocab_hash": stored_hash[:24],
-        "current_risk_vocab_hash": current_lock_hash[:24],
+        "verified": verified,
+        "computed_checksums_match": contracts_match,
+        "failures": failures,
+        "contract": {
+            "stored": dict(stored_contract),
+            "current": dict(contract),
+        },
+        "block_download": row.get("block_download", False),
+        "drift_severity": row.get("drift_severity"),
         "downloaded_count": row["downloaded_count"],
         "created_at": row["created_at"].isoformat(),
     }

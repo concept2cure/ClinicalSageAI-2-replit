@@ -480,7 +480,15 @@ class PredicateSuggestion(BaseModel):
     )
     toxicity_score: Optional[float] = Field(
         None, ge=0.0, le=1.0,
-        description="Placeholder until 6.6.A safety signals pipeline is live",
+        description="Weighted toxicity from safety signals (6.6.F)",
+    )
+    family_toxicity_score: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Family tree toxicity from lineage recalls (6.6.F)",
+    )
+    badge: Optional[str] = Field(
+        None,
+        description="Toxicity badge: TOXIC | RISKY_FAMILY | CLEAN (6.6.F)",
     )
     # ── Strategy ──
     strategy_recommendation: StrategyRecommendation

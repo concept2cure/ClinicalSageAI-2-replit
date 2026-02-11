@@ -173,7 +173,9 @@ export interface PredicateSuggestion {
   // Scores (B2)
   similarity_score: number;
   defense_readiness_score: number;
-  toxicity_score?: number | null; // placeholder until 6.6.A safety signals
+  toxicity_score?: number | null;
+  family_toxicity_score?: number | null;
+  badge?: ToxicityBadge | null;
   // Strategy
   strategy_recommendation: StrategyRecommendation;
   // Explainability
@@ -567,6 +569,7 @@ export interface ToxicPredicateDetail {
   signals: ToxicSignalDetail[];
   toxicity_score: number;
   family_toxicity_score: number;
+  badge: ToxicityBadge;
   mdr_rate_bucket: 'NONE' | 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   family_recall_count: number;
   is_toxic: boolean;
@@ -1144,7 +1147,7 @@ export interface ReplayDeterminismRequest {
   originalManifestHash: string;
 }
 
-export type DriftSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+export type DriftSeverity = 'NONE' | 'LOW' | 'MED' | 'HIGH';
 
 /** Structured diff for a single field that drifted */
 export interface DriftDiffEntry {
@@ -1167,19 +1170,32 @@ export interface ReplayDeterminismResult {
   diff_summary: DriftDiffEntry[];
   /** E.3 — controlled list of drift reason codes */
   drift_reason_codes: string[];
+  /** G — deterministic drift severity from locked mapping */
+  drift_severity: DriftSeverity;
   /** E.3 — UI uses this directly to block/allow download */
   block_download: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.E1 — Proof Pack ZIP Export (Enterprise Artifact)
+// Phase 6.6.G — Proof Pack Trust Chain (Submission-Grade)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Result of persisting a proof pack for later ZIP download */
+/** Contract snapshot — frozen set of hashes for tamper detection */
+export interface ContractSnapshot {
+  risk_vocab_hash: string;
+  risk_codes_lock_hash: string;
+  schema_hash: string;
+  generator_version: string;
+}
+
+/** Result of persisting a proof pack (G — with contract snapshot) */
 export interface ProofPackPersistResult {
   proof_pack_id: string;
   manifest_hash: string;
-  status: 'CREATED' | 'ASSEMBLED' | 'FAILED';
+  status: 'CREATED' | 'REUSED' | 'ASSEMBLED' | 'FAILED';
+  zip_manifest_hash: string;
+  contract: ContractSnapshot;
+  block_download: boolean;
   created_at: string;
 }
 
@@ -1191,16 +1207,54 @@ export interface ProofPackArtifactEntry {
   mime_type: string;
 }
 
-/** Verification result for a stored proof pack */
+/** Structured checksum failure from verify endpoint */
+export interface ChecksumFailure {
+  path: string;
+  expected_sha256: string;
+  actual_sha256: string;
+}
+
+/** Verification result for a stored proof pack (G — structured failures) */
 export interface ProofPackVerifyResult {
   proof_pack_id: string;
   manifest_hash: string;
   status: 'CREATED' | 'ASSEMBLED' | 'FAILED';
-  hashes_consistent: boolean;
-  stored_risk_vocab_hash: string;
-  current_risk_vocab_hash: string;
+  verified: boolean;
+  computed_checksums_match: boolean;
+  failures: ChecksumFailure[];
+  contract: {
+    stored: ContractSnapshot;
+    current: ContractSnapshot;
+  };
+  block_download: boolean;
+  drift_severity: DriftSeverity | null;
   downloaded_count: number;
   created_at: string;
+}
+
+/** Error response for blocked downloads (409) */
+export interface ProofPackDownloadBlockedError {
+  error_code: 'PROOF_PACK_DOWNLOAD_BLOCKED';
+  drift_severity: DriftSeverity;
+  drift_reason_codes: string[];
+  block_download: true;
+  message: string;
+}
+
+/** Error response for contract mismatch (409) */
+export interface ProofPackContractMismatchError {
+  error_code: 'PROOF_PACK_CONTRACT_MISMATCH';
+  mismatches: Array<{ field: string; expected: string; actual: string }>;
+  expected_contract: ContractSnapshot;
+  actual_contract: ContractSnapshot;
+  block_download: true;
+  message: string;
+}
+
+/** Error response for legacy endpoint usage (410) */
+export interface ProofPackEndpointRemovedError {
+  error_code: 'ENDPOINT_REMOVED_USE_PROOF_PACK_ID';
+  message: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -177,10 +177,15 @@ export function SEMatrixV2Panel({
   const persistMutation = usePersistProofPack(programId);
   const downloadProofPackMutation = useDownloadProofPack(programId);
   const [replayResult, setReplayResult] = useState<ReplayDeterminismResult | null>(null);
+  // G: Store proof_pack_id from persist result (server-authoritative key for download)
+  const [proofPackId, setProofPackId] = useState<string | null>(null);
+  const [contractVersion, setContractVersion] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<Record<string, unknown> | null>(null);
 
-  // Derive block_download from replay result (server-authoritative)
+  // Derive block_download from persist result or replay result (server-authoritative)
   const isDownloadBlocked =
-    replayResult !== null && (replayResult.block_download || !replayResult.deterministic);
+    persistMutation.data?.block_download === true ||
+    (replayResult !== null && (replayResult.block_download || !replayResult.deterministic));
 
   const handleFieldChange = useCallback((key: string, value: string) => {
     setSubjectDevice(prev => ({ ...prev, [key]: value }));
@@ -197,9 +202,17 @@ export function SEMatrixV2Panel({
       {
         onSuccess: data => {
           setResult(data);
-          // Auto-persist proof pack after generation
+          setDownloadError(null);
+          // Auto-persist proof pack after generation (G: store proof_pack_id)
           if (data.manifest_hash) {
-            persistMutation.mutate({ manifestHash: data.manifest_hash });
+            persistMutation.mutate(
+              { manifestHash: data.manifest_hash },
+              {
+                onSuccess: persistResult => {
+                  setProofPackId(persistResult.proof_pack_id);
+                },
+              }
+            );
           }
         },
       }
@@ -301,8 +314,8 @@ export function SEMatrixV2Panel({
               </Button>
             )}
 
-            {/* E1: Download Proof Pack ZIP */}
-            {result?.manifest_hash && (
+            {/* G: Download Proof Pack ZIP (by proof_pack_id only) */}
+            {proofPackId && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -312,16 +325,26 @@ export function SEMatrixV2Panel({
                       disabled={downloadProofPackMutation.isPending || isDownloadBlocked}
                       data-testid="download-proof-pack-btn"
                       onClick={() => {
+                        setDownloadError(null);
                         downloadProofPackMutation.mutate(
-                          { manifestHash: result.manifest_hash! },
+                          { proofPackId: proofPackId },
                           {
-                            onSuccess: ({ blob, filename }) => {
+                            onSuccess: ({ blob, filename, contractVersion: cv }) => {
+                              if (cv) setContractVersion(cv);
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
                               a.download = filename;
                               a.click();
                               URL.revokeObjectURL(url);
+                            },
+                            onError: err => {
+                              try {
+                                const parsed = JSON.parse(err.message);
+                                setDownloadError(parsed);
+                              } catch {
+                                setDownloadError({ message: err.message });
+                              }
                             },
                           }
                         );
@@ -330,7 +353,9 @@ export function SEMatrixV2Panel({
                       <FileText className="h-3.5 w-3.5 mr-1.5" />
                       {downloadProofPackMutation.isPending
                         ? 'Packaging…'
-                        : 'Download Evidence Pack'}
+                        : isDownloadBlocked
+                          ? 'Download Blocked'
+                          : 'Download Evidence Pack'}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
@@ -338,6 +363,7 @@ export function SEMatrixV2Panel({
                       Download a ZIP containing manifest.json, se_matrix_payload.json,
                       risk_codes.lock.json, checksums.sha256, and audit_events.jsonl. Verifiable
                       offline by any auditor.
+                      {contractVersion && ` Contract: ${contractVersion}`}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -413,6 +439,58 @@ export function SEMatrixV2Panel({
               </Badge>
             )}
           </div>
+
+          {/* G: "Why blocked?" panel for drift/contract mismatch */}
+          {isDownloadBlocked && replayResult && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-sm space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-red-800">
+                <ShieldAlert className="h-4 w-4" />
+                Download Blocked — Drift Severity: {replayResult.drift_severity || 'HIGH'}
+              </div>
+              {replayResult.drift_reason_codes?.length > 0 && (
+                <div className="text-red-700">
+                  Reason codes: {replayResult.drift_reason_codes.join(', ')}
+                </div>
+              )}
+              <div className="text-red-600 text-xs">
+                Re-generate the SE Matrix to create a new proof pack with the current contract.
+              </div>
+            </div>
+          )}
+
+          {/* G: Download error details (409 BLOCKED / CONTRACT_MISMATCH) */}
+          {downloadError && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm space-y-1">
+              <div className="font-semibold text-amber-800">
+                {(downloadError as any).error_code || 'Download Error'}
+              </div>
+              <div className="text-amber-700 text-xs">
+                {(downloadError as any).message || JSON.stringify(downloadError)}
+              </div>
+              {(downloadError as any).mismatches && (
+                <ul className="text-xs text-amber-600 list-disc ml-4">
+                  {(
+                    (downloadError as any).mismatches as Array<{
+                      field: string;
+                      expected: string;
+                      actual: string;
+                    }>
+                  ).map((m, i) => (
+                    <li key={i}>
+                      {m.field}: expected {m.expected?.slice(0, 16)}… got {m.actual?.slice(0, 16)}…
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* G: Contract version display */}
+          {contractVersion && (
+            <div className="mt-2 text-xs text-muted-foreground">
+              Contract Version: <code className="font-mono">{contractVersion}</code>
+            </div>
+          )}
         </CardContent>
       </Card>
 

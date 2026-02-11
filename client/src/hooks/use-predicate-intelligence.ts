@@ -637,21 +637,22 @@ export function useReplayDeterminism(programId: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.E1 — Proof Pack ZIP Export
+// Phase 6.6.G — Proof Pack Trust Chain
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const proofPackExportKeys = {
   all: ['proof-pack-export'] as const,
-  verify: (programId: string, manifestHash: string) =>
-    [...proofPackExportKeys.all, 'verify', programId, manifestHash] as const,
+  verify: (programId: string, proofPackId: string) =>
+    [...proofPackExportKeys.all, 'verify', programId, proofPackId] as const,
 };
 
 /**
- * Persist a proof pack record (freeze manifest + payload for download).
+ * Persist a proof pack record (freeze manifest + payload + contract snapshot).
  * POST /api/programs/:programId/predicate-intel/proof-pack/persist
+ * Returns proof_pack_id + contract snapshot (G).
  */
 export function usePersistProofPack(programId: string) {
-  return useMutation<ProofPackPersistResult, Error, { manifestHash: string }>({
+  return useMutation<ProofPackPersistResult, Error, { manifestHash: string; requestId?: string }>({
     mutationFn: params =>
       defensePacketFetch<ProofPackPersistResult>(
         `/${programId}/predicate-intel/proof-pack/persist`,
@@ -661,43 +662,49 @@ export function usePersistProofPack(programId: string) {
 }
 
 /**
- * Verify a proof pack's hash integrity (no download).
+ * Verify a proof pack's hash integrity + contract consistency (G — structured failures).
  * GET /api/programs/:programId/predicate-intel/proof-pack/:proofPackId/verify
  */
-export function useVerifyProofPack(programId: string, manifestHash: string) {
+export function useVerifyProofPack(programId: string, proofPackId: string) {
   return useQuery<ProofPackVerifyResult>({
-    queryKey: proofPackExportKeys.verify(programId, manifestHash),
+    queryKey: proofPackExportKeys.verify(programId, proofPackId),
     queryFn: () =>
       defensePacketFetch<ProofPackVerifyResult>(
-        `/${programId}/predicate-intel/proof-pack/${encodeURIComponent(manifestHash)}/verify`
+        `/${programId}/predicate-intel/proof-pack/${encodeURIComponent(proofPackId)}/verify`
       ),
-    enabled: !!programId && !!manifestHash,
+    enabled: !!programId && !!proofPackId,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 }
 
 /**
- * Download a proof pack ZIP.
- * GET /api/programs/:programId/predicate-intel/proof-pack/:proofPackId/download
- * Returns a Blob (ZIP file).
+ * Download a proof pack ZIP by proof_pack_id (G — proof_pack_id only, not manifest_hash).
+ * Returns a Blob + filename + contract version header.
+ * Throws structured error for 409 (BLOCKED / CONTRACT_MISMATCH) or 410 (GONE).
  */
 export function useDownloadProofPack(programId: string) {
-  return useMutation<{ blob: Blob; filename: string }, Error, { manifestHash: string }>({
-    mutationFn: async ({ manifestHash }) => {
+  return useMutation<
+    { blob: Blob; filename: string; contractVersion?: string; proofPackHash?: string },
+    Error,
+    { proofPackId: string }
+  >({
+    mutationFn: async ({ proofPackId }) => {
       const resp = await fetch(
-        `/api/programs/${programId}/predicate-intel/proof-pack/${encodeURIComponent(manifestHash)}/download`,
+        `/api/programs/${programId}/predicate-intel/proof-pack/${encodeURIComponent(proofPackId)}/download`,
         { credentials: 'include' }
       );
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Download failed' }));
-        throw new Error(err.detail || err.error || `HTTP ${resp.status}`);
+        throw new Error(JSON.stringify(err) || `HTTP ${resp.status}`);
       }
       const blob = await resp.blob();
       const filename =
         resp.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ||
-        `proof-pack-${manifestHash.slice(0, 12)}.zip`;
-      return { blob, filename };
+        `proof-pack-${proofPackId.slice(0, 12)}.zip`;
+      const contractVersion = resp.headers.get('X-Contract-Version') || undefined;
+      const proofPackHash = resp.headers.get('X-Proof-Pack-Hash') || undefined;
+      return { blob, filename, contractVersion, proofPackHash };
     },
   });
 }

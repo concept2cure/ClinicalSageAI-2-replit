@@ -977,7 +977,7 @@ router.post(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:programId/predicate-intel/proof-pack/persist — E1 Persist Proof Pack
+// POST /:programId/predicate-intel/proof-pack/persist — G Persist Proof Pack
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.post(
@@ -987,16 +987,18 @@ router.post(
   async (req: Request, res: Response) => {
     const { programId } = req.params;
     const userId = (req as any).user?.id || 'unknown';
-    const { manifestHash } = req.body || {};
+    const { manifestHash, requestId } = req.body || {};
 
     if (!manifestHash) {
       return res.status(400).json({ error: 'manifestHash is required' });
     }
 
+    const reqId = requestId || '';
+
     try {
       const result = await shadowFetch<Record<string, unknown>>(
         'POST',
-        `/predicate/proof-pack/persist?program_id=${encodeURIComponent(programId)}&manifest_hash=${encodeURIComponent(manifestHash)}&user_id=${encodeURIComponent(userId)}`
+        `/predicate/proof-pack/persist?program_id=${encodeURIComponent(programId)}&manifest_hash=${encodeURIComponent(manifestHash)}&user_id=${encodeURIComponent(userId)}&request_id=${encodeURIComponent(reqId)}`
       );
 
       if (result.status !== 200) {
@@ -1012,7 +1014,7 @@ router.post(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:programId/predicate-intel/proof-pack/:proofPackId/download — E1 ZIP Download
+// GET /:programId/predicate-intel/proof-pack/:proofPackId/download — G ZIP Download
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(
@@ -1023,6 +1025,7 @@ router.get(
     const { programId, proofPackId } = req.params;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
+    const requestId = (req.query.request_id as string) || '';
 
     try {
       // Audit: PROOF_PACK_DOWNLOADED — Part 11 event
@@ -1038,7 +1041,7 @@ router.get(
           success: true,
           metadata: {
             program_id: programId,
-            manifest_hash: proofPackId,
+            proof_pack_id: proofPackId,
             user_id: userId,
             downloaded_at: new Date().toISOString(),
           },
@@ -1049,13 +1052,13 @@ router.get(
 
       const result = await shadowFetch<ArrayBuffer>(
         'GET',
-        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/download?program_id=${encodeURIComponent(programId)}&user_id=${encodeURIComponent(userId)}`,
+        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/download?program_id=${encodeURIComponent(programId)}&user_id=${encodeURIComponent(userId)}&request_id=${encodeURIComponent(requestId)}`,
         undefined,
         { responseType: 'arraybuffer' }
       );
 
       if (result.status !== 200) {
-        // If not binary, try to parse as JSON error
+        // If not binary, try to parse as JSON error (409 BLOCKED / 409 CONTRACT_MISMATCH / 410 GONE)
         try {
           const errorData = JSON.parse(Buffer.from(result.data as any).toString('utf-8'));
           return res.status(result.status).json(errorData);
@@ -1067,6 +1070,15 @@ router.get(
       const filename = `proof-pack-${proofPackId.slice(0, 12)}.zip`;
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      // Forward contract version header from Shadow
+      const contractVersion = (result as any).headers?.['x-contract-version'];
+      if (contractVersion) {
+        res.setHeader('X-Contract-Version', contractVersion);
+      }
+      const proofPackHash = (result as any).headers?.['x-proof-pack-hash'];
+      if (proofPackHash) {
+        res.setHeader('X-Proof-Pack-Hash', proofPackHash);
+      }
       return res.status(200).send(Buffer.from(result.data as any));
     } catch (err: any) {
       console.error('[defense-packet] proof-pack download failed:', err.message);
@@ -1076,7 +1088,7 @@ router.get(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:programId/predicate-intel/proof-pack/:proofPackId/verify — E1 Verify
+// GET /:programId/predicate-intel/proof-pack/:proofPackId/verify — G Verify
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(
@@ -1085,11 +1097,12 @@ router.get(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const { programId, proofPackId } = req.params;
+    const requestId = (req.query.request_id as string) || '';
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
         'GET',
-        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/verify?program_id=${encodeURIComponent(programId)}`
+        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/verify?program_id=${encodeURIComponent(programId)}&request_id=${encodeURIComponent(requestId)}`
       );
 
       if (result.status !== 200) {

@@ -48,7 +48,9 @@
     "storybook:test": "test-storybook",
     "prepare": "[ -n \"$CI\" ] || husky",
     "generate:risk-codes": "tsx scripts/generate-risk-code-types.ts",
-    "ci:risk-codes": "tsx scripts/generate-risk-code-types.ts --check"
+    "ci:risk-codes": "tsx scripts/generate-risk-code-types.ts --check",
+    "validate:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts",
+    "ci:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

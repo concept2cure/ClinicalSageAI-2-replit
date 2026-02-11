@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from . import sql_predicates as sql_pred
+from . import sql_fda_universe as fda_sql
 from .models_predicate import (
     PredicateFlagCode,
     PredicateSuggestRequest,
@@ -149,6 +150,9 @@ async def suggest_predicates(
 
     # B2 + B3 + B4 — Score each candidate
     scored = [_score_candidate(row, subject_text, req) for row in rows]
+
+    # F.1 — Batch-enrich with safety signal toxicity data
+    await _enrich_toxicity(pool, scored)
 
     # Deterministic ordering: similarity DESC, DRS DESC, k_number ASC (stable)
     scored.sort(key=lambda s: (-s.similarity_score, -s.defense_readiness_score, s.k_number))
@@ -371,7 +375,9 @@ def _score_candidate(
         summary_url=row.get("summary_url"),
         similarity_score=similarity,
         defense_readiness_score=float(drs),
-        toxicity_score=None,  # placeholder until 6.6.A safety signals live
+        toxicity_score=None,          # enriched async in _enrich_toxicity
+        family_toxicity_score=None,   # enriched async in _enrich_toxicity
+        badge=None,                   # enriched async in _enrich_toxicity
         strategy_recommendation=strategy,
         reasoning=reasoning,
         score_breakdown=breakdown,
@@ -407,3 +413,86 @@ def _compute_reviewer_heat(
     if similarity < 0.05:
         heat += 10
     return min(heat, 100)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# F.1 — Safety signal toxicity enrichment
+# ─────────────────────────────────────────────────────────────────────────────
+
+TOXICITY_WEIGHTS: dict[str, float] = {
+    "Class1Recall": 0.95,
+    "SafetyCommunication": 0.70,
+    "Class2Recall": 0.50,
+    "483Warning": 0.40,
+    "WarningLetter": 0.35,
+    "MDRReport": 0.25,
+    "Seizure": 0.90,
+    "Class3Recall": 0.15,
+}
+TOXICITY_AVOID_THRESHOLD = 0.6
+TOXICITY_RISKY_THRESHOLD = 0.3
+
+
+def _compute_toxicity_from_signals(signals: list[dict]) -> float:
+    """Weighted toxicity — same formula as strategy_engine.py."""
+    total = 0.0
+    for s in signals:
+        w = TOXICITY_WEIGHTS.get(s.get("signal_type", ""), 0.1)
+        total += float(s.get("severity_score", 0)) * w
+    return min(total, 1.0)
+
+
+def _badge_from_scores(toxicity: float, family_toxicity: float) -> str:
+    """Deterministic badge: TOXIC / RISKY_FAMILY / CLEAN."""
+    if toxicity > TOXICITY_AVOID_THRESHOLD:
+        return "TOXIC"
+    if family_toxicity > TOXICITY_RISKY_THRESHOLD:
+        return "RISKY_FAMILY"
+    return "CLEAN"
+
+
+async def _enrich_toxicity(
+    pool: Any,
+    suggestions: list[PredicateSuggestion],
+) -> None:
+    """Batch-enrich suggestions with toxicity_score, family_toxicity_score, badge.
+
+    Fetches safety signals + family recalls for each k_number in one pass.
+    Mutates in place to avoid re-constructing Pydantic models.
+    """
+    if not suggestions:
+        return
+
+    try:
+        async with pool.acquire() as conn:
+            for s in suggestions:
+                # Fetch signals
+                sig_rows = await conn.fetch(
+                    fda_sql.SELECT_SIGNALS_BY_K_NUMBER, s.k_number,
+                )
+                signals = [dict(r) for r in sig_rows]
+                tox = _compute_toxicity_from_signals(signals)
+
+                # Fetch family recall count
+                fam_row = await conn.fetchrow(
+                    fda_sql.CHECK_FAMILY_SAFETY, s.k_number,
+                )
+                fam_count = fam_row["family_recall_count"] if fam_row else 0
+                fam_tox = min(fam_count * 0.3, 1.0)
+
+                # Patch in place
+                s.toxicity_score = round(tox, 4)
+                s.family_toxicity_score = round(fam_tox, 4)
+                s.badge = _badge_from_scores(tox, fam_tox)
+
+                # Override strategy to AVOID if toxic (B4 spec)
+                if tox > TOXICITY_AVOID_THRESHOLD:
+                    s.strategy_recommendation = StrategyRecommendation.AVOID
+                    s.reasoning = (
+                        f"AVOID: Predicate {s.k_number} has severe safety signal "
+                        f"history (toxicity={tox:.2f}). "
+                        "Class I recall or safety communication in lineage. "
+                        + s.reasoning
+                    )
+    except Exception as e:
+        logger.warning("Toxicity enrichment failed (proceeding without): %s", e)

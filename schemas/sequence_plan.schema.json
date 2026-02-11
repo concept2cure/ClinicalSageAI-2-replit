@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clinicalsage.ai/schemas/sequence_plan.schema.json",
+  "title": "eCTD Sequence Plan",
+  "description": "Defines the submission sequence plan for a regulatory proof pack. Specifies which eCTD sequence this proof pack targets and the operation type for each leaf.",
+  "type": "object",
+  "required": ["version", "sequence_number", "sequence_type", "lifecycle_operations"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "sequence_number": {
+      "type": "string",
+      "description": "eCTD sequence number (e.g. 0000, 0001)",
+      "pattern": "^\\d{4}$"
+    },
+    "sequence_type": {
+      "type": "string",
+      "enum": ["initial", "amendment", "supplement", "annual_report"],
+      "description": "Type of eCTD sequence"
+    },
+    "submission_type": {
+      "type": "string",
+      "enum": ["510k", "pma", "de_novo", "hde"],
+      "description": "FDA submission type"
+    },
+    "lifecycle_operations": {
+      "type": "array",
+      "description": "List of leaf lifecycle operations in this sequence",
+      "items": {
+        "type": "object",
+        "required": ["leaf_id", "operation"],
+        "properties": {
+          "leaf_id": {
+            "type": "string",
+            "description": "Reference to a leaf_id in the leaf map",
+            "pattern": "^m[1-5](-[a-z0-9-]+)+$"
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["new", "replace", "append", "delete"],
+            "description": "eCTD lifecycle operation"
+          },
+          "modified_file": {
+            "type": "string",
+            "description": "Path to the modified file within the proof pack"
+          },
+          "checksum_sha256": {
+            "type": "string",
+            "description": "SHA-256 of the file being submitted",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "related_sequences": {
+      "type": "array",
+      "description": "Previous sequence numbers this sequence depends on",
+      "items": {
+        "type": "string",
+        "pattern": "^\\d{4}$"
+      }
+    }
+  }
+}

@@ -55,6 +55,7 @@ import {
   ArrowRight,
   Eye,
   Package,
+  GitBranch,
 } from 'lucide-react';
 import {
   useCandidates,
@@ -65,11 +66,15 @@ import {
   useGenerateDefensePreview,
   useSuggestPredicates,
   useGenerateSEMatrix,
+  useToxicDetail,
+  useToxicityProfile,
+  useLineageGraph,
 } from '@/hooks/use-predicate-intelligence';
 import { SEMatrixV2Panel } from '@/components/predicate/SEMatrixV2Panel';
 import { DefensePacketPanel } from '@/components/predicate/DefensePacketPanel';
 import { PredicateRadarPlot } from '@/components/predicate/PredicateRadarPlot';
 import { ProofStrip } from '@/components/predicate/ProofStrip';
+import { LineageGraphPanel } from '@/components/predicate/LineageGraphPanel';
 import type {
   PredicateCandidate,
   EquivalenceStatus,
@@ -79,6 +84,7 @@ import type {
   StrategyRecommendation,
   SEMatrixComparisonRow,
   DiffSeverity,
+  ToxicityBadge as ToxicityBadgeType,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -143,7 +149,34 @@ function StrategyBadge({ recommendation }: { recommendation: StrategyRecommendat
   );
 }
 
-function ToxicityBadge({ score }: { score: number }) {
+function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeType | null }) {
+  // F.1: If server provides a discrete badge, use it (TOXIC / RISKY_FAMILY / CLEAN)
+  if (badge === 'TOXIC') {
+    return (
+      <Badge variant="destructive" data-testid="toxicity-badge-toxic">
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        TOXIC ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+  if (badge === 'RISKY_FAMILY') {
+    return (
+      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300" data-testid="toxicity-badge-risky-family">
+        <ShieldAlert className="h-3 w-3 mr-1" />
+        RISKY FAMILY ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+  if (badge === 'CLEAN') {
+    return (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300" data-testid="toxicity-badge-clean">
+        <ShieldCheck className="h-3 w-3 mr-1" />
+        Clean ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+
+  // Fallback: score-based thresholds (pre-F.1 compat)
   if (score <= TOXICITY_THRESHOLDS.safe) {
     return (
       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
@@ -238,9 +271,11 @@ function ReadinessMeter({ score, size = 'lg' }: { score: number; size?: 'sm' | '
 function PredicateRadarTab({
   programId,
   onSelectCandidate,
+  onToxicDetail,
 }: {
   programId: string;
   onSelectCandidate: (c: PredicateCandidate) => void;
+  onToxicDetail?: (kNumber: string) => void;
 }) {
   const { data: candidates, isLoading } = useCandidates(programId);
   const analyzeMut = useAnalyze(programId);
@@ -658,6 +693,20 @@ function PredicateRadarTab({
                           {s.defense_readiness_score.toFixed(0)}/100
                         </div>
                       </div>
+                      {/* F.1: Toxicity badge from safety signals */}
+                      {s.toxicity_score != null && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">Safety</div>
+                          <button
+                            type="button"
+                            className="cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => onToxicDetail?.(s.k_number)}
+                            title="Click to view safety signal details"
+                          >
+                            <ToxicityBadge score={s.toxicity_score} badge={s.badge} />
+                          </button>
+                        </div>
+                      )}
                       {s.decision_date && (
                         <div className="text-xs text-muted-foreground">{s.decision_date}</div>
                       )}
@@ -766,7 +815,14 @@ function PredicateRadarTab({
                       <SimilarityBar score={c.similarity_score} />
                     </TableCell>
                     <TableCell>
-                      <ToxicityBadge score={c.toxicity_score} />
+                      <button
+                        type="button"
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => onToxicDetail?.(c.k_number)}
+                        title="Click to view safety signal details"
+                      >
+                        <ToxicityBadge score={c.toxicity_score} />
+                      </button>
                     </TableCell>
                     <TableCell>
                       {c.enforcement_events.length > 0 ? (
@@ -1280,6 +1336,147 @@ function DefenseMeterTab({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Toxic Detail Drill-Down Dialog (Phase 6.6.F)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ToxicDetailDialog({
+  programId,
+  kNumber,
+  onClose,
+}: {
+  programId: string;
+  kNumber: string;
+  onClose: () => void;
+}) {
+  const { data, isLoading, isError } = useToxicDetail(programId, kNumber);
+
+  return (
+    <Dialog open onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            Safety Signal Details — <span className="font-mono">{kNumber}</span>
+          </DialogTitle>
+          <DialogDescription>
+            Detailed toxicity breakdown and safety signal citations for this predicate.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading && (
+          <div className="space-y-3 py-4">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p className="text-sm text-muted-foreground py-4">
+            Failed to load toxic detail for {kNumber}.
+          </p>
+        )}
+
+        {data && (
+          <div className="space-y-4 py-2">
+            {/* Summary badges */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <ToxicityBadge score={data.toxicity_score} badge={data.badge} />
+              <Badge variant="outline" className="text-xs">
+                MDR: {data.mdr_rate_bucket}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                Family Recalls: {data.family_recall_count}
+              </Badge>
+            </div>
+
+            {/* Toxic reasons */}
+            {data.toxic_because.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Why this predicate is flagged
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-sm">
+                  {data.toxic_because.map((reason, i) => (
+                    <li key={i}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Signal citations */}
+            {data.signals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Safety Signals ({data.signals.length})
+                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Severity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.signals.map((sig, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {sig.signal_type.replace(/_/g, ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {sig.signal_date || '—'}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-xs truncate">
+                          {sig.description}
+                          {sig.recall_number && (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              (#{sig.recall_number})
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={`text-sm font-medium ${
+                              sig.severity_score >= 0.7
+                                ? 'text-red-600'
+                                : sig.severity_score >= 0.4
+                                  ? 'text-orange-600'
+                                  : 'text-yellow-600'
+                            }`}
+                          >
+                            {(sig.severity_score * 100).toFixed(0)}%
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {data.signals.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No safety signals on record for this device.
+              </p>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Main Page
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1298,9 +1495,18 @@ export default function PredicateIntelligencePage({
   const [inputProgramId, setInputProgramId] = useState('');
   const programId = propProgramId || urlProgramId || inputProgramId;
   const [selectedCandidate, setSelectedCandidate] = useState<PredicateCandidate | null>(null);
+  const [toxicDetailK, setToxicDetailK] = useState<string | null>(null);
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
+      {/* Toxic Detail Drill-Down Dialog (F.1) */}
+      {toxicDetailK && (
+        <ToxicDetailDialog
+          programId={programId}
+          kNumber={toxicDetailK}
+          onClose={() => setToxicDetailK(null)}
+        />
+      )}
       {/* Header + Proof Strip (top-right) */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -1364,10 +1570,13 @@ export default function PredicateIntelligencePage({
             <TabsTrigger value="defense-packet" className="flex items-center gap-1">
               <Package className="h-4 w-4" /> Defense Packet
             </TabsTrigger>
+            <TabsTrigger value="lineage" className="flex items-center gap-1">
+              <GitBranch className="h-4 w-4" /> Lineage
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="radar" className="mt-4">
-            <PredicateRadarTab programId={programId} onSelectCandidate={setSelectedCandidate} />
+            <PredicateRadarTab programId={programId} onSelectCandidate={setSelectedCandidate} onToxicDetail={setToxicDetailK} />
           </TabsContent>
 
           <TabsContent value="strategy" className="mt-4">
@@ -1395,6 +1604,27 @@ export default function PredicateIntelligencePage({
               predicateKNumber={selectedCandidate?.k_number}
               initialSubjectDevice={{}}
             />
+          </TabsContent>
+
+          <TabsContent value="lineage" className="mt-4">
+            {selectedCandidate?.k_number ? (
+              <LineageGraphPanel
+                programId={programId}
+                kNumber={selectedCandidate.k_number}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center text-muted-foreground">
+                    <GitBranch className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>Select a predicate candidate to view its family lineage.</p>
+                    <p className="text-sm mt-1">
+                      Use the Predicate Radar or Strategy Engine tab to select a candidate first.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       )}

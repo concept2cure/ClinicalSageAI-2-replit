@@ -331,12 +331,12 @@ describe('Shadow Router — Proof Pack Endpoints', () => {
     expect(router()).toContain('@router.post("/proof-pack/persist")');
   });
 
-  it('GET /proof-pack/{manifest_hash}/download endpoint exists', () => {
-    expect(router()).toContain('@router.get("/proof-pack/{manifest_hash}/download")');
+  it('GET /proof-pack/{proof_pack_id}/download endpoint exists (G)', () => {
+    expect(router()).toContain('@router.get("/proof-pack/{proof_pack_id}/download")');
   });
 
-  it('GET /proof-pack/{manifest_hash}/verify endpoint exists', () => {
-    expect(router()).toContain('@router.get("/proof-pack/{manifest_hash}/verify")');
+  it('GET /proof-pack/{proof_pack_id}/verify endpoint exists (G)', () => {
+    expect(router()).toContain('@router.get("/proof-pack/{proof_pack_id}/verify")');
   });
 
   it('download returns ZIP content-type', () => {
@@ -356,8 +356,8 @@ describe('Shadow Router — Proof Pack Endpoints', () => {
     expect(src).toContain('409');
   });
 
-  it('verify returns hashes_consistent field', () => {
-    expect(router()).toContain('hashes_consistent');
+  it('verify returns verified field (G — replaces hashes_consistent)', () => {
+    expect(router()).toContain('verified');
   });
 });
 
