@@ -1999,7 +1999,7 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                 original_loaded = True
         except Exception as exc:
             logger.warning("replay-determinism: failed to read original packet: %s", exc)
-    
+
     if not original_loaded:
         raise HTTPException(
             status_code=422,
