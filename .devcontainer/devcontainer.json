@@ -50,6 +50,8 @@
 
   "postCreateCommand": "npm install",
 
+  "remoteUser": "root",
+
   "remoteEnv": {
     "NODE_ENV": "development"
   }
