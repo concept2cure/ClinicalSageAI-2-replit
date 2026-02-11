@@ -43,8 +43,13 @@ import {
   useGenerateSEMatrixV2,
   useRenderSEDocxV2,
   useReplayDeterminism,
+  usePersistProofPack,
+  useDownloadProofPack,
 } from '@/hooks/use-predicate-intelligence';
-import type { ReplayDeterminismResult } from '../../../shared/types/predicate-intelligence';
+import type {
+  ReplayDeterminismResult,
+  DriftDiffEntry,
+} from '../../../shared/types/predicate-intelligence';
 import type {
   SEMatrixRowV2,
   EvidenceTaskV2,
@@ -169,7 +174,13 @@ export function SEMatrixV2Panel({
   const generateMutation = useGenerateSEMatrixV2();
   const renderDocxMutation = useRenderSEDocxV2();
   const replayMutation = useReplayDeterminism(programId);
+  const persistMutation = usePersistProofPack(programId);
+  const downloadProofPackMutation = useDownloadProofPack(programId);
   const [replayResult, setReplayResult] = useState<ReplayDeterminismResult | null>(null);
+
+  // Derive block_download from replay result (server-authoritative)
+  const isDownloadBlocked =
+    replayResult !== null && (replayResult.block_download || !replayResult.deterministic);
 
   const handleFieldChange = useCallback((key: string, value: string) => {
     setSubjectDevice(prev => ({ ...prev, [key]: value }));
@@ -184,7 +195,13 @@ export function SEMatrixV2Panel({
         subject_device: subjectDevice,
       },
       {
-        onSuccess: data => setResult(data),
+        onSuccess: data => {
+          setResult(data);
+          // Auto-persist proof pack after generation
+          if (data.manifest_hash) {
+            persistMutation.mutate({ manifestHash: data.manifest_hash });
+          }
+        },
       }
     );
   }, [programId, kNumber, subjectDevice, generateMutation]);
@@ -272,19 +289,59 @@ export function SEMatrixV2Panel({
               <Button
                 variant="outline"
                 onClick={handleDownloadDocx}
-                disabled={
-                  renderDocxMutation.isPending ||
-                  (replayResult !== null && !replayResult.deterministic)
-                }
+                disabled={renderDocxMutation.isPending || isDownloadBlocked}
                 data-testid="download-docx-btn"
               >
                 <Download className="h-4 w-4 mr-1" />
                 {renderDocxMutation.isPending
                   ? 'Rendering...'
-                  : replayResult !== null && !replayResult.deterministic
+                  : isDownloadBlocked
                     ? 'Download Blocked (Drift)'
                     : 'Download V2 DOCX'}
               </Button>
+            )}
+
+            {/* E1: Download Proof Pack ZIP */}
+            {result?.manifest_hash && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={downloadProofPackMutation.isPending || isDownloadBlocked}
+                      data-testid="download-proof-pack-btn"
+                      onClick={() => {
+                        downloadProofPackMutation.mutate(
+                          { manifestHash: result.manifest_hash! },
+                          {
+                            onSuccess: ({ blob, filename }) => {
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = filename;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            },
+                          }
+                        );
+                      }}
+                    >
+                      <FileText className="h-3.5 w-3.5 mr-1.5" />
+                      {downloadProofPackMutation.isPending
+                        ? 'Packaging…'
+                        : 'Download Evidence Pack'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-xs max-w-xs">
+                      Download a ZIP containing manifest.json, se_matrix_payload.json,
+                      risk_codes.lock.json, checksums.sha256, and audit_events.jsonl. Verifiable
+                      offline by any auditor.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
             {/* E2: Replay / Verify Determinism — next to Download */}
@@ -524,35 +581,102 @@ export function SEMatrixV2Panel({
             </Card>
           )}
 
-          {/* Drift details + Metadata footer */}
-          <div className="flex flex-col gap-3">
-            {/* Drift detail lines (if any) */}
-            {replayResult &&
-              !replayResult.deterministic &&
-              replayResult.drift_details.length > 0 && (
-                <div
-                  className="rounded border border-red-300 bg-red-50 p-2 text-xs text-red-800 space-y-1"
-                  data-testid="drift-details"
-                >
-                  <p className="font-semibold">
-                    ⚠ Drift detected — downloads blocked until resolved:
-                  </p>
-                  {replayResult.drift_details.map((d, i) => (
-                    <p key={i} className="font-mono text-[11px]">
-                      • {d}
-                    </p>
-                  ))}
-                </div>
-              )}
+          {/* "Why Blocked?" drift panel (E.3) */}
+          {replayResult && !replayResult.deterministic && (
+            <Card className="border-red-300 bg-red-50" data-testid="drift-panel">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-red-800 flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" />
+                  Why is download blocked?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                {/* Drift reason codes */}
+                {replayResult.drift_reason_codes && replayResult.drift_reason_codes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5" data-testid="drift-reason-codes">
+                    {replayResult.drift_reason_codes.map(code => (
+                      <Badge
+                        key={code}
+                        variant="outline"
+                        className="text-xs bg-red-100 text-red-800 border-red-300 font-mono"
+                      >
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
-            {/* Metadata row */}
-            <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
-              <span>Version: {payload.version}</span>
-              <span>Risk Map: {result.risk_code_map_version}</span>
-              <span>Lock: {RISK_CODES_LOCK_HASH.slice(0, 12)}…</span>
-              <span>Generated: {new Date(result.generation_timestamp).toLocaleString()}</span>
-              <span>Standard: {payload.regulatory_standard}</span>
-            </div>
+                {/* Structured diff summary table */}
+                {replayResult.diff_summary && replayResult.diff_summary.length > 0 && (
+                  <div
+                    className="rounded border border-red-200 overflow-hidden"
+                    data-testid="diff-summary-table"
+                  >
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-red-100">
+                          <TableHead className="text-xs text-red-800 w-[150px]">Field</TableHead>
+                          <TableHead className="text-xs text-red-800 w-[80px]">Severity</TableHead>
+                          <TableHead className="text-xs text-red-800">Before</TableHead>
+                          <TableHead className="text-xs text-red-800">After</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {replayResult.diff_summary.map((entry: DriftDiffEntry, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-xs font-mono">{entry.path}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  entry.severity === 'HIGH'
+                                    ? 'bg-red-100 text-red-800 border-red-300'
+                                    : entry.severity === 'MEDIUM'
+                                      ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                      : 'bg-blue-100 text-blue-800 border-blue-300'
+                                }`}
+                              >
+                                {entry.severity}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-[10px] font-mono text-muted-foreground">
+                              {entry.before_hash}…
+                            </TableCell>
+                            <TableCell className="text-[10px] font-mono text-muted-foreground">
+                              {entry.after_hash}…
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Raw drift details */}
+                {replayResult.drift_details.length > 0 && (
+                  <div className="text-xs text-red-800 space-y-1" data-testid="drift-details">
+                    {replayResult.drift_details.map((d, i) => (
+                      <p key={i} className="font-mono text-[11px]">
+                        • {d}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-red-600 font-medium">
+                  Regenerate the defense packet to resolve drift, then re-run replay verification.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Metadata row */}
+          <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
+            <span>Version: {payload.version}</span>
+            <span>Risk Map: {result.risk_code_map_version}</span>
+            <span>Lock: {RISK_CODES_LOCK_HASH.slice(0, 12)}…</span>
+            <span>Generated: {new Date(result.generation_timestamp).toLocaleString()}</span>
+            <span>Standard: {payload.regulatory_standard}</span>
           </div>
         </>
       )}

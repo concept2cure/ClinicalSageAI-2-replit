@@ -195,11 +195,11 @@ describe('Replay Determinism UI (SEMatrixV2Panel)', () => {
     expect(src).toContain('ShieldAlert');
   });
 
-  it('download button disabled prop includes drift check (GAP 1 — CRITICAL)', () => {
-    // The Download button must be disabled when replayResult is non-null and not deterministic
-    expect(src).toContain('replayResult !== null && !replayResult.deterministic');
-    // The disabled prop must reference this condition
-    expect(src).toMatch(/disabled=\{[^}]*replayResult/);
+  it('download blocking is server-authoritative via block_download (GAP 1 — CRITICAL)', () => {
+    // Phase 6.6.E: download is now server-authoritative via block_download field
+    expect(src).toContain('block_download');
+    // isDownloadBlocked derived from server response, not UI heuristic
+    expect(src).toContain('isDownloadBlocked');
   });
 
   it('download button has data-testid for testing', () => {

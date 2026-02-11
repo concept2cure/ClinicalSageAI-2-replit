@@ -2055,15 +2055,29 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                 replay_risk_codes_set.add(code)
     replay_risk_codes = sorted(replay_risk_codes_set)
 
-    # ── Compare ──
+    # ── Compare with structured diff summary (E.3) ──
+    diff_summary: list[dict] = []
+
     if original_manifest_hash != replay_manifest_hash:
         drift_details.append(
             f"manifest_hash mismatch: original={original_manifest_hash[:16]}… replay={replay_manifest_hash[:16]}…"
         )
+        diff_summary.append({
+            "path": "manifest_hash",
+            "before_hash": original_manifest_hash[:24],
+            "after_hash": replay_manifest_hash[:24],
+            "severity": "HIGH",
+        })
     if original_risk_vocab_hash and original_risk_vocab_hash != replay_risk_vocab_hash:
         drift_details.append(
             f"risk_vocab_hash mismatch: original={original_risk_vocab_hash[:16]}… replay={replay_risk_vocab_hash[:16]}…"
         )
+        diff_summary.append({
+            "path": "risk_vocab_hash",
+            "before_hash": original_risk_vocab_hash[:24],
+            "after_hash": replay_risk_vocab_hash[:24],
+            "severity": "HIGH",
+        })
     if original_risk_codes != replay_risk_codes:
         added = set(replay_risk_codes) - set(original_risk_codes)
         removed = set(original_risk_codes) - set(replay_risk_codes)
@@ -2073,8 +2087,112 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
         if removed:
             parts.append(f"removed={sorted(removed)}")
         drift_details.append(f"risk_codes changed: {', '.join(parts)}")
+        diff_summary.append({
+            "path": "triggered_risk_codes",
+            "before_hash": hashlib.sha256(",".join(original_risk_codes).encode()).hexdigest()[:24],
+            "after_hash": hashlib.sha256(",".join(replay_risk_codes).encode()).hexdigest()[:24],
+            "severity": "HIGH",
+        })
+
+    # Check evidence tasks order/count (MEDIUM severity)
+    original_tasks_raw = []
+    if pool and original_loaded:
+        try:
+            original_row = await pool.fetchrow(
+                dp_sql.SELECT_PACKET_BY_MANIFEST_HASH,
+                original_manifest_hash,
+            )
+            if original_row and original_row.get("tasks"):
+                otasks = original_row["tasks"]
+                if isinstance(otasks, str):
+                    otasks = _json.loads(otasks)
+                if isinstance(otasks, list):
+                    original_tasks_raw = otasks
+        except Exception:
+            pass
+
+    if original_tasks_raw and replay_tasks:
+        orig_task_ids = [t.get("task_id", "") for t in original_tasks_raw if isinstance(t, dict)]
+        replay_task_ids = [t.get("task_id", "") for t in replay_tasks if isinstance(t, dict)]
+        if orig_task_ids != replay_task_ids:
+            diff_summary.append({
+                "path": "evidence_tasks",
+                "before_hash": hashlib.sha256(",".join(orig_task_ids).encode()).hexdigest()[:24],
+                "after_hash": hashlib.sha256(",".join(replay_task_ids).encode()).hexdigest()[:24],
+                "severity": "MEDIUM",
+            })
+            drift_details.append(
+                f"evidence_tasks changed: original={len(orig_task_ids)} tasks, replay={len(replay_task_ids)} tasks"
+            )
+
+    # Check readiness score (HIGH severity)
+    original_readiness = None
+    if original_tasks_raw and original_loaded:
+        try:
+            if original_row:
+                original_readiness = original_row.get("defense_readiness_score")
+        except Exception:
+            pass
+
+    replay_readiness_score = replay_data.get("readiness_score") if isinstance(replay_data, dict) else None
+    if original_readiness is not None and replay_readiness_score is not None:
+        if original_readiness != replay_readiness_score:
+            diff_summary.append({
+                "path": "readiness_score",
+                "before_hash": str(original_readiness),
+                "after_hash": str(replay_readiness_score),
+                "severity": "HIGH",
+            })
+            drift_details.append(
+                f"readiness_score changed: original={original_readiness}, replay={replay_readiness_score}"
+            )
 
     deterministic = len(drift_details) == 0
+
+    # Derive drift_reason_codes from diff_summary
+    drift_reason_codes: list[str] = []
+    for ds in diff_summary:
+        path = ds["path"]
+        if path == "manifest_hash":
+            drift_reason_codes.append("MANIFEST_CHANGED")
+        elif path == "risk_vocab_hash":
+            drift_reason_codes.append("CONTRACT_CHANGED")
+        elif path == "triggered_risk_codes":
+            drift_reason_codes.append("RISK_CODES_CHANGED")
+        elif path == "evidence_tasks":
+            drift_reason_codes.append("TASKS_CHANGED")
+        elif path == "readiness_score":
+            drift_reason_codes.append("READINESS_CHANGED")
+
+    # block_download = True if any HIGH severity drift
+    block_download = any(ds["severity"] == "HIGH" for ds in diff_summary)
+
+    # Audit: PROOF_PACK_DRIFT_DETECTED (if not deterministic)
+    if not deterministic and pool:
+        try:
+            from . import sql_proof_pack as pp_sql
+            pp_row = await pool.fetchrow(
+                pp_sql.SELECT_PROOF_PACK_BY_MANIFEST_HASH,
+                original_manifest_hash,
+            )
+            if pp_row:
+                await pool.fetchrow(
+                    pp_sql.INSERT_AUDIT_EVENT,
+                    pp_row["id"],
+                    pp_row["program_id"],
+                    "system",
+                    "PROOF_PACK_DRIFT_DETECTED",
+                    pp_row["subject_hash"],
+                    original_manifest_hash,
+                    replay_risk_vocab_hash,
+                    _json.dumps({
+                        "drift_reason_codes": drift_reason_codes,
+                        "diff_summary_count": len(diff_summary),
+                        "block_download": block_download,
+                    }),
+                )
+        except Exception:
+            pass  # best-effort
 
     return {
         "deterministic": deterministic,
@@ -2085,4 +2203,496 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
         "original_risk_codes": original_risk_codes,
         "replay_risk_codes": replay_risk_codes,
         "drift_details": drift_details,
+        "diff_summary": diff_summary,
+        "drift_reason_codes": drift_reason_codes,
+        "block_download": block_download,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.E1 — Proof Pack ZIP Export (Enterprise Artifact)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.post("/proof-pack/persist")
+async def persist_proof_pack(
+    program_id: str = Query(..., description="Regulatory program UUID"),
+    manifest_hash: str = Query(..., description="Manifest hash of the defense packet"),
+    user_id: str = Query("system", description="User who triggered persistence"),
+):
+    """Persist a proof pack export record from an existing defense packet.
+
+    This freezes the manifest + payload JSON so downloads never regenerate.
+    Called automatically after SE Matrix generation.
+    """
+    import json as _json
+
+    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    from . import sql_defense_packets as dp_sql
+    from . import sql_proof_pack as pp_sql
+
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    # Load the defense packet
+    row = await pool.fetchrow(dp_sql.SELECT_PACKET_BY_MANIFEST_HASH, manifest_hash)
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Defense packet not found for manifest_hash={manifest_hash[:24]}…",
+        )
+
+    # Verify program ownership
+    if str(row["program_id"]) != str(program_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Defense packet does not belong to the specified program",
+        )
+
+    risk_vocab_hash = _compute_lock_hash()
+
+    # Build frozen manifest JSON
+    manifest_json = {
+        "manifest_hash": manifest_hash,
+        "risk_vocab_hash": risk_vocab_hash,
+        "risk_code_lock_hash": risk_vocab_hash,
+        "subject_hash": row["subject_hash"],
+        "program_id": str(row["program_id"]),
+        "predicate_k_number": row["predicate_k_number"],
+        "risk_code_map_version": row["risk_code_map_version"],
+        "defense_readiness_score": row["defense_readiness_score"],
+        "generated_at": row["created_at"].isoformat() if hasattr(row["created_at"], "isoformat") else str(row["created_at"]),
+        "generator_version": row.get("generator_version", "6.6.C2"),
+    }
+
+    # Freeze payload JSON
+    payload_json = _json.loads(row["se_payload"]) if isinstance(row["se_payload"], str) else dict(row["se_payload"]) if row["se_payload"] else {}
+
+    result = await pool.fetchrow(
+        pp_sql.INSERT_PROOF_PACK_EXPORT,
+        row["program_id"],         # $1
+        row["subject_hash"],       # $2
+        manifest_hash,             # $3
+        risk_vocab_hash,           # $4
+        risk_vocab_hash,           # $5 risk_code_lock_hash
+        _json.dumps(manifest_json),  # $6
+        _json.dumps(payload_json),   # $7
+        _json.dumps([]),             # $8 artifact_index
+        row["id"],                   # $9 defense_packet_id
+        user_id,                     # $10
+    )
+
+    # Audit event
+    try:
+        await pool.fetchrow(
+            pp_sql.INSERT_AUDIT_EVENT,
+            result["id"],
+            row["program_id"],
+            user_id,
+            "PROOF_PACK_CREATED",
+            row["subject_hash"],
+            manifest_hash,
+            risk_vocab_hash,
+            _json.dumps({"action": "persist", "defense_packet_id": str(row["id"])}),
+        )
+    except Exception:
+        pass  # best-effort audit
+
+    return {
+        "proof_pack_id": str(result["id"]),
+        "manifest_hash": manifest_hash,
+        "status": result["status"],
+        "created_at": result["created_at"].isoformat(),
+    }
+
+
+@router.get("/proof-pack/{manifest_hash}/download")
+async def download_proof_pack_zip(
+    manifest_hash: str,
+    program_id: str = Query(..., description="Regulatory program UUID"),
+    user_id: str = Query("system", description="User requesting download"),
+):
+    """Download a proof-pack ZIP. Pure packaging — never regenerates.
+
+    Returns a ZIP containing:
+      manifest.json, se_matrix_payload.json, risk_codes.lock.json,
+      checksums.sha256, audit_events.jsonl, outputs/
+
+    Returns 409 if stored hashes mismatch computed hashes.
+    Returns 404 if proof pack not found.
+    """
+    import json as _json
+    from starlette.responses import Response as StarletteResponse
+
+    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    from .proof_pack_zip import ProofPackZipBuilder
+    from . import sql_proof_pack as pp_sql
+
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    # Load proof pack + defense packet data in one join
+    row = await pool.fetchrow(
+        pp_sql.SELECT_PROOF_PACK_FOR_DOWNLOAD,
+        manifest_hash,
+        program_id,
+    )
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Proof pack not found for manifest_hash={manifest_hash[:24]}… in program={program_id}",
+        )
+
+    # ── Verify stored hashes match current contract ──
+    current_lock_hash = _compute_lock_hash()
+    stored_risk_vocab_hash = row["risk_vocab_hash"]
+
+    if stored_risk_vocab_hash != current_lock_hash:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "hash_mismatch",
+                "field": "risk_vocab_hash",
+                "stored": stored_risk_vocab_hash[:24],
+                "current": current_lock_hash[:24],
+                "message": "Risk vocabulary contract has changed since this proof pack was created. Regenerate the defense packet first.",
+            },
+        )
+
+    # ── Load frozen data ──
+    manifest_json = _json.loads(row["manifest_json"]) if isinstance(row["manifest_json"], str) else dict(row["manifest_json"])
+    payload_json = _json.loads(row["payload_json"]) if isinstance(row["payload_json"], str) else dict(row["payload_json"])
+
+    # ── Load audit events ──
+    audit_rows = await pool.fetch(
+        pp_sql.SELECT_AUDIT_EVENTS_BY_MANIFEST,
+        manifest_hash,
+    )
+    audit_events = []
+    for ar in audit_rows:
+        evt = dict(ar)
+        for k, v in evt.items():
+            if hasattr(v, "isoformat"):
+                evt[k] = v.isoformat()
+            elif not isinstance(v, (dict, list)):
+                evt[k] = str(v)
+        audit_events.append(evt)
+
+    # Add the download event to the audit trail
+    download_event = {
+        "action": "PROOF_PACK_DOWNLOADED",
+        "program_id": str(row["program_id"]),
+        "user_id": user_id,
+        "manifest_hash": manifest_hash,
+        "risk_vocab_hash": stored_risk_vocab_hash,
+        "subject_hash": row["subject_hash"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    audit_events.append(download_event)
+
+    # ── Assemble ZIP ──
+    builder = ProofPackZipBuilder(
+        manifest_json=manifest_json,
+        payload_json=payload_json,
+        audit_events=audit_events,
+        artifacts={},  # v1: outputs/ structure exists but DOCX included in v2
+    )
+    zip_bytes, checksums, artifact_index = builder.build()
+    zip_hash = hashlib.sha256(zip_bytes).hexdigest()
+
+    # ── Update proof pack record ──
+    try:
+        await pool.fetchrow(
+            pp_sql.UPDATE_PROOF_PACK_ASSEMBLED,
+            row["id"],
+            zip_hash,
+            len(zip_bytes),
+            _json.dumps(artifact_index),
+        )
+        await pool.fetchrow(
+            pp_sql.UPDATE_PROOF_PACK_DOWNLOADED,
+            row["id"],
+            user_id,
+        )
+    except Exception as exc:
+        logger.warning("proof-pack download: failed to update record: %s", exc)
+
+    # ── Audit: PROOF_PACK_DOWNLOADED ──
+    try:
+        await pool.fetchrow(
+            pp_sql.INSERT_AUDIT_EVENT,
+            row["id"],
+            row["program_id"],
+            user_id,
+            "PROOF_PACK_DOWNLOADED",
+            row["subject_hash"],
+            manifest_hash,
+            stored_risk_vocab_hash,
+            _json.dumps({"zip_hash": zip_hash, "zip_size_bytes": len(zip_bytes)}),
+        )
+    except Exception:
+        pass  # best-effort
+
+    filename = f"proof-pack-{manifest_hash[:12]}.zip"
+
+    return StarletteResponse(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Proof-Pack-Hash": zip_hash,
+            "X-Manifest-Hash": manifest_hash,
+        },
+    )
+
+
+@router.get("/proof-pack/{manifest_hash}/verify")
+async def verify_proof_pack(
+    manifest_hash: str,
+    program_id: str = Query(..., description="Regulatory program UUID"),
+):
+    """Verify a proof pack exists and hashes are consistent (no download)."""
+    from .scoring.risk_code_contract_validator import _compute_lock_hash
+    from . import sql_proof_pack as pp_sql
+
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_BY_MANIFEST_HASH, manifest_hash)
+    if not row:
+        raise HTTPException(status_code=404, detail="Proof pack not found")
+
+    if str(row["program_id"]) != str(program_id):
+        raise HTTPException(status_code=403, detail="Program mismatch")
+
+    current_lock_hash = _compute_lock_hash()
+    stored_hash = row["risk_vocab_hash"]
+    hashes_match = stored_hash == current_lock_hash
+
+    return {
+        "proof_pack_id": str(row["id"]),
+        "manifest_hash": manifest_hash,
+        "status": row["status"],
+        "hashes_consistent": hashes_match,
+        "stored_risk_vocab_hash": stored_hash[:24],
+        "current_risk_vocab_hash": current_lock_hash[:24],
+        "downloaded_count": row["downloaded_count"],
+        "created_at": row["created_at"].isoformat(),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.F — Safety Signals v1
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+TOXICITY_WEIGHTS: dict[str, float] = {
+    "Class1Recall": 0.95,
+    "SafetyCommunication": 0.70,
+    "Class2Recall": 0.50,
+    "483Warning": 0.40,
+    "WarningLetter": 0.35,
+    "MDRReport": 0.25,
+    "Seizure": 0.90,
+    "Class3Recall": 0.15,
+}
+TOXICITY_AVOID = 0.6
+TOXICITY_RISKY = 0.3
+
+
+def _badge(toxicity: float, family_toxicity: float) -> str:
+    """Deterministic badge from scores."""
+    if toxicity > TOXICITY_AVOID:
+        return "TOXIC"
+    if family_toxicity > TOXICITY_RISKY:
+        return "RISKY_FAMILY"
+    return "CLEAN"
+
+
+def _compute_toxicity(signals: list[dict]) -> float:
+    """Weighted toxicity from signal rows (same formula as strategy_engine)."""
+    total = 0.0
+    for s in signals:
+        weight = TOXICITY_WEIGHTS.get(s.get("signal_type", ""), 0.1)
+        total += float(s.get("severity_score", 0)) * weight
+    return min(total, 1.0)
+
+
+class SafetySignalIngestRequest(BaseModel):
+    """Idempotent ingest of safety signals for a k_number."""
+    k_number: str
+    signals: list[dict[str, Any]] = Field(
+        ...,
+        description="Array of {signal_type, signal_date, description, severity_score, source_url?, recall_number?, event_id?}",
+    )
+
+
+@router.post("/safety-signals/ingest")
+async def ingest_safety_signals(req: SafetySignalIngestRequest):
+    """F.1 — Idempotent safety signal ingest.
+
+    Accepts an array of signals for a k_number, upserts each via
+    ON CONFLICT DO NOTHING, then returns the resulting toxicity profile.
+    Acceptance: toxicity > 0.6 → badge = TOXIC, strategy_override = AVOID.
+    """
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    upserted = 0
+    skipped = 0
+
+    async with pool.acquire() as conn:
+        # Verify k_number exists in clearances
+        exists = await conn.fetchrow(fda_sql.SELECT_CLEARANCE, req.k_number)
+        if not exists:
+            raise HTTPException(
+                status_code=404,
+                detail=f"K-number {req.k_number} not found in FDA clearance universe",
+            )
+
+        for sig in req.signals:
+            row = await conn.fetchrow(
+                fda_sql.UPSERT_SAFETY_SIGNAL,
+                req.k_number,
+                sig.get("signal_type", "MDRReport"),
+                sig.get("signal_date"),
+                sig.get("description"),
+                float(sig.get("severity_score", 0.5)),
+                sig.get("source_url"),
+                sig.get("recall_number"),
+                sig.get("event_id"),
+            )
+            if row:
+                upserted += 1
+            else:
+                skipped += 1
+
+        # Re-fetch all signals for this k_number
+        all_signals = [dict(r) for r in await conn.fetch(
+            fda_sql.SELECT_SIGNALS_BY_K_NUMBER, req.k_number,
+        )]
+
+        # Compute toxicity from fresh data
+        toxicity = _compute_toxicity(all_signals)
+
+        # Get family toxicity
+        family_row = await conn.fetchrow(fda_sql.CHECK_FAMILY_SAFETY, req.k_number)
+        family_recall_count = family_row["family_recall_count"] if family_row else 0
+        family_toxicity = min(family_recall_count * 0.3, 1.0)
+
+        badge = _badge(toxicity, family_toxicity)
+
+    return {
+        "k_number": req.k_number,
+        "signals_upserted": upserted,
+        "signals_skipped": skipped,
+        "toxicity_score": round(toxicity, 4),
+        "badge": badge,
+    }
+
+
+@router.get("/safety-signals/{k_number}/profile")
+async def get_toxicity_profile(
+    k_number: str,
+    program_id: UUID = Query(..., description="Regulatory program UUID"),
+):
+    """F.1 — Full toxicity profile for a predicate candidate.
+
+    Returns badge (TOXIC / RISKY_FAMILY / CLEAN), all signals, family score,
+    and whether the strategy engine would override to AVOID.
+    """
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    async with pool.acquire() as conn:
+        signals_rows = await conn.fetch(fda_sql.SELECT_SIGNALS_BY_K_NUMBER, k_number)
+        signals = []
+        for s in signals_rows:
+            signals.append({
+                "k_number": k_number,
+                "signal_type": s["signal_type"],
+                "signal_date": str(s["signal_date"]) if s["signal_date"] else None,
+                "description": s.get("description"),
+                "severity_score": float(s["severity_score"]),
+                "source_url": s.get("source_url"),
+                "recall_number": s.get("recall_number"),
+                "event_id": s.get("event_id"),
+            })
+
+        toxicity = _compute_toxicity(signals)
+
+        family_row = await conn.fetchrow(fda_sql.CHECK_FAMILY_SAFETY, k_number)
+        family_recall_count = family_row["family_recall_count"] if family_row else 0
+        family_toxicity = min(family_recall_count * 0.3, 1.0)
+
+        badge = _badge(toxicity, family_toxicity)
+        strategy_override = "AVOID" if toxicity > TOXICITY_AVOID else None
+
+    return {
+        "k_number": k_number,
+        "toxicity_score": round(toxicity, 4),
+        "badge": badge,
+        "signal_count": len(signals),
+        "signals": signals,
+        "family_toxicity_score": round(family_toxicity, 4),
+        "lineage_depth_checked": 5,
+        "strategy_override": strategy_override,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.F — Lineage Graph v1
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/lineage/{k_number}/graph")
+async def get_lineage_graph(
+    k_number: str,
+    program_id: UUID = Query(..., description="Regulatory program UUID"),
+    max_depth: int = Query(2, ge=1, le=5, description="Max depth (spec default: 2)"),
+):
+    """F.2 — Lineage graph from structured fields (not embeddings).
+
+    Returns edges, family toxicity, and total nodes. Only accepts edges
+    stored from structured summary parsing — never from embedding-based inference.
+    """
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    async with pool.acquire() as conn:
+        # Recursive CTE traversal (already exists in sql_fda_universe)
+        rows = await conn.fetch(fda_sql.GET_FULL_LINEAGE_TREE, k_number, max_depth)
+
+        edges = []
+        node_set: set[str] = {k_number}
+        for r in rows:
+            edges.append({
+                "child_k_number": r["child_k_number"],
+                "parent_k_number": r["parent_k_number"],
+                "relationship_type": r["relationship_type"],
+                "distance": r["lineage_distance"],
+                "confidence": 1.0 if r.get("source") == "summary_parse" else 0.8,
+                "parent_device_name": r.get("device_name"),
+                "parent_product_code": r.get("product_code"),
+            })
+            node_set.add(r["child_k_number"])
+            node_set.add(r["parent_k_number"])
+
+        # Family toxicity = recalls in the tree / total nodes
+        family_row = await conn.fetchrow(fda_sql.CHECK_FAMILY_SAFETY, k_number)
+        family_recall_count = family_row["family_recall_count"] if family_row else 0
+        family_toxicity = min(family_recall_count * 0.3, 1.0)
+
+    return {
+        "root_k_number": k_number,
+        "edges": edges,
+        "family_toxicity": round(family_toxicity, 4),
+        "max_depth": max_depth,
+        "total_nodes": len(node_set),
     }

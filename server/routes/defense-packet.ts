@@ -976,4 +976,233 @@ router.post(
   }
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/proof-pack/persist — E1 Persist Proof Pack
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/proof-pack/persist',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+    const { manifestHash } = req.body || {};
+
+    if (!manifestHash) {
+      return res.status(400).json({ error: 'manifestHash is required' });
+    }
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'POST',
+        `/predicate/proof-pack/persist?program_id=${encodeURIComponent(programId)}&manifest_hash=${encodeURIComponent(manifestHash)}&user_id=${encodeURIComponent(userId)}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] proof-pack persist failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/proof-pack/:proofPackId/download — E1 ZIP Download
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/proof-pack/:proofPackId/download',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId, proofPackId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
+
+    try {
+      // Audit: PROOF_PACK_DOWNLOADED — Part 11 event
+      try {
+        await logAuditEvent({
+          category: 'compliance',
+          severity: 'info',
+          action: 'PROOF_PACK_DOWNLOADED',
+          userId,
+          organizationId,
+          resourceType: 'proof_pack',
+          resourceId: proofPackId,
+          success: true,
+          metadata: {
+            program_id: programId,
+            manifest_hash: proofPackId,
+            user_id: userId,
+            downloaded_at: new Date().toISOString(),
+          },
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
+      const result = await shadowFetch<ArrayBuffer>(
+        'GET',
+        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/download?program_id=${encodeURIComponent(programId)}&user_id=${encodeURIComponent(userId)}`,
+        undefined,
+        { responseType: 'arraybuffer' }
+      );
+
+      if (result.status !== 200) {
+        // If not binary, try to parse as JSON error
+        try {
+          const errorData = JSON.parse(Buffer.from(result.data as any).toString('utf-8'));
+          return res.status(result.status).json(errorData);
+        } catch {
+          return res.status(result.status).json({ error: 'Download failed' });
+        }
+      }
+
+      const filename = `proof-pack-${proofPackId.slice(0, 12)}.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.status(200).send(Buffer.from(result.data as any));
+    } catch (err: any) {
+      console.error('[defense-packet] proof-pack download failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/proof-pack/:proofPackId/verify — E1 Verify
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/proof-pack/:proofPackId/verify',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId, proofPackId } = req.params;
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/predicate/proof-pack/${encodeURIComponent(proofPackId)}/verify?program_id=${encodeURIComponent(programId)}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] proof-pack verify failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/safety-signals/ingest — F.1 Ingest
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/safety-signals/ingest',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId } = req.params;
+    const { kNumber, signals } = req.body;
+
+    if (!kNumber || !Array.isArray(signals)) {
+      return res.status(400).json({ error: 'kNumber and signals[] required' });
+    }
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'POST',
+        '/predicate/safety-signals/ingest',
+        { k_number: kNumber, signals }
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      logAuditEvent({
+        programId,
+        userId: (req as any).user?.id ?? 'system',
+        action: 'SAFETY_SIGNALS_INGESTED',
+        details: { kNumber, signals_count: signals.length, badge: (result.data as any).badge },
+      });
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] safety-signals ingest failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/safety-signals/:kNumber/profile — F.1 Profile
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/safety-signals/:kNumber/profile',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId, kNumber } = req.params;
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/predicate/safety-signals/${encodeURIComponent(kNumber)}/profile?program_id=${encodeURIComponent(programId)}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] toxicity profile failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/lineage/:kNumber/graph — F.2 Lineage
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/lineage/:kNumber/graph',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId, kNumber } = req.params;
+    const maxDepth = req.query.maxDepth ?? '2';
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/predicate/lineage/${encodeURIComponent(kNumber)}/graph?program_id=${encodeURIComponent(programId)}&max_depth=${maxDepth}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] lineage graph failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
 export default router;

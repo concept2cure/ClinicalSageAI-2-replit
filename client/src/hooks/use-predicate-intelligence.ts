@@ -29,6 +29,11 @@ import type {
   ProofPack,
   ReplayDeterminismRequest,
   ReplayDeterminismResult,
+  ProofPackPersistResult,
+  ProofPackVerifyResult,
+  PredicateToxicityProfile,
+  SafetySignalIngestResult,
+  LineageGraph,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -628,5 +633,133 @@ export function useReplayDeterminism(programId: string) {
         `/${programId}/predicate-intel/replay-determinism`,
         { method: 'POST', body: JSON.stringify(params) }
       ),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E1 — Proof Pack ZIP Export
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const proofPackExportKeys = {
+  all: ['proof-pack-export'] as const,
+  verify: (programId: string, manifestHash: string) =>
+    [...proofPackExportKeys.all, 'verify', programId, manifestHash] as const,
+};
+
+/**
+ * Persist a proof pack record (freeze manifest + payload for download).
+ * POST /api/programs/:programId/predicate-intel/proof-pack/persist
+ */
+export function usePersistProofPack(programId: string) {
+  return useMutation<ProofPackPersistResult, Error, { manifestHash: string }>({
+    mutationFn: params =>
+      defensePacketFetch<ProofPackPersistResult>(
+        `/${programId}/predicate-intel/proof-pack/persist`,
+        { method: 'POST', body: JSON.stringify(params) }
+      ),
+  });
+}
+
+/**
+ * Verify a proof pack's hash integrity (no download).
+ * GET /api/programs/:programId/predicate-intel/proof-pack/:proofPackId/verify
+ */
+export function useVerifyProofPack(programId: string, manifestHash: string) {
+  return useQuery<ProofPackVerifyResult>({
+    queryKey: proofPackExportKeys.verify(programId, manifestHash),
+    queryFn: () =>
+      defensePacketFetch<ProofPackVerifyResult>(
+        `/${programId}/predicate-intel/proof-pack/${encodeURIComponent(manifestHash)}/verify`
+      ),
+    enabled: !!programId && !!manifestHash,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Download a proof pack ZIP.
+ * GET /api/programs/:programId/predicate-intel/proof-pack/:proofPackId/download
+ * Returns a Blob (ZIP file).
+ */
+export function useDownloadProofPack(programId: string) {
+  return useMutation<{ blob: Blob; filename: string }, Error, { manifestHash: string }>({
+    mutationFn: async ({ manifestHash }) => {
+      const resp = await fetch(
+        `/api/programs/${programId}/predicate-intel/proof-pack/${encodeURIComponent(manifestHash)}/download`,
+        { credentials: 'include' }
+      );
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Download failed' }));
+        throw new Error(err.detail || err.error || `HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      const filename =
+        resp.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ||
+        `proof-pack-${manifestHash.slice(0, 12)}.zip`;
+      return { blob, filename };
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.F — Safety Signals & Lineage Hooks
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const safetySignalKeys = {
+  profile: (programId: string, kNumber: string) =>
+    ['safety-signal', 'profile', programId, kNumber] as const,
+  ingest: (programId: string) => ['safety-signal', 'ingest', programId] as const,
+};
+
+export const lineageKeys = {
+  graph: (programId: string, kNumber: string) => ['lineage', 'graph', programId, kNumber] as const,
+};
+
+/**
+ * Ingest safety signals for a predicate k-number (idempotent).
+ * POST /api/programs/:programId/predicate-intel/safety-signals/ingest
+ */
+export function useIngestSafetySignals(programId: string) {
+  return useMutation<SafetySignalIngestResult, Error, { kNumber: string; signals: unknown[] }>({
+    mutationFn: params =>
+      defensePacketFetch<SafetySignalIngestResult>(
+        `/${programId}/predicate-intel/safety-signals/ingest`,
+        { method: 'POST', body: JSON.stringify(params) }
+      ),
+  });
+}
+
+/**
+ * Get toxicity profile for a predicate.
+ * GET /api/programs/:programId/predicate-intel/safety-signals/:kNumber/profile
+ */
+export function useToxicityProfile(programId: string, kNumber: string) {
+  return useQuery<PredicateToxicityProfile>({
+    queryKey: safetySignalKeys.profile(programId, kNumber),
+    queryFn: () =>
+      defensePacketFetch<PredicateToxicityProfile>(
+        `/${programId}/predicate-intel/safety-signals/${encodeURIComponent(kNumber)}/profile`
+      ),
+    enabled: !!programId && !!kNumber,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Get lineage graph for a predicate.
+ * GET /api/programs/:programId/predicate-intel/lineage/:kNumber/graph
+ */
+export function useLineageGraph(programId: string, kNumber: string, maxDepth = 2) {
+  return useQuery<LineageGraph>({
+    queryKey: lineageKeys.graph(programId, kNumber),
+    queryFn: () =>
+      defensePacketFetch<LineageGraph>(
+        `/${programId}/predicate-intel/lineage/${encodeURIComponent(kNumber)}/graph?maxDepth=${maxDepth}`
+      ),
+    enabled: !!programId && !!kNumber,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 }

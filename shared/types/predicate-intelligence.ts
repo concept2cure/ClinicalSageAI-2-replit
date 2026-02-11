@@ -1133,7 +1133,7 @@ export interface ProofPack {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.E2 — Replay Determinism
+// Phase 6.6.E2 — Replay Determinism (with E.3 diff summary)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface ReplayDeterminismRequest {
@@ -1142,6 +1142,16 @@ export interface ReplayDeterminismRequest {
   selectedPredicate: Record<string, unknown>;
   /** The original manifest hash to compare against */
   originalManifestHash: string;
+}
+
+export type DriftSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+
+/** Structured diff for a single field that drifted */
+export interface DriftDiffEntry {
+  path: string;
+  before_hash: string;
+  after_hash: string;
+  severity: DriftSeverity;
 }
 
 export interface ReplayDeterminismResult {
@@ -1153,6 +1163,87 @@ export interface ReplayDeterminismResult {
   original_risk_codes: string[];
   replay_risk_codes: string[];
   drift_details: string[];
+  /** E.3 — structured diff summary with severity levels */
+  diff_summary: DriftDiffEntry[];
+  /** E.3 — controlled list of drift reason codes */
+  drift_reason_codes: string[];
+  /** E.3 — UI uses this directly to block/allow download */
+  block_download: boolean;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E1 — Proof Pack ZIP Export (Enterprise Artifact)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Result of persisting a proof pack for later ZIP download */
+export interface ProofPackPersistResult {
+  proof_pack_id: string;
+  manifest_hash: string;
+  status: 'CREATED' | 'ASSEMBLED' | 'FAILED';
+  created_at: string;
+}
+
+/** Artifact entry inside a proof pack ZIP */
+export interface ProofPackArtifactEntry {
+  filename: string;
+  sha256: string;
+  size_bytes: number;
+  mime_type: string;
+}
+
+/** Verification result for a stored proof pack */
+export interface ProofPackVerifyResult {
+  proof_pack_id: string;
+  manifest_hash: string;
+  status: 'CREATED' | 'ASSEMBLED' | 'FAILED';
+  hashes_consistent: boolean;
+  stored_risk_vocab_hash: string;
+  current_risk_vocab_hash: string;
+  downloaded_count: number;
+  created_at: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.F — Safety Signals & Lineage Graph
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type ToxicityBadge = 'TOXIC' | 'RISKY_FAMILY' | 'CLEAN';
+
+export interface PredicateToxicityProfile {
+  k_number: string;
+  toxicity_score: number;
+  badge: ToxicityBadge;
+  signal_count: number;
+  signals: SafetySignal[]; // reuses existing SafetySignal above
+  family_toxicity_score: number;
+  lineage_depth_checked: number;
+  strategy_override: 'AVOID' | null;
+}
+
+export interface SafetySignalIngestResult {
+  k_number: string;
+  signals_upserted: number;
+  signals_skipped: number;
+  toxicity_score: number;
+  badge: ToxicityBadge;
+}
+
+export interface LineageEdge {
+  child_k_number: string;
+  parent_k_number: string;
+  relationship_type: string;
+  distance: number;
+  confidence: number;
+  parent_device_name?: string;
+  parent_product_code?: string;
+}
+
+export interface LineageGraph {
+  root_k_number: string;
+  edges: LineageEdge[];
+  family_toxicity: number;
+  max_depth: number;
+  total_nodes: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
