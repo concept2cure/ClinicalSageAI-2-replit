@@ -65,6 +65,7 @@ function makeSEMatrixV2Response() {
           diff_flag: 'EQUIVALENT' as const,
           discussion_text: 'Identical',
           risk_code: null,
+          triggered_risk_codes: [],
           evidence_task_ids: [],
           requires_citation: false,
           suggested_tests: [],
@@ -83,6 +84,7 @@ function makeSEMatrixV2Response() {
           diff_flag: 'DISCUSSION_REQUIRED' as const,
           discussion_text: 'Material change detected',
           risk_code: 'MATERIAL_CHANGE' as const,
+          triggered_risk_codes: ['MATERIAL_CHANGE'],
           evidence_task_ids: ['abc123def456'],
           requires_citation: true,
           suggested_tests: ['ISO 10993-1'],
@@ -113,7 +115,7 @@ function makeSEMatrixV2Response() {
       ],
       defense_readiness_score: 65,
       generated_at: '2026-02-10T00:00:00Z',
-      risk_code_map_version: '1.0.0',
+      risk_code_map_version: '2.0.0',
       evidence_linkage: true,
       regulatory_standard: 'FDA_510k_SE',
     },
@@ -122,7 +124,7 @@ function makeSEMatrixV2Response() {
     discussion_required_count: 1,
     significant_count: 0,
     evidence_task_count: 1,
-    risk_code_map_version: '1.0.0',
+    risk_code_map_version: '2.0.0',
     generation_timestamp: '2026-02-10T00:00:00Z',
   };
 }
@@ -291,7 +293,7 @@ describe('SEMatrixV2Panel', () => {
 
     it('shows metadata footer', () => {
       expect(screen.getByText(/Version: 6.6.0/)).toBeInTheDocument();
-      expect(screen.getByText(/Risk Map: 1.0.0/)).toBeInTheDocument();
+      expect(screen.getByText(/Risk Map: 2.0.0/)).toBeInTheDocument();
       expect(screen.getByText(/Standard: FDA_510k_SE/)).toBeInTheDocument();
     });
 

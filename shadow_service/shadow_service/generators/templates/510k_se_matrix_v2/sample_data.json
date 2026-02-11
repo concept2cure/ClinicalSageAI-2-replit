@@ -222,7 +222,7 @@
   ],
   "defense_readiness_score": 62,
   "generated_at": "2026-02-10T14:30:00.000000+00:00",
-  "risk_code_map_version": "1.0.0",
+  "risk_code_map_version": "2.0.0",
   "evidence_linkage": true,
   "regulatory_standard": "FDA_510k_SE"
 }

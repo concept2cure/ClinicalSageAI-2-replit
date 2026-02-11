@@ -254,7 +254,7 @@ def build_evidence_tasks_from_risk_codes(
                 mapping={
                     "truth_machine_placeholder": True,
                     "se_matrix_linkable": True,
-                    "ectd_leaf_target": None,
+                    "ectd_section": "",
                     "source_risk_code": rc,
                 },
             ))

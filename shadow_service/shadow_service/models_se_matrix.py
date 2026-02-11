@@ -74,7 +74,7 @@ class EvidenceTaskV2(BaseModel):
         default_factory=lambda: {
             "truth_machine_placeholder": True,
             "se_matrix_linkable": True,
-            "ectd_leaf_target": None,
+            "ectd_section": "",
         },
     )
 
@@ -97,7 +97,7 @@ class SEMatrixPayloadV2(BaseModel):
     evidence_tasks: list[EvidenceTaskV2] = Field(default_factory=list)
     defense_readiness_score: int = Field(ge=0, le=100)
     generated_at: str  # ISO 8601
-    risk_code_map_version: str = "1.0.0"
+    risk_code_map_version: str = "2.0.0"
 
     # Downstream compatibility
     evidence_linkage: bool = True
