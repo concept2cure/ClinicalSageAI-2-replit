@@ -385,7 +385,158 @@ export function useDownloadDefensePacket() {
 import type {
   GenerateSEMatrixV2Request,
   GenerateSEMatrixV2Response,
+  BuildDefensePacketRequest,
+  BuildDefensePacketResponse,
+  DefensePacketFull,
+  SubmissionGateResult,
+  WaiveTaskRequest,
+  WaiveTaskResponse,
 } from '../../shared/types/predicate-intelligence';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D1 — Defense Packet Builder Hooks (Evidence Ops)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const DEFENSE_PACKET_BASE = '/api/programs';
+
+async function defensePacketFetch<T>(
+  path: string,
+  options: Record<string, unknown> = {}
+): Promise<T> {
+  const orgId = localStorage.getItem('organizationId') || '1';
+  const headers: Record<string, string> = {
+    'x-organization-id': orgId,
+    ...((options.headers as Record<string, string>) || {}),
+  };
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(`${DEFENSE_PACKET_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const errBody = await res.json();
+      detail = errBody?.detail || errBody?.error || res.statusText;
+    } catch {
+      detail = res.statusText;
+    }
+    throw new Error(`Defense Packet API error ${res.status}: ${detail}`);
+  }
+
+  if (res.status === 204) return {} as T;
+  return res.json();
+}
+
+export const defensePacketKeys = {
+  all: ['defense-packet'] as const,
+  build: (programId: string) => [...defensePacketKeys.all, 'build', programId] as const,
+  packet: (programId: string, hash: string) =>
+    [...defensePacketKeys.all, 'packet', programId, hash] as const,
+  gate: (programId: string, hash: string) =>
+    [...defensePacketKeys.all, 'gate', programId, hash] as const,
+  list: (programId: string) => [...defensePacketKeys.all, 'list', programId] as const,
+};
+
+/**
+ * Build a deterministic Defense Packet (6.6.D1).
+ * POST /api/programs/:programId/predicate-intel/defense-packet/build
+ */
+export function useBuildDefensePacket(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: BuildDefensePacketRequest) =>
+      defensePacketFetch<BuildDefensePacketResponse>(
+        `/${programId}/predicate-intel/defense-packet/build`,
+        { method: 'POST', body: JSON.stringify(params) }
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: defensePacketKeys.all });
+    },
+  });
+}
+
+/**
+ * Export defense packet as JSON (6.6.D1).
+ * GET /api/programs/:programId/predicate-intel/defense-packet/:hash/export.json
+ */
+export function useExportDefensePacketJSON(programId: string, manifestHash: string) {
+  return useQuery<DefensePacketFull>({
+    queryKey: defensePacketKeys.packet(programId, manifestHash),
+    queryFn: () =>
+      defensePacketFetch(
+        `/${programId}/predicate-intel/defense-packet/${manifestHash}/export.json`
+      ),
+    enabled: !!programId && !!manifestHash,
+    staleTime: 120_000,
+  });
+}
+
+/**
+ * Export defense packet as CSV (6.6.D1 — binary download).
+ */
+export function useExportDefensePacketCSV() {
+  return useMutation({
+    mutationFn: async ({
+      programId,
+      manifestHash,
+    }: {
+      programId: string;
+      manifestHash: string;
+    }) => {
+      const orgId = localStorage.getItem('organizationId') || '1';
+      const res = await fetch(
+        `${DEFENSE_PACKET_BASE}/${programId}/predicate-intel/defense-packet/${manifestHash}/export.csv`,
+        {
+          headers: { 'x-organization-id': orgId },
+          credentials: 'include',
+        }
+      );
+      if (!res.ok) throw new Error(`CSV export failed: ${res.statusText}`);
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition');
+      const filename = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'defense_packet.csv';
+      return { blob, filename };
+    },
+  });
+}
+
+/**
+ * Run submission gate check (6.6.D1).
+ * POST /api/programs/:programId/predicate-intel/defense-packet/:hash/submission-gate
+ */
+export function useSubmissionGate(programId: string) {
+  return useMutation({
+    mutationFn: (manifestHash: string) =>
+      defensePacketFetch<SubmissionGateResult>(
+        `/${programId}/predicate-intel/defense-packet/${manifestHash}/submission-gate`,
+        { method: 'POST' }
+      ),
+  });
+}
+
+/**
+ * Waive a task with audit trail (6.6.D1 — Part 11).
+ * POST /api/programs/:programId/predicate-intel/defense-packet/:packetId/waive-task
+ */
+export function useWaiveTask(programId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ packetId, ...params }: WaiveTaskRequest & { packetId: string }) =>
+      defensePacketFetch<WaiveTaskResponse>(
+        `/${programId}/predicate-intel/defense-packet/${packetId}/waive-task`,
+        { method: 'POST', body: JSON.stringify(params) }
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: defensePacketKeys.all });
+    },
+  });
+}
 
 /**
  * Generate V2 Evidence-Linked SE Matrix with risk_code → evidence_task_ids.

@@ -54,6 +54,7 @@ import {
   AlertCircle,
   ArrowRight,
   Eye,
+  Package,
 } from 'lucide-react';
 import {
   useCandidates,
@@ -66,6 +67,8 @@ import {
   useGenerateSEMatrix,
 } from '@/hooks/use-predicate-intelligence';
 import { SEMatrixV2Panel } from '@/components/predicate/SEMatrixV2Panel';
+import { DefensePacketPanel } from '@/components/predicate/DefensePacketPanel';
+import { PredicateRadarPlot } from '@/components/predicate/PredicateRadarPlot';
 import type {
   PredicateCandidate,
   EquivalenceStatus,
@@ -687,81 +690,13 @@ function PredicateRadarTab({
         </Card>
       )}
 
-      {/* Scatter Plot Visualization (Similarity vs Toxicity) */}
+      {/* Scatter Plot Visualization (Similarity vs Toxicity) — Phase 6.6.D SVG Radar */}
       {sorted.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" /> Predicate Radar
-            </CardTitle>
-            <CardDescription>
-              Similarity (X) vs. Safety (Y). Green = recommended. Red = toxic. Click a point for
-              details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative w-full h-64 border rounded-lg bg-muted/10 overflow-hidden">
-              {/* Axis labels */}
-              <span className="absolute bottom-1 right-2 text-[10px] text-muted-foreground">
-                Similarity →
-              </span>
-              <span className="absolute top-1 left-2 text-[10px] text-muted-foreground">
-                ← Safe
-              </span>
-              <span className="absolute bottom-1 left-2 text-[10px] text-muted-foreground">
-                Toxic →
-              </span>
-              {/* Quadrant shading */}
-              <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-green-50/50" />
-              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-red-50/50" />
-              {/* Data points */}
-              {sorted.map(c => {
-                const x = c.similarity_score * 100;
-                const y = (1 - c.toxicity_score) * 100; // invert: low toxicity = top
-                const dotColor = c.recommended
-                  ? 'bg-green-500 ring-green-300'
-                  : c.toxicity_score > TOXICITY_THRESHOLDS.danger
-                    ? 'bg-red-500 ring-red-300'
-                    : c.toxicity_score > TOXICITY_THRESHOLDS.caution
-                      ? 'bg-orange-400 ring-orange-200'
-                      : 'bg-yellow-400 ring-yellow-200';
-                return (
-                  <TooltipProvider key={c.id}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          className={`absolute w-4 h-4 rounded-full ring-2 cursor-pointer hover:scale-125 transition-transform ${dotColor}`}
-                          style={{
-                            left: `calc(${x}% - 8px)`,
-                            bottom: `calc(${y}% - 8px)`,
-                          }}
-                          onClick={() => onSelectCandidate(c)}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="text-xs">
-                          <p className="font-semibold">{c.device_name}</p>
-                          <p>
-                            {c.k_number} — {c.manufacturer}
-                          </p>
-                          <p>
-                            Similarity: {(c.similarity_score * 100).toFixed(0)}% | Toxicity:{' '}
-                            {(c.toxicity_score * 100).toFixed(0)}%
-                          </p>
-                          {c.enforcement_events.length > 0 && (
-                            <p className="text-red-600">
-                              ⚠ {c.enforcement_events.length} enforcement event(s)
-                            </p>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <PredicateRadarPlot
+          candidates={sorted}
+          selectedCandidate={null}
+          onSelectCandidate={onSelectCandidate}
+        />
       )}
 
       {/* Candidate Table */}
@@ -1413,6 +1348,9 @@ export default function PredicateIntelligencePage({
             <TabsTrigger value="se-matrix-v2" className="flex items-center gap-1">
               <FileText className="h-4 w-4" /> SE Matrix V2
             </TabsTrigger>
+            <TabsTrigger value="defense-packet" className="flex items-center gap-1">
+              <Package className="h-4 w-4" /> Defense Packet
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="radar" className="mt-4">
@@ -1435,6 +1373,14 @@ export default function PredicateIntelligencePage({
             <SEMatrixV2Panel
               programId={programId}
               predicateKNumber={selectedCandidate?.k_number}
+            />
+          </TabsContent>
+
+          <TabsContent value="defense-packet" className="mt-4">
+            <DefensePacketPanel
+              programId={programId}
+              predicateKNumber={selectedCandidate?.k_number}
+              initialSubjectDevice={{}}
             />
           </TabsContent>
         </Tabs>
