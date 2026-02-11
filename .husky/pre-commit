@@ -68,7 +68,7 @@ ECTD_CHANGED=$(git diff --cached --name-only | grep -E '(^schemas/|^ectd-stubs/|
 if [ -n "$ECTD_CHANGED" ]; then
   echo ""
   echo "🔒 eCTD contract files changed — running AJV bundle validation..."
-  if ! npm run ci:ectd-stubs --silent 2>&1; then
+  if ! npm run --silent ci:ectd-stubs 2>&1; then
     echo ""
     echo "🚫 ERROR: eCTD bundle validation FAILED."
     echo "   The bundle data does not validate against the schema."
@@ -85,7 +85,7 @@ RISK_CHANGED=$(git diff --cached --name-only | grep -E '(risk_codes|risk_vocab|p
 if [ -n "$RISK_CHANGED" ]; then
   echo ""
   echo "🔒 Risk code contract files changed — running risk code validation..."
-  if ! npm run ci:risk-codes --silent 2>&1; then
+  if ! npm run --silent ci:risk-codes 2>&1; then
     echo ""
     echo "🚫 ERROR: Risk code validation FAILED."
     echo "   Fix risk code contract files before committing."

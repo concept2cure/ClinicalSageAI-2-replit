@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+
+# ============================================
+# PRE-PUSH HOOK - eCTD Contract Enforcement (unconditional)
+# Added: Phase 6.6.H
+# ============================================
+# Unlike pre-commit (which only runs on changed files),
+# pre-push ALWAYS validates the eCTD bundle and risk codes.
+# This prevents any bypass via --no-verify on commit.
+# ============================================
+
+echo "🔒 Pre-push: Running eCTD contract enforcement gates..."
+
+# ── eCTD bundle validation (unconditional) ──
+echo "   Validating eCTD stubs bundle against schema (AJV)..."
+if ! npm run --silent ci:ectd-stubs 2>&1; then
+  echo ""
+  echo "🚫 ERROR: eCTD bundle validation FAILED."
+  echo "   The bundle data does not validate against the schema."
+  echo "   Fix schemas/ or ectd-stubs/ before pushing."
+  echo ""
+  exit 1
+fi
+echo "   ✅ eCTD bundle validation passed."
+
+# ── Risk code contract validation (unconditional) ──
+echo "   Validating risk code contracts..."
+if ! npm run --silent ci:risk-codes 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Risk code validation FAILED."
+  echo "   Fix risk code contract files before pushing."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Risk code validation passed."
+
+echo "✅ Pre-push checks complete — all gates passed."

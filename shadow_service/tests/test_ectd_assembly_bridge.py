@@ -266,6 +266,57 @@ class TestSequenceBuilder:
         assert "<sequence-number>0000</sequence-number>" in index_xml
         assert 'type="510k"' in index_xml
 
+    def test_index_xml_uses_per_leaf_operations(self):
+        """Each leaf in index.xml gets its per-leaf operation, not sequence_type."""
+        from shadow_service.ectd_sequence_builder import build_sequence_0000
+        import xml.etree.ElementTree as ET
+
+        # Create a sequence plan with mixed operations to verify per-leaf behavior
+        mixed_plan = {
+            "version": "1.0.0",
+            "sequence_number": "0001",
+            "sequence_type": "supplement",
+            "submission_type": "510k",
+            "lifecycle_operations": [
+                {"leaf_id": "m4-2-1-se-matrix", "operation": "replace"},
+                {"leaf_id": "m4-2-2-defense-packet", "operation": "new"},
+                {"leaf_id": "m5-1-1-toxicity-profile", "operation": "append"},
+                {"leaf_id": "m1-1-1-cover-letter", "operation": "delete"},
+            ],
+        }
+
+        files = build_sequence_0000(
+            leaf_map=SAMPLE_LEAF_MAP,
+            sequence_plan=mixed_plan,
+        )
+
+        index_xml = files["sequence/0001/index.xml"].decode("utf-8")
+
+        # Parse XML — strip the namespace for easier querying
+        root = ET.fromstring(index_xml)
+        ns = {"xlink": "http://www.w3.org/1999/xlink"}
+        leaves = root.findall(".//{urn:hl7-org:v3}leaf", namespaces=None)
+        # ElementTree doesn't auto-resolve the default ns; use string find instead
+        leaf_ops = {}
+        for line in index_xml.splitlines():
+            if "<leaf " in line:
+                # Extract ID and operation via string parsing
+                import re
+                id_match = re.search(r'ID="([^"]+)"', line)
+                op_match = re.search(r'operation="([^"]+)"', line)
+                if id_match and op_match:
+                    leaf_ops[id_match.group(1)] = op_match.group(1)
+
+        # Verify each leaf has the correct per-leaf operation (NOT "supplement")
+        assert leaf_ops["m4-2-1-se-matrix"] == "replace"
+        assert leaf_ops["m4-2-2-defense-packet"] == "new"
+        assert leaf_ops["m5-1-1-toxicity-profile"] == "append"
+        assert leaf_ops["m1-1-1-cover-letter"] == "delete"
+
+        # None should have sequence_type="supplement" (unless it was the per-leaf op)
+        assert "supplement" not in leaf_ops.values(), \
+            "Leaf operations should be per-leaf, not sequence_type fallback"
+
     def test_placeholder_stubs_for_missing_artifacts(self):
         """Leaves without artifact bytes get placeholder stubs."""
         from shadow_service.ectd_sequence_builder import build_sequence_0000

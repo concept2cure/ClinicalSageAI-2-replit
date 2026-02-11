@@ -140,6 +140,11 @@ def build_sequence_0000(
                 path = f"{prefix}/m1/{region}/{subdir}/{filename}"
                 files[path] = content
 
+    # ── Build per-leaf operations lookup for index.xml ──
+    leaf_operations: dict[str, str] = {}
+    for op in sequence_plan.get("lifecycle_operations", []):
+        leaf_operations[op["leaf_id"]] = op["operation"]
+
     # ── index.xml stub ──
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     index_xml = _build_index_xml(
@@ -147,6 +152,7 @@ def build_sequence_0000(
         sequence_type=seq_type,
         submission_type=submission_type,
         leaves=list(leaves_by_id.values()),
+        leaf_operations=leaf_operations,
         timestamp=now_iso,
     )
     files[f"{prefix}/index.xml"] = index_xml.encode("utf-8")
@@ -169,18 +175,25 @@ def _build_index_xml(
     sequence_type: str,
     submission_type: str,
     leaves: list[dict[str, Any]],
+    leaf_operations: dict[str, str],
     timestamp: str,
 ) -> str:
     """Build a minimal eCTD index.xml stub for a sequence.
 
     This is a v0 stub — not a full DTD-valid eCTD index.xml.
     It contains enough structure for downstream tooling to parse.
+
+    Args:
+        leaf_operations: Map of leaf_id → lifecycle operation (e.g. "new", "replace").
+                         Falls back to sequence_type if a leaf has no explicit operation.
     """
     leaf_entries = []
     for leaf in sorted(leaves, key=lambda l: l.get("section", "")):
+        # Use the per-leaf lifecycle operation, falling back to sequence_type
+        op = leaf_operations.get(leaf["leaf_id"], sequence_type)
         leaf_entries.append(
             f'    <leaf ID="{leaf["leaf_id"]}" '
-            f'operation="{sequence_type}" '
+            f'operation="{op}" '
             f'xlink:href="m{leaf["module"]}/{_module_subdir(leaf["section"])}/" '
             f'checksum-type="SHA-256">'
             f'\n      <title>{leaf.get("title", leaf["leaf_id"])}</title>'
