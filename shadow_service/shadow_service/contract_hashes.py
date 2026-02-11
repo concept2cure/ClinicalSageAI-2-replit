@@ -1,4 +1,4 @@
-"""Phase 6.6.G — Contract Hashes (Runtime Trust Chain).
+"""Phase 6.6.H — Contract Hashes (Runtime Trust Chain).
 
 Single source of truth for all contract hashes the proof pack system enforces.
 Every hash is computed from the canonical source files per-request (I/O cost
@@ -10,11 +10,17 @@ Contract fields:
   - schema_hash:           SHA-256 of the eCTD bundle schema
   - generator_version:     Git SHA or build version string
   - zip_manifest_hash:     Computed per-pack (not cached here)
+
+Phase 6.6.H additions:
+  - validate_ectd_bundle(): Runtime AJV-equivalent — validates the bundle DATA
+    against the bundle SCHEMA using Python jsonschema. Returns (valid, errors).
+    Called at persist + download time as a hard-stop gate.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import subprocess
@@ -200,3 +206,128 @@ def compute_drift_severity(reason_codes: list[str]) -> str:
 def should_block_download(drift_severity: str) -> bool:
     """Server-authoritative: block_download = severity === HIGH."""
     return drift_severity == "HIGH"
+
+
+# ── Phase 6.6.H: Runtime eCTD Bundle Validation ──────────────────────────
+
+BUNDLE_DATA_PATH = _BASE.parent.parent / "ectd-stubs" / "ectd_stubs.bundle.json"
+SUB_SCHEMA_FILES = ["leaf_map.schema.json", "sequence_plan.schema.json", "m1_index.schema.json"]
+_SCHEMAS_DIR = SCHEMA_BUNDLE_PATH.parent
+
+
+def validate_ectd_bundle() -> tuple[bool, list[str]]:
+    """Validate the eCTD bundle DATA against the bundle SCHEMA at runtime.
+
+    This is the Python equivalent of the AJV CI gate. Uses jsonschema to
+    validate the data payload against the JSON Schema with $ref resolution.
+
+    Returns:
+        (valid, errors): True and empty list if valid, False and error strings
+        with JSONPointer paths if invalid.
+
+    This function is a HARD-STOP gate — called at persist and download time.
+    If it returns (False, errors), the endpoint must block with 409.
+    """
+    errors: list[str] = []
+
+    # Load bundle data
+    if not BUNDLE_DATA_PATH.exists():
+        return False, ["Bundle data file missing: ectd-stubs/ectd_stubs.bundle.json"]
+
+    try:
+        bundle_data = json.loads(BUNDLE_DATA_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return False, [f"Bundle data invalid: {exc}"]
+
+    # Load bundle schema
+    if not SCHEMA_BUNDLE_PATH.exists():
+        return False, ["Bundle schema file missing: schemas/ectd_stubs.bundle.schema.json"]
+
+    try:
+        bundle_schema = json.loads(SCHEMA_BUNDLE_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return False, [f"Bundle schema invalid: {exc}"]
+
+    # Load sub-schemas for $ref resolution
+    try:
+        import jsonschema
+        from jsonschema import Draft7Validator
+    except ImportError:
+        # If jsonschema is not installed, fail-closed
+        return False, ["jsonschema library not installed — cannot validate bundle at runtime"]
+
+    # Build a schema store for $ref resolution
+    schema_store: dict[str, dict] = {}
+    for sub_file in SUB_SCHEMA_FILES:
+        sub_path = _SCHEMAS_DIR / sub_file
+        if sub_path.exists():
+            try:
+                sub_schema = json.loads(sub_path.read_text(encoding="utf-8"))
+                schema_id = sub_schema.get("$id", "")
+                if schema_id:
+                    schema_store[schema_id] = sub_schema
+            except (json.JSONDecodeError, OSError) as exc:
+                errors.append(f"Sub-schema {sub_file} invalid: {exc}")
+
+    if errors:
+        return False, errors
+
+    # Validate using jsonschema with $ref resolution
+    # Use referencing library if available (jsonschema >= 4.18), else fallback to RefResolver
+    try:
+        try:
+            from referencing import Registry, Resource
+            from referencing.jsonschema import DRAFT7
+
+            resources = []
+            for schema_id, schema_obj in schema_store.items():
+                resources.append((schema_id, Resource.from_contents(schema_obj, default_specification=DRAFT7)))
+            registry = Registry().with_resources(resources)
+            validator = Draft7Validator(bundle_schema, registry=registry)
+        except ImportError:
+            # Fallback to deprecated RefResolver for older jsonschema versions
+            from jsonschema import RefResolver  # type: ignore[attr-defined]
+            resolver = RefResolver.from_schema(bundle_schema, store=schema_store)
+            validator = Draft7Validator(bundle_schema, resolver=resolver)
+        validation_errors = list(validator.iter_errors(bundle_data))
+
+        if validation_errors:
+            for err in validation_errors:
+                pointer = "/" + "/".join(str(p) for p in err.absolute_path) if err.absolute_path else "/"
+                errors.append(f"{pointer}: {err.message}")
+            return False, errors
+    except jsonschema.SchemaError as exc:
+        return False, [f"Bundle schema itself is invalid: {exc.message}"]
+    except Exception as exc:
+        return False, [f"Unexpected validation error: {exc}"]
+
+    # Cross-check bundle hash
+    # NOTE: The JS hash computation uses JSON.stringify(subContents, sortedKeys, 0)
+    # where the replacer array strips all nested properties. The canonical form is
+    # just the sorted filenames as keys with empty objects as values.
+    try:
+        sub_contents: dict[str, object] = {}
+        for sub_file in SUB_SCHEMA_FILES:
+            sub_path = _SCHEMAS_DIR / sub_file
+            if sub_path.exists():
+                # Only need to confirm the file exists; the JS replacer strips content
+                sub_contents[sub_file] = {}
+
+        # Match JS: JSON.stringify(subContents, Object.keys(subContents).sort(), 0)
+        canonical = json.dumps(
+            dict(sorted(sub_contents.items())),
+            separators=(",", ":"),
+        )
+        computed_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        stored_hash = bundle_data.get("bundle_hash", "")
+
+        if computed_hash != stored_hash:
+            errors.append(
+                f"Bundle hash mismatch: computed={computed_hash[:16]}… "
+                f"stored={stored_hash[:16]}…"
+            )
+            return False, errors
+    except Exception as exc:
+        return False, [f"Hash verification failed: {exc}"]
+
+    return True, []

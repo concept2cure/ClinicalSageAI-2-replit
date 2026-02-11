@@ -230,6 +230,13 @@ class ProofPackZipBuilder:
                 contract_bytes = _canonical_json(self.contract_snapshot).encode("utf-8")
                 _track_add(f"{PREFIX}/contracts/contract_hashes.json", contract_bytes, "application/json")
 
+                # Phase 6.6.H: contract_snapshot.json + .sha256 — trust chain reinforcement
+                # Store the full contract snapshot with its hash for downstream verify
+                _track_add(f"{PREFIX}/contracts/contract_snapshot.json", contract_bytes, "application/json")
+                snapshot_hash = _sha256(contract_bytes)
+                snapshot_hash_bytes = (snapshot_hash + "  contract_snapshot.json\n").encode("utf-8")
+                _track_add(f"{PREFIX}/contracts/contract_snapshot.sha256", snapshot_hash_bytes, "text/plain")
+
             # ── outputs/ ──
             payload_bytes = _canonical_json(self.payload_json).encode("utf-8")
             _track_add(f"{PREFIX}/outputs/se_matrix_payload.json", payload_bytes, "application/json")

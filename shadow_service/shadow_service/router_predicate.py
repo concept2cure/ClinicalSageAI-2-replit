@@ -2263,13 +2263,40 @@ async def persist_proof_pack(
     import json as _json
     import uuid as _uuid
 
-    from .contract_hashes import get_contract_snapshot
+    from .contract_hashes import get_contract_snapshot, validate_ectd_bundle
     from . import sql_defense_packets as dp_sql
     from . import sql_proof_pack as pp_sql
 
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
+
+    # ── Phase 6.6.H: Runtime eCTD bundle validation (hard-stop) ──
+    bundle_valid, bundle_errors = validate_ectd_bundle()
+    if not bundle_valid:
+        # Emit Part 11 audit event for schema-invalid bundle
+        try:
+            contract = get_contract_snapshot()
+            await pool.fetchrow(
+                pp_sql.INSERT_AUDIT_EVENT,
+                None, None, user_id, "PROOF_PACK_SCHEMA_INVALID",
+                "", manifest_hash, contract["risk_vocab_hash"],
+                contract["risk_codes_lock_hash"], contract["schema_hash"],
+                contract["generator_version"], request_id or str(_uuid.uuid4()),
+                _json.dumps(contract),
+                _json.dumps({"validation_errors": bundle_errors, "gate": "persist"}),
+            )
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (SCHEMA_INVALID persist): %s", _audit_exc)
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "PROOF_PACK_SCHEMA_INVALID",
+                "validation_errors": bundle_errors,
+                "block_download": True,
+                "message": "eCTD bundle data does not validate against schema. Persist blocked.",
+            },
+        )
 
     # Load the defense packet
     row = await pool.fetchrow(dp_sql.SELECT_PACKET_BY_MANIFEST_HASH, manifest_hash)
@@ -2393,7 +2420,7 @@ async def download_proof_pack_zip(
     import uuid as _uuid
     from starlette.responses import Response as StarletteResponse
 
-    from .contract_hashes import get_contract_snapshot, check_contract_mismatch, ContractSnapshot
+    from .contract_hashes import get_contract_snapshot, check_contract_mismatch, ContractSnapshot, validate_ectd_bundle
     from .proof_pack_zip import ProofPackZipBuilder
     from . import sql_proof_pack as pp_sql
 
@@ -2402,6 +2429,32 @@ async def download_proof_pack_zip(
         raise HTTPException(status_code=503, detail="Database unavailable")
 
     req_id = request_id or str(_uuid.uuid4())
+
+    # ── Phase 6.6.H: Runtime eCTD bundle validation (hard-stop) ──
+    bundle_valid, bundle_errors = validate_ectd_bundle()
+    if not bundle_valid:
+        try:
+            contract = get_contract_snapshot()
+            await pool.fetchrow(
+                pp_sql.INSERT_AUDIT_EVENT,
+                None, None, user_id, "PROOF_PACK_SCHEMA_INVALID",
+                "", "", contract["risk_vocab_hash"],
+                contract["risk_codes_lock_hash"], contract["schema_hash"],
+                contract["generator_version"], req_id,
+                _json.dumps(contract),
+                _json.dumps({"validation_errors": bundle_errors, "gate": "download"}),
+            )
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (SCHEMA_INVALID download): %s", _audit_exc)
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "PROOF_PACK_SCHEMA_INVALID",
+                "validation_errors": bundle_errors,
+                "block_download": True,
+                "message": "eCTD bundle data does not validate against schema. Download blocked.",
+            },
+        )
 
     # ── Load proof pack by ID ──
     row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_FOR_DOWNLOAD_BY_ID, proof_pack_id)

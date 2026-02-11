@@ -326,9 +326,9 @@ class TestDriftSeverityMapping:
 
     def test_unknown_code_defaults_safely(self):
         from shadow_service.contract_hashes import compute_drift_severity
-        # Unknown codes should not crash — defaults to MED (safe side)
+        # GA audit: unknown codes fail-closed to HIGH (not MED)
         result = compute_drift_severity(["UNKNOWN_CODE"])
-        assert result in ("LOW", "MED", "NONE"), f"Unknown code should default safely, got {result}"
+        assert result == "HIGH", f"Unknown code should fail-closed to HIGH, got {result}"
 
     def test_block_download_only_for_high(self):
         from shadow_service.contract_hashes import should_block_download

@@ -2,9 +2,18 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://clinicalsage.ai/schemas/ectd_stubs.bundle.schema.json",
   "title": "eCTD Stubs Bundle Schema",
-  "description": "Bundle schema for validating all eCTD stub artifacts in a proof pack ZIP. This is the single schema file hashed by compute_schema_hash() in contract_hashes.py.",
+  "description": "Bundle schema for validating all eCTD stub artifacts in a proof pack ZIP. Validates the DATA payload (ectd-stubs/ectd_stubs.bundle.json), not just the schema artifact. This is the single schema file hashed by compute_schema_hash() in contract_hashes.py.",
   "type": "object",
-  "required": ["version", "bundle_hash", "schemas"],
+  "required": [
+    "version",
+    "bundle_hash",
+    "schemas",
+    "proof_pack_layout",
+    "leaf_map",
+    "sequence_plan",
+    "m1_index"
+  ],
+  "additionalProperties": false,
   "properties": {
     "version": {
       "type": "string",
@@ -78,27 +87,23 @@
         "required_dirs": {
           "type": "array",
           "items": { "type": "string" },
-          "default": [
-            "proof-pack/contracts/",
-            "proof-pack/outputs/",
-            "proof-pack/ectd-stubs/m1/",
-            "proof-pack/ectd-stubs/m4/",
-            "proof-pack/ectd-stubs/m5/"
-          ]
+          "minItems": 1
         },
         "required_files": {
           "type": "array",
           "items": { "type": "string" },
-          "default": [
-            "proof-pack/manifest.json",
-            "proof-pack/checksums.sha256",
-            "proof-pack/audit_events.jsonl",
-            "proof-pack/contracts/risk_codes.lock.json",
-            "proof-pack/contracts/contract_hashes.json",
-            "proof-pack/outputs/se_matrix_payload.json"
-          ]
+          "minItems": 1
         }
       }
+    },
+    "leaf_map": {
+      "$ref": "https://clinicalsage.ai/schemas/leaf_map.schema.json"
+    },
+    "sequence_plan": {
+      "$ref": "https://clinicalsage.ai/schemas/sequence_plan.schema.json"
+    },
+    "m1_index": {
+      "$ref": "https://clinicalsage.ai/schemas/m1_index.schema.json"
     }
   }
 }
