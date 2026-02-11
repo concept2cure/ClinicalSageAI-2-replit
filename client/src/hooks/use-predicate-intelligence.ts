@@ -26,6 +26,9 @@ import type {
   ToxicPredicateDetail,
   RenderSEDocxRequest,
   DownloadDefensePacketRequest,
+  ProofPack,
+  ReplayDeterminismRequest,
+  ReplayDeterminismResult,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -580,5 +583,50 @@ export function useRenderSEDocxV2() {
       const filename = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'SE_Matrix_V2.docx';
       return { blob, filename };
     },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E1 — Proof Pack (Zero-Drift Evidence)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const proofPackKeys = {
+  all: ['proof-pack'] as const,
+  pack: (programId: string, subjectHash: string) =>
+    [...proofPackKeys.all, programId, subjectHash] as const,
+};
+
+/**
+ * Fetch the Defense Proof Pack — zero-drift attestation.
+ * GET /api/programs/:programId/predicate-intel/proof-pack?subject_hash=...
+ */
+export function useProofPack(programId: string, subjectHash: string) {
+  return useQuery<ProofPack>({
+    queryKey: proofPackKeys.pack(programId, subjectHash),
+    queryFn: () =>
+      defensePacketFetch(
+        `/${programId}/predicate-intel/proof-pack?subject_hash=${encodeURIComponent(subjectHash)}`
+      ),
+    enabled: !!programId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E2 — Replay Determinism
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Replay a defense packet build and verify determinism.
+ * POST /api/programs/:programId/predicate-intel/replay-determinism
+ */
+export function useReplayDeterminism(programId: string) {
+  return useMutation<ReplayDeterminismResult, Error, ReplayDeterminismRequest>({
+    mutationFn: (params: ReplayDeterminismRequest) =>
+      defensePacketFetch<ReplayDeterminismResult>(
+        `/${programId}/predicate-intel/replay-determinism`,
+        { method: 'POST', body: JSON.stringify(params) }
+      ),
   });
 }

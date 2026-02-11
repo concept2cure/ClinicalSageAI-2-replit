@@ -788,6 +788,8 @@ export interface GenerateSEMatrixV2Response {
   evidence_task_count: number;
   risk_code_map_version: string;
   generation_timestamp: string;
+  /** Manifest hash for determinism replay (E2). May be absent in older responses. */
+  manifest_hash?: string;
 }
 
 /** Request body for POST /generate-se-matrix-v2. */
@@ -1096,6 +1098,61 @@ export interface WaiveTaskResponse {
   waiver_reason: string;
   waived_by: string;
   waived_at: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E1 — Proof Pack (Zero-Drift Evidence)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type IngestFreshnessStatus = 'GREEN' | 'YELLOW' | 'RED';
+
+export interface IngestFreshness {
+  last_success_at: string | null;
+  source: string;
+  status: IngestFreshnessStatus;
+}
+
+export interface ProofPackAudit {
+  signature_method: 'HSM' | 'PKI' | 'DEV';
+  key_id: string;
+  doc_hash: string;
+}
+
+/**
+ * Defense Proof Pack — read-only attestation of contract integrity.
+ * GET /predicate-intel/proof-pack?program_id=...&subject_hash=...
+ */
+export interface ProofPack {
+  subject_hash: string;
+  risk_vocab_version: string;
+  risk_vocab_hash: string;
+  manifest_hash: string;
+  generated_at: string;
+  ingest_freshness: IngestFreshness;
+  audit: ProofPackAudit;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E2 — Replay Determinism
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ReplayDeterminismRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: Record<string, unknown>;
+  /** The original manifest hash to compare against */
+  originalManifestHash: string;
+}
+
+export interface ReplayDeterminismResult {
+  deterministic: boolean;
+  original_manifest_hash: string;
+  replay_manifest_hash: string;
+  original_risk_vocab_hash: string;
+  replay_risk_vocab_hash: string;
+  original_risk_codes: string[];
+  replay_risk_codes: string[];
+  drift_details: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

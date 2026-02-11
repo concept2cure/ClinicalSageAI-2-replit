@@ -69,6 +69,7 @@ import {
 import { SEMatrixV2Panel } from '@/components/predicate/SEMatrixV2Panel';
 import { DefensePacketPanel } from '@/components/predicate/DefensePacketPanel';
 import { PredicateRadarPlot } from '@/components/predicate/PredicateRadarPlot';
+import { ProofStrip } from '@/components/predicate/ProofStrip';
 import type {
   PredicateCandidate,
   EquivalenceStatus,
@@ -1332,6 +1333,9 @@ export default function PredicateIntelligencePage({
 
       {/* Summary stats */}
       {programId && <SummaryCards programId={programId} selectedCandidate={selectedCandidate} />}
+
+      {/* E1: Proof Strip — zero-drift compliance badges */}
+      {programId && <ProofStrip programId={programId} />}
 
       {/* Main Tabs */}
       {programId && (

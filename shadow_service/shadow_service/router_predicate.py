@@ -1259,6 +1259,7 @@ async def generate_se_matrix_v2(req: GenerateSEMatrixV2Request):
             "evidence_task_count": len(payload.evidence_tasks),
             "risk_code_map_version": payload.risk_code_map_version,
             "generation_timestamp": payload.generated_at,
+            "manifest_hash": getattr(payload, "manifest_hash", None) or payload.generated_at,
         }
     except Exception as exc:
         logger.exception("SE matrix V2 generation failed: %s", exc)
@@ -1842,4 +1843,234 @@ async def check_submission_gate_endpoint(manifest_hash: str):
         "recommended_next_actions": next_actions,
         "override_available": not allowed,
         "reason": reason,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.E1 — Defense Proof Pack (Zero-Drift Evidence)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/proof-pack")
+async def get_proof_pack(
+    program_id: str = Query(..., description="Regulatory program UUID"),
+    subject_hash: str = Query("", description="Subject device hash (for latest packet lookup)"),
+):
+    """Return a minimal proof attestation packet for demo / compliance.
+
+    Always includes risk_vocab_hash and manifest_hash.
+    Never includes secrets.
+    Works with no DB access beyond latest ingest run + latest defense packet.
+
+    Phase 6.6.E1 — Defense Proof Pack
+    """
+    import hashlib
+    import json as _json
+    from datetime import timezone as _tz
+
+    from .scoring.risk_code_map import RISK_CODE_MAP_VERSION
+    from .scoring.risk_code_contract_validator import _compute_lock_hash
+
+    risk_vocab_hash = _compute_lock_hash()
+
+    # ── Latest defense packet for this program+subject (if any) ──
+    manifest_hash = ""
+    generated_at = ""
+    pool = await db.get_pool()
+
+    if pool and subject_hash:
+        try:
+            from . import sql_defense_packets as dp_sql
+            row = await pool.fetchrow(
+                dp_sql.SELECT_LATEST_PACKET_FOR_SUBJECT,
+                program_id,
+                subject_hash,
+            )
+            if row:
+                manifest_hash = row.get("manifest_hash", "") or ""
+                created = row.get("created_at")
+                if created:
+                    generated_at = created.isoformat() if hasattr(created, "isoformat") else str(created)
+        except Exception as exc:
+            logger.warning("proof-pack: failed to read latest packet: %s", exc)
+
+    if not generated_at:
+        generated_at = datetime.now(timezone.utc).isoformat()
+
+    # ── Ingest freshness ──
+    ingest_freshness = {
+        "last_success_at": None,
+        "source": "openFDA + enforcement",
+        "status": "RED",
+    }
+
+    if pool:
+        try:
+            ingest_row = await pool.fetchrow(fda_sql.SELECT_LAST_SUCCESSFUL_INGEST)
+            if ingest_row:
+                completed = ingest_row.get("completed_at")
+                if completed:
+                    ingest_freshness["last_success_at"] = (
+                        completed.isoformat() if hasattr(completed, "isoformat") else str(completed)
+                    )
+                    age = datetime.now(timezone.utc) - completed.replace(tzinfo=timezone.utc) if completed.tzinfo is None else datetime.now(timezone.utc) - completed
+                    if age <= timedelta(days=INGEST_FRESHNESS_DAYS):
+                        ingest_freshness["status"] = "GREEN"
+                    elif age <= timedelta(days=INGEST_FRESHNESS_DAYS * 2):
+                        ingest_freshness["status"] = "YELLOW"
+                    else:
+                        ingest_freshness["status"] = "RED"
+        except Exception as exc:
+            logger.warning("proof-pack: failed to read ingest freshness: %s", exc)
+
+    # ── Audit stub (DEV signer for now; HSM/PKI in production) ──
+    doc_content = f"{program_id}:{subject_hash}:{manifest_hash}:{risk_vocab_hash}"
+    doc_hash = hashlib.sha256(doc_content.encode("utf-8")).hexdigest()
+
+    return {
+        "subject_hash": subject_hash,
+        "risk_vocab_version": RISK_CODE_MAP_VERSION,
+        "risk_vocab_hash": risk_vocab_hash,
+        "manifest_hash": manifest_hash,
+        "generated_at": generated_at,
+        "ingest_freshness": ingest_freshness,
+        "audit": {
+            "signature_method": "DEV",
+            "key_id": "dev-local-001",
+            "doc_hash": doc_hash,
+        },
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.E2 — Replay Determinism
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class ReplayDeterminismPayload(BaseModel):
+    """Payload for the replay determinism check."""
+    product_code: str = Field(..., alias="productCode")
+    subject_device: dict = Field(..., alias="subjectDevice")
+    selected_predicate: dict = Field(..., alias="selectedPredicate")
+    original_manifest_hash: str = Field(..., alias="originalManifestHash")
+
+    class Config:
+        populate_by_name = True
+
+
+@router.post("/replay-determinism")
+async def replay_determinism(payload: ReplayDeterminismPayload):
+    """Re-run the defense packet build and compare hashes for determinism.
+
+    Returns whether the replay produced identical manifest_hash,
+    risk_vocab_hash, and triggered_risk_codes.
+
+    Phase 6.6.E2 — Replay Determinism
+    """
+    import json as _json
+
+    from .scoring.risk_code_contract_validator import _compute_lock_hash
+
+    drift_details: list[str] = []
+
+    # ── Load original packet ──
+    original_manifest_hash = payload.original_manifest_hash
+    original_risk_vocab_hash = ""
+    original_risk_codes: list[str] = []
+    pool = await db.get_pool()
+
+    if pool:
+        try:
+            from . import sql_defense_packets as dp_sql
+            row = await pool.fetchrow(
+                dp_sql.SELECT_PACKET_BY_MANIFEST_HASH,
+                original_manifest_hash,
+            )
+            if row:
+                original_risk_vocab_hash = row.get("risk_vocab_hash", "") or ""
+                codes_raw = row.get("risk_codes_used", [])
+                if isinstance(codes_raw, str):
+                    codes_raw = _json.loads(codes_raw)
+                if isinstance(codes_raw, list):
+                    original_risk_codes = sorted(codes_raw)
+                elif isinstance(codes_raw, dict):
+                    original_risk_codes = sorted(codes_raw.keys())
+        except Exception as exc:
+            logger.warning("replay-determinism: failed to read original packet: %s", exc)
+
+    # ── Replay: rebuild using the same deterministic pipeline ──
+    from .predicate_intel.defense_packet import (
+        build_defense_packet_from_manifest,
+    )
+    from .generators.se_matrix_payload import generate_se_matrix_with_manifest
+
+    try:
+        se_result = generate_se_matrix_with_manifest(
+            program_id="replay",
+            product_code=payload.product_code,
+            subject_device=payload.subject_device,
+            predicate_record=payload.selected_predicate,
+            design_control_ids={},
+        )
+        manifest = se_result["manifest"]
+        subject_hash = manifest["subject_hash"]
+        if "se_matrix" not in manifest:
+            comparison_rows = se_result.get("payload", {}).get("comparison_rows", [])
+            manifest["se_matrix"] = {"rows": comparison_rows}
+
+        replay_packet = build_defense_packet_from_manifest(
+            program_id="replay",
+            product_code=payload.product_code,
+            manifest=manifest,
+            subject_hash=subject_hash,
+        )
+        replay_data = replay_packet.model_dump(mode="json") if hasattr(replay_packet, "model_dump") else replay_packet
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Replay build failed: {exc}",
+        )
+
+    replay_manifest_hash = replay_data.get("manifest_hash", "") if isinstance(replay_data, dict) else ""
+    replay_risk_vocab_hash = _compute_lock_hash()
+
+    # Extract risk codes from replay tasks
+    replay_tasks = replay_data.get("tasks", []) if isinstance(replay_data, dict) else []
+    replay_risk_codes_set: set[str] = set()
+    for task in replay_tasks:
+        if isinstance(task, dict):
+            for code in task.get("triggered_risk_codes", []):
+                replay_risk_codes_set.add(code)
+    replay_risk_codes = sorted(replay_risk_codes_set)
+
+    # ── Compare ──
+    if original_manifest_hash != replay_manifest_hash:
+        drift_details.append(
+            f"manifest_hash mismatch: original={original_manifest_hash[:16]}… replay={replay_manifest_hash[:16]}…"
+        )
+    if original_risk_vocab_hash and original_risk_vocab_hash != replay_risk_vocab_hash:
+        drift_details.append(
+            f"risk_vocab_hash mismatch: original={original_risk_vocab_hash[:16]}… replay={replay_risk_vocab_hash[:16]}…"
+        )
+    if original_risk_codes != replay_risk_codes:
+        added = set(replay_risk_codes) - set(original_risk_codes)
+        removed = set(original_risk_codes) - set(replay_risk_codes)
+        parts = []
+        if added:
+            parts.append(f"added={sorted(added)}")
+        if removed:
+            parts.append(f"removed={sorted(removed)}")
+        drift_details.append(f"risk_codes changed: {', '.join(parts)}")
+
+    deterministic = len(drift_details) == 0
+
+    return {
+        "deterministic": deterministic,
+        "original_manifest_hash": original_manifest_hash,
+        "replay_manifest_hash": replay_manifest_hash,
+        "original_risk_vocab_hash": original_risk_vocab_hash,
+        "replay_risk_vocab_hash": replay_risk_vocab_hash,
+        "original_risk_codes": original_risk_codes,
+        "replay_risk_codes": replay_risk_codes,
+        "drift_details": drift_details,
     }

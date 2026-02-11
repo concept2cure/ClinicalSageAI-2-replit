@@ -357,6 +357,13 @@ ORDER BY started_at DESC
 LIMIT 1;
 """
 
+SELECT_LAST_SUCCESSFUL_INGEST = """
+SELECT * FROM predicate.fda_ingest_runs
+WHERE status = 'completed'
+ORDER BY completed_at DESC
+LIMIT 1;
+"""
+
 SELECT_INGEST_RUNS_RECENT = """
 SELECT * FROM predicate.fda_ingest_runs
 ORDER BY started_at DESC

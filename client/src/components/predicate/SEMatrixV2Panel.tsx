@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -34,8 +35,16 @@ import {
   Play,
   FileText,
   Shield,
+  ShieldCheck,
+  ShieldAlert,
+  RefreshCw,
 } from 'lucide-react';
-import { useGenerateSEMatrixV2, useRenderSEDocxV2 } from '@/hooks/use-predicate-intelligence';
+import {
+  useGenerateSEMatrixV2,
+  useRenderSEDocxV2,
+  useReplayDeterminism,
+} from '@/hooks/use-predicate-intelligence';
+import type { ReplayDeterminismResult } from '../../../shared/types/predicate-intelligence';
 import type {
   SEMatrixRowV2,
   EvidenceTaskV2,
@@ -159,6 +168,8 @@ export function SEMatrixV2Panel({
 
   const generateMutation = useGenerateSEMatrixV2();
   const renderDocxMutation = useRenderSEDocxV2();
+  const replayMutation = useReplayDeterminism(programId);
+  const [replayResult, setReplayResult] = useState<ReplayDeterminismResult | null>(null);
 
   const handleFieldChange = useCallback((key: string, value: string) => {
     setSubjectDevice(prev => ({ ...prev, [key]: value }));
@@ -436,13 +447,106 @@ export function SEMatrixV2Panel({
             </Card>
           )}
 
-          {/* Metadata footer */}
-          <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
-            <span>Version: {payload.version}</span>
-            <span>Risk Map: {result.risk_code_map_version}</span>
-            <span>Lock: {RISK_CODES_LOCK_HASH.slice(0, 12)}…</span>
-            <span>Generated: {new Date(result.generation_timestamp).toLocaleString()}</span>
-            <span>Standard: {payload.regulatory_standard}</span>
+          {/* E2: Replay Determinism + Metadata footer */}
+          <div className="flex flex-col gap-3">
+            {/* Replay Determinism — the mic drop */}
+            {result.manifest_hash && (
+              <div className="flex items-center gap-3">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={replayMutation.isPending}
+                        data-testid="replay-determinism-btn"
+                        onClick={() => {
+                          setReplayResult(null);
+                          replayMutation.mutate(
+                            {
+                              productCode: payload.comparison_rows?.[0]?.product_code || '',
+                              subjectDevice: subjectDevice,
+                              selectedPredicate: { k_number: kNumber },
+                              originalManifestHash: result.manifest_hash!,
+                            },
+                            { onSuccess: data => setReplayResult(data) }
+                          );
+                        }}
+                      >
+                        <RefreshCw
+                          className={`h-3.5 w-3.5 mr-1.5 ${replayMutation.isPending ? 'animate-spin' : ''}`}
+                        />
+                        {replayMutation.isPending ? 'Replaying…' : 'Replay / Verify Determinism'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs max-w-xs">
+                        Re-submits the same inputs and asserts identical manifest hash, risk vocab
+                        hash, and triggered risk codes. Converts "trust me" into "watch it verify
+                        itself."
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Replay result badge */}
+                {replayResult && (
+                  <Badge
+                    variant="outline"
+                    data-testid="replay-result-badge"
+                    className={
+                      replayResult.deterministic
+                        ? 'bg-green-100 text-green-800 border-green-300'
+                        : 'bg-red-100 text-red-800 border-red-300 animate-pulse'
+                    }
+                  >
+                    {replayResult.deterministic ? (
+                      <>
+                        <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Deterministic — Verified
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="h-3.5 w-3.5 mr-1" /> RED DRIFT DETECTED
+                      </>
+                    )}
+                  </Badge>
+                )}
+
+                {replayMutation.isError && (
+                  <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                    Replay failed: {replayMutation.error?.message?.slice(0, 60) || 'unknown error'}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Drift detail lines (if any) */}
+            {replayResult &&
+              !replayResult.deterministic &&
+              replayResult.drift_details.length > 0 && (
+                <div
+                  className="rounded border border-red-300 bg-red-50 p-2 text-xs text-red-800 space-y-1"
+                  data-testid="drift-details"
+                >
+                  <p className="font-semibold">
+                    ⚠ Drift detected — downloads blocked until resolved:
+                  </p>
+                  {replayResult.drift_details.map((d, i) => (
+                    <p key={i} className="font-mono text-[11px]">
+                      • {d}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+            {/* Metadata row */}
+            <div className="text-xs text-muted-foreground flex gap-4 flex-wrap">
+              <span>Version: {payload.version}</span>
+              <span>Risk Map: {result.risk_code_map_version}</span>
+              <span>Lock: {RISK_CODES_LOCK_HASH.slice(0, 12)}…</span>
+              <span>Generated: {new Date(result.generation_timestamp).toLocaleString()}</span>
+              <span>Standard: {payload.regulatory_standard}</span>
+            </div>
           </div>
         </>
       )}

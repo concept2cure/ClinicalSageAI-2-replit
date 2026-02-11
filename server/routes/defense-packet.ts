@@ -869,4 +869,88 @@ router.post(
   }
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:programId/predicate-intel/proof-pack — E1 Defense Proof Pack
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/:programId/predicate-intel/proof-pack',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId } = req.params;
+    const subjectHash = (req.query.subject_hash as string) || '';
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/predicate/proof-pack?program_id=${encodeURIComponent(programId)}&subject_hash=${encodeURIComponent(subjectHash)}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] proof-pack failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:programId/predicate-intel/replay-determinism — E2 Replay Determinism
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/:programId/predicate-intel/replay-determinism',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { programId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+    const organizationId = String((req as any).user?.organizationId || '');
+
+    try {
+      // Audit: DETERMINISM_REPLAY — Part 11 event
+      try {
+        await logAuditEvent({
+          category: 'compliance',
+          severity: 'info',
+          action: 'DETERMINISM_REPLAY',
+          userId,
+          organizationId,
+          resourceType: 'defense_packet',
+          resourceId: req.body?.originalManifestHash || 'unknown',
+          success: true,
+          metadata: {
+            program_id: programId,
+            user_id: userId,
+            original_manifest_hash: req.body?.originalManifestHash,
+            replayed_at: new Date().toISOString(),
+          },
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
+      const result = await shadowFetch<Record<string, unknown>>(
+        'POST',
+        '/predicate/replay-determinism',
+        req.body
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] replay-determinism failed:', err.message);
+      return res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  }
+);
+
 export default router;
