@@ -365,7 +365,11 @@ class TestStaleness:
 
     def test_stale_when_predicate_changed(self):
         pkt = self._build_packet()
-        reasons = is_packet_stale(pkt, current_predicate_k="K999999")
+        reasons = is_packet_stale(
+            pkt,
+            current_predicate_k="K999999",
+            packet_predicate_k="K000001",
+        )
         assert STALE_PREDICATE_CHANGED in reasons
 
     def test_stale_when_predicate_refreshed(self):

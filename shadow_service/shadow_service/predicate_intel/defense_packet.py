@@ -45,6 +45,7 @@ from ..models_defense_packet import (
     ReviewerQuestionSeed,
     SubmissionGateResult,
 )
+from .manifest import canonical_sort, extract_top_risks
 from .risk_vocab import load_risk_vocab_hash
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -753,8 +754,8 @@ def build_defense_packet_from_manifest(
     for code in (manifest.get("risk_codes_used") or []):
         triggered.append(code)
 
-    # Dedup + stable sort
-    risk_codes = sorted(set(triggered))
+    # Dedup + stable canonical sort
+    risk_codes = canonical_sort(list(set(triggered)))
 
     # ── Build tasks (dedupe by task_id) ──
     task_objs: List[EvidenceTaskFull] = []
@@ -840,7 +841,7 @@ def build_defense_packet_from_manifest(
     status = PacketOpsStatus.BLOCKED if any_high else PacketOpsStatus.CREATED
 
     # ── Top risks: top 8, sorted by severity then canonical order ──
-    top_risks = risk_codes[:8]
+    top_risks = extract_top_risks(risk_codes, RISK_CODE_SEVERITY_DEFAULT, max_count=8)
 
     return DefensePacketFull(
         packet_version=PACKET_VERSION,
@@ -869,6 +870,7 @@ def is_packet_stale(
     current_map_version: Optional[str] = None,
     current_subject_hash: Optional[str] = None,
     current_predicate_k: Optional[str] = None,
+    packet_predicate_k: Optional[str] = None,
     predicate_refresh_timestamp: Optional[datetime] = None,
 ) -> List[str]:
     """Check if a defense packet is stale. Returns list of machine-code reasons.
@@ -888,10 +890,9 @@ def is_packet_stale(
         reasons.append(STALE_RISK_CODE_MAP_CHANGED)
     if current_subject_hash and packet.subject_hash != current_subject_hash:
         reasons.append(STALE_SUBJECT_CHANGED)
-    if current_predicate_k:
-        # packet_id is derived from manifest, but we check top_risks contains predicate-related data
-        # In practice, predicate change means manifest_hash would change, but explicit check is enterprise-required
-        reasons.append(STALE_PREDICATE_CHANGED)
+    if current_predicate_k and packet_predicate_k:
+        if current_predicate_k != packet_predicate_k:
+            reasons.append(STALE_PREDICATE_CHANGED)
     if predicate_refresh_timestamp and packet.generated_at < predicate_refresh_timestamp:
         reasons.append(STALE_PREDICATE_DATA_REFRESHED)
 

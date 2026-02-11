@@ -1657,8 +1657,6 @@ async def export_defense_packet_json(manifest_hash: str):
     Phase 6.6.D+. Stable ordering, deterministic.
     Returns full DefensePacketFull JSON.
     """
-    from .predicate_intel.defense_packet import build_defense_packet_from_manifest
-
     # For v1, rebuild from DB if stored, or return 404
     from .defense_packet_repository import get_packet_by_manifest_hash
     try:
@@ -1669,38 +1667,48 @@ async def export_defense_packet_json(manifest_hash: str):
     if not packet_row:
         raise HTTPException(status_code=404, detail="Defense packet not found for manifest_hash")
 
-    # Return stored packet data as JSON (DB-level, not full builder output)
+    # Return canonical DefensePacketFull JSON
     import json as _json
+    from datetime import datetime, timezone
+    from .models_defense_packet import DefensePacketFull, PacketOpsStatus
     tasks = packet_row.get("tasks", [])
     if isinstance(tasks, str):
         tasks = _json.loads(tasks)
     top_risks = packet_row.get("top_risks", [])
     if isinstance(top_risks, str):
         top_risks = _json.loads(top_risks)
-    risk_codes_used = packet_row.get("risk_codes_used", [])
-    if isinstance(risk_codes_used, str):
-        risk_codes_used = _json.loads(risk_codes_used)
+    # Determine ops status from task state (same rule as builder)
+    any_high_open = False
+    for task in tasks:
+        sev = task.get("severity", "") if isinstance(task, dict) else ""
+        completion = task.get("completion", {}) if isinstance(task, dict) else {}
+        state = completion.get("state", "OPEN") if isinstance(completion, dict) else "OPEN"
+        if sev in ("High", "HIGH") and state in ("OPEN", "IN_PROGRESS"):
+            any_high_open = True
+            break
+
+    status = PacketOpsStatus.BLOCKED if any_high_open else PacketOpsStatus.CREATED
+    generated_at = packet_row.get("created_at") or datetime.now(timezone.utc)
+
+    packet = DefensePacketFull(
+        packet_version="6.6.D+",
+        packet_id=manifest_hash,
+        manifest_hash=manifest_hash,
+        subject_hash=packet_row.get("subject_hash", ""),
+        program_id=str(packet_row["program_id"]),
+        product_code=packet_row.get("product_code", ""),
+        generated_at=generated_at,
+        risk_code_map_version=str(packet_row.get("risk_code_map_version", "")),
+        risk_vocab_hash=str(packet_row.get("risk_vocab_hash", "")),
+        readiness_score=float(packet_row.get("defense_readiness_score", 0)),
+        status=status,
+        stale_reasons=[],
+        top_risks=top_risks,
+        tasks=tasks,
+    )
 
     from fastapi.responses import JSONResponse
-    return JSONResponse(
-        content={
-            "packet_version": "6.6.D+",
-            "packet_id": str(packet_row["id"]),
-            "manifest_hash": manifest_hash,
-            "program_id": str(packet_row["program_id"]),
-            "subject_hash": packet_row.get("subject_hash", ""),
-            "product_code": packet_row.get("product_code", ""),
-            "risk_code_map_version": packet_row.get("risk_code_map_version", ""),
-            "risk_vocab_hash": packet_row.get("risk_vocab_hash", ""),
-            "readiness_score": packet_row.get("defense_readiness_score", 0),
-            "top_risks": top_risks,
-            "risk_codes_used": risk_codes_used,
-            "tasks": tasks,
-            "status": packet_row.get("status", ""),
-            "created_at": str(packet_row.get("created_at", "")),
-        },
-        media_type="application/json",
-    )
+    return JSONResponse(content=packet.model_dump(mode="json"), media_type="application/json")
 
 
 @router.get("/device/defense-packet/{manifest_hash}/export.csv")
