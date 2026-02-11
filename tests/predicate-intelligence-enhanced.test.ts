@@ -1140,7 +1140,7 @@ describe('Defense Packet Seed — Enterprise Enhancement', () => {
 
     it('defines response-level DefensePacketSeed with tasks', () => {
       const content = readFileContent(SHARED_TYPES);
-      expect(content).toContain('tasks: EvidenceTask[]');
+      expect(content).toContain('tasks: EvidenceTaskLite[]');
       expect(content).toContain('readiness_score: number');
       expect(content).toContain('top_risks: string[]');
     });

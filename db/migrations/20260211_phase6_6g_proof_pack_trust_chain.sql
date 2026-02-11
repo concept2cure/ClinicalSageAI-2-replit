@@ -3,6 +3,8 @@
 -- drift severity, block_download, and idempotency constraint.
 -- Depends on: 20260211_phase6_6e_proof_pack_exports.sql
 
+BEGIN;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Add new contract hash columns + trust chain fields
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -68,10 +70,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_proof_pack_idempotency
         COALESCE(schema_hash, '')
     );
 
--- Index for proof_pack_id (UUID PK already, but confirm)
-CREATE INDEX IF NOT EXISTS idx_proof_pack_exports_id
-    ON predicate.proof_pack_exports(id);
-
 -- Index for download lookups by id + program
 CREATE INDEX IF NOT EXISTS idx_proof_pack_exports_id_program
     ON predicate.proof_pack_exports(id, program_id);
@@ -94,3 +92,5 @@ COMMENT ON COLUMN predicate.proof_pack_exports.block_download IS
 
 COMMENT ON COLUMN predicate.proof_pack_exports.drift_severity IS
     'Phase 6.6.G — Last computed drift severity: NONE, LOW, MED, HIGH.';
+
+COMMIT;

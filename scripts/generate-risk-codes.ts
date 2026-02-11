@@ -20,8 +20,14 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, join, dirname } from 'path';
 import { createHash } from 'crypto';
+import { fileURLToPath } from 'url';
 
-const ROOT = resolve(__dirname, '..');
+// ESM-compatible __dirname
+const __ESM_filename =
+  typeof __filename !== 'undefined' ? __filename : fileURLToPath(import.meta.url);
+const __ESM_dirname = typeof __dirname !== 'undefined' ? __dirname : dirname(__ESM_filename);
+
+const ROOT = resolve(__ESM_dirname, '..');
 const LOCK_FILE = join(ROOT, 'shadow_service', 'risk_codes.lock.json');
 const OUTPUT_DIR = join(ROOT, 'shared', 'types', 'generated');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'risk-codes.generated.ts');
@@ -88,7 +94,6 @@ const lines: string[] = [
   ' *',
   ` * Source: shadow_service/risk_codes.lock.json`,
   ` * Lock hash: ${lockHash}`,
-  ` * Generated: ${new Date().toISOString()}`,
   ' */',
   '',
   `/** SHA-256 of risk_codes.lock.json at generation time */`,

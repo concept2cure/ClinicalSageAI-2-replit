@@ -36,7 +36,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from . import db
@@ -57,20 +57,30 @@ from .models_predicate import (
     SECategory,
 )
 
+import os as _os
+
 # Configurable freshness threshold (spec: 14 days default)
-INGEST_FRESHNESS_DAYS = int(__import__('os').environ.get('INGEST_FRESHNESS_DAYS', '14'))
+INGEST_FRESHNESS_DAYS = int(_os.environ.get('INGEST_FRESHNESS_DAYS', '14'))
+
+# Admin token for BFF → Shadow authentication
+_ADMIN_TOKEN = _os.environ.get('REVIEW_ADMIN_TOKEN', '')
 
 logger = logging.getLogger(__name__)
 
 
-# ─── Auth dependency (reuses shadow service admin token check) ────────────────
+# ─── Auth dependency (validates BFF → Shadow admin token) ─────────────────────
 
-async def require_predicate_admin():
-    """Fail-closed auth check — reuses existing admin token pattern."""
-    import os
-    from fastapi import Header
-    # For now, rely on BFF to inject X-Admin-Token
-    pass
+async def require_predicate_admin(
+    x_admin_token: str = Header("", alias="X-Admin-Token"),
+):
+    """Fail-closed auth check — validates BFF admin token.
+
+    In production (REVIEW_ADMIN_TOKEN is set), rejects requests without a
+    matching token. In development (no token configured), allows all requests.
+    """
+    if _ADMIN_TOKEN and x_admin_token != _ADMIN_TOKEN:
+        logger.warning("Auth failure: invalid admin token on predicate endpoint")
+        raise HTTPException(status_code=401, detail="Invalid or missing admin token")
 
 
 # ─── Router ───────────────────────────────────────────────────────────────────
@@ -1803,7 +1813,7 @@ async def check_submission_gate_endpoint(manifest_hash: str):
         tasks = _json.loads(tasks)
 
     # Check gate with simplified logic (matching builder logic)
-    from ..scoring.risk_code_map import SIGNIFICANT_RISK_CODES as SIG_CODES
+    from .scoring.risk_code_map import SIGNIFICANT_RISK_CODES as SIG_CODES
     blocking_task_ids = []
     blocking_risk_codes = []
     missing_evidence = []
@@ -1962,7 +1972,7 @@ class ReplayDeterminismPayload(BaseModel):
         populate_by_name = True
 
 
-@router.post("/replay-determinism")
+@router.post("/replay-determinism", dependencies=[Depends(require_predicate_admin)])
 async def replay_determinism(payload: ReplayDeterminismPayload):
     """Re-run the defense packet build and compare hashes for determinism.
 
@@ -1971,6 +1981,7 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
 
     Phase 6.6.E2 — Replay Determinism
     """
+    import hashlib
     import json as _json
 
     from .scoring.risk_code_contract_validator import _compute_lock_hash
@@ -2213,8 +2224,8 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
                         "block_download": block_download,
                     }),
                 )
-        except Exception:
-            pass  # best-effort
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (DRIFT_DETECTED): %s", _audit_exc)
 
     return {
         "deterministic": deterministic,
@@ -2237,7 +2248,7 @@ async def replay_determinism(payload: ReplayDeterminismPayload):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@router.post("/proof-pack/persist")
+@router.post("/proof-pack/persist", dependencies=[Depends(require_predicate_admin)])
 async def persist_proof_pack(
     program_id: str = Query(..., description="Regulatory program UUID"),
     manifest_hash: str = Query(..., description="Manifest hash of the defense packet"),
@@ -2329,8 +2340,8 @@ async def persist_proof_pack(
                 contract["generator_version"], req_id,
                 _json.dumps(contract), _json.dumps({"error": str(exc)}),
             )
-        except Exception:
-            pass
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (PERSIST_FAILED): %s", _audit_exc)
         raise HTTPException(
             status_code=500,
             detail={"error_code": "PROOF_PACK_PERSIST_FAILED", "message": f"Persist failed: {exc}"},
@@ -2351,8 +2362,8 @@ async def persist_proof_pack(
             _json.dumps(contract),
             _json.dumps({"defense_packet_id": str(row["id"]), "zip_manifest_hash": zip_manifest_hash}),
         )
-    except Exception:
-        pass
+    except Exception as _audit_exc:
+        logger.warning("Part 11 audit write failed (PROOF_PACK_CREATED): %s", _audit_exc)
 
     return {
         "proof_pack_id": str(result["id"]),
@@ -2365,7 +2376,7 @@ async def persist_proof_pack(
     }
 
 
-@router.get("/proof-pack/{proof_pack_id}/download")
+@router.get("/proof-pack/{proof_pack_id}/download", dependencies=[Depends(require_predicate_admin)])
 async def download_proof_pack_zip(
     proof_pack_id: str,
     program_id: str = Query(..., description="Regulatory program UUID"),
@@ -2418,8 +2429,8 @@ async def download_proof_pack_zip(
                 _json.dumps(contract),
                 _json.dumps({"drift_severity": row.get("drift_severity", "HIGH"), "block_download": True}),
             )
-        except Exception:
-            pass
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (DOWNLOAD_BLOCKED): %s", _audit_exc)
         raise HTTPException(
             status_code=409,
             detail={
@@ -2452,8 +2463,8 @@ async def download_proof_pack_zip(
                 _json.dumps(contract),
                 _json.dumps({"mismatches": mismatches}),
             )
-        except Exception:
-            pass
+        except Exception as _audit_exc:
+            logger.warning("Part 11 audit write failed (CONTRACT_MISMATCH): %s", _audit_exc)
         raise HTTPException(
             status_code=409,
             detail={
@@ -2508,8 +2519,8 @@ async def download_proof_pack_zip(
                 "top_risks": list(row.get("top_risks", [])) if row.get("top_risks") else [],
                 "task_count": len(tasks),
             }
-    except Exception:
-        pass
+    except Exception as _seed_exc:
+        logger.warning("proof-pack download: failed to build defense seed: %s", _seed_exc)
 
     # ── Assemble ZIP v1.1 ──
     builder = ProofPackZipBuilder(
@@ -2521,7 +2532,8 @@ async def download_proof_pack_zip(
         artifacts={},
     )
     zip_bytes, checksums, artifact_index, zip_mh = builder.build()
-    zip_hash = hashlib.sha256(zip_bytes).hexdigest()
+    import hashlib as _hashlib_dl
+    zip_hash = _hashlib_dl.sha256(zip_bytes).hexdigest()
 
     # ── Update proof pack record ──
     try:
@@ -2541,8 +2553,8 @@ async def download_proof_pack_zip(
             _json.dumps(contract),
             _json.dumps({"zip_hash": zip_hash, "zip_size_bytes": len(zip_bytes)}),
         )
-    except Exception:
-        pass
+    except Exception as _audit_exc:
+        logger.warning("Part 11 audit write failed (PROOF_PACK_DOWNLOADED): %s", _audit_exc)
 
     filename = f"proof-pack-{proof_pack_id[:12]}.zip"
 
@@ -2571,7 +2583,7 @@ async def download_proof_pack_legacy(manifest_hash_legacy: str):
     )
 
 
-@router.get("/proof-pack/{proof_pack_id}/verify")
+@router.get("/proof-pack/{proof_pack_id}/verify", dependencies=[Depends(require_predicate_admin)])
 async def verify_proof_pack(
     proof_pack_id: str,
     program_id: str = Query(..., description="Regulatory program UUID"),
@@ -2630,8 +2642,8 @@ async def verify_proof_pack(
             _json.dumps(contract),
             _json.dumps({"verified": verified, "failure_count": len(failures)}),
         )
-    except Exception:
-        pass
+    except Exception as _audit_exc:
+        logger.warning("Part 11 audit write failed (VERIFY): %s", _audit_exc)
 
     return {
         "proof_pack_id": proof_pack_id,
@@ -2688,16 +2700,35 @@ def _compute_toxicity(signals: list[dict]) -> float:
     return min(total, 1.0)
 
 
+class SafetySignalItem(BaseModel):
+    """Validated safety signal entry."""
+    signal_type: str = Field(
+        ...,
+        description="Type: MDRReport, ClassIRecall, ClassIIRecall, ClassIIIRecall, FieldCorrection, WarningLetter",
+    )
+    signal_date: str | None = Field(None, description="ISO date string")
+    description: str | None = None
+    severity_score: float = Field(
+        0.5,
+        ge=0.0,
+        le=1.0,
+        description="Severity 0.0-1.0. Higher = more severe.",
+    )
+    source_url: str | None = None
+    recall_number: str | None = None
+    event_id: str | None = None
+
+
 class SafetySignalIngestRequest(BaseModel):
     """Idempotent ingest of safety signals for a k_number."""
     k_number: str
-    signals: list[dict[str, Any]] = Field(
+    signals: list[SafetySignalItem] = Field(
         ...,
-        description="Array of {signal_type, signal_date, description, severity_score, source_url?, recall_number?, event_id?}",
+        description="Array of validated safety signal items",
     )
 
 
-@router.post("/safety-signals/ingest")
+@router.post("/safety-signals/ingest", dependencies=[Depends(require_predicate_admin)])
 async def ingest_safety_signals(req: SafetySignalIngestRequest):
     """F.1 — Idempotent safety signal ingest.
 
@@ -2725,13 +2756,13 @@ async def ingest_safety_signals(req: SafetySignalIngestRequest):
             row = await conn.fetchrow(
                 fda_sql.UPSERT_SAFETY_SIGNAL,
                 req.k_number,
-                sig.get("signal_type", "MDRReport"),
-                sig.get("signal_date"),
-                sig.get("description"),
-                float(sig.get("severity_score", 0.5)),
-                sig.get("source_url"),
-                sig.get("recall_number"),
-                sig.get("event_id"),
+                sig.signal_type,
+                sig.signal_date,
+                sig.description,
+                sig.severity_score,
+                sig.source_url,
+                sig.recall_number,
+                sig.event_id,
             )
             if row:
                 upserted += 1

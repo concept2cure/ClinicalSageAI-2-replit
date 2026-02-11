@@ -211,13 +211,16 @@ export function SEMatrixV2Panel({
                 onSuccess: persistResult => {
                   setProofPackId(persistResult.proof_pack_id);
                 },
+                onError: err => {
+                  console.error('Auto-persist proof pack failed:', err);
+                },
               }
             );
           }
         },
       }
     );
-  }, [programId, kNumber, subjectDevice, generateMutation]);
+  }, [programId, kNumber, subjectDevice]);
 
   const handleDownloadDocx = useCallback(() => {
     if (!kNumber.trim()) return;
@@ -238,7 +241,7 @@ export function SEMatrixV2Panel({
         },
       }
     );
-  }, [programId, kNumber, subjectDevice, renderDocxMutation]);
+  }, [programId, kNumber, subjectDevice]);
 
   const payload = result?.se_matrix_payload;
 
@@ -462,15 +465,15 @@ export function SEMatrixV2Panel({
           {downloadError && (
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm space-y-1">
               <div className="font-semibold text-amber-800">
-                {(downloadError as any).error_code || 'Download Error'}
+                {String(downloadError.error_code ?? 'Download Error')}
               </div>
               <div className="text-amber-700 text-xs">
-                {(downloadError as any).message || JSON.stringify(downloadError)}
+                {String(downloadError.message ?? JSON.stringify(downloadError))}
               </div>
-              {(downloadError as any).mismatches && (
+              {Array.isArray(downloadError.mismatches) && (
                 <ul className="text-xs text-amber-600 list-disc ml-4">
                   {(
-                    (downloadError as any).mismatches as Array<{
+                    downloadError.mismatches as Array<{
                       field: string;
                       expected: string;
                       actual: string;

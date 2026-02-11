@@ -1,8 +1,8 @@
 """Phase 6.6.G — Contract Hashes (Runtime Trust Chain).
 
 Single source of truth for all contract hashes the proof pack system enforces.
-Every hash is computed lazily from the canonical source files and cached for the
-lifetime of the process.
+Every hash is computed from the canonical source files per-request (I/O cost
+is negligible for small JSON files and correctness is paramount).
 
 Contract fields:
   - risk_vocab_hash:       SHA-256 of risk_codes.lock.json (raw bytes)
@@ -18,7 +18,6 @@ import hashlib
 import logging
 import os
 import subprocess
-from functools import lru_cache
 from pathlib import Path
 from typing import TypedDict
 
@@ -30,6 +29,10 @@ _BASE = Path(__file__).resolve().parent
 LOCK_FILE_PATH = _BASE / "predicate_intel" / "risk_codes.lock.json"
 SCHEMA_BUNDLE_PATH = _BASE.parent.parent / "schemas" / "ectd_stubs.bundle.schema.json"
 RISK_VOCAB_PATH = LOCK_FILE_PATH  # alias — they are the same file
+
+# Sentinel values — treated as mismatches in check_contract_mismatch
+_SENTINEL_MISSING = "__MISSING__"
+_SENTINEL_NOT_DEPLOYED = "__NOT_DEPLOYED__"
 
 
 class ContractSnapshot(TypedDict):
@@ -46,24 +49,27 @@ def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-@lru_cache(maxsize=1)
 def compute_risk_vocab_hash() -> str:
-    """SHA-256 of risk_codes.lock.json."""
+    """SHA-256 of risk_codes.lock.json. Raises if file is missing in production."""
     if not LOCK_FILE_PATH.exists():
         logger.error("risk_codes.lock.json not found at %s", LOCK_FILE_PATH)
-        return "MISSING"
+        if os.environ.get("ENV", "dev") in ("production", "staging"):
+            raise RuntimeError(
+                f"CRITICAL: risk_codes.lock.json missing at {LOCK_FILE_PATH}. "
+                "Contract trust chain cannot be established without this file."
+            )
+        return _SENTINEL_MISSING
     return _sha256_file(LOCK_FILE_PATH)
 
 
-@lru_cache(maxsize=1)
 def compute_schema_hash() -> str:
-    """SHA-256 of the eCTD bundle schema. Returns 'NONE' if file doesn't exist yet."""
+    """SHA-256 of the eCTD bundle schema."""
     if not SCHEMA_BUNDLE_PATH.exists():
-        return "NONE"
+        logger.warning("eCTD bundle schema not found at %s", SCHEMA_BUNDLE_PATH)
+        return _SENTINEL_NOT_DEPLOYED
     return _sha256_file(SCHEMA_BUNDLE_PATH)
 
 
-@lru_cache(maxsize=1)
 def compute_generator_version() -> str:
     """Git short SHA or fallback to env/build version."""
     # Try environment variable first (set in CI/CD)
@@ -71,19 +77,21 @@ def compute_generator_version() -> str:
     if env_version:
         return env_version
 
-    # Try git
+    # Try git (only in dev — containers may not have .git)
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short=12", "HEAD"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=3,
             cwd=str(_BASE),
         )
         if result.returncode == 0:
-            return result.stdout.strip()
-    except Exception:
-        pass
+            sha = result.stdout.strip()
+            if sha:
+                return sha
+    except Exception as exc:
+        logger.debug("git rev-parse failed (expected in containers): %s", exc)
 
     return "6.6.G-dev"
 
@@ -106,14 +114,31 @@ def check_contract_mismatch(
 
     Returns a list of mismatches: [{"field": ..., "expected": ..., "actual": ...}].
     Empty list means all hashes match.
+
+    Sentinel values (_SENTINEL_MISSING, _SENTINEL_NOT_DEPLOYED) always trigger
+    a mismatch report — they explicitly indicate the contract file is absent
+    and should never silently compare equal.
     """
     current = get_contract_snapshot()
     mismatches: list[dict[str, str]] = []
 
+    _sentinels = {_SENTINEL_MISSING, _SENTINEL_NOT_DEPLOYED, ""}
+
     for field in ("risk_vocab_hash", "risk_codes_lock_hash", "schema_hash", "generator_version"):
         stored_val = stored.get(field, "")  # type: ignore[arg-type]
         current_val = current[field]  # type: ignore[literal-required]
-        if stored_val and current_val and stored_val != current_val:
+
+        # A sentinel on either side is always a mismatch (fail-closed)
+        if stored_val in _sentinels or current_val in _sentinels:
+            if stored_val != current_val:
+                mismatches.append({
+                    "field": field,
+                    "expected": stored_val,
+                    "actual": current_val,
+                })
+            continue
+
+        if stored_val != current_val:
             mismatches.append({
                 "field": field,
                 "expected": stored_val,
@@ -149,6 +174,7 @@ def compute_drift_severity(reason_codes: list[str]) -> str:
     """Deterministic drift severity from reason codes.
 
     Returns: 'HIGH' | 'MED' | 'LOW' | 'NONE'
+    Unknown codes default to HIGH (fail-closed for regulatory safety).
     """
     if not reason_codes:
         return "NONE"
@@ -156,12 +182,19 @@ def compute_drift_severity(reason_codes: list[str]) -> str:
     codes = set(reason_codes)
     if codes & HIGH_DRIFT_CODES:
         return "HIGH"
+
+    # Unknown codes → HIGH (fail-closed in a regulated context)
+    unknown = codes - HIGH_DRIFT_CODES - MED_DRIFT_CODES - LOW_DRIFT_CODES
+    if unknown:
+        logger.warning("Unknown drift reason codes treated as HIGH: %s", unknown)
+        return "HIGH"
+
     if codes & MED_DRIFT_CODES:
         return "MED"
     if codes & LOW_DRIFT_CODES:
         return "LOW"
-    # Unknown codes default to MED (safe)
-    return "MED"
+
+    return "NONE"
 
 
 def should_block_download(drift_severity: str) -> bool:

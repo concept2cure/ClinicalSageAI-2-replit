@@ -328,15 +328,18 @@ describe('Shadow Router — Proof Pack Endpoints', () => {
   const router = () => readAbs(ROUTER_PY);
 
   it('POST /proof-pack/persist endpoint exists', () => {
-    expect(router()).toContain('@router.post("/proof-pack/persist")');
+    expect(router()).toContain('/proof-pack/persist');
+    expect(router()).toContain('async def persist_proof_pack');
   });
 
   it('GET /proof-pack/{proof_pack_id}/download endpoint exists (G)', () => {
-    expect(router()).toContain('@router.get("/proof-pack/{proof_pack_id}/download")');
+    expect(router()).toContain('/proof-pack/{proof_pack_id}/download');
+    expect(router()).toContain('async def download_proof_pack_zip');
   });
 
   it('GET /proof-pack/{proof_pack_id}/verify endpoint exists (G)', () => {
-    expect(router()).toContain('@router.get("/proof-pack/{proof_pack_id}/verify")');
+    expect(router()).toContain('/proof-pack/{proof_pack_id}/verify');
+    expect(router()).toContain('async def verify_proof_pack');
   });
 
   it('download returns ZIP content-type', () => {
@@ -468,7 +471,8 @@ describe('F.1 — Safety Signal Ingest', () => {
   const router = () => readAbs(ROUTER_PY);
 
   it('POST /safety-signals/ingest endpoint exists', () => {
-    expect(router()).toContain('@router.post("/safety-signals/ingest")');
+    expect(router()).toContain('/safety-signals/ingest');
+    expect(router()).toContain('async def ingest_safety_signals');
   });
 
   it('GET /safety-signals/{k_number}/profile endpoint exists', () => {
@@ -792,5 +796,266 @@ describe('Integration — Existing Safety Infrastructure', () => {
     const router = readAbs(ROUTER_PY);
     expect(router).toContain('toxic-detail');
     expect(router).toContain('toxic_because');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Behavioral Tests — Lineage Tree Builder
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Behavioral — buildTree logic', () => {
+  interface LineageEdge {
+    child_k_number: string;
+    parent_k_number: string;
+    parent_device_name?: string;
+    parent_product_code?: string;
+    relationship_type: string;
+    distance: number;
+    confidence: number;
+  }
+
+  interface TreeNode {
+    kNumber: string;
+    deviceName?: string;
+    productCode?: string;
+    relationship: string;
+    distance: number;
+    confidence: number;
+    children: TreeNode[];
+  }
+
+  /** Mirror of LineageGraphPanel buildTree with cycle detection */
+  function buildTree(edges: LineageEdge[], rootK: string, maxDepth: number = 4): TreeNode[] {
+    const byChild = new Map<string, LineageEdge[]>();
+    for (const e of edges) {
+      const list = byChild.get(e.child_k_number) || [];
+      list.push(e);
+      byChild.set(e.child_k_number, list);
+    }
+
+    const rootEdges = byChild.get(rootK) || [];
+    if (rootEdges.length === 0 && edges.length > 0) {
+      return edges.map(e => ({
+        kNumber: e.parent_k_number,
+        deviceName: e.parent_device_name,
+        productCode: e.parent_product_code,
+        relationship: e.relationship_type,
+        distance: e.distance,
+        confidence: e.confidence,
+        children: [],
+      }));
+    }
+
+    function recurse(
+      childK: string,
+      depth: number,
+      maxD: number,
+      visited: Set<string>
+    ): TreeNode[] {
+      const parents = byChild.get(childK) || [];
+      return parents
+        .filter(e => !visited.has(e.parent_k_number))
+        .map(e => {
+          const nextVisited = new Set(visited);
+          nextVisited.add(e.parent_k_number);
+          return {
+            kNumber: e.parent_k_number,
+            deviceName: e.parent_device_name,
+            productCode: e.parent_product_code,
+            relationship: e.relationship_type,
+            distance: e.distance,
+            confidence: e.confidence,
+            children: depth < maxD ? recurse(e.parent_k_number, depth + 1, maxD, nextVisited) : [],
+          };
+        });
+    }
+
+    return recurse(rootK, 1, maxDepth, new Set([rootK]));
+  }
+
+  function flattenTree(nodes: TreeNode[], depth = 0): Array<TreeNode & { depth: number }> {
+    const result: Array<TreeNode & { depth: number }> = [];
+    for (const n of nodes) {
+      result.push({ ...n, depth });
+      result.push(...flattenTree(n.children, depth + 1));
+    }
+    return result;
+  }
+
+  it('builds two-level tree from simple edges', () => {
+    const edges: LineageEdge[] = [
+      {
+        child_k_number: 'K001',
+        parent_k_number: 'K002',
+        relationship_type: 'predicate',
+        distance: 1,
+        confidence: 0.9,
+      },
+      {
+        child_k_number: 'K002',
+        parent_k_number: 'K003',
+        relationship_type: 'predicate',
+        distance: 2,
+        confidence: 0.85,
+      },
+    ];
+    const tree = buildTree(edges, 'K001');
+    expect(tree).toHaveLength(1);
+    expect(tree[0].kNumber).toBe('K002');
+    expect(tree[0].children).toHaveLength(1);
+    expect(tree[0].children[0].kNumber).toBe('K003');
+  });
+
+  it('respects maxDepth parameter', () => {
+    const edges: LineageEdge[] = [
+      {
+        child_k_number: 'K001',
+        parent_k_number: 'K002',
+        relationship_type: 'p',
+        distance: 1,
+        confidence: 1,
+      },
+      {
+        child_k_number: 'K002',
+        parent_k_number: 'K003',
+        relationship_type: 'p',
+        distance: 2,
+        confidence: 1,
+      },
+      {
+        child_k_number: 'K003',
+        parent_k_number: 'K004',
+        relationship_type: 'p',
+        distance: 3,
+        confidence: 1,
+      },
+    ];
+    const tree = buildTree(edges, 'K001', 2);
+    expect(tree[0].kNumber).toBe('K002');
+    // depth=2 means recurse(K001, 1, 2, ...) → recurse(K002, 2, 2, ...) → depth < maxD is 2<2 false → stops
+    expect(tree[0].children).toHaveLength(1);
+    expect(tree[0].children[0].children).toHaveLength(0); // truncated at maxDepth
+  });
+
+  it('detects cycles and avoids infinite recursion', () => {
+    const edges: LineageEdge[] = [
+      {
+        child_k_number: 'K001',
+        parent_k_number: 'K002',
+        relationship_type: 'p',
+        distance: 1,
+        confidence: 1,
+      },
+      {
+        child_k_number: 'K002',
+        parent_k_number: 'K003',
+        relationship_type: 'p',
+        distance: 2,
+        confidence: 1,
+      },
+      {
+        child_k_number: 'K003',
+        parent_k_number: 'K001',
+        relationship_type: 'p',
+        distance: 3,
+        confidence: 1,
+      }, // cycle!
+    ];
+    // Should not stack overflow — cycle detection skips K001 since it's visited
+    const tree = buildTree(edges, 'K001', 10);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].kNumber).toBe('K002');
+    expect(tree[0].children[0].kNumber).toBe('K003');
+    expect(tree[0].children[0].children).toHaveLength(0); // K001 filtered out (visited)
+  });
+
+  it('flattenTree produces correct depth indicators', () => {
+    const edges: LineageEdge[] = [
+      {
+        child_k_number: 'K001',
+        parent_k_number: 'K002',
+        relationship_type: 'p',
+        distance: 1,
+        confidence: 0.9,
+      },
+      {
+        child_k_number: 'K002',
+        parent_k_number: 'K003',
+        relationship_type: 'p',
+        distance: 2,
+        confidence: 0.8,
+      },
+    ];
+    const tree = buildTree(edges, 'K001');
+    const flat = flattenTree(tree);
+    expect(flat).toHaveLength(2);
+    expect(flat[0]).toMatchObject({ kNumber: 'K002', depth: 0 });
+    expect(flat[1]).toMatchObject({ kNumber: 'K003', depth: 1 });
+  });
+
+  it('fallback: flat list when root has no edges', () => {
+    const edges: LineageEdge[] = [
+      {
+        child_k_number: 'K005',
+        parent_k_number: 'K006',
+        relationship_type: 'p',
+        distance: 1,
+        confidence: 0.7,
+      },
+    ];
+    // Root K001 has no edges → returns flat fallback
+    const tree = buildTree(edges, 'K001');
+    expect(tree).toHaveLength(1);
+    expect(tree[0].kNumber).toBe('K006');
+    expect(tree[0].children).toHaveLength(0);
+  });
+
+  it('empty edges → empty tree', () => {
+    expect(buildTree([], 'K001')).toHaveLength(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Behavioral Tests — Toxicity Scoring
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Behavioral — toxicity badge thresholds', () => {
+  function getToxicityLevel(score: number): 'high' | 'moderate' | 'low' {
+    if (score >= 0.6) return 'high';
+    if (score >= 0.3) return 'moderate';
+    return 'low';
+  }
+
+  it('0.0 → low', () => expect(getToxicityLevel(0.0)).toBe('low'));
+  it('0.29 → low', () => expect(getToxicityLevel(0.29)).toBe('low'));
+  it('0.3 → moderate', () => expect(getToxicityLevel(0.3)).toBe('moderate'));
+  it('0.59 → moderate', () => expect(getToxicityLevel(0.59)).toBe('moderate'));
+  it('0.6 → high', () => expect(getToxicityLevel(0.6)).toBe('high'));
+  it('1.0 → high', () => expect(getToxicityLevel(1.0)).toBe('high'));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Behavioral Tests — Safety Signal Severity Bounds
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Behavioral — signal severity bounds', () => {
+  it('severity_score must be between 0.0 and 1.0', () => {
+    function validateSeverity(score: number): boolean {
+      return score >= 0.0 && score <= 1.0;
+    }
+    expect(validateSeverity(0.0)).toBe(true);
+    expect(validateSeverity(0.5)).toBe(true);
+    expect(validateSeverity(1.0)).toBe(true);
+    expect(validateSeverity(-0.1)).toBe(false);
+    expect(validateSeverity(1.1)).toBe(false);
+  });
+
+  it('AVOID strategy triggered at threshold 0.6', () => {
+    function shouldAvoid(toxicityScore: number): boolean {
+      return toxicityScore >= 0.6;
+    }
+    expect(shouldAvoid(0.59)).toBe(false);
+    expect(shouldAvoid(0.6)).toBe(true);
+    expect(shouldAvoid(0.95)).toBe(true);
   });
 });

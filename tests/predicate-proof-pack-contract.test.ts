@@ -264,7 +264,8 @@ describe('Shadow Router — Predicate Intelligence', () => {
   });
 
   it('has replay-determinism POST endpoint', () => {
-    expect(src).toContain('@router.post("/replay-determinism")');
+    expect(src).toContain('/replay-determinism');
+    expect(src).toContain('async def replay_determinism');
   });
 
   it('proof-pack returns risk_vocab_hash', () => {

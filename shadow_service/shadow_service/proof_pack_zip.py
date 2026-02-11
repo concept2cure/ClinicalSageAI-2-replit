@@ -7,9 +7,9 @@ Standard ZIP Layout v1.1:
     audit_events.jsonl      — Part 11 events
 
     contracts/
-      risk_codes.lock.json  — the exact risk code contract
-      risk_vocab.yml        — risk vocabulary (if exists)
-      schema.json           — canonical schema used
+      risk_codes.lock.json  — the exact risk code contract (frozen at persist)
+      risk_vocab.yml        — risk vocabulary (frozen at persist)
+      schema.json           — canonical schema used (frozen at persist)
       contract_hashes.json  — runtime contract hash snapshot
 
     outputs/
@@ -24,7 +24,8 @@ Standard ZIP Layout v1.1:
       m4/                       — Module 4 placeholder
       m5/                       — Module 5 placeholder
 
-proof_pack_id is derived from normalized checksums + zip_manifest_hash.
+All contract files are frozen at persist time and passed as parameters.
+The ZIP builder NEVER reads from the live filesystem to ensure zero-drift.
 All JSON is canonicalized (sort_keys=True, stable separators).
 """
 
@@ -33,27 +34,32 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
+import os
+import re
+import sys
 import zipfile
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Lock file + schema paths
-# ─────────────────────────────────────────────────────────────────────────────
-
-LOCK_FILE_PATH = (
-    Path(__file__).resolve().parent / "predicate_intel" / "risk_codes.lock.json"
-)
-RISK_VOCAB_PATH = (
-    Path(__file__).resolve().parent / "predicate_intel" / "risk_vocab.yml"
-)
-SCHEMA_BUNDLE_PATH = (
-    Path(__file__).resolve().parent.parent.parent / "schemas" / "ectd_stubs.bundle.schema.json"
-)
+logger = logging.getLogger(__name__)
 
 # ZIP internal prefix — all files sit under proof-pack/
 PREFIX = "proof-pack"
+
+# Safety limits
+MAX_ZIP_SIZE_BYTES = int(os.environ.get("PROOF_PACK_MAX_ZIP_BYTES", str(100 * 1024 * 1024)))  # 100 MB
+MAX_ARTIFACT_COUNT = 500
+MAX_SINGLE_ARTIFACT_BYTES = 50 * 1024 * 1024  # 50 MB
+
+# Filename sanitization pattern (only allow safe chars)
+_SAFE_FILENAME_RE = re.compile(r"^[a-zA-Z0-9_\-][a-zA-Z0-9_.\-]{0,254}$")
+
+# Paths — only used for fallback reads when frozen data is not available
+_BASE = Path(__file__).resolve().parent
+LOCK_FILE_PATH = _BASE / "predicate_intel" / "risk_codes.lock.json"
+RISK_VOCAB_PATH = _BASE / "predicate_intel" / "risk_vocab.yml"
+SCHEMA_BUNDLE_PATH = _BASE.parent.parent / "schemas" / "ectd_stubs.bundle.schema.json"
 
 
 def _canonical_json(obj: Any) -> str:
@@ -65,8 +71,33 @@ def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize a filename to prevent path traversal.
+
+    Strips directory components, rejects empty/unsafe names.
+    Raises ValueError for malicious filenames.
+    """
+    # Strip any directory traversal
+    basename = os.path.basename(filename.replace("\\", "/"))
+    # Remove leading dots (hidden files / traversal)
+    basename = basename.lstrip(".")
+    if not basename:
+        raise ValueError(f"Invalid artifact filename: {filename!r}")
+    if not _SAFE_FILENAME_RE.match(basename):
+        raise ValueError(
+            f"Unsafe artifact filename: {filename!r} — "
+            "only alphanumeric, dash, underscore, dot allowed"
+        )
+    return basename
+
+
 class ProofPackZipBuilder:
     """Assembles a proof-pack ZIP (v1.1) from stored (frozen) data.
+
+    IMPORTANT: Contract files (lock_file_bytes, vocab_bytes, schema_bytes)
+    should be frozen at persist time and passed here. The builder will only
+    fall back to reading the live filesystem if frozen data is not provided,
+    and will log a warning when doing so.
 
     Usage:
         builder = ProofPackZipBuilder(
@@ -79,6 +110,9 @@ class ProofPackZipBuilder:
             toxicity_profile={...},
             lineage_graph={...},
             replay_result={...},
+            lock_file_bytes=b'...',    # frozen at persist time
+            vocab_bytes=b'...',        # frozen at persist time
+            schema_bytes=b'...',       # frozen at persist time
         )
         zip_bytes, checksums, artifact_index, zip_manifest_hash = builder.build()
     """
@@ -95,6 +129,10 @@ class ProofPackZipBuilder:
         toxicity_profile: dict[str, Any] | None = None,
         lineage_graph: dict[str, Any] | None = None,
         replay_result: dict[str, Any] | None = None,
+        # Frozen contract files (GA: should always be provided)
+        lock_file_bytes: bytes | None = None,
+        vocab_bytes: bytes | None = None,
+        schema_bytes: bytes | None = None,
     ):
         self.manifest_json = manifest_json
         self.payload_json = payload_json
@@ -105,9 +143,32 @@ class ProofPackZipBuilder:
         self.toxicity_profile = toxicity_profile
         self.lineage_graph = lineage_graph
         self.replay_result = replay_result
+        self.lock_file_bytes = lock_file_bytes
+        self.vocab_bytes = vocab_bytes
+        self.schema_bytes = schema_bytes
+
+    def _resolve_contract_file(
+        self,
+        frozen: bytes | None,
+        fallback_path: Path,
+        label: str,
+    ) -> bytes | None:
+        """Use frozen bytes if available, else fall back to filesystem with warning."""
+        if frozen is not None:
+            return frozen
+        if fallback_path.exists():
+            logger.warning(
+                "ZIP builder reading %s from live filesystem — "
+                "pass frozen bytes at persist time for zero-drift guarantee",
+                label,
+            )
+            return fallback_path.read_bytes()
+        return None
 
     def build(self) -> tuple[bytes, dict[str, str], list[dict[str, Any]], str]:
         """Build the ZIP and return (zip_bytes, checksums_dict, artifact_index, zip_manifest_hash).
+
+        Raises ValueError if artifact count or total size exceeds safety limits.
 
         Returns:
             zip_bytes:          Raw bytes of the ZIP file
@@ -115,76 +176,100 @@ class ProofPackZipBuilder:
             artifact_index:     [ {filename, sha256, size_bytes, mime_type} ]
             zip_manifest_hash:  SHA-256 of manifest.json content (content-addressed ID)
         """
+        if len(self.artifacts) > MAX_ARTIFACT_COUNT:
+            raise ValueError(
+                f"Too many artifacts: {len(self.artifacts)} (max {MAX_ARTIFACT_COUNT})"
+            )
+
         checksums: dict[str, str] = {}
         artifact_index: list[dict[str, Any]] = []
+        total_size = 0
         buf = io.BytesIO()
 
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            def _track_add(path: str, data: bytes, mime: str) -> None:
+                nonlocal total_size
+                if len(data) > MAX_SINGLE_ARTIFACT_BYTES:
+                    raise ValueError(
+                        f"Artifact {path} is {len(data)} bytes "
+                        f"(max {MAX_SINGLE_ARTIFACT_BYTES})"
+                    )
+                total_size += len(data)
+                if total_size > MAX_ZIP_SIZE_BYTES:
+                    raise ValueError(
+                        f"ZIP total exceeds {MAX_ZIP_SIZE_BYTES} bytes limit"
+                    )
+                self._add_file(zf, path, data, checksums, artifact_index, mime)
+
             # ── manifest.json ──
             manifest_bytes = _canonical_json(self.manifest_json).encode("utf-8")
             zip_manifest_hash = _sha256(manifest_bytes)
-            self._add_file(zf, f"{PREFIX}/manifest.json", manifest_bytes, checksums, artifact_index, "application/json")
+            _track_add(f"{PREFIX}/manifest.json", manifest_bytes, "application/json")
 
-            # ── contracts/ ──
-            # risk_codes.lock.json
-            if LOCK_FILE_PATH.exists():
-                lock_bytes = LOCK_FILE_PATH.read_bytes()
-                self._add_file(zf, f"{PREFIX}/contracts/risk_codes.lock.json", lock_bytes, checksums, artifact_index, "application/json")
+            # ── contracts/ (from frozen data, fallback to live filesystem) ──
+            lock_data = self._resolve_contract_file(
+                self.lock_file_bytes, LOCK_FILE_PATH, "risk_codes.lock.json"
+            )
+            if lock_data:
+                _track_add(f"{PREFIX}/contracts/risk_codes.lock.json", lock_data, "application/json")
 
-            # risk_vocab.yml (if exists)
-            if RISK_VOCAB_PATH.exists():
-                vocab_bytes = RISK_VOCAB_PATH.read_bytes()
-                self._add_file(zf, f"{PREFIX}/contracts/risk_vocab.yml", vocab_bytes, checksums, artifact_index, "text/yaml")
+            vocab_data = self._resolve_contract_file(
+                self.vocab_bytes, RISK_VOCAB_PATH, "risk_vocab.yml"
+            )
+            if vocab_data:
+                _track_add(f"{PREFIX}/contracts/risk_vocab.yml", vocab_data, "text/yaml")
 
-            # schema.json (eCTD bundle schema)
-            if SCHEMA_BUNDLE_PATH.exists():
-                schema_bytes = SCHEMA_BUNDLE_PATH.read_bytes()
-                self._add_file(zf, f"{PREFIX}/contracts/schema.json", schema_bytes, checksums, artifact_index, "application/json")
+            schema_data = self._resolve_contract_file(
+                self.schema_bytes, SCHEMA_BUNDLE_PATH, "schema.json"
+            )
+            if schema_data:
+                _track_add(f"{PREFIX}/contracts/schema.json", schema_data, "application/json")
 
             # contract_hashes.json — runtime hash snapshot
             if self.contract_snapshot:
                 contract_bytes = _canonical_json(self.contract_snapshot).encode("utf-8")
-                self._add_file(zf, f"{PREFIX}/contracts/contract_hashes.json", contract_bytes, checksums, artifact_index, "application/json")
+                _track_add(f"{PREFIX}/contracts/contract_hashes.json", contract_bytes, "application/json")
 
             # ── outputs/ ──
-            # se_matrix_payload.json
             payload_bytes = _canonical_json(self.payload_json).encode("utf-8")
-            self._add_file(zf, f"{PREFIX}/outputs/se_matrix_payload.json", payload_bytes, checksums, artifact_index, "application/json")
+            _track_add(f"{PREFIX}/outputs/se_matrix_payload.json", payload_bytes, "application/json")
 
-            # defense_packet_seed.json
             if self.defense_packet_seed:
                 seed_bytes = _canonical_json(self.defense_packet_seed).encode("utf-8")
-                self._add_file(zf, f"{PREFIX}/outputs/defense_packet_seed.json", seed_bytes, checksums, artifact_index, "application/json")
+                _track_add(f"{PREFIX}/outputs/defense_packet_seed.json", seed_bytes, "application/json")
 
-            # toxicity_profile.json
             if self.toxicity_profile:
                 tox_bytes = _canonical_json(self.toxicity_profile).encode("utf-8")
-                self._add_file(zf, f"{PREFIX}/outputs/toxicity_profile.json", tox_bytes, checksums, artifact_index, "application/json")
+                _track_add(f"{PREFIX}/outputs/toxicity_profile.json", tox_bytes, "application/json")
 
-            # lineage_graph.json
             if self.lineage_graph:
                 lin_bytes = _canonical_json(self.lineage_graph).encode("utf-8")
-                self._add_file(zf, f"{PREFIX}/outputs/lineage_graph.json", lin_bytes, checksums, artifact_index, "application/json")
+                _track_add(f"{PREFIX}/outputs/lineage_graph.json", lin_bytes, "application/json")
 
-            # replay_result.json
             if self.replay_result:
                 replay_bytes = _canonical_json(self.replay_result).encode("utf-8")
-                self._add_file(zf, f"{PREFIX}/outputs/replay_result.json", replay_bytes, checksums, artifact_index, "application/json")
+                _track_add(f"{PREFIX}/outputs/replay_result.json", replay_bytes, "application/json")
 
-            # Additional artifacts (DOCX, PDF, etc.)
+            # Additional artifacts (DOCX, PDF, etc.) — sanitized filenames
             for filename, data in sorted(self.artifacts.items()):
-                path = f"{PREFIX}/outputs/{filename}"
-                mime = self._guess_mime(filename)
-                self._add_file(zf, path, data, checksums, artifact_index, mime)
+                safe_name = _sanitize_filename(filename)
+                path = f"{PREFIX}/outputs/{safe_name}"
+                mime = self._guess_mime(safe_name)
+                _track_add(path, data, mime)
 
             # ── audit_events.jsonl ──
             lines = [json.dumps(evt, sort_keys=True, default=str) for evt in self.audit_events]
             events_bytes = ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
-            self._add_file(zf, f"{PREFIX}/audit_events.jsonl", events_bytes, checksums, artifact_index, "application/x-ndjson")
+            _track_add(f"{PREFIX}/audit_events.jsonl", events_bytes, "application/x-ndjson")
 
             # ── eCTD stubs (placeholder directories) ──
             for stub_dir in ("ectd-stubs/m1/", "ectd-stubs/m4/", "ectd-stubs/m5/"):
-                zf.mkdir(f"{PREFIX}/{stub_dir}")
+                full_dir = f"{PREFIX}/{stub_dir}"
+                # Python 3.11+ supports zf.mkdir(); 3.10 needs writestr with trailing /
+                if sys.version_info >= (3, 11):
+                    zf.mkdir(full_dir)
+                else:
+                    zf.writestr(full_dir, "")
 
             # ── checksums.sha256 (written last, covers all above) ──
             checksum_lines = [f"{sha}  {fname}" for fname, sha in sorted(checksums.items())]
@@ -239,6 +324,11 @@ class ProofPackZipBuilder:
 def verify_checksums(zip_bytes: bytes) -> tuple[bool, list[dict[str, str]]]:
     """Verify all checksums in a proof-pack ZIP.
 
+    Checks:
+      1. Every file listed in checksums.sha256 has a matching hash
+      2. Every file in the ZIP (except checksums.sha256 and directories)
+         has an entry in checksums.sha256 — detects injected files
+
     Returns (all_ok, failures) where failures is a list of
     {"path": ..., "expected_sha256": ..., "actual_sha256": ...}
     """
@@ -265,7 +355,7 @@ def verify_checksums(zip_bytes: bytes) -> tuple[bool, list[dict[str, str]]]:
             if len(parts) == 2:
                 expected[parts[1]] = parts[0]
 
-        # Verify each file
+        # 1. Verify listed files match their expected hashes
         for filename, expected_hash in expected.items():
             try:
                 actual_data = zf.read(filename)
@@ -282,5 +372,19 @@ def verify_checksums(zip_bytes: bytes) -> tuple[bool, list[dict[str, str]]]:
                     "expected_sha256": expected_hash,
                     "actual_sha256": "FILE_MISSING",
                 })
+
+        # 2. Detect injected files not in checksums (directories excluded)
+        all_zip_files = {
+            name for name in zf.namelist()
+            if not name.endswith("/")  # skip directories
+        }
+        tracked_files = set(expected.keys()) | {checksums_path}
+        extra_files = all_zip_files - tracked_files
+        for extra in sorted(extra_files):
+            failures.append({
+                "path": extra,
+                "expected_sha256": "NOT_IN_CHECKSUMS",
+                "actual_sha256": _sha256(zf.read(extra)),
+            })
 
     return len(failures) == 0, failures

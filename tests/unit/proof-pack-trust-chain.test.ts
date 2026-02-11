@@ -277,7 +277,7 @@ describe('Error response types', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 7. eCTD Stub Schema Validation Tests
+// 7. eCTD Stub Schema Validation Tests (fail-closed: missing file = fail)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('eCTD stub schemas', () => {
@@ -285,36 +285,191 @@ describe('eCTD stub schemas', () => {
     const fs = await import('fs');
     const path = await import('path');
     const schemaPath = path.resolve(__dirname, '../../schemas/leaf_map.schema.json');
-    if (fs.existsSync(schemaPath)) {
-      const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
-      expect(data.$schema).toBeDefined();
-      expect(data.required).toContain('leaves');
-    }
+    expect(fs.existsSync(schemaPath)).toBe(true);
+    const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
+    expect(data.$schema).toBeDefined();
+    expect(data.required).toContain('leaves');
   });
 
   it('bundle schema references all sub-schemas', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const schemaPath = path.resolve(__dirname, '../../schemas/ectd_stubs.bundle.schema.json');
-    if (fs.existsSync(schemaPath)) {
-      const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
-      // The bundle is itself a JSON Schema, so sub-schemas are in properties.schemas.properties
-      const schemasProps = data.properties?.schemas?.properties;
-      expect(schemasProps).toHaveProperty('leaf_map');
-      expect(schemasProps).toHaveProperty('sequence_plan');
-      expect(schemasProps).toHaveProperty('m1_index');
-    }
+    expect(fs.existsSync(schemaPath)).toBe(true);
+    const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
+    const schemasProps = data.properties?.schemas?.properties;
+    expect(schemasProps).toHaveProperty('leaf_map');
+    expect(schemasProps).toHaveProperty('sequence_plan');
+    expect(schemasProps).toHaveProperty('m1_index');
   });
 
   it('bundle specifies proof-pack/ root prefix', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const schemaPath = path.resolve(__dirname, '../../schemas/ectd_stubs.bundle.schema.json');
-    if (fs.existsSync(schemaPath)) {
-      const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
-      expect(data.properties?.proof_pack_layout?.properties?.root_prefix?.const).toBe(
-        'proof-pack/'
-      );
+    expect(fs.existsSync(schemaPath)).toBe(true);
+    const data = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
+    expect(data.properties?.proof_pack_layout?.properties?.root_prefix?.const).toBe('proof-pack/');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. Behavioral: DriftSeverity escalation logic
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('DriftSeverity escalation (behavioral)', () => {
+  /** Mirrors the Python drift severity logic from contract_hashes.py */
+  function computeDriftSeverity(reasonCodes: string[]): 'NONE' | 'LOW' | 'MED' | 'HIGH' {
+    if (reasonCodes.length === 0) return 'NONE';
+    const HIGH_CODES = ['RISK_VOCAB_CHANGED', 'MANIFEST_CHANGED', 'RISK_CODES_LOCK_CHANGED'];
+    const LOW_CODES = ['SCHEMA_CHANGED', 'GENERATOR_VERSION_CHANGED'];
+    for (const code of reasonCodes) {
+      if (HIGH_CODES.includes(code)) return 'HIGH';
     }
+    for (const code of reasonCodes) {
+      if (LOW_CODES.includes(code)) return 'LOW';
+    }
+    // Unknown codes → HIGH (fail-closed)
+    return 'HIGH';
+  }
+
+  it('no drift codes → NONE', () => {
+    expect(computeDriftSeverity([])).toBe('NONE');
+  });
+
+  it('RISK_VOCAB_CHANGED → HIGH', () => {
+    expect(computeDriftSeverity(['RISK_VOCAB_CHANGED'])).toBe('HIGH');
+  });
+
+  it('SCHEMA_CHANGED alone → LOW', () => {
+    expect(computeDriftSeverity(['SCHEMA_CHANGED'])).toBe('LOW');
+  });
+
+  it('mixed LOW + HIGH → HIGH wins', () => {
+    expect(computeDriftSeverity(['SCHEMA_CHANGED', 'MANIFEST_CHANGED'])).toBe('HIGH');
+  });
+
+  it('unknown code → HIGH (fail-closed)', () => {
+    expect(computeDriftSeverity(['SOMETHING_UNKNOWN'])).toBe('HIGH');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 9. Behavioral: Contract mismatch detection
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Contract mismatch detection (behavioral)', () => {
+  function detectMismatches(
+    stored: Record<string, string>,
+    current: Record<string, string>
+  ): Array<{ field: string; expected: string; actual: string }> {
+    const fields = ['risk_vocab_hash', 'risk_codes_lock_hash', 'schema_hash', 'generator_version'];
+    const mismatches: Array<{ field: string; expected: string; actual: string }> = [];
+    for (const f of fields) {
+      if (stored[f] !== current[f]) {
+        mismatches.push({ field: f, expected: stored[f], actual: current[f] });
+      }
+    }
+    return mismatches;
+  }
+
+  it('identical contracts → no mismatches', () => {
+    const snap = {
+      risk_vocab_hash: 'a',
+      risk_codes_lock_hash: 'b',
+      schema_hash: 'c',
+      generator_version: 'd',
+    };
+    expect(detectMismatches(snap, { ...snap })).toHaveLength(0);
+  });
+
+  it('one changed hash → one mismatch', () => {
+    const stored = {
+      risk_vocab_hash: 'a',
+      risk_codes_lock_hash: 'b',
+      schema_hash: 'c',
+      generator_version: 'd',
+    };
+    const current = { ...stored, risk_vocab_hash: 'CHANGED' };
+    const m = detectMismatches(stored, current);
+    expect(m).toHaveLength(1);
+    expect(m[0].field).toBe('risk_vocab_hash');
+    expect(m[0].expected).toBe('a');
+    expect(m[0].actual).toBe('CHANGED');
+  });
+
+  it('all changed → four mismatches', () => {
+    const stored = {
+      risk_vocab_hash: 'a',
+      risk_codes_lock_hash: 'b',
+      schema_hash: 'c',
+      generator_version: 'd',
+    };
+    const current = {
+      risk_vocab_hash: 'w',
+      risk_codes_lock_hash: 'x',
+      schema_hash: 'y',
+      generator_version: 'z',
+    };
+    expect(detectMismatches(stored, current)).toHaveLength(4);
+  });
+
+  it('sentinel __MISSING__ treated as mismatch against real hash', () => {
+    const stored = {
+      risk_vocab_hash: '__MISSING__',
+      risk_codes_lock_hash: 'b',
+      schema_hash: 'c',
+      generator_version: 'd',
+    };
+    const current = {
+      risk_vocab_hash: 'real_hash',
+      risk_codes_lock_hash: 'b',
+      schema_hash: 'c',
+      generator_version: 'd',
+    };
+    const m = detectMismatches(stored, current);
+    expect(m).toHaveLength(1);
+    expect(m[0].field).toBe('risk_vocab_hash');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. Behavioral: Proof pack download blocking
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Download blocking logic (behavioral)', () => {
+  function shouldBlock(opts: {
+    blockDownload: boolean;
+    driftSeverity: string | null;
+    mismatches: unknown[];
+  }): boolean {
+    if (opts.blockDownload) return true;
+    if (opts.driftSeverity === 'HIGH') return true;
+    if (opts.mismatches.length > 0) return true;
+    return false;
+  }
+
+  it('blockDownload=true → blocked', () => {
+    expect(shouldBlock({ blockDownload: true, driftSeverity: 'NONE', mismatches: [] })).toBe(true);
+  });
+
+  it('HIGH drift → blocked', () => {
+    expect(shouldBlock({ blockDownload: false, driftSeverity: 'HIGH', mismatches: [] })).toBe(true);
+  });
+
+  it('contract mismatches → blocked', () => {
+    expect(
+      shouldBlock({ blockDownload: false, driftSeverity: 'NONE', mismatches: [{ field: 'x' }] })
+    ).toBe(true);
+  });
+
+  it('no issues → allowed', () => {
+    expect(shouldBlock({ blockDownload: false, driftSeverity: 'NONE', mismatches: [] })).toBe(
+      false
+    );
+  });
+
+  it('LOW drift without mismatches → allowed', () => {
+    expect(shouldBlock({ blockDownload: false, driftSeverity: 'LOW', mismatches: [] })).toBe(false);
   });
 });

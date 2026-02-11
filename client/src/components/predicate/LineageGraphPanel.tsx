@@ -22,7 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, GitBranch, Layers, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useLineageGraph } from '@/hooks/use-predicate-intelligence';
-import type { LineageEdge, LineageGraph } from '../../../shared/types/predicate-intelligence';
+import type { LineageEdge } from '../../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -48,7 +48,7 @@ interface TreeNode {
 // Helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function buildTree(edges: LineageEdge[], rootK: string): TreeNode[] {
+function buildTree(edges: LineageEdge[], rootK: string, maxDepth: number = 4): TreeNode[] {
   // Group edges by child → parents
   const byChild = new Map<string, LineageEdge[]>();
   for (const e of edges) {
@@ -72,20 +72,26 @@ function buildTree(edges: LineageEdge[], rootK: string): TreeNode[] {
     }));
   }
 
-  function recurse(childK: string, depth: number): TreeNode[] {
+  function recurse(childK: string, depth: number, maxD: number, visited: Set<string>): TreeNode[] {
     const parents = byChild.get(childK) || [];
-    return parents.map(e => ({
-      kNumber: e.parent_k_number,
-      deviceName: e.parent_device_name,
-      productCode: e.parent_product_code,
-      relationship: e.relationship_type,
-      distance: e.distance,
-      confidence: e.confidence,
-      children: depth < 4 ? recurse(e.parent_k_number, depth + 1) : [],
-    }));
+    return parents
+      .filter(e => !visited.has(e.parent_k_number)) // cycle detection
+      .map(e => {
+        const nextVisited = new Set(visited);
+        nextVisited.add(e.parent_k_number);
+        return {
+          kNumber: e.parent_k_number,
+          deviceName: e.parent_device_name,
+          productCode: e.parent_product_code,
+          relationship: e.relationship_type,
+          distance: e.distance,
+          confidence: e.confidence,
+          children: depth < maxD ? recurse(e.parent_k_number, depth + 1, maxD, nextVisited) : [],
+        };
+      });
   }
 
-  return recurse(rootK, 1);
+  return recurse(rootK, 1, maxDepth, new Set([rootK]));
 }
 
 function flattenTree(nodes: TreeNode[], depth = 0): Array<TreeNode & { depth: number }> {
@@ -139,9 +145,9 @@ export function LineageGraphPanel({ programId, kNumber, maxDepth = 2 }: LineageG
 
   const flatRows = useMemo(() => {
     if (!graph?.edges) return [];
-    const tree = buildTree(graph.edges, graph.root_k_number);
+    const tree = buildTree(graph.edges, graph.root_k_number, maxDepth);
     return flattenTree(tree);
-  }, [graph]);
+  }, [graph, maxDepth]);
 
   // ─── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -221,7 +227,7 @@ export function LineageGraphPanel({ programId, kNumber, maxDepth = 2 }: LineageG
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table aria-label={`Predicate lineage tree for ${graph.root_k_number}`}>
           <TableHeader>
             <TableRow>
               <TableHead>Predicate K-Number</TableHead>

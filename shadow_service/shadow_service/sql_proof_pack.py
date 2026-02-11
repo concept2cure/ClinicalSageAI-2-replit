@@ -27,7 +27,9 @@ INSERT INTO predicate.proof_pack_exports (
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
         $9::jsonb, $10::jsonb, $11::jsonb,
         $12, $13, $14, $15, $16)
-ON CONFLICT ON CONSTRAINT idx_proof_pack_idempotency DO UPDATE SET
+ON CONFLICT (program_id, subject_hash, manifest_hash,
+             risk_vocab_hash, risk_code_lock_hash,
+             COALESCE(schema_hash, '')) DO UPDATE SET
     updated_at = NOW()
 RETURNING *
 """

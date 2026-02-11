@@ -110,7 +110,11 @@ export type EvidenceCategory =
   | 'StandardsConformance'
   | 'PostMarketSurveillance';
 
-export interface EvidenceTask {
+/**
+ * Lightweight evidence task shape used by DefensePacketSeed.
+ * For the full ops-complete type with tracking, use EvidenceTask (alias of EvidenceTaskFull).
+ */
+export interface EvidenceTaskLite {
   task_id: string;
   category: EvidenceCategory;
   severity: 'LOW' | 'MEDIUM' | 'HIGH';
@@ -125,7 +129,7 @@ export interface DefensePacketSeed {
   generated_at: string;
   program_id: string;
   product_code: string;
-  tasks: EvidenceTask[];
+  tasks: EvidenceTaskLite[];
   readiness_score: number;
   top_risks: string[];
 }

@@ -47,7 +47,7 @@ const BASE = '/api/predicate-intelligence';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function predicateFetch<T>(path: string, options: Record<string, unknown> = {}): Promise<T> {
-  const orgId = localStorage.getItem('organizationId') || '1';
+  const orgId = localStorage.getItem('organizationId') ?? '';
   const headers: Record<string, string> = {
     'x-organization-id': orgId,
     ...((options.headers as Record<string, string>) || {}),
@@ -411,7 +411,7 @@ async function defensePacketFetch<T>(
   path: string,
   options: Record<string, unknown> = {}
 ): Promise<T> {
-  const orgId = localStorage.getItem('organizationId') || '1';
+  const orgId = localStorage.getItem('organizationId') ?? '';
   const headers: Record<string, string> = {
     'x-organization-id': orgId,
     ...((options.headers as Record<string, string>) || {}),
@@ -612,7 +612,7 @@ export function useProofPack(programId: string, subjectHash: string) {
       defensePacketFetch(
         `/${programId}/predicate-intel/proof-pack?subject_hash=${encodeURIComponent(subjectHash)}`
       ),
-    enabled: !!programId,
+    enabled: !!programId && !!subjectHash,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
@@ -690,9 +690,13 @@ export function useDownloadProofPack(programId: string) {
     { proofPackId: string }
   >({
     mutationFn: async ({ proofPackId }) => {
+      const orgId = localStorage.getItem('organizationId') ?? '';
       const resp = await fetch(
         `/api/programs/${programId}/predicate-intel/proof-pack/${encodeURIComponent(proofPackId)}/download`,
-        { credentials: 'include' }
+        {
+          credentials: 'include',
+          headers: { 'x-organization-id': orgId },
+        }
       );
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Download failed' }));

@@ -132,9 +132,25 @@ try {
 
   log(`Computed bundle hash: ${computedHash.slice(0, 24)}…`);
 
-  // This hash should match what contract_hashes.compute_schema_hash() returns
-  // at runtime when it hashes the same file
-  pass(`Bundle hash computed successfully: ${computedHash.slice(0, 16)}…`);
+  // Compare against the stored bundle_hash in the bundle schema
+  if (existsSync(bundlePath)) {
+    const bundleObj = JSON.parse(readFileSync(bundlePath, 'utf-8'));
+    const storedHash = bundleObj.properties?.bundle_hash?.const;
+    if (storedHash) {
+      if (computedHash !== storedHash) {
+        fail(
+          `Bundle hash mismatch: computed ${computedHash.slice(0, 16)}… !== stored ${storedHash.slice(0, 16)}…`
+        );
+      } else {
+        pass(`Bundle hash verified: ${computedHash.slice(0, 16)}…`);
+      }
+    } else {
+      log('No const bundle_hash in bundle schema — skipping hash comparison');
+      pass(`Bundle hash computed successfully: ${computedHash.slice(0, 16)}…`);
+    }
+  } else {
+    pass(`Bundle hash computed successfully: ${computedHash.slice(0, 16)}…`);
+  }
 } catch (err: any) {
   fail(`Hash computation failed: ${err.message}`);
 }

@@ -105,14 +105,20 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
 async function shadowFetch<T = unknown>(
   method: string,
   path: string,
-  body?: unknown
-): Promise<{ status: number; data: T; raw?: string }> {
+  body?: unknown,
+  options?: { responseType?: 'json' | 'arraybuffer'; timeoutMs?: number }
+): Promise<{ status: number; data: T; raw?: string; headers: Record<string, string> }> {
   const base = getShadowUrl().replace(/\/$/, '');
   const url = `${base}${path.startsWith('/') ? '' : '/'}${path}`;
   const token = getAdminToken();
 
+  const controller = new AbortController();
+  const timeout = options?.timeoutMs ?? 60_000;
+  const timer = setTimeout(() => controller.abort(), timeout);
+
   const opts: RequestInit = {
     method,
+    signal: controller.signal,
     headers: {
       'Content-Type': 'application/json',
       'X-Admin-Token': token,
@@ -122,16 +128,34 @@ async function shadowFetch<T = unknown>(
     opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url, opts);
-  const text = await res.text();
-  let data: T;
   try {
-    data = JSON.parse(text) as T;
-  } catch {
-    data = text as unknown as T;
-  }
+    const res = await fetch(url, opts);
 
-  return { status: res.status, data, raw: text };
+    // Collect response headers
+    const resHeaders: Record<string, string> = {};
+    res.headers.forEach((value, key) => {
+      resHeaders[key] = value;
+    });
+
+    // Binary response (ZIP downloads)
+    if (options?.responseType === 'arraybuffer') {
+      const buffer = await res.arrayBuffer();
+      return { status: res.status, data: buffer as unknown as T, headers: resHeaders };
+    }
+
+    // JSON/text response (default)
+    const text = await res.text();
+    let data: T;
+    try {
+      data = JSON.parse(text) as T;
+    } catch {
+      data = text as unknown as T;
+    }
+
+    return { status: res.status, data, raw: text, headers: resHeaders };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 type PacketAuditMetadata = {
@@ -1071,11 +1095,11 @@ router.get(
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       // Forward contract version header from Shadow
-      const contractVersion = (result as any).headers?.['x-contract-version'];
+      const contractVersion = result.headers['x-contract-version'];
       if (contractVersion) {
         res.setHeader('X-Contract-Version', contractVersion);
       }
-      const proofPackHash = (result as any).headers?.['x-proof-pack-hash'];
+      const proofPackHash = result.headers['x-proof-pack-hash'];
       if (proofPackHash) {
         res.setHeader('X-Proof-Pack-Hash', proofPackHash);
       }
@@ -1145,10 +1169,15 @@ router.post(
       }
 
       logAuditEvent({
-        programId,
-        userId: (req as any).user?.id ?? 'system',
+        category: 'compliance',
+        severity: 'info',
         action: 'SAFETY_SIGNALS_INGESTED',
-        details: { kNumber, signals_count: signals.length, badge: (result.data as any).badge },
+        userId: (req as any).user?.id ?? 'system',
+        organizationId: (req as any).user?.organizationId ?? '',
+        resourceType: 'safety_signal',
+        resourceId: programId,
+        success: true,
+        metadata: { kNumber, signals_count: signals.length, badge: (result.data as any).badge },
       });
 
       return res.status(200).json(result.data);
