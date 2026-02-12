@@ -575,6 +575,16 @@ try {
   console.error('❌ Failed to mount FDA 510(k) routes:', error);
 }
 
+// Mount FDA 510(k) eSTAR export routes
+try {
+  const estarModule = await import('./routes/510k-estar-routes.ts');
+  const estarRoutes = estarModule.default;
+  app.use('/api/510k/estar', estarRoutes);
+  console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount FDA 510(k) eSTAR routes:', error);
+}
+
 // Mount Document Orchestration routes for 510(k) auto-population
 try {
   const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
@@ -4321,48 +4331,53 @@ async function startServer() {
 
   // Setup Vite middleware for frontend serving (development mode with HMR)
   // This must be done AFTER all API routes are mounted
-  try {
-    await setupVite(app, httpServer);
-    console.log('✅ Vite middleware setup complete - frontend will be served');
-  } catch (viteError) {
-    console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
-    // Fallback: serve static files from dist if Vite fails
-    const distPath = path.resolve(__dirname, '../client/dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get('*', (_req, res) => {
-        res.sendFile(path.resolve(distPath, 'index.html'));
-      });
-      console.log('✅ Static files being served from dist folder');
-    } else {
-      // Last resort: serve a simple landing page
-      app.get('/', (_req, res) => {
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>TrialSage - ClinicalSageAI</title>
-            <style>
-              body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-              .container { text-align: center; color: white; padding: 40px; }
-              h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-              p { font-size: 1.2rem; opacity: 0.9; }
-              a { color: white; text-decoration: underline; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>🧬 TrialSage Platform</h1>
-              <p>API Server is running successfully.</p>
-              <p>Check <a href="/api/health">/api/health</a> for system status.</p>
-              <p>Frontend build may be required. Run: <code>npm run build</code></p>
-            </div>
-          </body>
-          </html>
-        `);
-      });
-      console.log('⚠️ No frontend available - serving basic landing page');
+  const skipVite = ['1', 'true', 'yes'].includes(String(process.env.SKIP_VITE || '').toLowerCase());
+  if (!skipVite) {
+    try {
+      await setupVite(app, httpServer);
+      console.log('✅ Vite middleware setup complete - frontend will be served');
+    } catch (viteError) {
+      console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
+      // Fallback: serve static files from dist if Vite fails
+      const distPath = path.resolve(__dirname, '../client/dist');
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (_req, res) => {
+          res.sendFile(path.resolve(distPath, 'index.html'));
+        });
+        console.log('✅ Static files being served from dist folder');
+      } else {
+        // Last resort: serve a simple landing page
+        app.get('/', (_req, res) => {
+          res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>TrialSage - ClinicalSageAI</title>
+              <style>
+                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+                .container { text-align: center; color: white; padding: 40px; }
+                h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+                p { font-size: 1.2rem; opacity: 0.9; }
+                a { color: white; text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>🧬 TrialSage Platform</h1>
+                <p>API Server is running successfully.</p>
+                <p>Check <a href="/api/health">/api/health</a> for system status.</p>
+                <p>Frontend build may be required. Run: <code>npm run build</code></p>
+              </div>
+            </body>
+            </html>
+          `);
+        });
+        console.log('⚠️ No frontend available - serving basic landing page');
+      }
     }
+  } else {
+    console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
   }
 
   // Start the HTTP server

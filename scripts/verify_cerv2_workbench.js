@@ -1,3 +1,5 @@
+const logger = console;
+
 const baseUrl = process.env.CERV2_BASE_URL || 'http://localhost:3000';
 const healthPaths = ['/healthz', '/api/health'];
 

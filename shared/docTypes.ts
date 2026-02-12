@@ -5,36 +5,34 @@ export const DocTypeConfigs = {
     key: 'cerv2_510k',
     label: 'FDA 510(k)',
     agency: 'FDA',
-    pathway: 'Diagnostics',
-    stylePack: '510k_fda_v1',
+    pathway: 'Device',
+    stylePack: '510k_v1',
     sections: [
-      { id: 'cover', title: 'Cover Letter', required: true },
-      { id: 'toc', title: 'Table of Contents', required: true },
-      { id: 'summary', title: '510(k) Summary', required: true },
-      { id: 'device', title: '1. Device Description' },
-      { id: 'predicate', title: '2. Predicate Device(s)' },
-      { id: 'comparison', title: '3. Substantial Equivalence Comparison', required: true },
-      { id: 'performance', title: '4. Performance Data' },
-      { id: 'biocompat', title: '5. Biocompatibility (if applicable)' },
-      { id: 'software', title: '6. Software Validation (if applicable)' },
-      { id: 'labeling', title: '7. Proposed Labeling' }
-    ]
+      { id: 'admin', title: '1. Administrative Information', required: true },
+      { id: 'ifu', title: '2. Indications for Use', required: true },
+      { id: 'desc', title: '3. Device Description', required: true },
+      { id: 'pred', title: '4. Predicate Devices', required: true },
+      { id: 'se', title: '5. Substantial Equivalence Discussion', required: true },
+      { id: 'testing', title: '6. Performance Testing (Bench/Clinical)' },
+      { id: 'labeling', title: '7. Labeling' },
+      { id: 'concl', title: '8. Conclusion' },
+    ],
   },
   cerv2_pma: {
     key: 'cerv2_pma',
     label: 'FDA PMA',
     agency: 'FDA',
-    pathway: 'Diagnostics',
-    stylePack: 'pma_fda_v1',
+    pathway: 'Device',
+    stylePack: 'pma_v1',
     sections: [
-      { id: 'admin', title: '1. Administrative Information', required: true },
-      { id: 'device', title: '2. Device Description' },
-      { id: 'nonclinical', title: '3. Nonclinical Studies', required: true },
+      { id: 'summary', title: '1. Summary and General Information', required: true },
+      { id: 'nonclin', title: '2. Nonclinical Laboratory Studies', required: true },
+      { id: 'clin', title: '3. Clinical Investigations', required: true },
       { id: 'mfgqa', title: '4. Manufacturing and Quality Systems' },
       { id: 'labeling', title: '5. Labeling' },
       { id: 'risk', title: '6. Risk/Benefit Determination' },
-      { id: 'pms', title: '7. Post-Approval Study / PMS (if applicable)' }
-    ]
+      { id: 'pms', title: '7. Post-Approval Study / PMS (if applicable)' },
+    ],
   },
   cerv2_cer: {
     key: 'cerv2_cer',
@@ -50,9 +48,9 @@ export const DocTypeConfigs = {
       { id: 'benefitrisk', title: '5. Benefit–Risk Determination', required: true },
       { id: 'gspr', title: '6. GSPR Mapping' },
       { id: 'pms', title: '7. PMS Plan / PMCF' },
-      { id: 'concl', title: '8. Conclusions & Recommendations' }
-    ]
-  }
+      { id: 'concl', title: '8. Conclusions & Recommendations' },
+    ],
+  },
 };
 
 export const DOC_TYPES = DocTypeConfigs;

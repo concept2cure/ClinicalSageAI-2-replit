@@ -2,6 +2,8 @@ import { randomUUID } from 'crypto';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
+const logger = console;
+
 const parseArgValue = flag => {
   const index = process.argv.findIndex(arg => arg === flag);
   if (index !== -1 && process.argv[index + 1]) {

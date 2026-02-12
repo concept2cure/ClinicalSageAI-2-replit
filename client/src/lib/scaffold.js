@@ -3,9 +3,9 @@
 import { DOC_TYPES } from '@shared/docTypes';
 
 // Create or update a section in the editor
-export function upsertSection(editor, heading, level = 1, body = '<Populate section>') {
+export function upsertSection(editor, heading, level = 1, body = 'Section content not provided.') {
   if (!editor) return;
-  
+
   const json = editor.getJSON ? editor.getJSON() : null;
   if (!json) {
     // Fallback for text-based editors
@@ -15,14 +15,14 @@ export function upsertSection(editor, heading, level = 1, body = '<Populate sect
   }
 
   const idx = (json.content || []).findIndex(
-    (n) => n.type === 'heading' && n.content?.[0]?.text === heading
+    n => n.type === 'heading' && n.content?.[0]?.text === heading
   );
-  
+
   const nodes = [
     { type: 'heading', attrs: { level }, content: [{ type: 'text', text: heading }] },
-    { type: 'paragraph', content: [{ type: 'text', text: body }] }
+    { type: 'paragraph', content: [{ type: 'text', text: body }] },
   ];
-  
+
   if (idx >= 0) {
     // Update existing section
     let end = json.content.length;
@@ -61,79 +61,87 @@ export function applyScaffold(editor, docType, deviceProfile = {}) {
   } else {
     // Generic scaffold
     for (const section of docType.sections) {
-      const placeholder = section.required 
-        ? `<Required: ${section.title}>` 
-        : `<Optional: ${section.title}>`;
+      const placeholder = section.required
+        ? `${section.title} is required. Add content here.`
+        : `${section.title} is optional. Add content if applicable.`;
       upsertSection(editor, section.title, 1, placeholder);
     }
   }
 }
 
+const fallbackText = (value, label) => {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return `${label} not provided.`;
+  }
+  return String(value);
+};
+
 // FDA 510(k) specific scaffold
 function apply510kScaffold(editor, docType, deviceProfile) {
   const f = deviceProfile || {};
-  
+
   upsertSection(
     editor,
     '1. Administrative Information',
     1,
-    `Manufacturer: ${f.manufacturer || '<Manufacturer Name>'}\n` +
-    `Device Name: ${f.deviceName || '<Device Trade Name>'}\n` +
-    `Product Code: ${f.productCode || '<FDA Product Code>'}\n` +
-    `Regulation Number: ${f.regulationNumber || '<21 CFR XXX.XXXX>'}\n` +
-    `510(k) Number: ${f.submissionNumber || '<To be assigned by FDA>'}`
+    `Manufacturer: ${fallbackText(f.manufacturer, 'Manufacturer')}\n` +
+      `Device Name: ${fallbackText(f.deviceName, 'Device name')}\n` +
+      `Product Code: ${fallbackText(f.productCode, 'FDA product code')}\n` +
+      `Regulation Number: ${fallbackText(f.regulationNumber, 'Regulation number')}\n` +
+      `510(k) Number: ${f.submissionNumber ? String(f.submissionNumber) : 'Not assigned by FDA'}\n` +
+      `Submission Type: ${fallbackText(f.submissionType, 'Submission type')}`
   );
 
   upsertSection(
     editor,
     '2. Indications for Use',
     1,
-    `The ${f.deviceName || '<device name>'} is indicated for ${f.intendedUse || '<describe intended use, patient population, and clinical setting>'}.\n\n` +
-    `This device is ${f.prescriptionUse ? 'prescription use (Rx)' : 'over-the-counter (OTC)'}.`
+    `The ${f.deviceName || 'device'} is indicated for ${f.intendedUse || 'the intended use described in the device profile'}.\n\n` +
+      `Use type: ${f.prescriptionUse === true ? 'Prescription (Rx)' : f.prescriptionUse === false ? 'Over-the-counter (OTC)' : 'Use type not specified'}.`
   );
 
   upsertSection(
     editor,
     '3. Device Description',
     1,
-    `Product Overview:\n${f.deviceDescription || '<Provide detailed device description including components, materials, and specifications>'}\n\n` +
-    `Key Features:\n• <Feature 1>\n• <Feature 2>\n• <Feature 3>\n\n` +
-    `Principles of Operation:\n<Describe how the device works>`
+    `Product Overview:\n${f.deviceDescription || 'Device description not provided in the profile.'}\n\n` +
+      `Key Features:\n• Key feature details not provided.\n• Add performance characteristics where applicable.\n• Reference design inputs and specifications.\n\n` +
+      `Principles of Operation:\n${f.principlesOfOperation || 'Principles of operation not provided.'}`
   );
 
   upsertSection(
     editor,
     '4. Predicate Devices',
     1,
-    `Primary Predicate: ${f.predicateDevice || '<K number and device name>'}\n` +
-    `Manufacturer: ${f.predicateManufacturer || '<Predicate manufacturer>'}\n\n` +
-    `Comparison Table:\n` +
-    `| Feature | Subject Device | Predicate Device |\n` +
-    `|---------|---------------|------------------|\n` +
-    `| Intended Use | Same | Same |\n` +
-    `| Technology | <Describe> | <Describe> |\n` +
-    `| Materials | <List> | <List> |`
+    `Primary Predicate: ${fallbackText(f.predicateDevice, 'Predicate device')}\n` +
+      `Manufacturer: ${fallbackText(f.predicateManufacturer, 'Predicate manufacturer')}\n\n` +
+      `Comparison Table:\n` +
+      `| Feature | Subject Device | Predicate Device |\n` +
+      `|---------|---------------|------------------|\n` +
+      `| Intended Use | ${f.intendedUse ? 'Same' : 'Not documented'} | ${f.predicateIntendedUse ? 'Same' : 'Not documented'} |\n` +
+      `| Technology | ${f.technology || 'Not documented'} | ${f.predicateTechnology || 'Not documented'} |\n` +
+      `| Materials | ${f.materials || 'Not documented'} | ${f.predicateMaterials || 'Not documented'} |`
   );
 
   upsertSection(
     editor,
     '5. Substantial Equivalence Discussion',
     1,
-    `The ${f.deviceName || '<device>'} is substantially equivalent to the predicate device based on:\n\n` +
-    `• Same intended use\n` +
-    `• Similar technological characteristics\n` +
-    `• Performance data demonstrating safety and effectiveness\n\n` +
-    `<Provide detailed SE rationale>`
+    `The ${f.deviceName || 'device'} is substantially equivalent to the predicate device based on:\n\n` +
+      `• Same intended use\n` +
+      `• Similar technological characteristics\n` +
+      `• Performance data demonstrating safety and effectiveness\n\n` +
+      `Provide a detailed substantial equivalence rationale with supporting evidence.`
   );
 
   upsertSection(
     editor,
     '6. Performance Testing (Bench/Clinical)',
     1,
-    `Bench Testing:\n• <Test 1 and results>\n• <Test 2 and results>\n\n` +
-    `Biocompatibility:\n• <ISO 10993 testing if applicable>\n\n` +
-    `Software Validation:\n• <If applicable, describe validation per FDA software guidance>\n\n` +
-    `Clinical Data:\n• <If applicable, summarize clinical studies>`
+    `Bench Testing:\n• Bench test protocols and results not provided.\n• Add summary tables or performance metrics.\n\n` +
+      `Biocompatibility:\n• Biocompatibility evidence not provided.\n\n` +
+      `Software Validation:\n• Software validation evidence not provided.\n\n` +
+      `Clinical Data:\n• Clinical evidence not provided.`
   );
 
   upsertSection(
@@ -141,17 +149,17 @@ function apply510kScaffold(editor, docType, deviceProfile) {
     '7. Proposed Labeling',
     1,
     `The following labeling is proposed:\n\n` +
-    `• Instructions for Use (IFU)\n` +
-    `• Package Insert\n` +
-    `• Device Label\n\n` +
-    `<Attach draft labeling as appendices>`
+      `• Instructions for Use (IFU)\n` +
+      `• Package Insert\n` +
+      `• Device Label\n\n` +
+      `Attach final labeling artifacts in the document vault for review.`
   );
 
   upsertSection(
     editor,
     '8. Conclusion',
     1,
-    `Based on the information provided in this submission, the ${f.deviceName || '<device>'} is substantially equivalent to the legally marketed predicate device.`
+    `Based on the information provided in this submission, the ${f.deviceName || 'device'} is substantially equivalent to the legally marketed predicate device.`
   );
 }
 
@@ -163,19 +171,19 @@ function applyPMAScaffold(editor, docType, deviceProfile) {
     editor,
     '1. Summary and General Information',
     1,
-    `Device Name: ${f.deviceName || '<Device Name>'}\n` +
-    `PMA Number: ${f.pmaNumber || '<To be assigned>'}\n` +
-    `Classification: Class III\n\n` +
-    `Executive Summary:\n<Provide overview of device, indications, and clinical evidence>`
+    `Device Name: ${fallbackText(f.deviceName, 'Device name')}\n` +
+      `PMA Number: ${f.pmaNumber ? String(f.pmaNumber) : 'Not assigned'}\n` +
+      `Classification: Class III\n\n` +
+      `Executive Summary:\nProvide an overview of the device, indications, and clinical evidence.`
   );
 
   upsertSection(
     editor,
     '2. Nonclinical Laboratory Studies',
     1,
-    `Biocompatibility Testing (ISO 10993):\n• <List all tests and results>\n\n` +
-    `Mechanical Testing:\n• <Fatigue, tensile, compression results>\n\n` +
-    `Animal Studies:\n• <Summarize preclinical studies>`
+    `Biocompatibility Testing (ISO 10993):\n• Results not provided.\n\n` +
+      `Mechanical Testing:\n• Results not provided.\n\n` +
+      `Animal Studies:\n• Preclinical study summaries not provided.`
   );
 
   upsertSection(
@@ -183,22 +191,22 @@ function applyPMAScaffold(editor, docType, deviceProfile) {
     '3. Clinical Investigations',
     1,
     `Pivotal Study:\n` +
-    `• Study Design: <RCT, single-arm, etc.>\n` +
-    `• Primary Endpoint: <Define>\n` +
-    `• Sample Size: <N=>\n` +
-    `• Results: <Summarize key findings>\n\n` +
-    `Supporting Studies:\n<List and summarize additional clinical evidence>`
+      `• Study Design: ${fallbackText(f.pmaStudyDesign, 'Study design')}\n` +
+      `• Primary Endpoint: ${fallbackText(f.primaryEndpoint, 'Primary endpoint')}\n` +
+      `• Sample Size: ${fallbackText(f.sampleSize, 'Sample size')}\n` +
+      `• Results: ${fallbackText(f.clinicalResults, 'Clinical results summary')}\n\n` +
+      `Supporting Studies:\nAdditional clinical evidence not provided.`
   );
 
   upsertSection(
     editor,
     '4. Manufacturing and Quality Systems',
     1,
-    `Manufacturing Process:\n<Describe key manufacturing steps>\n\n` +
-    `Quality System Regulation (QSR) Compliance:\n` +
-    `• Design Controls\n` +
-    `• Production Controls\n` +
-    `• CAPA System`
+    `Manufacturing Process:\nManufacturing process details not provided.\n\n` +
+      `Quality System Regulation (QSR) Compliance:\n` +
+      `• Design Controls\n` +
+      `• Production Controls\n` +
+      `• CAPA System`
   );
 
   upsertSection(
@@ -206,17 +214,17 @@ function applyPMAScaffold(editor, docType, deviceProfile) {
     '5. Labeling',
     1,
     `Physician Labeling:\n• Instructions for Use\n• Contraindications\n• Warnings and Precautions\n\n` +
-    `Patient Labeling:\n• Patient Information Booklet\n• Implant Card (if applicable)`
+      `Patient Labeling:\n• Patient Information Booklet\n• Implant Card (if applicable)`
   );
 
   upsertSection(
     editor,
     '6. Risk/Benefit Determination',
     1,
-    `Benefits:\n• <List clinical benefits>\n\n` +
-    `Risks:\n• <List identified risks>\n\n` +
-    `Risk Mitigation:\n• <Describe risk controls>\n\n` +
-    `Conclusion: The benefits outweigh the risks when used as indicated.`
+    `Benefits:\n• Clinical benefits not provided.\n\n` +
+      `Risks:\n• Identified risks not provided.\n\n` +
+      `Risk Mitigation:\n• Risk controls not provided.\n\n` +
+      `Conclusion: The benefits outweigh the risks when used as indicated.`
   );
 }
 
@@ -228,19 +236,19 @@ function applyCERScaffold(editor, docType, deviceProfile) {
     editor,
     '1. State of the Art',
     1,
-    `Current Clinical Practice:\n<Describe current treatment standards>\n\n` +
-    `Alternative Treatments:\n• <Option 1>\n• <Option 2>\n\n` +
-    `Device Position:\n<How this device fits in current practice>`
+    `Current Clinical Practice:\nCurrent treatment standards not provided.\n\n` +
+      `Alternative Treatments:\n• Alternative treatment details not provided.\n\n` +
+      `Device Position:\nDevice positioning in current practice not provided.`
   );
 
   upsertSection(
     editor,
     '2. Device/Intended Purpose',
     1,
-    `Device Name: ${f.deviceName || '<Device Name>'}\n` +
-    `UDI: ${f.udi || '<Unique Device Identifier>'}\n` +
-    `Classification: ${f.mdClass || '<Class IIa/IIb/III>'}\n\n` +
-    `Intended Purpose:\n${f.intendedPurpose || '<Detailed intended purpose per MDR>'}`
+    `Device Name: ${fallbackText(f.deviceName, 'Device name')}\n` +
+      `UDI: ${fallbackText(f.udi, 'UDI')}\n` +
+      `Classification: ${fallbackText(f.mdClass, 'Device classification')}\n\n` +
+      `Intended Purpose:\n${f.intendedPurpose || 'Intended purpose not provided.'}`
   );
 
   upsertSection(
@@ -248,10 +256,10 @@ function applyCERScaffold(editor, docType, deviceProfile) {
     '3. Clinical Data Set (Literature + Studies)',
     1,
     `Literature Review:\n` +
-    `• Search Strategy: <Databases, keywords, date range>\n` +
-    `• Inclusion/Exclusion Criteria: <Define>\n` +
-    `• Results: <N studies identified>\n\n` +
-    `Clinical Studies:\n• <List relevant studies with outcomes>`
+      `• Search Strategy: Not provided.\n` +
+      `• Inclusion/Exclusion Criteria: Not provided.\n` +
+      `• Results: Not provided.\n\n` +
+      `Clinical Studies:\n• Clinical study list not provided.`
   );
 
   upsertSection(
@@ -259,19 +267,19 @@ function applyCERScaffold(editor, docType, deviceProfile) {
     '4. Critical Appraisal & Weighting',
     1,
     `Data Quality Assessment:\n` +
-    `• Level of Evidence: <Grade per MEDDEV 2.7/1>\n` +
-    `• Study Limitations: <Identify>\n` +
-    `• Data Relevance: <Assess applicability>\n\n` +
-    `Weighting Factors:\n• <Explain data weighting methodology>`
+      `• Level of Evidence: Not provided.\n` +
+      `• Study Limitations: Not provided.\n` +
+      `• Data Relevance: Not provided.\n\n` +
+      `Weighting Factors:\n• Data weighting methodology not provided.`
   );
 
   upsertSection(
     editor,
     '5. Benefit–Risk Determination',
     1,
-    `Clinical Benefits:\n• <Quantify benefits with evidence>\n\n` +
-    `Risks and Harms:\n• <List with frequencies>\n\n` +
-    `Benefit-Risk Profile:\n<Demonstrate positive benefit-risk per MDR Annex XIV>`
+    `Clinical Benefits:\n• Benefits not provided.\n\n` +
+      `Risks and Harms:\n• Risks not provided.\n\n` +
+      `Benefit-Risk Profile:\nDemonstrate positive benefit-risk per MDR Annex XIV.`
   );
 
   upsertSection(
@@ -279,26 +287,25 @@ function applyCERScaffold(editor, docType, deviceProfile) {
     '6. GSPR Mapping',
     1,
     `General Safety and Performance Requirements:\n\n` +
-    `GSPR 1: <How addressed>\n` +
-    `GSPR 2: <How addressed>\n` +
-    `...\n` +
-    `<Map all applicable GSPRs from Annex I>`
+      `GSPR 1: Not provided.\n` +
+      `GSPR 2: Not provided.\n\n` +
+      `Map all applicable GSPRs from Annex I.`
   );
 
   upsertSection(
     editor,
     '7. PMS Plan / PMCF',
     1,
-    `Post-Market Surveillance Plan:\n• <Data sources>\n• <Monitoring frequency>\n\n` +
-    `PMCF Activities:\n• <Registry participation>\n• <Follow-up studies>\n• <Literature monitoring>`
+    `Post-Market Surveillance Plan:\n• Data sources not provided.\n• Monitoring frequency not provided.\n\n` +
+      `PMCF Activities:\n• Registry participation not provided.\n• Follow-up studies not provided.\n• Literature monitoring not provided.`
   );
 
   upsertSection(
     editor,
     '8. Conclusions & Recommendations',
     1,
-    `The clinical evaluation demonstrates that the ${f.deviceName || '<device>'} meets the relevant GSPRs and has an acceptable benefit-risk profile when used as intended.\n\n` +
-    `Recommendations:\n• <Next CER update timeline>\n• <PMCF priorities>`
+    `The clinical evaluation demonstrates that the ${f.deviceName || 'device'} meets the relevant GSPRs and has an acceptable benefit-risk profile when used as intended.\n\n` +
+      `Recommendations:\n• CER update timeline not provided.\n• PMCF priorities not provided.`
   );
 }
 
@@ -306,6 +313,6 @@ export default {
   upsertSection,
   applyScaffold,
   apply510kScaffold,
-  applyPMAScaffold,  
-  applyCERScaffold
+  applyPMAScaffold,
+  applyCERScaffold,
 };

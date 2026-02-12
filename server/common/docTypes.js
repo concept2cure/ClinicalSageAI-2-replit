@@ -14,9 +14,9 @@ const DocTypeConfigs = {
       { id: 'pred', title: '4. Predicate Devices', required: true },
       { id: 'se', title: '5. Substantial Equivalence Discussion', required: true },
       { id: 'testing', title: '6. Performance Testing (Bench/Clinical)' },
-      { id: 'labeling', title: '7. Proposed Labeling' },
-      { id: 'concl', title: '8. Conclusion' }
-    ]
+      { id: 'labeling', title: '7. Labeling' },
+      { id: 'concl', title: '8. Conclusion' },
+    ],
   },
   cerv2_pma: {
     key: 'cerv2_pma',
@@ -31,8 +31,8 @@ const DocTypeConfigs = {
       { id: 'mfgqa', title: '4. Manufacturing and Quality Systems' },
       { id: 'labeling', title: '5. Labeling' },
       { id: 'risk', title: '6. Risk/Benefit Determination' },
-      { id: 'pms', title: '7. Post-Approval Study / PMS (if applicable)' }
-    ]
+      { id: 'pms', title: '7. Post-Approval Study / PMS (if applicable)' },
+    ],
   },
   cerv2_cer: {
     key: 'cerv2_cer',
@@ -48,13 +48,13 @@ const DocTypeConfigs = {
       { id: 'benefitrisk', title: '5. Benefit–Risk Determination', required: true },
       { id: 'gspr', title: '6. GSPR Mapping' },
       { id: 'pms', title: '7. PMS Plan / PMCF' },
-      { id: 'concl', title: '8. Conclusions & Recommendations' }
-    ]
-  }
+      { id: 'concl', title: '8. Conclusions & Recommendations' },
+    ],
+  },
 };
 
 module.exports = {
   DOC_TYPES: DocTypeConfigs,
-  getDocType: (key) => DocTypeConfigs[key],
-  getAllDocTypes: () => Object.values(DocTypeConfigs)
+  getDocType: key => DocTypeConfigs[key],
+  getAllDocTypes: () => Object.values(DocTypeConfigs),
 };

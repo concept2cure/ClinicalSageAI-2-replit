@@ -24,6 +24,7 @@ import { fromZodError } from 'zod-validation-error';
 import axios, { AxiosInstance } from 'axios';
 import { createHash } from 'crypto';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
+import { searchPredicates } from '../services/FDA510kService';
 
 // Load environment variables
 dotenv.config();
@@ -116,6 +117,27 @@ const router = express.Router();
 
 // Apply deprecation notice to all routes in this file
 router.use(create510kDeprecationNotice('/fda'));
+
+/**
+ * GET /predicates?query=...&limit=25
+ * Lightweight openFDA predicate search for CERV2 workflows.
+ */
+router.get('/predicates', async (req: Request, res: Response) => {
+  const query = typeof req.query.query === 'string' ? req.query.query : '';
+  const limit = req.query.limit ? Number(req.query.limit) : 25;
+
+  if (!query) {
+    return res.status(400).json({ error: 'query is required' });
+  }
+
+  try {
+    const result = await searchPredicates(query, Number.isFinite(limit) ? limit : 25);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error('[fda510k] predicate search failed:', error.message);
+    return res.status(502).json({ error: 'openFDA service unavailable' });
+  }
+});
 
 // Simple in-memory rate limiting implementation
 class SimpleRateLimiter {
