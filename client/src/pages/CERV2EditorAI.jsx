@@ -22,6 +22,12 @@
  *  - Export readiness score with penalty for errors/warnings
  *  - Section expand/collapse to review content before export
  *
+ * Phase 7.7 — Full end-to-end export simulation:
+ *  - CERV2FullExportSimulation: readiness-gated 3-step pipeline
+ *  - AI suggestions → TipTap editor JSON → format render (PDF/DOCX/ZIP)
+ *  - Step-by-step progress indicators + export history log
+ *  - Mock export fallback for demo/QA
+ *
  * UX features:
  *  - Outline panel (left) with section navigation & AI preview
  *  - Validation panel (right) with compliance hints & severity badges
@@ -35,6 +41,7 @@ import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEdit
 import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import CERV2ValidationPanel from '../components/CERV2ValidationPanel.jsx';
 import CERV2ExportPreviewPanel from '../components/CERV2ExportPreviewPanel.jsx';
+import CERV2FullExportSimulation from '../components/CERV2FullExportSimulation.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -54,6 +61,7 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   Eye,
+  Zap,
   X,
 } from 'lucide-react';
 
@@ -152,6 +160,9 @@ export default function CERV2EditorAI() {
 
   // Phase 7.6 – Export preview state
   const [showExportPreview, setShowExportPreview] = useState(false);
+
+  // Phase 7.7 – Full export simulation state
+  const [showExportSim, setShowExportSim] = useState(false);
 
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
@@ -445,6 +456,17 @@ export default function CERV2EditorAI() {
             <Eye className={`h-4 w-4 ${showExportPreview ? 'text-primary' : ''}`} />
           </Button>
 
+          {/* Full Export Simulation Toggle (Phase 7.7) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowExportSim(prev => !prev)}
+            title={showExportSim ? 'Hide export simulation' : 'Show export simulation'}
+          >
+            <Zap className={`h-4 w-4 ${showExportSim ? 'text-primary' : ''}`} />
+          </Button>
+
           {/* Scaffold Refresh */}
           <Button
             variant="ghost"
@@ -594,6 +616,18 @@ export default function CERV2EditorAI() {
             aiSuggestionsExternal={aiSuggestionsForEditor}
             loadingSectionsExternal={loadingSectionsForEditor}
           />
+          {/* ─── Full Export Simulation (Phase 7.7) ─────────────────────── */}
+          {showExportSim && (
+            <CERV2FullExportSimulation
+              outline={outline}
+              aiSuggestions={aiSuggestions}
+              validationHints={validationHints}
+              dismissedSuggestions={dismissedSuggestions}
+              selectedDocType={selectedDocType}
+              completeness={sectionCompleteness}
+              className="mx-4 my-2"
+            />
+          )}
           {/* ─── Inline Export Controls ─────────────────────────────────── */}
           <CERV2ExportControls
             docType={selectedDocType}
