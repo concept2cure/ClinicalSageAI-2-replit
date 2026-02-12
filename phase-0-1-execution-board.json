@@ -1,0 +1,1043 @@
+{
+  "meta": {
+    "title": "CERV2 Phase 0-1 Readiness Execution Board",
+    "generated": "2026-02-12",
+    "version": "v1.0.0",
+    "branch": "concept2cure-v2",
+    "commit": "8d56db7"
+  },
+  "summary": {
+    "overall_readiness_pct": 72,
+    "critical_blockers": 4,
+    "high_gaps": 5,
+    "medium_gaps": 6,
+    "low_gaps": 4,
+    "total_endpoints": 68,
+    "total_templates_defined": 44,
+    "total_docx_on_disk": 19
+  },
+  "doc_types": [
+    {
+      "id": "cerv2_510k",
+      "label": "FDA 510(k)",
+      "agency": "FDA",
+      "pathway": "Device",
+      "style_pack": "510k_v1",
+      "readiness_pct": 90,
+      "sections": [
+        {
+          "id": "cover_letter",
+          "label": "Cover Letter",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": false,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "user-fee-cover",
+          "docx_seed_template": "510k_cover_letter",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "admin",
+          "label": "Administrative Info",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "cdrh-cover-sheet",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "ifu",
+          "label": "Indications for Use",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "indications-for-use",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "summary",
+          "label": "510(k) Summary",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": false,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "510k-summary",
+          "docx_seed_template": "510k_summary",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "desc",
+          "label": "Device Description",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["device_description"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "outline_to_editor_map": "device-description",
+          "docx_seed_template": "510k_device_description",
+          "status": "READY"
+        },
+        {
+          "id": "pred",
+          "label": "Predicate Comparison",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["predicate_comparison"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "substantial-equivalence",
+          "docx_seed_template": "510k_se_comparison",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "se",
+          "label": "SE Discussion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["se_discussion"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "outline_to_editor_map": "substantial-equivalence",
+          "docx_seed_template": "510k_se_comparison",
+          "status": "READY"
+        },
+        {
+          "id": "testing",
+          "label": "Performance Testing",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["performance_testing"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "executive-studies",
+          "docx_seed_template": "510k_biocompatibility",
+          "status": "READY"
+        },
+        {
+          "id": "labeling",
+          "label": "Labeling",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "proposed-labeling",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "concl",
+          "label": "Conclusion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["conclusion"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": false,
+          "outline_to_editor_map": "executive-summary",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    },
+    {
+      "id": "cerv2_pma",
+      "label": "FDA PMA",
+      "agency": "FDA",
+      "pathway": "Device",
+      "style_pack": "pma_v1",
+      "readiness_pct": 80,
+      "sections": [
+        {
+          "id": "summary",
+          "label": "PMA Summary",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["summary_overview"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "nonclin",
+          "label": "Nonclinical Testing",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["bench_testing"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "clin",
+          "label": "Clinical Data",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["study_design", "clinical_results"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "mfgqa",
+          "label": "Manufacturing / QA",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "labeling",
+          "label": "Labeling",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "risk",
+          "label": "Benefit-Risk",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["risk_analysis"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "pms",
+          "label": "Post-Market Surveillance",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["pms_plan"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    },
+    {
+      "id": "cerv2_cer",
+      "label": "EU MDR CER",
+      "agency": "EU",
+      "pathway": "Diagnostics",
+      "style_pack": "cer_mdr_v1",
+      "readiness_pct": 90,
+      "sections": [
+        {
+          "id": "sota",
+          "label": "State of the Art",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["current_knowledge"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_state_of_art",
+          "status": "READY"
+        },
+        {
+          "id": "device",
+          "label": "Device Description",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["device_description"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "dataset",
+          "label": "Clinical Data / Literature",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["search_strategy"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_literature_analysis",
+          "status": "READY"
+        },
+        {
+          "id": "appraisal",
+          "label": "Appraisal",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["appraisal_methodology"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "benefitrisk",
+          "label": "Benefit-Risk",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["clinical_benefits", "residual_risks"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_benefit_risk_pmcf",
+          "status": "READY"
+        },
+        {
+          "id": "gspr",
+          "label": "GSPR Mapping",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["gspr_overview"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "pms",
+          "label": "PMS / PMCF",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["pms_plan"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "concl",
+          "label": "Conclusion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["overall_conclusion"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    }
+  ],
+  "docx_factory_seed_catalog": [
+    {
+      "name": "eCTD Cover Letter",
+      "doc_type": "ectd_cover_letter",
+      "file": "ectd_cover_letter.docx",
+      "module": "M1",
+      "tags": ["ectd", "module-1"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Form FDA 1571 Narrative",
+      "doc_type": "ind_1571_narrative",
+      "file": "fda_1571_narrative.docx",
+      "module": "M1",
+      "tags": ["ind", "fda-1571"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "IB Change Summary",
+      "doc_type": "ib_change_summary",
+      "file": "ib_change_summary.docx",
+      "module": "IB",
+      "tags": ["ib", "change-summary"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CMC Drug Substance (3.2.S)",
+      "doc_type": "cmc_drug_substance",
+      "file": "cmc_drug_substance.docx",
+      "module": "M3",
+      "tags": ["cmc", "module-3"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CMC Drug Product (3.2.P)",
+      "doc_type": "cmc_drug_product",
+      "file": "cmc_drug_product.docx",
+      "module": "M3",
+      "tags": ["cmc", "module-3"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Clinical Benefit/Risk (2.5)",
+      "doc_type": "clinical_benefit_risk",
+      "file": "clinical_benefit_risk.docx",
+      "module": "M2",
+      "tags": ["clinical", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Nonclinical Overview (2.4)",
+      "doc_type": "nonclinical_overview",
+      "file": "nonclinical_overview.docx",
+      "module": "M2",
+      "tags": ["nonclinical", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Quality Overall Summary (2.3)",
+      "doc_type": "quality_overall_summary",
+      "file": "quality_overall_summary.docx",
+      "module": "M2",
+      "tags": ["quality", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CSR Synopsis (5.3)",
+      "doc_type": "csr_synopsis",
+      "file": "csr_synopsis.docx",
+      "module": "M5",
+      "tags": ["clinical", "module-5"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Protocol Synopsis",
+      "doc_type": "protocol_synopsis",
+      "file": "protocol_synopsis.docx",
+      "module": "Clinical",
+      "tags": ["clinical", "protocol"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Cover Letter",
+      "doc_type": "510k_cover_letter",
+      "file": "510k_cover_letter.docx",
+      "module": "510k",
+      "tags": ["510k", "device"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) SE Comparison",
+      "doc_type": "510k_se_comparison",
+      "file": "510k_se_comparison.docx",
+      "module": "510k",
+      "tags": ["510k", "se-comparison"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Device Description",
+      "doc_type": "510k_device_description",
+      "file": "510k_device_description.docx",
+      "module": "510k",
+      "tags": ["510k", "device"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Summary (§807.92)",
+      "doc_type": "510k_summary",
+      "file": "510k_summary.docx",
+      "module": "510k",
+      "tags": ["510k", "summary"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Biocompatibility",
+      "doc_type": "510k_biocompatibility",
+      "file": "510k_biocompatibility.docx",
+      "module": "510k",
+      "tags": ["510k", "iso-10993"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Evaluation Plan",
+      "doc_type": "cer_evaluation_plan",
+      "file": "cer_evaluation_plan.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Literature Analysis",
+      "doc_type": "cer_literature_analysis",
+      "file": "cer_literature_analysis.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Benefit-Risk & PMCF",
+      "doc_type": "cer_benefit_risk_pmcf",
+      "file": "cer_benefit_risk_pmcf.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER State of the Art",
+      "doc_type": "cer_state_of_art",
+      "file": "cer_state_of_art.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    }
+  ],
+  "ind_templates": [
+    {
+      "name": "Form FDA 1571",
+      "generator": "render_form1571()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Form FDA 1572",
+      "generator": "render_form1572()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Form FDA 3674",
+      "generator": "render_form3674()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "IND Cover Letter",
+      "generator": "generate_cover_letter()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Module 2 Clinical",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 2 Nonclinical",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 2 Quality",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 3 CMC",
+      "generator": "TemplateGenerator.generate_module3()",
+      "format": "xml+j2",
+      "module": "M3",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Module 4 Nonclinical Studies",
+      "generator": null,
+      "format": null,
+      "module": "M4",
+      "on_disk": false,
+      "status": "MISSING"
+    },
+    {
+      "name": "Module 5 Clinical Study Reports",
+      "generator": null,
+      "format": null,
+      "module": "M5",
+      "on_disk": false,
+      "status": "MISSING"
+    }
+  ],
+  "ind_module_coverage": {
+    "module_1_administrative": {
+      "total_sub_templates_needed": 12,
+      "existing": 4,
+      "missing": [
+        "environmental_assessment",
+        "patent_info",
+        "financial_disclosure",
+        "drug_master_file",
+        "labeling",
+        "case_report_forms",
+        "debarment_certification",
+        "field_copy_certification"
+      ],
+      "readiness_pct": 33
+    },
+    "module_2_summaries": {
+      "total_sub_templates_needed": 7,
+      "existing": 3,
+      "missing": [
+        "introduction",
+        "pharmacology_written_summary",
+        "pharmacology_tabulated_summary",
+        "clinical_pharmacology"
+      ],
+      "readiness_pct": 43
+    },
+    "module_3_quality": {
+      "total_sub_templates_needed": 10,
+      "existing": 3,
+      "missing": [
+        "drug_substance_characterization",
+        "control_of_drug_substance",
+        "reference_standards",
+        "container_closure",
+        "stability",
+        "excipients",
+        "dissolution"
+      ],
+      "readiness_pct": 30
+    },
+    "module_4_nonclinical": {
+      "total_sub_templates_needed": 8,
+      "existing": 0,
+      "missing": [
+        "pharmacology_primary",
+        "pharmacology_secondary",
+        "pharmacology_safety",
+        "pharmacokinetics",
+        "toxicology_single_dose",
+        "toxicology_repeat_dose",
+        "genotoxicity",
+        "carcinogenicity"
+      ],
+      "readiness_pct": 0
+    },
+    "module_5_clinical": {
+      "total_sub_templates_needed": 10,
+      "existing": 1,
+      "missing": [
+        "clinical_study_report_full",
+        "clinical_tabulations",
+        "individual_patient_data",
+        "protocol_amendments",
+        "sample_crfs",
+        "human_pk_studies",
+        "clinical_efficacy",
+        "clinical_safety",
+        "post_marketing"
+      ],
+      "readiness_pct": 10
+    }
+  },
+  "gaps": {
+    "critical": [
+      {
+        "id": "C1",
+        "title": "AI endpoints return static templates — no LLM integration",
+        "module": "AI",
+        "impact": "All suggestions are placeholder text",
+        "effort": "3-5 days",
+        "priority": "P2-1"
+      },
+      {
+        "id": "C2",
+        "title": "IND Module 4 (Nonclinical) — zero templates",
+        "module": "IND",
+        "impact": "Cannot generate Module 4 content",
+        "effort": "3 days",
+        "priority": "P1-4"
+      },
+      {
+        "id": "C3",
+        "title": "IND Module 5 (Clinical) — minimal coverage",
+        "module": "IND",
+        "impact": "Only CSR Synopsis exists",
+        "effort": "3 days",
+        "priority": "P1-5"
+      },
+      {
+        "id": "C4",
+        "title": "PMA has no DOCX seed templates",
+        "module": "DOCX Factory",
+        "impact": "PMA only via CERV2 editor export",
+        "effort": "3 days",
+        "priority": "P1-1"
+      }
+    ],
+    "high": [
+      {
+        "id": "H1",
+        "title": "510(k) per-section PDFs missing 4 sections",
+        "module": "Export",
+        "effort": "1 day",
+        "priority": "P1-2"
+      },
+      {
+        "id": "H2",
+        "title": "cover_letter/summary not in shared/docTypes.ts",
+        "module": "Config",
+        "effort": "30 min",
+        "priority": "P0-1"
+      },
+      {
+        "id": "H3",
+        "title": "cerv2-versions.ts is dead stub code",
+        "module": "API",
+        "effort": "30 min",
+        "priority": "P0-2"
+      },
+      {
+        "id": "H4",
+        "title": "fetchEquivalence/fetchBenefitRisk never called",
+        "module": "Client",
+        "effort": "2 hrs",
+        "priority": "P0-4/P0-5"
+      },
+      {
+        "id": "H5",
+        "title": "IND templates route commented out",
+        "module": "IND",
+        "effort": "15 min",
+        "priority": "P0-6"
+      }
+    ],
+    "medium": [
+      {
+        "id": "M1",
+        "title": "DOCX Factory seeds only 6 of 19 catalog",
+        "module": "DOCX Factory",
+        "effort": "2 hrs",
+        "priority": "P0-7"
+      },
+      {
+        "id": "M2",
+        "title": "Mock export routes lack auth",
+        "module": "Export",
+        "effort": "15 min",
+        "priority": "P0-3"
+      },
+      {
+        "id": "M3",
+        "title": "No predicate search server endpoint",
+        "module": "API",
+        "effort": "2 days",
+        "priority": "P2-5"
+      },
+      {
+        "id": "M4",
+        "title": "IND Module 1 missing 8+ sub-templates",
+        "module": "IND",
+        "effort": "2 days",
+        "priority": "P1-3"
+      },
+      {
+        "id": "M5",
+        "title": "IND Module 2 summaries Jinja2 only",
+        "module": "IND",
+        "effort": "2 days",
+        "priority": "P1-3"
+      },
+      {
+        "id": "M6",
+        "title": "No IND doc type in CERV2 editor",
+        "module": "CERV2",
+        "effort": "3 days",
+        "priority": "P3-4"
+      }
+    ],
+    "low": [
+      {
+        "id": "L1",
+        "title": "Enhanced mock content for 8/25 sections only",
+        "module": "AI",
+        "effort": "1 day",
+        "priority": "P1-6"
+      },
+      {
+        "id": "L2",
+        "title": "No CHANGELOG.md",
+        "module": "Docs",
+        "effort": "1 hr",
+        "priority": "P3-1"
+      },
+      {
+        "id": "L3",
+        "title": "Pre-existing build warnings",
+        "module": "Build",
+        "effort": "2 hrs",
+        "priority": "P3-2"
+      },
+      {
+        "id": "L4",
+        "title": "eCTD XML templates are minimal",
+        "module": "eCTD",
+        "effort": "1 day",
+        "priority": "P3-3"
+      }
+    ]
+  },
+  "remediation_phases": {
+    "phase_0a_immediate": {
+      "label": "Before QA",
+      "effort": "1 day",
+      "tasks": [
+        {
+          "id": "P0-1",
+          "task": "Add cover_letter/summary to shared/docTypes.ts 510(k) sections",
+          "effort": "30 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-2",
+          "task": "Remove or implement cerv2-versions.ts",
+          "effort": "30 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-3",
+          "task": "Add auth to mock export routes",
+          "effort": "15 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-4",
+          "task": "Wire fetchEquivalence() to PredicateSearch",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-5",
+          "task": "Wire fetchBenefitRisk() to ReviewWorkflow",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-6",
+          "task": "Uncomment IND templates route",
+          "effort": "15 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-7",
+          "task": "Update DOCX Factory seed to register all 19",
+          "effort": "2 hrs",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_0b_templates": {
+      "label": "Template Completion",
+      "effort": "1-2 weeks",
+      "tasks": [
+        {
+          "id": "P1-1",
+          "task": "Create 7 PMA DOCX seed templates",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-2",
+          "task": "Add 4 missing 510(k) per-section PDF renderers",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-3",
+          "task": "Expand IND Module 1+2 templates",
+          "effort": "4 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-4",
+          "task": "Create IND Module 4 template set",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-5",
+          "task": "Create IND Module 5 template set",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-6",
+          "task": "Expand enhanced mock content to all 25 sections",
+          "effort": "1 day",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_1a_ai": {
+      "label": "AI Integration",
+      "effort": "2-4 weeks",
+      "tasks": [
+        {
+          "id": "P2-1",
+          "task": "Integrate LLM behind /api/cerv2/ai/suggest",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-2",
+          "task": "Integrate LLM for /api/cerv2/ai/analyze-section",
+          "effort": "2 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-3",
+          "task": "Integrate LLM for /api/cerv2/ai/equivalence",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-4",
+          "task": "Integrate LLM for /api/cerv2/ai/benefit-risk",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-5",
+          "task": "Create server-side predicate search endpoint",
+          "effort": "2 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-6",
+          "task": "Add IND doc type to CERV2 AI routes",
+          "effort": "3 days",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_1b_polish": {
+      "label": "End-to-End Polish",
+      "effort": "1 week",
+      "tasks": [
+        {
+          "id": "P3-1",
+          "task": "Generate CHANGELOG.md",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-2",
+          "task": "Clean up pre-existing build warnings",
+          "effort": "2 hrs",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-3",
+          "task": "Expand eCTD XML templates",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-4",
+          "task": "Add IND Canvas editing support",
+          "effort": "3 days",
+          "status": "not-started"
+        }
+      ]
+    }
+  }
+}
