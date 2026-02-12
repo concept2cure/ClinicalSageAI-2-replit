@@ -1,48 +1,14 @@
 /**
- * Phase 7.3 + 7.4 + 7.5 – CERV2 Editor AI Integration Page
+ * Phase 7 + 9 – CERV2 Editor AI Integration Page
  *
- * Wraps MedicalDeviceDocumentEditor with live AI suggestion
- * capabilities from /api/cerv2/ai/*. Supports 510(k), PMA, and CER
- * document types with per-section AI auto-populate, equivalence text,
- * and benefit-risk analysis.
+ * Phases 7.3–7.10: AI suggestions, export pipeline, validation, preview,
+ * export simulation, readiness gating, keyboard shortcuts, UX polish.
  *
- * Phase 7.4 — Export pipeline:
- *  - CERV2ExportControls inline bar: PDF, DOCX, eSTAR ZIP from AI-populated sections
- *  - AI suggestions → TipTap editor JSON → server-side rendering pipeline
- *
- * Phase 7.5 — Compliance validation:
- *  - CERV2ValidationPanel: per-section AI compliance hints (right panel)
- *  - Real-time validation via analyzeSection on content change
- *  - Severity classification: error / warning / pass
- *  - Section-level re-validate button
- *
- * Phase 7.6 — Live export preview:
- *  - CERV2ExportPreviewPanel: real-time pre-export view (right panel)
- *  - Shows AI content per section with compliance overlay + word counts
- *  - Export readiness score with penalty for errors/warnings
- *  - Section expand/collapse to review content before export
- *
- * Phase 7.7 — Full end-to-end export simulation:
- *  - CERV2FullExportSimulation: readiness-gated 3-step pipeline
- *  - AI suggestions → TipTap editor JSON → format render (PDF/DOCX/ZIP)
- *  - Step-by-step progress indicators + export history log
- *  - Mock export fallback for demo/QA
- *
- * Phase 7.9 — Export gating & warning prompts:
- *  - Borderline confirmation (30–50%) with impacting section summary
- *  - Hard block below 30% with actionable toast
- *
- * Phase 7.10 — UX polish:
- *  - Keyboard shortcuts: Ctrl+Shift+E (export sim), Ctrl+Shift+P (preview),
- *    Ctrl+Shift+V (validation), Ctrl+Shift+O (outline), Ctrl+Shift+R (scaffold)
- *  - Shortcut hints in toolbar tooltips
- *
- * UX features:
- *  - Outline panel (left) with section navigation & AI preview
- *  - Validation panel (right) with compliance hints & severity badges
- *  - Scaffold refresh (re-fetch AI templates without overwriting manual edits)
- *  - Section completeness progress bar
- *  - Inline export controls with format selector, pre-validation, and last-export indicator
+ * Phase 9 — Full UX/workflow improvements (P0–P3):
+ *  P0: Device context panel, auto-save persistence, user content in export
+ *  P1: Unified export, section progress indicators, word count targets
+ *  P2: Attachment upload, rules-based compliance, version history, undo dismiss
+ *  P3: Predicate device search, citation manager, review/approval workflow
  */
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
@@ -51,9 +17,26 @@ import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import CERV2ValidationPanel from '../components/CERV2ValidationPanel.jsx';
 import CERV2ExportPreviewPanel from '../components/CERV2ExportPreviewPanel.jsx';
 import CERV2FullExportSimulation from '../components/CERV2FullExportSimulation.jsx';
+import CERV2DeviceContextPanel from '../components/CERV2DeviceContextPanel.jsx';
+import CERV2AttachmentManager from '../components/CERV2AttachmentManager.jsx';
+import CERV2VersionHistory from '../components/CERV2VersionHistory.jsx';
+import CERV2PredicateSearch from '../components/CERV2PredicateSearch.jsx';
+import CERV2CitationManager from '../components/CERV2CitationManager.jsx';
+import CERV2ReviewWorkflow from '../components/CERV2ReviewWorkflow.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
+import autoSaveService from '../services/CERV2AutoSaveService.js';
+import {
+  validateSection as complianceValidate,
+  validateDocument,
+} from '../utils/CERV2ComplianceEngine.js';
+import {
+  computeSectionStatus,
+  getSectionTarget,
+  STATUS_CONFIG,
+} from '../utils/cerv2-section-targets.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -72,6 +55,8 @@ import {
   Eye,
   Zap,
   X,
+  Undo2,
+  Cpu,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -152,7 +137,7 @@ for (const [docType, map] of Object.entries(OUTLINE_TO_EDITOR)) {
 export default function CERV2EditorAI() {
   const { toast } = useToast();
 
-  // State
+  // ── Core State ──────────────────────────────────────────────────────────
   const [selectedDocType, setSelectedDocType] = useState('cerv2_510k');
   const [aiSuggestions, setAiSuggestions] = useState({});
   const [loadingSections, setLoadingSections] = useState({});
@@ -173,8 +158,48 @@ export default function CERV2EditorAI() {
   // Phase 7.7 – Full export simulation state
   const [showExportSim, setShowExportSim] = useState(false);
 
-  // Computed
+  // ── Phase 9 State ───────────────────────────────────────────────────────
+  // P0: Device context
+  const [deviceContext, setDeviceContext] = useState({});
+  const [showDeviceContext, setShowDeviceContext] = useState(false);
+
+  // P0: User-edited content tracking (separate from AI suggestions)
+  const [userSectionContent, setUserSectionContent] = useState({});
+
+  // P2: Attachments per section
+  const [attachments, setAttachments] = useState({});
+  const [showAttachments, setShowAttachments] = useState(false);
+
+  // P2: Version history
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+
+  // P2: Rules-based compliance results
+  const [complianceResults, setComplianceResults] = useState({});
+
+  // P3: Predicate search
+  const [showPredicateSearch, setShowPredicateSearch] = useState(false);
+
+  // P3: Citations
+  const [citations, setCitations] = useState([]);
+  const [showCitations, setShowCitations] = useState(false);
+
+  // P3: Review workflow
+  const [reviewState, setReviewState] = useState({ status: 'draft', auditTrail: [] });
+  const [showReview, setShowReview] = useState(false);
+
+  // ── Computed ────────────────────────────────────────────────────────────
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
+
+  // P0: Merge user edits + AI suggestions — user content wins
+  const mergedSectionContent = useMemo(() => {
+    const merged = {};
+    for (const section of DOC_OUTLINES[selectedDocType] || []) {
+      const userContent = userSectionContent[section.id];
+      const aiContent = (!dismissedSuggestions.has(section.id) && aiSuggestions[section.id]) || '';
+      merged[section.id] = userContent && userContent.trim() ? userContent : aiContent;
+    }
+    return merged;
+  }, [selectedDocType, userSectionContent, aiSuggestions, dismissedSuggestions]);
 
   // ── Key Transformation: outline keys → editor-compatible keys ─────────────
   // The editor renders AI suggestions using `${section.id}-main` compound keys.
@@ -222,6 +247,9 @@ export default function CERV2EditorAI() {
 
         const data = await cerv2AIService.fetchSuggestion(selectedDocType, sectionId, 'main', {
           existingContent: content,
+          deviceName: deviceContext.deviceName,
+          predicateDevice: deviceContext.predicateDevice,
+          indication: deviceContext.intendedUse,
         });
 
         setAiSuggestions(prev => ({
@@ -257,7 +285,9 @@ export default function CERV2EditorAI() {
       try {
         inFlightValidations.current.add(outlineId);
         setLoadingValidation(prev => ({ ...prev, [outlineId]: true }));
-        const result = await cerv2AIService.analyzeSection(selectedDocType, outlineId, content);
+        const result = await cerv2AIService.analyzeSection(selectedDocType, outlineId, content, {
+          deviceContext,
+        });
         setValidationHints(prev => ({
           ...prev,
           [outlineId]: result.suggestion || 'No compliance data.',
@@ -287,6 +317,9 @@ export default function CERV2EditorAI() {
       const reverseMap = EDITOR_TO_OUTLINE[selectedDocType] || {};
       const outlineId = reverseMap[sectionId] || sectionId;
 
+      // P0: Track user-edited content
+      setUserSectionContent(prev => ({ ...prev, [outlineId]: content }));
+
       // Clear stale cache for this section when content changes
       cerv2AIService.invalidateSection(selectedDocType, outlineId);
 
@@ -305,8 +338,14 @@ export default function CERV2EditorAI() {
       validationTimers.current[outlineId] = setTimeout(() => {
         validateSection(outlineId, content);
       }, 1200);
+
+      // P2: Rules-based compliance (instant, no debounce needed — pure JS)
+      setComplianceResults(prev => ({
+        ...prev,
+        [outlineId]: complianceValidate(selectedDocType, outlineId, content, deviceContext),
+      }));
     },
-    [selectedDocType, fetchAiSuggestion, validateSection]
+    [selectedDocType, fetchAiSuggestion, validateSection, deviceContext]
   );
 
   // ── Timer cleanup helpers ──────────────────────────────────────────────────
@@ -320,14 +359,66 @@ export default function CERV2EditorAI() {
 
   // Cleanup on unmount to prevent setState on unmounted component
   useEffect(() => {
-    return () => cancelAllTimers();
+    return () => {
+      cancelAllTimers();
+      autoSaveService.cancelAll();
+    };
   }, [cancelAllTimers]);
+
+  // ── Phase 9 P0: Auto-save persistence ──────────────────────────────────
+
+  // Load saved state on mount or doc type change
+  useEffect(() => {
+    autoSaveService.init(selectedDocType, 'default');
+    const saved = autoSaveService.load();
+    if (saved) {
+      if (saved.deviceContext) setDeviceContext(saved.deviceContext);
+      if (saved.userSectionContent) setUserSectionContent(saved.userSectionContent);
+      if (saved.aiSuggestions) setAiSuggestions(saved.aiSuggestions);
+      if (saved.dismissedSuggestions) setDismissedSuggestions(saved.dismissedSuggestions);
+      if (saved.attachments) setAttachments(saved.attachments);
+      if (saved.citations) setCitations(saved.citations);
+      if (saved.reviewState) setReviewState(saved.reviewState);
+      toast({ title: 'Session Restored', description: 'Your previous work has been loaded.' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDocType]);
+
+  // Debounced auto-save on state changes
+  useEffect(() => {
+    autoSaveService.init(selectedDocType, 'default');
+    autoSaveService.saveDebounced({
+      deviceContext,
+      userSectionContent,
+      aiSuggestions,
+      dismissedSuggestions,
+      attachments,
+      citations,
+      reviewState,
+    });
+  }, [
+    selectedDocType,
+    deviceContext,
+    userSectionContent,
+    aiSuggestions,
+    dismissedSuggestions,
+    attachments,
+    citations,
+    reviewState,
+  ]);
 
   // ── Scaffold Refresh ──────────────────────────────────────────────────────
 
   const handleScaffoldRefresh = useCallback(async () => {
     setScaffoldRefreshing(true);
     toast({ title: 'Refreshing AI Scaffold', description: 'Fetching latest templates…' });
+
+    // P2: Snapshot current state before overwrite
+    autoSaveService.init(selectedDocType, 'default');
+    autoSaveService.pushVersion(
+      { sectionData: mergedSectionContent, deviceContext, attachments, citations, reviewState },
+      'Pre-scaffold snapshot'
+    );
 
     try {
       cerv2AIService.clearCache();
@@ -360,7 +451,16 @@ export default function CERV2EditorAI() {
     } finally {
       setScaffoldRefreshing(false);
     }
-  }, [selectedDocType, outline, toast]);
+  }, [
+    selectedDocType,
+    outline,
+    toast,
+    mergedSectionContent,
+    deviceContext,
+    attachments,
+    citations,
+    reviewState,
+  ]);
 
   // ── Phase 7.10: Keyboard shortcuts ───────────────────────────────────────
   // IMPORTANT: This useEffect MUST come after handleScaffoldRefresh's
@@ -392,6 +492,10 @@ export default function CERV2EditorAI() {
           e.preventDefault();
           if (!scaffoldRefreshing) handleScaffoldRefresh();
           break;
+        case 'd': // Toggle device context (Phase 9)
+          e.preventDefault();
+          setShowDeviceContext(prev => !prev);
+          break;
         default:
           break;
       }
@@ -406,17 +510,64 @@ export default function CERV2EditorAI() {
     setDismissedSuggestions(prev => new Set(prev).add(sectionId));
   }, []);
 
+  // P2: Undo dismissed suggestion
+  const undoDismiss = useCallback(sectionId => {
+    setDismissedSuggestions(prev => {
+      const next = new Set(prev);
+      next.delete(sectionId);
+      return next;
+    });
+  }, []);
+
+  // P3: Predicate search auto-fill
+  const handlePredicateSelect = useCallback(
+    ({ deviceName, kNumber, applicant }) => {
+      setDeviceContext(prev => ({
+        ...prev,
+        predicateDevice: deviceName,
+        predicateK: kNumber,
+      }));
+      toast({ title: 'Predicate Selected', description: `${deviceName} (${kNumber})` });
+    },
+    [toast]
+  );
+
+  // P2: Version restore
+  const handleVersionRestore = useCallback(
+    state => {
+      if (state.sectionData) {
+        setUserSectionContent(state.sectionData);
+      }
+      if (state.deviceContext) setDeviceContext(state.deviceContext);
+      if (state.attachments) setAttachments(state.attachments);
+      if (state.citations) setCitations(state.citations);
+      if (state.reviewState) setReviewState(state.reviewState);
+      toast({
+        title: 'Version Restored',
+        description: 'Editor state has been restored from snapshot.',
+      });
+    },
+    [toast]
+  );
+
   // ── Doc Type Change ───────────────────────────────────────────────────────
 
   const handleDocTypeChange = useCallback(
     newType => {
       cancelAllTimers();
+      autoSaveService.cancelAll();
       setSelectedDocType(newType);
       setAiSuggestions({});
       setLoadingSections({});
       setDismissedSuggestions(new Set());
       setValidationHints({});
       setLoadingValidation({});
+      setUserSectionContent({});
+      setDeviceContext({});
+      setAttachments({});
+      setComplianceResults({});
+      setCitations([]);
+      setReviewState({ status: 'draft', auditTrail: [] });
       inFlightSuggestions.current.clear();
       inFlightValidations.current.clear();
       cerv2AIService.clearCache();
@@ -443,14 +594,24 @@ export default function CERV2EditorAI() {
     setExpandedOutlineSections(new Set());
   }, []);
 
-  // ── Section completeness (consumed by CERV2ExportControls) ─────────────────
+  // ── Section completeness (uses merged content — P0) ─────────────────────
   const sectionCompleteness = useMemo(() => {
     const total = outline.length;
     const populated = outline.filter(
-      s => aiSuggestions[s.id] && !dismissedSuggestions.has(s.id)
+      s => mergedSectionContent[s.id] && mergedSectionContent[s.id].trim().length > 0
     ).length;
     return { total, populated, percent: total > 0 ? Math.round((populated / total) * 100) : 0 };
-  }, [outline, aiSuggestions, dismissedSuggestions]);
+  }, [outline, mergedSectionContent]);
+
+  // P1: Per-section status indicators
+  const sectionStatuses = useMemo(() => {
+    const statuses = {};
+    for (const section of outline) {
+      const content = mergedSectionContent[section.id] || '';
+      statuses[section.id] = computeSectionStatus(selectedDocType, section.id, content);
+    }
+    return statuses;
+  }, [outline, mergedSectionContent, selectedDocType]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -460,6 +621,26 @@ export default function CERV2EditorAI() {
       <div className="flex items-center justify-between px-3 py-1.5 border-b">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold tracking-tight">CERV2 Editor</h2>
+          {/* P3: Review status badge */}
+          <Badge
+            className={`text-[10px] px-1.5 py-0 ${
+              reviewState.status === 'draft'
+                ? 'bg-slate-100 text-slate-600'
+                : reviewState.status === 'review'
+                  ? 'bg-amber-100 text-amber-700'
+                  : reviewState.status === 'approved'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-100 text-blue-700'
+            }`}
+          >
+            {reviewState.status === 'draft'
+              ? 'Draft'
+              : reviewState.status === 'review'
+                ? 'In Review'
+                : reviewState.status === 'approved'
+                  ? 'Approved'
+                  : 'Released'}
+          </Badge>
         </div>
 
         <div className="flex items-center gap-2">
@@ -476,6 +657,15 @@ export default function CERV2EditorAI() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* P0: Device Context Toggle */}
+          <CERV2DeviceContextPanel
+            selectedDocType={selectedDocType}
+            deviceContext={deviceContext}
+            onContextChange={setDeviceContext}
+            visible={showDeviceContext}
+            onToggle={() => setShowDeviceContext(prev => !prev)}
+          />
 
           {/* Outline Toggle */}
           <Button
@@ -584,9 +774,18 @@ export default function CERV2EditorAI() {
                 {outline.map(section => {
                   const hasSuggestion =
                     aiSuggestions[section.id] && !dismissedSuggestions.has(section.id);
+                  const isDismissed =
+                    dismissedSuggestions.has(section.id) && aiSuggestions[section.id];
                   const isLoading = loadingSections[section.id];
                   const isActive = activeSectionId === section.id;
                   const isExpanded = expandedOutlineSections.has(section.id);
+                  const status = sectionStatuses[section.id] || 'empty';
+                  const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.empty;
+                  const target = getSectionTarget(selectedDocType, section.id);
+                  const content = mergedSectionContent[section.id] || '';
+                  const words = content.trim().split(/\s+/).filter(Boolean).length;
+                  const attachCount = (attachments[section.id] || []).length;
+                  const compliance = complianceResults[section.id];
 
                   return (
                     <div key={section.id}>
@@ -607,17 +806,38 @@ export default function CERV2EditorAI() {
                         ) : (
                           <ChevronRight className="h-3 w-3 flex-shrink-0" />
                         )}
-                        {/* Status dot: populated / loading / empty */}
+                        {/* P1: Status dot with section status color */}
                         <span
                           className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
-                            isLoading
-                              ? 'bg-primary animate-pulse'
-                              : hasSuggestion
-                                ? 'bg-primary'
-                                : 'bg-border'
+                            isLoading ? 'bg-primary animate-pulse' : statusCfg.dot
                           }`}
+                          title={statusCfg.text}
                         />
                         <span className="truncate flex-1">{section.label}</span>
+
+                        {/* P1: Word count / target */}
+                        <span className="text-[10px] tabular-nums text-muted-foreground flex-shrink-0">
+                          {words > 0 ? `${words}/${target.target}` : ''}
+                        </span>
+
+                        {/* P2: Attachment badge */}
+                        {attachCount > 0 && (
+                          <span className="text-[10px] text-muted-foreground">📎{attachCount}</span>
+                        )}
+
+                        {/* P2: Compliance issue indicator */}
+                        {compliance && compliance.severity === 'error' && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0"
+                            title="Compliance issues"
+                          />
+                        )}
+                        {compliance && compliance.severity === 'warning' && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0"
+                            title="Compliance warnings"
+                          />
+                        )}
 
                         {isLoading && (
                           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
@@ -647,6 +867,22 @@ export default function CERV2EditorAI() {
                           </p>
                         </div>
                       )}
+
+                      {/* P2: Undo dismissed suggestion */}
+                      {isExpanded && isDismissed && (
+                        <div className="ml-7 mr-2 mt-0.5 mb-1.5">
+                          <button
+                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 transition-colors"
+                            onClick={e => {
+                              e.stopPropagation();
+                              undoDismiss(section.id);
+                            }}
+                          >
+                            <Undo2 className="h-3 w-3" />
+                            Restore dismissed AI suggestion
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -657,38 +893,153 @@ export default function CERV2EditorAI() {
 
         {/* ─── Editor Pane ───────────────────────────────────────────────── */}
         <main className="flex-1 flex flex-col overflow-auto">
+          {/* P3: Predicate Search (above editor, only for 510k) */}
+          {showPredicateSearch && selectedDocType === 'cerv2_510k' && (
+            <div className="mx-4 mt-2">
+              <CERV2PredicateSearch
+                onSelectPredicate={handlePredicateSelect}
+                visible={showPredicateSearch}
+                onToggle={() => setShowPredicateSearch(prev => !prev)}
+              />
+            </div>
+          )}
+
           <MedicalDeviceDocumentEditor
             documentType={selectedDocType}
             onSectionChange={handleSectionChange}
             aiSuggestionsExternal={aiSuggestionsForEditor}
             loadingSectionsExternal={loadingSectionsForEditor}
+            deviceProfile={deviceContext}
           />
-          {/* ─── Full Export Simulation (Phase 7.7) ─────────────────────── */}
-          {showExportSim && (
-            <CERV2FullExportSimulation
+
+          {/* ─── Below-editor panels ────────────────────────────────────── */}
+          <div className="mx-4 my-2 space-y-2">
+            {/* P2: Attachment Manager */}
+            {showAttachments && (
+              <CERV2AttachmentManager
+                activeSectionId={activeSectionId || outline[0]?.id}
+                attachments={attachments}
+                onAttachmentsChange={setAttachments}
+                outline={outline}
+                visible={showAttachments}
+                onToggle={() => setShowAttachments(prev => !prev)}
+              />
+            )}
+
+            {/* P2: Version History */}
+            {showVersionHistory && (
+              <CERV2VersionHistory
+                docType={selectedDocType}
+                projectId="default"
+                outline={outline}
+                currentState={{
+                  sectionData: mergedSectionContent,
+                  deviceContext,
+                  attachments,
+                  citations,
+                  reviewState,
+                }}
+                onRestore={handleVersionRestore}
+                visible={showVersionHistory}
+                onToggle={() => setShowVersionHistory(prev => !prev)}
+              />
+            )}
+
+            {/* P3: Citation Manager */}
+            {showCitations && (
+              <CERV2CitationManager
+                citations={citations}
+                onCitationsChange={setCitations}
+                outline={outline}
+                activeSectionId={activeSectionId || outline[0]?.id}
+                visible={showCitations}
+                onToggle={() => setShowCitations(prev => !prev)}
+              />
+            )}
+
+            {/* P3: Review Workflow */}
+            {showReview && (
+              <CERV2ReviewWorkflow
+                reviewState={reviewState}
+                onReviewStateChange={setReviewState}
+                readinessScore={sectionCompleteness.percent}
+                visible={showReview}
+                onToggle={() => setShowReview(prev => !prev)}
+              />
+            )}
+
+            {/* Full Export Simulation (Phase 7.7) */}
+            {showExportSim && (
+              <CERV2FullExportSimulation
+                outline={outline}
+                aiSuggestions={mergedSectionContent}
+                validationHints={validationHints}
+                dismissedSuggestions={dismissedSuggestions}
+                selectedDocType={selectedDocType}
+                completeness={sectionCompleteness}
+              />
+            )}
+          </div>
+
+          {/* ─── Sub-panel toggle strip ─────────────────────────────────── */}
+          <div className="flex items-center gap-1.5 px-4 py-1.5 border-t bg-slate-50/50">
+            <CERV2AttachmentManager
+              activeSectionId={activeSectionId || outline[0]?.id}
+              attachments={attachments}
+              onAttachmentsChange={setAttachments}
               outline={outline}
-              aiSuggestions={aiSuggestions}
-              validationHints={validationHints}
-              dismissedSuggestions={dismissedSuggestions}
-              selectedDocType={selectedDocType}
-              completeness={sectionCompleteness}
-              className="mx-4 my-2"
+              visible={false}
+              onToggle={() => setShowAttachments(prev => !prev)}
             />
-          )}
-          {/* ─── Inline Export Controls ─────────────────────────────────── */}
+            <CERV2VersionHistory
+              docType={selectedDocType}
+              projectId="default"
+              outline={outline}
+              currentState={{}}
+              onRestore={handleVersionRestore}
+              visible={false}
+              onToggle={() => setShowVersionHistory(prev => !prev)}
+            />
+            <CERV2CitationManager
+              citations={citations}
+              onCitationsChange={setCitations}
+              outline={outline}
+              activeSectionId={activeSectionId}
+              visible={false}
+              onToggle={() => setShowCitations(prev => !prev)}
+            />
+            <CERV2ReviewWorkflow
+              reviewState={reviewState}
+              onReviewStateChange={setReviewState}
+              readinessScore={sectionCompleteness.percent}
+              visible={false}
+              onToggle={() => setShowReview(prev => !prev)}
+            />
+            {selectedDocType === 'cerv2_510k' && (
+              <CERV2PredicateSearch
+                onSelectPredicate={handlePredicateSelect}
+                visible={false}
+                onToggle={() => setShowPredicateSearch(prev => !prev)}
+              />
+            )}
+          </div>
+
+          {/* ─── Inline Export Controls (P1: statusOnly when sim is open) ─ */}
           <CERV2ExportControls
             docType={selectedDocType}
-            aiSuggestions={aiSuggestions}
+            aiSuggestions={mergedSectionContent}
             outline={outline}
             completeness={sectionCompleteness}
             dismissedSuggestions={dismissedSuggestions}
+            statusOnly={showExportSim}
+            onOpenExportSim={() => setShowExportSim(true)}
           />
         </main>
 
         {/* ─── Export Preview Panel (Phase 7.6) ────────────────────────── */}
         <CERV2ExportPreviewPanel
           outline={outline}
-          aiSuggestions={aiSuggestions}
+          aiSuggestions={mergedSectionContent}
           validationHints={validationHints}
           loadingSections={loadingSections}
           dismissedSuggestions={dismissedSuggestions}

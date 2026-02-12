@@ -59,3 +59,39 @@ export const DOC_TYPE_SHORT_LABELS = {
   cerv2_pma: 'PMA',
   cerv2_cer: 'CER',
 };
+
+/**
+ * Phase 9 P2: Merge AI hint classification with rules-based compliance result.
+ * Returns the worst severity and combined issues list.
+ *
+ * @param {string} aiHint – raw hint string from AI backend
+ * @param {{ severity: string, issues: string[], score: number }|null} complianceResult
+ * @returns {{ severity: 'error'|'warning'|'pass'|'none', issues: string[], score: number }}
+ */
+export function mergeValidation(aiHint, complianceResult) {
+  const aiSeverity = classifyHint(aiHint);
+  const aiIssues = aiHint && aiSeverity !== 'pass' && aiSeverity !== 'none'
+    ? [`AI: ${aiHint}`]
+    : [];
+
+  if (!complianceResult) {
+    return {
+      severity: aiSeverity,
+      issues: aiIssues,
+      score: aiSeverity === 'error' ? 40 : aiSeverity === 'warning' ? 70 : 100,
+    };
+  }
+
+  const allIssues = [...complianceResult.issues, ...aiIssues];
+  const severityRank = { error: 3, warning: 2, pass: 1, none: 0 };
+  const worstSeverity =
+    (severityRank[complianceResult.severity] || 0) >= (severityRank[aiSeverity] || 0)
+      ? complianceResult.severity
+      : aiSeverity;
+
+  return {
+    severity: worstSeverity,
+    issues: allIssues,
+    score: complianceResult.score,
+  };
+}

@@ -32,6 +32,8 @@ const FORMAT_OPTIONS = [
  * @param {Array}  props.outline – [{ id, label }]
  * @param {{ total: number, populated: number, percent: number }} props.completeness
  * @param {Set}    [props.dismissedSuggestions] – dismissed section IDs
+ * @param {boolean} [props.statusOnly] – compact status bar mode (P1)
+ * @param {Function} [props.onOpenExportSim] – open full export simulation
  * @param {string} [props.className]
  */
 export default function CERV2ExportControls({
@@ -40,6 +42,8 @@ export default function CERV2ExportControls({
   outline = [],
   completeness = { total: 0, populated: 0, percent: 0 },
   dismissedSuggestions = new Set(),
+  statusOnly = false,
+  onOpenExportSim,
   className = '',
 }) {
   const { toast } = useToast();
@@ -186,6 +190,47 @@ export default function CERV2ExportControls({
   // ── Render ──────────────────────────────────────────────────────────────
 
   const FormatIcon = FORMAT_OPTIONS.find(f => f.value === selectedFormat)?.icon || FileDown;
+
+  // P1: Compact status bar when export simulation is open
+  if (statusOnly) {
+    return (
+      <div className={`flex items-center gap-3 px-4 py-2 border-t bg-muted/30 ${className}`}>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                completeness.percent === 100
+                  ? 'bg-primary'
+                  : completeness.percent >= 50
+                    ? 'bg-primary/60'
+                    : 'bg-muted-foreground/40'
+              }`}
+              style={{ width: `${completeness.percent}%` }}
+            />
+          </div>
+          <span className="tabular-nums">
+            {completeness.populated}/{completeness.total} sections
+          </span>
+        </div>
+        {lastExport && (
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <CheckCircle2 className="h-3 w-3 text-primary" />
+            <span className="truncate max-w-[120px]">{lastExport.filename}</span>
+          </div>
+        )}
+        {onOpenExportSim && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs ml-auto"
+            onClick={onOpenExportSim}
+          >
+            Open Export Panel
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 border-t bg-muted/30 ${className}`}>
