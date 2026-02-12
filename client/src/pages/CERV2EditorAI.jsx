@@ -16,6 +16,12 @@
  *  - Severity classification: error / warning / pass
  *  - Section-level re-validate button
  *
+ * Phase 7.6 — Live export preview:
+ *  - CERV2ExportPreviewPanel: real-time pre-export view (right panel)
+ *  - Shows AI content per section with compliance overlay + word counts
+ *  - Export readiness score with penalty for errors/warnings
+ *  - Section expand/collapse to review content before export
+ *
  * UX features:
  *  - Outline panel (left) with section navigation & AI preview
  *  - Validation panel (right) with compliance hints & severity badges
@@ -28,6 +34,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
 import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import CERV2ValidationPanel from '../components/CERV2ValidationPanel.jsx';
+import CERV2ExportPreviewPanel from '../components/CERV2ExportPreviewPanel.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -46,6 +53,7 @@ import {
   Loader2,
   PanelLeftOpen,
   PanelLeftClose,
+  Eye,
   X,
 } from 'lucide-react';
 
@@ -141,6 +149,9 @@ export default function CERV2EditorAI() {
   const [validationHints, setValidationHints] = useState({});
   const [loadingValidation, setLoadingValidation] = useState({});
   const [showValidation, setShowValidation] = useState(true);
+
+  // Phase 7.6 – Export preview state
+  const [showExportPreview, setShowExportPreview] = useState(false);
 
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
@@ -423,6 +434,17 @@ export default function CERV2EditorAI() {
             )}
           </Button>
 
+          {/* Export Preview Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowExportPreview(prev => !prev)}
+            title={showExportPreview ? 'Hide export preview' : 'Show export preview'}
+          >
+            <Eye className={`h-4 w-4 ${showExportPreview ? 'text-primary' : ''}`} />
+          </Button>
+
           {/* Scaffold Refresh */}
           <Button
             variant="ghost"
@@ -581,6 +603,19 @@ export default function CERV2EditorAI() {
             dismissedSuggestions={dismissedSuggestions}
           />
         </main>
+
+        {/* ─── Export Preview Panel (Phase 7.6) ────────────────────────── */}
+        <CERV2ExportPreviewPanel
+          outline={outline}
+          aiSuggestions={aiSuggestions}
+          validationHints={validationHints}
+          loadingSections={loadingSections}
+          dismissedSuggestions={dismissedSuggestions}
+          selectedDocType={selectedDocType}
+          completeness={sectionCompleteness}
+          visible={showExportPreview}
+          onToggle={() => setShowExportPreview(prev => !prev)}
+        />
 
         {/* ─── Compliance Validation Panel (Phase 7.5) ──────────────────── */}
         <CERV2ValidationPanel
