@@ -1,18 +1,24 @@
 /**
- * Phase 7.3 + 7.4 – CERV2 Editor AI Integration Page
+ * Phase 7.3 + 7.4 + 7.5 – CERV2 Editor AI Integration Page
  *
  * Wraps MedicalDeviceDocumentEditor with live AI suggestion
  * capabilities from /api/cerv2/ai/*. Supports 510(k), PMA, and CER
  * document types with per-section AI auto-populate, equivalence text,
  * and benefit-risk analysis.
  *
- * Phase 7.4 additions:
+ * Phase 7.4 — Export pipeline:
  *  - CERV2ExportControls inline bar: PDF, DOCX, eSTAR ZIP from AI-populated sections
  *  - AI suggestions → TipTap editor JSON → server-side rendering pipeline
  *
+ * Phase 7.5 — Compliance validation:
+ *  - CERV2ValidationPanel: per-section AI compliance hints (right panel)
+ *  - Real-time validation via analyzeSection on content change
+ *  - Severity classification: error / warning / pass
+ *  - Section-level re-validate button
+ *
  * UX features:
- *  - Outline panel with section navigation & AI preview
- *  - Expand / collapse section toggling
+ *  - Outline panel (left) with section navigation & AI preview
+ *  - Validation panel (right) with compliance hints & severity badges
  *  - Scaffold refresh (re-fetch AI templates without overwriting manual edits)
  *  - Section completeness progress bar
  *  - Inline export controls with format selector, pre-validation, and last-export indicator
@@ -21,6 +27,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
 import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
+import CERV2ValidationPanel from '../components/CERV2ValidationPanel.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -130,6 +137,11 @@ export default function CERV2EditorAI() {
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(new Set());
 
+  // Phase 7.5 – Validation state
+  const [validationHints, setValidationHints] = useState({});
+  const [loadingValidation, setLoadingValidation] = useState({});
+  const [showValidation, setShowValidation] = useState(true);
+
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
 
@@ -200,10 +212,36 @@ export default function CERV2EditorAI() {
     [selectedDocType, loadingSections]
   );
 
+  // ── Phase 7.5: Compliance validation ───────────────────────────────────────
+
+  const validateSection = useCallback(
+    async (outlineId, content = '') => {
+      if (loadingValidation[outlineId]) return;
+      try {
+        setLoadingValidation(prev => ({ ...prev, [outlineId]: true }));
+        const result = await cerv2AIService.analyzeSection(selectedDocType, outlineId, content);
+        setValidationHints(prev => ({
+          ...prev,
+          [outlineId]: result.suggestion || 'No compliance data.',
+        }));
+      } catch (err) {
+        console.error(`[CERV2EditorAI] Validation failed for ${outlineId}:`, err);
+        setValidationHints(prev => ({
+          ...prev,
+          [outlineId]: 'Error validating section.',
+        }));
+      } finally {
+        setLoadingValidation(prev => ({ ...prev, [outlineId]: false }));
+      }
+    },
+    [selectedDocType, loadingValidation]
+  );
+
   // Debounced version for live typing
   // The editor fires onSectionChange with its INTERNAL section IDs, so we need
   // to reverse-map them back to our outline IDs for the AI service.
   const debounceTimers = useRef({});
+  const validationTimers = useRef({});
   const handleSectionChange = useCallback(
     (sectionId, content) => {
       // Reverse-map editor ID → outline ID (identity if no mapping exists)
@@ -213,14 +251,23 @@ export default function CERV2EditorAI() {
       // Clear stale cache for this section when content changes
       cerv2AIService.invalidateSection(selectedDocType, outlineId);
 
+      // Debounced AI suggestion fetch (800ms)
       if (debounceTimers.current[outlineId]) {
         clearTimeout(debounceTimers.current[outlineId]);
       }
       debounceTimers.current[outlineId] = setTimeout(() => {
         fetchAiSuggestion(outlineId, content);
       }, 800);
+
+      // Debounced compliance validation (1200ms — slightly slower to avoid noise)
+      if (validationTimers.current[outlineId]) {
+        clearTimeout(validationTimers.current[outlineId]);
+      }
+      validationTimers.current[outlineId] = setTimeout(() => {
+        validateSection(outlineId, content);
+      }, 1200);
     },
-    [selectedDocType, fetchAiSuggestion]
+    [selectedDocType, fetchAiSuggestion, validateSection]
   );
 
   // ── Scaffold Refresh ──────────────────────────────────────────────────────
@@ -275,6 +322,8 @@ export default function CERV2EditorAI() {
     setAiSuggestions({});
     setLoadingSections({});
     setDismissedSuggestions(new Set());
+    setValidationHints({});
+    setLoadingValidation({});
     cerv2AIService.clearCache();
   }, []);
 
@@ -504,6 +553,16 @@ export default function CERV2EditorAI() {
             dismissedSuggestions={dismissedSuggestions}
           />
         </main>
+
+        {/* ─── Compliance Validation Panel (Phase 7.5) ──────────────────── */}
+        <CERV2ValidationPanel
+          outline={outline}
+          validationHints={validationHints}
+          loadingValidation={loadingValidation}
+          visible={showValidation}
+          onToggle={() => setShowValidation(prev => !prev)}
+          onRefreshSection={validateSection}
+        />
       </div>
     </div>
   );
