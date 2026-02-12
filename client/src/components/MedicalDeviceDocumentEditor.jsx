@@ -107,6 +107,10 @@ const MedicalDeviceDocumentEditor = ({
   onWorkflowUpdate,
   selectedSection = null, // Section selected from Document Vault
   onSectionSaved, // Callback when section is saved to database
+  // Phase 7.3 – CERV2 Editor AI integration props
+  onSectionChange = null, // Callback(sectionId, content) when user edits a section
+  aiSuggestionsExternal = null, // External AI suggestions map { [sectionId]: suggestion }
+  loadingSectionsExternal = null, // External loading state map { [sectionId]: boolean }
 }) => {
   const { toast } = useToast();
   const editorRef = useRef(null);
@@ -144,6 +148,17 @@ const MedicalDeviceDocumentEditor = ({
   // AI Assistant state
   const [aiSuggestions, setAiSuggestions] = useState({});
   const [isAiProcessing, setIsAiProcessing] = useState({});
+
+  // Phase 7.3 – merge external AI suggestions from CERV2EditorAI parent
+  const mergedAiSuggestions = useMemo(() => {
+    if (!aiSuggestionsExternal) return aiSuggestions;
+    return { ...aiSuggestions, ...aiSuggestionsExternal };
+  }, [aiSuggestions, aiSuggestionsExternal]);
+
+  const mergedLoadingSections = useMemo(() => {
+    if (!loadingSectionsExternal) return isAiProcessing;
+    return { ...isAiProcessing, ...loadingSectionsExternal };
+  }, [isAiProcessing, loadingSectionsExternal]);
 
   // Device Data Center state for Sources Tab
   const [deviceFiles, setDeviceFiles] = useState([]);
@@ -1984,6 +1999,11 @@ const MedicalDeviceDocumentEditor = ({
     }));
     setIsDirty(true);
     console.log('[Field Change] isDirty set to true');
+
+    // Phase 7.3 – notify parent (CERV2EditorAI) of section content change
+    if (onSectionChange && typeof onSectionChange === 'function') {
+      onSectionChange(sectionId, value);
+    }
   };
 
   // Toggle section expansion

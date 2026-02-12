@@ -124,6 +124,8 @@ const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
 const CERPage = lazy(() => import('./pages/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
 const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+// Phase 7.3 – CERV2 Editor AI Integration
+const CERV2EditorAI = lazy(() => import('./pages/CERV2EditorAI'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
@@ -2078,6 +2080,9 @@ function MainApp() {
             {/* CER Generator catch-all routes */}
             <Route path="/cer-generator/*">{() => <CERV2Page />}</Route>
             <Route path="/client-portal/cer-generator/*">{() => <CERV2Page />}</Route>
+            {/* Phase 7.3 – CERV2 Editor AI Integration */}
+            <Route path="/cerv2/editor-ai">{() => <CERV2EditorAI />}</Route>
+            <Route path="/cerv2-editor-ai">{() => <CERV2EditorAI />}</Route>
             <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
             <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
             {/* Enhanced Document Editor Route for IND Wizard Integration */}
