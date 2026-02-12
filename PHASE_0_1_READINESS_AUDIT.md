@@ -23,39 +23,45 @@
 
 ## 1. Executive Summary
 
-### Overall Readiness Score: **62%** (Production-capable with significant gaps)
+### Overall Readiness Score: **55%** (Production-capable with significant gaps)
 
-| Category                       | Ready                        | Partial                          | Missing                      | Score   |
-| ------------------------------ | ---------------------------- | -------------------------------- | ---------------------------- | ------- |
-| CERV2 Templates (510k/PMA/CER) | ✅ 25 sections               | ⚠️ 5 AI-only                     | —                            | 83%     |
-| **eCTD Co-Author Module**      | ✅ 38 UI components (16.5K)  | ⚠️ Server stubs (23L each)       | ❌ 20+ API endpoints missing | **25%** |
-| IND Templates (Modules 1–5)    | ✅ 19 seed DOCX              | ⚠️ Modules 4–5                   | ❌ 60+ sub-modules           | 35%     |
-| AI Population                  | ⚠️ Template/mock             | —                                | ❌ LLM integration           | 40%     |
-| Export Pipeline (PDF/DOCX/ZIP) | ✅ Fully functional          | —                                | —                            | 95%     |
-| DOCX Factory                   | ✅ 12 endpoints, DB-backed   | ⚠️ 6 seed templates              | ❌ 13+ missing               | 60%     |
-| Canvas Editing                 | ✅ TipTap editor             | ✅ Autosave                      | —                            | 90%     |
-| Section CRUD + Versioning      | ✅ 6 endpoints, audit trail  | —                                | —                            | 95%     |
-| IND Automation                 | ✅ Forms 1571/1572/3674      | ⚠️ Module 3 only                 | ❌ Modules 1,2,4,5           | 30%     |
-| eCTD Services (Shadow/Python)  | ✅ 773L router + 6 DB tables | ✅ Assembly, hashing, validation | —                            | 85%     |
+| Category                       | Ready                          | Partial                          | Missing                         | Score   |
+| ------------------------------ | ------------------------------ | -------------------------------- | ------------------------------- | ------- |
+| CERV2 Templates (510k/PMA/CER) | ✅ 25 sections                 | ⚠️ 5 AI-only                     | —                               | 83%     |
+| **eCTD Co-Author Module**      | ✅ 38 UI components (16.5K)    | ⚠️ Server stubs (23L each)       | ❌ 20+ API endpoints missing    | **25%** |
+| **CMC Wizard (Module 3)**      | ✅ 102 components (90K+ lines) | ⚠️ Routes imported not mounted   | ❌ 80+ API endpoints return 404 | **15%** |
+| IND Templates (Modules 1–5)    | ✅ 19 seed DOCX                | ⚠️ Modules 4–5                   | ❌ 60+ sub-modules              | 35%     |
+| AI Population                  | ⚠️ Template/mock               | —                                | ❌ LLM integration              | 40%     |
+| Export Pipeline (PDF/DOCX/ZIP) | ✅ Fully functional            | —                                | —                               | 95%     |
+| DOCX Factory                   | ✅ 12 endpoints, DB-backed     | ⚠️ 6 seed templates              | ❌ 13+ missing                  | 60%     |
+| Canvas Editing                 | ✅ TipTap editor               | ✅ Autosave                      | —                               | 90%     |
+| Section CRUD + Versioning      | ✅ 6 endpoints, audit trail    | —                                | —                               | 95%     |
+| IND Automation                 | ✅ Forms 1571/1572/3674        | ⚠️ Module 3 only                 | ❌ Modules 1,2,4,5              | 30%     |
+| eCTD Services (Shadow/Python)  | ✅ 773L router + 6 DB tables   | ✅ Assembly, hashing, validation | —                               | 85%     |
+| CMC DB Schema (Drizzle+SQL)    | ✅ 12 tables defined (333L)    | ⚠️ Prisma CMC models exist       | ❌ Never migrated               | 30%     |
 
-### Critical Blockers (6)
+### Critical Blockers (8)
 
 1. **🔴 `/api/coauthor` server routes are 23-line stubs** — CoAuthor.jsx (13,461L) calls 20+ endpoints that DON'T EXIST. The most impactful gap in the entire platform.
 2. **🔴 `/api/ectd-documents` server routes are 23-line stubs** — returns empty arrays, no CRUD
-3. **AI endpoints return static templates** — no LLM/GPT integration
-4. **IND Module 4 (Nonclinical) and Module 5 (Clinical) have no DOCX templates or generators**
-5. **PMA has zero dedicated DOCX seed templates**
-6. **CoAuthor → Server endpoint mismatch** — Client calls `/api/coauthor/documents`, `/api/coauthor/validate`, `/api/coauthor/ectd-modules/*`, etc. but real logic lives in disconnected routes (`authoring.router.ts`, `documentAuthoring.routes.ts`, `phase6.routes.ts`)
+3. **🔴 CMC Wizard routes imported but NEVER MOUNTED** — `cmcProjectRoutes`, `cmcBlueprintRoutes` imported at server/index.ts L69-70 but no `app.use()` call. **102 client components (90,454 lines) calling ~80 endpoints that ALL return 404.**
+4. **🔴 CMC API module (24 files, 10,935 lines) completely disconnected** — `server/api/cmc/index.js` registers 7 sub-routers (blueprint-generator, change-impact-simulator, manufacturing-tuner, etc.) but is never imported or mounted anywhere in the Express app.
+5. **AI endpoints return static templates** — no LLM/GPT integration
+6. **IND Module 4 (Nonclinical) and Module 5 (Clinical) have no DOCX templates or generators**
+7. **PMA has zero dedicated DOCX seed templates**
+8. **CoAuthor → Server endpoint mismatch** — Client calls `/api/coauthor/documents`, `/api/coauthor/validate`, `/api/coauthor/ectd-modules/*`, etc. but real logic lives in disconnected routes (`authoring.router.ts`, `documentAuthoring.routes.ts`, `phase6.routes.ts`)
 
-### High-Priority Gaps (7)
+### High-Priority Gaps (9)
 
-7. `cerv2-versions.ts` is dead stub code (no auth, no DB)
-8. `fetchEquivalence()` and `fetchBenefitRisk()` wired but never called from editor
-9. IND templates route commented out in `server/index.ts`
-10. Mock export routes have no auth on non-production
-11. DOCX Factory seed only covers 6 of 19 catalog entries on first `POST /seed`
-12. `coauthorWorkspaceService.js` is a 42-line stub
-13. eCTD real implementations (ectdService.ts, ECTDScaffoldingService.ts) not routed through `/api/coauthor` path
+9. `cerv2-versions.ts` is dead stub code (no auth, no DB)
+10. `fetchEquivalence()` and `fetchBenefitRisk()` wired but never called from editor
+11. IND templates route commented out in `server/index.ts`
+12. Mock export routes have no auth on non-production
+13. DOCX Factory seed only covers 6 of 19 catalog entries on first `POST /seed`
+14. `coauthorWorkspaceService.js` is a 42-line stub
+15. eCTD real implementations (ectdService.ts, ECTDScaffoldingService.ts) not routed through `/api/coauthor` path
+16. CMC `cmc-dashboard.ts` (36L) is the ONLY mounted CMC route — returns zeroed metrics and empty arrays
+17. 12 CMC DB tables defined in `shared/cmc-schema.ts` (333L) + 2 SQL files (514L) — never migrated
 
 ---
 
@@ -742,6 +748,218 @@ Most endpoints can delegate to existing services. The work is primarily:
 
 ---
 
+## 13. CMC Wizard Module — Full Integration Audit
+
+The CMC (Chemistry, Manufacturing, and Controls) Wizard is the Module 3 data capture and document generation subsystem. It is the **largest module in the platform by code volume** (90,454 lines of client components alone) but has the **lowest readiness score (15%)** because virtually none of its server routes are mounted.
+
+### 13.1 — Discovery Summary
+
+| Layer                                    | Files    | Lines        | Status                                                                                                               |
+| ---------------------------------------- | -------- | ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Client pages                             | 7        | 3,276        | ✅ IMPLEMENTED (CmcWizard, CMCPage, CMCBlueprintPage, CMCBlueprintGenerator, CMCModule, CMCGenerator, CMCWizard.tsx) |
+| Client components (`components/cmc/`)    | 102      | 90,454       | ✅ IMPLEMENTED — 25,424L flagship `ComprehensiveCMCPlatformClean.jsx`                                                |
+| Client services/API                      | 3        | 1,048        | ✅ IMPLEMENTED — `cmcService.ts` (750L), `cmc.js` (141L), `cmc.d.ts` (157L)                                          |
+| Client App routes                        | 4        | —            | ✅ WIRED (`/cmc-wizard`, `/client-portal/cmc-wizard`, `/cmc-blueprint`, `/cmc-monitoring`)                           |
+| Server API module (`server/api/cmc/`)    | 24       | 10,935       | ⚠️ IMPLEMENTED but **NEVER MOUNTED**                                                                                 |
+| Server routes (`server/routes/cmc-*.ts`) | 2        | 175          | ⚠️ `cmc-dashboard.ts` mounted (36L stub), `cmc-dashboard-prisma.ts` (140L) NOT mounted                               |
+| Server services                          | 4        | 918          | ✅ IMPLEMENTED (cmcBlueprintService 638L, cmcEvents 222L, aiInsights 38L, readiness 20L)                             |
+| Shared schema (Drizzle)                  | 1        | 333          | ✅ DEFINED — 12 tables with Zod validation                                                                           |
+| SQL schemas                              | 2        | 514          | ✅ DEFINED — `cmc_blueprints.sql`, `cmc-playbook-schema.sql`                                                         |
+| IND automation CMC                       | 1        | 126          | ✅ IMPLEMENTED — `cmc_guidance.py` with OpenAI integration                                                           |
+| Shadow service demos                     | 4        | 458          | ✅ DEMO DATA — drug substance + drug product templates & inputs                                                      |
+| AI detector                              | 1        | 563          | ✅ IMPLEMENTED — `CMCAnalyzer.ts`                                                                                    |
+| **TOTALS**                               | **~155** | **~108,800** | **15% operational**                                                                                                  |
+
+### 13.2 — Root Cause: Route Mounting Failure
+
+**The entire CMC module is dead on arrival because of 3 missing `app.use()` calls.**
+
+```typescript
+// server/index.ts — Lines 69-71
+import cmcProjectRoutes from './api/cmc/projectRoutes.ts'; // IMPORTED
+import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts'; // IMPORTED
+import cmcDashboardRoutes from './routes/cmc-dashboard.ts'; // IMPORTED
+
+// But NONE of these have a corresponding:
+// app.use('/api/cmc/projects', cmcProjectRoutes);     ← MISSING
+// app.use('/api/cmc/blueprints', cmcBlueprintRoutes); ← MISSING
+// Only cmc-dashboard is mounted via routes/index.ts as /api/cmc
+```
+
+Additionally, `server/api/cmc/index.js` (the main module aggregator) is **never imported** anywhere:
+
+```javascript
+// server/api/cmc/index.js — Registers 7 sub-routers:
+// /blueprint-generator, /change-impact-simulator, /manufacturing-tuner,
+// /preclinical-translator, /global-compliance, /audit-risk-monitor, /cmc-copilot
+// Plus /test-event and /status endpoints
+// BUT THIS FILE IS NEVER IMPORTED OR MOUNTED
+```
+
+### 13.3 — Client → Server Endpoint Analysis
+
+**~80 unique `/api/cmc/*` endpoints** are called by client components. The server has **~120 route handlers** defined across 24 files in `server/api/cmc/`. However, **none are reachable** because the Express app never mounts them.
+
+**The only reachable CMC endpoint** is the 36-line dashboard stub:
+
+| Endpoint                | Response                                       | File               |
+| ----------------------- | ---------------------------------------------- | ------------------ |
+| `GET /api/cmc/status`   | `{ success: true, data: { status: 'ready' } }` | `cmc-dashboard.ts` |
+| `GET /api/cmc/metrics`  | `{ totalProjects: 0, activeProjects: 0 }`      | `cmc-dashboard.ts` |
+| `GET /api/cmc/projects` | `{ projects: [], total: 0 }`                   | `cmc-dashboard.ts` |
+
+Every other `/api/cmc/*` call returns **404 Not Found**.
+
+### 13.4 — Server API Module Inventory (24 files, 10,935 lines)
+
+| File                         | Lines | Purpose                                                          | Sub-routes                                                                                                                                                         |
+| ---------------------------- | ----- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.js`                   | 100   | Module aggregator — registers 7 sub-routers                      | `/blueprint-generator`, `/change-impact-simulator`, `/manufacturing-tuner`, `/preclinical-translator`, `/global-compliance`, `/audit-risk-monitor`, `/cmc-copilot` |
+| `cmcRoutes.ts`               | 643   | Core CMC routes — mounts workflows, collaboration, documents     | `/generate-blueprint`, `/module/:moduleSection`, `/analyze`                                                                                                        |
+| `routes.ts`                  | 384   | CRUD for analytical methods, stability, drug substances/products | `/analytical-methods`, `/stability-studies`, `/drug-substances`, `/drug-products`, `/process-validation`, `/qc-testing`, `/change-control`                         |
+| `projectRoutes.ts`           | 657   | Project CRUD + substance/product/stability management            | `/projects`, `/projects/:id`, `/projects/:projectId/drug-substances`, etc.                                                                                         |
+| `blueprintRoutes.ts`         | 688   | Blueprint CRUD + generation + lock/unlock + export               | `/blueprints`, `/blueprints/:id`, `/generate-all`, `/export`                                                                                                       |
+| `workflowRoutes.ts`          | 964   | Workflow engine — instances, tasks, checklists, AI tools         | `/workflows`, `/workflows/:id/start`, `/checklists`, `/ai-tools/execute`                                                                                           |
+| `collaborationRoutes.ts`     | 428   | Team collaboration — comments, presence, sharing                 | `/comments`, `/presence`, `/share`, `/team/:workflowId`                                                                                                            |
+| `documentRoutes.ts`          | 530   | Document CRUD + generation + export                              | `/documents`, `/save-document`, `/download/:documentId`                                                                                                            |
+| `playbookRoutes.ts`          | 454   | Playbook management                                              | `/checklists`, `/ai-tools/execute`                                                                                                                                 |
+| `enhancedCMCService.ts`      | 567   | Enhanced service with AI pipeline                                | Blueprint generation + ICH compliance                                                                                                                              |
+| `cmcService.ts`              | 52    | Basic service stub                                               | —                                                                                                                                                                  |
+| `templateService.ts`         | 385   | Template management                                              | CRUD for CMC templates                                                                                                                                             |
+| `portfolio.ts`               | 167   | Portfolio overview + snapshot                                    | `/overview`, `/snapshot/save`                                                                                                                                      |
+| `regulatoryIR.ts`            | 185   | Regulatory intelligence                                          | `/submissions/:id/questions`, `/questions/:qId`                                                                                                                    |
+| `regulatory_aiDraft.ts`      | 105   | AI draft generation for regulatory questions                     | `/questions/:qId/ai-draft`                                                                                                                                         |
+| `regulatory_irPackager.ts`   | 72    | IR packaging                                                     | —                                                                                                                                                                  |
+| `blueprint-generator.js`     | 431   | AI CMC Blueprint Generator                                       | `/generate`, `/generate-enhanced-blueprint`                                                                                                                        |
+| `change-impact-simulator.js` | 445   | AI Change Impact Simulator (AICIS)                               | `/simulate`, `/analyze-collection`                                                                                                                                 |
+| `manufacturing-tuner.js`     | 519   | Manufacturing Intelligence Tuner                                 | `/optimize`, `/qbd-analysis`, `/process-validation`                                                                                                                |
+| `preclinical-translator.js`  | 564   | Preclinical-to-Process Translator                                | `/translate`, `/transform`, `/compatibility-matrix`                                                                                                                |
+| `global-compliance.js`       | 688   | Global Compliance Auto-Match                                     | `/compliance-check`, `/guidelines`, `/markets`                                                                                                                     |
+| `audit-risk-monitor.js`      | 949   | Real-Time Audit Risk Monitor                                     | `/inspection-findings`, `/mock-inspection`, `/compliance-monitor`                                                                                                  |
+| `cmc-copilot.js`             | 686   | CMC CoPilot AI Assistant                                         | `/query`, `/specialized-query`, `/terminology`                                                                                                                     |
+| `types.js`                   | 272   | Shared type definitions                                          | —                                                                                                                                                                  |
+
+### 13.5 — Top Client Components by Size
+
+| File                                | Lines  | Purpose                          |
+| ----------------------------------- | ------ | -------------------------------- |
+| `ComprehensiveCMCPlatformClean.jsx` | 25,424 | Full CMC platform — flagship     |
+| `DocumentAuthoringFixed.jsx`        | 4,517  | Document authoring with editor   |
+| `ManufacturingProcessPanel.jsx`     | 3,542  | Manufacturing process management |
+| `TaskManagementSystem.jsx`          | 3,079  | Task tracking and workflows      |
+| `ComprehensiveCMCPlatform.jsx`      | 2,854  | Original platform version        |
+| `RegulatoryWorkflowManager.jsx`     | 2,737  | Regulatory workflow management   |
+| `BlueprintEditor.jsx`               | 2,192  | Blueprint visual editor          |
+| `SubmissionPreparator.jsx`          | 2,176  | Submission preparation workflow  |
+| `MethodDetails.jsx`                 | 1,921  | Analytical method details        |
+| `SupplyChainPanel.jsx`              | 1,879  | Supply chain management          |
+| `ProcessTab.jsx`                    | 1,839  | Process parameters + validation  |
+| `CMCDocumentAuthoring.jsx`          | 1,835  | Document authoring (alternate)   |
+| `FormulationPredictor.jsx`          | 1,727  | AI formulation prediction        |
+| `AnalyticalMethodsTab.jsx`          | 1,576  | Analytical methods tab           |
+| `BatchRecordGenerator.jsx`          | 1,348  | Batch record generation          |
+
+### 13.6 — Database Schema Coverage
+
+**`shared/cmc-schema.ts` (333 lines)** defines 12 Drizzle ORM tables:
+
+| Table                     | Purpose                                | Status                  |
+| ------------------------- | -------------------------------------- | ----------------------- |
+| `cmc_projects`            | Core project management                | DEFINED, never migrated |
+| `drug_substances`         | Drug Substance data (3.2.S)            | DEFINED, never migrated |
+| `drug_products`           | Drug Product data (3.2.P)              | DEFINED, never migrated |
+| `analytical_methods`      | Analytical methods (3.2.S.4 / 3.2.P.5) | DEFINED, never migrated |
+| `stability_studies`       | Stability data (3.2.S.7 / 3.2.P.8)     | DEFINED, never migrated |
+| `manufacturing_processes` | Manufacturing info (3.2.S.2 / 3.2.P.3) | DEFINED, never migrated |
+| `quality_specifications`  | Specifications (3.2.S.4 / 3.2.P.5)     | DEFINED, never migrated |
+| `regulatory_documents`    | CTD Module documents                   | DEFINED, never migrated |
+| `compliance_tracking`     | ICH guideline compliance               | DEFINED, never migrated |
+| `workflow_templates`      | Reusable workflow templates            | DEFINED, never migrated |
+| `project_workflows`       | Active workflow instances              | DEFINED, never migrated |
+| `workflow_tasks`          | Individual workflow tasks              | DEFINED, never migrated |
+| `risk_assessments`        | Quality/regulatory risk tracking       | DEFINED, never migrated |
+
+**Additional SQL schemas:**
+
+- `sql/cmc_blueprints.sql` (381L): `cmc_blueprint_templates`, `cmc_blueprints`, `cmc_section_library`, + more
+- `server/database/cmc-playbook-schema.sql` (133L): `cmc_workflow_instances`, `cmc_workflow_tasks`, `cmc_checklist_instances`
+
+### 13.7 — Module 3 CTD Section Coverage Gap
+
+Per ICH M4Q (Quality section of CTD), Module 3 should capture:
+
+| CTD Section | Description                                            | Data Model                                             | Server Route             | Client UI                                                         |
+| ----------- | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------ | ----------------------------------------------------------------- |
+| 3.2.S.1     | General Information (nomenclature, structure)          | ✅ `drug_substances` table                             | ✅ `routes.ts`           | ✅ Components exist                                               |
+| 3.2.S.2     | Manufacture (process, controls)                        | ✅ `manufacturing_processes` table                     | ✅ `routes.ts`           | ✅ `ManufacturingProcessPanel.jsx`                                |
+| 3.2.S.3     | Characterization (elucidation, impurities)             | ⚠️ Partial in `drug_substances.characterization` JSONB | ⚠️ Partial               | ✅ Components exist                                               |
+| 3.2.S.4     | Control of Drug Substance (specs, methods, validation) | ✅ `quality_specifications` + `analytical_methods`     | ✅ `routes.ts`           | ✅ `AnalyticalMethodsTab.jsx`, `SpecificationsTable.jsx`          |
+| 3.2.S.5     | Reference Standards                                    | ⚠️ JSONB field in `drug_substances`                    | ❌ No dedicated endpoint | ⚠️ Minimal                                                        |
+| 3.2.S.6     | Container Closure System                               | ❌ No dedicated table                                  | ❌ No endpoint           | ❌ No component                                                   |
+| 3.2.S.7     | Stability                                              | ✅ `stability_studies` table                           | ✅ `routes.ts`           | ✅ Multiple components                                            |
+| 3.2.P.1     | Description and Composition                            | ✅ `drug_products` table                               | ✅ `routes.ts`           | ✅ Components exist                                               |
+| 3.2.P.2     | Pharmaceutical Development                             | ⚠️ Partial (DOE tab, Design Space tab)                 | ⚠️ Partial               | ✅ `DOETab.jsx`, `DesignSpaceTab.jsx`                             |
+| 3.2.P.3     | Manufacture (batch formula, process)                   | ✅ `manufacturing_processes`                           | ✅ `routes.ts`           | ✅ `ManufacturingStepperWorkflow.jsx`, `BatchRecordGenerator.jsx` |
+| 3.2.P.4     | Control of Excipients                                  | ❌ No dedicated table                                  | ❌ No endpoint           | ⚠️ `ExcipientCompatibilityAnalyzer.jsx` (UI only)                 |
+| 3.2.P.5     | Control of Drug Product (specs, methods)               | ✅ `quality_specifications`                            | ✅ `routes.ts`           | ✅ `QualityTab.tsx`, `QualityControlDashboard.jsx`                |
+| 3.2.P.6     | Reference Standards                                    | ❌ Same gap as 3.2.S.5                                 | ❌ No endpoint           | ❌ No component                                                   |
+| 3.2.P.7     | Container Closure System                               | ❌ Same gap as 3.2.S.6                                 | ❌ No endpoint           | ✅ `PackagingSerializationPanel.jsx` (partial)                    |
+| 3.2.P.8     | Stability                                              | ✅ Shares `stability_studies` table                    | ✅ `routes.ts`           | ✅ `PPQCPVTab.jsx`, `SystemSuitabilityTrending.jsx`               |
+| 3.2.A       | Appendices (facilities, adventitious agents)           | ❌ No table                                            | ❌ No endpoint           | ⚠️ `SiteAndEquipmentPanel.jsx` (partial)                          |
+| 3.2.R       | Regional Information                                   | ❌ No table                                            | ❌ No endpoint           | ❌ No component                                                   |
+
+### 13.8 — Fix Options
+
+| Option                       | Description                                                                     | Effort         | Impact                             |
+| ---------------------------- | ------------------------------------------------------------------------------- | -------------- | ---------------------------------- |
+| **A. Mount existing routes** | Add 3 `app.use()` lines in `server/index.ts` + import `server/api/cmc/index.js` | **30 minutes** | Enables ~120 endpoints immediately |
+| **B. Mount + migrate DB**    | Option A + run Drizzle migration for 12 CMC tables                              | **2-4 hours**  | Full data persistence              |
+| **C. Full integration**      | Option B + wire `cmc-dashboard-prisma.ts` + connect `cmcRoutes.ts` aggregator   | **1-2 days**   | Complete operational CMC platform  |
+| **D. Complete Module 3**     | Option C + add missing sections (S.5, S.6, P.4, P.6, P.7, 3.2.A, 3.2.R)         | **1-2 weeks**  | Regulatory-complete Module 3       |
+
+**Recommended: Option C first (1-2 days), then Option D iteratively.**
+
+### 13.9 — CmcWizard.jsx vs CMCWizard.tsx
+
+| File                                                   | Lines | Status                                                                                                                                                                                         |
+| ------------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client/src/modules/CmcWizard.jsx`                     | 98    | **UI shell only** — 5 wizard steps (Drug Substance, Drug Product, Manufacturing, Controls, Review) but NO data forms, NO API calls, NO validation. Step content shows static placeholder text. |
+| `client/src/concept2cure/components/cmc/CMCWizard.tsx` | 625   | **ICH Guardrail checker** — types for ICH Q1-Q6, guardrail validation, impurity thresholds, stability protocol generation. Client-side only (no API calls), but has real domain logic.         |
+| `client/src/components/cmc/CMCWorkflowWizard.jsx`      | —     | Workflow wizard for CMC task management                                                                                                                                                        |
+
+The user-facing CmcWizard at `/cmc-wizard` is the 98-line shell — it captures **zero data points**.
+
+### 13.10 — Client API Service Analysis
+
+**`client/src/api/cmc.js`** (141 lines) calls 7 endpoints — ALL return 404:
+
+- `GET /api/cmc/stability` — stability studies
+- `POST /api/cmc/stability/upload` — upload stability study
+- `GET /api/cmc/process-diagram/:id` — process diagram
+- `POST /api/cmc/process-diagram/save` — save process diagram
+- `GET /api/cmc/analytical-methods` — methods list
+- `POST /api/cmc/analytical-methods/save` — save method
+- `GET /api/cmc/certificates` — certificates
+
+**`client/src/concept2cure/services/cmcService.ts`** (750 lines) defines comprehensive TypeScript types for:
+
+- Specifications (7 types: DRUG_SUBSTANCE, DRUG_PRODUCT, EXCIPIENT, INTERMEDIATE, STARTING_MATERIAL, CONTAINER_CLOSURE, IN_PROCESS)
+- Impurity profiles (7 types + 6 origins + qualification status + toxicology data)
+- Stability protocols (6 storage conditions + ICH time points)
+- Batch records + Certificate of Analysis
+- ICH compliance checking
+
+### 13.11 — Shadow Service CMC Assets
+
+| File                                            | Lines | Purpose                           |
+| ----------------------------------------------- | ----- | --------------------------------- |
+| `demo_inputs/cmc_drug_substance__cmc_lite.json` | 86    | Example drug substance input data |
+| `demo_inputs/cmc_drug_product__cmc_lite.json`   | 66    | Example drug product input data   |
+| `demo_templates/cmc_drug_substance.docx`        | —     | Drug substance DOCX template      |
+| `demo_templates/cmc_drug_product.docx`          | —     | Drug product DOCX template        |
+
+---
+
 ## Appendix A: Complete File Index
 
 ### CERV2 Core Files
@@ -848,6 +1066,50 @@ Most endpoints can delegate to existing services. The work is primarily:
 | `ectd/TEST001/`                     | Sample eCTD sequences (0001, 0002) |
 | `ectd_test/`                        | Test fixtures (m1–m3)              |
 | `ectd-stubs/ectd_stubs.bundle.json` | Schemas, leaf_map, sequence_plan   |
+
+### CMC Wizard — Client
+
+| File                                                   | Lines  | Purpose                                            |
+| ------------------------------------------------------ | ------ | -------------------------------------------------- |
+| `client/src/modules/CmcWizard.jsx`                     | 98     | CMC wizard shell (5-step stepper, NO data capture) |
+| `client/src/pages/CMCPage.jsx`                         | 12     | CMC page wrapper                                   |
+| `client/src/pages/CMCModule.jsx`                       | 594    | CMC module page                                    |
+| `client/src/pages/CMCBlueprintPage.jsx`                | 158    | Blueprint page wrapper                             |
+| `client/src/pages/CMCBlueprintGenerator.jsx`           | 177    | Blueprint generator page                           |
+| `client/src/pages/CMC/CMCGenerator.jsx`                | 814    | CMC document generator                             |
+| `client/src/pages/CMC/components/CMCInputForm.jsx`     | 63     | CMC input form                                     |
+| `client/src/modules/CMCModule.jsx`                     | 735    | CMC module (alt)                                   |
+| `client/src/concept2cure/components/cmc/CMCWizard.tsx` | 625    | ICH Guardrail checker (client-only)                |
+| `client/src/components/cmc/` (102 files)               | 90,454 | All CMC UI components                              |
+| `client/src/api/cmc.js`                                | 141    | API client (7 endpoints, all 404)                  |
+| `client/src/concept2cure/services/cmcService.ts`       | 750    | Full domain types + service                        |
+| `client/src/types/cmc.d.ts`                            | 157    | TypeScript type definitions                        |
+
+### CMC Wizard — Server
+
+| File                                     | Lines  | Status                                       |
+| ---------------------------------------- | ------ | -------------------------------------------- |
+| `server/api/cmc/index.js`                | 100    | ⚠️ Aggregator — **NEVER IMPORTED**           |
+| `server/api/cmc/` (24 files total)       | 10,935 | ⚠️ All route handlers — **NEVER MOUNTED**    |
+| `server/routes/cmc-dashboard.ts`         | 36     | ✅ Mounted at `/api/cmc` — 3 stub endpoints  |
+| `server/routes/cmc-dashboard-prisma.ts`  | 140    | ⚠️ Full Prisma dashboard — **NEVER MOUNTED** |
+| `server/services/cmcBlueprintService.js` | 638    | ✅ IMPLEMENTED                               |
+| `server/services/cmcEvents.js`           | 222    | ✅ IMPLEMENTED                               |
+| `server/services/cmc/aiInsights.ts`      | 38     | ✅ IMPLEMENTED                               |
+| `server/services/cmc/readiness.ts`       | 20     | ✅ IMPLEMENTED                               |
+| `server/api/cmc-blueprint-generator.js`  | —      | ⚠️ Standalone file                           |
+| `services/ai/detectors/CMCAnalyzer.ts`   | 563    | ✅ IMPLEMENTED                               |
+
+### CMC Wizard — Data
+
+| File                                                 | Lines | Purpose                                     |
+| ---------------------------------------------------- | ----- | ------------------------------------------- |
+| `shared/cmc-schema.ts`                               | 333   | Drizzle ORM — 12 tables + Zod validation    |
+| `sql/cmc_blueprints.sql`                             | 381   | Blueprint + section library SQL             |
+| `server/database/cmc-playbook-schema.sql`            | 133   | Playbook workflow SQL                       |
+| `ind_automation/cmc_guidance.py`                     | 126   | CMC regulatory guidance + OpenAI            |
+| `shadow_service/shadow_service/demo_inputs/cmc_*`    | 152   | Demo input data (drug substance + product)  |
+| `shadow_service/shadow_service/demo_templates/cmc_*` | —     | DOCX templates for drug substance + product |
 
 ---
 
@@ -981,6 +1243,69 @@ GET    /api/ectd-documents/:id                            # ⚠️ STUB — retu
 GET    /api/atoms                                         # ⚠️ STUB — returns []
 ```
 
+### CMC Wizard — ~80 endpoints (0 reachable, all return 404)
+
+```
+# ONLY REACHABLE (36-line dashboard stub)
+GET    /api/cmc/status                                   # ✅ Returns { status: 'ready' }
+GET    /api/cmc/metrics                                  # ✅ Returns zeroed metrics
+GET    /api/cmc/projects                                 # ✅ Returns { projects: [], total: 0 }
+
+# NOT MOUNTED — defined in server/api/cmc/ but never app.use()'d
+# Blueprint Generation
+POST   /api/cmc/generate-blueprint                       # ❌ 404
+POST   /api/cmc/blueprints                               # ❌ 404
+GET    /api/cmc/blueprints/:id                           # ❌ 404
+POST   /api/cmc/blueprints/:id/generate-all              # ❌ 404
+GET    /api/cmc/blueprints/:id/export                    # ❌ 404
+
+# Data CRUD
+GET    /api/cmc/analytical-methods                       # ❌ 404
+GET    /api/cmc/stability-studies                        # ❌ 404
+GET    /api/cmc/drug-substances                          # ❌ 404
+GET    /api/cmc/drug-products                            # ❌ 404
+GET    /api/cmc/process-validation                       # ❌ 404
+GET    /api/cmc/qc-testing                               # ❌ 404
+
+# Project Management
+POST   /api/cmc/projects                                 # ❌ 404
+GET    /api/cmc/projects/:id                             # ❌ 404
+GET    /api/cmc/projects/:id/drug-substances             # ❌ 404
+GET    /api/cmc/projects/:id/stability-studies           # ❌ 404
+
+# Workflow & Tasks
+GET    /api/cmc/workflows                                # ❌ 404
+POST   /api/cmc/workflows/:id/start                      # ❌ 404
+GET    /api/cmc/tasks                                    # ❌ 404
+GET    /api/cmc/tasks/worklist                           # ❌ 404
+
+# AI Modules (7 sub-routers in index.js)
+POST   /api/cmc/blueprint-generator/generate             # ❌ 404
+POST   /api/cmc/change-impact-simulator/simulate         # ❌ 404
+POST   /api/cmc/manufacturing-tuner/optimize             # ❌ 404
+POST   /api/cmc/preclinical-translator/translate         # ❌ 404
+POST   /api/cmc/global-compliance/compliance-check       # ❌ 404
+GET    /api/cmc/audit-risk-monitor/inspection-findings   # ❌ 404
+POST   /api/cmc/cmc-copilot/query                        # ❌ 404
+
+# Manufacturing
+GET    /api/cmc/manufacturing/overview                   # ❌ 404
+POST   /api/cmc/manufacturing/ai/review                  # ❌ 404
+POST   /api/cmc/manufacturing/export/module3             # ❌ 404
+
+# Additional (selection of ~40 more)
+GET    /api/cmc/dashboard/summary                        # ❌ 404
+GET    /api/cmc/stage-gates                              # ❌ 404
+GET    /api/cmc/validation/issues                        # ❌ 404
+GET    /api/cmc/risks                                    # ❌ 404
+GET    /api/cmc/ai/insights                              # ❌ 404
+POST   /api/cmc/compliance/check-rules                   # ❌ 404
+GET    /api/cmc/readiness/heatmap                        # ❌ 404
+POST   /api/cmc/validate                                 # ❌ 404
+GET    /api/cmc/templates                                # ❌ 404
+# ... ~40 more endpoints
+```
+
 ---
 
-_Generated by Phase 0-1 Readiness Audit — CERV2 Platform v1.0.0 (Updated with eCTD Co-Author audit)_
+_Generated by Phase 0-1 Readiness Audit — CERV2 Platform v1.0.0 (Updated with eCTD Co-Author + CMC Wizard audits)_

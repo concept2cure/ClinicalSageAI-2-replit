@@ -7,17 +7,24 @@
     "commit": "8d56db7"
   },
   "summary": {
-    "overall_readiness_pct": 62,
-    "critical_blockers": 6,
-    "high_gaps": 7,
+    "overall_readiness_pct": 55,
+    "critical_blockers": 8,
+    "high_gaps": 9,
     "medium_gaps": 6,
     "low_gaps": 4,
-    "total_endpoints": 100,
+    "total_endpoints": 180,
     "total_templates_defined": 44,
     "total_docx_on_disk": 19,
     "ectd_coauthor_endpoints_missing": 18,
     "ectd_coauthor_client_files": 100,
-    "ectd_coauthor_client_lines": 67000
+    "ectd_coauthor_client_lines": 67000,
+    "cmc_wizard_client_components": 102,
+    "cmc_wizard_client_lines": 90454,
+    "cmc_wizard_server_api_files": 24,
+    "cmc_wizard_server_api_lines": 10935,
+    "cmc_wizard_endpoints_unreachable": 80,
+    "cmc_wizard_db_tables_defined": 12,
+    "cmc_wizard_db_tables_migrated": 0
   },
   "doc_types": [
     {
@@ -1203,6 +1210,225 @@
       }
     }
   },
+  "cmc_wizard": {
+    "discovery_summary": {
+      "total_files": 155,
+      "total_lines": 108800,
+      "readiness_pct": 15,
+      "root_cause": "Routes imported but never mounted with app.use(). 30 minutes of mounting unlocks 90K+ lines of client code."
+    },
+    "client": {
+      "pages": [
+        {
+          "file": "client/src/modules/CmcWizard.jsx",
+          "lines": 98,
+          "status": "UI_SHELL_ONLY",
+          "note": "5-step wizard, NO data forms, NO API calls"
+        },
+        { "file": "client/src/pages/CMCPage.jsx", "lines": 12, "status": "WRAPPER" },
+        { "file": "client/src/pages/CMCModule.jsx", "lines": 594, "status": "IMPLEMENTED" },
+        { "file": "client/src/pages/CMCBlueprintPage.jsx", "lines": 158, "status": "IMPLEMENTED" },
+        {
+          "file": "client/src/pages/CMCBlueprintGenerator.jsx",
+          "lines": 177,
+          "status": "IMPLEMENTED"
+        },
+        { "file": "client/src/pages/CMC/CMCGenerator.jsx", "lines": 814, "status": "IMPLEMENTED" },
+        { "file": "client/src/modules/CMCModule.jsx", "lines": 735, "status": "IMPLEMENTED" },
+        {
+          "file": "client/src/concept2cure/components/cmc/CMCWizard.tsx",
+          "lines": 625,
+          "status": "IMPLEMENTED",
+          "note": "ICH Guardrail checker, client-only domain logic"
+        }
+      ],
+      "components_dir": "client/src/components/cmc/",
+      "component_count": 102,
+      "component_total_lines": 90454,
+      "top_components": [
+        { "file": "ComprehensiveCMCPlatformClean.jsx", "lines": 25424 },
+        { "file": "DocumentAuthoringFixed.jsx", "lines": 4517 },
+        { "file": "ManufacturingProcessPanel.jsx", "lines": 3542 },
+        { "file": "TaskManagementSystem.jsx", "lines": 3079 },
+        { "file": "ComprehensiveCMCPlatform.jsx", "lines": 2854 },
+        { "file": "RegulatoryWorkflowManager.jsx", "lines": 2737 },
+        { "file": "BlueprintEditor.jsx", "lines": 2192 },
+        { "file": "SubmissionPreparator.jsx", "lines": 2176 },
+        { "file": "MethodDetails.jsx", "lines": 1921 },
+        { "file": "SupplyChainPanel.jsx", "lines": 1879 }
+      ],
+      "services": [
+        {
+          "file": "client/src/concept2cure/services/cmcService.ts",
+          "lines": 750,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "client/src/api/cmc.js",
+          "lines": 141,
+          "status": "IMPLEMENTED",
+          "note": "7 endpoints, all return 404"
+        },
+        { "file": "client/src/types/cmc.d.ts", "lines": 157, "status": "TYPE_DEFS" }
+      ],
+      "routes": ["/cmc-wizard", "/client-portal/cmc-wizard", "/cmc-blueprint", "/cmc-monitoring"]
+    },
+    "server": {
+      "api_module": {
+        "dir": "server/api/cmc/",
+        "file_count": 24,
+        "total_lines": 10935,
+        "mounted": false,
+        "index_file": "server/api/cmc/index.js",
+        "sub_routers": [
+          "blueprint-generator",
+          "change-impact-simulator",
+          "manufacturing-tuner",
+          "preclinical-translator",
+          "global-compliance",
+          "audit-risk-monitor",
+          "cmc-copilot"
+        ]
+      },
+      "mounted_routes": [
+        {
+          "file": "server/routes/cmc-dashboard.ts",
+          "lines": 36,
+          "mount_path": "/api/cmc",
+          "status": "STUB",
+          "endpoints": ["GET /status", "GET /metrics", "GET /projects"]
+        }
+      ],
+      "unmounted_routes": [
+        {
+          "file": "server/routes/cmc-dashboard-prisma.ts",
+          "lines": 140,
+          "status": "IMPLEMENTED",
+          "note": "Full Prisma dashboard — never imported"
+        },
+        { "file": "server/api/cmc/cmcRoutes.ts", "lines": 643, "status": "IMPLEMENTED" },
+        {
+          "file": "server/api/cmc/routes.ts",
+          "lines": 384,
+          "status": "IMPLEMENTED",
+          "note": "Drizzle CRUD for core Module 3 data"
+        },
+        {
+          "file": "server/api/cmc/projectRoutes.ts",
+          "lines": 657,
+          "status": "IMPLEMENTED",
+          "note": "Imported at L69 but no app.use()"
+        },
+        {
+          "file": "server/api/cmc/blueprintRoutes.ts",
+          "lines": 688,
+          "status": "IMPLEMENTED",
+          "note": "Imported at L70 but no app.use()"
+        },
+        { "file": "server/api/cmc/workflowRoutes.ts", "lines": 964, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/documentRoutes.ts", "lines": 530, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/collaborationRoutes.ts", "lines": 428, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/playbookRoutes.ts", "lines": 454, "status": "IMPLEMENTED" }
+      ],
+      "services": [
+        { "file": "server/services/cmcBlueprintService.js", "lines": 638, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmcEvents.js", "lines": 222, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmc/aiInsights.ts", "lines": 38, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmc/readiness.ts", "lines": 20, "status": "IMPLEMENTED" },
+        { "file": "services/ai/detectors/CMCAnalyzer.ts", "lines": 563, "status": "IMPLEMENTED" }
+      ],
+      "db_schema": {
+        "drizzle_file": "shared/cmc-schema.ts",
+        "drizzle_lines": 333,
+        "drizzle_tables": 12,
+        "sql_files": [
+          { "file": "sql/cmc_blueprints.sql", "lines": 381 },
+          { "file": "server/database/cmc-playbook-schema.sql", "lines": 133 }
+        ],
+        "tables": [
+          "cmc_projects",
+          "drug_substances",
+          "drug_products",
+          "analytical_methods",
+          "stability_studies",
+          "manufacturing_processes",
+          "quality_specifications",
+          "regulatory_documents",
+          "compliance_tracking",
+          "workflow_templates",
+          "project_workflows",
+          "workflow_tasks",
+          "risk_assessments"
+        ],
+        "migration_status": "NEVER_MIGRATED"
+      }
+    },
+    "shadow_service": [
+      {
+        "file": "shadow_service/shadow_service/demo_inputs/cmc_drug_substance__cmc_lite.json",
+        "lines": 86
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_inputs/cmc_drug_product__cmc_lite.json",
+        "lines": 66
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_templates/cmc_drug_substance.docx",
+        "type": "DOCX"
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_templates/cmc_drug_product.docx",
+        "type": "DOCX"
+      }
+    ],
+    "ind_automation": {
+      "file": "ind_automation/cmc_guidance.py",
+      "lines": 126,
+      "status": "IMPLEMENTED",
+      "note": "CMC regulatory guidance + OpenAI integration"
+    },
+    "module3_ctd_coverage": {
+      "3.2.S.1_general_information": { "db": true, "server": true, "client": true },
+      "3.2.S.2_manufacture": { "db": true, "server": true, "client": true },
+      "3.2.S.3_characterization": { "db": "partial", "server": "partial", "client": true },
+      "3.2.S.4_control": { "db": true, "server": true, "client": true },
+      "3.2.S.5_reference_standards": { "db": "jsonb_field", "server": false, "client": "minimal" },
+      "3.2.S.6_container_closure": { "db": false, "server": false, "client": false },
+      "3.2.S.7_stability": { "db": true, "server": true, "client": true },
+      "3.2.P.1_description_composition": { "db": true, "server": true, "client": true },
+      "3.2.P.2_pharmaceutical_development": {
+        "db": "partial",
+        "server": "partial",
+        "client": true
+      },
+      "3.2.P.3_manufacture": { "db": true, "server": true, "client": true },
+      "3.2.P.4_control_excipients": { "db": false, "server": false, "client": "ui_only" },
+      "3.2.P.5_control_drug_product": { "db": true, "server": true, "client": true },
+      "3.2.P.6_reference_standards": { "db": false, "server": false, "client": false },
+      "3.2.P.7_container_closure": { "db": false, "server": false, "client": "partial" },
+      "3.2.P.8_stability": { "db": true, "server": true, "client": true },
+      "3.2.A_appendices": { "db": false, "server": false, "client": "partial" },
+      "3.2.R_regional_information": { "db": false, "server": false, "client": false }
+    },
+    "unreachable_endpoints_sample": [
+      "POST /api/cmc/generate-blueprint",
+      "GET /api/cmc/analytical-methods",
+      "GET /api/cmc/stability-studies",
+      "GET /api/cmc/drug-substances",
+      "GET /api/cmc/drug-products",
+      "POST /api/cmc/projects",
+      "GET /api/cmc/workflows",
+      "GET /api/cmc/tasks",
+      "POST /api/cmc/blueprint-generator/generate",
+      "POST /api/cmc/change-impact-simulator/simulate",
+      "POST /api/cmc/manufacturing-tuner/optimize",
+      "POST /api/cmc/cmc-copilot/query",
+      "GET /api/cmc/dashboard/summary",
+      "GET /api/cmc/stage-gates",
+      "GET /api/cmc/validation/issues",
+      "POST /api/cmc/compliance/check-rules"
+    ]
+  },
   "gaps": {
     "critical": [
       {
@@ -1252,6 +1478,22 @@
         "impact": "Document CRUD for eCTD submissions non-functional",
         "effort": "2-3 days",
         "priority": "P0C-2"
+      },
+      {
+        "id": "C7",
+        "title": "CMC Wizard routes imported but NEVER MOUNTED — 102 components (90,454L) dead",
+        "module": "CMC Wizard",
+        "impact": "~80 /api/cmc/* endpoints called by client ALL return 404. Entire CMC platform non-functional.",
+        "effort": "30 min (mount) + 2-4 hrs (migrate DB)",
+        "priority": "P0D-1"
+      },
+      {
+        "id": "C8",
+        "title": "CMC API module (24 files, 10,935L) never imported — server/api/cmc/index.js unreachable",
+        "module": "CMC Wizard",
+        "impact": "7 AI sub-routers (blueprint-generator, change-impact-simulator, etc.) all return 404",
+        "effort": "30 min",
+        "priority": "P0D-2"
       }
     ],
     "high": [
@@ -1303,6 +1545,20 @@
         "module": "eCTD Co-Author",
         "effort": "1 day",
         "priority": "P0C-4"
+      },
+      {
+        "id": "H8",
+        "title": "cmc-dashboard.ts (36L) is ONLY mounted CMC route — returns zeroed metrics",
+        "module": "CMC Wizard",
+        "effort": "30 min",
+        "priority": "P0D-3"
+      },
+      {
+        "id": "H9",
+        "title": "12 CMC Drizzle tables + 2 SQL schemas never migrated — no data persistence",
+        "module": "CMC Wizard",
+        "effort": "2-4 hrs",
+        "priority": "P0D-4"
       }
     ],
     "medium": [
@@ -1559,6 +1815,76 @@
           "effort": "4 hrs",
           "status": "not-started",
           "wire_to": "db/schema.ts eCTD table definitions"
+        }
+      ]
+    },
+    "phase_0d_cmc_wizard": {
+      "label": "CMC Wizard Route Mounting + DB Migration",
+      "effort": "1-2 days",
+      "description": "Mount the existing 24-file CMC API module and migrate 12 Drizzle ORM tables. This is the highest-ROI fix: 30 minutes of mounting unlocks 90,454 lines of client code and ~120 server endpoints.",
+      "tasks": [
+        {
+          "id": "P0D-1",
+          "task": "Add app.use('/api/cmc', cmcApiRoutes) in server/index.ts — import server/api/cmc/index.js",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables 7 AI sub-routers + /status + /test-event"
+        },
+        {
+          "id": "P0D-2",
+          "task": "Add app.use('/api/cmc', cmcRoutes) in server/index.ts — mount cmcRoutes.ts aggregator",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables /generate-blueprint, /analyze, + workflow/collaboration/document sub-mounts"
+        },
+        {
+          "id": "P0D-3",
+          "task": "Add app.use('/api/cmc/projects', cmcProjectRoutes) — mount project CRUD",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables project + substance + product + stability CRUD"
+        },
+        {
+          "id": "P0D-4",
+          "task": "Add app.use('/api/cmc/blueprints', cmcBlueprintRoutes) — mount blueprint CRUD",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables blueprint generation, lock/unlock, export"
+        },
+        {
+          "id": "P0D-5",
+          "task": "Mount cmc-dashboard-prisma.ts — replace stub dashboard with Prisma-backed implementation",
+          "effort": "30 min",
+          "status": "not-started",
+          "impact": "Enables /dashboard/summary, /stage-gates, /tasks, /risks, /ai/insights"
+        },
+        {
+          "id": "P0D-6",
+          "task": "Mount routes.ts — Drizzle CRUD for analytical-methods, stability-studies, drug-substances, drug-products",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Core data CRUD for Module 3 sections"
+        },
+        {
+          "id": "P0D-7",
+          "task": "Run Drizzle migration for 12 CMC tables defined in shared/cmc-schema.ts",
+          "effort": "2 hrs",
+          "status": "not-started",
+          "impact": "Data persistence for all CMC operations"
+        },
+        {
+          "id": "P0D-8",
+          "task": "Run SQL migrations: cmc_blueprints.sql + cmc-playbook-schema.sql",
+          "effort": "1 hr",
+          "status": "not-started",
+          "impact": "Blueprint templates + workflow instances + checklists"
+        },
+        {
+          "id": "P0D-9",
+          "task": "Verify all ~80 client API calls resolve to server handlers — integration test",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "impact": "End-to-end validation of CMC platform"
         }
       ]
     },
