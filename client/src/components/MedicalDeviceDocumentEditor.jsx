@@ -2261,7 +2261,7 @@ const MedicalDeviceDocumentEditor = ({
   // Insert AI suggestion into field
   const handleInsertAISuggestion = (sectionId, fieldId) => {
     const key = `${sectionId}-${fieldId}`;
-    const suggestion = aiSuggestions[key];
+    const suggestion = mergedAiSuggestions[key];
     if (suggestion) {
       handleFieldChange(sectionId, fieldId, suggestion);
       setAiSuggestions(prev => {
@@ -2511,8 +2511,8 @@ const MedicalDeviceDocumentEditor = ({
 
       case 'textarea':
         const aiKey = `${section.id}-${field.id}`;
-        const hasSuggestion = aiSuggestions[aiKey];
-        const isProcessing = isAiProcessing[aiKey];
+        const hasSuggestion = mergedAiSuggestions[aiKey];
+        const isProcessing = mergedLoadingSections[aiKey];
 
         return (
           <div key={field.id} className="space-y-2">
@@ -3445,11 +3445,11 @@ ${sections}
                                                 }));
                                               }
                                             }}
-                                            disabled={isAiProcessing[section.id]}
+                                            disabled={mergedLoadingSections[section.id]}
                                             className="gap-1"
                                             data-testid="button-ai-generate-section"
                                           >
-                                            {isAiProcessing[section.id] ? (
+                                            {mergedLoadingSections[section.id] ? (
                                               <>
                                                 <RefreshCw className="h-3 w-3 animate-spin" />
                                                 Generating...
@@ -3543,13 +3543,13 @@ ${sections}
                                       </div>
 
                                       {/* AI Suggestions Display */}
-                                      {aiSuggestions[`${section.id}-main`] && (
+                                      {mergedAiSuggestions[`${section.id}-main`] && (
                                         <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                           <div className="flex items-start gap-2">
                                             <Sparkles className="h-4 w-4 text-blue-600 mt-0.5" />
                                             <div className="flex-1">
                                               <p className="text-sm text-blue-900">
-                                                {aiSuggestions[`${section.id}-main`]}
+                                                {mergedAiSuggestions[`${section.id}-main`]}
                                               </p>
                                               <div className="flex gap-2 mt-2">
                                                 <Button

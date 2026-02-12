@@ -1,10 +1,15 @@
 /**
- * Unified CERV2 Export Routes
+ * Unified CERV2 Export Routes  (Phase 7.4 – Enhanced)
  *
  * POST /api/cerv2/export/pdf   – single combined PDF for any doc type
  * POST /api/cerv2/export/docx  – single combined DOCX for any doc type
  * POST /api/cerv2/export/zip   – full submission pack (per-section PDFs + attachments)
- * GET  /api/cerv2/export/mock/:docType – export simulation with mock data (dev only)
+ * POST /api/cerv2/export/ai-to-editor – convert AI section map → TipTap editor JSON
+ * GET  /api/cerv2/export/mock/:docType        – mock PDF export (dev only)
+ * GET  /api/cerv2/export/mock/:docType/docx   – mock DOCX export (dev only)
+ * GET  /api/cerv2/export/mock/:docType/zip    – mock ZIP export (dev only)
+ * GET  /api/cerv2/export/mock/:docType/json   – mock editor JSON (dev only)
+ * GET  /api/cerv2/export/health               – health check
  */
 
 import { Router, Request, Response } from 'express';
@@ -282,6 +287,230 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
       res.status(500).json({ error: 'Mock ZIP failed', message: err.message });
     }
   }
+});
+
+// ── GET /mock/:docType/docx ────────────────────────────────────────────────────
+// Phase 7.4: Mock DOCX export using mock vault data
+router.get('/mock/:docType/docx', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Mock routes are disabled in production' });
+  }
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
+      });
+    }
+
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const docxBuffer = await renderCombinedDocx(docType, mockContent);
+
+    const filename = sanitizeFilename(`${docType}_mock_export`) + '.docx';
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(docxBuffer);
+  } catch (err: any) {
+    console.error('[CERV2 Export] Mock DOCX error:', err);
+    res.status(500).json({ error: 'Mock DOCX export failed', message: err.message });
+  }
+});
+
+// ── GET /mock/:docType/json ────────────────────────────────────────────────────
+// Phase 7.4: Return raw mock editor JSON for client-side inspection or re-export
+router.get('/mock/:docType/json', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Mock routes are disabled in production' });
+  }
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
+      });
+    }
+
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const mockDoc = mockVault.list(docType)[0];
+
+    return res.json({
+      docType,
+      editorJson: mockContent,
+      meta: mockDoc
+        ? {
+            id: mockDoc.id,
+            title: mockDoc.title,
+            version: mockDoc.version,
+          }
+        : null,
+    });
+  } catch (err: any) {
+    console.error('[CERV2 Export] Mock JSON error:', err);
+    res.status(500).json({ error: 'Mock JSON retrieval failed', message: err.message });
+  }
+});
+
+// ── POST /ai-to-editor ────────────────────────────────────────────────────────
+// Phase 7.4: Convert AI-populated section map into TipTap editor JSON for export.
+// Input: { docType, sections: { [sectionId]: { title: string, content: string } } }
+// Output: { editorJson: { type: 'doc', content: [...] } }
+const aiToEditorSchema = z.object({
+  docType: z.enum(validDocTypes),
+  sections: z.record(
+    z.string(),
+    z.object({
+      title: z.string().min(1),
+      content: z.string(),
+    })
+  ),
+  meta: z
+    .object({
+      id: z.string().optional(),
+      title: z.string().optional(),
+    })
+    .optional(),
+});
+
+function buildTipTapNode(title: string, content: string) {
+  const nodes: any[] = [
+    {
+      type: 'heading',
+      attrs: { level: 1 },
+      content: [{ type: 'text', text: title }],
+    },
+  ];
+
+  // Parse markdown-like content into paragraphs, headings, and bullet lists
+  const lines = content.split('\n');
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // H2 heading
+    if (line.startsWith('## ')) {
+      nodes.push({
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: line.replace(/^## /, '') }],
+      });
+    }
+    // H3 heading
+    else if (line.startsWith('### ')) {
+      nodes.push({
+        type: 'heading',
+        attrs: { level: 3 },
+        content: [{ type: 'text', text: line.replace(/^### /, '') }],
+      });
+    }
+    // Bullet list item
+    else if (line.startsWith('- ')) {
+      const listItems: any[] = [];
+      while (i < lines.length && lines[i].startsWith('- ')) {
+        listItems.push({
+          type: 'listItem',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: lines[i].replace(/^- /, '') }],
+            },
+          ],
+        });
+        i++;
+      }
+      nodes.push({ type: 'bulletList', content: listItems });
+      continue; // already advanced i
+    }
+    // Table row (markdown) — convert to paragraph for TipTap compatibility
+    else if (line.startsWith('|') && line.endsWith('|')) {
+      // Skip table separator lines
+      if (!/^\|[-| ]+\|$/.test(line)) {
+        const text = line.replace(/^\|/, '').replace(/\|$/, '').trim();
+        if (text) {
+          nodes.push({
+            type: 'paragraph',
+            content: [{ type: 'text', text }],
+          });
+        }
+      }
+    }
+    // Regular paragraph
+    else if (line.trim()) {
+      nodes.push({
+        type: 'paragraph',
+        content: [{ type: 'text', text: line }],
+      });
+    }
+
+    i++;
+  }
+
+  return nodes;
+}
+
+router.post(
+  '/ai-to-editor',
+  authMiddleware,
+  requireEditorAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const validation = aiToEditorSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res
+          .status(400)
+          .json({ error: 'Invalid request', details: validation.error.flatten() });
+      }
+
+      const { docType, sections, meta } = validation.data;
+      const contentNodes: any[] = [];
+
+      for (const [, section] of Object.entries(sections)) {
+        const sectionNodes = buildTipTapNode(section.title, section.content);
+        contentNodes.push(...sectionNodes);
+      }
+
+      const editorJson = {
+        type: 'doc' as const,
+        content: contentNodes,
+      };
+
+      return res.json({
+        editorJson,
+        docType,
+        meta,
+        sectionCount: Object.keys(sections).length,
+        nodeCount: contentNodes.length,
+      });
+    } catch (err: any) {
+      console.error('[CERV2 Export] AI-to-editor error:', err);
+      res.status(500).json({ error: 'AI-to-editor conversion failed', message: err.message });
+    }
+  }
+);
+
+// ── GET /health ────────────────────────────────────────────────────────────────
+// Phase 7.4: Health check for export service
+router.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    service: 'cerv2-export',
+    phase: '7.4',
+    endpoints: [
+      'POST /pdf',
+      'POST /docx',
+      'POST /zip',
+      'POST /ai-to-editor',
+      'GET  /mock/:docType',
+      'GET  /mock/:docType/docx',
+      'GET  /mock/:docType/zip',
+      'GET  /mock/:docType/json',
+      'GET  /health',
+    ],
+    supportedDocTypes: [...validDocTypes],
+    timestamp: new Date().toISOString(),
+  });
 });
 
 export default router;

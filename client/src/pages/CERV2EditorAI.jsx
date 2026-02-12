@@ -1,27 +1,40 @@
 /**
- * Phase 7.3 – CERV2 Editor AI Integration Page
+ * Phase 7.3 + 7.4 – CERV2 Editor AI Integration Page
  *
  * Wraps MedicalDeviceDocumentEditor with live AI suggestion
  * capabilities from /api/cerv2/ai/*. Supports 510(k), PMA, and CER
  * document types with per-section AI auto-populate, equivalence text,
  * and benefit-risk analysis.
  *
+ * Phase 7.4 additions:
+ *  - Export toolbar: PDF, DOCX, eSTAR ZIP from AI-populated sections
+ *  - Mock export for dev/demo without live editor data
+ *  - AI suggestions → TipTap editor JSON → server-side rendering pipeline
+ *
  * UX features:
  *  - Outline panel with section navigation
  *  - Expand / collapse section toggling
  *  - Scaffold refresh (re-fetch AI templates without overwriting manual edits)
  *  - Inline AI suggestion badges with accept/dismiss
+ *  - Export dropdown with format selection and progress feedback
  */
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
+import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -37,12 +50,15 @@ import {
   Sparkles,
   CheckCircle2,
   Loader2,
-  FileText,
   PanelLeftOpen,
   PanelLeftClose,
   Brain,
   Lightbulb,
   X,
+  Download,
+  FileDown,
+  FileArchive,
+  FileType,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -88,6 +104,36 @@ const DOC_OUTLINES = {
   ],
 };
 
+// ── Section ID Mapping ──────────────────────────────────────────────────────────
+// Maps AI outline section IDs → MedicalDeviceDocumentEditor internal section IDs.
+// PMA and CER IDs already match; 510(k) has different internal IDs.
+const OUTLINE_TO_EDITOR = {
+  cerv2_510k: {
+    cover_letter: 'user-fee-cover',
+    admin: 'cdrh-cover-sheet',
+    ifu: 'indications-for-use',
+    summary: '510k-summary',
+    desc: 'device-description',
+    pred: 'substantial-equivalence',
+    se: 'substantial-equivalence', // SE is part of the same SE section
+    testing: 'executive-studies',
+    labeling: 'proposed-labeling',
+    concl: 'executive-summary', // Conclusion maps to Executive Summary's se_conclusion field
+  },
+  // PMA and CER IDs match the editor's section IDs directly
+  cerv2_pma: {},
+  cerv2_cer: {},
+};
+
+// Build reverse mapping (editor → outline) for each doc type
+const EDITOR_TO_OUTLINE = {};
+for (const [docType, map] of Object.entries(OUTLINE_TO_EDITOR)) {
+  EDITOR_TO_OUTLINE[docType] = {};
+  for (const [outlineId, editorId] of Object.entries(map)) {
+    EDITOR_TO_OUTLINE[docType][editorId] = outlineId;
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function CERV2EditorAI() {
@@ -103,11 +149,44 @@ export default function CERV2EditorAI() {
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(new Set());
 
+  // Phase 7.4 – Export state
+  const [exporting, setExporting] = useState(null); // 'pdf' | 'docx' | 'zip' | 'mock-pdf' | 'mock-docx' | 'mock-zip' | null
+
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
   const activeSuggestionCount = Object.keys(aiSuggestions).filter(
     k => !dismissedSuggestions.has(k) && aiSuggestions[k]
   ).length;
+
+  // ── Key Transformation: outline keys → editor-compatible keys ─────────────
+  // The editor renders AI suggestions using `${section.id}-main` compound keys.
+  // This transforms our flat outline keys into that format, applying the
+  // 510(k) section-ID mapping where needed.
+  const aiSuggestionsForEditor = useMemo(() => {
+    const mapped = {};
+    const idMap = OUTLINE_TO_EDITOR[selectedDocType] || {};
+
+    for (const [outlineKey, value] of Object.entries(aiSuggestions)) {
+      if (dismissedSuggestions.has(outlineKey)) continue;
+      // Map outline ID → editor section ID (identity if no mapping exists)
+      const editorSectionId = idMap[outlineKey] || outlineKey;
+      mapped[`${editorSectionId}-main`] = value;
+    }
+    return mapped;
+  }, [aiSuggestions, selectedDocType, dismissedSuggestions]);
+
+  const loadingSectionsForEditor = useMemo(() => {
+    const mapped = {};
+    const idMap = OUTLINE_TO_EDITOR[selectedDocType] || {};
+
+    for (const [outlineKey, value] of Object.entries(loadingSections)) {
+      const editorSectionId = idMap[outlineKey] || outlineKey;
+      // Set both compound key (for field-level) and plain key (for section-level checks)
+      mapped[`${editorSectionId}-main`] = value;
+      mapped[editorSectionId] = value;
+    }
+    return mapped;
+  }, [loadingSections, selectedDocType]);
 
   // ── AI Suggestion Fetch ─────────────────────────────────────────────────────
 
@@ -147,17 +226,23 @@ export default function CERV2EditorAI() {
   );
 
   // Debounced version for live typing
+  // The editor fires onSectionChange with its INTERNAL section IDs, so we need
+  // to reverse-map them back to our outline IDs for the AI service.
   const debounceTimers = useRef({});
   const handleSectionChange = useCallback(
     (sectionId, content) => {
-      // Clear stale cache for this section when content changes
-      cerv2AIService.invalidateSection(selectedDocType, sectionId);
+      // Reverse-map editor ID → outline ID (identity if no mapping exists)
+      const reverseMap = EDITOR_TO_OUTLINE[selectedDocType] || {};
+      const outlineId = reverseMap[sectionId] || sectionId;
 
-      if (debounceTimers.current[sectionId]) {
-        clearTimeout(debounceTimers.current[sectionId]);
+      // Clear stale cache for this section when content changes
+      cerv2AIService.invalidateSection(selectedDocType, outlineId);
+
+      if (debounceTimers.current[outlineId]) {
+        clearTimeout(debounceTimers.current[outlineId]);
       }
-      debounceTimers.current[sectionId] = setTimeout(() => {
-        fetchAiSuggestion(sectionId, content);
+      debounceTimers.current[outlineId] = setTimeout(() => {
+        fetchAiSuggestion(outlineId, content);
       }, 800);
     },
     [selectedDocType, fetchAiSuggestion]
@@ -237,6 +322,128 @@ export default function CERV2EditorAI() {
     setExpandedOutlineSections(new Set());
   }, []);
 
+  // ── Phase 7.4: Export handlers ────────────────────────────────────────────
+
+  // Section completeness: count how many outline sections have AI content
+  const sectionCompleteness = useMemo(() => {
+    const total = outline.length;
+    const populated = outline.filter(
+      s => aiSuggestions[s.id] && !dismissedSuggestions.has(s.id)
+    ).length;
+    return { total, populated, percent: total > 0 ? Math.round((populated / total) * 100) : 0 };
+  }, [outline, aiSuggestions, dismissedSuggestions]);
+
+  const handleExport = useCallback(
+    async format => {
+      // Pre-export validation: warn if <50% of sections populated
+      if (sectionCompleteness.percent < 50) {
+        const missing = outline
+          .filter(s => !aiSuggestions[s.id] || dismissedSuggestions.has(s.id))
+          .map(s => s.label);
+
+        toast({
+          title: 'Incomplete Document',
+          description: `Only ${sectionCompleteness.populated}/${sectionCompleteness.total} sections populated. Missing: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` (+${missing.length - 3} more)` : ''}. Use "Scaffold Refresh" to auto-populate templates.`,
+          variant: 'destructive',
+          duration: 6000,
+        });
+        return;
+      }
+
+      setExporting(format);
+      toast({
+        title: 'Exporting…',
+        description: `Generating ${format.toUpperCase()} from ${sectionCompleteness.populated} AI-populated sections.`,
+      });
+
+      try {
+        const result = await cerv2ExportService.exportFromAiSuggestions(
+          format,
+          selectedDocType,
+          aiSuggestions,
+          outline,
+          { title: `${selectedDocType}_AI_Export` }
+        );
+
+        if (result.success) {
+          toast({
+            title: 'Export Complete',
+            description: `Downloaded ${result.filename}`,
+          });
+        } else {
+          toast({
+            title: 'Export Failed',
+            description: result.error || 'Unknown error',
+            variant: 'destructive',
+          });
+        }
+      } catch (err) {
+        console.error('[CERV2EditorAI] Export error:', err);
+        toast({
+          title: 'Export Error',
+          description: err.message || 'Unexpected failure.',
+          variant: 'destructive',
+        });
+      } finally {
+        setExporting(null);
+      }
+    },
+    [selectedDocType, aiSuggestions, outline, toast, sectionCompleteness, dismissedSuggestions]
+  );
+
+  const handleMockExport = useCallback(
+    async format => {
+      const key = `mock-${format}`;
+      setExporting(key);
+      toast({
+        title: 'Mock Export…',
+        description: `Generating mock ${format.toUpperCase()} from vault data.`,
+      });
+
+      try {
+        let result;
+        switch (format) {
+          case 'pdf':
+            result = await cerv2ExportService.exportMockPdf(selectedDocType);
+            break;
+          case 'docx':
+            result = await cerv2ExportService.exportMockDocx(selectedDocType);
+            break;
+          case 'zip':
+            result = await cerv2ExportService.exportMockZip(selectedDocType);
+            break;
+          default:
+            result = { success: false, error: `Unknown format: ${format}` };
+        }
+
+        if (result.success) {
+          toast({
+            title: 'Mock Export Complete',
+            description: `Downloaded ${result.filename}`,
+          });
+        } else {
+          toast({
+            title: 'Mock Export Failed',
+            description: result.error || 'Unknown error',
+            variant: 'destructive',
+          });
+        }
+      } catch (err) {
+        console.error('[CERV2EditorAI] Mock export error:', err);
+        toast({
+          title: 'Export Error',
+          description: err.message || 'Unexpected failure.',
+          variant: 'destructive',
+        });
+      } finally {
+        setExporting(null);
+      }
+    },
+    [selectedDocType, toast]
+  );
+
+  const isExporting = exporting !== null;
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -247,7 +454,7 @@ export default function CERV2EditorAI() {
           <Brain className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">CERV2 Editor AI</h2>
           <Badge variant="outline" className="text-xs">
-            Phase 7.3
+            Phase 7.4
           </Badge>
         </div>
 
@@ -310,6 +517,28 @@ export default function CERV2EditorAI() {
             {scaffoldRefreshing ? 'Refreshing…' : 'Scaffold Refresh'}
           </Button>
 
+          {/* Section Completeness Indicator */}
+          <div
+            className="flex items-center gap-2"
+            title={`${sectionCompleteness.populated}/${sectionCompleteness.total} sections populated`}
+          >
+            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  sectionCompleteness.percent === 100
+                    ? 'bg-green-500'
+                    : sectionCompleteness.percent >= 50
+                      ? 'bg-amber-400'
+                      : 'bg-red-400'
+                }`}
+                style={{ width: `${sectionCompleteness.percent}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {sectionCompleteness.populated}/{sectionCompleteness.total}
+            </span>
+          </div>
+
           {/* AI Suggestion Badge */}
           {activeSuggestionCount > 0 && (
             <Badge className="bg-amber-100 text-amber-800 border-amber-300">
@@ -317,6 +546,72 @@ export default function CERV2EditorAI() {
               {activeSuggestionCount} AI Suggestion{activeSuggestionCount > 1 ? 's' : ''}
             </Badge>
           )}
+
+          {/* Phase 7.4 – Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm" disabled={isExporting}>
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-1" />
+                )}
+                {isExporting ? 'Exporting…' : 'Export'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* AI-populated exports */}
+              <DropdownMenuItem
+                onClick={() => handleExport('pdf')}
+                disabled={activeSuggestionCount === 0 || isExporting}
+              >
+                <FileDown className="h-4 w-4 mr-2 text-red-500" />
+                Export AI Sections → PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport('docx')}
+                disabled={activeSuggestionCount === 0 || isExporting}
+              >
+                <FileType className="h-4 w-4 mr-2 text-blue-500" />
+                Export AI Sections → DOCX
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport('zip')}
+                disabled={activeSuggestionCount === 0 || isExporting}
+              >
+                <FileArchive className="h-4 w-4 mr-2 text-green-600" />
+                Export AI Sections → eSTAR ZIP
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {/* Mock exports (dev/demo) */}
+              <DropdownMenuItem
+                onClick={() => handleMockExport('pdf')}
+                disabled={isExporting}
+                className="text-muted-foreground"
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                Mock Export → PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleMockExport('docx')}
+                disabled={isExporting}
+                className="text-muted-foreground"
+              >
+                <FileType className="h-4 w-4 mr-2" />
+                Mock Export → DOCX
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleMockExport('zip')}
+                disabled={isExporting}
+                className="text-muted-foreground"
+              >
+                <FileArchive className="h-4 w-4 mr-2" />
+                Mock Export → ZIP
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -325,10 +620,13 @@ export default function CERV2EditorAI() {
         {/* ─── Outline Panel ─────────────────────────────────────────────── */}
         {showOutline && (
           <aside className="w-64 border-r bg-background flex-shrink-0">
-            <div className="px-3 py-2 border-b">
+            <div className="px-3 py-2 border-b flex items-center justify-between">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Outline
               </h3>
+              <span className="text-xs text-muted-foreground">
+                {sectionCompleteness.populated}/{sectionCompleteness.total}
+              </span>
             </div>
             <ScrollArea className="h-[calc(100vh-120px)]">
               <div className="p-2 space-y-0.5">
@@ -358,7 +656,12 @@ export default function CERV2EditorAI() {
                         ) : (
                           <ChevronRight className="h-3 w-3 flex-shrink-0" />
                         )}
-                        <FileText className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                        {/* Status dot: green = populated, gray = empty */}
+                        <span
+                          className={`h-2 w-2 rounded-full flex-shrink-0 ${
+                            hasSuggestion ? 'bg-green-500' : 'bg-gray-300'
+                          }`}
+                        />
                         <span className="truncate flex-1">{section.label}</span>
 
                         {isLoading && (
@@ -405,8 +708,8 @@ export default function CERV2EditorAI() {
           <MedicalDeviceDocumentEditor
             documentType={selectedDocType}
             onSectionChange={handleSectionChange}
-            aiSuggestionsExternal={aiSuggestions}
-            loadingSectionsExternal={loadingSections}
+            aiSuggestionsExternal={aiSuggestionsForEditor}
+            loadingSectionsExternal={loadingSectionsForEditor}
           />
 
           {/* ─── AI Suggestions Summary Panel ────────────────────────────── */}
