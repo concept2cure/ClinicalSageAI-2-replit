@@ -7,33 +7,24 @@
  * and benefit-risk analysis.
  *
  * Phase 7.4 additions:
- *  - Export toolbar: PDF, DOCX, eSTAR ZIP from AI-populated sections
- *  - Mock export for dev/demo without live editor data
+ *  - CERV2ExportControls inline bar: PDF, DOCX, eSTAR ZIP from AI-populated sections
  *  - AI suggestions → TipTap editor JSON → server-side rendering pipeline
  *
  * UX features:
- *  - Outline panel with section navigation
+ *  - Outline panel with section navigation & AI preview
  *  - Expand / collapse section toggling
  *  - Scaffold refresh (re-fetch AI templates without overwriting manual edits)
- *  - Inline AI suggestion badges with accept/dismiss
- *  - Export dropdown with format selection and progress feedback
+ *  - Section completeness progress bar
+ *  - Inline export controls with format selector, pre-validation, and last-export indicator
  */
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
 import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
-import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -49,10 +40,6 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   X,
-  Download,
-  FileDown,
-  FileArchive,
-  FileType,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -143,14 +130,8 @@ export default function CERV2EditorAI() {
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(new Set());
 
-  // Phase 7.4 – Export state
-  const [exporting, setExporting] = useState(null); // 'pdf' | 'docx' | 'zip' | 'mock-pdf' | 'mock-docx' | 'mock-zip' | null
-
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
-  const activeSuggestionCount = Object.keys(aiSuggestions).filter(
-    k => !dismissedSuggestions.has(k) && aiSuggestions[k]
-  ).length;
 
   // ── Key Transformation: outline keys → editor-compatible keys ─────────────
   // The editor renders AI suggestions using `${section.id}-main` compound keys.
@@ -316,9 +297,7 @@ export default function CERV2EditorAI() {
     setExpandedOutlineSections(new Set());
   }, []);
 
-  // ── Phase 7.4: Export handlers ────────────────────────────────────────────
-
-  // Section completeness: count how many outline sections have AI content
+  // ── Section completeness (consumed by CERV2ExportControls) ─────────────────
   const sectionCompleteness = useMemo(() => {
     const total = outline.length;
     const populated = outline.filter(
@@ -326,117 +305,6 @@ export default function CERV2EditorAI() {
     ).length;
     return { total, populated, percent: total > 0 ? Math.round((populated / total) * 100) : 0 };
   }, [outline, aiSuggestions, dismissedSuggestions]);
-
-  const handleExport = useCallback(
-    async format => {
-      // Pre-export validation: warn if <50% of sections populated
-      if (sectionCompleteness.percent < 50) {
-        const missing = outline
-          .filter(s => !aiSuggestions[s.id] || dismissedSuggestions.has(s.id))
-          .map(s => s.label);
-
-        toast({
-          title: 'Incomplete Document',
-          description: `Only ${sectionCompleteness.populated}/${sectionCompleteness.total} sections populated. Missing: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` (+${missing.length - 3} more)` : ''}. Use "Scaffold Refresh" to auto-populate templates.`,
-          variant: 'destructive',
-          duration: 6000,
-        });
-        return;
-      }
-
-      setExporting(format);
-      toast({
-        title: 'Exporting…',
-        description: `Generating ${format.toUpperCase()} from ${sectionCompleteness.populated} AI-populated sections.`,
-      });
-
-      try {
-        const result = await cerv2ExportService.exportFromAiSuggestions(
-          format,
-          selectedDocType,
-          aiSuggestions,
-          outline,
-          { title: `${selectedDocType}_AI_Export` }
-        );
-
-        if (result.success) {
-          toast({
-            title: 'Export Complete',
-            description: `Downloaded ${result.filename}`,
-          });
-        } else {
-          toast({
-            title: 'Export Failed',
-            description: result.error || 'Unknown error',
-            variant: 'destructive',
-          });
-        }
-      } catch (err) {
-        console.error('[CERV2EditorAI] Export error:', err);
-        toast({
-          title: 'Export Error',
-          description: err.message || 'Unexpected failure.',
-          variant: 'destructive',
-        });
-      } finally {
-        setExporting(null);
-      }
-    },
-    [selectedDocType, aiSuggestions, outline, toast, sectionCompleteness, dismissedSuggestions]
-  );
-
-  const handleMockExport = useCallback(
-    async format => {
-      const key = `mock-${format}`;
-      setExporting(key);
-      toast({
-        title: 'Mock Export…',
-        description: `Generating mock ${format.toUpperCase()} from vault data.`,
-      });
-
-      try {
-        let result;
-        switch (format) {
-          case 'pdf':
-            result = await cerv2ExportService.exportMockPdf(selectedDocType);
-            break;
-          case 'docx':
-            result = await cerv2ExportService.exportMockDocx(selectedDocType);
-            break;
-          case 'zip':
-            result = await cerv2ExportService.exportMockZip(selectedDocType);
-            break;
-          default:
-            result = { success: false, error: `Unknown format: ${format}` };
-        }
-
-        if (result.success) {
-          toast({
-            title: 'Mock Export Complete',
-            description: `Downloaded ${result.filename}`,
-          });
-        } else {
-          toast({
-            title: 'Mock Export Failed',
-            description: result.error || 'Unknown error',
-            variant: 'destructive',
-          });
-        }
-      } catch (err) {
-        console.error('[CERV2EditorAI] Mock export error:', err);
-        toast({
-          title: 'Export Error',
-          description: err.message || 'Unexpected failure.',
-          variant: 'destructive',
-        });
-      } finally {
-        setExporting(null);
-      }
-    },
-    [selectedDocType, toast]
-  );
-
-  const isExporting = exporting !== null;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -511,60 +379,6 @@ export default function CERV2EditorAI() {
               {sectionCompleteness.populated}/{sectionCompleteness.total}
             </span>
           </div>
-
-          {/* Export */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isExporting} className="h-8 gap-1.5">
-                {isExporting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={() => handleExport('pdf')}
-                disabled={activeSuggestionCount === 0 || isExporting}
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport('docx')}
-                disabled={activeSuggestionCount === 0 || isExporting}
-              >
-                <FileType className="h-4 w-4 mr-2" />
-                DOCX
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport('zip')}
-                disabled={activeSuggestionCount === 0 || isExporting}
-              >
-                <FileArchive className="h-4 w-4 mr-2" />
-                eSTAR ZIP
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={() => handleMockExport('pdf')}
-                disabled={isExporting}
-                className="text-xs text-muted-foreground"
-              >
-                Sample PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleMockExport('docx')}
-                disabled={isExporting}
-                className="text-xs text-muted-foreground"
-              >
-                Sample DOCX
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

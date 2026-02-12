@@ -6,7 +6,7 @@
  * Renders as a compact horizontal bar below the editor.
  */
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Download, FileDown, FileType, FileArchive, Loader2, CheckCircle2 } from 'lucide-react';
+import { FileDown, FileType, FileArchive, Loader2, CheckCircle2 } from 'lucide-react';
 
 const FORMAT_OPTIONS = [
   { value: 'pdf', label: 'PDF', icon: FileDown, description: 'Standard PDF document' },
@@ -174,12 +174,10 @@ export default function CERV2ExportControls({
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  const FormatIcon = FORMAT_OPTIONS.find(f => f.value === selectedFormat)?.icon || Download;
+  const FormatIcon = FORMAT_OPTIONS.find(f => f.value === selectedFormat)?.icon || FileDown;
 
   return (
-    <div
-      className={`flex items-center gap-3 px-4 py-2.5 border-t bg-muted/30 ${className}`}
-    >
+    <div className={`flex items-center gap-3 px-4 py-2.5 border-t bg-muted/30 ${className}`}>
       {/* Format picker */}
       <Select value={selectedFormat} onValueChange={setSelectedFormat}>
         <SelectTrigger className="w-[140px] h-8 text-xs">
