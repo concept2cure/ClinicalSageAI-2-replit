@@ -24,8 +24,6 @@ import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEdit
 import cerv2AIService from '../services/CERV2AIService.js';
 import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -43,17 +41,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Bot,
   ChevronDown,
   ChevronRight,
   RefreshCw,
-  Sparkles,
-  CheckCircle2,
   Loader2,
   PanelLeftOpen,
   PanelLeftClose,
-  Brain,
-  Lightbulb,
   X,
   Download,
   FileDown,
@@ -448,20 +441,16 @@ export default function CERV2EditorAI() {
 
   return (
     <div className="flex flex-col w-full h-full min-h-screen bg-background">
-      {/* ─── Top Toolbar ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <Brain className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">CERV2 Editor AI</h2>
-          <Badge variant="outline" className="text-xs">
-            Phase 7.4
-          </Badge>
+      {/* ─── Top Bar ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold tracking-tight">CERV2 Editor</h2>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Doc Type Selector */}
           <Select value={selectedDocType} onValueChange={handleDocTypeChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[160px] h-8 text-xs">
               <SelectValue placeholder="Document type" />
             </SelectTrigger>
             <SelectContent>
@@ -476,7 +465,8 @@ export default function CERV2EditorAI() {
           {/* Outline Toggle */}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
+            className="h-8 w-8"
             onClick={() => setShowOutline(prev => !prev)}
             title={showOutline ? 'Hide outline' : 'Show outline'}
           >
@@ -487,128 +477,90 @@ export default function CERV2EditorAI() {
             )}
           </Button>
 
-          {/* Expand / Collapse All */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={expandAllSections}
-            title="Expand all outline sections"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={collapseAllSections}
-            title="Collapse all outline sections"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
           {/* Scaffold Refresh */}
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={handleScaffoldRefresh}
             disabled={scaffoldRefreshing}
-            title="Refresh AI scaffold templates"
+            title="Populate all sections with AI templates"
           >
-            <RefreshCw className={`h-4 w-4 mr-1 ${scaffoldRefreshing ? 'animate-spin' : ''}`} />
-            {scaffoldRefreshing ? 'Refreshing…' : 'Scaffold Refresh'}
+            <RefreshCw className={`h-4 w-4 ${scaffoldRefreshing ? 'animate-spin' : ''}`} />
           </Button>
 
-          {/* Section Completeness Indicator */}
+          {/* Section Completeness */}
           <div
-            className="flex items-center gap-2"
-            title={`${sectionCompleteness.populated}/${sectionCompleteness.total} sections populated`}
+            className="flex items-center gap-1.5"
+            title={`${sectionCompleteness.populated} of ${sectionCompleteness.total} sections populated`}
           >
-            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
                   sectionCompleteness.percent === 100
-                    ? 'bg-green-500'
+                    ? 'bg-primary'
                     : sectionCompleteness.percent >= 50
-                      ? 'bg-amber-400'
-                      : 'bg-red-400'
+                      ? 'bg-primary/60'
+                      : 'bg-muted-foreground/40'
                 }`}
                 style={{ width: `${sectionCompleteness.percent}%` }}
               />
             </div>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
+            <span className="text-[11px] tabular-nums text-muted-foreground">
               {sectionCompleteness.populated}/{sectionCompleteness.total}
             </span>
           </div>
 
-          {/* AI Suggestion Badge */}
-          {activeSuggestionCount > 0 && (
-            <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-              <Sparkles className="h-3 w-3 mr-1" />
-              {activeSuggestionCount} AI Suggestion{activeSuggestionCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-
-          {/* Phase 7.4 – Export Dropdown */}
+          {/* Export */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="default" size="sm" disabled={isExporting}>
+              <Button variant="outline" size="sm" disabled={isExporting} className="h-8 gap-1.5">
                 {isExporting ? (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4 mr-1" />
+                  <Download className="h-3.5 w-3.5" />
                 )}
-                {isExporting ? 'Exporting…' : 'Export'}
+                Export
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {/* AI-populated exports */}
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
                 onClick={() => handleExport('pdf')}
                 disabled={activeSuggestionCount === 0 || isExporting}
               >
-                <FileDown className="h-4 w-4 mr-2 text-red-500" />
-                Export AI Sections → PDF
+                <FileDown className="h-4 w-4 mr-2" />
+                PDF
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleExport('docx')}
                 disabled={activeSuggestionCount === 0 || isExporting}
               >
-                <FileType className="h-4 w-4 mr-2 text-blue-500" />
-                Export AI Sections → DOCX
+                <FileType className="h-4 w-4 mr-2" />
+                DOCX
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleExport('zip')}
                 disabled={activeSuggestionCount === 0 || isExporting}
               >
-                <FileArchive className="h-4 w-4 mr-2 text-green-600" />
-                Export AI Sections → eSTAR ZIP
+                <FileArchive className="h-4 w-4 mr-2" />
+                eSTAR ZIP
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
-              {/* Mock exports (dev/demo) */}
               <DropdownMenuItem
                 onClick={() => handleMockExport('pdf')}
                 disabled={isExporting}
-                className="text-muted-foreground"
+                className="text-xs text-muted-foreground"
               >
-                <FileDown className="h-4 w-4 mr-2" />
-                Mock Export → PDF
+                Sample PDF
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleMockExport('docx')}
                 disabled={isExporting}
-                className="text-muted-foreground"
+                className="text-xs text-muted-foreground"
               >
-                <FileType className="h-4 w-4 mr-2" />
-                Mock Export → DOCX
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleMockExport('zip')}
-                disabled={isExporting}
-                className="text-muted-foreground"
-              >
-                <FileArchive className="h-4 w-4 mr-2" />
-                Mock Export → ZIP
+                Sample DOCX
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -619,14 +571,30 @@ export default function CERV2EditorAI() {
       <div className="flex flex-1 overflow-hidden">
         {/* ─── Outline Panel ─────────────────────────────────────────────── */}
         {showOutline && (
-          <aside className="w-64 border-r bg-background flex-shrink-0">
-            <div className="px-3 py-2 border-b flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Outline
+          <aside className="w-56 border-r flex-shrink-0">
+            <div className="px-3 py-1.5 border-b flex items-center justify-between">
+              <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Sections
               </h3>
-              <span className="text-xs text-muted-foreground">
-                {sectionCompleteness.populated}/{sectionCompleteness.total}
-              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={expandAllSections}
+                  className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded"
+                  title="Expand all"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={collapseAllSections}
+                  className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded"
+                  title="Collapse all"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </button>
+                <span className="text-[11px] tabular-nums text-muted-foreground ml-1">
+                  {sectionCompleteness.populated}/{sectionCompleteness.total}
+                </span>
+              </div>
             </div>
             <ScrollArea className="h-[calc(100vh-120px)]">
               <div className="p-2 space-y-0.5">
@@ -656,10 +624,14 @@ export default function CERV2EditorAI() {
                         ) : (
                           <ChevronRight className="h-3 w-3 flex-shrink-0" />
                         )}
-                        {/* Status dot: green = populated, gray = empty */}
+                        {/* Status dot: populated / loading / empty */}
                         <span
-                          className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                            hasSuggestion ? 'bg-green-500' : 'bg-gray-300'
+                          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                            isLoading
+                              ? 'bg-primary animate-pulse'
+                              : hasSuggestion
+                                ? 'bg-primary'
+                                : 'bg-border'
                           }`}
                         />
                         <span className="truncate flex-1">{section.label}</span>
@@ -667,20 +639,17 @@ export default function CERV2EditorAI() {
                         {isLoading && (
                           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                         )}
-                        {hasSuggestion && !isLoading && (
-                          <Lightbulb className="h-3 w-3 text-amber-500" />
-                        )}
                       </button>
 
                       {/* Expanded AI Preview */}
                       {isExpanded && hasSuggestion && (
-                        <div className="ml-8 mr-2 mt-1 mb-2 p-2 rounded border border-amber-200 bg-amber-50/50 text-xs">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-amber-700 flex items-center gap-1">
-                              <Bot className="h-3 w-3" /> AI Suggestion
+                        <div className="ml-7 mr-2 mt-0.5 mb-1.5 px-2 py-1.5 rounded border text-xs">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="font-medium text-muted-foreground text-[11px] uppercase tracking-wide">
+                              AI Draft
                             </span>
                             <button
-                              className="text-muted-foreground hover:text-foreground"
+                              className="text-muted-foreground/60 hover:text-foreground"
                               onClick={e => {
                                 e.stopPropagation();
                                 dismissSuggestion(section.id);
@@ -690,7 +659,7 @@ export default function CERV2EditorAI() {
                               <X className="h-3 w-3" />
                             </button>
                           </div>
-                          <p className="text-muted-foreground line-clamp-3">
+                          <p className="text-muted-foreground line-clamp-2 leading-relaxed">
                             {aiSuggestions[section.id]}
                           </p>
                         </div>
@@ -711,51 +680,6 @@ export default function CERV2EditorAI() {
             aiSuggestionsExternal={aiSuggestionsForEditor}
             loadingSectionsExternal={loadingSectionsForEditor}
           />
-
-          {/* ─── AI Suggestions Summary Panel ────────────────────────────── */}
-          {activeSuggestionCount > 0 && (
-            <div className="border-t bg-amber-50/30 px-4 py-3">
-              <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Active AI Suggestions
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {Object.entries(aiSuggestions)
-                  .filter(([id]) => !dismissedSuggestions.has(id))
-                  .map(([sectionId, suggestion]) => {
-                    const sectionDef = outline.find(s => s.id === sectionId);
-                    return (
-                      <Card key={sectionId} className="border-amber-200">
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-amber-700">
-                              {sectionDef?.label || sectionId}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {loadingSections[sectionId] ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="h-3 w-3 text-green-500" />
-                              )}
-                              <button
-                                onClick={() => dismissSuggestion(sectionId)}
-                                className="text-muted-foreground hover:text-foreground"
-                                title="Dismiss"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {loadingSections[sectionId] ? 'Loading…' : suggestion}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
         </main>
       </div>
     </div>

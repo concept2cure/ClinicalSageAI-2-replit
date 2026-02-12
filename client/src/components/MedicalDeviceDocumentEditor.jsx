@@ -2535,12 +2535,12 @@ const MedicalDeviceDocumentEditor = ({
                     {isProcessing ? (
                       <>
                         <RefreshCw className="h-3 w-3 animate-spin" />
-                        Thinking...
+                        Drafting
                       </>
                     ) : (
                       <>
                         <Bot className="h-3 w-3" />
-                        Writing Helper
+                        Draft
                       </>
                     )}
                   </Button>
@@ -2574,25 +2574,25 @@ const MedicalDeviceDocumentEditor = ({
               fieldId={`${section.id}-${field.id}`}
             />
             {hasSuggestion && (
-              <div className="border rounded-lg p-3 bg-blue-50 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-blue-900">
-                  <Sparkles className="h-4 w-4" />
-                  AI Suggestion
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{hasSuggestion}</p>
+              <div className="border rounded-md p-3 bg-muted/40 space-y-2">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {hasSuggestion}
+                </p>
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     size="sm"
+                    variant="outline"
                     onClick={() => handleInsertAISuggestion(section.id, field.id)}
                     className="h-7 text-xs"
                     data-testid={`insert-ai-${section.id}-${field.id}`}
                   >
-                    Insert Suggestion
+                    <Check className="h-3 w-3 mr-1" />
+                    Accept
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() =>
                       setAiSuggestions(prev => {
@@ -3349,14 +3349,14 @@ ${sections}
                             <div key={section.id} className="max-w-4xl">
                               {/* Main Section Content Editor - For FDA Template Content */}
                               {selectedSection && (
-                                <div className="bg-white rounded-lg border p-6 mb-6">
-                                  <div className="space-y-4">
+                                <div className="border rounded-md p-5 mb-4">
+                                  <div className="space-y-3">
                                     <div>
                                       <div className="flex items-center justify-between mb-2">
-                                        <label className="text-sm font-medium text-gray-700">
-                                          Section Content
+                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                          Content
                                         </label>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1.5">
                                           {/* AI Content Generation with Auto-Citations */}
                                           <Button
                                             type="button"
@@ -3452,12 +3452,12 @@ ${sections}
                                             {mergedLoadingSections[section.id] ? (
                                               <>
                                                 <RefreshCw className="h-3 w-3 animate-spin" />
-                                                Generating...
+                                                Generating
                                               </>
                                             ) : (
                                               <>
                                                 <Sparkles className="h-3 w-3" />
-                                                Generate Section
+                                                Generate
                                               </>
                                             )}
                                           </Button>
@@ -3504,7 +3504,7 @@ ${sections}
                                             className="gap-1"
                                           >
                                             <ShieldCheck className="h-3 w-3" />
-                                            Check Compliance
+                                            Compliance
                                           </Button>
 
                                           {/* AI Suggestions */}
@@ -3537,37 +3537,32 @@ ${sections}
                                             className="gap-1"
                                           >
                                             <Bot className="h-3 w-3" />
-                                            AI Suggestions
+                                            Suggest
                                           </Button>
                                         </div>
                                       </div>
 
                                       {/* AI Suggestions Display */}
                                       {mergedAiSuggestions[`${section.id}-main`] && (
-                                        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                          <div className="flex items-start gap-2">
-                                            <Sparkles className="h-4 w-4 text-blue-600 mt-0.5" />
-                                            <div className="flex-1">
-                                              <p className="text-sm text-blue-900">
-                                                {mergedAiSuggestions[`${section.id}-main`]}
-                                              </p>
-                                              <div className="flex gap-2 mt-2">
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => {
-                                                    setAiSuggestions(prev => {
-                                                      const updated = { ...prev };
-                                                      delete updated[`${section.id}-main`];
-                                                      return updated;
-                                                    });
-                                                  }}
-                                                  className="h-7 text-xs"
-                                                >
-                                                  Dismiss
-                                                </Button>
-                                              </div>
-                                            </div>
+                                        <div className="mb-3 p-3 bg-muted/40 border rounded-md">
+                                          <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {mergedAiSuggestions[`${section.id}-main`]}
+                                          </p>
+                                          <div className="flex gap-2 mt-2">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => {
+                                                setAiSuggestions(prev => {
+                                                  const updated = { ...prev };
+                                                  delete updated[`${section.id}-main`];
+                                                  return updated;
+                                                });
+                                              }}
+                                              className="h-7 text-xs"
+                                            >
+                                              Dismiss
+                                            </Button>
                                           </div>
                                         </div>
                                       )}
