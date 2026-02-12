@@ -464,9 +464,9 @@ class TestSQLRenderJobsPhase7CD:
         from shadow_service.sql_render_jobs import COUNT_RECENT_RENDERS_BY_PROGRAM
         assert COUNT_RECENT_RENDERS_BY_PROGRAM.count("$") == 2
 
-    def test_select_by_idempotency_key_has_1_param(self):
+    def test_select_by_idempotency_key_has_2_params(self):
         from shadow_service.sql_render_jobs import SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY
-        assert SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY.count("$") == 1
+        assert SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY.count("$") == 2
 
     def test_delete_expired_failed_has_1_param(self):
         from shadow_service.sql_render_jobs import DELETE_EXPIRED_FAILED_JOBS
@@ -687,3 +687,10 @@ class TestECTDAssemblyZIP:
             readme_file = [n for n in zf.namelist() if "submission_readme.md" in n][0]
             readme = zf.read(readme_file).decode("utf-8")
             assert str(SAMPLE_PP_ROW["id"]) in readme
+
+    def test_deterministic(self):
+        """Same input → same ZIP bytes (fixed timestamps, no datetime.now)."""
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        zip1 = render_ectd_assembly(SAMPLE_PP_ROW)
+        zip2 = render_ectd_assembly(SAMPLE_PP_ROW)
+        assert hashlib.sha256(zip1).hexdigest() == hashlib.sha256(zip2).hexdigest()

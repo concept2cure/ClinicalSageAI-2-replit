@@ -53,6 +53,9 @@ def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+_DETERMINISTIC_TS = "2025-01-01T00:00:00Z"
+
+
 def _safe_str(val: Any) -> str:
     if val is None:
         return ""
@@ -72,7 +75,7 @@ def _generate_readme(pp_row: dict[str, Any]) -> str:
         f"- **Program ID**: {_safe_str(pp_row.get('program_id'))}",
         f"- **Sequence**: {_SEQUENCE_NUMBER}",
         f"- **Generator**: ClinicalSageAI v{_safe_str(pp_row.get('generator_version', 'unknown'))}",
-        f"- **Generated**: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}",
+        f"- **Generated**: {_DETERMINISTIC_TS}",
         "",
         "## Contract Hashes",
         "",
@@ -114,7 +117,7 @@ def _generate_manifest_json(pp_row: dict[str, Any]) -> str:
         "risk_code_lock_hash": _safe_str(pp_row.get("risk_code_lock_hash")),
         "schema_hash": _safe_str(pp_row.get("schema_hash")),
         "subject_hash": _safe_str(pp_row.get("subject_hash")),
-        "assembled_at": datetime.now(timezone.utc).isoformat(),
+        "assembled_at": _DETERMINISTIC_TS,
     }
     return json.dumps(manifest, indent=2, ensure_ascii=False)
 

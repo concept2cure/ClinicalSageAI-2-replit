@@ -108,11 +108,11 @@ async def check_rate_limit(pool, program_id: str) -> None:
         )
 
 
-async def check_idempotency(pool, idempotency_key: str | None):
-    """Return existing job if idempotency key matches, else None."""
+async def check_idempotency(pool, idempotency_key: str | None, program_id: str = ""):
+    """Return existing job if idempotency key + program matches, else None."""
     if not idempotency_key:
         return None
-    row = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY, idempotency_key)
+    row = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY, idempotency_key, program_id)
     return dict(row) if row else None
 
 
@@ -234,7 +234,7 @@ async def create_and_execute_render(
     Returns (artifact_bytes, job_record_dict).
     """
     # ── Phase 7.0D — Idempotency check ──
-    existing_job = await check_idempotency(pool, idempotency_key)
+    existing_job = await check_idempotency(pool, idempotency_key, program_id)
     if existing_job:
         logger.info(
             "Idempotency key '%s' matched existing job %s (status=%s)",

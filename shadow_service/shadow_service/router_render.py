@@ -59,7 +59,7 @@ def _validate_uuid(value: str, name: str = "id") -> str:
 
 
 async def require_render_auth(
-    x_review_admin_token: str = Header(None, alias="x-review-admin-token"),
+    x_admin_token: str = Header(None, alias="X-Admin-Token"),
 ):
     """Require admin token for render operations.
 
@@ -73,8 +73,8 @@ async def require_render_auth(
     if not expected:
         logger.error("REVIEW_ADMIN_TOKEN not configured — render endpoints disabled")
         raise HTTPException(status_code=503, detail="Service not configured")
-    if not x_review_admin_token or not hmac.compare_digest(
-        x_review_admin_token.encode("utf-8"), expected.encode("utf-8")
+    if not x_admin_token or not hmac.compare_digest(
+        x_admin_token.encode("utf-8"), expected.encode("utf-8")
     ):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -242,6 +242,7 @@ async def get_render_job(
 async def download_render_artifact(
     render_job_id: str,
     user_id: str = Query("system", description="User requesting download"),
+    program_id: str = Query("", description="Program ID for ownership scoping"),
 ):
     """Download the rendered artifact (PDF/DOCX/ZIP) for a completed job.
 
@@ -252,7 +253,10 @@ async def download_render_artifact(
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
+    if program_id:
+        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
+    else:
+        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Render job not found")
 
@@ -277,11 +281,17 @@ async def download_render_artifact(
         "defense_packet_pdf": "application/pdf",
         "defense_packet_docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "ectd_sequence_zip": "application/zip",
+        "se_matrix_pdf": "application/pdf",
+        "proof_pack_summary_pdf": "application/pdf",
+        "audit_trail_pdf": "application/pdf",
     }
     filename_map = {
         "defense_packet_pdf": "DefensePacketReport.pdf",
         "defense_packet_docx": "DefensePacketReport.docx",
         "ectd_sequence_zip": "ectd_sequence.zip",
+        "se_matrix_pdf": "SEMatrixReport.pdf",
+        "proof_pack_summary_pdf": "ProofPackSummary.pdf",
+        "audit_trail_pdf": "AuditTrailReport.pdf",
     }
     content_type = content_type_map.get(artifact_type, "application/octet-stream")
     filename = filename_map.get(artifact_type, f"{artifact_type}_output")

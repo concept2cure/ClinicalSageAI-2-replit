@@ -1352,12 +1352,12 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { proofPackId } = req.params;
+    const { proofPackId, programId } = req.params;
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
         'GET',
-        `/render/proof-pack/${encodeURIComponent(proofPackId)}`
+        `/render/proof-pack/${encodeURIComponent(proofPackId)}?program_id=${encodeURIComponent(programId)}`
       );
 
       if (result.status !== 200) {

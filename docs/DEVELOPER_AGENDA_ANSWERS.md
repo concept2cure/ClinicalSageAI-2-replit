@@ -3,6 +3,7 @@
 ## Item 1: How to start the full stack locally
 
 ### Service Order
+
 ```
 1. PostgreSQL  →  (Docker or Neon cloud)
 2. Shadow Service  →  uvicorn on :8001
@@ -10,6 +11,7 @@
 ```
 
 ### Quick Start
+
 ```bash
 # Option A: One command (recommended)
 scripts/dev-all.sh
@@ -28,19 +30,21 @@ npm run dev
 ```
 
 ### Ports
-| Service | Port | Protocol |
-|---------|------|----------|
-| PostgreSQL | 5432 | TCP |
-| Shadow Service (FastAPI) | 8001 | HTTP |
-| BFF + Vite (Express) | 5000 | HTTP |
+
+| Service                  | Port | Protocol |
+| ------------------------ | ---- | -------- |
+| PostgreSQL               | 5432 | TCP      |
+| Shadow Service (FastAPI) | 8001 | HTTP     |
+| BFF + Vite (Express)     | 5000 | HTTP     |
 
 ### Required Environment Variables
-| Variable | Where | Purpose |
-|----------|-------|---------|
-| `DATABASE_URL` | Both | PostgreSQL connection string |
-| `REVIEW_ADMIN_TOKEN` | Both | Shared secret: BFF→Shadow auth |
+
+| Variable             | Where    | Purpose                                                   |
+| -------------------- | -------- | --------------------------------------------------------- |
+| `DATABASE_URL`       | Both     | PostgreSQL connection string                              |
+| `REVIEW_ADMIN_TOKEN` | Both     | Shared secret: BFF→Shadow auth                            |
 | `SHADOW_SERVICE_URL` | BFF only | Where BFF finds Shadow (default: `http://localhost:8001`) |
-| `JWT_SECRET` | BFF only | JWT signing key (default exists for dev) |
+| `JWT_SECRET`         | BFF only | JWT signing key (default exists for dev)                  |
 
 ---
 
@@ -60,17 +64,21 @@ function getAdminToken() {
 ```
 
 Every BFF → Shadow request sends:
+
 ```
-Authorization: Bearer <REVIEW_ADMIN_TOKEN>
+X-Admin-Token: <REVIEW_ADMIN_TOKEN>
 Content-Type: application/json
 ```
 
 The Shadow Service validates this in `router_render.py`:
+
 ```python
 settings = get_settings()
 if not settings.review_admin_token:
     raise HTTPException(503, "Render service is not configured")
-if req_token != f"Bearer {settings.review_admin_token}":
+if not x_admin_token or not hmac.compare_digest(
+    x_admin_token.encode("utf-8"), expected.encode("utf-8")
+):
     raise HTTPException(401, "Unauthorized")
 ```
 
@@ -83,6 +91,7 @@ if req_token != f"Bearer {settings.review_admin_token}":
 ### What you need in the database
 
 1. **A proof_pack_exports row** — this is what the renderer reads:
+
    ```sql
    INSERT INTO proof_pack_exports (
      id, proof_pack_id, manifest_hash, risk_vocab_hash,
@@ -107,10 +116,12 @@ if req_token != f"Bearer {settings.review_admin_token}":
    ```
 
 2. **A user** — in dev mode, the BFF auto-injects an admin user:
+
    ```typescript
    // server/routes.ts (dev mode)
-   req.user = { id: 1, username: 'admin', role: 'admin' }
+   req.user = { id: 1, username: 'admin', role: 'admin' };
    ```
+
    No separate user seed needed for local dev.
 
 3. **A regulatory program** — only needed if using `requireProgramAccess` middleware:
@@ -120,6 +131,7 @@ if req_token != f"Bearer {settings.review_admin_token}":
    ```
 
 ### What you DON'T need
+
 - No CSR documents needed (renderer reads from proof_pack_exports)
 - No file uploads needed
 - No external API keys needed
@@ -144,12 +156,15 @@ if req_token != f"Bearer {settings.review_admin_token}":
    - Each migration is idempotent (uses `IF NOT EXISTS`, `DO $$ ... $$`)
 
 ### Migration for Phase 7.0C-F
+
 The single migration file handles everything:
+
 ```bash
 psql "$DATABASE_URL" -f db/migrations/20260212_phase7_0c_render_tenant_safety.sql
 ```
 
 This:
+
 - Adds `program_id` column to `render_jobs`
 - Adds `idempotency_key` column with unique index
 - Expands `artifact_type` CHECK to include new types
@@ -157,7 +172,9 @@ This:
 - Adds TTL cleanup index for expired jobs
 
 ### Future: Automated runner
+
 There is no migration runner yet. If you want to run all pending migrations:
+
 ```bash
 for f in db/migrations/*.sql; do
   echo "Running $f..."

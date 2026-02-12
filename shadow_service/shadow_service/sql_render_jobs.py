@@ -82,10 +82,11 @@ SELECT COUNT(*) AS cnt FROM predicate.render_jobs
    AND created_at > NOW() - INTERVAL '1 second' * $2
 """
 
-# Find existing job by idempotency key (prevents double-click)
+# Find existing job by idempotency key + program scope (prevents double-click + cross-tenant leak)
 SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY = """
 SELECT * FROM predicate.render_jobs
  WHERE idempotency_key = $1
+   AND program_id = $2
  LIMIT 1
 """
 

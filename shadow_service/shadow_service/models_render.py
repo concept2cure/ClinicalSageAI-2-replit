@@ -135,6 +135,8 @@ class RenderJobRecord(BaseModel):
     created_at: Optional[datetime] = None
     created_by: str = "system"
     request_id: Optional[str] = None
+    program_id: str = ""
+    idempotency_key: Optional[str] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
