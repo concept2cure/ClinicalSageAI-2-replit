@@ -24,24 +24,35 @@ import {
 /**
  * Severity classification for validation hints.
  * The AI backend returns a suggestion string — we parse keywords to assign severity.
+ * Uses phrase-level matching to avoid false positives on common regulatory language
+ * (e.g., "should be cleared" is legitimate, not a warning).
  */
 function classifyHint(hint) {
   if (!hint || typeof hint !== 'string') return 'none';
   const lower = hint.toLowerCase();
+
+  // Error: explicit failure or missing-required language
   if (
-    lower.includes('error') ||
+    lower.includes('error validating') ||
     lower.includes('missing required') ||
-    lower.includes('must include')
+    lower.includes('must include') ||
+    lower.includes('does not comply') ||
+    lower.includes('non-compliant')
   )
     return 'error';
+
+  // Warning: contains unfilled placeholder tokens like [DEVICE NAME]
+  if (/\[[A-Z][A-Z _/()-]{2,}\]/.test(hint)) return 'warning';
+
+  // Warning: explicit advisory phrases
   if (
-    lower.includes('warning') ||
-    lower.includes('consider') ||
-    lower.includes('recommend') ||
-    lower.includes('should') ||
-    lower.includes('placeholder')
+    lower.includes('consider adding') ||
+    lower.includes('recommend including') ||
+    lower.includes('no enhanced content available') ||
+    lower.includes('no compliance data')
   )
     return 'warning';
+
   return 'pass';
 }
 

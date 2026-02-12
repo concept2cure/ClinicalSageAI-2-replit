@@ -24,7 +24,7 @@
  *  - Inline export controls with format selector, pre-validation, and last-export indicator
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
 import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import CERV2ValidationPanel from '../components/CERV2ValidationPanel.jsx';
@@ -175,13 +175,18 @@ export default function CERV2EditorAI() {
     return mapped;
   }, [loadingSections, selectedDocType]);
 
+  // Refs for in-flight tracking (avoids stale closure issues with state objects)
+  const inFlightSuggestions = useRef(new Set());
+  const inFlightValidations = useRef(new Set());
+
   // ── AI Suggestion Fetch ─────────────────────────────────────────────────────
 
   const fetchAiSuggestion = useCallback(
     async (sectionId, content = '') => {
-      if (loadingSections[sectionId]) return; // already in-flight
+      if (inFlightSuggestions.current.has(sectionId)) return; // already in-flight
 
       try {
+        inFlightSuggestions.current.add(sectionId);
         setLoadingSections(prev => ({ ...prev, [sectionId]: true }));
 
         const data = await cerv2AIService.fetchSuggestion(selectedDocType, sectionId, 'main', {
@@ -206,18 +211,20 @@ export default function CERV2EditorAI() {
           [sectionId]: 'Error fetching suggestion.',
         }));
       } finally {
+        inFlightSuggestions.current.delete(sectionId);
         setLoadingSections(prev => ({ ...prev, [sectionId]: false }));
       }
     },
-    [selectedDocType, loadingSections]
+    [selectedDocType]
   );
 
   // ── Phase 7.5: Compliance validation ───────────────────────────────────────
 
   const validateSection = useCallback(
     async (outlineId, content = '') => {
-      if (loadingValidation[outlineId]) return;
+      if (inFlightValidations.current.has(outlineId)) return;
       try {
+        inFlightValidations.current.add(outlineId);
         setLoadingValidation(prev => ({ ...prev, [outlineId]: true }));
         const result = await cerv2AIService.analyzeSection(selectedDocType, outlineId, content);
         setValidationHints(prev => ({
@@ -231,10 +238,11 @@ export default function CERV2EditorAI() {
           [outlineId]: 'Error validating section.',
         }));
       } finally {
+        inFlightValidations.current.delete(outlineId);
         setLoadingValidation(prev => ({ ...prev, [outlineId]: false }));
       }
     },
-    [selectedDocType, loadingValidation]
+    [selectedDocType]
   );
 
   // Debounced version for live typing
@@ -269,6 +277,20 @@ export default function CERV2EditorAI() {
     },
     [selectedDocType, fetchAiSuggestion, validateSection]
   );
+
+  // ── Timer cleanup helpers ──────────────────────────────────────────────────
+
+  const cancelAllTimers = useCallback(() => {
+    for (const id of Object.values(debounceTimers.current)) clearTimeout(id);
+    for (const id of Object.values(validationTimers.current)) clearTimeout(id);
+    debounceTimers.current = {};
+    validationTimers.current = {};
+  }, []);
+
+  // Cleanup on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => cancelAllTimers();
+  }, [cancelAllTimers]);
 
   // ── Scaffold Refresh ──────────────────────────────────────────────────────
 
@@ -317,15 +339,21 @@ export default function CERV2EditorAI() {
 
   // ── Doc Type Change ───────────────────────────────────────────────────────
 
-  const handleDocTypeChange = useCallback(newType => {
-    setSelectedDocType(newType);
-    setAiSuggestions({});
-    setLoadingSections({});
-    setDismissedSuggestions(new Set());
-    setValidationHints({});
-    setLoadingValidation({});
-    cerv2AIService.clearCache();
-  }, []);
+  const handleDocTypeChange = useCallback(
+    newType => {
+      cancelAllTimers();
+      setSelectedDocType(newType);
+      setAiSuggestions({});
+      setLoadingSections({});
+      setDismissedSuggestions(new Set());
+      setValidationHints({});
+      setLoadingValidation({});
+      inFlightSuggestions.current.clear();
+      inFlightValidations.current.clear();
+      cerv2AIService.clearCache();
+    },
+    [cancelAllTimers]
+  );
 
   // ── Outline toggle ────────────────────────────────────────────────────────
 
