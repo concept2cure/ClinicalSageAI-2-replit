@@ -52,3 +52,4 @@ pool.end*
 # Package lock (using npm ci from package.json)
 package-lock.json
 staging-report.json
+postmerge-report.json
