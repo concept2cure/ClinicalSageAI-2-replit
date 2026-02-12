@@ -70,9 +70,8 @@ export const DOC_TYPE_SHORT_LABELS = {
  */
 export function mergeValidation(aiHint, complianceResult) {
   const aiSeverity = classifyHint(aiHint);
-  const aiIssues = aiHint && aiSeverity !== 'pass' && aiSeverity !== 'none'
-    ? [`AI: ${aiHint}`]
-    : [];
+  const aiIssues =
+    aiHint && aiSeverity !== 'pass' && aiSeverity !== 'none' ? [`AI: ${aiHint}`] : [];
 
   if (!complianceResult) {
     return {

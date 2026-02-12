@@ -133,7 +133,7 @@ export default function CERV2VersionHistory({
 
           {versions.map((v, idx) => {
             const isExpanded = expanded === idx;
-            const sectionData = v.state?.sectionData || v.state?.aiSuggestions || {};
+            const sectionData = v.state?.sectionData || {};
             const sectionWords = {};
             for (const [sid, content] of Object.entries(sectionData)) {
               sectionWords[sid] = wordCount(
@@ -188,7 +188,7 @@ export default function CERV2VersionHistory({
                           const w = sectionWords[section.id] || 0;
                           return (
                             <tr key={section.id} className="text-slate-600">
-                              <td className="py-0.5 truncate max-w-[150px]">{section.title}</td>
+                              <td className="py-0.5 truncate max-w-[150px]">{section.label}</td>
                               <td className="text-right py-0.5 tabular-nums">{w}</td>
                             </tr>
                           );

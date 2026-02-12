@@ -210,11 +210,21 @@ export function getSectionTarget(docType, sectionId) {
 }
 
 /**
- * Compute section status from word count and content.
+ * Compute section status from doc type, section ID, and content.
+ * Internally computes word count and checks against section targets.
+ *
+ * @param {string} docType — cerv2_510k | cerv2_pma | cerv2_cer
+ * @param {string} sectionId — outline section ID
+ * @param {string} content — combined section text
+ * @returns {string} — SECTION_STATUS value
  */
-export function computeSectionStatus(wordCount, target, hasUserEdits = false) {
-  if (wordCount === 0) return SECTION_STATUS.EMPTY;
-  if (wordCount < target.min) return SECTION_STATUS.DRAFT;
-  if (hasUserEdits && wordCount >= target.target) return SECTION_STATUS.COMPLETE;
+export function computeSectionStatus(docType, sectionId, content) {
+  if (!content || typeof content !== 'string') return SECTION_STATUS.EMPTY;
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  if (words === 0) return SECTION_STATUS.EMPTY;
+
+  const target = getSectionTarget(docType, sectionId);
+  if (words < target.min) return SECTION_STATUS.DRAFT;
+  if (words >= target.target) return SECTION_STATUS.COMPLETE;
   return SECTION_STATUS.DRAFT;
 }

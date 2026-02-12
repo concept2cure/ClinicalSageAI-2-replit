@@ -5,16 +5,21 @@
  * Auto-saves on every state change (debounced at 2s).
  * Supports multiple documents via composite key: `cerv2:${docType}:${projectId}`.
  *
+ * Usage pattern:
+ *   autoSaveService.init(docType, projectId);  // set current doc context
+ *   autoSaveService.save(state);               // save using stored context
+ *   autoSaveService.load();                    // load using stored context
+ *   autoSaveService.pushVersion(state, label); // snapshot for version history
+ *   autoSaveService.getVersions();             // list all versions
+ *
  * Stored state:
  *  - deviceContext (device name, predicate, intended use, etc.)
  *  - userSectionContent (user-edited content per section)
  *  - aiSuggestions (AI-generated content per section)
  *  - dismissedSuggestions (Set → Array for JSON)
- *  - validationHints
- *  - attachments metadata (base64 stripped to save quota)
+ *  - attachments metadata (base64 data stripped to save quota)
  *  - citations
  *  - reviewState
- *  - sectionStatuses
  *  - lastSavedAt timestamp
  */
 
@@ -25,36 +30,52 @@ const MAX_VERSIONS = 50;
 class CERV2AutoSaveService {
   constructor() {
     this._timers = {};
+    this._docType = null;
+    this._projectId = 'default';
+  }
+
+  // ── Initialization ─────────────────────────────────────────────────────
+
+  /**
+   * Set the current document context. Must be called before other methods.
+   */
+  init(docType, projectId = 'default') {
+    this._docType = docType;
+    this._projectId = projectId;
   }
 
   // ── Key helpers ────────────────────────────────────────────────────────
 
-  _key(docType, projectId = 'default') {
-    return `${STORAGE_PREFIX}:${docType}:${projectId}`;
+  _key() {
+    return `${STORAGE_PREFIX}:${this._docType}:${this._projectId}`;
   }
 
-  _versionKey(docType, projectId = 'default') {
-    return `${STORAGE_PREFIX}:versions:${docType}:${projectId}`;
+  _versionKey() {
+    return `${STORAGE_PREFIX}:versions:${this._docType}:${this._projectId}`;
   }
 
   // ── Save ───────────────────────────────────────────────────────────────
 
-  save(docType, state, projectId = 'default') {
+  save(state) {
+    if (!this._docType) {
+      console.warn('[CERV2AutoSave] save() called before init()');
+      return false;
+    }
     try {
-      const key = this._key(docType, projectId);
+      const key = this._key();
 
-      // Strip large base64 attachment data to avoid localStorage quota
+      // Strip large base64 attachment data to avoid localStorage quota.
+      // AttachmentManager creates: { name, size, type, data }
+      // We keep name/size/type and drop data (base64 payload).
       let attachments = state.attachments;
       if (attachments) {
         const stripped = {};
         for (const [secId, files] of Object.entries(attachments)) {
           stripped[secId] = (files || []).map(f => ({
-            id: f.id,
-            filename: f.filename,
-            mimeType: f.mimeType,
+            name: f.name,
             size: f.size,
-            addedAt: f.addedAt,
-            // base64 omitted — re-upload after reload
+            type: f.type,
+            // data (base64) omitted — re-upload after reload
           }));
         }
         attachments = stripped;
@@ -68,8 +89,8 @@ class CERV2AutoSaveService {
           ? Array.from(state.dismissedSuggestions)
           : [],
         lastSavedAt: new Date().toISOString(),
-        docType,
-        projectId,
+        docType: this._docType,
+        projectId: this._projectId,
       };
       localStorage.setItem(key, JSON.stringify(payload));
       return true;
@@ -82,19 +103,23 @@ class CERV2AutoSaveService {
   /**
    * Debounced save — waits AUTOSAVE_DEBOUNCE_MS after last call.
    */
-  saveDebounced(docType, state, projectId = 'default') {
-    const timerKey = this._key(docType, projectId);
+  saveDebounced(state) {
+    const timerKey = this._key();
     if (this._timers[timerKey]) clearTimeout(this._timers[timerKey]);
     this._timers[timerKey] = setTimeout(() => {
-      this.save(docType, state, projectId);
+      this.save(state);
     }, AUTOSAVE_DEBOUNCE_MS);
   }
 
   // ── Load ───────────────────────────────────────────────────────────────
 
-  load(docType, projectId = 'default') {
+  load() {
+    if (!this._docType) {
+      console.warn('[CERV2AutoSave] load() called before init()');
+      return null;
+    }
     try {
-      const key = this._key(docType, projectId);
+      const key = this._key();
       const raw = localStorage.getItem(key);
       if (!raw) return null;
 
@@ -114,19 +139,30 @@ class CERV2AutoSaveService {
 
   // ── Version History ────────────────────────────────────────────────────
 
-  pushVersion(docType, snapshot, projectId = 'default') {
+  /**
+   * Push a version snapshot.
+   * @param {Object} snapshot — { sectionData, deviceContext, attachments, citations, reviewState }
+   * @param {string} [label] — human-readable label for this version
+   */
+  pushVersion(snapshot, label = 'Auto-save') {
+    if (!this._docType) return null;
     try {
-      const key = this._versionKey(docType, projectId);
+      const key = this._versionKey();
       const raw = localStorage.getItem(key);
       const versions = raw ? JSON.parse(raw) : [];
 
       versions.unshift({
         id: `v${Date.now()}`,
         timestamp: new Date().toISOString(),
-        label: snapshot.label || 'Auto-save',
-        sectionData: snapshot.sectionData || {},
-        deviceContext: snapshot.deviceContext || {},
-        docType,
+        label,
+        state: {
+          sectionData: snapshot.sectionData || {},
+          deviceContext: snapshot.deviceContext || {},
+          attachments: snapshot.attachments || {},
+          citations: snapshot.citations || [],
+          reviewState: snapshot.reviewState || {},
+        },
+        docType: this._docType,
       });
 
       const trimmed = versions.slice(0, MAX_VERSIONS);
@@ -138,9 +174,10 @@ class CERV2AutoSaveService {
     }
   }
 
-  getVersions(docType, projectId = 'default') {
+  getVersions() {
+    if (!this._docType) return [];
     try {
-      const key = this._versionKey(docType, projectId);
+      const key = this._versionKey();
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : [];
     } catch {
@@ -148,31 +185,17 @@ class CERV2AutoSaveService {
     }
   }
 
-  getVersion(docType, versionId, projectId = 'default') {
-    const versions = this.getVersions(docType, projectId);
+  getVersion(versionId) {
+    const versions = this.getVersions();
     return versions.find(v => v.id === versionId) || null;
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────
 
-  clear(docType, projectId = 'default') {
-    localStorage.removeItem(this._key(docType, projectId));
-    localStorage.removeItem(this._versionKey(docType, projectId));
-  }
-
-  listSavedDocTypes(projectId = 'default') {
-    const prefix = `${STORAGE_PREFIX}:`;
-    const types = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(prefix) && !key.includes(':versions:')) {
-        const parts = key.split(':');
-        if (parts.length >= 3 && (projectId === '*' || parts[2] === projectId)) {
-          types.push(parts[1]);
-        }
-      }
-    }
-    return types;
+  clear() {
+    if (!this._docType) return;
+    localStorage.removeItem(this._key());
+    localStorage.removeItem(this._versionKey());
   }
 
   cancelAll() {

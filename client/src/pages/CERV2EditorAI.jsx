@@ -25,10 +25,7 @@ import CERV2CitationManager from '../components/CERV2CitationManager.jsx';
 import CERV2ReviewWorkflow from '../components/CERV2ReviewWorkflow.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
 import autoSaveService from '../services/CERV2AutoSaveService.js';
-import {
-  validateSection as complianceValidate,
-  validateDocument,
-} from '../utils/CERV2ComplianceEngine.js';
+import { validateSection as complianceValidate } from '../utils/CERV2ComplianceEngine.js';
 import {
   computeSectionStatus,
   getSectionTarget,
@@ -56,7 +53,6 @@ import {
   Zap,
   X,
   Undo2,
-  Cpu,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -274,7 +270,7 @@ export default function CERV2EditorAI() {
         setLoadingSections(prev => ({ ...prev, [sectionId]: false }));
       }
     },
-    [selectedDocType]
+    [selectedDocType, deviceContext]
   );
 
   // ── Phase 7.5: Compliance validation ───────────────────────────────────────
@@ -303,7 +299,7 @@ export default function CERV2EditorAI() {
         setLoadingValidation(prev => ({ ...prev, [outlineId]: false }));
       }
     },
-    [selectedDocType]
+    [selectedDocType, deviceContext]
   );
 
   // Debounced version for live typing
@@ -658,14 +654,23 @@ export default function CERV2EditorAI() {
             </SelectContent>
           </Select>
 
-          {/* P0: Device Context Toggle */}
-          <CERV2DeviceContextPanel
-            selectedDocType={selectedDocType}
-            deviceContext={deviceContext}
-            onContextChange={setDeviceContext}
-            visible={showDeviceContext}
-            onToggle={() => setShowDeviceContext(prev => !prev)}
-          />
+          {/* P0: Device Context Toggle — compact trigger in top bar */}
+          <button
+            onClick={() => setShowDeviceContext(prev => !prev)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs border rounded-md transition-colors ${
+              showDeviceContext
+                ? 'bg-blue-50 border-blue-300 text-blue-700'
+                : 'hover:bg-slate-50 text-slate-600'
+            }`}
+            title="Toggle Device Context (Ctrl+Shift+D)"
+          >
+            <span className="font-medium">Device</span>
+            {showDeviceContext ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </button>
 
           {/* Outline Toggle */}
           <Button
@@ -739,6 +744,17 @@ export default function CERV2EditorAI() {
           </div>
         </div>
       </div>
+
+      {/* P0: Device Context Panel — full form rendered below top bar when expanded */}
+      {showDeviceContext && (
+        <CERV2DeviceContextPanel
+          selectedDocType={selectedDocType}
+          deviceContext={deviceContext}
+          onContextChange={setDeviceContext}
+          visible={showDeviceContext}
+          onToggle={() => setShowDeviceContext(false)}
+        />
+      )}
 
       {/* ─── Main Body ───────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">

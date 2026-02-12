@@ -168,7 +168,7 @@ export default function CERV2AttachmentManager({
     );
   }
 
-  const sectionLabel = outline.find(s => s.id === activeSectionId)?.title || activeSectionId;
+  const sectionLabel = outline.find(s => s.id === activeSectionId)?.label || activeSectionId;
 
   return (
     <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
@@ -253,7 +253,7 @@ export default function CERV2AttachmentManager({
                   ) : (
                     <ChevronRight className="w-3 h-3" />
                   )}
-                  {section.title}
+                  {section.label}
                   <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-auto">
                     {files.length}
                   </Badge>
