@@ -1,14 +1,15 @@
 /**
- * CERV2FullExportSimulation – Phase 7.7 End-to-End Export Simulation
+ * CERV2FullExportSimulation – Phase 7.7 + 7.9 End-to-End Export Simulation
  *
  * Combines the live Export Preview with a multi-format export workflow:
  *
  *  1. Pre-export readiness gate — blocks export below configurable threshold
- *  2. Three-step simulation pipeline (per CERV2ExportService):
+ *  2. Borderline warning (score 30–50%): inline confirmation with impacting sections
+ *  3. Three-step simulation pipeline (per CERV2ExportService):
  *     AI suggestions → TipTap editor JSON → format render (PDF / DOCX / ZIP)
- *  3. Mock-export fallback for demo/QA use
- *  4. Per-step progress indicators (converting → rendering → downloading)
- *  5. Post-export receipt with filename + timestamp
+ *  4. Mock-export fallback for demo/QA use
+ *  5. Per-step progress indicators (converting → rendering → downloading)
+ *  6. Post-export receipt with filename + timestamp
  *
  * Uses CERV2ExportService singleton (never raw axios) to ensure consistent
  * caching, error handling, and blob download behavior across the app.
@@ -18,6 +19,8 @@
  *  │ Header: doc type + readiness score │
  *  ├────────────────────────────────────┤
  *  │ Export buttons + format picker     │
+ *  ├────────────────────────────────────┤
+ *  │ Pre-export summary (if borderline) │
  *  ├────────────────────────────────────┤
  *  │ Step-by-step progress log          │
  *  ├────────────────────────────────────┤
@@ -48,6 +51,7 @@ import {
   Zap,
   ShieldAlert,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -66,6 +70,9 @@ const DOC_TYPE_LABELS = {
 
 /** Minimum readiness % to allow export (errors/warnings penalize this) */
 const READINESS_THRESHOLD = 30;
+
+/** Borderline zone — export allowed but requires confirmation */
+const WARNING_THRESHOLD = 50;
 
 // ── Severity classifier (mirrors CERV2ValidationPanel / ExportPreviewPanel) ──
 
@@ -122,6 +129,7 @@ export default function CERV2FullExportSimulation({
   const [exporting, setExporting] = useState(false);
   const [exportStep, setExportStep] = useState(null); // 'converting' | 'rendering' | 'downloading' | null
   const [exportHistory, setExportHistory] = useState([]); // [{ format, filename, timestamp, success }]
+  const [showConfirmation, setShowConfirmation] = useState(false); // Phase 7.9 borderline confirm
 
   // ── Readiness calculation ───────────────────────────────────────────────
   const readiness = useMemo(() => {
@@ -143,8 +151,9 @@ export default function CERV2FullExportSimulation({
     score = Math.min(100, Math.round(score));
 
     const canExport = score >= READINESS_THRESHOLD && completeness.populated > 0;
+    const isBorderline = canExport && score < WARNING_THRESHOLD;
 
-    return { score, errorCount, warningCount, canExport };
+    return { score, errorCount, warningCount, canExport, isBorderline };
   }, [completeness, outline, validationHints]);
 
   // ── Active suggestions (excluding dismissed) ────────────────────────────
@@ -158,17 +167,24 @@ export default function CERV2FullExportSimulation({
     return active;
   }, [aiSuggestions, dismissedSuggestions]);
 
-  // ── Full pipeline export ────────────────────────────────────────────────
-  const handleFullExport = useCallback(async () => {
-    if (!readiness.canExport) {
-      toast({
-        title: 'Export Blocked',
-        description: `Readiness score is ${readiness.score}% — minimum ${READINESS_THRESHOLD}% required. Populate more sections or resolve compliance issues.`,
-        variant: 'destructive',
-      });
-      return;
-    }
+  // ── Impacting sections (for pre-export summary) ────────────────────────
+  const impactingSections = useMemo(() => {
+    return outline
+      .map(section => {
+        const hint = validationHints[section.id];
+        if (!hint) return null;
+        const severity = classifyHint(hint);
+        if (severity === 'error' || severity === 'warning') {
+          return { id: section.id, label: section.label, severity, hint };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  }, [outline, validationHints]);
 
+  // ── Full pipeline export ────────────────────────────────────────────────
+  const executeExport = useCallback(async () => {
+    setShowConfirmation(false);
     setExporting(true);
     const startTime = Date.now();
 
@@ -242,7 +258,28 @@ export default function CERV2FullExportSimulation({
       setExporting(false);
       setExportStep(null);
     }
-  }, [readiness, selectedFormat, selectedDocType, activeSuggestions, outline, completeness, toast]);
+  }, [selectedFormat, selectedDocType, activeSuggestions, outline, completeness, toast]);
+
+  // ── Export with gating (Phase 7.9) ──────────────────────────────────────
+  const handleFullExport = useCallback(() => {
+    if (!readiness.canExport) {
+      toast({
+        title: 'Export Blocked',
+        description: `Readiness score is ${readiness.score}% — minimum ${READINESS_THRESHOLD}% required. Populate more sections or resolve compliance issues.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Borderline: show confirmation with impacting sections
+    if (readiness.isBorderline) {
+      setShowConfirmation(true);
+      return;
+    }
+
+    // Above warning threshold: export directly
+    executeExport();
+  }, [readiness, toast, executeExport]);
 
   // ── Mock export ─────────────────────────────────────────────────────────
   const handleMockExport = useCallback(async () => {
@@ -328,9 +365,7 @@ export default function CERV2FullExportSimulation({
       <div className="px-4 py-2.5 border-b flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold tracking-tight">
-            Full Export Simulation
-          </h3>
+          <h3 className="text-sm font-semibold tracking-tight">Full Export Simulation</h3>
           <span className="text-xs text-muted-foreground">
             {DOC_TYPE_LABELS[selectedDocType] || selectedDocType}
           </span>
@@ -405,6 +440,14 @@ export default function CERV2FullExportSimulation({
           </div>
         )}
 
+        {/* Borderline warning badge */}
+        {readiness.isBorderline && !showConfirmation && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-500 ml-auto">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>Borderline ({readiness.score}%) — will ask to confirm</span>
+          </div>
+        )}
+
         {/* Compliance summary */}
         {readiness.canExport && (readiness.errorCount > 0 || readiness.warningCount > 0) && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground ml-auto">
@@ -424,19 +467,77 @@ export default function CERV2FullExportSimulation({
         )}
       </div>
 
+      {/* ─── Pre-Export Confirmation (Phase 7.9 — borderline zone) ───── */}
+      {showConfirmation && (
+        <div className="px-4 py-3 border-b bg-amber-50 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            <span className="text-sm font-medium text-foreground">
+              Export readiness is {readiness.score}% — review before exporting
+            </span>
+          </div>
+          {impactingSections.length > 0 && (
+            <div className="ml-6 mb-2.5 space-y-1">
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                Sections impacting readiness
+              </span>
+              {impactingSections.map(s => (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded border ${
+                    s.severity === 'error'
+                      ? 'bg-destructive/5 border-destructive/20 text-destructive'
+                      : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+                  }`}
+                >
+                  {s.severity === 'error' ? (
+                    <XCircle className="h-3 w-3 flex-shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                  )}
+                  <span className="font-medium">{s.label}</span>
+                  <span className="text-muted-foreground truncate">
+                    {s.severity === 'error' ? '-15%' : '-5%'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2 ml-6">
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-7 text-xs gap-1"
+              onClick={executeExport}
+            >
+              Export Anyway
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => setShowConfirmation(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ─── Step Progress (visible during export) ──────────────────────── */}
       {exporting && exportStep && (
         <div className="px-4 py-2.5 border-b bg-primary/[0.02]">
           <div className="flex items-center gap-2 text-xs">
             {steps.map((step, idx) => {
               const isCurrent = step.key === exportStep;
-              const isPast =
-                steps.findIndex(s => s.key === exportStep) > idx;
+              const isPast = steps.findIndex(s => s.key === exportStep) > idx;
 
               return (
                 <div key={step.key} className="flex items-center gap-1.5">
                   {idx > 0 && (
-                    <ArrowRight className={`h-2.5 w-2.5 ${isPast ? 'text-primary' : 'text-muted-foreground/30'}`} />
+                    <ArrowRight
+                      className={`h-2.5 w-2.5 ${isPast ? 'text-primary' : 'text-muted-foreground/30'}`}
+                    />
                   )}
                   {isCurrent ? (
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />

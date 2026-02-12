@@ -28,6 +28,15 @@
  *  - Step-by-step progress indicators + export history log
  *  - Mock export fallback for demo/QA
  *
+ * Phase 7.9 — Export gating & warning prompts:
+ *  - Borderline confirmation (30–50%) with impacting section summary
+ *  - Hard block below 30% with actionable toast
+ *
+ * Phase 7.10 — UX polish:
+ *  - Keyboard shortcuts: Ctrl+Shift+E (export sim), Ctrl+Shift+P (preview),
+ *    Ctrl+Shift+V (validation), Ctrl+Shift+O (outline), Ctrl+Shift+R (scaffold)
+ *  - Shortcut hints in toolbar tooltips
+ *
  * UX features:
  *  - Outline panel (left) with section navigation & AI preview
  *  - Validation panel (right) with compliance hints & severity badges
@@ -163,6 +172,41 @@ export default function CERV2EditorAI() {
 
   // Phase 7.7 – Full export simulation state
   const [showExportSim, setShowExportSim] = useState(false);
+
+  // ── Phase 7.10: Keyboard shortcuts ───────────────────────────────────────
+  useEffect(() => {
+    const handler = e => {
+      // All shortcuts use Ctrl+Shift+<key> (Cmd+Shift on Mac)
+      if (!(e.ctrlKey || e.metaKey) || !e.shiftKey) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'o': // Toggle outline
+          e.preventDefault();
+          setShowOutline(prev => !prev);
+          break;
+        case 'p': // Toggle export preview
+          e.preventDefault();
+          setShowExportPreview(prev => !prev);
+          break;
+        case 'v': // Toggle validation panel
+          e.preventDefault();
+          setShowValidation(prev => !prev);
+          break;
+        case 'e': // Toggle export simulation
+          e.preventDefault();
+          setShowExportSim(prev => !prev);
+          break;
+        case 'r': // Scaffold refresh
+          e.preventDefault();
+          if (!scaffoldRefreshing) handleScaffoldRefresh();
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [scaffoldRefreshing, handleScaffoldRefresh]);
 
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
@@ -436,7 +480,7 @@ export default function CERV2EditorAI() {
             size="icon"
             className="h-8 w-8"
             onClick={() => setShowOutline(prev => !prev)}
-            title={showOutline ? 'Hide outline' : 'Show outline'}
+            title={`${showOutline ? 'Hide' : 'Show'} outline (⌃⇧O)`}
           >
             {showOutline ? (
               <PanelLeftClose className="h-4 w-4" />
@@ -451,7 +495,7 @@ export default function CERV2EditorAI() {
             size="icon"
             className="h-8 w-8"
             onClick={() => setShowExportPreview(prev => !prev)}
-            title={showExportPreview ? 'Hide export preview' : 'Show export preview'}
+            title={`${showExportPreview ? 'Hide' : 'Show'} export preview (⌃⇧P)`}
           >
             <Eye className={`h-4 w-4 ${showExportPreview ? 'text-primary' : ''}`} />
           </Button>
@@ -462,7 +506,7 @@ export default function CERV2EditorAI() {
             size="icon"
             className="h-8 w-8"
             onClick={() => setShowExportSim(prev => !prev)}
-            title={showExportSim ? 'Hide export simulation' : 'Show export simulation'}
+            title={`${showExportSim ? 'Hide' : 'Show'} export simulation (⌃⇧E)`}
           >
             <Zap className={`h-4 w-4 ${showExportSim ? 'text-primary' : ''}`} />
           </Button>
@@ -474,7 +518,7 @@ export default function CERV2EditorAI() {
             className="h-8 w-8"
             onClick={handleScaffoldRefresh}
             disabled={scaffoldRefreshing}
-            title="Populate all sections with AI templates"
+            title="Populate all sections with AI templates (⌃⇧R)"
           >
             <RefreshCw className={`h-4 w-4 ${scaffoldRefreshing ? 'animate-spin' : ''}`} />
           </Button>

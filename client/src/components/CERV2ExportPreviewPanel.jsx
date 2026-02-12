@@ -322,13 +322,18 @@ export default function CERV2ExportPreviewPanel({
             const severityClass =
               SEVERITY_ICONS[section.severity]?.className || 'text-muted-foreground';
 
-            // Card styling based on status
+            // Card styling based on status + severity highlighting (Phase 7.10)
+            const isImpacting = section.severity === 'error' || section.severity === 'warning';
             const borderClass =
-              section.status === 'ready'
-                ? 'border-primary/20'
-                : section.status === 'loading'
-                  ? 'border-primary/30'
-                  : 'border-border';
+              isImpacting && section.severity === 'error'
+                ? 'border-destructive/40 ring-1 ring-destructive/20'
+                : isImpacting && section.severity === 'warning'
+                  ? 'border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/40 dark:ring-amber-800/40'
+                  : section.status === 'ready'
+                    ? 'border-primary/20'
+                    : section.status === 'loading'
+                      ? 'border-primary/30'
+                      : 'border-border';
 
             const bgClass =
               section.status === 'ready'
