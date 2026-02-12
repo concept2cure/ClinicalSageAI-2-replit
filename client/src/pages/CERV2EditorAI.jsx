@@ -21,6 +21,7 @@
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import MedicalDeviceDocumentEditor from '../components/MedicalDeviceDocumentEditor.jsx';
+import CERV2ExportControls from '../components/CERV2ExportControls.jsx';
 import cerv2AIService from '../services/CERV2AIService.js';
 import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
@@ -679,6 +680,14 @@ export default function CERV2EditorAI() {
             onSectionChange={handleSectionChange}
             aiSuggestionsExternal={aiSuggestionsForEditor}
             loadingSectionsExternal={loadingSectionsForEditor}
+          />
+          {/* ─── Inline Export Controls ─────────────────────────────────── */}
+          <CERV2ExportControls
+            docType={selectedDocType}
+            aiSuggestions={aiSuggestions}
+            outline={outline}
+            completeness={sectionCompleteness}
+            dismissedSuggestions={dismissedSuggestions}
           />
         </main>
       </div>
