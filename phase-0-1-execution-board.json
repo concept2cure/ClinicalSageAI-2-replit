@@ -7,14 +7,17 @@
     "commit": "8d56db7"
   },
   "summary": {
-    "overall_readiness_pct": 72,
-    "critical_blockers": 4,
-    "high_gaps": 5,
+    "overall_readiness_pct": 62,
+    "critical_blockers": 6,
+    "high_gaps": 7,
     "medium_gaps": 6,
     "low_gaps": 4,
-    "total_endpoints": 68,
+    "total_endpoints": 100,
     "total_templates_defined": 44,
-    "total_docx_on_disk": 19
+    "total_docx_on_disk": 19,
+    "ectd_coauthor_endpoints_missing": 18,
+    "ectd_coauthor_client_files": 100,
+    "ectd_coauthor_client_lines": 67000
   },
   "doc_types": [
     {
@@ -729,6 +732,477 @@
       "readiness_pct": 10
     }
   },
+  "ectd_coauthor": {
+    "overall_readiness_pct": 25,
+    "client": {
+      "pages": {
+        "primary": {
+          "file": "client/src/pages/CoAuthor.jsx",
+          "lines": 13461,
+          "status": "IMPLEMENTED"
+        },
+        "full_wrapper": {
+          "file": "client/src/pages/FulleCTDCoAuthor.jsx",
+          "lines": 1181,
+          "status": "PARTIAL"
+        },
+        "search": {
+          "file": "client/src/pages/SearchResultsPage.jsx",
+          "lines": 836,
+          "status": "IMPLEMENTED"
+        },
+        "restore": {
+          "file": "client/src/pages/RestoreCoAuthor.jsx",
+          "lines": 759,
+          "status": "PARTIAL"
+        },
+        "real": { "file": "client/src/pages/RealCoAuthor.jsx", "lines": 752, "status": "PARTIAL" },
+        "simple_creator": {
+          "file": "client/src/pages/SimpleDocumentCreator.jsx",
+          "lines": 143,
+          "status": "MINIMAL"
+        },
+        "wrapper": { "file": "client/src/pages/CoauthorPage.jsx", "lines": 25, "status": "STUB" }
+      },
+      "components": {
+        "total_files": 38,
+        "total_lines": 16501,
+        "implemented": 36,
+        "stubs": 2,
+        "top_components": [
+          {
+            "name": "ComponentManagementSystem",
+            "lines": 3444,
+            "purpose": "CCMS/UDI component management"
+          },
+          { "name": "DocumentPreview", "lines": 1169, "purpose": "Document preview/render" },
+          { "name": "VersionHistory", "lines": 1088, "purpose": "Version control UI" },
+          {
+            "name": "ComplianceCommandCenter",
+            "lines": 961,
+            "purpose": "Compliance/validation dashboard"
+          },
+          {
+            "name": "AdvancedSearchPanel",
+            "lines": 857,
+            "purpose": "Full-text search with refiners"
+          },
+          { "name": "DocumentSelector", "lines": 794, "purpose": "Document selection/browsing" },
+          { "name": "WorkflowTimeline", "lines": 734, "purpose": "Workflow progress tracker" },
+          { "name": "ActivityFeed", "lines": 666, "purpose": "Activity/audit trail" },
+          { "name": "AskDataRoomPanel", "lines": 662, "purpose": "AI data room query panel" },
+          { "name": "NotificationCenter", "lines": 645, "purpose": "Notifications/alerts" },
+          { "name": "SmartBlocks", "lines": 581, "purpose": "Content block authoring" },
+          { "name": "DraftEditor", "lines": 556, "purpose": "Rich text editor" },
+          { "name": "ImportFromINDDialog", "lines": 483, "purpose": "IND-to-eCTD import dialog" },
+          {
+            "name": "CollaborationSidebar",
+            "lines": 452,
+            "purpose": "Real-time collaboration panel"
+          }
+        ],
+        "stub_components": [
+          { "name": "SubmissionProgress", "lines": 33, "status": "STUB" },
+          { "name": "CanvasWorkbenchModule", "lines": 20, "status": "STUB" }
+        ]
+      },
+      "services": [
+        {
+          "name": "coauthorService",
+          "file": "coauthorService.js",
+          "lines": 196,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "name": "collaborationService",
+          "file": "coauthorCollaborationService.js",
+          "lines": 555,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "name": "workspaceService",
+          "file": "coauthorWorkspaceService.js",
+          "lines": 42,
+          "status": "STUB"
+        }
+      ],
+      "routes": [
+        "/coauthor",
+        "/working-coauthor",
+        "/coauthor-clean",
+        "/ectd-co-author",
+        "/coauthor/timeline",
+        "/coauthor/ask-lumen",
+        "/coauthor/canvas",
+        "/coauthor/validation",
+        "/coauthor/templates",
+        "/create-document",
+        "/portal/ectd-coauthor"
+      ]
+    },
+    "server": {
+      "mounted_routes": [
+        {
+          "file": "server/routes/coauthor.ts",
+          "mount": "/api/coauthor",
+          "lines": 23,
+          "status": "STUB",
+          "endpoints_implemented": 2,
+          "endpoints_missing": 18
+        },
+        {
+          "file": "server/routes/ectd-documents.ts",
+          "mount": "/api/ectd-documents",
+          "lines": 23,
+          "status": "STUB",
+          "endpoints_implemented": 2,
+          "endpoints_missing": 0
+        }
+      ],
+      "disconnected_real_routes": [
+        {
+          "file": "server/routes/authoring.router.ts",
+          "mount": "/api/regulatory",
+          "lines": 5126,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/documentAuthoring.routes.ts",
+          "mount": "/api/document-authoring",
+          "lines": 2047,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/phase6.routes.ts",
+          "mount": "/api/phase6",
+          "lines": 591,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/leaves.js",
+          "mount": "/api/leaves",
+          "lines": 401,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/contextual-guidance.js",
+          "mount": "/api/guidance",
+          "lines": 113,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/predictive-sections.ts",
+          "mount": "/api/predictive",
+          "lines": 299,
+          "status": "IMPLEMENTED"
+        }
+      ],
+      "services": [
+        {
+          "name": "ectdService",
+          "file": "server/services/ectdService.ts",
+          "lines": 489,
+          "status": "IMPLEMENTED",
+          "purpose": "Dream eCTD Machine"
+        },
+        {
+          "name": "ECTDScaffoldingService",
+          "file": "server/services/ectd/ECTDScaffoldingService.ts",
+          "lines": 465,
+          "status": "IMPLEMENTED",
+          "purpose": "Module structure, multi-agency"
+        },
+        {
+          "name": "eventBus",
+          "file": "server/services/eventBus.js",
+          "lines": 413,
+          "status": "IMPLEMENTED",
+          "purpose": "IND <> CoAuthor events"
+        },
+        {
+          "name": "componentExtraction",
+          "file": "server/services/componentExtraction.js",
+          "lines": 559,
+          "status": "IMPLEMENTED",
+          "purpose": "Component extraction"
+        },
+        {
+          "name": "unifiedDocumentIngestion",
+          "file": "server/services/unifiedDocumentIngestion.js",
+          "lines": 1495,
+          "status": "IMPLEMENTED",
+          "purpose": "Full eCTD pipeline"
+        },
+        {
+          "name": "ReleaseHashGenerator",
+          "file": "server/services/export/ReleaseHashGenerator.ts",
+          "lines": 520,
+          "status": "IMPLEMENTED",
+          "purpose": "SHA256 hashing"
+        }
+      ],
+      "db_tables": [
+        {
+          "name": "ectd_modules",
+          "purpose": "Hierarchical eCTD structure (M1-M5)",
+          "status": "DEFINED"
+        },
+        { "name": "ectd_granules", "purpose": "Atomic document units", "status": "DEFINED" },
+        { "name": "ectd_templates", "purpose": "Reusable document templates", "status": "DEFINED" },
+        {
+          "name": "ectd_compilations",
+          "purpose": "Module compilation + XML backbone",
+          "status": "DEFINED"
+        },
+        {
+          "name": "ectd_change_control",
+          "purpose": "Change control per granule",
+          "status": "DEFINED"
+        },
+        {
+          "name": "ectd_cross_references",
+          "purpose": "Cross-module references",
+          "status": "DEFINED"
+        }
+      ]
+    },
+    "shadow_service": [
+      {
+        "file": "router_ectd.py",
+        "lines": 773,
+        "status": "IMPLEMENTED",
+        "purpose": "Full CRUD for eCTD"
+      },
+      {
+        "file": "models_ectd.py",
+        "lines": 303,
+        "status": "IMPLEMENTED",
+        "purpose": "Pydantic models"
+      },
+      { "file": "sql_ectd.py", "lines": 278, "status": "IMPLEMENTED", "purpose": "SQL queries" },
+      {
+        "file": "ectd_assembly.py",
+        "lines": 226,
+        "status": "IMPLEMENTED",
+        "purpose": "eCTD ZIP assembly"
+      },
+      {
+        "file": "leaf_registry.py",
+        "lines": 182,
+        "status": "IMPLEMENTED",
+        "purpose": "Leaf map + sequence plan"
+      },
+      {
+        "file": "proof_pack_zip.py",
+        "lines": 397,
+        "status": "IMPLEMENTED",
+        "purpose": "Proof Pack ZIP"
+      },
+      {
+        "file": "router_ectd_stub.py",
+        "lines": 204,
+        "status": "STUB",
+        "purpose": "Fallback skeleton"
+      }
+    ],
+    "missing_endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/coauthor/documents",
+        "purpose": "Create/list documents",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/:id/versions",
+        "purpose": "Version history",
+        "wire_to": "ectd_granules"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/documents/:id/restore/:versionId",
+        "purpose": "Restore version",
+        "wire_to": "ectd_change_control"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/ectd-modules/tree-with-counts",
+        "purpose": "eCTD module tree",
+        "wire_to": "ECTDScaffoldingService"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/section/:sectionId",
+        "purpose": "Docs per section",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/components/ingest",
+        "purpose": "Component ingestion",
+        "wire_to": "componentExtraction"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/ectd-modules/:sectionId",
+        "purpose": "Module lookup",
+        "wire_to": "ECTDScaffoldingService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/modules/:id/documents",
+        "purpose": "Create doc in module",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/validate",
+        "purpose": "Document validation",
+        "wire_to": "authoring.router"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/history/:documentId",
+        "purpose": "Validation history",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/export/:validationId",
+        "purpose": "Export validation",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/latest/:documentId",
+        "purpose": "Latest validation",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/:id/status-history",
+        "purpose": "Status audit trail",
+        "wire_to": "db"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/coauthor/documents/:id/status",
+        "purpose": "Update status",
+        "wire_to": "db"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/import-word",
+        "purpose": "Word import",
+        "wire_to": "unifiedDocumentIngestion"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/export",
+        "purpose": "Export to formats",
+        "wire_to": "documentAuthoring"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/search",
+        "purpose": "Full-text search",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/components/statistics",
+        "purpose": "Component stats",
+        "wire_to": "componentExtraction"
+      }
+    ],
+    "readiness_by_feature": {
+      "document_crud": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "ectd_module_tree": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "validation": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "version_history": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "PARTIAL",
+        "db": "DEFINED",
+        "overall_pct": 20
+      },
+      "collaboration": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "NONE",
+        "db": "NONE",
+        "overall_pct": 15
+      },
+      "component_ingestion": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "word_import": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "export": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "search": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "NONE",
+        "db": "NONE",
+        "overall_pct": 10
+      },
+      "ectd_package_assembly": {
+        "client": "NONE",
+        "server_route": "IMPLEMENTED",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "shadow": "IMPLEMENTED",
+        "overall_pct": 80
+      },
+      "ectd_hashing": {
+        "client": "NONE",
+        "server_route": "IMPLEMENTED",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 90
+      },
+      "ectd4_compiler": {
+        "client": "NONE",
+        "server_route": "NONE",
+        "server_service": "NONE",
+        "ind_automation": "IMPLEMENTED",
+        "overall_pct": 90
+      }
+    }
+  },
   "gaps": {
     "critical": [
       {
@@ -762,6 +1236,22 @@
         "impact": "PMA only via CERV2 editor export",
         "effort": "3 days",
         "priority": "P1-1"
+      },
+      {
+        "id": "C5",
+        "title": "/api/coauthor routes are 23-line stubs — 18 of 20 endpoints missing",
+        "module": "eCTD Co-Author",
+        "impact": "CoAuthor.jsx (13,461L) calls endpoints that return 404; entire Co-Author workflow non-functional",
+        "effort": "5-7 days",
+        "priority": "P0C-1"
+      },
+      {
+        "id": "C6",
+        "title": "/api/ectd-documents routes are 23-line stubs — returns empty arrays",
+        "module": "eCTD Co-Author",
+        "impact": "Document CRUD for eCTD submissions non-functional",
+        "effort": "2-3 days",
+        "priority": "P0C-2"
       }
     ],
     "high": [
@@ -799,6 +1289,20 @@
         "module": "IND",
         "effort": "15 min",
         "priority": "P0-6"
+      },
+      {
+        "id": "H6",
+        "title": "Real eCTD logic at /api/regulatory disconnected from CoAuthor UI",
+        "module": "eCTD Co-Author",
+        "effort": "2-3 days",
+        "priority": "P0C-3"
+      },
+      {
+        "id": "H7",
+        "title": "6 eCTD DB tables defined but never migrated or seeded",
+        "module": "eCTD Co-Author",
+        "effort": "1 day",
+        "priority": "P0C-4"
       }
     ],
     "medium": [
@@ -964,6 +1468,97 @@
           "task": "Expand enhanced mock content to all 25 sections",
           "effort": "1 day",
           "status": "not-started"
+        }
+      ]
+    },
+    "phase_0c_coauthor": {
+      "label": "eCTD Co-Author Route Implementation",
+      "effort": "5-7 days",
+      "description": "Implement 18 missing /api/coauthor endpoints. Most can delegate to existing services (ectdService, ECTDScaffoldingService, componentExtraction, unifiedDocumentIngestion, documentAuthoring routes).",
+      "tasks": [
+        {
+          "id": "P0C-1",
+          "task": "Implement /api/coauthor/sessions CRUD (GET list, GET :id, PUT :id, DELETE :id)",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "authoring.router.ts session logic"
+        },
+        {
+          "id": "P0C-2",
+          "task": "Implement /api/ectd-documents full CRUD (GET list, GET :id, POST, PUT :id, DELETE :id)",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "documentAuthoring.routes.ts + ectdService.ts"
+        },
+        {
+          "id": "P0C-3",
+          "task": "Implement /api/coauthor/sessions/:id/modules — eCTD module tree (M1-M5)",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ECTDScaffoldingService.ts"
+        },
+        {
+          "id": "P0C-4",
+          "task": "Implement /api/coauthor/sessions/:id/documents — document listing per session",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts"
+        },
+        {
+          "id": "P0C-5",
+          "task": "Implement /api/coauthor/sessions/:id/compile — eCTD compilation + XML backbone",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "ectdService.ts compileSubmission()"
+        },
+        {
+          "id": "P0C-6",
+          "task": "Implement /api/coauthor/sessions/:id/validate — submission validation",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts validateSubmission()"
+        },
+        {
+          "id": "P0C-7",
+          "task": "Implement /api/coauthor/sessions/:id/export — export to eCTD package",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts + ReleaseHashGenerator"
+        },
+        {
+          "id": "P0C-8",
+          "task": "Implement /api/coauthor/templates — eCTD template CRUD",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectd_templates DB table"
+        },
+        {
+          "id": "P0C-9",
+          "task": "Implement /api/coauthor/atoms — content atom library",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "componentExtraction.js"
+        },
+        {
+          "id": "P0C-10",
+          "task": "Implement /api/coauthor/collaboration — real-time collaboration endpoints",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "eventBus.js + WebSocket"
+        },
+        {
+          "id": "P0C-11",
+          "task": "Implement /api/coauthor/sessions/:id/history — version history per session",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectd_change_control DB table"
+        },
+        {
+          "id": "P0C-12",
+          "task": "Run eCTD DB migrations (6 tables) and seed reference data",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "db/schema.ts eCTD table definitions"
         }
       ]
     },

@@ -23,32 +23,39 @@
 
 ## 1. Executive Summary
 
-### Overall Readiness Score: **72%** (Production-capable with gaps)
+### Overall Readiness Score: **62%** (Production-capable with significant gaps)
 
-| Category                       | Ready                       | Partial             | Missing            | Score |
-| ------------------------------ | --------------------------- | ------------------- | ------------------ | ----- |
-| CERV2 Templates (510k/PMA/CER) | ✅ 25 sections              | ⚠️ 5 AI-only        | —                  | 83%   |
-| IND Templates (Modules 1–5)    | ✅ 19 seed DOCX             | ⚠️ Modules 4–5      | ❌ 60+ sub-modules | 35%   |
-| AI Population                  | ⚠️ Template/mock            | —                   | ❌ LLM integration | 40%   |
-| Export Pipeline (PDF/DOCX/ZIP) | ✅ Fully functional         | —                   | —                  | 95%   |
-| DOCX Factory                   | ✅ 12 endpoints, DB-backed  | ⚠️ 6 seed templates | ❌ 13+ missing     | 60%   |
-| Canvas Editing                 | ✅ TipTap editor            | ✅ Autosave         | —                  | 90%   |
-| Section CRUD + Versioning      | ✅ 6 endpoints, audit trail | —                   | —                  | 95%   |
-| IND Automation                 | ✅ Forms 1571/1572/3674     | ⚠️ Module 3 only    | ❌ Modules 1,2,4,5 | 30%   |
+| Category                       | Ready                        | Partial                          | Missing                      | Score   |
+| ------------------------------ | ---------------------------- | -------------------------------- | ---------------------------- | ------- |
+| CERV2 Templates (510k/PMA/CER) | ✅ 25 sections               | ⚠️ 5 AI-only                     | —                            | 83%     |
+| **eCTD Co-Author Module**      | ✅ 38 UI components (16.5K)  | ⚠️ Server stubs (23L each)       | ❌ 20+ API endpoints missing | **25%** |
+| IND Templates (Modules 1–5)    | ✅ 19 seed DOCX              | ⚠️ Modules 4–5                   | ❌ 60+ sub-modules           | 35%     |
+| AI Population                  | ⚠️ Template/mock             | —                                | ❌ LLM integration           | 40%     |
+| Export Pipeline (PDF/DOCX/ZIP) | ✅ Fully functional          | —                                | —                            | 95%     |
+| DOCX Factory                   | ✅ 12 endpoints, DB-backed   | ⚠️ 6 seed templates              | ❌ 13+ missing               | 60%     |
+| Canvas Editing                 | ✅ TipTap editor             | ✅ Autosave                      | —                            | 90%     |
+| Section CRUD + Versioning      | ✅ 6 endpoints, audit trail  | —                                | —                            | 95%     |
+| IND Automation                 | ✅ Forms 1571/1572/3674      | ⚠️ Module 3 only                 | ❌ Modules 1,2,4,5           | 30%     |
+| eCTD Services (Shadow/Python)  | ✅ 773L router + 6 DB tables | ✅ Assembly, hashing, validation | —                            | 85%     |
 
-### Critical Blockers (3)
+### Critical Blockers (6)
 
-1. **AI endpoints return static templates** — no LLM/GPT integration (marked "Phase 8" but not implemented)
-2. **IND Module 4 (Nonclinical) and Module 5 (Clinical) have no DOCX templates or generators**
-3. **PMA has zero dedicated DOCX seed templates** (only CERV2 editor sections)
+1. **🔴 `/api/coauthor` server routes are 23-line stubs** — CoAuthor.jsx (13,461L) calls 20+ endpoints that DON'T EXIST. The most impactful gap in the entire platform.
+2. **🔴 `/api/ectd-documents` server routes are 23-line stubs** — returns empty arrays, no CRUD
+3. **AI endpoints return static templates** — no LLM/GPT integration
+4. **IND Module 4 (Nonclinical) and Module 5 (Clinical) have no DOCX templates or generators**
+5. **PMA has zero dedicated DOCX seed templates**
+6. **CoAuthor → Server endpoint mismatch** — Client calls `/api/coauthor/documents`, `/api/coauthor/validate`, `/api/coauthor/ectd-modules/*`, etc. but real logic lives in disconnected routes (`authoring.router.ts`, `documentAuthoring.routes.ts`, `phase6.routes.ts`)
 
-### High-Priority Gaps (5)
+### High-Priority Gaps (7)
 
-4. `cerv2-versions.ts` is dead stub code (no auth, no DB)
-5. `fetchEquivalence()` and `fetchBenefitRisk()` wired but never called from editor
-6. IND templates route commented out in `server/index.ts`
-7. Mock export routes have no auth on non-production
-8. DOCX Factory seed only covers 6 of 19 catalog entries on first `POST /seed`
+7. `cerv2-versions.ts` is dead stub code (no auth, no DB)
+8. `fetchEquivalence()` and `fetchBenefitRisk()` wired but never called from editor
+9. IND templates route commented out in `server/index.ts`
+10. Mock export routes have no auth on non-production
+11. DOCX Factory seed only covers 6 of 19 catalog entries on first `POST /seed`
+12. `coauthorWorkspaceService.js` is a 42-line stub
+13. eCTD real implementations (ectdService.ts, ECTDScaffoldingService.ts) not routed through `/api/coauthor` path
 
 ---
 
@@ -505,6 +512,236 @@ Only a subset of the 19-item SEED_CATALOG is seeded by default. Remaining 13 req
 
 ---
 
+## 11. eCTD Co-Author Module — Full Integration Audit
+
+### 11.1 — Module Scale
+
+| Layer                                    | Files           | Lines        | Status                                            |
+| ---------------------------------------- | --------------- | ------------ | ------------------------------------------------- |
+| Client Pages                             | 9               | ~32,818      | 1 primary (13,461L), 2 partial, 2 backup, 4 stubs |
+| Client Components (`coauthor/`)          | 38              | ~16,501      | 36 implemented, 2 stubs                           |
+| Client Services                          | 3               | ~793         | 2 implemented, 1 stub (42L)                       |
+| Server Routes (mounted)                  | 2               | **46**       | ⚠️ **BOTH ARE 23-LINE STUBS**                     |
+| Server Routes (real logic, disconnected) | 6               | ~8,581       | Implemented but NOT wired to `/api/coauthor`      |
+| Server Services                          | 7               | ~3,441       | Fully implemented                                 |
+| Shadow Service (Python)                  | 8               | ~2,363       | Fully implemented                                 |
+| Backend Python                           | 4               | ~1,406       | Fully implemented                                 |
+| IND eCTD Compiler                        | 2               | ~439         | Fully implemented                                 |
+| DB Schema (eCTD tables)                  | 6 tables        | ~500         | Fully defined with relations                      |
+| **TOTAL**                                | **~100+ files** | **~67,000+** | **Client: 95% / Server routes: 5%**               |
+
+### 11.2 — Client-Server Endpoint Mismatch (CRITICAL)
+
+The primary `CoAuthor.jsx` (13,461 lines) calls these server endpoints:
+
+| #   | Client Calls To                                       | Exists on Server? | What Server Returns                  |
+| --- | ----------------------------------------------------- | ----------------- | ------------------------------------ |
+| 1   | `POST /api/coauthor/documents`                        | ❌ **NO**         | 404 or falls to catch-all            |
+| 2   | `GET /api/coauthor/documents/:id/versions`            | ❌ **NO**         | 404                                  |
+| 3   | `POST /api/coauthor/documents/:id/restore/:versionId` | ❌ **NO**         | 404                                  |
+| 4   | `GET /api/coauthor/ectd-modules/tree-with-counts`     | ❌ **NO**         | 404                                  |
+| 5   | `GET /api/coauthor/documents/section/:sectionId`      | ❌ **NO**         | 404                                  |
+| 6   | `POST /api/coauthor/components/ingest`                | ❌ **NO**         | 404                                  |
+| 7   | `GET /api/coauthor/ectd-modules/:sectionId`           | ❌ **NO**         | 404                                  |
+| 8   | `POST /api/coauthor/modules/:id/documents`            | ❌ **NO**         | 404                                  |
+| 9   | `POST /api/coauthor/validate`                         | ❌ **NO**         | 404                                  |
+| 10  | `GET /api/coauthor/validate/history/:documentId`      | ❌ **NO**         | 404                                  |
+| 11  | `GET /api/coauthor/validate/export/:validationId`     | ❌ **NO**         | 404                                  |
+| 12  | `GET /api/coauthor/validate/latest/:documentId`       | ❌ **NO**         | 404                                  |
+| 13  | `GET /api/coauthor/documents/:id/status-history`      | ❌ **NO**         | 404                                  |
+| 14  | `PATCH /api/coauthor/documents/:id/status`            | ❌ **NO**         | 404                                  |
+| 15  | `POST /api/coauthor/import-word`                      | ❌ **NO**         | 404                                  |
+| 16  | `POST /api/coauthor/export`                           | ❌ **NO**         | 404                                  |
+| 17  | `POST /api/coauthor/search`                           | ❌ **NO**         | 404                                  |
+| 18  | `GET /api/coauthor/components/statistics`             | ❌ **NO**         | 404                                  |
+| 19  | `GET /api/coauthor/sessions`                          | ✅ Yes            | `{ sessions: [], message: 'ready' }` |
+| 20  | `POST /api/coauthor/sessions`                         | ✅ Yes            | `{ success: true, session: {...} }`  |
+
+**Result: 2 of 20 endpoints exist. 18 are missing.** The eCTD Co-Author UI is essentially non-functional on the server side.
+
+### 11.3 — Where Real Logic Lives (Disconnected Routes)
+
+The actual eCTD business logic exists but is mounted at different paths:
+
+| Real Route File                        | Mount Point                 | Endpoints                                     | CoAuthor UI Uses?               |
+| -------------------------------------- | --------------------------- | --------------------------------------------- | ------------------------------- |
+| `authoring.router.ts` (5,126L)         | `/api/regulatory/*`         | Document authoring + eCTD packager bridge     | ❌ Not called from CoAuthor.jsx |
+| `documentAuthoring.routes.ts` (2,047L) | `/api/document-authoring/*` | 21 CFR Part 11 authoring + eCTD export        | ❌ Not called from CoAuthor.jsx |
+| `phase6.routes.ts` (591L)              | `/api/phase6/*`             | eCTD module tree, folder seeding, scaffolding | ❌ Not called from CoAuthor.jsx |
+| `leaves.js` (401L)                     | `/api/leaves/*`             | eCTD v4.0 validation hints                    | ❌ Not called                   |
+| `contextual-guidance.js` (113L)        | `/api/guidance/*`           | eCTD section guidance                         | ❌ Not called                   |
+| `predictive-sections.ts` (299L)        | `/api/predictive/*`         | AI analysis for eCTD                          | ❌ Not called                   |
+
+**The fix requires either:**
+
+1. Implementing all 18 missing endpoints in `server/routes/coauthor.ts`, OR
+2. Rewiring `CoAuthor.jsx` to call the existing real routes, OR
+3. Creating a proxy layer that maps `/api/coauthor/*` → existing real endpoints
+
+### 11.4 — Client Components (38 total)
+
+| Category                | Components                                                                                                                                                                   | Lines  | Status             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------ |
+| **Document Management** | ComponentManagementSystem, DocumentPreview, DocumentSelector, DraftEditor, SectionEditor, SectionHeader, SectionReorder, SmartBlocks, TemplateEditor                         | ~7,240 | ✅ All implemented |
+| **Collaboration**       | CollaborationSidebar, CollaborationPresence, CursorDisplay, LumenChatPane, AICopilotPanel                                                                                    | ~1,342 | ✅ All implemented |
+| **Search**              | AdvancedSearchPanel, GlobalSearchComponent, SearchSuggestions, RegulatorySearch                                                                                              | ~1,902 | ✅ All implemented |
+| **Workflow**            | WorkflowTimeline, VersionHistory, ActivityFeed, ComplianceCommandCenter, SubmissionDashboardPanel, TimelineSimulator                                                         | ~3,791 | ✅ All implemented |
+| **Navigation/UX**       | NotificationCenter, ToastNotifications, ExportModal, HistoryModal, GuidancePanel, AnnotationToolbar, CanvasSidebar, ModuleDashboard, RiskAnalysisWidget, ImportFromINDDialog | ~3,984 | ✅ All implemented |
+| **Integration**         | CoauthorModule, AskDataRoomPanel                                                                                                                                             | ~843   | ✅ Implemented     |
+| **Stubs**               | SubmissionProgress, CanvasWorkbenchModule                                                                                                                                    | ~53    | ⚠️ Stubs           |
+
+### 11.5 — Client Services
+
+| Service                | File                              | Lines | Status         | Detail                                       |
+| ---------------------- | --------------------------------- | ----- | -------------- | -------------------------------------------- |
+| `coauthorService`      | `coauthorService.js`              | 196   | ✅ Implemented | Document CRUD, export, validation API client |
+| `collaborationService` | `coauthorCollaborationService.js` | 555   | ✅ Implemented | WebSocket collab, cursor sync, presence      |
+| `workspaceService`     | `coauthorWorkspaceService.js`     | 42    | ⚠️ Stub        | Workspace state management skeleton          |
+
+### 11.6 — Server Services (Implemented but not routed to CoAuthor)
+
+| Service                       | Lines | Purpose                                                                                           | Connected to CoAuthor?                                  |
+| ----------------------------- | ----- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `ectdService.ts`              | 489   | Dream eCTD Machine — pyramid init, tree, module compile, XML backbone, change control, cross-refs | ❌ Not wired                                            |
+| `ECTDScaffoldingService.ts`   | 465   | Module structure caching, project folder hierarchy, multi-agency (FDA/EMA/PMDA)                   | ❌ Via phase6.routes only                               |
+| `eventBus.js`                 | 413   | IND ↔ CoAuthor event bridge (6 event types)                                                       | ⚠️ Events defined but no CoAuthor route handler listens |
+| `componentExtraction.js`      | 559   | Component extraction for eCTD documents                                                           | ❌ Not wired to CoAuthor                                |
+| `unifiedDocumentIngestion.js` | 1,495 | Full eCTD document pipeline: CTD module detection, section mapping, ZIP handling                  | ❌ Not wired                                            |
+| `ReleaseHashGenerator.ts`     | 520   | eCTD package SHA256 hash generation                                                               | ✅ Via phase6.routes                                    |
+| `mockVault.ts`                | ~400  | 3 mock documents with eCTD metadata                                                               | ❌ Not used by CoAuthor                                 |
+
+### 11.7 — Shadow Service (Python — Fully Implemented)
+
+| File                  | Lines | Purpose                                                                                   | Status                  |
+| --------------------- | ----- | ----------------------------------------------------------------------------------------- | ----------------------- |
+| `router_ectd.py`      | 773   | Full CRUD: modules, packages, documents, validation, delivery                             | ✅ IMPLEMENTED          |
+| `models_ectd.py`      | 303   | Pydantic models: PackageStatus, DocumentStatus, ECTDOperation (new/replace/append/delete) | ✅ IMPLEMENTED          |
+| `sql_ectd.py`         | 278   | All SQL for `ectd.*` schema                                                               | ✅ IMPLEMENTED          |
+| `ectd_assembly.py`    | 226   | Generates eCTD sequence ZIP: folder skeleton, index.xml, us-regional.xml, checksums       | ✅ IMPLEMENTED          |
+| `leaf_registry.py`    | 182   | Links stubs bundle leaf_map + sequence_plan to artifact bytes                             | ✅ IMPLEMENTED          |
+| `proof_pack_zip.py`   | 397   | Proof Pack ZIP assembly (v1.1 eCTD-Drop-In)                                               | ✅ IMPLEMENTED          |
+| `router_ectd_stub.py` | 204   | Skeleton fallback (returns 501)                                                           | ⚠️ STUB (fallback only) |
+
+### 11.8 — Database Schema (6 eCTD tables)
+
+| Table                   | Purpose                              | Key Fields                                                       | Status              |
+| ----------------------- | ------------------------------------ | ---------------------------------------------------------------- | ------------------- |
+| `ectd_modules`          | Hierarchical eCTD structure (M1–M5)  | moduleNumber, moduleName, level, isLeaf, ichGuidance, isRequired | ✅ Defined, indexed |
+| `ectd_granules`         | Atomic document units within modules | granuleId (e.g. "3.2.P.1"), status, version, lock, ichSection    | ✅ Defined, indexed |
+| `ectd_templates`        | Reusable document templates          | category, type, contentStructure, active                         | ✅ Defined          |
+| `ectd_compilations`     | Module compilation records           | xml_backbone (eCTD XML structure)                                | ✅ Defined          |
+| `ectd_change_control`   | Change control per granule           | sequence_number, xml_operation                                   | ✅ Defined          |
+| `ectd_cross_references` | Cross-module reference links         | validation_status, xml_hyperlink                                 | ✅ Defined          |
+
+All tables: org-scoped, full Drizzle ORM relations, complete index coverage.
+
+### 11.9 — IND ↔ eCTD Integration
+
+| Component                 | Status         | Detail                                                                                                                                        |
+| ------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ectd4_compiler.py`       | ✅ IMPLEMENTED | Native eCTD 4.0 compiler: compile(), generate_docx(), sign_and_audit() (FHIR AuditEvent), generate_backbone() (JSON eCTD 4.0)                 |
+| `content_controls.py`     | ✅ IMPLEMENTED | SDT injection with eCTD 4.0 camelCase convention                                                                                              |
+| `ImportFromINDDialog.jsx` | ✅ IMPLEMENTED | Client-side IND→eCTD import dialog                                                                                                            |
+| `EventBus` events         | ⚠️ DEFINED     | `COAUTHOR_DOCUMENT_LOCKED`, `COAUTHOR_SEQUENCE_READY`, `COAUTHOR_VALIDATION_FAILED`, etc. — but no server handler processes them for CoAuthor |
+| `indSequenceRoutes.mjs`   | ⚠️ PARTIAL     | eCTD structure validation + package generation                                                                                                |
+
+### 11.10 — Client Routes (App.jsx)
+
+| Route                   | Component                   | Purpose                 |
+| ----------------------- | --------------------------- | ----------------------- |
+| `/coauthor`             | `<CoAuthor />`              | Primary entry point     |
+| `/working-coauthor`     | `<CoAuthor />`              | Alias                   |
+| `/coauthor-clean`       | `<CoAuthor />`              | Clean slate alias       |
+| `/ectd-co-author`       | `<FulleCTDCoAuthor />`      | Full system wrapper     |
+| `/coauthor/timeline`    | `<CoAuthor />`              | Timeline view           |
+| `/coauthor/ask-lumen`   | `<CoAuthor />`              | AI assistant            |
+| `/coauthor/canvas`      | `<CoAuthor />`              | Canvas workspace        |
+| `/coauthor/validation`  | `<ValidationDashboard />`   | Validation dashboard    |
+| `/coauthor/templates`   | `<DocumentTemplates />`     | Template browser        |
+| `/create-document`      | `<SimpleDocumentCreator />` | Quick document creation |
+| `/portal/ectd-coauthor` | Portal module               | Client portal entry     |
+
+### 11.11 — eCTD Co-Author Readiness Matrix
+
+| Feature                    | Client UI                          | Server Route    | Server Service              | DB                   | Shadow Service    | Overall |
+| -------------------------- | ---------------------------------- | --------------- | --------------------------- | -------------------- | ----------------- | ------- |
+| Document CRUD              | ✅ 13,461L                         | ❌ **STUB**     | ✅ ectdService              | ✅                   | ✅ router_ectd    | **25%** |
+| eCTD Module Tree           | ✅ Component                       | ❌ **MISSING**  | ✅ ECTDScaffoldingService   | ✅ ectd_modules      | ✅                | **25%** |
+| Document Validation        | ✅ ComplianceCommandCenter         | ❌ **MISSING**  | ✅ (in authoring.router)    | ✅                   | ✅ sql_ectd       | **25%** |
+| Version History            | ✅ VersionHistory.jsx              | ❌ **MISSING**  | —                           | ✅ ectd_granules     | —                 | **20%** |
+| Collaboration (WebSocket)  | ✅ CollaborationSidebar + Presence | ❌ **MISSING**  | —                           | —                    | —                 | **15%** |
+| Component Ingestion (CCMS) | ✅ ComponentManagementSystem       | ❌ **MISSING**  | ✅ componentExtraction      | —                    | —                 | **25%** |
+| Word Import                | ✅ ImportFromINDDialog             | ❌ **MISSING**  | ✅ unifiedDocumentIngestion | —                    | —                 | **25%** |
+| Export (Word/PDF/eCTD)     | ✅ ExportModal                     | ❌ **MISSING**  | ✅ (in documentAuthoring)   | —                    | ✅ ectd_assembly  | **25%** |
+| Search                     | ✅ GlobalSearchComponent           | ❌ **MISSING**  | —                           | —                    | —                 | **10%** |
+| Status Workflow            | ✅ WorkflowTimeline                | ❌ **MISSING**  | —                           | —                    | —                 | **10%** |
+| eCTD Package Assembly      | —                                  | —               | ✅ ectdService              | ✅ ectd_compilations | ✅ ectd_assembly  | **80%** |
+| eCTD Hashing/Signing       | —                                  | ✅ phase6 route | ✅ ReleaseHashGenerator     | —                    | —                 | **90%** |
+| eCTD 4.0 Compiler          | —                                  | —               | —                           | —                    | ✅ ectd4_compiler | **90%** |
+| **Average**                |                                    |                 |                             |                      |                   | **35%** |
+
+---
+
+## 12. eCTD Co-Author — Missing Endpoints Implementation Plan
+
+### Endpoints Required (18 total)
+
+These must be implemented in `server/routes/coauthor.ts` to connect the existing UI to existing services:
+
+#### Group A: Document CRUD (5 endpoints)
+
+```
+POST   /api/coauthor/documents                           # Create/list docs → wire to ectdService
+GET    /api/coauthor/documents/:id/versions              # Version history → wire to ectd_granules
+POST   /api/coauthor/documents/:id/restore/:versionId    # Restore version → wire to ectd_change_control
+GET    /api/coauthor/documents/:id/status-history        # Status audit trail
+PATCH  /api/coauthor/documents/:id/status                # Update doc status
+```
+
+#### Group B: eCTD Module Tree (3 endpoints)
+
+```
+GET    /api/coauthor/ectd-modules/tree-with-counts       # → ECTDScaffoldingService.getModuleStructure()
+GET    /api/coauthor/ectd-modules/:sectionId             # → ECTDScaffoldingService
+GET    /api/coauthor/documents/section/:sectionId        # Docs per section → ectdService
+```
+
+#### Group C: Document Operations (3 endpoints)
+
+```
+POST   /api/coauthor/modules/:id/documents               # Create doc in module → ectdService
+POST   /api/coauthor/import-word                         # Word import → unifiedDocumentIngestion
+POST   /api/coauthor/export                              # Export → documentAuthoring export logic
+```
+
+#### Group D: Validation (4 endpoints)
+
+```
+POST   /api/coauthor/validate                            # Validate doc → authoring.router validation
+GET    /api/coauthor/validate/history/:documentId        # Validation history
+GET    /api/coauthor/validate/export/:validationId       # Export validation report
+GET    /api/coauthor/validate/latest/:documentId         # Latest validation result
+```
+
+#### Group E: Components & Search (3 endpoints)
+
+```
+POST   /api/coauthor/components/ingest                   # Component ingestion → componentExtraction
+GET    /api/coauthor/components/statistics                # Component stats
+POST   /api/coauthor/search                              # Full-text search
+```
+
+### Effort Estimate: **5–7 days**
+
+Most endpoints can delegate to existing services. The work is primarily:
+
+1. Import existing services into `coauthor.ts`
+2. Add auth middleware
+3. Map request/response formats
+4. Wire DB queries via Drizzle ORM
+
+---
+
 ## Appendix A: Complete File Index
 
 ### CERV2 Core Files
@@ -565,6 +802,52 @@ Only a subset of the 19-item SEED_CATALOG is seeded by default. Remaining 13 req
 | `server/routes/ind-database.routes.ts`    | 8 IND database endpoints                      |
 | `server/routes/ind-submissions.routes.ts` | 6 IND submission endpoints                    |
 | `server/routes/ind.ts`                    | 3 basic IND endpoints                         |
+
+### eCTD Co-Author — Client
+
+| File                                                  | Lines   | Purpose                     |
+| ----------------------------------------------------- | ------- | --------------------------- |
+| `client/src/pages/CoAuthor.jsx`                       | 13,461  | Primary eCTD Co-Author page |
+| `client/src/pages/FulleCTDCoAuthor.jsx`               | 1,181   | Full system wrapper         |
+| `client/src/pages/SearchResultsPage.jsx`              | 836     | CoAuthor search results     |
+| `client/src/components/coauthor/` (38 files)          | ~16,501 | All UI components           |
+| `client/src/services/coauthorService.js`              | 196     | Core API client             |
+| `client/src/services/coauthorCollaborationService.js` | 555     | WebSocket collaboration     |
+| `client/src/services/coauthorWorkspaceService.js`     | 42      | Workspace state (STUB)      |
+
+### eCTD Co-Author — Server
+
+| File                                             | Lines | Status                           |
+| ------------------------------------------------ | ----- | -------------------------------- |
+| `server/routes/coauthor.ts`                      | 23    | ⚠️ **STUB** — only /sessions     |
+| `server/routes/ectd-documents.ts`                | 23    | ⚠️ **STUB** — returns empty      |
+| `server/routes/phase6.routes.ts`                 | 591   | ✅ eCTD scaffolding, hashing     |
+| `server/routes/authoring.router.ts`              | 5,126 | ✅ Doc authoring + eCTD packager |
+| `server/routes/documentAuthoring.routes.ts`      | 2,047 | ✅ 21 CFR Part 11                |
+| `server/services/ectdService.ts`                 | 489   | ✅ Dream eCTD Machine            |
+| `server/services/ectd/ECTDScaffoldingService.ts` | 465   | ✅ Module structure              |
+| `server/services/eventBus.js`                    | 413   | ✅ IND ↔ CoAuthor events         |
+| `server/services/componentExtraction.js`         | 559   | ✅ Component extraction          |
+| `server/services/unifiedDocumentIngestion.js`    | 1,495 | ✅ Full eCTD pipeline            |
+| `server/services/export/ReleaseHashGenerator.ts` | 520   | ✅ SHA256 hashing                |
+
+### eCTD Co-Author — Shadow Service
+
+| File                                                       | Lines | Purpose            |
+| ---------------------------------------------------------- | ----- | ------------------ |
+| `shadow_service/shadow_service/router_ectd.py`             | 773   | Full CRUD for eCTD |
+| `shadow_service/shadow_service/models_ectd.py`             | 303   | Pydantic models    |
+| `shadow_service/shadow_service/sql_ectd.py`                | 278   | eCTD SQL queries   |
+| `shadow_service/shadow_service/renderers/ectd_assembly.py` | 226   | eCTD ZIP assembly  |
+| `ind_automation/compilers/ectd4_compiler.py`               | 384   | eCTD 4.0 compiler  |
+
+### eCTD Static Files
+
+| Path                                | Purpose                            |
+| ----------------------------------- | ---------------------------------- |
+| `ectd/TEST001/`                     | Sample eCTD sequences (0001, 0002) |
+| `ectd_test/`                        | Test fixtures (m1–m3)              |
+| `ectd-stubs/ectd_stubs.bundle.json` | Schemas, leaf_map, sequence_plan   |
 
 ---
 
@@ -653,6 +936,51 @@ POST   /api/ind-submissions/:id/ind-step             # Advance step
 POST   /api/ind-submissions/:id/transition-to-ectd   # Transition to eCTD
 ```
 
+### eCTD Co-Author — 20 endpoints (2 exist, 18 MISSING)
+
+```
+# EXISTING (23-line stub file)
+GET    /api/coauthor/sessions                            # ✅ Returns empty sessions
+POST   /api/coauthor/sessions                            # ✅ Creates session object
+
+# MISSING — called by CoAuthor.jsx but NOT implemented
+POST   /api/coauthor/documents                           # ❌ Create/list documents
+GET    /api/coauthor/documents/:id/versions              # ❌ Version history
+POST   /api/coauthor/documents/:id/restore/:versionId    # ❌ Restore version
+GET    /api/coauthor/ectd-modules/tree-with-counts       # ❌ eCTD module tree
+GET    /api/coauthor/documents/section/:sectionId        # ❌ Docs per section
+POST   /api/coauthor/components/ingest                   # ❌ Component ingestion
+GET    /api/coauthor/ectd-modules/:sectionId             # ❌ Module lookup
+POST   /api/coauthor/modules/:id/documents               # ❌ Create doc in module
+POST   /api/coauthor/validate                            # ❌ Document validation
+GET    /api/coauthor/validate/history/:documentId        # ❌ Validation history
+GET    /api/coauthor/validate/export/:validationId       # ❌ Export validation
+GET    /api/coauthor/validate/latest/:documentId         # ❌ Latest validation
+GET    /api/coauthor/documents/:id/status-history        # ❌ Status audit trail
+PATCH  /api/coauthor/documents/:id/status                # ❌ Update doc status
+POST   /api/coauthor/import-word                         # ❌ Word import
+POST   /api/coauthor/export                              # ❌ Export to formats
+POST   /api/coauthor/search                              # ❌ Full-text search
+GET    /api/coauthor/components/statistics                # ❌ Component stats
+```
+
+### eCTD Routes (Implemented, separate mount points)
+
+```
+GET    /api/phase6/ectd/modules                          # ✅ Module structure
+GET    /api/phase6/ectd/modules/tree                     # ✅ Nested tree
+POST   /api/phase6/ectd/projects/:id/seed                # ✅ Seed folder hierarchy
+GET    /api/phase6/ectd/projects/:id/folders              # ✅ Project folders
+GET    /api/phase6/ectd/projects/:id/folders/tree         # ✅ Folder tree
+PATCH  /api/phase6/ectd/folders/:id/status                # ✅ Update folder status
+POST   /api/phase6/release/ectd-hash                      # ✅ SHA256 package hash
+GET    /api/ectd/templates                                # ✅ List eCTD templates
+GET    /api/ectd/templates/:id                            # ✅ Get template by ID
+GET    /api/ectd-documents                                # ⚠️ STUB — returns []
+GET    /api/ectd-documents/:id                            # ⚠️ STUB — returns null
+GET    /api/atoms                                         # ⚠️ STUB — returns []
+```
+
 ---
 
-_Generated by Phase 0-1 Readiness Audit — CERV2 Platform v1.0.0_
+_Generated by Phase 0-1 Readiness Audit — CERV2 Platform v1.0.0 (Updated with eCTD Co-Author audit)_
