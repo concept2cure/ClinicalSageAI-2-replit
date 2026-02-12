@@ -1247,4 +1247,126 @@ router.get(
   }
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 7.0 — Document Render Proxies
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /:programId/predicate-intel/render — Create + execute render job
+ */
+router.post(
+  '/:programId/predicate-intel/render',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id || 'unknown';
+    const { proofPackId, artifactType, requestId } = req.body || {};
+
+    if (!proofPackId || !artifactType) {
+      return res.status(400).json({ error: 'proofPackId and artifactType are required' });
+    }
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>('POST', '/render/jobs', {
+        proof_pack_id: proofPackId,
+        artifact_type: artifactType,
+        user_id: userId,
+        request_id: requestId || '',
+      });
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] render job failed:', err.message);
+      return res.status(502).json({ error: 'Render service temporarily unavailable' });
+    }
+  }
+);
+
+/**
+ * GET /:programId/predicate-intel/render/:renderJobId/download — Download rendered artifact
+ */
+router.get(
+  '/:programId/predicate-intel/render/:renderJobId/download',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { renderJobId } = req.params;
+    const userId = (req as any).user?.id || 'unknown';
+
+    try {
+      const result = await shadowFetch<ArrayBuffer>(
+        'GET',
+        `/render/jobs/${encodeURIComponent(renderJobId)}/download?user_id=${encodeURIComponent(userId)}`,
+        undefined,
+        { responseType: 'arraybuffer' }
+      );
+
+      if (result.status !== 200) {
+        // Try to parse error from raw response
+        try {
+          const errBody = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(result.data as unknown as ArrayBuffer))
+          );
+          return res.status(result.status).json(errBody);
+        } catch {
+          return res.status(result.status).json({ error: 'Download failed' });
+        }
+      }
+
+      // Forward headers
+      const contentType = result.headers['content-type'] || 'application/octet-stream';
+      const contentDisposition =
+        result.headers['content-disposition'] || 'attachment; filename="artifact"';
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', contentDisposition);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'no-store');
+      if (result.headers['x-render-job-id']) {
+        res.setHeader('X-Render-Job-Id', result.headers['x-render-job-id']);
+      }
+      if (result.headers['x-artifact-hash']) {
+        res.setHeader('X-Artifact-Hash', result.headers['x-artifact-hash']);
+      }
+
+      return res.status(200).send(Buffer.from(result.data as unknown as ArrayBuffer));
+    } catch (err: any) {
+      console.error('[defense-packet] render download failed:', err.message);
+      return res.status(502).json({ error: 'Download service temporarily unavailable' });
+    }
+  }
+);
+
+/**
+ * GET /:programId/predicate-intel/render/proof-pack/:proofPackId — List render jobs
+ */
+router.get(
+  '/:programId/predicate-intel/render/proof-pack/:proofPackId',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { proofPackId } = req.params;
+
+    try {
+      const result = await shadowFetch<Record<string, unknown>>(
+        'GET',
+        `/render/proof-pack/${encodeURIComponent(proofPackId)}`
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json(result.data);
+      }
+
+      return res.status(200).json(result.data);
+    } catch (err: any) {
+      console.error('[defense-packet] render list failed:', err.message);
+      return res.status(502).json({ error: 'Render list service temporarily unavailable' });
+    }
+  }
+);
+
 export default router;

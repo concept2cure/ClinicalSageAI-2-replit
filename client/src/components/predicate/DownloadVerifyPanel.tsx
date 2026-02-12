@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   FileJson,
   FileSpreadsheet,
+  FileText,
   Download,
   Lock,
   Hash,
@@ -34,6 +35,7 @@ import {
 import {
   useExportDefensePacketJSON,
   useExportDefensePacketCSV,
+  useRenderProofPackPDF,
 } from '@/hooks/use-predicate-intelligence';
 import { RISK_CODES_LOCK_HASH } from '../../../shared/types/generated';
 
@@ -229,6 +231,7 @@ export function DownloadVerifyPanel({
 }: DownloadVerifyPanelProps) {
   const jsonQuery = useExportDefensePacketJSON(programId, manifestHash);
   const csvMut = useExportDefensePacketCSV();
+  const pdfMut = useRenderProofPackPDF(programId);
   const [zipDownloading, setZipDownloading] = useState(false);
 
   const handleCSV = useCallback(() => {
@@ -293,6 +296,22 @@ export function DownloadVerifyPanel({
     }
   }, [programId, manifestHash, handleJSON]);
 
+  const handlePDF = useCallback(() => {
+    pdfMut.mutate(
+      { manifestHash },
+      {
+        onSuccess: ({ blob, filename }) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+      }
+    );
+  }, [manifestHash, pdfMut]);
+
   return (
     <div className="space-y-4">
       {/* Header Card */}
@@ -339,7 +358,22 @@ export function DownloadVerifyPanel({
           </div>
 
           {/* Download buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <Button
+              variant="outline"
+              className="h-20 flex flex-col items-center justify-center gap-1"
+              onClick={handlePDF}
+              disabled={pdfMut.isPending}
+            >
+              {pdfMut.isPending ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <FileText className="h-6 w-6 text-red-600" />
+              )}
+              <span className="text-sm font-medium">Generate PDF</span>
+              <span className="text-[10px] text-muted-foreground">Branded defense report</span>
+            </Button>
+
             <Button
               variant="outline"
               className="h-20 flex flex-col items-center justify-center gap-1"

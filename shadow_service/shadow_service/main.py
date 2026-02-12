@@ -93,6 +93,7 @@ from .router_orchestration import router as orchestration_router
 from .router_evidence import router as evidence_router
 from .router_docx_factory import router as docx_factory_router
 from .router_predicate import router as predicate_router
+from .router_render import router as render_router
 
 # Configure logging
 logging.basicConfig(
@@ -171,6 +172,7 @@ app.include_router(orchestration_router)  # Phase 4 Orchestration Kernel
 app.include_router(evidence_router)       # Phase 5 Evidence Fabric
 app.include_router(docx_factory_router)   # Phase 6 DOCX Factory
 app.include_router(predicate_router)     # Phase 6.6 Predicate Intelligence
+app.include_router(render_router)        # Phase 7.0 Document Renderers
 
 
 # =============================================================================

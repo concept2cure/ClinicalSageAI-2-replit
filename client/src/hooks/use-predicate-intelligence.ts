@@ -774,3 +774,113 @@ export function useLineageGraph(programId: string, kNumber: string, maxDepth = 2
     refetchOnWindowFocus: false,
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 7.0 — Document Renderers
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const renderKeys = {
+  all: ['render'] as const,
+  jobs: (programId: string, proofPackId: string) =>
+    [...renderKeys.all, 'jobs', programId, proofPackId] as const,
+};
+
+interface RenderJobResult {
+  render_job_id: string;
+  proof_pack_id: string;
+  artifact_type: string;
+  status: string;
+  inputs_hash: string;
+  artifact_hash?: string;
+  artifact_size_bytes?: number;
+  artifact_path?: string;
+  created_at: string;
+  completed_at: string;
+}
+
+/**
+ * Render a Defense Packet PDF.
+ * Two-step: auto-persist proof pack (idempotent) → create render job → download binary.
+ * POST /api/programs/:programId/predicate-intel/render
+ * GET  /api/programs/:programId/predicate-intel/render/:renderJobId/download
+ */
+export function useRenderProofPackPDF(programId: string) {
+  return useMutation<
+    { blob: Blob; filename: string; artifactHash?: string },
+    Error,
+    { manifestHash: string }
+  >({
+    mutationFn: async ({ manifestHash }) => {
+      const orgId = localStorage.getItem('organizationId') ?? '';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-organization-id': orgId,
+      };
+
+      // Step 1: Persist proof pack (idempotent — returns existing if already persisted)
+      const persistRes = await fetch(
+        `/api/programs/${programId}/predicate-intel/proof-pack/persist`,
+        {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ manifestHash }),
+        }
+      );
+      if (!persistRes.ok) {
+        const errBody = await persistRes.json().catch(() => ({}));
+        throw new Error(
+          errBody.error || errBody.detail || `Persist failed: ${persistRes.statusText}`
+        );
+      }
+      const persistData = await persistRes.json();
+      const proofPackId = persistData.proof_pack_id || persistData.id;
+      if (!proofPackId) {
+        throw new Error('Persist succeeded but no proof_pack_id returned');
+      }
+
+      // Step 2: Create + execute render job
+      const renderRes = await fetch(
+        `/api/programs/${programId}/predicate-intel/render`,
+        {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            proofPackId,
+            artifactType: 'defense_packet_pdf',
+          }),
+        }
+      );
+      if (!renderRes.ok) {
+        const errBody = await renderRes.json().catch(() => ({}));
+        throw new Error(
+          errBody.error || errBody.detail?.message || `Render failed: ${renderRes.statusText}`
+        );
+      }
+      const renderData: RenderJobResult = await renderRes.json();
+      const renderJobId = renderData.render_job_id;
+
+      // Step 3: Download the rendered PDF
+      const dlRes = await fetch(
+        `/api/programs/${programId}/predicate-intel/render/${encodeURIComponent(renderJobId)}/download`,
+        {
+          headers: { 'x-organization-id': orgId },
+          credentials: 'include',
+        }
+      );
+      if (!dlRes.ok) {
+        throw new Error(`Download failed: ${dlRes.statusText}`);
+      }
+
+      const blob = await dlRes.blob();
+      const cd = dlRes.headers.get('Content-Disposition');
+      const filename =
+        cd?.match(/filename="?([^"]+)"?/)?.[1] ??
+        `DefensePacketReport_${manifestHash.slice(0, 8)}.pdf`;
+      const artifactHash = dlRes.headers.get('X-Artifact-Hash') ?? undefined;
+
+      return { blob, filename, artifactHash };
+    },
+  });
+}
