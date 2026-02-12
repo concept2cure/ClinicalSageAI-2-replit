@@ -252,6 +252,149 @@ export async function renderPdfBuffersFor510k(
   };
 }
 
+export async function renderPdfBuffersForPma(content: any, pack: StylePack = stylePacks['pma_v1']) {
+  const sections = extractSectionsFromEditor(content);
+
+  const summaryInfo = buildSectionHtml(
+    'Summary and General Information',
+    selectSection(sections, 'Summary')?.html || selectSection(sections, 'General')?.html || '',
+    'Summary and general information content not found in the current document.'
+  );
+  const nonclinical = buildSectionHtml(
+    'Nonclinical Laboratory Studies',
+    selectSection(sections, 'Nonclinical')?.html ||
+      selectSection(sections, 'Laboratory')?.html ||
+      '',
+    'Nonclinical laboratory studies content not found in the current document.'
+  );
+  const clinical = buildSectionHtml(
+    'Clinical Investigations',
+    selectSection(sections, 'Clinical')?.html || '',
+    'Clinical investigations content not found in the current document.'
+  );
+  const manufacturing = buildSectionHtml(
+    'Manufacturing and Quality Systems',
+    selectSection(sections, 'Manufacturing')?.html ||
+      selectSection(sections, 'Quality')?.html ||
+      '',
+    'Manufacturing and quality systems content not found in the current document.'
+  );
+  const labeling = buildSectionHtml(
+    'Labeling',
+    selectSection(sections, 'Labeling')?.html || '',
+    'Labeling content not found in the current document.'
+  );
+  const riskBenefit = buildSectionHtml(
+    'Risk/Benefit Determination',
+    selectSection(sections, 'Risk')?.html || selectSection(sections, 'Benefit')?.html || '',
+    'Risk/benefit determination content not found in the current document.'
+  );
+  const postApproval = buildSectionHtml(
+    'Post-Approval Study / PMS',
+    selectSection(sections, 'Post-Approval')?.html || selectSection(sections, 'PMS')?.html || '',
+    'Post-approval study content not found in the current document.'
+  );
+
+  const [summaryPdf, nonclinPdf, clinPdf, mfgPdf, labelPdf, riskPdf, pmsPdf] = await Promise.all([
+    renderHtmlToPdf(await renderHtmlWithStylePack(summaryInfo, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(nonclinical, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(clinical, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(manufacturing, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(labeling, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(riskBenefit, pack)),
+    renderHtmlToPdf(await renderHtmlWithStylePack(postApproval, pack)),
+  ]);
+
+  return {
+    summaryInfo: summaryPdf,
+    nonclinical: nonclinPdf,
+    clinical: clinPdf,
+    manufacturing: mfgPdf,
+    labeling: labelPdf,
+    riskBenefit: riskPdf,
+    postApproval: pmsPdf,
+  };
+}
+
+export async function renderPdfBuffersForCer(
+  content: any,
+  pack: StylePack = stylePacks['cer_mdr_v1']
+) {
+  const sections = extractSectionsFromEditor(content);
+
+  const sota = buildSectionHtml(
+    'State of the Art',
+    selectSection(sections, 'State of the Art')?.html || '',
+    'State of the art content not found in the current document.'
+  );
+  const devicePurpose = buildSectionHtml(
+    'Device / Intended Purpose',
+    selectSection(sections, 'Device')?.html ||
+      selectSection(sections, 'Intended Purpose')?.html ||
+      '',
+    'Device/intended purpose content not found in the current document.'
+  );
+  const clinicalDataSet = buildSectionHtml(
+    'Clinical Data Set (Literature + Studies)',
+    selectSection(sections, 'Clinical Data')?.html ||
+      selectSection(sections, 'Literature')?.html ||
+      '',
+    'Clinical data set content not found in the current document.'
+  );
+  const appraisal = buildSectionHtml(
+    'Critical Appraisal & Weighting',
+    selectSection(sections, 'Appraisal')?.html || selectSection(sections, 'Weighting')?.html || '',
+    'Critical appraisal content not found in the current document.'
+  );
+  const benefitRisk = buildSectionHtml(
+    'Benefit–Risk Determination',
+    selectSection(sections, 'Benefit')?.html ||
+      selectSection(sections, 'Risk Determination')?.html ||
+      '',
+    'Benefit–risk determination content not found in the current document.'
+  );
+  const gspr = buildSectionHtml(
+    'GSPR Mapping',
+    selectSection(sections, 'GSPR')?.html || '',
+    'GSPR mapping content not found in the current document.'
+  );
+  const pmsPlan = buildSectionHtml(
+    'PMS Plan / PMCF',
+    selectSection(sections, 'PMS')?.html || selectSection(sections, 'PMCF')?.html || '',
+    'PMS plan content not found in the current document.'
+  );
+  const conclusions = buildSectionHtml(
+    'Conclusions & Recommendations',
+    selectSection(sections, 'Conclusions')?.html ||
+      selectSection(sections, 'Recommendations')?.html ||
+      '',
+    'Conclusions and recommendations content not found in the current document.'
+  );
+
+  const [sotaPdf, devicePdf, dataPdf, appraisalPdf, brPdf, gsprPdf, pmsPdf, conclPdf] =
+    await Promise.all([
+      renderHtmlToPdf(await renderHtmlWithStylePack(sota, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(devicePurpose, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(clinicalDataSet, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(appraisal, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(benefitRisk, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(gspr, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(pmsPlan, pack)),
+      renderHtmlToPdf(await renderHtmlWithStylePack(conclusions, pack)),
+    ]);
+
+  return {
+    stateOfArt: sotaPdf,
+    devicePurpose: devicePdf,
+    clinicalDataSet: dataPdf,
+    appraisal: appraisalPdf,
+    benefitRisk: brPdf,
+    gsprMapping: gsprPdf,
+    pmsPlan: pmsPdf,
+    conclusions: conclPdf,
+  };
+}
+
 export async function renderPdfForDocType(docType: string, content: any, packKey: string) {
   const pack = stylePacks[packKey];
   if (!pack) {
@@ -296,4 +439,24 @@ export async function renderDocxForDocType(docType: string, content: any) {
   });
 
   return Packer.toBuffer(doc);
+}
+
+/**
+ * Render a full combined PDF for any doc type using its style pack.
+ */
+export async function renderCombinedPdf(docType: string, content: any): Promise<Buffer> {
+  const packMap: Record<string, string> = {
+    cerv2_510k: '510k_v1',
+    cerv2_pma: 'pma_v1',
+    cerv2_cer: 'cer_mdr_v1',
+  };
+  const packKey = packMap[docType] || '510k_v1';
+  return renderPdfForDocType(docType, content, packKey);
+}
+
+/**
+ * Render a full combined DOCX for any doc type.
+ */
+export async function renderCombinedDocx(docType: string, content: any): Promise<Buffer> {
+  return renderDocxForDocType(docType, content);
 }

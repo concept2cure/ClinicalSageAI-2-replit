@@ -13,8 +13,14 @@ const BASE = process.env.CERV2_BASE_URL || 'http://localhost:5000';
 let pass = 0;
 let fail = 0;
 
-const ok = (label) => { pass++; console.log(`  ✅ ${label}`); };
-const no = (label, detail) => { fail++; console.error(`  ❌ ${label} — ${detail}`); };
+const ok = label => {
+  pass++;
+  console.log(`  ✅ ${label}`);
+};
+const no = (label, detail) => {
+  fail++;
+  console.error(`  ❌ ${label} — ${detail}`);
+};
 
 const json = async (url, opts = {}) => {
   const res = await fetch(`${BASE}${url}`, {
@@ -24,7 +30,11 @@ const json = async (url, opts = {}) => {
   });
   const text = await res.text();
   let data;
-  try { data = JSON.parse(text); } catch { data = text; }
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = text;
+  }
   return { status: res.status, data };
 };
 
@@ -33,7 +43,9 @@ console.log('\n🔬 1. Server Health');
 try {
   const { status, data } = await json('/api/health');
   status === 200 ? ok('GET /api/health → 200') : no('Health', `got ${status}`);
-} catch (e) { no('Health', e.message); }
+} catch (e) {
+  no('Health', e.message);
+}
 
 // ─── 2. eSTAR Route Protection ──────────────────────────────────────────────
 console.log('\n🔬 2. eSTAR Route (/api/510k/estar/build)');
@@ -69,7 +81,9 @@ try {
   noAuth.status !== 404
     ? ok('eSTAR route is mounted (not 404)')
     : no('eSTAR mount', 'got 404 — route not mounted');
-} catch (e) { no('eSTAR route', e.message); }
+} catch (e) {
+  no('eSTAR route', e.message);
+}
 
 // ─── 3. CERV2 Sections Persistence ──────────────────────────────────────────
 console.log('\n🔬 3. CERV2 Sections CRUD (/api/cerv2-sections)');
@@ -81,7 +95,7 @@ try {
   } else if (list.status === 400) {
     ok('GET /api/cerv2-sections → 400 (org context required — auth enforced)');
   } else {
-    no('Sections list', `unexpected ${list.status}: ${JSON.stringify(list.data).slice(0,100)}`);
+    no('Sections list', `unexpected ${list.status}: ${JSON.stringify(list.data).slice(0, 100)}`);
   }
 
   // 3b. POST create (without auth — may 500 if DB unavailable, just confirm route exists)
@@ -98,7 +112,9 @@ try {
   versions.status !== 404
     ? ok(`GET /api/cerv2-sections/:id/versions route exists (${versions.status})`)
     : no('Sections versions', 'route not found (404)');
-} catch (e) { no('CERV2 Sections', e.message); }
+} catch (e) {
+  no('CERV2 Sections', e.message);
+}
 
 // ─── 4. CERV2 Document Routes ───────────────────────────────────────────────
 console.log('\n🔬 4. CERV2 Document Routes (/api/cerv2)');
@@ -127,25 +143,30 @@ try {
   save.status !== 404
     ? ok(`POST /api/cerv2/documents/:id/save route exists (${save.status})`)
     : no('Document save', 'route not found (404)');
-} catch (e) { no('CERV2 Documents', e.message); }
+} catch (e) {
+  no('CERV2 Documents', e.message);
+}
 
 // ─── 5. DocType Config Alignment ────────────────────────────────────────────
 console.log('\n🔬 5. DocType Config Alignment');
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 const root = resolve(import.meta.dirname, '..');
-const read = (p) => readFileSync(resolve(root, p), 'utf-8');
+const read = p => readFileSync(resolve(root, p), 'utf-8');
 try {
   // docTypes.js is CJS — read as text and parse
   const dtContent = read('server/common/docTypes.js');
 
   // 5a. All three doc types exist
-  const has510k = dtContent.includes("cerv2_510k");
-  const hasPma = dtContent.includes("cerv2_pma");
-  const hasCer = dtContent.includes("cerv2_cer");
+  const has510k = dtContent.includes('cerv2_510k');
+  const hasPma = dtContent.includes('cerv2_pma');
+  const hasCer = dtContent.includes('cerv2_cer');
   has510k && hasPma && hasCer
     ? ok('DOC_TYPES has all 3 keys: cerv2_510k, cerv2_pma, cerv2_cer')
-    : no('DOC_TYPES keys', `missing: ${!has510k?'510k ':''}${!hasPma?'pma ':''}${!hasCer?'cer':''}`);
+    : no(
+        'DOC_TYPES keys',
+        `missing: ${!has510k ? '510k ' : ''}${!hasPma ? 'pma ' : ''}${!hasCer ? 'cer' : ''}`
+      );
 
   // 5b. 510k has "7. Labeling" (aligned title)
   dtContent.includes("'7. Labeling'") || dtContent.includes('"7. Labeling"')
@@ -165,7 +186,9 @@ try {
   cerSectionCount >= 5
     ? ok(`CER has ${cerSectionCount} sections`)
     : no('CER sections', `only ${cerSectionCount} sections`);
-} catch (e) { no('DocType config', e.message); }
+} catch (e) {
+  no('DocType config', e.message);
+}
 
 // ─── 6. File-Level Code Verification ────────────────────────────────────────
 console.log('\n🔬 6. File-Level Code Verification');
@@ -182,7 +205,9 @@ try {
   sections.includes('cerv2510kSections') && sections.includes('cerv2SectionVersions')
     ? ok('cerv2-sections.ts imports Drizzle schema tables')
     : no('Sections persistence', 'missing Drizzle imports');
-  sections.includes('router.post') && sections.includes('router.patch') && sections.includes('router.delete')
+  sections.includes('router.post') &&
+  sections.includes('router.patch') &&
+  sections.includes('router.delete')
     ? ok('cerv2-sections.ts has full CRUD endpoints')
     : no('Sections CRUD', 'missing POST/PATCH/DELETE');
 
@@ -215,7 +240,9 @@ try {
   editor.includes('pmaSections') || editor.includes('cerv2_pma')
     ? ok('MedicalDeviceDocumentEditor.jsx has PMA section handling')
     : no('Editor PMA', 'missing PMA sections');
-} catch (e) { no('File verification', e.message); }
+} catch (e) {
+  no('File verification', e.message);
+}
 
 // ─── 7. SKIP_VITE Feature ──────────────────────────────────────────────────
 console.log('\n🔬 7. SKIP_VITE Guard');
@@ -224,7 +251,9 @@ try {
   index.includes('SKIP_VITE')
     ? ok('server/index.ts has SKIP_VITE guard for API-only startup')
     : no('SKIP_VITE', 'missing SKIP_VITE guard');
-} catch (e) { no('SKIP_VITE', e.message); }
+} catch (e) {
+  no('SKIP_VITE', e.message);
+}
 
 // ─── Summary ────────────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(60));

@@ -1228,13 +1228,13 @@ const MedicalDeviceDocumentEditor = ({
     },
   ];
 
-  // CER sections for EU MDR
+  // CER sections for EU MDR – aligned with docTypes.js cerv2_cer (8 sections)
   const cerSections = [
     {
-      id: 'executive-summary',
-      title: '1. Executive Summary',
+      id: 'sota',
+      title: '1. State of the Art',
       required: true,
-      icon: FileText,
+      icon: BookOpen,
       fields: [
         { id: 'device_name', label: 'Device Name', type: 'text', required: true },
         { id: 'manufacturer', label: 'Manufacturer', type: 'text', required: true },
@@ -1245,10 +1245,214 @@ const MedicalDeviceDocumentEditor = ({
           options: ['Class I', 'Class IIa', 'Class IIb', 'Class III'],
           required: true,
         },
-        { id: 'intended_purpose', label: 'Intended Purpose', type: 'textarea', required: true },
+        {
+          id: 'current_knowledge',
+          label: 'Current Knowledge / State of the Art',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'applicable_standards',
+          label: 'Applicable Standards & Guidance',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'alternative_treatments',
+          label: 'Alternative Treatments / Devices',
+          type: 'textarea',
+          required: false,
+        },
       ],
     },
-    // Add more CER sections as needed
+    {
+      id: 'device',
+      title: '2. Device / Intended Purpose',
+      required: false,
+      icon: Settings,
+      fields: [
+        {
+          id: 'device_description',
+          label: 'Device Description',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'intended_purpose',
+          label: 'Intended Purpose (MDR Art. 2(12))',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'target_population',
+          label: 'Target Patient Population',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'clinical_benefits_claimed',
+          label: 'Claimed Clinical Benefits',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
+    {
+      id: 'dataset',
+      title: '3. Clinical Data Set (Literature + Studies)',
+      required: true,
+      icon: Database,
+      fields: [
+        {
+          id: 'search_strategy',
+          label: 'Literature Search Strategy (MEDDEV 2.7/1 A10)',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'direct_evidence',
+          label: 'Direct Clinical Evidence (Device-Specific Studies)',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'equivalent_evidence',
+          label: 'Equivalent Device Literature',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'post_market_data',
+          label: 'Post-Market / Registry Data',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
+    {
+      id: 'appraisal',
+      title: '4. Critical Appraisal & Weighting',
+      required: true,
+      icon: ClipboardCheck,
+      fields: [
+        {
+          id: 'appraisal_methodology',
+          label: 'Appraisal Methodology',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'quality_assessment',
+          label: 'Study Quality Assessment',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'data_weighting',
+          label: 'Data Contribution & Weighting',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
+    {
+      id: 'benefitrisk',
+      title: '5. Benefit–Risk Determination',
+      required: true,
+      icon: AlertTriangle,
+      fields: [
+        {
+          id: 'clinical_benefits',
+          label: 'Clinical Benefits Summary',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'residual_risks',
+          label: 'Residual Risks Summary',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'benefit_risk_conclusion',
+          label: 'Benefit–Risk Conclusion',
+          type: 'textarea',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'gspr',
+      title: '6. GSPR Mapping',
+      required: false,
+      icon: ShieldCheck,
+      fields: [
+        {
+          id: 'gspr_overview',
+          label: 'GSPR Compliance Overview (Annex I)',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'gspr_mapping_table',
+          label: 'GSPR Mapping Detail',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
+    {
+      id: 'pms',
+      title: '7. PMS Plan / PMCF',
+      required: false,
+      icon: Activity,
+      fields: [
+        {
+          id: 'pms_plan',
+          label: 'Post-Market Surveillance Plan',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'pmcf_plan',
+          label: 'PMCF Plan (Annex XIV Part B)',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'psur_schedule',
+          label: 'PSUR / Reporting Schedule',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
+    {
+      id: 'concl',
+      title: '8. Conclusions & Recommendations',
+      required: false,
+      icon: FileCheck,
+      fields: [
+        {
+          id: 'overall_conclusion',
+          label: 'Overall Clinical Evaluation Conclusion',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 'ce_marking_recommendation',
+          label: 'CE Marking Recommendation',
+          type: 'textarea',
+          required: false,
+        },
+        {
+          id: 'update_schedule',
+          label: 'CER Update Schedule',
+          type: 'textarea',
+          required: false,
+        },
+      ],
+    },
   ];
 
   const sections = useMemo(() => {

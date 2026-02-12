@@ -81,3 +81,27 @@ table th {
   color: #6b7280;
   font-style: italic;
 }
+
+.doc-meta {
+  font-size: 10pt;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+.subtitle {
+  margin: 0;
+  color: #4b5563;
+}
+
+footer {
+  margin-top: 48px;
+  padding-top: 12px;
+  border-top: 1px solid #d1d5db;
+  font-size: 9pt;
+  color: #9ca3af;
+  text-align: center;
+}
+
+footer p {
+  margin: 0;
+}

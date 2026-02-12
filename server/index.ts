@@ -585,6 +585,26 @@ try {
   console.error('❌ Failed to mount FDA 510(k) eSTAR routes:', error);
 }
 
+// Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
+try {
+  const cerv2ExportModule = await import('./routes/cerv2-export-routes.ts');
+  const cerv2ExportRoutes = cerv2ExportModule.default;
+  app.use('/api/cerv2/export', cerv2ExportRoutes);
+  console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 export routes:', error);
+}
+
+// Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
+try {
+  const cerv2AiModule = await import('./routes/cerv2-ai-routes.ts');
+  const cerv2AiRoutes = cerv2AiModule.default;
+  app.use('/api/cerv2/ai', cerv2AiRoutes);
+  console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 AI routes:', error);
+}
+
 // Mount Document Orchestration routes for 510(k) auto-population
 try {
   const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
