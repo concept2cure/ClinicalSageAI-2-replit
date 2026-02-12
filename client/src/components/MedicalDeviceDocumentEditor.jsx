@@ -1464,7 +1464,11 @@ const MedicalDeviceDocumentEditor = ({
       return pmaSections;
     }
     return cerSections;
-  }, [documentType, fda510kSections]);
+    // pmaSections and cerSections are static arrays defined in the component body.
+    // They are included here for correctness; their identity changes each render
+    // but documentType is the effective discriminant.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentType, fda510kSections, pmaSections, cerSections]);
 
   // Initialize section data with auto-populated values on mount
   useEffect(() => {

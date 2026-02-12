@@ -38,7 +38,10 @@ const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;
 
 const exportSchema = z.object({
   docType: z.enum(validDocTypes),
-  content: z.any(),
+  content: z.object({
+    type: z.literal('doc'),
+    content: z.array(z.any()).min(1, 'Editor content must have at least one node'),
+  }),
   meta: z
     .object({
       id: z.string().optional(),
@@ -130,7 +133,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', err => {
       console.error('[CERV2 Export] ZIP archive error:', err);
-      res.status(500).end();
+      if (!res.headersSent) res.status(500).end();
     });
     archive.pipe(res);
 
@@ -192,7 +195,11 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
 // ── GET /mock/:docType ─────────────────────────────────────────────────────────
 // Export simulation using mock data – useful for dev/demo without a live DB
+// Gated: no auth required but blocked in production
 router.get('/mock/:docType', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Mock routes are disabled in production' });
+  }
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -216,6 +223,9 @@ router.get('/mock/:docType', async (req: Request, res: Response) => {
 
 // ── GET /mock/:docType/zip ─────────────────────────────────────────────────────
 router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Mock routes are disabled in production' });
+  }
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -233,7 +243,7 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', err => {
       console.error('[CERV2 Export] Mock ZIP error:', err);
-      res.status(500).end();
+      if (!res.headersSent) res.status(500).end();
     });
     archive.pipe(res);
 

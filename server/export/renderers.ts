@@ -34,7 +34,13 @@ async function getCluster(): Promise<Cluster | null> {
       puppeteerOptions: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
-    }).catch(() => null);
+    }).catch(err => {
+      console.warn(
+        '[Renderers] Puppeteer cluster failed to launch – using PDFKit fallback:',
+        err?.message || err
+      );
+      return null;
+    });
   }
   return clusterPromise;
 }
@@ -133,8 +139,17 @@ function extractSectionsFromEditor(editorJson: any): SectionContent[] {
 
 function selectSection(sections: SectionContent[], titleIncludes: string): SectionContent | null {
   const needle = normalizeHeading(titleIncludes);
-  const direct = sections.find(section => normalizeHeading(section.title).includes(needle));
-  return direct || null;
+  // Prefer exact title match first, then start-of-title, then substring
+  const exact = sections.find(section => normalizeHeading(section.title) === needle);
+  if (exact) return exact;
+  const startsWith = sections.find(section => {
+    const norm = normalizeHeading(section.title);
+    // Match at word boundary: title starts with needle or contains " needle"
+    return norm.startsWith(needle) || norm.includes(` ${needle}`);
+  });
+  if (startsWith) return startsWith;
+  const substring = sections.find(section => normalizeHeading(section.title).includes(needle));
+  return substring || null;
 }
 
 async function renderHtmlWithStylePack(htmlBody: string, pack: StylePack): Promise<string> {
@@ -177,6 +192,11 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
 
     const text = html
       .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -269,7 +289,7 @@ export async function renderPdfBuffersForPma(content: any, pack: StylePack = sty
   );
   const clinical = buildSectionHtml(
     'Clinical Investigations',
-    selectSection(sections, 'Clinical')?.html || '',
+    selectSection(sections, 'Clinical Investigations')?.html || '',
     'Clinical investigations content not found in the current document.'
   );
   const manufacturing = buildSectionHtml(
