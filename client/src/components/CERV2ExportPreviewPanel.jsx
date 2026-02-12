@@ -8,6 +8,7 @@
  * Features:
  *  - Per-section cards with AI content preview (expandable)
  *  - Inline compliance severity icon per section
+ *  - Per-section readiness penalty badges (-15% error, -5% warning, Ready)
  *  - Word count per section and total
  *  - Export readiness score (penalizes errors/warnings)
  *  - Status badges: ready / loading / empty / dismissed
@@ -72,6 +73,26 @@ const SEVERITY_ICONS = {
   warning: { icon: AlertTriangle, className: 'text-amber-500' },
   pass: { icon: ShieldCheck, className: 'text-primary' },
   none: { icon: ShieldCheck, className: 'text-muted-foreground' },
+};
+
+/** Per-section readiness penalty badges (Phase 7.8) */
+const READINESS_BADGES = {
+  error: {
+    label: '-15%',
+    bg: 'bg-destructive/10',
+    text: 'text-destructive',
+  },
+  warning: {
+    label: '-5%',
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-700 dark:text-amber-400',
+  },
+  pass: {
+    label: 'Ready',
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+  },
+  none: null,
 };
 
 const DOC_TYPE_LABELS = {
@@ -339,6 +360,14 @@ export default function CERV2ExportPreviewPanel({
                   <span className="font-medium text-foreground truncate flex-1">
                     {section.label}
                   </span>
+                  {/* Per-section readiness penalty badge (Phase 7.8) */}
+                  {section.severity !== 'none' && READINESS_BADGES[section.severity] && (
+                    <span
+                      className={`text-[9px] font-semibold tabular-nums px-1 py-0.5 rounded ${READINESS_BADGES[section.severity].bg} ${READINESS_BADGES[section.severity].text}`}
+                    >
+                      {READINESS_BADGES[section.severity].label}
+                    </span>
+                  )}
                   {section.status === 'ready' && (
                     <span className="text-[10px] tabular-nums text-muted-foreground">
                       {section.words}w
@@ -391,9 +420,12 @@ export default function CERV2ExportPreviewPanel({
       {/* ─── Footer ─────────────────────────────────────────────────────── */}
       <div className="px-3 py-1.5 border-t text-[11px] text-muted-foreground flex items-center justify-between">
         <span className="tabular-nums">~{stats.totalWords.toLocaleString()} words</span>
-        <span className="tabular-nums">
-          {stats.readyCount}/{outline.length} sections
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums">
+            {stats.readyCount}/{outline.length} sections
+          </span>
+          <span className={`font-bold tabular-nums ${readinessColor}`}>{stats.readiness}%</span>
+        </div>
       </div>
     </aside>
   );
