@@ -3,11 +3,15 @@
 FastAPI router for the document rendering pipeline.
 Mounts at /render prefix.
 
+Phase 7.0C: Tenant-safe auth with program_id ownership enforcement.
+Phase 7.0D: Rate limiting, concurrency caps, idempotency, TTL cleanup.
+
 Endpoints:
   POST /render/jobs                         — Create + execute a render job
   GET  /render/jobs/:render_job_id          — Get render job status
   GET  /render/jobs/:render_job_id/download — Download rendered artifact
   GET  /render/proof-pack/:proof_pack_id    — List render jobs for a proof pack
+  POST /render/cleanup                      — TTL cleanup of expired FAILED jobs
 """
 
 from __future__ import annotations
@@ -35,7 +39,7 @@ from .contract_hashes import get_contract_snapshot, validate_ectd_bundle
 
 # Auto-register all renderers
 from . import renderers  # noqa: F401
-from .render_runner import create_and_execute_render
+from .render_runner import create_and_execute_render, cleanup_expired_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +65,11 @@ async def require_render_auth(
 
     Uses constant-time comparison to prevent timing attacks.
     Refuses to start if REVIEW_ADMIN_TOKEN is not configured.
+    Phase 7.0C: reads from Settings.review_admin_token (properly declared field).
     """
     from .config import get_settings
     settings = get_settings()
-    expected = getattr(settings, "REVIEW_ADMIN_TOKEN", None)
+    expected = settings.review_admin_token
     if not expected:
         logger.error("REVIEW_ADMIN_TOKEN not configured — render endpoints disabled")
         raise HTTPException(status_code=503, detail="Service not configured")
@@ -126,8 +131,14 @@ async def create_render_job(
             artifact_type=body.artifact_type.value,
             user_id=body.user_id,
             request_id=body.request_id or str(uuid.uuid4()),
+            program_id=body.program_id or str(pp_row.get("program_id", "")),
+            idempotency_key=body.idempotency_key,
         )
     except ValueError as exc:
+        err_msg = str(exc)
+        if "Concurrency cap" in err_msg or "Rate limit" in err_msg:
+            logger.warning("Render job throttled: %s", err_msg)
+            raise HTTPException(status_code=429, detail="Too many render requests. Try again later.")
         logger.warning("Render job rejected: %s", exc)
         raise HTTPException(status_code=400, detail="Render request rejected. Check proof pack status.")
     except Exception as exc:
@@ -180,14 +191,25 @@ async def create_render_job(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/jobs/{render_job_id}", dependencies=[Depends(require_render_auth)])
-async def get_render_job(render_job_id: str):
-    """Get the status of a render job."""
+async def get_render_job(
+    render_job_id: str,
+    program_id: str = Query("", description="Program ID for ownership check"),
+):
+    """Get the status of a render job.
+
+    Phase 7.0C: If program_id is provided, enforces ownership via scoped query.
+    """
     render_job_id = _validate_uuid(render_job_id, "render_job_id")
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
+    # Phase 7.0C — ownership enforcement
+    if program_id:
+        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
+    else:
+        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
+
     if not job:
         raise HTTPException(status_code=404, detail="Render job not found")
 
@@ -302,14 +324,25 @@ async def download_render_artifact(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/proof-pack/{proof_pack_id}", dependencies=[Depends(require_render_auth)])
-async def list_render_jobs(proof_pack_id: str):
-    """List all render jobs for a proof pack."""
+async def list_render_jobs(
+    proof_pack_id: str,
+    program_id: str = Query("", description="Program ID for ownership check"),
+):
+    """List all render jobs for a proof pack.
+
+    Phase 7.0C: If program_id is provided, enforces ownership via scoped query.
+    """
     proof_pack_id = _validate_uuid(proof_pack_id, "proof_pack_id")
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK, proof_pack_id)
+    # Phase 7.0C — ownership enforcement
+    if program_id:
+        rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK_SCOPED, proof_pack_id, program_id)
+    else:
+        rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK, proof_pack_id)
+
     return {
         "proof_pack_id": proof_pack_id,
         "render_jobs": [
@@ -326,3 +359,23 @@ async def list_render_jobs(proof_pack_id: str):
             for r in rows
         ],
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# POST /render/cleanup — TTL Cleanup (Phase 7.0D)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/cleanup", dependencies=[Depends(require_render_auth)])
+async def cleanup_render_jobs(
+    ttl_days: int = Query(None, description="Override TTL in days (default from config)"),
+):
+    """Delete expired FAILED render jobs beyond TTL.
+
+    Phase 7.0D: Maintenance endpoint for job table hygiene.
+    """
+    pool = await db.get_pool()
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    deleted = await cleanup_expired_jobs(pool, ttl_days)
+    return {"deleted_count": deleted, "ttl_days": ttl_days or "default"}

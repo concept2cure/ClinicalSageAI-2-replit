@@ -19,7 +19,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -47,6 +47,10 @@ class ArtifactType(str, Enum):
     DEFENSE_PACKET_PDF = "defense_packet_pdf"
     DEFENSE_PACKET_DOCX = "defense_packet_docx"
     ECTD_SEQUENCE_ZIP = "ectd_sequence_zip"
+    # Phase 7.0E — Document Render Suite
+    SE_MATRIX_PDF = "se_matrix_pdf"
+    PROOF_PACK_SUMMARY_PDF = "proof_pack_summary_pdf"
+    AUDIT_TRAIL_PDF = "audit_trail_pdf"
 
 
 # Standard output layout (matches proof-pack zip)
@@ -54,6 +58,10 @@ ARTIFACT_OUTPUT_PATHS: dict[str, str] = {
     "defense_packet_pdf": "proof-pack/outputs/defense_packet_pdf/DefensePacketReport.pdf",
     "defense_packet_docx": "proof-pack/outputs/defense_packet_docx/DefensePacketReport.docx",
     "ectd_sequence_zip": "proof-pack/outputs/ectd_sequence_zip/ectd_sequence.zip",
+    # Phase 7.0E
+    "se_matrix_pdf": "proof-pack/outputs/se_matrix_pdf/SEMatrixReport.pdf",
+    "proof_pack_summary_pdf": "proof-pack/outputs/proof_pack_summary_pdf/ProofPackSummary.pdf",
+    "audit_trail_pdf": "proof-pack/outputs/audit_trail_pdf/AuditTrailReport.pdf",
 }
 
 
@@ -72,11 +80,16 @@ class RenderRequest(BaseModel):
     artifact_type: ArtifactType = Field(..., description="Which artifact to render")
     user_id: str = Field(default="system", description="Who requested the render", max_length=200)
     request_id: str = Field(default="", description="Traceability ID", max_length=200)
+    # Phase 7.0C — Tenant isolation
+    program_id: str = Field(default="", description="Program ID for ownership", max_length=200)
+    # Phase 7.0D — Idempotency
+    idempotency_key: Optional[str] = Field(None, description="Client idempotency key", max_length=128)
     options: dict[str, str] = Field(
         default_factory=dict,
         description="Renderer-specific options (string values only, max 20 keys)",
     )
 
+    @field_validator("options")
     @classmethod
     def validate_options_size(cls, v: dict) -> dict:
         """Prevent DoS via oversized options payload."""

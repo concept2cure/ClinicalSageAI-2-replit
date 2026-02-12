@@ -1,7 +1,10 @@
-"""Phase 7.0A — Render Job Runner (in-process, synchronous).
+"""Phase 7.0A–D — Render Job Runner (in-process, synchronous).
 
 Executes render jobs by dispatching to the correct renderer based on artifact_type.
 No Redis/Celery — this is the simplest possible runner for v1.
+
+Phase 7.0C: Added program_id ownership enforcement.
+Phase 7.0D: Added concurrency cap, rate limiting, idempotency, TTL cleanup.
 
 Usage:
     from .render_runner import execute_render_job
@@ -59,6 +62,71 @@ def get_renderer(artifact_type: str):
     if not renderer:
         raise ValueError(f"No renderer registered for artifact_type={artifact_type}")
     return renderer
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 7.0D — Rate Limiting & Concurrency Guards
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def check_concurrency_cap(pool, program_id: str) -> None:
+    """Raise if program exceeds max concurrent render jobs (QUEUED + RUNNING).
+
+    Prevents resource exhaustion from a single tenant.
+    """
+    from .config import get_settings
+    settings = get_settings()
+    max_concurrent = settings.render_max_concurrent_per_program + settings.render_max_queued_per_program
+
+    row = await pool.fetchrow(rj_sql.COUNT_ACTIVE_JOBS_BY_PROGRAM, program_id)
+    active = row["cnt"] if row else 0
+    if active >= max_concurrent:
+        raise ValueError(
+            f"Concurrency cap exceeded: program {program_id[:8]}… has {active} active jobs "
+            f"(max {max_concurrent}). Wait for existing jobs to complete."
+        )
+
+
+async def check_rate_limit(pool, program_id: str) -> None:
+    """Raise if program exceeds rate limit (renders per time window).
+
+    Prevents abuse — e.g., 20 renders per 10 minutes.
+    """
+    from .config import get_settings
+    settings = get_settings()
+
+    row = await pool.fetchrow(
+        rj_sql.COUNT_RECENT_RENDERS_BY_PROGRAM,
+        program_id,
+        settings.render_rate_limit_window_seconds,
+    )
+    recent = row["cnt"] if row else 0
+    if recent >= settings.render_rate_limit_max_requests:
+        raise ValueError(
+            f"Rate limit exceeded: program {program_id[:8]}… has {recent} renders "
+            f"in {settings.render_rate_limit_window_seconds}s window "
+            f"(max {settings.render_rate_limit_max_requests}). Try again later."
+        )
+
+
+async def check_idempotency(pool, idempotency_key: str | None):
+    """Return existing job if idempotency key matches, else None."""
+    if not idempotency_key:
+        return None
+    row = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY, idempotency_key)
+    return dict(row) if row else None
+
+
+async def cleanup_expired_jobs(pool, ttl_days: int | None = None) -> int:
+    """Delete FAILED jobs older than TTL. Returns count deleted."""
+    from .config import get_settings
+    if ttl_days is None:
+        ttl_days = get_settings().render_job_ttl_days
+
+    rows = await pool.fetch(rj_sql.DELETE_EXPIRED_FAILED_JOBS, ttl_days)
+    count = len(rows)
+    if count > 0:
+        logger.info("TTL cleanup: deleted %d expired FAILED render jobs (ttl=%d days)", count, ttl_days)
+    return count
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -153,17 +221,42 @@ async def create_and_execute_render(
     artifact_type: str,
     user_id: str = "system",
     request_id: str = "",
+    program_id: str = "",
+    idempotency_key: str | None = None,
     options: dict[str, Any] | None = None,
     reuse_completed: bool = True,
 ) -> tuple[bytes, dict[str, Any]]:
     """Create a render job and execute it immediately.
 
-    If reuse_completed=True and a COMPLETED job with the same inputs_hash
-    exists, return a placeholder (the caller still needs the artifact bytes
-    from a cache or re-render). For v1, we always re-render.
+    Phase 7.0C: Enforces program_id is stored on the job.
+    Phase 7.0D: Checks idempotency, concurrency cap, and rate limit.
 
     Returns (artifact_bytes, job_record_dict).
     """
+    # ── Phase 7.0D — Idempotency check ──
+    existing_job = await check_idempotency(pool, idempotency_key)
+    if existing_job:
+        logger.info(
+            "Idempotency key '%s' matched existing job %s (status=%s)",
+            idempotency_key, existing_job["id"], existing_job["status"],
+        )
+        if existing_job["status"] == "COMPLETED":
+            # Re-render bytes (v1: no blob cache)
+            renderer = get_renderer(artifact_type)
+            pp_full = await pool.fetchrow(
+                pp_sql.SELECT_PROOF_PACK_FOR_DOWNLOAD_BY_ID, existing_job["proof_pack_id"]
+            )
+            if pp_full:
+                artifact_bytes = renderer(pp_full, request_id)
+                return artifact_bytes, existing_job
+        # Return existing (possibly still running) — let caller handle status
+        return b"", existing_job
+
+    # ── Phase 7.0D — Concurrency + rate limit checks ──
+    if program_id:
+        await check_concurrency_cap(pool, program_id)
+        await check_rate_limit(pool, program_id)
+
     # Load proof pack to compute inputs_hash
     pp_row = await pool.fetchrow(pp_sql.SELECT_PROOF_PACK_BY_ID, proof_pack_id)
     if not pp_row:
@@ -201,15 +294,17 @@ async def create_and_execute_render(
             artifact_bytes = renderer(pp_full or pp_row, request_id)
             return artifact_bytes, dict(maybe_done)
 
-    # Insert QUEUED job
+    # Insert QUEUED job — Phase 7.0C: includes program_id; 7.0D: includes idempotency_key
     job = await pool.fetchrow(
         rj_sql.INSERT_RENDER_JOB,
-        pp_row["id"],            # proof_pack_id (UUID)
-        artifact_type,
-        "QUEUED",
-        inputs_hash,
-        user_id,
-        request_id,
+        pp_row["id"],            # $1: proof_pack_id (UUID)
+        artifact_type,           # $2
+        "QUEUED",                # $3: status
+        inputs_hash,             # $4
+        user_id,                 # $5: created_by
+        request_id,              # $6
+        program_id or str(pp_row.get("program_id", "")),  # $7: program_id
+        idempotency_key,         # $8: idempotency_key
     )
 
     render_job_id = str(job["id"])

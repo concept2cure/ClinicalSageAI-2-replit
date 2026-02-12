@@ -1260,7 +1260,8 @@ router.post(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || 'unknown';
-    const { proofPackId, artifactType, requestId } = req.body || {};
+    const { proofPackId, artifactType, requestId, idempotencyKey } = req.body || {};
+    const programId = req.params.programId;
 
     if (!proofPackId || !artifactType) {
       return res.status(400).json({ error: 'proofPackId and artifactType are required' });
@@ -1272,6 +1273,8 @@ router.post(
         artifact_type: artifactType,
         user_id: userId,
         request_id: requestId || '',
+        program_id: programId,
+        idempotency_key: idempotencyKey || undefined,
       });
 
       if (result.status !== 200) {

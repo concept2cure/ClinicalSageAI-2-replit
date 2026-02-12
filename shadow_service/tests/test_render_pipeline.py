@@ -1,4 +1,5 @@
-"""Phase 7.0A+B — Render Pipeline + Defense Packet PDF Tests.
+"""Phase 7.0A-F — Render Pipeline, Defense Packet, SE Matrix, Proof Pack Summary,
+Audit Trail, eCTD Assembly Tests.
 
 Tests:
   1. Models: RenderRequest, RenderResult, compute_inputs_hash
@@ -6,6 +7,9 @@ Tests:
   3. Render Runner: registry, lifecycle
   4. Blocking: contract mismatch / block_download prevents render
   5. SQL helpers: query shapes
+  6. Integration: End-to-End Render Flow (mocked DB)
+  7. Phase 7.0E: SE Matrix, Proof Pack Summary, Audit Trail PDFs
+  8. Phase 7.0F: eCTD Assembly ZIP
 
 Run: pytest shadow_service/tests/test_render_pipeline.py -v
 """
@@ -106,9 +110,13 @@ class TestRenderModels:
             user_id="test-user",
             request_id="req-456",
             options={"page_size": "A4"},
+            program_id="prog-001",
+            idempotency_key="idem-key-001",
         )
         assert req.user_id == "test-user"
         assert req.options["page_size"] == "A4"
+        assert req.program_id == "prog-001"
+        assert req.idempotency_key == "idem-key-001"
 
     def test_render_request_rejects_invalid_uuid(self):
         """Non-UUID proof_pack_id should be rejected by Pydantic validation."""
@@ -340,9 +348,9 @@ class TestRenderBlocking:
 class TestSQLRenderJobs:
     """Verify SQL query constants have correct shapes."""
 
-    def test_insert_has_6_params(self):
+    def test_insert_has_8_params(self):
         from shadow_service.sql_render_jobs import INSERT_RENDER_JOB
-        assert INSERT_RENDER_JOB.count("$") == 6
+        assert INSERT_RENDER_JOB.count("$") == 8
 
     def test_select_by_id_has_1_param(self):
         from shadow_service.sql_render_jobs import SELECT_RENDER_JOB_BY_ID
@@ -431,3 +439,251 @@ class TestRenderE2E:
         pdf = render_defense_packet_pdf(row)
         assert isinstance(pdf, bytes)
         assert len(pdf) > 5000
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 7. Phase 7.0C/D — SQL Query Shape Tests (new queries)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestSQLRenderJobsPhase7CD:
+    """Verify Phase 7.0C/D new SQL queries."""
+
+    def test_select_scoped_by_id_has_2_params(self):
+        from shadow_service.sql_render_jobs import SELECT_RENDER_JOB_BY_ID_SCOPED
+        assert SELECT_RENDER_JOB_BY_ID_SCOPED.count("$") == 2
+
+    def test_select_scoped_by_proof_pack_has_2_params(self):
+        from shadow_service.sql_render_jobs import SELECT_RENDER_JOBS_BY_PROOF_PACK_SCOPED
+        assert SELECT_RENDER_JOBS_BY_PROOF_PACK_SCOPED.count("$") == 2
+
+    def test_count_active_jobs_has_1_param(self):
+        from shadow_service.sql_render_jobs import COUNT_ACTIVE_JOBS_BY_PROGRAM
+        assert COUNT_ACTIVE_JOBS_BY_PROGRAM.count("$") == 1
+
+    def test_count_recent_renders_has_2_params(self):
+        from shadow_service.sql_render_jobs import COUNT_RECENT_RENDERS_BY_PROGRAM
+        assert COUNT_RECENT_RENDERS_BY_PROGRAM.count("$") == 2
+
+    def test_select_by_idempotency_key_has_1_param(self):
+        from shadow_service.sql_render_jobs import SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY
+        assert SELECT_RENDER_JOB_BY_IDEMPOTENCY_KEY.count("$") == 1
+
+    def test_delete_expired_failed_has_1_param(self):
+        from shadow_service.sql_render_jobs import DELETE_EXPIRED_FAILED_JOBS
+        assert DELETE_EXPIRED_FAILED_JOBS.count("$") == 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 8. Phase 7.0E — New Artifact Type Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestArtifactTypes7E:
+    """Test that new artifact types are properly registered."""
+
+    def test_new_artifact_enums_exist(self):
+        from shadow_service.models_render import ArtifactType
+        assert ArtifactType.SE_MATRIX_PDF.value == "se_matrix_pdf"
+        assert ArtifactType.PROOF_PACK_SUMMARY_PDF.value == "proof_pack_summary_pdf"
+        assert ArtifactType.AUDIT_TRAIL_PDF.value == "audit_trail_pdf"
+
+    def test_new_output_paths_exist(self):
+        from shadow_service.models_render import ARTIFACT_OUTPUT_PATHS
+        assert "SEMatrixReport.pdf" in ARTIFACT_OUTPUT_PATHS["se_matrix_pdf"]
+        assert "ProofPackSummary.pdf" in ARTIFACT_OUTPUT_PATHS["proof_pack_summary_pdf"]
+        assert "AuditTrailReport.pdf" in ARTIFACT_OUTPUT_PATHS["audit_trail_pdf"]
+
+    def test_all_renderers_registered(self):
+        from shadow_service.render_runner import _RENDERERS
+        import shadow_service.renderers  # noqa: F401
+        for name in ["defense_packet_pdf", "se_matrix_pdf", "proof_pack_summary_pdf",
+                      "audit_trail_pdf", "ectd_sequence_zip"]:
+            assert name in _RENDERERS, f"Renderer {name} not registered"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 9. Phase 7.0E — SE Matrix PDF Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestSEMatrixPDF:
+    """Test SE Matrix PDF renderer."""
+
+    def test_renders_valid_pdf(self):
+        from shadow_service.renderers.se_matrix_pdf import render_se_matrix_pdf
+        result = render_se_matrix_pdf(SAMPLE_PP_ROW)
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+        assert len(result) > 1000
+
+    def test_deterministic(self):
+        from shadow_service.renderers.se_matrix_pdf import render_se_matrix_pdf
+        pdf1 = render_se_matrix_pdf(SAMPLE_PP_ROW)
+        pdf2 = render_se_matrix_pdf(SAMPLE_PP_ROW)
+        assert pdf1 == pdf2
+
+    def test_handles_minimal_data(self):
+        from shadow_service.renderers.se_matrix_pdf import render_se_matrix_pdf
+        minimal = {"id": "min-id", "manifest_hash": "mh"}
+        result = render_se_matrix_pdf(minimal)
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+
+    def test_handles_no_se_payload(self):
+        from shadow_service.renderers.se_matrix_pdf import render_se_matrix_pdf
+        row = deepcopy(SAMPLE_PP_ROW)
+        row["se_payload"] = None
+        result = render_se_matrix_pdf(row)
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+
+    def test_many_se_rows(self):
+        from shadow_service.renderers.se_matrix_pdf import render_se_matrix_pdf
+        row = deepcopy(SAMPLE_PP_ROW)
+        many = [{"risk_code": f"RC-{i}", "dimension": f"D{i}", "score": i, "discussion": f"Text {i}"} for i in range(60)]
+        row["se_payload"] = json.dumps({"version": "2.0", "rows": many})
+        result = render_se_matrix_pdf(row)
+        assert len(result) > 3000
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. Phase 7.0E — Proof Pack Summary PDF Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestProofPackSummaryPDF:
+    """Test Proof Pack Summary PDF renderer."""
+
+    def test_renders_valid_pdf(self):
+        from shadow_service.renderers.proof_pack_summary_pdf import render_proof_pack_summary_pdf
+        result = render_proof_pack_summary_pdf(SAMPLE_PP_ROW)
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+        assert len(result) > 1000
+
+    def test_deterministic(self):
+        from shadow_service.renderers.proof_pack_summary_pdf import render_proof_pack_summary_pdf
+        pdf1 = render_proof_pack_summary_pdf(SAMPLE_PP_ROW)
+        pdf2 = render_proof_pack_summary_pdf(SAMPLE_PP_ROW)
+        assert pdf1 == pdf2
+
+    def test_handles_minimal_data(self):
+        from shadow_service.renderers.proof_pack_summary_pdf import render_proof_pack_summary_pdf
+        result = render_proof_pack_summary_pdf({"id": "min", "manifest_hash": "mh"})
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 11. Phase 7.0E — Audit Trail PDF Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestAuditTrailPDF:
+    """Test Audit Trail PDF renderer."""
+
+    def test_renders_valid_pdf(self):
+        from shadow_service.renderers.audit_trail_pdf import render_audit_trail_pdf
+        result = render_audit_trail_pdf(SAMPLE_PP_ROW)
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+        assert len(result) > 500
+
+    def test_deterministic(self):
+        from shadow_service.renderers.audit_trail_pdf import render_audit_trail_pdf
+        pdf1 = render_audit_trail_pdf(SAMPLE_PP_ROW)
+        pdf2 = render_audit_trail_pdf(SAMPLE_PP_ROW)
+        assert pdf1 == pdf2
+
+    def test_handles_minimal_data(self):
+        from shadow_service.renderers.audit_trail_pdf import render_audit_trail_pdf
+        result = render_audit_trail_pdf({"id": "min"})
+        assert isinstance(result, bytes)
+        assert result[:5] == b"%PDF-"
+
+    def test_with_audit_events(self):
+        from shadow_service.renderers.audit_trail_pdf import render_audit_trail_pdf
+        row = deepcopy(SAMPLE_PP_ROW)
+        row["audit_events"] = [
+            {"timestamp": "2025-01-01T00:00:00Z", "action": "CREATE", "actor": "user1", "details": "Created proof pack", "hash": "abc123"},
+            {"timestamp": "2025-01-01T01:00:00Z", "action": "SEAL", "actor": "user1", "details": "Sealed manifest", "hash": "def456"},
+            {"timestamp": "2025-01-01T02:00:00Z", "action": "RENDER", "actor": "system", "details": "Rendered defense packet", "hash": "ghi789"},
+        ]
+        result = render_audit_trail_pdf(row)
+        assert isinstance(result, bytes)
+        assert len(result) > 1000
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 12. Phase 7.0F — eCTD Assembly ZIP Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestECTDAssemblyZIP:
+    """Test eCTD Assembly ZIP renderer."""
+
+    def test_renders_valid_zip(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        from zipfile import ZipFile
+        result = render_ectd_assembly(SAMPLE_PP_ROW)
+        assert isinstance(result, bytes)
+        # ZIP magic bytes: PK\x03\x04
+        assert result[:2] == b"PK"
+
+    def test_contains_required_structure(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        from zipfile import ZipFile
+        result = render_ectd_assembly(SAMPLE_PP_ROW)
+        with ZipFile(io.BytesIO(result), "r") as zf:
+            names = zf.namelist()
+            # Must have m1, m2, m3 skeleton
+            assert any("m1/" in n for n in names), "Missing m1/"
+            assert any("m2/" in n for n in names), "Missing m2/"
+            assert any("m3/" in n for n in names), "Missing m3/"
+            # Must have checksums
+            assert any("checksums.sha256" in n for n in names), "Missing checksums"
+            # Must have submission readme
+            assert any("submission_readme.md" in n for n in names), "Missing readme"
+            # Must have manifest.json
+            assert any("manifest.json" in n for n in names), "Missing manifest"
+
+    def test_contains_rendered_pdfs(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        from zipfile import ZipFile
+        result = render_ectd_assembly(SAMPLE_PP_ROW)
+        with ZipFile(io.BytesIO(result), "r") as zf:
+            names = zf.namelist()
+            # Should embed at least defense packet + SE matrix
+            assert any("defense-packet-report.pdf" in n for n in names), "Missing defense packet PDF"
+            assert any("se-matrix-report.pdf" in n for n in names), "Missing SE matrix PDF"
+            assert any("proof-pack-summary.pdf" in n for n in names), "Missing proof pack summary PDF"
+
+    def test_checksums_are_valid(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        from zipfile import ZipFile
+        result = render_ectd_assembly(SAMPLE_PP_ROW)
+        with ZipFile(io.BytesIO(result), "r") as zf:
+            # Read checksums file
+            checksum_file = [n for n in zf.namelist() if "checksums.sha256" in n][0]
+            checksum_content = zf.read(checksum_file).decode("utf-8")
+            # Each line: <sha256>  <path>
+            for line in checksum_content.strip().split("\n"):
+                parts = line.split("  ", 1)
+                assert len(parts) == 2, f"Invalid checksum line: {line}"
+                digest, path = parts
+                assert len(digest) == 64, f"Invalid SHA-256 length: {digest}"
+                # Verify file exists in ZIP
+                assert path in zf.namelist(), f"Checksummed file not in ZIP: {path}"
+                # Verify checksum matches
+                file_data = zf.read(path)
+                assert hashlib.sha256(file_data).hexdigest() == digest, f"Checksum mismatch for {path}"
+
+    def test_handles_minimal_data(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        result = render_ectd_assembly({"id": "min-id"})
+        assert isinstance(result, bytes)
+        assert result[:2] == b"PK"
+
+    def test_readme_contains_proof_pack_id(self):
+        from shadow_service.renderers.ectd_assembly import render_ectd_assembly
+        from zipfile import ZipFile
+        result = render_ectd_assembly(SAMPLE_PP_ROW)
+        with ZipFile(io.BytesIO(result), "r") as zf:
+            readme_file = [n for n in zf.namelist() if "submission_readme.md" in n][0]
+            readme = zf.read(readme_file).decode("utf-8")
+            assert str(SAMPLE_PP_ROW["id"]) in readme
