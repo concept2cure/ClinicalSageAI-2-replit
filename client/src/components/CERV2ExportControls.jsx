@@ -6,7 +6,7 @@
  * Renders as a compact horizontal bar below the editor.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import cerv2ExportService from '../services/CERV2ExportService.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,21 @@ export default function CERV2ExportControls({
   const [lastExport, setLastExport] = useState(null); // { format, filename, timestamp }
 
   const canExport = completeness.populated > 0;
+  // Inline export controls use a 50% threshold (more conservative than the
+  // Full Export Simulation's 30% gated+borderline flow, which has explicit
+  // confirmation UI). This is intentional — inline bar has no confirmation step.
   const isIncomplete = completeness.percent < 50;
+
+  // Filter out dismissed suggestions so they are NOT included in exports
+  const activeSuggestions = useMemo(() => {
+    const active = {};
+    for (const [key, value] of Object.entries(aiSuggestions)) {
+      if (!dismissedSuggestions.has(key)) {
+        active[key] = value;
+      }
+    }
+    return active;
+  }, [aiSuggestions, dismissedSuggestions]);
 
   // ── Export handler ──────────────────────────────────────────────────────
 
@@ -57,9 +71,7 @@ export default function CERV2ExportControls({
 
     // Warn on incomplete documents
     if (isIncomplete) {
-      const missing = outline
-        .filter(s => !aiSuggestions[s.id] || dismissedSuggestions.has(s.id))
-        .map(s => s.label);
+      const missing = outline.filter(s => !activeSuggestions[s.id]).map(s => s.label);
 
       toast({
         title: 'Incomplete Document',
@@ -80,7 +92,7 @@ export default function CERV2ExportControls({
       const result = await cerv2ExportService.exportFromAiSuggestions(
         selectedFormat,
         docType,
-        aiSuggestions,
+        activeSuggestions,
         outline,
         { title: `${docType}_AI_Export` }
       );
@@ -114,10 +126,9 @@ export default function CERV2ExportControls({
     isIncomplete,
     selectedFormat,
     docType,
-    aiSuggestions,
+    activeSuggestions,
     outline,
     completeness,
-    dismissedSuggestions,
     toast,
   ]);
 

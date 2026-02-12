@@ -20,6 +20,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { classifyHint, DOC_TYPE_SHORT_LABELS } from '../utils/cerv2-validation-utils.js';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Eye,
@@ -35,38 +36,7 @@ import {
   FileWarning,
 } from 'lucide-react';
 
-// ── Severity classification ─────────────────────────────────────────────────
-// Mirrors CERV2ValidationPanel's classifyHint — phrase-level matching to avoid
-// false positives on standard regulatory language.
-
-function classifyHint(hint) {
-  if (!hint || typeof hint !== 'string') return 'none';
-  const lower = hint.toLowerCase();
-
-  // Error: explicit failure or missing-required language
-  if (
-    lower.includes('error validating') ||
-    lower.includes('missing required') ||
-    lower.includes('must include') ||
-    lower.includes('does not comply') ||
-    lower.includes('non-compliant')
-  )
-    return 'error';
-
-  // Warning: unfilled placeholder tokens like [DEVICE NAME]
-  if (/\[[A-Z][A-Z _/()-]{2,}\]/.test(hint)) return 'warning';
-
-  // Warning: explicit advisory phrases
-  if (
-    lower.includes('consider adding') ||
-    lower.includes('recommend including') ||
-    lower.includes('no enhanced content available') ||
-    lower.includes('no compliance data')
-  )
-    return 'warning';
-
-  return 'pass';
-}
+// classifyHint imported from cerv2-validation-utils.js
 
 const SEVERITY_ICONS = {
   error: { icon: XCircle, className: 'text-destructive' },
@@ -95,11 +65,7 @@ const READINESS_BADGES = {
   none: null,
 };
 
-const DOC_TYPE_LABELS = {
-  cerv2_510k: '510(k)',
-  cerv2_pma: 'PMA',
-  cerv2_cer: 'CER',
-};
+// DOC_TYPE_SHORT_LABELS imported from cerv2-validation-utils.js
 
 function wordCount(text) {
   if (!text || typeof text !== 'string') return 0;
@@ -259,7 +225,7 @@ export default function CERV2ExportPreviewPanel({
       <div className="px-3 py-2 border-b bg-muted/20">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[11px] text-muted-foreground">
-            Export Readiness — {DOC_TYPE_LABELS[selectedDocType] || selectedDocType}
+            Export Readiness — {DOC_TYPE_SHORT_LABELS[selectedDocType] || selectedDocType}
           </span>
           <div className="flex items-center gap-1">
             <button

@@ -173,41 +173,6 @@ export default function CERV2EditorAI() {
   // Phase 7.7 – Full export simulation state
   const [showExportSim, setShowExportSim] = useState(false);
 
-  // ── Phase 7.10: Keyboard shortcuts ───────────────────────────────────────
-  useEffect(() => {
-    const handler = e => {
-      // All shortcuts use Ctrl+Shift+<key> (Cmd+Shift on Mac)
-      if (!(e.ctrlKey || e.metaKey) || !e.shiftKey) return;
-
-      switch (e.key.toLowerCase()) {
-        case 'o': // Toggle outline
-          e.preventDefault();
-          setShowOutline(prev => !prev);
-          break;
-        case 'p': // Toggle export preview
-          e.preventDefault();
-          setShowExportPreview(prev => !prev);
-          break;
-        case 'v': // Toggle validation panel
-          e.preventDefault();
-          setShowValidation(prev => !prev);
-          break;
-        case 'e': // Toggle export simulation
-          e.preventDefault();
-          setShowExportSim(prev => !prev);
-          break;
-        case 'r': // Scaffold refresh
-          e.preventDefault();
-          if (!scaffoldRefreshing) handleScaffoldRefresh();
-          break;
-        default:
-          break;
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [scaffoldRefreshing, handleScaffoldRefresh]);
-
   // Computed
   const outline = useMemo(() => DOC_OUTLINES[selectedDocType] || [], [selectedDocType]);
 
@@ -396,6 +361,44 @@ export default function CERV2EditorAI() {
       setScaffoldRefreshing(false);
     }
   }, [selectedDocType, outline, toast]);
+
+  // ── Phase 7.10: Keyboard shortcuts ───────────────────────────────────────
+  // IMPORTANT: This useEffect MUST come after handleScaffoldRefresh's
+  // useCallback declaration to avoid a Temporal Dead Zone reference error
+  // (const is not accessible before initialization in ES2020+).
+  useEffect(() => {
+    const handler = e => {
+      // All shortcuts use Ctrl+Shift+<key> (Cmd+Shift on Mac)
+      if (!(e.ctrlKey || e.metaKey) || !e.shiftKey) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'o': // Toggle outline
+          e.preventDefault();
+          setShowOutline(prev => !prev);
+          break;
+        case 'p': // Toggle export preview
+          e.preventDefault();
+          setShowExportPreview(prev => !prev);
+          break;
+        case 'v': // Toggle validation panel
+          e.preventDefault();
+          setShowValidation(prev => !prev);
+          break;
+        case 'e': // Toggle export simulation
+          e.preventDefault();
+          setShowExportSim(prev => !prev);
+          break;
+        case 'r': // Scaffold refresh
+          e.preventDefault();
+          if (!scaffoldRefreshing) handleScaffoldRefresh();
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [scaffoldRefreshing, handleScaffoldRefresh]);
 
   // ── Dismiss / Accept helpers ──────────────────────────────────────────────
 

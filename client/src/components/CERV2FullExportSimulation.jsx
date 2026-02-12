@@ -30,6 +30,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import cerv2ExportService from '../services/CERV2ExportService.js';
+import { classifyHint, DOC_TYPE_LABELS } from '../utils/cerv2-validation-utils.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -62,45 +63,13 @@ const FORMAT_OPTIONS = [
   { value: 'zip', label: 'eSTAR ZIP', icon: FileArchive },
 ];
 
-const DOC_TYPE_LABELS = {
-  cerv2_510k: 'FDA 510(k)',
-  cerv2_pma: 'FDA PMA',
-  cerv2_cer: 'EU MDR CER',
-};
-
 /** Minimum readiness % to allow export (errors/warnings penalize this) */
 const READINESS_THRESHOLD = 30;
 
 /** Borderline zone — export allowed but requires confirmation */
 const WARNING_THRESHOLD = 50;
 
-// ── Severity classifier (mirrors CERV2ValidationPanel / ExportPreviewPanel) ──
-
-function classifyHint(hint) {
-  if (!hint || typeof hint !== 'string') return 'none';
-  const lower = hint.toLowerCase();
-
-  if (
-    lower.includes('error validating') ||
-    lower.includes('missing required') ||
-    lower.includes('must include') ||
-    lower.includes('does not comply') ||
-    lower.includes('non-compliant')
-  )
-    return 'error';
-
-  if (/\[[A-Z][A-Z _/()-]{2,}\]/.test(hint)) return 'warning';
-
-  if (
-    lower.includes('consider adding') ||
-    lower.includes('recommend including') ||
-    lower.includes('no enhanced content available') ||
-    lower.includes('no compliance data')
-  )
-    return 'warning';
-
-  return 'pass';
-}
+// classifyHint and DOC_TYPE_LABELS imported from cerv2-validation-utils.js
 
 // ── Component ───────────────────────────────────────────────────────────────
 

@@ -188,7 +188,10 @@ check(
 
 // H-2: ZIP error handler checks headersSent
 {
-  const exportSrc = fs.readFileSync(path.join(root, 'server/routes/cerv2-export-routes.ts'), 'utf-8');
+  const exportSrc = fs.readFileSync(
+    path.join(root, 'server/routes/cerv2-export-routes.ts'),
+    'utf-8'
+  );
   const archiveErrorBlocks = exportSrc.match(/archive\.on\('error'[\s\S]*?\}\);/g) || [];
   const allCheckHeadersSent = archiveErrorBlocks.every(b => b.includes('headersSent'));
   check('H-2: All archive error handlers check headersSent', allCheckHeadersSent);
@@ -213,31 +216,31 @@ check(
 // M-4: AI template keys match docTypes.js section IDs
 check(
   'M-4: 510k template has "admin" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    admin:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    admin:')
 );
 check(
   'M-4: 510k template has "se" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    se:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    se:')
 );
 check(
   'M-4: PMA template has "nonclin" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    nonclin:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    nonclin:')
 );
 check(
   'M-4: PMA template has "mfgqa" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    mfgqa:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    mfgqa:')
 );
 check(
   'M-4: CER template has "sota" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    sota:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    sota:')
 );
 check(
   'M-4: CER template has "benefitrisk" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    benefitrisk:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    benefitrisk:')
 );
 check(
   'M-4: CER template has "concl" key',
-  fileContains('server/routes/cerv2-ai-routes.ts', "    concl:")
+  fileContains('server/routes/cerv2-ai-routes.ts', '    concl:')
 );
 
 // M-5: useMemo includes pmaSections/cerSections deps
