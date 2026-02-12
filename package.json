@@ -43,6 +43,8 @@
     "smoke:cerv2-workbench": "node scripts/smoke_cerv2_workbench.js",
     "cerv2:seed-demo": "node scripts/cerv2_seed_demo.js",
     "cerv2:verify": "node scripts/verify_cerv2_workbench.js",
+    "cerv2:staging-verify": "node scripts/cerv2_staging_verify.mjs",
+    "cerv2:deploy-rc": "bash scripts/cerv2_deploy_rc.sh",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "storybook:test": "test-storybook",
