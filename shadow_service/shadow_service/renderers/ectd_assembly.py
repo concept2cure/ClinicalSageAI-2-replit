@@ -89,8 +89,8 @@ def _generate_readme(pp_row: dict[str, Any]) -> str:
         "| Module | Content |",
         "|--------|---------|",
         "| m1/    | Submission readme, regional admin |",
-        "| m2/    | (Reserved for summaries) |",
-        "| m3/    | (Reserved for quality data) |",
+        "| m2/    | Not included in v1 |",
+        "| m3/    | Not included in v1 |",
         "| m4/    | SE Matrix Report |",
         "| m5/    | Defense Packet, Audit Trail |",
         "| proof-pack/ | Summary, manifest |",
@@ -173,17 +173,9 @@ def render_ectd_assembly(pp_row: dict[str, Any] | Any, request_id: str = "") -> 
         zf.writestr(readme_path, readme)
         checksums[readme_path] = _sha256(readme)
 
-        # ── m2/ — placeholder ─────────────────────────────────────────
-        m2_placeholder = b"# Module 2 - Summaries (Reserved for v2)\n"
-        m2_path = f"{prefix}/m2/.gitkeep"
-        zf.writestr(m2_path, m2_placeholder)
-        checksums[m2_path] = _sha256(m2_placeholder)
-
-        # ── m3/ — placeholder ─────────────────────────────────────────
-        m3_placeholder = b"# Module 3 - Quality (Reserved for v2)\n"
-        m3_path = f"{prefix}/m3/.gitkeep"
-        zf.writestr(m3_path, m3_placeholder)
-        checksums[m3_path] = _sha256(m3_placeholder)
+        # ── m2/ + m3/ — empty directories (no placeholder files) ──────
+        zf.writestr(f"{prefix}/m2/", b"")
+        zf.writestr(f"{prefix}/m3/", b"")
 
         # ── m4/ — SE Matrix Report ────────────────────────────────────
         se_pdf = _try_render_inline("se_matrix_pdf", row)

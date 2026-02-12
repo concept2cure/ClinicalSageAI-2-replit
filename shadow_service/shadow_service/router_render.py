@@ -193,22 +193,19 @@ async def create_render_job(
 @router.get("/jobs/{render_job_id}", dependencies=[Depends(require_render_auth)])
 async def get_render_job(
     render_job_id: str,
-    program_id: str = Query("", description="Program ID for ownership check"),
+    program_id: str = Query(..., description="Program ID for ownership check"),
 ):
     """Get the status of a render job.
 
-    Phase 7.0C: If program_id is provided, enforces ownership via scoped query.
+    Phase 7.0C: Requires program_id and enforces ownership via scoped query.
     """
     render_job_id = _validate_uuid(render_job_id, "render_job_id")
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    # Phase 7.0C — ownership enforcement
-    if program_id:
-        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
-    else:
-        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
+    # Phase 7.0C — ownership enforcement (program_id required)
+    job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Render job not found")
@@ -242,7 +239,7 @@ async def get_render_job(
 async def download_render_artifact(
     render_job_id: str,
     user_id: str = Query("system", description="User requesting download"),
-    program_id: str = Query("", description="Program ID for ownership scoping"),
+    program_id: str = Query(..., description="Program ID for ownership scoping"),
 ):
     """Download the rendered artifact (PDF/DOCX/ZIP) for a completed job.
 
@@ -253,10 +250,7 @@ async def download_render_artifact(
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    if program_id:
-        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
-    else:
-        job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID, render_job_id)
+    job = await pool.fetchrow(rj_sql.SELECT_RENDER_JOB_BY_ID_SCOPED, render_job_id, program_id)
     if not job:
         raise HTTPException(status_code=404, detail="Render job not found")
 
@@ -336,22 +330,19 @@ async def download_render_artifact(
 @router.get("/proof-pack/{proof_pack_id}", dependencies=[Depends(require_render_auth)])
 async def list_render_jobs(
     proof_pack_id: str,
-    program_id: str = Query("", description="Program ID for ownership check"),
+    program_id: str = Query(..., description="Program ID for ownership check"),
 ):
     """List all render jobs for a proof pack.
 
-    Phase 7.0C: If program_id is provided, enforces ownership via scoped query.
+    Phase 7.0C: Requires program_id and enforces ownership via scoped query.
     """
     proof_pack_id = _validate_uuid(proof_pack_id, "proof_pack_id")
     pool = await db.get_pool()
     if not pool:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    # Phase 7.0C — ownership enforcement
-    if program_id:
-        rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK_SCOPED, proof_pack_id, program_id)
-    else:
-        rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK, proof_pack_id)
+    # Phase 7.0C — ownership enforcement (program_id required)
+    rows = await pool.fetch(rj_sql.SELECT_RENDER_JOBS_BY_PROOF_PACK_SCOPED, proof_pack_id, program_id)
 
     return {
         "proof_pack_id": proof_pack_id,

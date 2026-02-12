@@ -1298,12 +1298,13 @@ router.get(
   requireProgramAccess,
   async (req: Request, res: Response) => {
     const { renderJobId } = req.params;
+    const programId = req.params.programId;
     const userId = (req as any).user?.id || 'unknown';
 
     try {
       const result = await shadowFetch<ArrayBuffer>(
         'GET',
-        `/render/jobs/${encodeURIComponent(renderJobId)}/download?user_id=${encodeURIComponent(userId)}`,
+        `/render/jobs/${encodeURIComponent(renderJobId)}/download?user_id=${encodeURIComponent(userId)}&program_id=${encodeURIComponent(programId)}`,
         undefined,
         { responseType: 'arraybuffer' }
       );
