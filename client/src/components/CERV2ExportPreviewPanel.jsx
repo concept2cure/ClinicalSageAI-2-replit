@@ -36,8 +36,6 @@ import {
   FileWarning,
 } from 'lucide-react';
 
-// classifyHint imported from cerv2-validation-utils.js
-
 const SEVERITY_ICONS = {
   error: { icon: XCircle, className: 'text-destructive' },
   warning: { icon: AlertTriangle, className: 'text-amber-500' },
@@ -64,8 +62,6 @@ const READINESS_BADGES = {
   },
   none: null,
 };
-
-// DOC_TYPE_SHORT_LABELS imported from cerv2-validation-utils.js
 
 function wordCount(text) {
   if (!text || typeof text !== 'string') return 0;

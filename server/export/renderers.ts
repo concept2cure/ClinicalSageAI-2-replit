@@ -1,13 +1,8 @@
 import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
 import { Cluster } from 'puppeteer-cluster';
 import { Document, Packer, Paragraph, HeadingLevel } from 'docx';
 import { stylePacks, StylePack } from './stylePacks/config';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const MAX_CONTENT_CHARS = 500000;
 let clusterPromise: Promise<Cluster> | null = null;

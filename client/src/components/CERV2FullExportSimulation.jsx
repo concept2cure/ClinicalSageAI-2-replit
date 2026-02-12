@@ -69,8 +69,6 @@ const READINESS_THRESHOLD = 30;
 /** Borderline zone — export allowed but requires confirmation */
 const WARNING_THRESHOLD = 50;
 
-// classifyHint and DOC_TYPE_LABELS imported from cerv2-validation-utils.js
-
 // ── Component ───────────────────────────────────────────────────────────────
 
 /**

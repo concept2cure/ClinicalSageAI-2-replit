@@ -59,11 +59,12 @@ const zipSchema = exportSchema.extend({
   attachments: z
     .array(
       z.object({
-        filename: z.string().min(1),
-        buffer: z.string().min(1),
-        mimeType: z.string().optional(),
+        filename: z.string().min(1).max(255),
+        buffer: z.string().min(1).max(10_485_760), // ~10 MB base64 ≈ 7.5 MB decoded
+        mimeType: z.string().max(127).optional(),
       })
     )
+    .max(20)
     .optional(),
 });
 

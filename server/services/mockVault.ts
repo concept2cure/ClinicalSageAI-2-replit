@@ -101,7 +101,7 @@ const mock510kContent = {
 
     heading(1, 'Labeling'),
     paragraph(
-      'Proposed labeling includes: Instructions for Use (IFU), Quick Start Guide, Physician's Guide to Interpretation, Patient Information Sheet, and packaging labels. All labeling complies with 21 CFR 801 requirements.'
+      "Proposed labeling includes: Instructions for Use (IFU), Quick Start Guide, Physician's Guide to Interpretation, Patient Information Sheet, and packaging labels. All labeling complies with 21 CFR 801 requirements."
     ),
 
     heading(1, 'Conclusion'),
@@ -118,7 +118,7 @@ const mockPmaContent = {
   content: [
     heading(1, 'Summary and General Information'),
     paragraph(
-      'This Premarket Approval (PMA) application is submitted for the NeuroStim Adaptive DBS System, a Class III implantable deep brain stimulation device intended for the treatment of medication-refractory Parkinson\'s disease.'
+      "This Premarket Approval (PMA) application is submitted for the NeuroStim Adaptive DBS System, a Class III implantable deep brain stimulation device intended for the treatment of medication-refractory Parkinson's disease."
     ),
     paragraph(
       'Applicant: NeuroTech Medical Corp., 500 Innovation Drive, San Jose, CA 95112. Device Classification: Class III – Product Code: GZB. Regulation: 21 CFR 882.5805.'
@@ -126,7 +126,7 @@ const mockPmaContent = {
     bulletList([
       'Device Trade Name: NeuroStim Adaptive DBS System',
       'Common Name: Implantable Deep Brain Stimulation System',
-      'Intended Use: Treatment of symptoms of advanced, levodopa-responsive Parkinson\'s disease',
+      "Intended Use: Treatment of symptoms of advanced, levodopa-responsive Parkinson's disease",
       'Target Population: Adults aged 22+ with disease duration ≥ 4 years',
     ]),
 
@@ -157,12 +157,12 @@ const mockPmaContent = {
 
     heading(1, 'Manufacturing and Quality Systems'),
     paragraph(
-      'The NeuroStim system is manufactured at NeuroTech Medical\'s ISO 13485:2016 certified facility in San Jose, CA. The facility is also compliant with 21 CFR Part 820 Quality System Regulation. All critical suppliers are qualified under a documented supplier management program.'
+      "The NeuroStim system is manufactured at NeuroTech Medical's ISO 13485:2016 certified facility in San Jose, CA. The facility is also compliant with 21 CFR Part 820 Quality System Regulation. All critical suppliers are qualified under a documented supplier management program."
     ),
 
     heading(1, 'Labeling'),
     paragraph(
-      'Proposed labeling includes: Physician\'s Manual, Patient\'s Manual, MRI Guidelines, Programming Guide, and Surgical Technique Guide. Labeling includes required Class III warnings, precautions, and a detailed summary of clinical trial results.'
+      "Proposed labeling includes: Physician's Manual, Patient's Manual, MRI Guidelines, Programming Guide, and Surgical Technique Guide. Labeling includes required Class III warnings, precautions, and a detailed summary of clinical trial results."
     ),
 
     heading(1, 'Risk/Benefit Determination'),

@@ -22,8 +22,6 @@ import {
   XCircle,
 } from 'lucide-react';
 
-// classifyHint imported from cerv2-validation-utils.js
-
 const SEVERITY_CONFIG = {
   error: {
     icon: XCircle,
