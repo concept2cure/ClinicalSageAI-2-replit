@@ -33,8 +33,20 @@ const JWT_SECRET =
 const JWT_EXPIRES_IN = '24h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
-// Development mode flag
-const isDev = process.env.NODE_ENV !== 'production';
+// CRIT-06 FIX: Fail-fast if no JWT secret in production
+if (
+  process.env.NODE_ENV === 'production' &&
+  !process.env.JWT_SECRET &&
+  !process.env.SESSION_SECRET
+) {
+  throw new Error(
+    'FATAL: JWT_SECRET or SESSION_SECRET must be set in production. ' +
+      'Refusing to start with a hardcoded fallback key.'
+  );
+}
+
+// Development auth bypass fully removed — all authentication is enforced.
+// To test locally, create a user via POST /api/auth/signup then login normally.
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -54,6 +66,21 @@ const signupSchema = z.object({
 });
 
 /**
+ * Guard: ensure database is available before any DB query.
+ * Returns 503 if the pool didn't initialize (e.g. missing DATABASE_URL).
+ */
+function requireDb(res: Response): boolean {
+  if (!db) {
+    res.status(503).json({
+      success: false,
+      error: { code: 'DB_UNAVAILABLE', message: 'Database connection not available' },
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
  * GET /api/auth/session
  * Get current session status and user info
  */
@@ -62,33 +89,8 @@ router.get('/session', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
 
-    // In dev mode without token, return mock session
-    if (isDev && !token) {
-      return res.json({
-        authenticated: true,
-        user: {
-          id: 'dev-user-1',
-          email: 'developer@trialsage.ai',
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          roles: ['admin', 'user'],
-          permissions: ['*'],
-          organizationId: '2',
-          organizationName: 'TrialSage Demo',
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
-        },
-        session: {
-          id: 'dev-session-1',
-          createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          lastActivityAt: new Date(),
-        },
-        tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      });
-    }
+    // CRIT-02b FIX: Removed unconditional dev-mode session bypass (was: isDev && !token → admin)
+    // All sessions now require a valid JWT token regardless of environment.
 
     if (!token) {
       return res.status(401).json({
@@ -168,33 +170,7 @@ router.get('/session', async (req: Request, res: Response) => {
 
     console.error('[auth] Session check error:', error);
 
-    // In dev mode, return mock session even on error
-    if (isDev) {
-      return res.json({
-        authenticated: true,
-        user: {
-          id: 'dev-user-1',
-          email: 'developer@trialsage.ai',
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          roles: ['admin', 'user'],
-          permissions: ['*'],
-          organizationId: '2',
-          organizationName: 'TrialSage Demo',
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
-        },
-        session: {
-          id: 'dev-session-1',
-          createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          lastActivityAt: new Date(),
-        },
-        tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      });
-    }
+    // CRIT-02c FIX: Removed error-path dev bypass that returned mock admin on DB errors
 
     res.status(500).json({
       authenticated: false,
@@ -218,45 +194,11 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // In dev mode, accept any credentials
-    if (isDev) {
-      const accessToken = jwt.sign(
-        { userId: '1', email, organizationId: '2', organizationUuid: null },
-        JWT_SECRET,
-        {
-        expiresIn: JWT_EXPIRES_IN,
-        }
-      );
+    // CRIT-02d FIX: Removed dev-mode any-credentials login bypass
+    // All login attempts now validated against database with bcrypt
 
-      const refreshToken = jwt.sign({ userId: '1', email, type: 'refresh' }, JWT_SECRET, {
-        expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-      });
-
-      return res.json({
-        success: true,
-        accessToken,
-        refreshToken,
-        expiresIn: 86400, // 24 hours
-        user: {
-          id: '1',
-          email,
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          roles: ['admin', 'user'],
-          permissions: ['*'],
-          organizationId: '2',
-          organizationName: 'TrialSage Demo',
-          organizationUuid: null,
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
-        },
-        mfaRequired: false,
-      });
-    }
-
-    // In production, validate credentials against database
+    // Validate credentials against database
+    if (!requireDb(res)) return;
     const user = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
 
     if (!user.length) {
@@ -266,9 +208,24 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implement proper password verification with bcrypt
-    // For now, this is a placeholder
+    // CRIT-01b FIX: Password verification with bcrypt
     const userData = user[0];
+
+    if (!userData.passwordHash) {
+      console.error('[auth] User has no password hash:', userData.email);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Invalid credentials' },
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, userData.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Invalid credentials' },
+      });
+    }
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -360,6 +317,7 @@ router.post('/signup', async (req: Request, res: Response) => {
 
     const { email, password, companyName, industryMode, firstName, lastName } = parsed.data;
 
+    if (!requireDb(res)) return;
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length) {
       return res.status(409).json({
@@ -375,7 +333,11 @@ router.post('/signup', async (req: Request, res: Response) => {
       .replace(/(^-|-$)/g, '');
     let slug = baseSlug || `tenant-${Date.now()}`;
 
-    const existingSlug = await db.select().from(organizations).where(eq(organizations.slug, slug)).limit(1);
+    const existingSlug = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.slug, slug))
+      .limit(1);
     if (existingSlug.length) {
       slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
     }
@@ -546,20 +508,7 @@ router.get('/me', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
 
-    // Dev mode fallback
-    if (isDev && !token) {
-      return res.json({
-        id: 'dev-user-1',
-        email: 'developer@trialsage.ai',
-        firstName: 'Dev',
-        lastName: 'User',
-        displayName: 'Dev User',
-        roles: ['admin', 'user'],
-        permissions: ['*'],
-        organizationId: '2',
-        organizationName: 'TrialSage Demo',
-      });
-    }
+    // CRIT-02e FIX: Removed GET /me dev-mode bypass
 
     if (!token) {
       return res.status(401).json({
@@ -604,19 +553,7 @@ router.get('/me', async (req: Request, res: Response) => {
 
     console.error('[auth] Get user error:', error);
 
-    if (isDev) {
-      return res.json({
-        id: 'dev-user-1',
-        email: 'developer@trialsage.ai',
-        firstName: 'Dev',
-        lastName: 'User',
-        displayName: 'Dev User',
-        roles: ['admin', 'user'],
-        permissions: ['*'],
-        organizationId: '2',
-        organizationName: 'TrialSage Demo',
-      });
-    }
+    // CRIT-02f FIX: Removed error-path dev bypass for GET /me
 
     res.status(500).json({
       error: { code: 'AUTH_010', message: 'Failed to get user profile' },
@@ -629,38 +566,8 @@ router.get('/me', async (req: Request, res: Response) => {
  * Verify MFA code (placeholder for dev mode)
  */
 router.post('/mfa/verify', async (req: Request, res: Response) => {
-  // In dev mode, MFA always passes
-  if (isDev) {
-    return res.json({
-      success: true,
-      accessToken: jwt.sign(
-        { userId: '1', email: 'developer@trialsage.ai', organizationId: '2' },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      ),
-      refreshToken: jwt.sign(
-        { userId: '1', email: 'developer@trialsage.ai', type: 'refresh' },
-        JWT_SECRET,
-        { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
-      ),
-      expiresIn: 86400,
-      user: {
-        id: '1',
-        email: 'developer@trialsage.ai',
-        firstName: 'Dev',
-        lastName: 'User',
-        displayName: 'Dev User',
-        roles: ['admin', 'user'],
-        permissions: ['*'],
-        organizationId: '2',
-        organizationName: 'TrialSage Demo',
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
-      },
-    });
-  }
-
+  // CRIT-02g FIX: Removed unconditional dev-mode MFA bypass
+  // MFA verification placeholder — returns 501 until MFA service is implemented
   res.status(501).json({
     success: false,
     error: { code: 'MFA_NOT_IMPLEMENTED', message: 'MFA not implemented in this version' },

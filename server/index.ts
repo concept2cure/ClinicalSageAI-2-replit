@@ -74,7 +74,7 @@ import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
 
 // Import AI assistance routes
 import aiAssistanceRoutes from './routes/ai-assistance.ts';
-import aiPhase3Routes from './api/ai/phase3-routes.js';
+// Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
 // Import authoring routes - made optional to prevent startup crashes
 // import authoringRouter from './routes/authoring.router.js';
@@ -334,36 +334,19 @@ try {
   console.error('❌ Failed to mount users routes:', error);
 }
 
-// Mount legacy login/logout endpoints directly
-app.post('/api/login', async (req, res) => {
-  const isDev = process.env.NODE_ENV !== 'production';
-  const { username, password, email } = req.body;
-  const loginEmail = email || username;
-
-  if (isDev) {
-    return res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
-    });
-  }
-
-  res.json({ id: 1, username: 'user', email: loginEmail, role: 'user' });
+// Legacy login/logout/register endpoints — redirect to proper auth router
+// CRIT-03b FIX: Removed zero-check legacy endpoints that accepted any credentials
+app.post('/api/login', (req, res) => {
+  // Redirect to the real auth endpoint
+  res.redirect(307, '/api/auth/login');
 });
 
 app.post('/api/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+  res.redirect(307, '/api/auth/logout');
 });
 
 app.post('/api/register', (req, res) => {
-  const { username, email } = req.body;
-  res.json({
-    id: 1,
-    username: username || email?.split('@')[0] || 'newuser',
-    email: email || `${username}@trialsage.ai`,
-    role: 'user',
-  });
+  res.redirect(307, '/api/auth/signup');
 });
 
 // Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
@@ -496,6 +479,23 @@ try {
   console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
+}
+
+// Mount AI Assistance routes
+try {
+  app.use('/api/ai-assistance', aiAssistanceRoutes);
+  console.log('✅ AI Assistance API routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount AI Assistance routes:', error);
+}
+
+// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
+try {
+  const lumenCortexRoutes = await import('./routes/lumen-cortex.ts');
+  app.use('/api/lumen-cortex', lumenCortexRoutes.default);
+  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+} catch (error) {
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
 }
 
 // Mount Phase 5: Intelligent Document System routes

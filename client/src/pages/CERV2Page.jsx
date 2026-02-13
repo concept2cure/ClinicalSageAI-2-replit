@@ -5011,6 +5011,136 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         </div>
       );
     }
+    // CER-specific tab rendering (re-enabled per REGULATORY_UX_AUDIT_2026-02-13)
+    else if (activeTab === 'builder') {
+      return (
+        <CerBuilderPanel
+          documentId={cerDocumentId}
+          sections={sections}
+          onSectionUpdate={(sectionId, data) => {
+            setSections(prev => prev.map(s => s.id === sectionId ? { ...s, ...data } : s));
+          }}
+        />
+      );
+    } else if (activeTab === 'cer-preview') {
+      return (
+        <CerPreviewPanel
+          documentId={cerDocumentId}
+          sections={sections}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'literature') {
+      return (
+        <LiteratureSearchPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          onLiteratureSelect={(items) => {
+            setSelectedLiterature(prev => [...prev, ...items]);
+          }}
+        />
+      );
+    } else if (activeTab === 'literature-review') {
+      return (
+        <LiteratureReviewWorkflow
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          selectedLiterature={selectedLiterature}
+        />
+      );
+    } else if (activeTab === 'literature-methodology') {
+      return (
+        <LiteratureMethodologyPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'cep') {
+      return (
+        <ClinicalEvaluationPlanPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'qmp') {
+      return (
+        <QualityManagementPlanPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'data-retrieval') {
+      return (
+        <CerDataRetrievalPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'internal-clinical-data') {
+      return (
+        <InternalClinicalDataPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'sota') {
+      return (
+        <StateOfArtPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'gspr-mapping') {
+      return (
+        <GSPRMappingPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'traceability') {
+      return (
+        <RegulatoryTraceabilityMatrix
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'assistant') {
+      return (
+        <CerAssistantPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+          activeTab={activeTab}
+        />
+      );
+    } else if (activeTab === 'maude') {
+      return (
+        <MAUDIntegrationPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'cer-reports') {
+      return (
+        <CerComprehensiveReportsPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'cer-export') {
+      return (
+        <ExportModule
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+          documentType="cer"
+        />
+      );
+    }
     // OLD DUPLICATE CODE REMOVED - NOW HANDLED EARLIER IN FUNCTION
     else {
       // Default to showing the 510(k) workflow overview
