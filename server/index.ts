@@ -4350,9 +4350,189 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
-  // ============================================================================
+  // ──────────────────────────────────────────────────────────────────────────
+  // Wave 5: Mount previously-unmounted core route files
+  // ──────────────────────────────────────────────────────────────────────────
+
+  try {
+    const qualityMgmtApi = await import('./routes/quality-management-api.ts');
+    app.use('/api/quality', qualityMgmtApi.default);
+    console.log('✅ Quality Management API routes mounted at /api/quality');
+  } catch (error) {
+    console.error('Failed to mount quality-management-api routes:', error);
+  }
+
+  try {
+    const analyticsRoutes = await import('./routes/analytics-routes.ts');
+    app.use('/api/analytics', analyticsRoutes.default);
+    console.log('✅ Analytics routes mounted at /api/analytics');
+  } catch (error) {
+    console.error('Failed to mount analytics routes:', error);
+  }
+
+  try {
+    const vaultAutoRoutes = await import('./routes/vault-auto.ts');
+    app.use('/api/vault', vaultAutoRoutes.default);
+    console.log('✅ Vault routes mounted at /api/vault');
+  } catch (error) {
+    console.error('Failed to mount vault routes:', error);
+  }
+
+  try {
+    const documentsUnified = await import('./routes/documents-unified.ts');
+    app.use('/api/documents', documentsUnified.default);
+    console.log('✅ Documents-unified routes mounted at /api/documents');
+  } catch (error) {
+    console.error('Failed to mount documents-unified routes:', error);
+  }
+
+  try {
+    const { protocolRoutes } = await import('./routes/protocol_routes.ts');
+    app.use('/api/protocol', protocolRoutes);
+    console.log('✅ Protocol routes mounted at /api/protocol');
+  } catch (error) {
+    console.error('Failed to mount protocol routes:', error);
+  }
+
+  try {
+    const qcRoutes = await import('./routes/qc.routes.ts');
+    app.use('/api/qc', qcRoutes.default);
+    console.log('✅ QC routes mounted at /api/qc');
+  } catch (error) {
+    console.error('Failed to mount qc routes:', error);
+  }
+
+  try {
+    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes.ts');
+    app.use('/api/module-integration', moduleIntegrationRoutes.default);
+    console.log('✅ Module Integration routes mounted at /api/module-integration');
+  } catch (error) {
+    console.error('Failed to mount module-integration routes:', error);
+  }
+
+  try {
+    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes.ts');
+    app.use('/api/regulatory', regulatoryRoutesModule.default);
+    console.log('✅ Regulatory routes mounted at /api/regulatory');
+  } catch (error) {
+    console.error('Failed to mount regulatory routes:', error);
+  }
+
+  try {
+    const innovationRoutes = await import('./routes/innovation-routes.ts');
+    app.use('/api/innovation', innovationRoutes.default);
+    console.log('✅ Innovation routes mounted at /api/innovation');
+  } catch (error) {
+    console.error('Failed to mount innovation routes:', error);
+  }
+
+  try {
+    const notificationRoutes = await import('./routes/notification_routes.ts');
+    app.use('/api/notifications', notificationRoutes.default);
+    console.log('✅ Notification routes mounted at /api/notifications');
+  } catch (error) {
+    console.error('Failed to mount notification routes:', error);
+  }
+
+  try {
+    const indUnifiedRoutes = await import('./routes/ind-unified.ts');
+    app.use('/api/ind-wizard', indUnifiedRoutes.default);
+    console.log('✅ IND Unified routes mounted at /api/ind-wizard');
+  } catch (error) {
+    console.error('Failed to mount ind-unified routes:', error);
+  }
+
+  try {
+    const indTemplatesRoutes = await import('./routes/ind-templates.ts');
+    app.use('/api/ind-templates', indTemplatesRoutes.default);
+    console.log('✅ IND Templates routes mounted at /api/ind-templates');
+  } catch (error) {
+    console.error('Failed to mount ind-templates routes:', error);
+  }
+
+  try {
+    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes.ts');
+    app.use('/api/ind-submissions', indSubmissionsRoutes.default);
+    console.log('✅ IND Submissions routes mounted at /api/ind-submissions');
+  } catch (error) {
+    console.error('Failed to mount ind-submissions routes:', error);
+  }
+
+  try {
+    const indDatabaseRoutes = await import('./routes/ind-database.routes.ts');
+    app.use('/api/ind-database', indDatabaseRoutes.default);
+    console.log('✅ IND Database routes mounted at /api/ind-database');
+  } catch (error) {
+    console.error('Failed to mount ind-database routes:', error);
+  }
+
+  try {
+    const plannerRoutes = await import('./routes/planner-routes.ts');
+    app.use('/api/planner', plannerRoutes.default);
+    console.log('✅ Planner routes mounted at /api/planner');
+  } catch (error) {
+    console.error('Failed to mount planner routes:', error);
+  }
+
+  try {
+    const tenantSectionGating = await import('./routes/tenant-section-gating.ts');
+    app.use('/api/tenant-section-gating', tenantSectionGating.default);
+    console.log('✅ Tenant Section Gating routes mounted at /api/tenant-section-gating');
+  } catch (error) {
+    console.error('Failed to mount tenant-section-gating routes:', error);
+  }
+
+  try {
+    const tenantConfig = await import('./routes/tenant-config.ts');
+    app.use('/api/tenant-config', tenantConfig.default);
+    console.log('✅ Tenant Config routes mounted at /api/tenant-config');
+  } catch (error) {
+    console.error('Failed to mount tenant-config routes:', error);
+  }
+
+  try {
+    const tenantStats = await import('./routes/tenant-stats.ts');
+    app.use('/api/tenant-stats', tenantStats.default);
+    console.log('✅ Tenant Stats routes mounted at /api/tenant-stats');
+  } catch (error) {
+    console.error('Failed to mount tenant-stats routes:', error);
+  }
+
+  try {
+    const tenantTraceability = await import('./routes/tenant-traceability.ts');
+    app.use('/api/tenant-traceability', tenantTraceability.default);
+    console.log('✅ Tenant Traceability routes mounted at /api/tenant-traceability');
+  } catch (error) {
+    console.error('Failed to mount tenant-traceability routes:', error);
+  }
+
+  try {
+    const tenantQualityValidation = await import('./routes/tenant-quality-validation.ts');
+    app.use('/api/tenant-quality-validation', tenantQualityValidation.default);
+    console.log('✅ Tenant Quality Validation routes mounted at /api/tenant-quality-validation');
+  } catch (error) {
+    console.error('Failed to mount tenant-quality-validation routes:', error);
+  }
+
+  try {
+    const tenantCtqFactors = await import('./routes/tenant-ctq-factors.ts');
+    app.use('/api/tenant-ctq-factors', tenantCtqFactors.default);
+    console.log('✅ Tenant CTQ Factors routes mounted at /api/tenant-ctq-factors');
+  } catch (error) {
+    console.error('Failed to mount tenant-ctq-factors routes:', error);
+  }
+
+  try {
+    const indAutomationRoutes = await import('./routes/ind_automation_routes.ts');
+    app.use('/api/ind-automation', indAutomationRoutes.default);
+    console.log('✅ IND Automation routes mounted at /api/ind-automation');
+  } catch (error) {
+    console.error('Failed to mount ind-automation routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML
-  // ============================================================================
+  // ──────────────────────────────────────────────────────────────────────────
   app.all('/api/*', (req, res) => {
     console.log(`[API 404] Unhandled API route: ${req.method} ${req.path}`);
     res.status(404).json({
