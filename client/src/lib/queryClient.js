@@ -11,20 +11,23 @@ export const api = axios.create({
 
 // Add interceptor to include organization ID and auth token headers
 api.interceptors.request.use(
-  (config) => {
+  config => {
     // Get organization ID from localStorage (set by TenantContext)
     const orgId = localStorage.getItem('currentOrganizationId');
     if (orgId) {
       config.headers['x-organization-id'] = orgId;
     }
     // Include JWT auth token if available (stored by authService on login)
-    const authToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+    const authToken =
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('auth_token');
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;
     }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );

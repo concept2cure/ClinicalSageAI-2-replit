@@ -76,5 +76,6 @@
   "mssql.intelliSense.enableSuggestions": false,
   "mssql.intelliSense.enableQuickInfo": false,
   "mssql.intelliSense.enableErrorChecking": false,
-  "mssql.ignorePlatformWarning": true
+  "mssql.ignorePlatformWarning": true,
+  "azureTerraform.checkTerraformCmd": false
 }

@@ -59,7 +59,10 @@ export async function apiRequest(method, url, body = null, customOptions = {}) {
   const securityHeaders = generateSecureHeaders(method, url, body);
 
   // Include JWT auth token if available (stored by authService on login)
-  const authToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+  const authToken =
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('auth_token');
 
   // Prepare options with security enhancements
   const options = {
@@ -68,7 +71,7 @@ export async function apiRequest(method, url, body = null, customOptions = {}) {
     headers: {
       ...defaultOptions.headers,
       ...securityHeaders,
-      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...customOptions.headers,
     },
   };
