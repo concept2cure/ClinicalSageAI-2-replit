@@ -48,34 +48,59 @@ declare global {
 
 /**
  * Authentication middleware
- * For development, this uses a simplified authentication mechanism
+ * Validates JWT tokens (from /api/auth/login) or legacy API keys.
+ * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   // Attach database to request for consistent access
   req.db = db;
 
-  // Get API key from request headers (could be either Authorization or x-api-key)
+  // Get token from Authorization header or x-api-key
   const apiKey =
     req.headers['x-api-key'] ||
     (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
       ? req.headers.authorization.substring(7)
       : null);
 
-  // CRIT-03 FIX: Removed blanket dev-mode bypass that granted admin to all
-  // unauthenticated requests when NODE_ENV === 'development'.
-  // All requests now require a valid API key or token regardless of environment.
-
-  // In a real environment, require authentication
   if (!apiKey) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {
-    // For development, use a simple API key validation
-    // In production, you would look up the API key in the database
+    // 1. Try JWT verification first (primary auth method)
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET =
+      process.env.JWT_SECRET ||
+      process.env.SESSION_SECRET ||
+      'trialsage-dev-secret-key-change-in-production';
+
+    try {
+      const decoded = jwt.verify(apiKey, JWT_SECRET) as {
+        userId?: string;
+        email?: string;
+        organizationId?: string;
+        role?: string;
+      };
+
+      if (decoded.userId) {
+        req.userId = parseInt(decoded.userId) || decoded.userId;
+        req.userRole = decoded.role || 'user';
+        req.userEmail = decoded.email;
+        req.tenantId = parseInt(decoded.organizationId || '1') || 1;
+        req.tenantContext = {
+          organizationId: parseInt(decoded.organizationId || '1') || 1,
+          userId: req.userId,
+          role: decoded.role || 'user',
+        };
+        return next();
+      }
+    } catch (_jwtError) {
+      // Not a valid JWT — fall through to API key check
+    }
+
+    // 2. Fallback to DEV_API_KEY (for automated tools / CI)
     const devApiKey = process.env.DEV_API_KEY;
     if (devApiKey && apiKey === devApiKey) {
-      // Set development user information
       req.userId = 1;
       req.userRole = 'admin';
       req.userEmail = 'dev@example.com';
@@ -89,8 +114,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       return next();
     }
 
-    // If API key doesn't match, authentication fails
-    return res.status(401).json({ error: 'Invalid API key' });
+    // No valid authentication
+    return res.status(401).json({ error: 'Invalid token or API key' });
   } catch (error) {
     logger.error('Authentication error', error);
     return res.status(500).json({ error: 'Authentication failed' });

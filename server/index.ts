@@ -15,7 +15,7 @@ import { httpLogger, errorHandler } from './src/mw/observability.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -51,6 +51,7 @@ let aiProviderRouter: AIProviderRouter | null = null;
 const openaiService = { getRouter: () => aiProviderRouter };
 import auditService from './services/auditService.js';
 import rbacService from './services/roleBasedAccess.js';
+import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -381,6 +382,18 @@ try {
 } catch (err) {
   console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
 }
+
+// ── Global Auth Middleware ──────────────────────────────────────────────
+// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const openPrefixes = ['/api/auth', '/api/login', '/api/logout', '/api/register', '/api/health'];
+  const fullPath = req.baseUrl + req.path;
+  if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
+  return authMiddleware(req, res, next);
+});
+console.log(
+  '✅ Global authMiddleware applied — all /api/* routes protected (except auth & health)'
+);
 
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
