@@ -373,6 +373,7 @@ export type ModuleId =
   | 'ai_assistant'
   | 'project_hub'
   | 'timeline_planner'
+  | 'platform_readiness'
   | 'settings';
 
 /** Module metadata for navigation and display */

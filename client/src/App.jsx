@@ -250,6 +250,9 @@ const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
 // New Project Wizard for 510(k) submissions
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
+// Platform Readiness Dashboard — interactive Phase 0–1 audit visualization
+const PlatformReadinessDashboard = lazy(() => import('./pages/PlatformReadinessDashboard'));
+
 // Protected Route wrapper - redirects to Concept2Cure login if not authenticated
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -1961,6 +1964,13 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <BatchOpsDashboard />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/admin/platform-readiness">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <PlatformReadinessDashboard />
                 </Suspense>
               )}
             </Route>

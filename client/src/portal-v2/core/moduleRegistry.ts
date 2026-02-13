@@ -243,6 +243,16 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
     category: 'core',
     requiredRoles: ['admin', 'regulatory_lead', 'clinical_ops', 'project_manager'],
   },
+  platform_readiness: {
+    id: 'platform_readiness',
+    label: 'Platform Readiness',
+    description: 'Interactive Phase 0–1 readiness audit with gap inventory and remediation roadmap',
+    icon: 'Activity',
+    route: '/admin/platform-readiness',
+    category: 'analytics',
+    requiredRoles: ['admin', 'regulatory_lead', 'executive', 'project_manager'],
+    isNew: true,
+  },
   settings: {
     id: 'settings',
     label: 'Settings',

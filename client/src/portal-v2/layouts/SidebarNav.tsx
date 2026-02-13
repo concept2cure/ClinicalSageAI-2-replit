@@ -77,6 +77,7 @@ const moduleIcons: Record<string, React.ComponentType<{ className?: string }>> =
   dossier_builder: Building2,
   submission_tracker: Briefcase,
   audit_trail: Scale,
+  platform_readiness: Activity,
   settings: Settings,
 };
 
@@ -114,6 +115,7 @@ const moduleRouteMap: Record<string, string> = {
   dossier_builder: '/client-portal/dossier',
   submission_tracker: '/client-portal/submissions',
   audit_trail: '/client-portal/audit',
+  platform_readiness: '/admin/platform-readiness',
   settings: '/client-portal/settings',
 };
 
