@@ -15,9 +15,13 @@ export const apiRequest = async (
   // Get organization ID from localStorage
   const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
   
+  // Get auth token from localStorage (stored by authService on login)
+  const authToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'x-organization-id': organizationId,
+    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
     ...customHeaders,
   };
 
