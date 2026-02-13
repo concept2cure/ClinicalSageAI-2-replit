@@ -5,13 +5,13 @@ import { useToast } from '@/components/ui/toaster';
 import { queryClient } from '@/lib/queryClient';
 import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
 import axios from 'axios';
-// CER imports disabled - focusing on 510(k) workflow only
-// import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
-// import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
-// import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
-// import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
+// CER imports re-enabled per REGULATORY_UX_AUDIT_2026-02-13 recommendation
+import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
+import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
+import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
+import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
 import ComplianceScorePanel from '@/components/cer/ComplianceScorePanel';
-// import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
+import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
 import DocumentVaultPanel from '@/components/cer/DocumentVaultPanel';
 import CerDataRetrievalPanel from '@/components/cer/CerDataRetrievalPanel';
 // Using 510k specific components instead of CER ones

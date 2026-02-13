@@ -69,6 +69,8 @@ const debugLog = (message: string, data?: any) => {
 import cmcProjectRoutes from './api/cmc/projectRoutes.ts';
 import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts';
 import cmcDashboardRoutes from './routes/cmc-dashboard.ts';
+import cmcAggregatorRoutes from './api/cmc/index.js';
+import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
 
 // Import AI assistance routes
 import aiAssistanceRoutes from './routes/ai-assistance.ts';
@@ -483,6 +485,18 @@ app.use('/api/enterprise', enterpriseRoutes);
 // Mount enhanced RBAC routes
 import rbacRoutes from './api/enterprise/rbac-routes.js';
 app.use('/api/enterprise/rbac', rbacRoutes);
+
+// Mount CMC Module routes (Chemistry, Manufacturing & Controls)
+try {
+  app.use('/api/cmc', cmcAggregatorRoutes);
+  app.use('/api/cmc/projects', cmcProjectRoutes);
+  app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
+  app.use('/api/cmc/dashboard', cmcDashboardPrisma);
+  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
+} catch (error) {
+  console.error('❌ Failed to mount CMC Module routes:', error);
+}
 
 // Mount Phase 5: Intelligent Document System routes
 try {
