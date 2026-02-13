@@ -199,8 +199,10 @@ const StudyRegulatoryIntelligenceSuite = lazy(
   () => import('./components/unified/StudyRegulatoryIntelligenceSuite')
 );
 
-// IND Wizard pages - DELETED per user request
-// const IndWizardLayout = lazy(() => import('./components/ind-wizard/IndWizardLayout')); // DELETED
+// IND Wizard Layout (actual file at layout/IndWizardLayout.jsx)
+const IndWizardLayout = lazy(() => import('./layout/IndWizardLayout'));
+const QualityDashboard = lazy(() => import('./pages/QualityDashboard'));
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
 // import INDWizardModule from './components/ind-wizard/INDWizardModule'; // DELETED
 // const INDWizardDashboard = lazy(() => import('./pages/INDWizardDashboard')); // DELETED
 // const INDFullSolution = lazy(() => import('./pages/INDFullSolution')); // DELETED
@@ -566,7 +568,84 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* IND Dashboard route DELETED per user request */}
+            {/* --- Client Portal Module Routes (sidebar navigation) --- */}
+            <Route path="/client-portal/ind-wizard">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <IndWizardLayout />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/ectd-coauthor">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <FulleCTDCoAuthor />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/510k-builder">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/quality">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <QualityDashboard />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/documents">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <DocumentsPage />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/settings">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <Settings />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/safety">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/training">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/ai-assistant">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <LumenCortex />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/project-hub">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/timeline-planner">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <TimelinePage />
+                </Suspense>
+              )}
+            </Route>
             {/* Unified eCTD System - combines IND Wizard and Co-Author */}
             <Route path="/unified-ectd">
               {() => (
