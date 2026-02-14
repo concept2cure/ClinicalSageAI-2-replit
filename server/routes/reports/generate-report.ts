@@ -8,10 +8,14 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { db } from '../../db';
 import { eq } from 'drizzle-orm';
 import { csr_reports, csr_details } from '../../../shared/schema';
 import { getReportGenerator } from '../../services/report-generator-service';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 

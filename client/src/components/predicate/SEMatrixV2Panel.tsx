@@ -57,7 +57,10 @@ import type {
   DiffFlagV2,
   RiskCode,
 } from '../../../shared/types/predicate-intelligence';
-import { RISK_CODE_LABELS, RISK_CODES_LOCK_HASH } from '../../../shared/types/generated';
+import {
+  RISK_CODE_LABELS,
+  RISK_CODES_LOCK_HASH,
+} from '../../../../shared/types/generated/risk-codes.generated';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Constants

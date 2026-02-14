@@ -1,5 +1,6 @@
 import express from 'express';
-import { io } from '../routes';
+
+const io = null;
 
 const router = express.Router();
 

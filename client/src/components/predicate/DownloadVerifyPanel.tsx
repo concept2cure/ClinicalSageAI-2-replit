@@ -37,7 +37,7 @@ import {
   useExportDefensePacketCSV,
   useRenderProofPackPDF,
 } from '@/hooks/use-predicate-intelligence';
-import { RISK_CODES_LOCK_HASH } from '../../../shared/types/generated';
+import { RISK_CODES_LOCK_HASH } from '../../../../shared/types/generated/risk-codes.generated';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types

@@ -1,6 +1,6 @@
 import express from 'express';
 import { indAutomationService, Module3Data, ProjectMetadata } from '../ind-automation-service';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import axios from 'axios';
 import http from 'http';
 import https from 'https';

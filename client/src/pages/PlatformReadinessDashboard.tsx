@@ -21,7 +21,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { nodeTypes } from '../../components/platform-readiness/FlowNodes';
+import { nodeTypes } from '../components/platform-readiness/FlowNodes';
 import {
   MODULES,
   SEVERITY_COLORS,
@@ -32,7 +32,7 @@ import {
   buildRoadmapEdges,
   buildArchitectureNodes,
   buildArchitectureEdges,
-} from '../../components/platform-readiness/readinessFlowData';
+} from '../components/platform-readiness/readinessFlowData';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STYLES

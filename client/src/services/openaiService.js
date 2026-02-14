@@ -305,6 +305,14 @@ export async function assessRegulatoryCompliance(specData) {
   }
 }
 
+export async function analyzeRegulatoryCompliance(documentContent, moduleType, section) {
+  return assessRegulatoryCompliance({
+    documentContent,
+    moduleType,
+    section,
+  });
+}
+
 /**
  * Simulate OpenAI response for development/testing
  * @param {string} prompt - Input prompt
@@ -328,5 +336,6 @@ export default {
   generateExecutiveSummary,
   generateMethodValidationProtocol,
   assessRegulatoryCompliance,
+  analyzeRegulatoryCompliance,
   simulateOpenAIResponse,
 };

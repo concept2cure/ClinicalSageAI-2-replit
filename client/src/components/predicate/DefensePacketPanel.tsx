@@ -55,7 +55,7 @@ import {
   REGULATORY_OBJECTION_LIBRARY,
   RISK_CODES_LOCK_HASH,
   type RiskCode,
-} from '../../../shared/types/generated';
+} from '../../../../shared/types/generated/risk-codes.generated';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Constants

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 

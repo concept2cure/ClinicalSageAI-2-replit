@@ -58,3 +58,46 @@ export const updateDocument = async (docId, content) => {
     throw error;
   }
 };
+
+export const saveToVault = async (docId, metadata = {}) => {
+  try {
+    const payload = {
+      documentId: docId,
+      ...metadata,
+    };
+
+    const response = await fetch('/api/vault/documents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        documentId: docId,
+        metadata,
+      };
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error saving Google Doc to vault:', error);
+    return {
+      success: false,
+      documentId: docId,
+      metadata,
+      error: error.message,
+    };
+  }
+};
+
+export default {
+  createDocument,
+  openDocument,
+  getDocument,
+  updateDocument,
+  saveToVault,
+};

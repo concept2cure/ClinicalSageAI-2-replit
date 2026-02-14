@@ -4583,21 +4583,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           />
         </div>
       );
-          <Card>
-            <CardHeader>
-              <CardTitle>eSTAR Package Compiler</CardTitle>
-              <CardDescription>Assemble submission into FDA eSTAR format</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-3 text-blue-300" />
-                <p className="mb-2">eSTAR Assembly Engine</p>
-                <p className="text-sm">Coming soon - Automated eSTAR package generation</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
     } else if (activeTab === 'rta-check') {
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
@@ -5018,7 +5003,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           documentId={cerDocumentId}
           sections={sections}
           onSectionUpdate={(sectionId, data) => {
-            setSections(prev => prev.map(s => s.id === sectionId ? { ...s, ...data } : s));
+            setSections(prev => prev.map(s => (s.id === sectionId ? { ...s, ...data } : s)));
           }}
         />
       );
@@ -5035,7 +5020,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         <LiteratureSearchPanel
           documentId={cerDocumentId}
           deviceProfile={deviceProfile}
-          onLiteratureSelect={(items) => {
+          onLiteratureSelect={items => {
             setSelectedLiterature(prev => [...prev, ...items]);
           }}
         />
@@ -5050,10 +5035,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       );
     } else if (activeTab === 'literature-methodology') {
       return (
-        <LiteratureMethodologyPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
+        <LiteratureMethodologyPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
       );
     } else if (activeTab === 'cep') {
       return (
@@ -5065,32 +5047,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       );
     } else if (activeTab === 'qmp') {
       return (
-        <QualityManagementPlanPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
+        <QualityManagementPlanPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
       );
     } else if (activeTab === 'data-retrieval') {
-      return (
-        <CerDataRetrievalPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
-      );
+      return <CerDataRetrievalPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
     } else if (activeTab === 'internal-clinical-data') {
-      return (
-        <InternalClinicalDataPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
-      );
+      return <InternalClinicalDataPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
     } else if (activeTab === 'sota') {
-      return (
-        <StateOfArtPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
-      );
+      return <StateOfArtPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
     } else if (activeTab === 'gspr-mapping') {
       return (
         <GSPRMappingPanel
@@ -5117,12 +5081,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         />
       );
     } else if (activeTab === 'maude') {
-      return (
-        <MAUDIntegrationPanel
-          documentId={cerDocumentId}
-          deviceProfile={deviceProfile}
-        />
-      );
+      return <MAUDIntegrationPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
     } else if (activeTab === 'cer-reports') {
       return (
         <CerComprehensiveReportsPanel
