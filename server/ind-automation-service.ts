@@ -207,6 +207,50 @@ export class INDAutomationService {
     }
   }
 
+  async getPyramidCatalog(): Promise<Record<string, unknown>> {
+    try {
+      const serviceRunning = await this.isServiceRunning();
+      if (!serviceRunning) {
+        await this.startService();
+      }
+
+      const response = await axios.get(`${this.serviceUrl}/api/ind/pyramid/catalog`);
+      return response.data;
+    } catch (error) {
+      logger.error(`Error fetching IND pyramid catalog: ${error.message}`);
+      throw new Error(`Failed to fetch IND pyramid catalog: ${error.message}`);
+    }
+  }
+
+  async generatePyramidTemplate(
+    moduleNumber: 1 | 2 | 3 | 4 | 5,
+    templateId: string,
+    data: ProjectMetadata
+  ): Promise<Buffer> {
+    try {
+      const serviceRunning = await this.isServiceRunning();
+      if (!serviceRunning) {
+        await this.startService();
+      }
+
+      const encodedTemplateId = encodeURIComponent(templateId);
+      const response = await axios.post(
+        `${this.serviceUrl}/api/ind/pyramid/${moduleNumber}/${encodedTemplateId}`,
+        data,
+        { responseType: 'arraybuffer' }
+      );
+
+      return Buffer.from(response.data);
+    } catch (error) {
+      logger.error(
+        `Error generating Module ${moduleNumber} template ${templateId}: ${error.message}`
+      );
+      throw new Error(
+        `Failed to generate Module ${moduleNumber} template ${templateId}: ${error.message}`
+      );
+    }
+  }
+
   /**
    * Get available projects from Benchling
    */

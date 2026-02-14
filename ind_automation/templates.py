@@ -7,13 +7,59 @@ using python-docx instead of docxtpl.
 
 import os
 import io
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from io import BytesIO
 from datetime import datetime
 
 import docx
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+
+IND_PYRAMID_CATALOG: Dict[int, List[Dict[str, Any]]] = {
+    1: [
+        {"id": "1.1", "title": "Table of Contents", "sections": ["toc_entries"]},
+        {"id": "1.2", "title": "Cover Letter", "sections": ["cover_letter_body"]},
+        {"id": "1.3", "title": "Administrative Information", "sections": ["administrative_info"]},
+        {"id": "1.4", "title": "Investigator's Brochure", "sections": ["investigator_brochure_summary"]},
+    ],
+    2: [
+        {"id": "2.1", "title": "CTD Table of Contents", "sections": ["module2_toc"]},
+        {"id": "2.2", "title": "Introduction", "sections": ["module2_introduction"]},
+        {"id": "2.3", "title": "Quality Overall Summary", "sections": ["module2_quality_summary"]},
+        {"id": "2.4", "title": "Nonclinical Overview", "sections": ["module2_nonclinical_overview"]},
+        {"id": "2.5", "title": "Clinical Overview", "sections": ["module2_clinical_overview"]},
+        {"id": "2.6", "title": "Nonclinical Written & Tabulated Summaries", "sections": ["module2_nonclinical_summary"]},
+        {"id": "2.7", "title": "Clinical Summary", "sections": ["module2_clinical_summary"]},
+    ],
+    3: [
+        {"id": "3.2.S", "title": "Drug Substance", "sections": ["drug_substance", "specifications"]},
+        {"id": "3.2.P", "title": "Drug Product", "sections": ["drug_product", "stability_data"]},
+        {"id": "3.2.A", "title": "Appendices", "sections": ["module3_appendices"]},
+        {"id": "3.2.R", "title": "Regional Information", "sections": ["module3_regional_info"]},
+    ],
+    4: [
+        {"id": "4.2", "title": "Study Reports", "sections": ["module4_study_reports"]},
+        {"id": "4.3", "title": "Literature References", "sections": ["module4_literature_references"]},
+    ],
+    5: [
+        {"id": "5.1", "title": "Tabular Listing of Clinical Studies", "sections": ["module5_tabular_listing"]},
+        {"id": "5.2", "title": "Clinical Study Reports", "sections": ["module5_clinical_reports"]},
+        {"id": "5.3", "title": "Clinical References", "sections": ["module5_references"]},
+    ],
+}
+
+
+def get_ind_pyramid_catalog() -> Dict[int, List[Dict[str, Any]]]:
+    return IND_PYRAMID_CATALOG
+
+
+def _find_pyramid_template(module_number: int, template_id: str) -> Optional[Dict[str, Any]]:
+    templates = IND_PYRAMID_CATALOG.get(module_number, [])
+    for template in templates:
+        if template["id"].lower() == template_id.lower():
+            return template
+    return None
 
 
 def _create_module_document(title: str, module_code: str, data: Dict[str, Any]) -> docx.Document:
@@ -417,3 +463,25 @@ def render_ind_module(module_number: int, data: Dict[str, Any]) -> BytesIO:
         raise ValueError("Module must be between 1 and 5")
 
     return renderer(data)
+
+
+def render_ind_subtemplate(module_number: int, template_id: str, data: Dict[str, Any]) -> BytesIO:
+    template = _find_pyramid_template(module_number, template_id)
+    if template is None:
+        raise ValueError(f"Unknown template '{template_id}' for module {module_number}")
+
+    doc = _create_module_document(template["title"], str(module_number), data)
+    doc.add_paragraph(f"Template ID: {template['id']}")
+
+    for section_key in template.get("sections", []):
+        section_title = section_key.replace("_", " ").title()
+        section_content = data.get(section_key)
+
+        if section_content is None and section_key == "specifications":
+            section_content = data.get("specifications", [])
+        if section_content is None and section_key == "stability_data":
+            section_content = data.get("stability_data", [])
+
+        _add_section(doc, section_title, section_content or "Pending content")
+
+    return _save_document(doc)

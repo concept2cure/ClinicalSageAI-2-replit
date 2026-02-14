@@ -222,6 +222,8 @@ from .templates import (
     render_form3674,
     generate_cover_letter,
     render_ind_module,
+    render_ind_subtemplate,
+    get_ind_pyramid_catalog,
 )
 
 
@@ -316,6 +318,29 @@ async def generate_module_docx(module_number: int, payload: Dict[str, Any]):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating module document: {str(e)}")
+
+
+@app.get("/api/ind/pyramid/catalog")
+async def get_pyramid_catalog():
+    return {"modules": get_ind_pyramid_catalog()}
+
+
+@app.post("/api/ind/pyramid/{module_number}/{template_id:path}")
+async def generate_pyramid_template(module_number: int, template_id: str, payload: Dict[str, Any]):
+    if module_number < 1 or module_number > 5:
+        raise HTTPException(status_code=400, detail="Module number must be between 1 and 5")
+
+    try:
+        filename = (
+            f"Module{module_number}_{template_id}_{payload.get('drug_name', 'IND')}.docx"
+            .replace(" ", "_")
+            .replace("/", "-")
+        )
+        return _docx_response(render_ind_subtemplate(module_number, template_id, payload), filename)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating pyramid template: {str(e)}")
 
 # Add a demo endpoint for the ENZYMAX FORTE sample project
 @app.get("/api/demo/enzymax")
