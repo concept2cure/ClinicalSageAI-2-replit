@@ -1,10 +1,9 @@
-// @ts-nocheck
 /**
  * CER Generation Service
- *
+ * 
  * Clinical Evaluation Report generation with deterministic templates
  * MDR 2017/745 and IVDR 2017/746 compliant
- *
+ * 
  * Features:
  * - Deterministic template-based generation
  * - Version control and change tracking
@@ -29,7 +28,7 @@ import {
   NewCerReport,
   CerTemplate,
   CerClinicalEvidence,
-  NewCerClinicalEvidence,
+  NewCerClinicalEvidence
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -66,7 +65,7 @@ interface ClinicalEvidenceSource {
 
 class CerGenerationService {
   private readonly templateEngine: Map<string, Function>;
-
+  
   constructor() {
     this.templateEngine = this.initializeTemplateEngine();
   }
@@ -76,7 +75,7 @@ class CerGenerationService {
    */
   private initializeTemplateEngine(): Map<string, Function> {
     const engine = new Map<string, Function>();
-
+    
     // Executive Summary Template
     engine.set('executive_summary', (data: any) => ({
       title: 'Executive Summary',
@@ -86,8 +85,8 @@ class CerGenerationService {
         intendedPurpose: data.intendedPurpose,
         clinicalEvaluation: `This Clinical Evaluation Report (CER) for ${data.deviceName} has been prepared in accordance with ${data.regulatoryFramework} requirements.`,
         conclusion: `Based on the clinical data analyzed, ${data.deviceName} demonstrates an acceptable benefit-risk profile for its intended use.`,
-        date: new Date().toISOString().split('T')[0],
-      },
+        date: new Date().toISOString().split('T')[0]
+      }
     }));
 
     // Device Description Template
@@ -101,8 +100,8 @@ class CerGenerationService {
         targetPopulation: data.targetPopulation,
         principlesOfOperation: data.operationPrinciples,
         materials: data.materials,
-        specifications: data.specifications,
-      },
+        specifications: data.specifications
+      }
     }));
 
     // Essential Requirements Template
@@ -112,8 +111,8 @@ class CerGenerationService {
         generalRequirements: this.generateGeneralRequirements(data),
         designRequirements: this.generateDesignRequirements(data),
         informationRequirements: this.generateInformationRequirements(data),
-        clinicalRequirements: this.generateClinicalRequirements(data),
-      },
+        clinicalRequirements: this.generateClinicalRequirements(data)
+      }
     }));
 
     // Clinical Background Template
@@ -124,8 +123,8 @@ class CerGenerationService {
         currentTreatmentOptions: data.currentTreatments,
         clinicalBenefits: data.expectedBenefits,
         targetPopulation: data.targetPopulation,
-        epidemiology: data.epidemiology,
-      },
+        epidemiology: data.epidemiology
+      }
     }));
 
     // Risk-Benefit Analysis Template
@@ -136,8 +135,8 @@ class CerGenerationService {
         riskMitigation: data.mitigationMeasures || [],
         clinicalBenefits: data.benefits || [],
         benefitRiskRatio: this.calculateBenefitRiskRatio(data),
-        conclusion: this.generateRiskBenefitConclusion(data),
-      },
+        conclusion: this.generateRiskBenefitConclusion(data)
+      }
     }));
 
     return engine;
@@ -197,14 +196,12 @@ class CerGenerationService {
           templateChecksum: this.calculateChecksum(template),
           createdBy: options.userId,
           updatedBy: options.userId,
-          changeLog: [
-            {
-              version: '1.0',
-              date: new Date().toISOString(),
-              author: options.userId,
-              changes: 'Initial CER creation',
-            },
-          ],
+          changeLog: [{
+            version: '1.0',
+            date: new Date().toISOString(),
+            author: options.userId,
+            changes: 'Initial CER creation'
+          }]
         } as NewCerReport)
         .returning();
 
@@ -218,8 +215,8 @@ class CerGenerationService {
         details: {
           cerNumber,
           deviceId: options.deviceId,
-          regulatoryFramework: options.regulatoryFramework,
-        },
+          regulatoryFramework: options.regulatoryFramework
+        }
       });
 
       return newCer;
@@ -243,7 +240,10 @@ class CerGenerationService {
       const [cer] = await db
         .select()
         .from(cerReports)
-        .where(and(eq(cerReports.id, cerReportId), eq(cerReports.organizationId, organizationId)))
+        .where(and(
+          eq(cerReports.id, cerReportId),
+          eq(cerReports.organizationId, organizationId)
+        ))
         .limit(1);
 
       if (!cer) {
@@ -263,7 +263,7 @@ class CerGenerationService {
           relevanceScore: evidence.relevance,
           qualityScore: evidence.quality,
           includeInReport: true,
-          addedBy: userId,
+          addedBy: userId
         } as NewCerClinicalEvidence)
         .returning();
 
@@ -292,7 +292,10 @@ class CerGenerationService {
       const [currentCer] = await db
         .select()
         .from(cerReports)
-        .where(and(eq(cerReports.id, cerReportId), eq(cerReports.organizationId, organizationId)))
+        .where(and(
+          eq(cerReports.id, cerReportId),
+          eq(cerReports.organizationId, organizationId)
+        ))
         .limit(1);
 
       if (!currentCer) {
@@ -301,7 +304,7 @@ class CerGenerationService {
 
       // Create version history entry
       const newVersion = this.incrementVersion(currentCer.cerVersion);
-
+      
       await db.insert(cerVersionHistory).values({
         cerReportId,
         versionNumber: currentCer.cerVersion,
@@ -310,7 +313,7 @@ class CerGenerationService {
         changedSections: Object.keys(changes),
         reportSnapshot: currentCer,
         reviewStatus: 'pending',
-        authorId: userId,
+        authorId: userId
       });
 
       // Update CER with new version
@@ -320,14 +323,14 @@ class CerGenerationService {
         updatedBy: userId,
         updatedAt: new Date(),
         changeLog: [
-          ...((currentCer.changeLog as any[]) || []),
+          ...(currentCer.changeLog as any[] || []),
           {
             version: newVersion,
             date: new Date().toISOString(),
             author: userId,
-            changes: changeSummary,
-          },
-        ],
+            changes: changeSummary
+          }
+        ]
       };
 
       const [updatedCer] = await db
@@ -346,8 +349,8 @@ class CerGenerationService {
         details: {
           version: newVersion,
           changeSummary,
-          changedSections: Object.keys(changes),
-        },
+          changedSections: Object.keys(changes)
+        }
       });
 
       return updatedCer;
@@ -370,7 +373,10 @@ class CerGenerationService {
       const [cer] = await db
         .select()
         .from(cerReports)
-        .where(and(eq(cerReports.id, cerReportId), eq(cerReports.organizationId, organizationId)))
+        .where(and(
+          eq(cerReports.id, cerReportId),
+          eq(cerReports.organizationId, organizationId)
+        ))
         .limit(1);
 
       if (!cer) {
@@ -399,13 +405,13 @@ class CerGenerationService {
 
       // Update export tracking
       const exportChecksum = this.calculateChecksum(exportContent);
-
+      
       await db
         .update(cerReports)
         .set({
           lastExportedAt: new Date(),
           exportFormat: format,
-          exportChecksum,
+          exportChecksum
         })
         .where(eq(cerReports.id, cerReportId));
 
@@ -420,8 +426,8 @@ class CerGenerationService {
           format,
           checksum: exportChecksum,
           cerNumber: cer.cerNumber,
-          version: cer.cerVersion,
-        },
+          version: cer.cerVersion
+        }
       });
 
       return { content: exportContent, filename };
@@ -483,7 +489,7 @@ class CerGenerationService {
         deviceClasses: ['I', 'IIa', 'IIb', 'III'],
         regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
         createdBy: 1, // System user
-        templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure()),
+        templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure())
       })
       .returning();
 
@@ -502,7 +508,7 @@ class CerGenerationService {
       deviceName: device.deviceName,
       deviceClass: device.classification,
       intendedPurpose: device.intendedUse,
-      regulatoryFramework: options.regulatoryFramework,
+      regulatoryFramework: options.regulatoryFramework
     });
 
     structure.deviceDescription = this.templateEngine.get('device_description')!({
@@ -510,7 +516,7 @@ class CerGenerationService {
       description: device.description,
       intendedUse: device.intendedUse,
       indications: device.indications,
-      targetPopulation: device.targetPopulation,
+      targetPopulation: device.targetPopulation
     });
 
     structure.essentialRequirements = this.templateEngine.get('essential_requirements')!(device);
@@ -521,8 +527,8 @@ class CerGenerationService {
       title: 'Clinical Evidence',
       content: {
         overview: 'Clinical evidence compiled from multiple sources',
-        sources: [],
-      },
+        sources: []
+      }
     };
 
     structure.literatureReview = {
@@ -530,8 +536,8 @@ class CerGenerationService {
       content: {
         searchStrategy: 'Systematic literature search conducted',
         databases: ['PubMed', 'EMBASE', 'Cochrane'],
-        results: [],
-      },
+        results: []
+      }
     };
 
     structure.conclusions = {
@@ -539,8 +545,8 @@ class CerGenerationService {
       content: {
         summary: `The clinical evaluation demonstrates that ${device.deviceName} meets all applicable requirements.`,
         benefitRisk: 'The benefit-risk analysis is favorable.',
-        recommendations: 'Continue post-market surveillance as planned.',
-      },
+        recommendations: 'Continue post-market surveillance as planned.'
+      }
     };
 
     return structure;
@@ -550,17 +556,16 @@ class CerGenerationService {
     return [
       {
         requirement: 'ER 1',
-        description:
-          'Devices shall be designed and manufactured to be suitable for their intended purpose',
+        description: 'Devices shall be designed and manufactured to be suitable for their intended purpose',
         conformity: 'Conforms',
-        evidence: 'Design verification and validation documentation',
+        evidence: 'Design verification and validation documentation'
       },
       {
         requirement: 'ER 2',
         description: 'Devices shall be safe and effective',
         conformity: 'Conforms',
-        evidence: 'Clinical evaluation and risk management file',
-      },
+        evidence: 'Clinical evaluation and risk management file'
+      }
     ];
   }
 
@@ -570,8 +575,8 @@ class CerGenerationService {
         requirement: 'ER 3',
         description: 'Chemical, physical and biological properties',
         conformity: 'Conforms',
-        evidence: 'Material safety data and biocompatibility testing',
-      },
+        evidence: 'Material safety data and biocompatibility testing'
+      }
     ];
   }
 
@@ -581,8 +586,8 @@ class CerGenerationService {
         requirement: 'ER 13',
         description: 'Information supplied with the device',
         conformity: 'Conforms',
-        evidence: 'Instructions for use and labeling',
-      },
+        evidence: 'Instructions for use and labeling'
+      }
     ];
   }
 
@@ -592,18 +597,18 @@ class CerGenerationService {
         requirement: 'ER 14',
         description: 'Clinical evaluation',
         conformity: 'Conforms',
-        evidence: 'This clinical evaluation report',
-      },
+        evidence: 'This clinical evaluation report'
+      }
     ];
   }
 
   private calculateBenefitRiskRatio(data: any): string {
     const benefits = data.benefits?.length || 0;
     const risks = data.risks?.length || 0;
-
+    
     if (risks === 0) return 'Highly favorable';
     const ratio = benefits / risks;
-
+    
     if (ratio > 2) return 'Highly favorable';
     if (ratio > 1) return 'Favorable';
     if (ratio === 1) return 'Balanced';
@@ -630,7 +635,7 @@ class CerGenerationService {
       .update(cerReports)
       .set({
         totalStudiesReviewed: Number(evidenceCount[0].count) || 0,
-        totalPatientsIncluded: Number(patientSum[0].total) || 0,
+        totalPatientsIncluded: Number(patientSum[0].total) || 0
       })
       .where(eq(cerReports.id, cerReportId));
   }
@@ -644,7 +649,7 @@ class CerGenerationService {
   private getVersionType(oldVersion: string, newVersion: string): string {
     const oldParts = oldVersion.split('.');
     const newParts = newVersion.split('.');
-
+    
     if (oldParts[0] !== newParts[0]) return 'major';
     if (oldParts[1] !== newParts[1]) return 'minor';
     return 'patch';
@@ -666,13 +671,13 @@ class CerGenerationService {
         'clinicalEvidence',
         'literatureReview',
         'riskBenefitAnalysis',
-        'conclusions',
+        'conclusions'
       ],
       formatting: {
         font: 'Arial',
         fontSize: 11,
-        lineSpacing: 1.5,
-      },
+        lineSpacing: 1.5
+      }
     };
   }
 
@@ -683,7 +688,7 @@ class CerGenerationService {
       'intendedUse',
       'clinicalEvidence',
       'riskAnalysis',
-      'conclusions',
+      'conclusions'
     ];
   }
 
@@ -698,8 +703,8 @@ class CerGenerationService {
             Title: `Clinical Evaluation Report - ${cer.deviceName}`,
             Author: 'eCTD Co-Author™',
             Subject: `CER ${cer.reportId} Version ${cer.version}`,
-            Keywords: 'CER, Medical Device, Clinical Evaluation',
-          },
+            Keywords: 'CER, Medical Device, Clinical Evaluation'
+          }
         });
 
         // Collect PDF data
@@ -708,43 +713,41 @@ class CerGenerationService {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
 
         // Title page
-        doc
-          .fontSize(24)
-          .font('Helvetica-Bold')
-          .text('CLINICAL EVALUATION REPORT', { align: 'center' });
+        doc.fontSize(24).font('Helvetica-Bold')
+           .text('CLINICAL EVALUATION REPORT', { align: 'center' });
         doc.moveDown();
-        doc.fontSize(18).font('Helvetica').text(cer.deviceName, { align: 'center' });
+        doc.fontSize(18).font('Helvetica')
+           .text(cer.deviceName, { align: 'center' });
         doc.moveDown();
-        doc
-          .fontSize(14)
-          .text(`CER Number: ${cer.reportId}`, { align: 'center' })
-          .text(`Version: ${cer.version || '1.0'}`, { align: 'center' })
-          .text(`Status: ${cer.status}`, { align: 'center' });
+        doc.fontSize(14)
+           .text(`CER Number: ${cer.reportId}`, { align: 'center' })
+           .text(`Version: ${cer.version || '1.0'}`, { align: 'center' })
+           .text(`Status: ${cer.status}`, { align: 'center' });
         doc.moveDown(2);
-        doc
-          .fontSize(12)
-          .text(`Device Manufacturer: ${cer.deviceManufacturer || 'N/A'}`)
-          .text(`Device Type: ${cer.deviceType || 'N/A'}`);
+        doc.fontSize(12)
+           .text(`Device Manufacturer: ${cer.deviceManufacturer || 'N/A'}`)
+           .text(`Device Type: ${cer.deviceType || 'N/A'}`);
 
         // Add page break
         doc.addPage();
 
         // Table of Contents
-        doc.fontSize(18).font('Helvetica-Bold').text('TABLE OF CONTENTS', { align: 'center' });
+        doc.fontSize(18).font('Helvetica-Bold')
+           .text('TABLE OF CONTENTS', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).font('Helvetica');
-
+        
         const sections = [
           '1. Executive Summary',
-          '2. Device Description',
+          '2. Device Description', 
           '3. Clinical Background',
           '4. Essential Requirements',
           '5. Clinical Evidence',
           '6. Literature Review',
           '7. Risk-Benefit Analysis',
-          '8. Conclusions',
+          '8. Conclusions'
         ];
-
+        
         sections.forEach((section, index) => {
           doc.text(section);
         });
@@ -754,36 +757,30 @@ class CerGenerationService {
 
         // Add actual content from cer.content (JSON)
         const content = cer.content || {};
-
+        
         // Executive Summary
-        doc.fontSize(16).font('Helvetica-Bold').text('1. EXECUTIVE SUMMARY');
+        doc.fontSize(16).font('Helvetica-Bold')
+           .text('1. EXECUTIVE SUMMARY');
         doc.fontSize(11).font('Helvetica');
         doc.moveDown();
-
+        
         if (content.executiveSummary) {
-          doc.text(
-            JSON.stringify(content.executiveSummary.content || content.executiveSummary, null, 2)
-          );
+          doc.text(JSON.stringify(content.executiveSummary.content || content.executiveSummary, null, 2));
         } else {
-          doc.text(
-            `This Clinical Evaluation Report (CER) has been prepared for ${cer.deviceName} in accordance with applicable regulatory requirements.`
-          );
+          doc.text(`This Clinical Evaluation Report (CER) has been prepared for ${cer.deviceName} in accordance with applicable regulatory requirements.`);
           doc.moveDown();
-          doc.text(
-            'The device has been evaluated based on available clinical data, literature review, and risk-benefit analysis.'
-          );
+          doc.text('The device has been evaluated based on available clinical data, literature review, and risk-benefit analysis.');
         }
 
         // Device Description
         doc.addPage();
-        doc.fontSize(16).font('Helvetica-Bold').text('2. DEVICE DESCRIPTION');
+        doc.fontSize(16).font('Helvetica-Bold')
+           .text('2. DEVICE DESCRIPTION');
         doc.fontSize(11).font('Helvetica');
         doc.moveDown();
-
+        
         if (content.deviceDescription) {
-          doc.text(
-            JSON.stringify(content.deviceDescription.content || content.deviceDescription, null, 2)
-          );
+          doc.text(JSON.stringify(content.deviceDescription.content || content.deviceDescription, null, 2));
         } else {
           doc.text(`Device Name: ${cer.deviceName}`);
           doc.text(`Manufacturer: ${cer.deviceManufacturer || 'N/A'}`);
@@ -793,22 +790,18 @@ class CerGenerationService {
         // Additional sections from content
         if (content.clinicalBackground) {
           doc.addPage();
-          doc.fontSize(16).font('Helvetica-Bold').text('3. CLINICAL BACKGROUND');
+          doc.fontSize(16).font('Helvetica-Bold')
+             .text('3. CLINICAL BACKGROUND');
           doc.fontSize(11).font('Helvetica');
           doc.moveDown();
-          doc.text(
-            JSON.stringify(
-              content.clinicalBackground.content || content.clinicalBackground,
-              null,
-              2
-            )
-          );
+          doc.text(JSON.stringify(content.clinicalBackground.content || content.clinicalBackground, null, 2));
         }
 
         // Metadata and approval information
         if (cer.metadata) {
           doc.addPage();
-          doc.fontSize(16).font('Helvetica-Bold').text('DOCUMENT INFORMATION');
+          doc.fontSize(16).font('Helvetica-Bold')
+             .text('DOCUMENT INFORMATION');
           doc.fontSize(11).font('Helvetica');
           doc.moveDown();
           doc.text(`Created: ${new Date(cer.createdAt).toLocaleDateString()}`);
@@ -829,45 +822,45 @@ class CerGenerationService {
   private async generateDocx(cer: CerReport): Promise<Buffer> {
     try {
       const content = cer.content || {};
-
+      
       // Create sections for the document
       const docSections = [];
-
+      
       // Title section
       docSections.push(
         new Paragraph({
           text: 'CLINICAL EVALUATION REPORT',
           heading: HeadingLevel.TITLE,
           alignment: AlignmentType.CENTER,
-          spacing: { after: 400 },
+          spacing: { after: 400 }
         }),
         new Paragraph({
           text: cer.deviceName,
           heading: HeadingLevel.HEADING_1,
           alignment: AlignmentType.CENTER,
-          spacing: { after: 200 },
+          spacing: { after: 200 }
         }),
         new Paragraph({
           children: [
             new TextRun({ text: 'CER Number: ', bold: true }),
-            new TextRun({ text: cer.reportId }),
+            new TextRun({ text: cer.reportId })
           ],
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.CENTER
         }),
         new Paragraph({
           children: [
             new TextRun({ text: 'Version: ', bold: true }),
-            new TextRun({ text: cer.version || '1.0' }),
+            new TextRun({ text: cer.version || '1.0' })
           ],
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.CENTER
         }),
         new Paragraph({
           children: [
             new TextRun({ text: 'Status: ', bold: true }),
-            new TextRun({ text: cer.status }),
+            new TextRun({ text: cer.status })
           ],
           alignment: AlignmentType.CENTER,
-          spacing: { after: 600 },
+          spacing: { after: 600 }
         })
       );
 
@@ -876,15 +869,15 @@ class CerGenerationService {
         new Paragraph({
           children: [
             new TextRun({ text: 'Device Manufacturer: ', bold: true }),
-            new TextRun({ text: cer.deviceManufacturer || 'N/A' }),
-          ],
+            new TextRun({ text: cer.deviceManufacturer || 'N/A' })
+          ]
         }),
         new Paragraph({
           children: [
             new TextRun({ text: 'Device Type: ', bold: true }),
-            new TextRun({ text: cer.deviceType || 'N/A' }),
+            new TextRun({ text: cer.deviceType || 'N/A' })
           ],
-          spacing: { after: 800 },
+          spacing: { after: 800 }
         })
       );
 
@@ -893,7 +886,7 @@ class CerGenerationService {
         new Paragraph({
           text: 'TABLE OF CONTENTS',
           heading: HeadingLevel.HEADING_1,
-          spacing: { before: 800, after: 400 },
+          spacing: { before: 800, after: 400 }
         })
       );
 
@@ -905,14 +898,14 @@ class CerGenerationService {
         '5. Clinical Evidence',
         '6. Literature Review',
         '7. Risk-Benefit Analysis',
-        '8. Conclusions',
+        '8. Conclusions'
       ];
 
       tocItems.forEach(item => {
         docSections.push(
           new Paragraph({
             text: item,
-            spacing: { after: 200 },
+            spacing: { after: 200 }
           })
         );
       });
@@ -923,7 +916,7 @@ class CerGenerationService {
           text: '1. EXECUTIVE SUMMARY',
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 800, after: 400 },
-          pageBreakBefore: true,
+          pageBreakBefore: true
         })
       );
 
@@ -931,22 +924,21 @@ class CerGenerationService {
         const summaryContent = content.executiveSummary.content || content.executiveSummary;
         docSections.push(
           new Paragraph({
-            text:
-              typeof summaryContent === 'string'
-                ? summaryContent
-                : JSON.stringify(summaryContent, null, 2),
-            spacing: { after: 400 },
+            text: typeof summaryContent === 'string' 
+              ? summaryContent 
+              : JSON.stringify(summaryContent, null, 2),
+            spacing: { after: 400 }
           })
         );
       } else {
         docSections.push(
           new Paragraph({
             text: `This Clinical Evaluation Report (CER) has been prepared for ${cer.deviceName} in accordance with applicable regulatory requirements.`,
-            spacing: { after: 200 },
+            spacing: { after: 200 }
           }),
           new Paragraph({
             text: 'The device has been evaluated based on available clinical data, literature review, and risk-benefit analysis.',
-            spacing: { after: 400 },
+            spacing: { after: 400 }
           })
         );
       }
@@ -957,7 +949,7 @@ class CerGenerationService {
           text: '2. DEVICE DESCRIPTION',
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 800, after: 400 },
-          pageBreakBefore: true,
+          pageBreakBefore: true
         })
       );
 
@@ -965,9 +957,10 @@ class CerGenerationService {
         const descContent = content.deviceDescription.content || content.deviceDescription;
         docSections.push(
           new Paragraph({
-            text:
-              typeof descContent === 'string' ? descContent : JSON.stringify(descContent, null, 2),
-            spacing: { after: 400 },
+            text: typeof descContent === 'string' 
+              ? descContent 
+              : JSON.stringify(descContent, null, 2),
+            spacing: { after: 400 }
           })
         );
       } else {
@@ -975,21 +968,21 @@ class CerGenerationService {
           new Paragraph({
             children: [
               new TextRun({ text: 'Device Name: ', bold: true }),
-              new TextRun({ text: cer.deviceName }),
-            ],
+              new TextRun({ text: cer.deviceName })
+            ]
           }),
           new Paragraph({
             children: [
               new TextRun({ text: 'Manufacturer: ', bold: true }),
-              new TextRun({ text: cer.deviceManufacturer || 'N/A' }),
-            ],
+              new TextRun({ text: cer.deviceManufacturer || 'N/A' })
+            ]
           }),
           new Paragraph({
             children: [
               new TextRun({ text: 'Device Type: ', bold: true }),
-              new TextRun({ text: cer.deviceType || 'N/A' }),
+              new TextRun({ text: cer.deviceType || 'N/A' })
             ],
-            spacing: { after: 400 },
+            spacing: { after: 400 }
           })
         );
       }
@@ -1001,15 +994,17 @@ class CerGenerationService {
             text: '3. CLINICAL BACKGROUND',
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 800, after: 400 },
-            pageBreakBefore: true,
+            pageBreakBefore: true
           })
         );
 
         const bgContent = content.clinicalBackground.content || content.clinicalBackground;
         docSections.push(
           new Paragraph({
-            text: typeof bgContent === 'string' ? bgContent : JSON.stringify(bgContent, null, 2),
-            spacing: { after: 400 },
+            text: typeof bgContent === 'string' 
+              ? bgContent 
+              : JSON.stringify(bgContent, null, 2),
+            spacing: { after: 400 }
           })
         );
       }
@@ -1021,19 +1016,19 @@ class CerGenerationService {
             text: 'DOCUMENT INFORMATION',
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 800, after: 400 },
-            pageBreakBefore: true,
+            pageBreakBefore: true
           }),
           new Paragraph({
             children: [
               new TextRun({ text: 'Created: ', bold: true }),
-              new TextRun({ text: new Date(cer.createdAt).toLocaleDateString() }),
-            ],
+              new TextRun({ text: new Date(cer.createdAt).toLocaleDateString() })
+            ]
           }),
           new Paragraph({
             children: [
               new TextRun({ text: 'Last Updated: ', bold: true }),
-              new TextRun({ text: new Date(cer.updatedAt).toLocaleDateString() }),
-            ],
+              new TextRun({ text: new Date(cer.updatedAt).toLocaleDateString() })
+            ]
           })
         );
 
@@ -1042,8 +1037,8 @@ class CerGenerationService {
             new Paragraph({
               children: [
                 new TextRun({ text: 'Approval Date: ', bold: true }),
-                new TextRun({ text: new Date(cer.metadata.approvalDate).toLocaleDateString() }),
-              ],
+                new TextRun({ text: new Date(cer.metadata.approvalDate).toLocaleDateString() })
+              ]
             })
           );
         }
@@ -1051,24 +1046,22 @@ class CerGenerationService {
 
       // Create the document
       const doc = new Document({
-        sections: [
-          {
-            properties: {
-              page: {
-                margin: {
-                  top: 1440,
-                  right: 1440,
-                  bottom: 1440,
-                  left: 1440,
-                },
-              },
-            },
-            children: docSections,
+        sections: [{
+          properties: {
+            page: {
+              margin: {
+                top: 1440,
+                right: 1440,
+                bottom: 1440,
+                left: 1440
+              }
+            }
           },
-        ],
+          children: docSections
+        }],
         creator: 'eCTD Co-Author™',
         title: `Clinical Evaluation Report - ${cer.deviceName}`,
-        subject: `CER ${cer.reportId} Version ${cer.version}`,
+        subject: `CER ${cer.reportId} Version ${cer.version}`
       });
 
       // Generate buffer
@@ -1084,7 +1077,7 @@ class CerGenerationService {
   private async generateXml(cer: CerReport): Promise<string> {
     // Generate structured XML for regulatory submission (eCTD compliant)
     const content = cer.content || {};
-
+    
     // Escape XML special characters
     const escapeXml = (str: any): string => {
       if (!str) return '';
@@ -1099,7 +1092,7 @@ class CerGenerationService {
     // Format content sections as XML
     const formatSection = (section: any, name: string): string => {
       if (!section) return '';
-
+      
       if (typeof section === 'string') {
         return `    <${name}>${escapeXml(section)}</${name}>`;
       } else if (typeof section === 'object') {
@@ -1162,7 +1155,7 @@ ${formatSection(content.conclusions, 'Conclusions')}
     </ReviewerSignature>
   </Signatures>
 </ClinicalEvaluationReport>`;
-
+    
     return xml;
   }
 }

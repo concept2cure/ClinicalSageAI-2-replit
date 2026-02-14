@@ -1,4 +1,3 @@
-// @ts-nocheck
 // CSR Search Service
 // This service connects to the deep semantic layer for intelligent CSR search
 

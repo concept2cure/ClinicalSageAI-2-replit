@@ -1,10 +1,9 @@
-// @ts-nocheck
 /**
  * Artifact Skeleton Generator Service
- *
+ * 
  * Auto-scaffolds regulatory document templates with proper structure,
  * metadata, and placeholder content based on submission type and eCTD requirements.
- *
+ * 
  * Phase 6 Component - eCTD Co-Author + Document Drafting
  * Integrates with: ComplianceRulesEngine, ECTDScaffoldingService
  */
@@ -12,7 +11,15 @@
 import { logger } from '../../lib/logger';
 import { AuditLogger } from '../audit/AuditLogger';
 
-export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO' | 'EUA';
+export type SubmissionType = 
+  | '510K' 
+  | 'IND' 
+  | 'NDA' 
+  | 'BLA' 
+  | 'PMA' 
+  | 'MAA' 
+  | 'DE_NOVO' 
+  | 'EUA';
 
 export type DocumentType =
   | 'CLINICAL_OVERVIEW'
@@ -90,7 +97,7 @@ export class ArtifactSkeletonGenerator {
 
       // Get template based on document and submission type
       const sections = this.getSectionsByType(documentType, submissionType);
-
+      
       // Build metadata
       const metadata: ArtifactMetadata = {
         title: this.getDefaultTitle(documentType, submissionType),
@@ -145,6 +152,7 @@ export class ArtifactSkeletonGenerator {
 
       logger.info(`Skeleton generated successfully with ${sections.length} sections`);
       return skeleton;
+
     } catch (error) {
       logger.error('Error generating artifact skeleton:', error);
       throw new Error(`Failed to generate skeleton: ${error.message}`);
@@ -165,8 +173,7 @@ export class ArtifactSkeletonGenerator {
           id: 'device_overview',
           title: '1. Device Overview',
           level: 1,
-          placeholder:
-            '[Provide a high-level description of the device, its intended use, and target patient population]',
+          placeholder: '[Provide a high-level description of the device, its intended use, and target patient population]',
           required: true,
           complianceNote: 'Required by 21 CFR 807.87',
         },
@@ -174,8 +181,7 @@ export class ArtifactSkeletonGenerator {
           id: 'device_specifications',
           title: '2. Device Specifications',
           level: 1,
-          placeholder:
-            '[List all technical specifications including materials, dimensions, and performance characteristics]',
+          placeholder: '[List all technical specifications including materials, dimensions, and performance characteristics]',
           required: true,
         },
         {
@@ -230,8 +236,7 @@ export class ArtifactSkeletonGenerator {
           id: 'substantial_equivalence',
           title: '2. Substantial Equivalence Discussion',
           level: 1,
-          placeholder:
-            '[Demonstrate substantial equivalence in intended use and technological characteristics]',
+          placeholder: '[Demonstrate substantial equivalence in intended use and technological characteristics]',
           required: true,
           complianceNote: 'Critical for 510(k) clearance',
         },
@@ -246,8 +251,7 @@ export class ArtifactSkeletonGenerator {
           id: 'differences_discussion',
           title: '4. Discussion of Differences',
           level: 1,
-          placeholder:
-            '[Address any differences and explain why they do not affect safety/effectiveness]',
+          placeholder: '[Address any differences and explain why they do not affect safety/effectiveness]',
           required: false,
         },
       ],
@@ -596,10 +600,7 @@ export class ArtifactSkeletonGenerator {
   /**
    * Get eCTD module mapping for document type
    */
-  private getECTDModule(
-    documentType: DocumentType,
-    submissionType: SubmissionType
-  ): string | undefined {
+  private getECTDModule(documentType: DocumentType, submissionType: SubmissionType): string | undefined {
     // eCTD module mappings
     const moduleMap: Partial<Record<DocumentType, string>> = {
       COVER_LETTER: 'm1.2',
@@ -621,18 +622,18 @@ export class ArtifactSkeletonGenerator {
    */
   private getApplicableRules(documentType: DocumentType, submissionType: SubmissionType): string[] {
     const baseRules = ['STRUCT-001', 'STRUCT-002', 'CONTENT-001', 'CONTENT-002'];
-
+    
     // Add document-specific rules
     if (documentType === 'CLINICAL_PROTOCOL' || documentType === 'CLINICAL_OVERVIEW') {
       baseRules.push('CITE-001', 'CITE-002', 'REG-001');
     }
-
+    
     if (documentType === 'COVER_LETTER') {
       baseRules.push('SIG-001');
     }
 
     baseRules.push('DATA-001', 'DATA-002');
-
+    
     return baseRules;
   }
 
