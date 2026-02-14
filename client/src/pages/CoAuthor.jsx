@@ -4608,7 +4608,13 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             };
             
             const prefix = getRegionalPrefix(region);
-            const timestamp = new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
+            const timestamp = new Date()
+              .toISOString()
+              .replaceAll('-', '')
+              .replaceAll(':', '')
+              .replaceAll('.', '')
+              .replace('T', '')
+              .slice(0, 14);
             const sequenceNumber = Math.floor(Math.random() * 9000) + 1000;
             
             return {
