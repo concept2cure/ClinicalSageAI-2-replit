@@ -27,6 +27,33 @@ const httpClient = axios.create({
   timeout: 60000, // 60 seconds timeout
 });
 
+const sendModuleDocument = async (
+  moduleNumber: 1 | 2 | 3 | 4 | 5,
+  req: express.Request,
+  res: express.Response,
+  defaultName: string
+) => {
+  try {
+    const data = req.body as ProjectMetadata;
+    const documentBytes = await indAutomationService.generateModuleDocument(moduleNumber, data);
+    const safeDrugName = (data.drug_name || defaultName).replace(/\s+/g, '_');
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="Module${moduleNumber}_${safeDrugName}.docx"`,
+      'Content-Length': documentBytes.length,
+    });
+
+    res.send(documentBytes);
+  } catch (error) {
+    logger.error(`Error generating Module ${moduleNumber} document: ${error.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to generate Module ${moduleNumber} document: ${error.message}`,
+    });
+  }
+};
+
 /**
  * GET /api/ind-automation/status
  * Check if the IND Automation service is running
@@ -164,6 +191,22 @@ router.post('/generate/module3', async (req, res) => {
       .status(500)
       .json({ status: 'error', message: `Failed to generate document: ${error.message}` });
   }
+});
+
+router.post('/generate/module1', async (req, res) => {
+  await sendModuleDocument(1, req, res, 'IND_Admin');
+});
+
+router.post('/generate/module2', async (req, res) => {
+  await sendModuleDocument(2, req, res, 'IND_Summaries');
+});
+
+router.post('/generate/module4', async (req, res) => {
+  await sendModuleDocument(4, req, res, 'IND_Nonclinical');
+});
+
+router.post('/generate/module5', async (req, res) => {
+  await sendModuleDocument(5, req, res, 'IND_Clinical');
 });
 
 /**

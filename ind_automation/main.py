@@ -75,14 +75,14 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 def load_data():
     """Load projects and history data from files."""
     global projects, history
-    
+
     if PROJECTS_FILE.exists():
         try:
             with open(PROJECTS_FILE, "r") as f:
                 projects = json.load(f)
         except Exception as e:
             print(f"Error loading projects: {e}")
-    
+
     if HISTORY_FILE.exists():
         try:
             with open(HISTORY_FILE, "r") as f:
@@ -98,7 +98,7 @@ def save_data():
             json.dump(projects, f, indent=2)
     except Exception as e:
         print(f"Error saving projects: {e}")
-    
+
     try:
         with open(HISTORY_FILE, "w") as f:
             json.dump(history, f, indent=2)
@@ -123,26 +123,26 @@ async def create_project(project: Project, background_tasks: BackgroundTasks):
     """Create a new IND project."""
     # Generate a unique project ID
     project_id = f"IND-{datetime.now().strftime('%Y%m')}-{str(uuid.uuid4())[:8].upper()}"
-    
+
     # Set created date and initial serial number
     project_dict = project.dict()
     project_dict["project_id"] = project_id
     project_dict["created"] = datetime.now().strftime("%Y-%m-%d")
     project_dict["serial_number"] = 0
-    
+
     # Store the project
     projects[project_id] = project_dict
-    
+
     # Initialize history for this project
     history[project_id] = [{
         "serial": "0001",
         "timestamp": datetime.now().isoformat(),
         "type": "creation"
     }]
-    
+
     # Save data in the background
     background_tasks.add_task(save_data)
-    
+
     return project_dict
 
 @app.get("/api/projects", response_model=List[ProjectResponse])
@@ -155,7 +155,7 @@ async def get_project(project_id: str):
     """Get an IND project by ID."""
     if project_id not in projects:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     return projects[project_id]
 
 @app.put("/api/projects/{project_id}", response_model=ProjectResponse)
@@ -163,13 +163,13 @@ async def update_project(project_id: str, project: Project, background_tasks: Ba
     """Update an IND project."""
     if project_id not in projects:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # Update project data
     project_dict = project.dict(exclude_unset=True)
     for key, value in project_dict.items():
         if value is not None:
             projects[project_id][key] = value
-    
+
     # Add history entry
     if project_id in history:
         history[project_id].append({
@@ -177,10 +177,10 @@ async def update_project(project_id: str, project: Project, background_tasks: Ba
             "timestamp": datetime.now().isoformat(),
             "type": "update"
         })
-    
+
     # Save data in the background
     background_tasks.add_task(save_data)
-    
+
     return projects[project_id]
 
 @app.post("/api/ind/{project_id}/sequence", response_model=GenerateSequenceResponse)
@@ -188,11 +188,11 @@ async def generate_sequence(project_id: str, background_tasks: BackgroundTasks):
     """Generate a new sequence number for an IND project."""
     if project_id not in projects:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # Increment the serial number
     projects[project_id]["serial_number"] += 1
     serial_number = f"{projects[project_id]['serial_number']:04d}"
-    
+
     # Add history entry
     if project_id in history:
         history[project_id].append({
@@ -200,10 +200,10 @@ async def generate_sequence(project_id: str, background_tasks: BackgroundTasks):
             "timestamp": datetime.now().isoformat(),
             "type": "submission"
         })
-    
+
     # Save data in the background
     background_tasks.add_task(save_data)
-    
+
     return {"serial_number": serial_number}
 
 @app.get("/api/ind/{project_id}/history", response_model=List[HistoryItem])
@@ -211,22 +211,37 @@ async def get_history(project_id: str):
     """Get the submission history for an IND project."""
     if project_id not in history:
         return []
-    
+
     return history[project_id]
 
 from fastapi.responses import StreamingResponse
 from .form_generator import generate_form as generate_form_document
+from .templates import (
+    render_form1571,
+    render_form1572,
+    render_form3674,
+    generate_cover_letter,
+    render_ind_module,
+)
+
+
+def _docx_response(buffer, filename: str) -> StreamingResponse:
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 @app.get("/api/ind/{project_id}/forms/{form_type}")
 async def generate_form(project_id: str, form_type: str, background_tasks: BackgroundTasks):
     """Generate an FDA form for an IND project."""
     if project_id not in projects:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     try:
         # Generate the form document
         form_data = generate_form_document(form_type, projects[project_id])
-        
+
         # Add history entry for form generation
         if project_id in history:
             history[project_id].append({
@@ -234,18 +249,18 @@ async def generate_form(project_id: str, form_type: str, background_tasks: Backg
                 "timestamp": datetime.now().isoformat(),
                 "type": "form_generation"
             })
-        
+
         # Save data in the background
         background_tasks.add_task(save_data)
-        
+
         # Set the appropriate content type based on the form type
         # In a real implementation, this would be application/vnd.openxmlformats-officedocument.wordprocessingml.document
         # For now, we'll use text/plain
         media_type = "text/plain"
-        
+
         # Return the form as a streaming response
         return StreamingResponse(
-            form_data, 
+            form_data,
             media_type=media_type,
             headers={
                 "Content-Disposition": f'attachment; filename="Form{form_type}_{project_id}.txt"'
@@ -255,6 +270,52 @@ async def generate_form(project_id: str, form_type: str, background_tasks: Backg
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating form: {str(e)}")
+
+
+@app.post("/api/ind/form1571")
+async def generate_form1571_docx(payload: Dict[str, Any]):
+    try:
+        return _docx_response(render_form1571(payload), "FDA_Form_1571.docx")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating Form 1571: {str(e)}")
+
+
+@app.post("/api/ind/form1572")
+async def generate_form1572_docx(payload: Dict[str, Any]):
+    try:
+        return _docx_response(render_form1572(payload), "FDA_Form_1572.docx")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating Form 1572: {str(e)}")
+
+
+@app.post("/api/ind/form3674")
+async def generate_form3674_docx(payload: Dict[str, Any]):
+    try:
+        return _docx_response(render_form3674(payload), "FDA_Form_3674.docx")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating Form 3674: {str(e)}")
+
+
+@app.post("/api/ind/cover-letter")
+async def generate_cover_letter_docx(payload: Dict[str, Any]):
+    try:
+        return _docx_response(generate_cover_letter(payload), "IND_Cover_Letter.docx")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating cover letter: {str(e)}")
+
+
+@app.post("/api/ind/module/{module_number}")
+async def generate_module_docx(module_number: int, payload: Dict[str, Any]):
+    if module_number < 1 or module_number > 5:
+        raise HTTPException(status_code=400, detail="Module number must be between 1 and 5")
+
+    try:
+        filename = f"Module{module_number}_{payload.get('drug_name', 'IND')}.docx".replace(" ", "_")
+        return _docx_response(render_ind_module(module_number, payload), filename)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating module document: {str(e)}")
 
 # Add a demo endpoint for the ENZYMAX FORTE sample project
 @app.get("/api/demo/enzymax")
@@ -266,10 +327,10 @@ async def create_demo_project(background_tasks: BackgroundTasks):
         if project["drug_name"] == "ENZYMAX FORTE":
             demo_project_id = pid
             break
-    
+
     if demo_project_id:
         return {"message": "Demo project already exists", "project_id": demo_project_id}
-    
+
     # Create demo project
     project = Project(
         sponsor="TrialSage Pharma",
@@ -279,16 +340,16 @@ async def create_demo_project(background_tasks: BackgroundTasks):
         pi_address="123 Medical Center, San Francisco, CA 94158",
         nct_number="NCT03456789"
     )
-    
+
     # Use the create_project endpoint
     result = await create_project(project, background_tasks)
-    
+
     # Generate some history for the demo project
     project_id = result["project_id"]
-    
+
     # Generate a sequence
     await generate_sequence(project_id, background_tasks)
-    
+
     # Add some additional history
     if project_id in history:
         # Add form generation entries
@@ -298,8 +359,8 @@ async def create_demo_project(background_tasks: BackgroundTasks):
                 "timestamp": (datetime.now()).isoformat(),
                 "type": "form_generation"
             })
-    
+
     # Save data in the background
     background_tasks.add_task(save_data)
-    
+
     return {"message": "Demo project created", "project_id": project_id}
