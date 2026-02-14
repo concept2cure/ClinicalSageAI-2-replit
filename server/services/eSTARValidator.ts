@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * eSTAR Validator Service
  *

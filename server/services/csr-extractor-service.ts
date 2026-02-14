@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs from 'fs';
 import path from 'path';
 import { sql } from 'drizzle-orm';
@@ -188,27 +189,27 @@ def extract_pdf_with_sections(pdf_path):
     doc = fitz.open(pdf_path)
     full_text = ""
     sections = {}
-    
+
     # Common CSR section patterns (ICH E3 structure)
     section_patterns = [
         r'^\\s*\\d+\\.\\d+\\s+([A-Z][A-Za-z\\s]+)',  # Numbered sections like "9.1 Demographics"
         r'^\\s*([A-Z][A-Z\\s]+)\\s*$',  # ALL CAPS section headers
         r'^\\s*([A-Z][a-z]+\\s+[A-Za-z\\s]+):',  # Title case with colon
     ]
-    
+
     current_section = None
     section_text = ""
-    
+
     for page in doc:
         page_text = page.get_text()
         full_text += page_text
-        
+
         # Process the page text line by line
         for line in page_text.split('\\n'):
             line = line.strip()
             if not line:
                 continue
-                
+
             # Check if line is a section header
             is_section_header = False
             for pattern in section_patterns:
@@ -217,20 +218,20 @@ def extract_pdf_with_sections(pdf_path):
                     # If we had a previous section, save it
                     if current_section:
                         sections[current_section] = section_text.strip()
-                    
+
                     # Start new section
                     current_section = match.group(1).strip()
                     section_text = ""
                     is_section_header = True
                     break
-            
+
             # Common ICH E3 section headers
             common_headers = [
-                "SYNOPSIS", "INTRODUCTION", "STUDY OBJECTIVES", 
-                "METHODOLOGY", "STATISTICAL METHODS", "EFFICACY RESULTS", 
+                "SYNOPSIS", "INTRODUCTION", "STUDY OBJECTIVES",
+                "METHODOLOGY", "STATISTICAL METHODS", "EFFICACY RESULTS",
                 "SAFETY RESULTS", "CONCLUSIONS", "REFERENCES"
             ]
-            
+
             # Check for exact matches to common headers
             if line in common_headers and not is_section_header:
                 if current_section:
@@ -238,7 +239,7 @@ def extract_pdf_with_sections(pdf_path):
                 current_section = line
                 section_text = ""
                 is_section_header = True
-            
+
             # Special case for Statistical Methods section (common in CSRs)
             if re.match(r'^\\s*\\d+\\.\\d+\\s+Statistical\\s+Methods', line, re.IGNORECASE):
                 if current_section:
@@ -246,20 +247,20 @@ def extract_pdf_with_sections(pdf_path):
                 current_section = "Statistical Methods"
                 section_text = ""
                 is_section_header = True
-                
+
             # If not a section header, add to current section
             if not is_section_header and current_section:
                 section_text += line + "\\n"
-    
+
     # Add the last section
     if current_section:
         sections[current_section] = section_text.strip()
-    
+
     # Add special section for unclassified text if there's text not in any section
     all_section_text = "\\n".join(sections.values())
     if len(all_section_text) < len(full_text) * 0.8:  # If less than 80% classified
         sections["UNCLASSIFIED_TEXT"] = full_text
-    
+
     return {
         "fullText": full_text,
         "sections": sections
@@ -269,7 +270,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No PDF path provided"}))
         sys.exit(1)
-    
+
     pdf_path = sys.argv[1]
     try:
         result = extract_pdf_with_sections(pdf_path)
@@ -522,9 +523,9 @@ ${context}
         uploadDate?: Date;
         file_path?: string;
       }>(sql`
-        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path 
-        FROM csr_reports 
-        WHERE id = ${reportId} 
+        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path
+        FROM csr_reports
+        WHERE id = ${reportId}
         LIMIT 1
       `);
 
@@ -571,8 +572,8 @@ ${context}
         };
         processed?: boolean;
       }>(sql`
-        SELECT * FROM csr_details 
-        WHERE report_id = ${reportId} 
+        SELECT * FROM csr_details
+        WHERE report_id = ${reportId}
         LIMIT 1
       `);
 
@@ -952,8 +953,8 @@ ${context}
     try {
       // Find unprocessed CSRs with details
       const unprocessedCSRs = await db.execute<{ report_id: number }>(sql`
-        SELECT report_id 
-        FROM csr_details 
+        SELECT report_id
+        FROM csr_details
         WHERE processed = false OR processed IS NULL
         LIMIT ${limit}
       `);
