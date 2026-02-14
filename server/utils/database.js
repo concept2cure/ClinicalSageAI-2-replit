@@ -1,5 +1,6 @@
 // server/utils/database.js
-import { pool as dbPool, query as baseQuery, transaction as baseTransaction } from '../db';
+// Explicit .ts extension to avoid resolution to server/db/index.ts (which only exports drizzle db)
+import { pool as dbPool, query as baseQuery, transaction as baseTransaction } from '../db.ts';
 
 const pool = dbPool;
 
