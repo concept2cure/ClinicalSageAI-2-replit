@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '../db';
 import { csrReports, csrDetails } from 'shared/schema';
 import { eq, and, like, inArray } from 'drizzle-orm';

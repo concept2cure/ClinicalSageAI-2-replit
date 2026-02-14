@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * FDA MedWatch 3500A XML Export Generator
  *

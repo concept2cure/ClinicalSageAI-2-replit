@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * EMA E2B(R3) XML Export Generator
  *
