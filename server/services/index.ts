@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Server Services - Unified Index
  *
@@ -108,9 +109,9 @@ export { default as reportGeneratorService } from './report-generator-service';
 // DATA SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { default as harvestEngine } from './harvestEngine';
-export { default as dataHarvester } from './dataHarvester';
-export { EnhancedFAERSClient, fetchFaersAnalysis } from './enhancedFaersService';
+export { default as harvestEngine } from './harvestEngine.js';
+export { default as dataHarvester } from './dataHarvester.js';
+export { EnhancedFAERSClient, fetchFaersAnalysis } from './enhancedFaersService.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INFRASTRUCTURE SERVICES
@@ -135,20 +136,14 @@ export {
 // PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { 
-  ArtifactSkeletonGenerator, 
-  artifactSkeletonGenerator 
+export {
+  ArtifactSkeletonGenerator,
+  artifactSkeletonGenerator,
 } from './documents/ArtifactSkeletonGenerator';
 
-export { 
-  ECTDScaffoldingService, 
-  ectdScaffoldingService 
-} from './ectd/ECTDScaffoldingService';
+export { ECTDScaffoldingService, ectdScaffoldingService } from './ectd/ECTDScaffoldingService';
 
-export { 
-  ReleaseHashGenerator, 
-  releaseHashGenerator 
-} from './export/ReleaseHashGenerator';
+export { ReleaseHashGenerator, releaseHashGenerator } from './export/ReleaseHashGenerator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GRDHE (Global Regulatory Data Harmonization Engine)

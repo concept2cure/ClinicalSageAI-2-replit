@@ -87,7 +87,7 @@ export class UnifiedLiteratureService {
         publicationDate: entry.publication_date ? new Date(entry.publication_date) : new Date(),
         abstract: entry.abstract || '',
         doi: entry.doi,
-        pmid: entry.pmid,
+        pmid: entry.source_id,
         relevanceScore: entry.relevance_score || 0,
         source: entry.source_name,
       }));

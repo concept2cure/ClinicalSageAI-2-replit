@@ -43,7 +43,7 @@ class RBACService {
       this.schemaLoaded = true;
       return !!this.db;
     } catch (error) {
-      logger.warn('RBAC schema load failed — falling back to deny-by-default', error);
+      logger.warn('RBAC schema load failed — falling back to deny-by-default', { error });
       this.schemaLoaded = true; // Don't retry on every request
       return false;
     }
@@ -81,7 +81,7 @@ class RBACService {
 
       return false;
     } catch (error) {
-      logger.error(`Permission check failed for user ${userId}`, error);
+      logger.error(`Permission check failed for user ${userId}`, { error });
       return false; // Fail-closed
     }
   }
@@ -101,7 +101,7 @@ class RBACService {
 
       return rows.map((r: any) => r.role).filter(Boolean);
     } catch (error) {
-      logger.error(`getUserRoles failed for user ${userId}`, error);
+      logger.error(`getUserRoles failed for user ${userId}`, { error });
       return [];
     }
   }

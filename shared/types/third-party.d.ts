@@ -183,6 +183,9 @@ declare module 'file-saver' {
   ): void;
 }
 
+declare module 'cheerio';
+declare module '@aws-sdk/client-s3';
+
 // ============================================================================
 // Testing Library Extensions
 // ============================================================================

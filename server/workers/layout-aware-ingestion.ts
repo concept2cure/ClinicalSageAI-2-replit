@@ -449,6 +449,9 @@ export class LayoutAwareIngestionWorker {
     let tableCount = 0;
     let figureCount = 0;
 
+    if (!pool) {
+      throw new Error('Database pool not available');
+    }
     const client = await pool.connect();
     try {
       await client.query('BEGIN');

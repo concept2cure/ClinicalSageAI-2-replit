@@ -972,3 +972,5 @@ export function getReportGenerator(persona: string) {
       return new BaseReportGenerator(persona);
   }
 }
+
+export default getReportGenerator;
