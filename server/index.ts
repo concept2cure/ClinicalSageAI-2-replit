@@ -74,7 +74,7 @@ import cmcAggregatorRoutes from './api/cmc/index.js';
 import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
 
 // Import AI assistance routes
-import aiAssistanceRoutes from './routes/ai-assistance.ts';
+import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
 // Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
 // Import authoring routes - made optional to prevent startup crashes

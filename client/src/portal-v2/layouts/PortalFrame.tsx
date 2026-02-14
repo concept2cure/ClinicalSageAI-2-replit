@@ -60,7 +60,6 @@ const moduleRouteMap: Record<string, string> = {
   quality_management: '/client-portal/quality',
   document_control: '/client-portal/documents',
   analytics: '/client-portal/analytics',
-  ind_wizard: '/client-portal/ind-wizard',
   cer_generator: '/client-portal/cer-generator',
   ectd_coauthor: '/client-portal/ectd-coauthor',
   '510k_builder': '/client-portal/510k-builder',

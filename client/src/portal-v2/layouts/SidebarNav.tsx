@@ -100,7 +100,6 @@ const categoryIcons: Record<ModuleCategory, React.ComponentType<{ className?: st
 const moduleRouteMap: Record<string, string> = {
   dashboard: '/client-portal',
   vault: '/client-portal/vault',
-  ind_wizard: '/client-portal/ind-wizard',
   cer_generator: '/client-portal/cer-generator',
   '510k_builder': '/client-portal/510k-builder',
   ectd_coauthor: '/client-portal/ectd-coauthor',

@@ -161,7 +161,11 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
   }
   if (badge === 'RISKY_FAMILY') {
     return (
-      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300" data-testid="toxicity-badge-risky-family">
+      <Badge
+        variant="outline"
+        className="bg-orange-50 text-orange-700 border-orange-300"
+        data-testid="toxicity-badge-risky-family"
+      >
         <ShieldAlert className="h-3 w-3 mr-1" />
         RISKY FAMILY ({(score * 100).toFixed(0)}%)
       </Badge>
@@ -169,7 +173,11 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
   }
   if (badge === 'CLEAN') {
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300" data-testid="toxicity-badge-clean">
+      <Badge
+        variant="outline"
+        className="bg-green-50 text-green-700 border-green-300"
+        data-testid="toxicity-badge-clean"
+      >
         <ShieldCheck className="h-3 w-3 mr-1" />
         Clean ({(score * 100).toFixed(0)}%)
       </Badge>
@@ -746,7 +754,7 @@ function PredicateRadarTab({
         <PredicateRadarPlot
           candidates={sorted}
           selectedCandidate={sorted.find(c => c.id === selectedCandidateInTab) ?? null}
-          onSelectCandidate={(c) => {
+          onSelectCandidate={c => {
             setSelectedCandidateInTab(c.id);
             onSelectCandidate(c);
           }}
@@ -1576,7 +1584,11 @@ export default function PredicateIntelligencePage({
           </TabsList>
 
           <TabsContent value="radar" className="mt-4">
-            <PredicateRadarTab programId={programId} onSelectCandidate={setSelectedCandidate} onToxicDetail={setToxicDetailK} />
+            <PredicateRadarTab
+              programId={programId}
+              onSelectCandidate={setSelectedCandidate}
+              onToxicDetail={setToxicDetailK}
+            />
           </TabsContent>
 
           <TabsContent value="strategy" className="mt-4">
@@ -1592,10 +1604,7 @@ export default function PredicateIntelligencePage({
           </TabsContent>
 
           <TabsContent value="se-matrix-v2" className="mt-4">
-            <SEMatrixV2Panel
-              programId={programId}
-              predicateKNumber={selectedCandidate?.k_number}
-            />
+            <SEMatrixV2Panel programId={programId} predicateKNumber={selectedCandidate?.k_number} />
           </TabsContent>
 
           <TabsContent value="defense-packet" className="mt-4">
@@ -1608,10 +1617,7 @@ export default function PredicateIntelligencePage({
 
           <TabsContent value="lineage" className="mt-4">
             {selectedCandidate?.k_number ? (
-              <LineageGraphPanel
-                programId={programId}
-                kNumber={selectedCandidate.k_number}
-              />
+              <LineageGraphPanel programId={programId} kNumber={selectedCandidate.k_number} />
             ) : (
               <Card>
                 <CardContent className="py-12">
@@ -1784,7 +1790,7 @@ function StrategyTab({
                 <option value="">Select…</option>
                 <option value="transient">≤24h (Transient)</option>
                 <option value="short">24h–30d (Short)</option>
-                <option value="long">>30d (Long / Permanent)</option>
+                <option value="long">&gt;30d (Long / Permanent)</option>
               </select>
             </div>
             <div>
@@ -1827,11 +1833,11 @@ function StrategyTab({
           <Button
             onClick={handleSuggest}
             disabled={
-              !productCode.trim()
-              || !deviceName.trim()
-              || !intendedUse.trim()
-              || !technology.trim()
-              || suggestMut.isPending
+              !productCode.trim() ||
+              !deviceName.trim() ||
+              !intendedUse.trim() ||
+              !technology.trim() ||
+              suggestMut.isPending
             }
             className="bg-purple-600 hover:bg-purple-700"
           >
@@ -1981,12 +1987,15 @@ function StrategyTab({
                   </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Machine-readable evidence fix list — bridges predicate ranking to regulatory workflow.
+                  Machine-readable evidence fix list — bridges predicate ranking to regulatory
+                  workflow.
                   {suggestMut.data.defense_packet_seed.top_risks?.length > 0 && (
                     <span className="ml-2">
                       Top risks:{' '}
                       {suggestMut.data.defense_packet_seed.top_risks.map((r: string, i: number) => (
-                        <Badge key={i} variant="destructive" className="text-[9px] ml-1">{r}</Badge>
+                        <Badge key={i} variant="destructive" className="text-[9px] ml-1">
+                          {r}
+                        </Badge>
                       ))}
                     </span>
                   )}
@@ -1998,19 +2007,31 @@ function StrategyTab({
                     <div key={task.task_id} className="p-3 rounded-md border bg-muted/30">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge
-                          variant={task.severity === 'HIGH' ? 'destructive' : task.severity === 'MEDIUM' ? 'default' : 'secondary'}
+                          variant={
+                            task.severity === 'HIGH'
+                              ? 'destructive'
+                              : task.severity === 'MEDIUM'
+                                ? 'default'
+                                : 'secondary'
+                          }
                           className="text-[10px] shrink-0"
                         >
                           {task.severity}
                         </Badge>
-                        <span className="font-mono text-xs text-blue-600 shrink-0">[{task.category}]</span>
-                        <span className="text-xs text-muted-foreground font-mono">{task.trigger}</span>
+                        <span className="font-mono text-xs text-blue-600 shrink-0">
+                          [{task.category}]
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {task.trigger}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">{task.rationale}</p>
                       {task.recommended_artifacts?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {task.recommended_artifacts.map((art: string, i: number) => (
-                            <Badge key={i} variant="outline" className="text-[9px]">{art}</Badge>
+                            <Badge key={i} variant="outline" className="text-[9px]">
+                              {art}
+                            </Badge>
                           ))}
                         </div>
                       )}

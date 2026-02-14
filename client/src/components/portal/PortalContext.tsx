@@ -1,12 +1,17 @@
 /**
  * Portal Context Provider
- * 
+ *
  * Provides the computed portal experience to all child components.
  * Handles context computation and re-computation on dependency changes.
  */
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { computePortalExperience, ROLE_PERMISSIONS, AGENCY_CONFIG, MODULE_REGISTRY } from './portalPolicy';
+import {
+  computePortalExperience,
+  ROLE_PERMISSIONS,
+  AGENCY_CONFIG,
+  MODULE_REGISTRY,
+} from './portalPolicy';
 import type {
   PortalExperience,
   PortalContext,
@@ -36,21 +41,21 @@ interface PortalProviderProps {
 interface PortalContextValue {
   // Core experience
   experience: PortalExperience;
-  
+
   // User context
   user: PortalUser;
   organization: OrganizationConfig;
-  
+
   // Current product/study context
   productType?: ProductType;
   studyType?: StudyType;
   submissionType?: SubmissionType;
   targetAgency?: RegulatoryAgency;
-  
+
   // Module access helpers
   isModuleEnabled: (moduleId: ModuleId) => boolean;
   canAccessModule: (moduleId: ModuleId) => boolean;
-  
+
   // Configuration references
   agencyConfig: typeof AGENCY_CONFIG;
   moduleRegistry: typeof MODULE_REGISTRY;
@@ -88,78 +93,77 @@ export function PortalProvider({
   targetAgency,
 }: PortalProviderProps) {
   // Build context for experience computation
-  const portalContext: PortalContext = useMemo(() => ({
-    user,
-    organization,
-    productType,
-    studyType,
-    submissionType,
-    targetAgency,
-  }), [user, organization, productType, studyType, submissionType, targetAgency]);
-  
-  // Compute portal experience
-  const experience = useMemo(
-    () => computePortalExperience(portalContext),
-    [portalContext]
+  const portalContext: PortalContext = useMemo(
+    () => ({
+      user,
+      organization,
+      productType,
+      studyType,
+      submissionType,
+      targetAgency,
+    }),
+    [user, organization, productType, studyType, submissionType, targetAgency]
   );
-  
+
+  // Compute portal experience
+  const experience = useMemo(() => computePortalExperience(portalContext), [portalContext]);
+
   // Helper: Check if module is in enabledModules list
   const isModuleEnabled = useMemo(() => {
     return (moduleId: ModuleId): boolean => {
       return experience.enabledModules.includes(moduleId);
     };
   }, [experience.enabledModules]);
-  
+
   // Helper: Check if user can access a specific module
   const canAccessModule = useMemo(() => {
     return (moduleId: ModuleId): boolean => {
       const module = MODULE_REGISTRY[moduleId];
       if (!module) return false;
-      
+
       // Check organization has module enabled
       if (!organization.enabledModules.includes(moduleId)) {
         return false;
       }
-      
+
       // Check user has required permission level
       const permissionLevels = ['none', 'read', 'write', 'admin'] as const;
       const userLevel = permissionLevels.indexOf(user.permissions[module.requiredPermission]);
       const requiredLevel = permissionLevels.indexOf(module.minPermissionLevel);
-      
+
       return userLevel >= requiredLevel;
     };
   }, [organization.enabledModules, user.permissions]);
-  
+
   // Build context value
-  const contextValue: PortalContextValue = useMemo(() => ({
-    experience,
-    user,
-    organization,
-    productType,
-    studyType,
-    submissionType,
-    targetAgency,
-    isModuleEnabled,
-    canAccessModule,
-    agencyConfig: AGENCY_CONFIG,
-    moduleRegistry: MODULE_REGISTRY,
-  }), [
-    experience,
-    user,
-    organization,
-    productType,
-    studyType,
-    submissionType,
-    targetAgency,
-    isModuleEnabled,
-    canAccessModule,
-  ]);
-  
-  return (
-    <PortalContextReact.Provider value={contextValue}>
-      {children}
-    </PortalContextReact.Provider>
+  const contextValue: PortalContextValue = useMemo(
+    () => ({
+      experience,
+      user,
+      organization,
+      productType,
+      studyType,
+      submissionType,
+      targetAgency,
+      isModuleEnabled,
+      canAccessModule,
+      agencyConfig: AGENCY_CONFIG,
+      moduleRegistry: MODULE_REGISTRY,
+    }),
+    [
+      experience,
+      user,
+      organization,
+      productType,
+      studyType,
+      submissionType,
+      targetAgency,
+      isModuleEnabled,
+      canAccessModule,
+    ]
   );
+
+  return <PortalContextReact.Provider value={contextValue}>{children}</PortalContextReact.Provider>;
 }
 
 // =============================================================================
@@ -184,7 +188,6 @@ export const DEMO_ORGANIZATION: OrganizationConfig = {
     'dashboard',
     'vault',
     'submissions',
-    'ind_wizard',
     'cer_generator',
     '510k_builder',
     'csr_intelligence',

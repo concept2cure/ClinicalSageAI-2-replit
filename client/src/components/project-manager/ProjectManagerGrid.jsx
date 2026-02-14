@@ -26,6 +26,7 @@ const ProjectManagerGrid = ({ projects = [] }) => {
       case 'cer2v':
         return <FileText className="h-4 w-4 text-green-600" />;
       case 'ind-wizard':
+      case 'ectd-coauthor':
         return <FileText className="h-4 w-4 text-blue-600" />;
       case 'cmc-wizard':
       case 'cmc-module':

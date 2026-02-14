@@ -1,6 +1,6 @@
 /**
  * Unified Task Dashboard Component
- * 
+ *
  * Production-ready dashboard that connects ALL modules in the Regulatory Submission Center.
  * Shows tasks from Protocol Design, CMC, Medical Device, IND Wizard, eCTD Co-Author, and Vault.
  */
@@ -14,7 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import UnifiedTaskCreationModal from './UnifiedTaskCreationModal';
@@ -60,13 +66,13 @@ const MODULE_CONFIG = {
     route: '/cmc',
   },
   IND: {
-    name: 'IND Wizard',
+    name: 'eCTD Co-Author (IND)',
     color: 'bg-green-500',
     lightColor: 'bg-green-100',
     textColor: 'text-green-700',
     borderColor: 'border-green-500',
     icon: FileText,
-    route: '/ind-wizard',
+    route: '/client-portal/ectd-coauthor',
   },
   MedicalDevice: {
     name: 'Medical Device',
@@ -142,7 +148,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
       const params = new URLSearchParams();
       params.append('organizationId', organizationId);
       if (projectId) params.append('projectId', projectId);
-      
+
       const response = await fetch(`/api/regulatory/dashboard/unified?${params}`);
       if (!response.ok) throw new Error('Failed to fetch dashboard metrics');
       return response.json();
@@ -151,8 +157,18 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
   });
 
   // Fetch all tasks
-  const { data: tasksData, isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
-    queryKey: ['/api/regulatory/tasks/all', organizationId, projectId, selectedModule, selectedStatus],
+  const {
+    data: tasksData,
+    isLoading: tasksLoading,
+    refetch: refetchTasks,
+  } = useQuery({
+    queryKey: [
+      '/api/regulatory/tasks/all',
+      organizationId,
+      projectId,
+      selectedModule,
+      selectedStatus,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('organizationId', organizationId);
@@ -160,7 +176,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
       if (selectedModule !== 'all') params.append('moduleType', selectedModule);
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
       params.append('limit', '100');
-      
+
       const response = await fetch(`/api/regulatory/tasks/all?${params}`);
       if (!response.ok) throw new Error('Failed to fetch tasks');
       return response.json();
@@ -169,7 +185,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
 
   // Sync tasks from module mutation
   const syncTasksMutation = useMutation({
-    mutationFn: async (module) => {
+    mutationFn: async module => {
       const response = await fetch(`/api/regulatory/tasks/sync/${module}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -186,7 +202,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
       queryClient.invalidateQueries(['/api/regulatory/tasks/all']);
       queryClient.invalidateQueries(['/api/regulatory/dashboard/unified']);
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Sync Failed',
         description: error.message,
@@ -215,19 +231,19 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
   // Filter tasks based on selected filters
   const filteredTasks = useMemo(() => {
     if (!tasksData?.tasks) return [];
-    
+
     let filtered = [...tasksData.tasks];
-    
+
     if (selectedPriority !== 'all') {
       filtered = filtered.filter(task => task.priority === selectedPriority);
     }
-    
+
     return filtered.sort((a, b) => {
       // Sort by priority first, then by due date
       const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      
+
       // Then by due date
       if (a.dueDate && b.dueDate) {
         return new Date(a.dueDate) - new Date(b.dueDate);
@@ -237,7 +253,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
   }, [tasksData, selectedPriority]);
 
   // Handle task click - navigate to appropriate module
-  const handleTaskClick = (task) => {
+  const handleTaskClick = task => {
     const moduleConfig = MODULE_CONFIG[task.moduleType];
     if (moduleConfig?.route) {
       navigate(moduleConfig.route);
@@ -245,7 +261,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
   };
 
   // Toggle task expansion
-  const toggleTaskExpansion = (taskId) => {
+  const toggleTaskExpansion = taskId => {
     const newExpanded = new Set(expandedTasks);
     if (newExpanded.has(taskId)) {
       newExpanded.delete(taskId);
@@ -351,9 +367,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
           <CardContent>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-orange-500" />
-              <span className="text-2xl font-bold">
-                {metricsData.highPriorityTasks || 0}
-              </span>
+              <span className="text-2xl font-bold">{metricsData.highPriorityTasks || 0}</span>
             </div>
             <p className="text-xs text-gray-500 mt-2">Require attention</p>
           </CardContent>
@@ -386,7 +400,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
             {Object.entries(MODULE_CONFIG).map(([key, config]) => {
               const progress = metricsData.moduleProgress?.[key] || 0;
               const Icon = config.icon;
-              
+
               return (
                 <div
                   key={key}
@@ -396,13 +410,9 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                   <div className={`p-2 rounded-full ${config.lightColor}`}>
                     <Icon className={`h-5 w-5 ${config.textColor}`} />
                   </div>
-                  <span className="text-xs font-medium text-gray-700">
-                    {config.name}
-                  </span>
+                  <span className="text-xs font-medium text-gray-700">{config.name}</span>
                   <Progress value={progress} className="w-full" />
-                  <span className="text-xs text-gray-500">
-                    {Math.round(progress)}%
-                  </span>
+                  <span className="text-xs text-gray-500">{Math.round(progress)}%</span>
                 </div>
               );
             })}
@@ -418,7 +428,9 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
           <AlertDescription>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               {metricsData.criticalAlerts.map((alert, index) => (
-                <li key={index} className="text-sm">{alert}</li>
+                <li key={index} className="text-sm">
+                  {alert}
+                </li>
               ))}
             </ul>
           </AlertDescription>
@@ -478,11 +490,11 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
           {/* Task List */}
           <ScrollArea className="h-[500px]">
             <div className="space-y-2">
-              {filteredTasks.map((task) => {
+              {filteredTasks.map(task => {
                 const moduleConfig = MODULE_CONFIG[task.moduleType];
                 const StatusIcon = STATUS_ICONS[task.status];
                 const isExpanded = expandedTasks.has(task.taskId || task.id);
-                
+
                 return (
                   <div
                     key={task.taskId || task.id}
@@ -500,36 +512,35 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                             <moduleConfig.icon className="h-3 w-3 mr-1" />
                             {moduleConfig.name}
                           </Badge>
-                          
+
                           {/* Priority Badge */}
-                          <Badge className={PRIORITY_COLORS[task.priority]}>
-                            {task.priority}
-                          </Badge>
-                          
+                          <Badge className={PRIORITY_COLORS[task.priority]}>{task.priority}</Badge>
+
                           {/* Status Icon */}
                           <div className="flex items-center gap-1">
-                            <StatusIcon className={`h-4 w-4 ${
-                              task.status === 'completed' ? 'text-green-500' :
-                              task.status === 'blocked' ? 'text-red-500' :
-                              task.status === 'in-progress' ? 'text-blue-500' :
-                              'text-gray-400'
-                            }`} />
+                            <StatusIcon
+                              className={`h-4 w-4 ${
+                                task.status === 'completed'
+                                  ? 'text-green-500'
+                                  : task.status === 'blocked'
+                                    ? 'text-red-500'
+                                    : task.status === 'in-progress'
+                                      ? 'text-blue-500'
+                                      : 'text-gray-400'
+                              }`}
+                            />
                             <span className="text-xs text-gray-600 capitalize">
                               {task.status.replace('-', ' ')}
                             </span>
                           </div>
                         </div>
-                        
-                        <h4 className="font-medium text-gray-900 mb-1">
-                          {task.title}
-                        </h4>
-                        
+
+                        <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
+
                         {task.description && (
-                          <p className="text-sm text-gray-600 mb-2">
-                            {task.description}
-                          </p>
+                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                         )}
-                        
+
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           {task.assigneeName && (
                             <span className="flex items-center gap-1">
@@ -550,7 +561,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Expandable Details */}
                         {isExpanded && (
                           <div className="mt-4 pt-4 border-t">
@@ -564,7 +575,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                                 <span className="ml-2">{task.estimatedHours || 'N/A'}</span>
                               </div>
                             </div>
-                            
+
                             {task.blockedBy?.length > 0 && (
                               <Alert className="mt-3 border-orange-200 bg-orange-50">
                                 <AlertCircle className="h-4 w-4" />
@@ -576,7 +587,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center gap-2 ml-4">
                         <Button
                           variant="ghost"
@@ -589,12 +600,8 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                             <ChevronDown className="h-4 w-4" />
                           )}
                         </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleTaskClick(task)}
-                        >
+
+                        <Button variant="ghost" size="sm" onClick={() => handleTaskClick(task)}>
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
@@ -602,7 +609,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                   </div>
                 );
               })}
-              
+
               {filteredTasks.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -626,7 +633,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
               {metricsData.nextMilestones.map((milestone, index) => {
                 const config = MODULE_CONFIG[milestone.module];
                 const Icon = config?.icon || Target;
-                
+
                 return (
                   <div
                     key={index}
@@ -645,9 +652,7 @@ export default function UnifiedTaskDashboard({ organizationId = 7, projectId }) 
                     </div>
                     <div className="text-right">
                       <Progress value={milestone.progress} className="w-24" />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {milestone.progress}% complete
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">{milestone.progress}% complete</p>
                     </div>
                   </div>
                 );

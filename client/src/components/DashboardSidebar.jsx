@@ -100,9 +100,9 @@ export default function DashboardSidebar({ collapsed, setCollapsed }) {
       ],
     },
     {
-      title: t('IND Wizard'),
+      title: t('eCTD Co-Author'),
       icon: <Package size={20} />,
-      link: '/ind/wizard',
+      link: '/client-portal/ectd-coauthor',
       notification: 2,
       subItems: [
         { title: t('IND Overview'), icon: <FileText size={18} />, link: '/ind/wizard' },
@@ -171,7 +171,7 @@ export default function DashboardSidebar({ collapsed, setCollapsed }) {
   return (
     <div
       className={`
-      h-screen bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 
+      h-screen bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700
       fixed left-0 top-0 z-40 transition-all duration-300 flex flex-col
       ${collapsed ? 'w-16' : 'w-64'}
     `}

@@ -199,8 +199,8 @@ const StudyRegulatoryIntelligenceSuite = lazy(
   () => import('./components/unified/StudyRegulatoryIntelligenceSuite')
 );
 
-// IND Wizard Layout (actual file at layout/IndWizardLayout.jsx)
-const IndWizardLayout = lazy(() => import('./layout/IndWizardLayout'));
+// IND Wizard DEPRECATED — rolled into eCTD Co-Author
+// const IndWizardLayout = lazy(() => import('./layout/IndWizardLayout')); // DEPRECATED
 const QualityDashboard = lazy(() => import('./pages/QualityDashboard'));
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
 // import INDWizardModule from './components/ind-wizard/INDWizardModule'; // DELETED
@@ -569,12 +569,9 @@ function MainApp() {
               )}
             </Route>
             {/* --- Client Portal Module Routes (sidebar navigation) --- */}
+            {/* IND Wizard DEPRECATED — redirect to eCTD Co-Author */}
             <Route path="/client-portal/ind-wizard">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/ectd-coauthor">
               {() => (
@@ -1446,28 +1443,25 @@ function MainApp() {
                             </div>
                           )}
 
+                          {/* IND Wizard DEPRECATED — redirect to eCTD Co-Author */}
                           {activeModule === 'ind' && (
                             <Card className="shadow-lg border-t-4 border-blue-500">
-                              <CardContent className="p-0">
-                                <IndWizardLayout
-                                  onDataUpdate={data => {
-                                    updateSharedData({
-                                      drugName: data.drugName,
-                                      indication: data.indication,
-                                      sponsor: data.sponsor,
-                                      phase: data.phase,
-                                    });
-
-                                    // Update module status
-                                    setModuleStatus(prev => ({
-                                      ...prev,
-                                      ind: {
-                                        ...prev.ind,
-                                        complete: data.stepsComplete || prev.ind.complete,
-                                      },
-                                    }));
-                                  }}
-                                />
+                              <CardContent className="p-6">
+                                <div className="text-center">
+                                  <h2 className="text-2xl font-bold mb-4">
+                                    IND Workflow — eCTD Co-Author
+                                  </h2>
+                                  <p className="text-gray-600 mb-6">
+                                    IND submission preparation is now handled through the eCTD
+                                    Co-Author module.
+                                  </p>
+                                  <Button
+                                    size="lg"
+                                    onClick={() => setLocation('/client-portal/ectd-coauthor')}
+                                  >
+                                    Open eCTD Co-Author
+                                  </Button>
+                                </div>
                               </CardContent>
                             </Card>
                           )}
@@ -1901,56 +1895,14 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* IND Wizard Module Routes - Using IndWizardLayout for all 7 steps */}
-            <Route path="/module-1">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-2">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-3">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-4">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-5">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-6">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-7">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
+            {/* IND Wizard Module Routes — DEPRECATED, redirect to eCTD Co-Author */}
+            <Route path="/module-1">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-2">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-3">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-4">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-5">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-6">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-7">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
             {/* Analytical Control & Method Management Routes */}
             <Route path="/analytical">
               {() => (
@@ -2083,54 +2035,27 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
+            {/* Client Portal Module Routes — DEPRECATED IND Wizard, redirect to eCTD Co-Author */}
             <Route path="/client-portal/module-1">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-2">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-3">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-4">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-5">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-6">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-7">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/ectd-module">
               {() => (

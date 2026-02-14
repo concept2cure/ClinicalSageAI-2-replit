@@ -358,7 +358,6 @@ export type ModuleCategory =
 export type ModuleId =
   | 'dashboard'
   | 'vault'
-  | 'ind_wizard'
   | 'cer_generator'
   | '510k_builder'
   | 'ectd_coauthor'

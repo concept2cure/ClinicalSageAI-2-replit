@@ -49,7 +49,7 @@ const NextActionsSidebar = ({ clientId }) => {
       priority: 'high',
       status: 'not_started',
       project: 'BTX-112 Clinical Trial',
-      module: 'ind-wizard',
+      module: 'ectd-coauthor',
       progress: 0,
     },
   ];

@@ -60,22 +60,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
       'project_manager',
     ],
   },
-  ind_wizard: {
-    id: 'ind_wizard',
-    label: 'IND Wizard',
-    description: 'Guided IND submission preparation',
-    icon: 'FileStack',
-    route: '/portal/ind-wizard',
-    category: 'submissions',
-    requiredRoles: [
-      'admin',
-      'regulatory_lead',
-      'medical_writer',
-      'cmc_specialist',
-      'project_manager',
-    ],
-    badge: 'FDA',
-  },
+  // ind_wizard: DEPRECATED — rolled into ectd_coauthor
   cer_generator: {
     id: 'cer_generator',
     label: 'CER Generator',
@@ -437,12 +422,12 @@ export const ROLE_MODULE_PRESETS: Record<UserRole, RoleModulePreset> = {
   admin: {
     role: 'admin',
     primaryModules: ['dashboard', 'vault', 'project_hub', 'analytics', 'settings'],
-    quickActions: ['ind_wizard', 'ectd_coauthor', 'ai_assistant'],
+    quickActions: ['ectd_coauthor', 'ai_assistant'],
     defaultRoute: '/portal/dashboard',
   },
   regulatory_lead: {
     role: 'regulatory_lead',
-    primaryModules: ['dashboard', 'vault', 'ind_wizard', 'ectd_coauthor', 'regulatory_intel'],
+    primaryModules: ['dashboard', 'vault', 'ectd_coauthor', 'regulatory_intel'],
     quickActions: ['cer_generator', '510k_builder', 'timeline_planner'],
     defaultRoute: '/portal/dashboard',
   },
@@ -455,7 +440,7 @@ export const ROLE_MODULE_PRESETS: Record<UserRole, RoleModulePreset> = {
   medical_writer: {
     role: 'medical_writer',
     primaryModules: ['dashboard', 'vault', 'ectd_coauthor', 'document_control'],
-    quickActions: ['ind_wizard', 'cer_generator', 'ai_assistant'],
+    quickActions: ['ectd_coauthor', 'cer_generator', 'ai_assistant'],
     defaultRoute: '/portal/vault',
   },
   biostatistician: {
@@ -485,7 +470,7 @@ export const ROLE_MODULE_PRESETS: Record<UserRole, RoleModulePreset> = {
   cmc_specialist: {
     role: 'cmc_specialist',
     primaryModules: ['dashboard', 'cmc_platform', 'vault', 'quality_management'],
-    quickActions: ['ind_wizard', 'ai_assistant'],
+    quickActions: ['ectd_coauthor', 'ai_assistant'],
     defaultRoute: '/portal/cmc-platform',
   },
   safety_officer: {

@@ -97,9 +97,9 @@ const UnifiedDocumentUpload = ({
       color: 'bg-purple-100 border-purple-200',
     },
     'ind-wizard': {
-      name: 'IND Wizard',
+      name: 'eCTD Co-Author (IND)',
       icon: '🧪',
-      description: 'Upload IND-related documents',
+      description: 'Upload IND-related documents via eCTD Co-Author',
       color: 'bg-orange-100 border-orange-200',
     },
     vault: {

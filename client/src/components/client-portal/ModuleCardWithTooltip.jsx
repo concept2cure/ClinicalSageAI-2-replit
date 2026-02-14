@@ -1,7 +1,6 @@
-
 /**
  * Module Card with Tooltip Component
- * 
+ *
  * Enhanced module card that includes navigation tooltips and quick access links
  */
 
@@ -11,22 +10,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, HelpCircle } from 'lucide-react';
 import { useLocation } from 'wouter';
-import INDWizardTooltip from '../ind-wizard/INDWizardTooltip';
+// INDWizardTooltip removed — IND Wizard deprecated, rolled into eCTD Co-Author
+// import INDWizardTooltip from '../ind-wizard/INDWizardTooltip';
 
-const ModuleCardWithTooltip = ({ 
-  module, 
-  onModuleClick, 
-  className = "",
-  showTooltip = true 
-}) => {
+const ModuleCardWithTooltip = ({ module, onModuleClick, className = '', showTooltip = true }) => {
   const [, setLocation] = useLocation();
 
-  const handleQuickStart = (e) => {
+  const handleQuickStart = e => {
     e.stopPropagation();
     setLocation(module.path);
   };
 
-  const handleTutorialAccess = (e) => {
+  const handleTutorialAccess = e => {
     e.stopPropagation();
     setLocation(`/client-portal/tutorial?module=${module.id}`);
   };
@@ -36,7 +31,7 @@ const ModuleCardWithTooltip = ({
 
     switch (module.id) {
       case 'ind':
-        return <INDWizardTooltip className="absolute top-2 right-2" />;
+      // IND Wizard deprecated — fallthrough to default tooltip
       default:
         return (
           <Button
@@ -52,12 +47,12 @@ const ModuleCardWithTooltip = ({
   };
 
   return (
-    <Card 
+    <Card
       className={`relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${className}`}
       onClick={() => onModuleClick(module)}
     >
       {renderModuleTooltip()}
-      
+
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 pr-8">
@@ -65,18 +60,16 @@ const ModuleCardWithTooltip = ({
               <span className="text-2xl">{module.icon}</span>
               <span>{module.title}</span>
             </CardTitle>
-            <CardDescription className="mt-1">
-              {module.description}
-            </CardDescription>
+            <CardDescription className="mt-1">{module.description}</CardDescription>
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="space-y-3">
           {/* Status Badge */}
           <div className="flex items-center space-x-2">
-            <Badge 
+            <Badge
               variant={module.status === 'active' ? 'default' : 'secondary'}
               className="text-xs"
             >
@@ -91,8 +84,8 @@ const ModuleCardWithTooltip = ({
 
           {/* Quick Actions */}
           <div className="flex space-x-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={handleQuickStart}
               className="flex-1 text-xs"
               disabled={module.status !== 'active'}
@@ -100,12 +93,7 @@ const ModuleCardWithTooltip = ({
               Quick Start
               <ExternalLink className="h-3 w-3 ml-1" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleTutorialAccess}
-              className="text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={handleTutorialAccess} className="text-xs">
               Tutorial
             </Button>
           </div>
