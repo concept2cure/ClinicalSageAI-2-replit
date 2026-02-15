@@ -157,25 +157,34 @@ ALTER TABLE predicate.se_matrix_rows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE predicate.defense_previews ENABLE ROW LEVEL SECURITY;
 
 -- Candidates
-CREATE POLICY candidates_program_isolation ON predicate.candidates
-    USING (
-        program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
-    );
+DO $$ BEGIN
+    CREATE POLICY candidates_program_isolation ON predicate.candidates
+        USING (
+            program_id::TEXT = current_setting('app.current_program_id', TRUE)
+            OR current_setting('app.bypass_rls', TRUE) = 'true'
+        );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- SE Matrix Rows
-CREATE POLICY se_matrix_program_isolation ON predicate.se_matrix_rows
-    USING (
-        program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
-    );
+DO $$ BEGIN
+    CREATE POLICY se_matrix_program_isolation ON predicate.se_matrix_rows
+        USING (
+            program_id::TEXT = current_setting('app.current_program_id', TRUE)
+            OR current_setting('app.bypass_rls', TRUE) = 'true'
+        );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Defense Previews
-CREATE POLICY defense_preview_program_isolation ON predicate.defense_previews
-    USING (
-        program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
-    );
+DO $$ BEGIN
+    CREATE POLICY defense_preview_program_isolation ON predicate.defense_previews
+        USING (
+            program_id::TEXT = current_setting('app.current_program_id', TRUE)
+            OR current_setting('app.bypass_rls', TRUE) = 'true'
+        );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- fda_enforcement is global (no program_id) — no RLS needed
 

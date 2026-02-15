@@ -118,6 +118,7 @@ jobs:
 
       - name: Generate Test IND Document (eCTD 4.0)
         run: |
+          PYTHONPATH="${GITHUB_WORKSPACE}" \
           python scripts/generate-ectd4-sample.py \
             --module 2.6.2 \
             --output ./test-artifacts

@@ -804,6 +804,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState(false);
   const [googleUserInfo, setGoogleUserInfo] = useState(null);
 
+  const { toast } = useToast();
+
   useEffect(() => {
     const importPendingIndCanvasPayload = async () => {
       const rawPayload = localStorage.getItem(COAUTHOR_IMPORT_KEY);
@@ -1594,8 +1596,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
   // Import Word Document Dialog state
   const [importWordDialogOpen, setImportWordDialogOpen] = useState(false);
-
-  const { toast } = useToast();
 
   // Collaboration state
   const [isCollaborationConnected, setIsCollaborationConnected] = useState(false);
