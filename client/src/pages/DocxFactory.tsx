@@ -851,6 +851,7 @@ function TemplatesTab({ programId }: { programId: string }) {
                   className="w-full"
                   onClick={handleSeed}
                   disabled={seedTemplates.isPending}
+                  id="seed-templates-btn"
                   data-testid="seed-templates-guided-btn"
                 >
                   {seedTemplates.isPending ? (

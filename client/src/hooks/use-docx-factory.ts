@@ -163,8 +163,10 @@ export const docxKeys = {
     ['docx-factory', 'render', programId, renderId] as const,
   renderEvents: (programId: string, renderId: string) =>
     ['docx-factory', 'render-events', programId, renderId] as const,
-  demoPacks: (docType: string, docFamily: string) =>
-    ['docx-factory', 'demo-packs', docType, docFamily] as const,
+  demoPacks: (docType: string, docFamily?: string) =>
+    docFamily
+      ? (['docx-factory', 'demo-packs', docType, docFamily] as const)
+      : (['docx-factory', 'demo-packs', docType] as const),
   catalogFamilies: () => ['docx-factory', 'catalog', 'families'] as const,
   catalogDocTypes: (docFamily: string) =>
     ['docx-factory', 'catalog', 'doc-types', docFamily] as const,
@@ -319,7 +321,16 @@ export function useSeedTemplates(programId: string) {
 // Demo Packs
 // =============================================================================
 
-export function useDemoPacks(options: { docType?: string; docFamily?: string }) {
+export function useDemoPacks(docType?: string): ReturnType<typeof useQuery<DemoPack[]>>;
+export function useDemoPacks(options?: { docType?: string; docFamily?: string }): ReturnType<
+  typeof useQuery<DemoPack[]>
+>;
+export function useDemoPacks(optionsOrDocType?: string | { docType?: string; docFamily?: string }) {
+  const options =
+    typeof optionsOrDocType === 'string'
+      ? { docType: optionsOrDocType }
+      : (optionsOrDocType ?? {});
+
   const docType = options.docType || '';
   const docFamily = options.docFamily || '';
 
