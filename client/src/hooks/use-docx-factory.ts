@@ -322,14 +322,13 @@ export function useSeedTemplates(programId: string) {
 // =============================================================================
 
 export function useDemoPacks(docType?: string): ReturnType<typeof useQuery<DemoPack[]>>;
-export function useDemoPacks(options?: { docType?: string; docFamily?: string }): ReturnType<
-  typeof useQuery<DemoPack[]>
->;
+export function useDemoPacks(options?: {
+  docType?: string;
+  docFamily?: string;
+}): ReturnType<typeof useQuery<DemoPack[]>>;
 export function useDemoPacks(optionsOrDocType?: string | { docType?: string; docFamily?: string }) {
   const options =
-    typeof optionsOrDocType === 'string'
-      ? { docType: optionsOrDocType }
-      : (optionsOrDocType ?? {});
+    typeof optionsOrDocType === 'string' ? { docType: optionsOrDocType } : (optionsOrDocType ?? {});
 
   const docType = options.docType || '';
   const docFamily = options.docFamily || '';
@@ -454,8 +453,10 @@ export async function computeSHA256(blob: Blob): Promise<string | null> {
   if (typeof crypto === 'undefined' || !crypto.subtle) {
     return null;
   }
-  // Use Response.arrayBuffer() for broader jsdom/browser compat
-  const buffer = await new Response(blob).arrayBuffer();
+  const buffer =
+    typeof blob.arrayBuffer === 'function'
+      ? await blob.arrayBuffer()
+      : await new Response(blob).arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
