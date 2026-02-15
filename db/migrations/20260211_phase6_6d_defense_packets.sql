@@ -75,12 +75,12 @@ CREATE TABLE IF NOT EXISTS predicate.defense_packets (
 -- Indexes
 -- ─────────────────────────────────────────────────────────────────────────────
 
-CREATE INDEX idx_defense_packets_program     ON predicate.defense_packets(program_id);
-CREATE INDEX idx_defense_packets_subject     ON predicate.defense_packets(subject_hash);
-CREATE INDEX idx_defense_packets_manifest    ON predicate.defense_packets(manifest_hash);
-CREATE INDEX idx_defense_packets_status      ON predicate.defense_packets(status);
-CREATE INDEX idx_defense_packets_created     ON predicate.defense_packets(created_at DESC);
-CREATE INDEX idx_defense_packets_program_sub ON predicate.defense_packets(program_id, subject_hash, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_program     ON predicate.defense_packets(program_id);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_subject     ON predicate.defense_packets(subject_hash);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_manifest    ON predicate.defense_packets(manifest_hash);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_status      ON predicate.defense_packets(status);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_created     ON predicate.defense_packets(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_defense_packets_program_sub ON predicate.defense_packets(program_id, subject_hash, created_at DESC);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Comments
