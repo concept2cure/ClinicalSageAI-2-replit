@@ -38,26 +38,51 @@ COMMENT ON COLUMN pm_settings.therapeutic_area_settings IS 'Therapeutic area con
 CREATE OR REPLACE FUNCTION audit_pm_settings_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Insert audit log entry
-  INSERT INTO audit_logs (
-    tenant_id,
-    user_id,
-    action,
-    table_name,
-    record_id,
-    old_values,
-    new_values,
-    created_at
-  ) VALUES (
-    NEW.organization_id,
-    NEW.updated_by,
-    TG_OP,
-    'pm_settings',
-    NEW.id::text,
-    CASE WHEN TG_OP = 'UPDATE' THEN row_to_json(OLD) ELSE NULL END,
-    row_to_json(NEW),
-    NOW()
-  );
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'audit_logs'
+      AND column_name = 'old_values'
+  ) THEN
+    INSERT INTO audit_logs (
+      tenant_id,
+      user_id,
+      action,
+      table_name,
+      record_id,
+      old_values,
+      new_values,
+      created_at
+    ) VALUES (
+      NEW.organization_id,
+      NEW.updated_by,
+      TG_OP,
+      'pm_settings',
+      NEW.id::text,
+      CASE WHEN TG_OP = 'UPDATE' THEN row_to_json(OLD) ELSE NULL END,
+      row_to_json(NEW),
+      NOW()
+    );
+  ELSE
+    INSERT INTO audit_logs (
+      tenant_id,
+      user_id,
+      action,
+      table_name,
+      record_id,
+      new_values,
+      created_at
+    ) VALUES (
+      NEW.organization_id,
+      NEW.updated_by,
+      TG_OP,
+      'pm_settings',
+      NEW.id::text,
+      row_to_json(NEW),
+      NOW()
+    );
+  END IF;
   
   RETURN NEW;
 END;
