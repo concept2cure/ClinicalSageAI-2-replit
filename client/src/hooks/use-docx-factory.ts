@@ -453,11 +453,18 @@ export async function computeSHA256(blob: Blob): Promise<string | null> {
   if (typeof crypto === 'undefined' || !crypto.subtle) {
     return null;
   }
-  const buffer =
+  const rawBuffer =
     typeof blob.arrayBuffer === 'function'
       ? await blob.arrayBuffer()
       : await new Response(blob).arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const digestInput =
+    rawBuffer instanceof ArrayBuffer
+      ? new Uint8Array(rawBuffer)
+      : ArrayBuffer.isView(rawBuffer)
+        ? new Uint8Array(rawBuffer.buffer, rawBuffer.byteOffset, rawBuffer.byteLength)
+        : new TextEncoder().encode(String(rawBuffer));
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', digestInput);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
