@@ -58,7 +58,7 @@ BEGIN
       row_to_json(NEW),
       NOW()
     );
-  EXCEPTION WHEN undefined_column THEN
+  EXCEPTION WHEN undefined_column OR not_null_violation THEN
     BEGIN
       INSERT INTO audit_logs (
         tenant_id,
@@ -75,7 +75,7 @@ BEGIN
         NEW.id::text,
         NOW()
       );
-    EXCEPTION WHEN undefined_column THEN
+    EXCEPTION WHEN undefined_column OR not_null_violation THEN
       NULL;
     END;
   END;

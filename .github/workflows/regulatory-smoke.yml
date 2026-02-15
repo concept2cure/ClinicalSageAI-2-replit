@@ -113,7 +113,7 @@ jobs:
 
       - name: Install deps
         run: |
-          cd ind_automation && pip install -r requirements.txt && pip install rsa
+          cd ind_automation && pip install -r requirements.txt && pip install pytest python-docx lxml defusedxml rsa requests cryptography boto3 pyasn1 pyasn1-modules
           cd ../server && npm install
 
       - name: Generate Test IND Document (eCTD 4.0)
