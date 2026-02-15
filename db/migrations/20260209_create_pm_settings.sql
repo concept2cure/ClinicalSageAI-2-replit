@@ -38,13 +38,7 @@ COMMENT ON COLUMN pm_settings.therapeutic_area_settings IS 'Therapeutic area con
 CREATE OR REPLACE FUNCTION audit_pm_settings_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'audit_logs'
-      AND column_name = 'old_values'
-  ) THEN
+  BEGIN
     INSERT INTO audit_logs (
       tenant_id,
       user_id,
@@ -64,26 +58,28 @@ BEGIN
       row_to_json(NEW),
       NOW()
     );
-  ELSE
-    INSERT INTO audit_logs (
-      tenant_id,
-      user_id,
-      action,
-      table_name,
-      record_id,
-      new_values,
-      created_at
-    ) VALUES (
-      NEW.organization_id,
-      NEW.updated_by,
-      TG_OP,
-      'pm_settings',
-      NEW.id::text,
-      row_to_json(NEW),
-      NOW()
-    );
-  END IF;
-  
+  EXCEPTION WHEN undefined_column THEN
+    BEGIN
+      INSERT INTO audit_logs (
+        tenant_id,
+        user_id,
+        action,
+        table_name,
+        record_id,
+        created_at
+      ) VALUES (
+        NEW.organization_id,
+        NEW.updated_by,
+        TG_OP,
+        'pm_settings',
+        NEW.id::text,
+        NOW()
+      );
+    EXCEPTION WHEN undefined_column THEN
+      NULL;
+    END;
+  END;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -136,7 +132,7 @@ INSERT INTO pm_settings (
   compliance_settings,
   therapeutic_area_settings
 )
-SELECT 
+SELECT
   id,
   '{"tone": "regulatory", "riskTolerance": "moderate", "citationPreference": "primary_sources"}'::jsonb,
   '{"defaultSubmissionType": "IND", "reviewCadenceDays": 7, "requireSecondReviewer": true}'::jsonb,
@@ -158,16 +154,16 @@ ON CONFLICT (organization_id) DO NOTHING;
 
 -- Verify RLS policy
 -- SELECT tablename, policyname, permissive, roles, cmd, qual
--- FROM pg_policies 
+-- FROM pg_policies
 -- WHERE tablename = 'pm_settings';
 
 -- Verify audit trigger
--- SELECT tgname, tgtype, tgenabled 
--- FROM pg_trigger 
+-- SELECT tgname, tgtype, tgenabled
+-- FROM pg_trigger
 -- WHERE tgrelid = 'pm_settings'::regclass;
 
 -- View default settings for all orgs
--- SELECT 
+-- SELECT
 --   ps.organization_id,
 --   o.name as org_name,
 --   ps.ai_settings,
