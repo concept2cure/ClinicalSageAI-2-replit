@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Strengthen proof-pack trust chain with contract hashes, drift severity, and idempotency.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1/5 submission package integrity and replay checks
+--   - Integrity Risk Addressed: drift ambiguity and unverifiable proof-pack replay state
+--
+-- Determinism Contract:
+--   - Contract/hash fields must preserve deterministic replay and verification logic.
+--   - Hash semantics changes require explicit spec/version governance.
+--
+-- Notes:
+--   - Download blocking is server-authoritative and auditable.
+-- =============================================================================
+
 -- Migration: Phase 6.6.G — Submission-Grade Proof Pack Trust Chain
 -- Expands proof_pack_exports with full contract hashes, proof_pack_id keying,
 -- drift severity, block_download, and idempotency constraint.

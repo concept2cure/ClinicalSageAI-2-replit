@@ -31,6 +31,8 @@
 -- IDEMPOTENT: Safe to run multiple times
 -- ============================================================================
 
+CREATE SCHEMA IF NOT EXISTS evidence;
+
 -- 1) Contradiction scans table
 CREATE TABLE IF NOT EXISTS evidence.contradiction_scans (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Persist proof-pack export metadata and audit events for reproducible submissions.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1/2/5 submission evidence and export audit trail
+--   - Integrity Risk Addressed: non-reproducible ZIP artifacts and missing export lineage
+--
+-- Determinism Contract:
+--   - Export manifests/payload snapshots must remain hash-stable and replayable.
+--   - Any schema-impacting export contract change requires governed hash/version updates.
+--
+-- Notes:
+--   - Event log remains append-only with explicit actor/action attribution.
+-- =============================================================================
+
 -- Migration: Phase 6.6.E — proof_pack_exports table
 -- Enterprise artifact: downloadable ZIP proof pack keyed by manifest_hash.
 -- Stores metadata + artifact index; actual artifacts are assembled on-demand

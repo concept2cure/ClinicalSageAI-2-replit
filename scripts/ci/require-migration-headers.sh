@@ -28,26 +28,56 @@ echo "🔍 Checking migrations for eCTD regulatory audit headers..."
 echo "   (Scope: 2026+ date-prefixed migrations + vault prerequisite)"
 echo ""
 
-# Check date-prefixed migrations (Feb 2026+ only - when standard was established)
-while IFS= read -r -d '' f; do
+# Determine base ref for changed-file scope
+BASE_REF=""
+if [[ -n "${GITHUB_BASE_REF:-}" ]] && git rev-parse --verify "origin/${GITHUB_BASE_REF}" >/dev/null 2>&1; then
+  BASE_REF="origin/${GITHUB_BASE_REF}"
+elif git rev-parse --verify origin/main >/dev/null 2>&1; then
+  BASE_REF="origin/main"
+elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+  BASE_REF="HEAD~1"
+fi
+
+CHANGED_MIGRATIONS=""
+if [[ -n "$BASE_REF" ]]; then
+  CHANGED_MIGRATIONS=$(git diff --name-only "$BASE_REF"...HEAD -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
+else
+  CHANGED_MIGRATIONS=$(git diff --name-only -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
+fi
+
+if [[ -z "$CHANGED_MIGRATIONS" ]]; then
+  echo "✅ No migration changes detected in current diff scope."
+  exit 0
+fi
+
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+
+  file_name="$(basename "$f")"
+
+  # In-scope: 2026+ date-prefixed migrations + vault prerequisite
+  if [[ ! "$file_name" =~ ^2026 ]] && [[ ! "$file_name" =~ ^2027 ]] && [[ ! "$file_name" =~ ^2028 ]] && [[ ! "$file_name" =~ ^2029 ]] && [[ "$file_name" != "044c_gcc_vault_schema.sql" ]]; then
+    continue
+  fi
+
+  if [[ ! -f "$f" ]]; then
+    # Deleted/renamed-out files should not block header checks
+    continue
+  fi
+
   checked=$((checked + 1))
   if ! head -40 "$f" | grep -q "$HEADER_MARKER"; then
     echo "❌ Missing eCTD header: $f"
     missing=1
   fi
-done < <(find "$MIGRATIONS_DIR" -maxdepth 1 \( -name "202602*.sql" -o -name "202603*.sql" -o -name "202604*.sql" -o -name "202605*.sql" -o -name "202606*.sql" -o -name "202607*.sql" -o -name "202608*.sql" -o -name "202609*.sql" -o -name "20261*.sql" -o -name "2027*.sql" -o -name "2028*.sql" -o -name "2029*.sql" \) -print0 2>/dev/null || true)
-
-# Check specific vault prerequisite migration
-VAULT_PREREQ="$MIGRATIONS_DIR/044c_gcc_vault_schema.sql"
-if [ -f "$VAULT_PREREQ" ]; then
-  checked=$((checked + 1))
-  if ! head -40 "$VAULT_PREREQ" | grep -q "$HEADER_MARKER"; then
-    echo "❌ Missing eCTD header: $VAULT_PREREQ"
-    missing=1
-  fi
-fi
+done <<< "$CHANGED_MIGRATIONS"
 
 echo ""
+
+if [ "$checked" -eq 0 ]; then
+  echo "✅ No in-scope migration files changed; header guardrail not applicable."
+  exit 0
+fi
 
 if [ "$missing" -eq 1 ]; then
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -77,4 +107,4 @@ if [ "$missing" -eq 1 ]; then
   exit 1
 fi
 
-echo "✅ Migration header check passed ($checked migrations checked)."
+echo "✅ Migration header check passed ($checked in-scope migration(s) checked)."

@@ -29,13 +29,13 @@ jobs:
 
       - name: Run eCTD 4.0 Compliance Tests
         run: |
-          PYTHONPATH=/workspaces/ClinicalSageAI-2-replit/ \
+          PYTHONPATH="${GITHUB_WORKSPACE}" \
           python -m pytest ind_automation/tests/test_ectd4_compiler.py -v \
           --tb=short --strict-markers
 
       - name: Test Digital Signatures
         run: |
-          PYTHONPATH=/workspaces/ClinicalSageAI-2-replit/ python - <<'PY'
+          PYTHONPATH="${GITHUB_WORKSPACE}" python - <<'PY'
           from ind_automation.signatures.pki_signer import Part11Signature
           from ind_automation.compilers.ectd4_compiler import ECTD4Compiler
 
@@ -113,8 +113,8 @@ jobs:
 
       - name: Install deps
         run: |
-          cd ind_automation && pip install -e .
-          cd ../server && npm ci
+          cd ind_automation && pip install -r requirements.txt
+          cd ../server && npm install
 
       - name: Generate Test IND Document (eCTD 4.0)
         run: |

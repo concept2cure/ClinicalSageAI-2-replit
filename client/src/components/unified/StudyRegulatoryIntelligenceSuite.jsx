@@ -28,12 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -195,10 +190,10 @@ export default function StudyRegulatoryIntelligenceSuite() {
 
   // Fetch regulatory readiness
   const { data: regulatoryData, isLoading: regulatoryLoading } = useQuery({
-    queryKey: ['/api/lumen/regulatory-analysis'],
+    queryKey: ['/api/lumen-cortex/regulatory-analysis'],
     enabled: activeTab === 'compliance',
     queryFn: async () => {
-      const response = await fetch('/api/lumen/regulatory-analysis', {
+      const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,11 +234,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
       },
       operations: {
         module: 'Study Operations',
-        suggestions: [
-          'Plan study milestones',
-          'Allocate resources',
-          'Track operational metrics',
-        ],
+        suggestions: ['Plan study milestones', 'Allocate resources', 'Track operational metrics'],
       },
       insights: {
         module: 'Analytics & Intelligence',
@@ -283,7 +274,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
 
     setLumenLoading(true);
     try {
-      const response = await fetch('/api/lumen/ich-e6r3-guidance', {
+      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,7 +290,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
       });
 
       if (!response.ok) throw new Error('Failed to get Lumen AI response');
-      
+
       const result = await response.json();
       setLumenResponses(prev => [
         {
@@ -312,7 +303,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
         ...prev,
       ]);
       setLumenQuery('');
-      
+
       toast({
         title: '✅ Lumen AI Response',
         description: 'Successfully received guidance',

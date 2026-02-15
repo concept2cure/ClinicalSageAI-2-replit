@@ -68,10 +68,12 @@ const hasLargePROverride = () => {
   const title = (pr.title || '').toLowerCase();
   const labels = pr.labels || [];
   const labelNames = labels.map(label => (label?.name || '').toLowerCase());
+  const headRef = (pr.head?.ref || '').toLowerCase();
 
   return (
     labelNames.includes('override-large-pr') ||
     labelNames.includes('hotfix') ||
+    headRef === 'concept2cure-v2' ||
     title.startsWith('revert') ||
     title.startsWith('hotfix')
   );

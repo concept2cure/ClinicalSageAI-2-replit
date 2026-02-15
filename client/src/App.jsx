@@ -2057,6 +2057,13 @@ function MainApp() {
             <Route path="/client-portal/module-7">
               {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
+            {/* Legacy IND Full Solution routes — consolidated into CoAuthor */}
+            <Route path="/ind-full-solution">
+              {() => <Redirect to="/coauthor?source=ind-legacy" />}
+            </Route>
+            <Route path="/ind-full-solution/:rest*">
+              {() => <Redirect to="/coauthor?source=ind-legacy" />}
+            </Route>
             <Route path="/ectd-module">
               {() => (
                 <Suspense fallback={<LoadingPage />}>

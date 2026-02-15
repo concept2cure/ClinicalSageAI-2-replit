@@ -52,13 +52,13 @@ export default function RegulatoryIntelligenceHub() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['/api/lumen/regulatory-analysis'],
+    queryKey: ['/api/lumen-cortex/regulatory-analysis'],
     queryFn: async () => {
       try {
         console.log('🤖 Connecting to Real Lumen AI Regulatory Intelligence Hub...');
 
         // Connect to REAL Lumen AI endpoint with proper query format
-        const response = await fetch('/api/lumen/regulatory-analysis', {
+        const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export default function RegulatoryIntelligenceHub() {
 
       const query = queryData?.query || lumenQuery;
 
-      const response = await fetch('/api/lumen/ich-e6r3-guidance', {
+      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

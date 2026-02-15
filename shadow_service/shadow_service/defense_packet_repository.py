@@ -171,7 +171,7 @@ def _build_response(
 # Read
 # ═══════════════════════════════════════════════════════════════════════════════
 
-async def get_packet_by_id(packet_id: str) -> Optional[dict[str, Any]]:
+async def get_packet_by_id(packet_id: str, program_id: Optional[str] = None) -> Optional[dict[str, Any]]:
     """Fetch a defense packet by ID."""
     from . import db
     from . import sql_defense_packets as sql_dp
@@ -179,12 +179,21 @@ async def get_packet_by_id(packet_id: str) -> Optional[dict[str, Any]]:
     conn = await db.acquire_connection()
     try:
         row = await conn.fetchrow(sql_dp.SELECT_PACKET_BY_ID, UUID(packet_id))
-        return dict(row) if row else None
+        if not row:
+            return None
+
+        packet = dict(row)
+        if program_id is not None and str(packet.get("program_id")) != str(program_id):
+            return None
+        return packet
     finally:
         await db.release_connection(conn)
 
 
-async def get_packet_by_manifest_hash(manifest_hash: str) -> Optional[dict[str, Any]]:
+async def get_packet_by_manifest_hash(
+    manifest_hash: str,
+    program_id: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
     """Fetch a defense packet by manifest hash."""
     from . import db
     from . import sql_defense_packets as sql_dp
@@ -192,7 +201,13 @@ async def get_packet_by_manifest_hash(manifest_hash: str) -> Optional[dict[str, 
     conn = await db.acquire_connection()
     try:
         row = await conn.fetchrow(sql_dp.SELECT_PACKET_BY_MANIFEST_HASH, manifest_hash)
-        return dict(row) if row else None
+        if not row:
+            return None
+
+        packet = dict(row)
+        if program_id is not None and str(packet.get("program_id")) != str(program_id):
+            return None
+        return packet
     finally:
         await db.release_connection(conn)
 
@@ -241,6 +256,7 @@ async def update_packet_status(
     packet_id: str,
     status: str,
     *,
+    program_id: Optional[str] = None,
     render_job_id: Optional[str] = None,
     error_code: Optional[str] = None,
     error_detail: Optional[str] = None,
@@ -255,6 +271,9 @@ async def update_packet_status(
         # Fetch current status
         current = await conn.fetchrow(sql_dp.SELECT_PACKET_BY_ID, UUID(packet_id))
         if not current:
+            return None
+
+        if program_id is not None and str(current.get("program_id")) != str(program_id):
             return None
 
         current_status = current["status"]

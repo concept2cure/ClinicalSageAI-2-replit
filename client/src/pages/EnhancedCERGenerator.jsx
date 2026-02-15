@@ -1253,7 +1253,7 @@ export default function EnhancedCERGenerator() {
               </p>
             </div>
             <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-              <Link to="/ind-full-solution">
+              <Link to="/coauthor?source=ind-workflow-entry">
                 <Button variant="outline" className="w-full sm:w-auto">
                   IND Full Solution
                   <ArrowRight className="ml-1 h-4 w-4" />

@@ -1530,11 +1530,11 @@ async def create_defense_packet_endpoint(req: DefensePacketCreateReq):
 
 
 @router.get("/device/defense-packet/{packet_id}")
-async def get_defense_packet_endpoint(packet_id: UUID):
+async def get_defense_packet_endpoint(packet_id: UUID, program_id: UUID = Query(...)):
     """Get a defense packet by ID."""
     from .defense_packet_repository import get_packet_by_id
 
-    packet = await get_packet_by_id(str(packet_id))
+    packet = await get_packet_by_id(str(packet_id), str(program_id))
     if not packet:
         raise HTTPException(status_code=404, detail="Defense packet not found")
     return {"packet": packet}
@@ -1552,11 +1552,11 @@ async def list_defense_packets_endpoint(
 
 
 @router.post("/device/defense-packet/{packet_id}/staleness-check")
-async def check_packet_staleness_endpoint(packet_id: UUID):
+async def check_packet_staleness_endpoint(packet_id: UUID, program_id: UUID = Query(...)):
     """Check if a defense packet is stale (upstream data has changed)."""
     from .defense_packet_repository import check_staleness, get_packet_by_id
 
-    packet = await get_packet_by_id(str(packet_id))
+    packet = await get_packet_by_id(str(packet_id), str(program_id))
     if not packet:
         raise HTTPException(status_code=404, detail="Defense packet not found")
 
@@ -1567,6 +1567,7 @@ async def check_packet_staleness_endpoint(packet_id: UUID):
 @router.patch("/device/defense-packet/{packet_id}/status")
 async def update_defense_packet_status_endpoint(
     packet_id: UUID,
+    program_id: UUID = Query(...),
     status: str = Query(...),
     render_job_id: Optional[str] = Query(None),
     error_code: Optional[str] = Query(None),
@@ -1579,6 +1580,7 @@ async def update_defense_packet_status_endpoint(
     updated = await update_packet_status(
         str(packet_id),
         status,
+        program_id=str(program_id),
         render_job_id=render_job_id,
         error_code=error_code,
         error_detail=error_detail,
@@ -1666,7 +1668,7 @@ async def build_defense_packet_endpoint(req: DefensePacketBuildReq):
 
 
 @router.get("/device/defense-packet/{manifest_hash}/export.json")
-async def export_defense_packet_json(manifest_hash: str):
+async def export_defense_packet_json(manifest_hash: str, program_id: UUID = Query(...)):
     """Export a defense packet as canonical JSON.
 
     Phase 6.6.D+. Stable ordering, deterministic.
@@ -1675,7 +1677,7 @@ async def export_defense_packet_json(manifest_hash: str):
     # For v1, rebuild from DB if stored, or return 404
     from .defense_packet_repository import get_packet_by_manifest_hash
     try:
-        packet_row = await get_packet_by_manifest_hash(manifest_hash)
+        packet_row = await get_packet_by_manifest_hash(manifest_hash, str(program_id))
     except Exception:
         packet_row = None
 
@@ -1727,7 +1729,7 @@ async def export_defense_packet_json(manifest_hash: str):
 
 
 @router.get("/device/defense-packet/{manifest_hash}/export.csv")
-async def export_defense_packet_csv(manifest_hash: str):
+async def export_defense_packet_csv(manifest_hash: str, program_id: UUID = Query(...)):
     """Export defense packet tasks as stable CSV.
 
     Phase 6.6.D+. Columns: task_id, severity, category, title,
@@ -1742,7 +1744,7 @@ async def export_defense_packet_csv(manifest_hash: str):
     import json as _json
 
     try:
-        packet_row = await get_packet_by_manifest_hash(manifest_hash)
+        packet_row = await get_packet_by_manifest_hash(manifest_hash, str(program_id))
     except Exception:
         packet_row = None
 

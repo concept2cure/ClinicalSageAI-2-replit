@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Add immutable ingestion-run provenance for FDA predicate universe freshness.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 (clinical evidence provenance)
+--   - Integrity Risk Addressed: stale external evidence and unverifiable ingest history
+--
+-- Determinism Contract:
+--   - Ingestion run metadata must preserve reproducible evidence lineage.
+--   - Any hash-impacting ingest contract change requires spec/version bump.
+--
+-- Notes:
+--   - Migration must remain idempotent and append-only where feasible.
+-- =============================================================================
+
 -- Migration: Phase 6.6.A — fda_ingest_runs table
 -- Tracks every ingestion job execution for audit + freshness proof.
 -- Depends on: 20260207_phase6_6a_fda_clearance_universe.sql (predicate schema)

@@ -605,6 +605,51 @@ const TipTapEditor = ({ document, onSave, isReadOnly = false, documentStatus }) 
 };
 
 export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} }) {
+  const COAUTHOR_IMPORT_KEY = 'coauthor_pending_canvas_import';
+
+  const escapeHtml = value =>
+    String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const tiptapNodeToHtml = node => {
+    if (!node) return '';
+
+    if (node.type === 'text') {
+      return escapeHtml(node.text || '');
+    }
+
+    const children = Array.isArray(node.content)
+      ? node.content.map(child => tiptapNodeToHtml(child)).join('')
+      : '';
+
+    switch (node.type) {
+      case 'doc':
+        return children;
+      case 'heading': {
+        const level = Number(node.attrs?.level || 1);
+        const safeLevel = Math.min(Math.max(level, 1), 6);
+        return `<h${safeLevel}>${children}</h${safeLevel}>`;
+      }
+      case 'paragraph':
+        return `<p>${children}</p>`;
+      case 'bulletList':
+        return `<ul>${children}</ul>`;
+      case 'listItem':
+        return `<li>${children}</li>`;
+      default:
+        return children;
+    }
+  };
+
+  const tiptapJsonToHtml = editorJson => {
+    if (!editorJson) return '';
+    return tiptapNodeToHtml(editorJson);
+  };
+
   // Component state
   const [isTreeOpen, setIsTreeOpen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -758,6 +803,116 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   const [googleDocsPopupOpen, setGoogleDocsPopupOpen] = useState(false);
   const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState(false);
   const [googleUserInfo, setGoogleUserInfo] = useState(null);
+
+  useEffect(() => {
+    const importPendingIndCanvasPayload = async () => {
+      const rawPayload = localStorage.getItem(COAUTHOR_IMPORT_KEY);
+      if (!rawPayload) return;
+
+      localStorage.removeItem(COAUTHOR_IMPORT_KEY);
+
+      try {
+        const payload = JSON.parse(rawPayload);
+        if (!payload?.editorJson) return;
+
+        const importedTitle = payload?.projectName
+          ? `${payload.projectName} — IND Draft`
+          : 'Imported IND Draft';
+        const importedContent = tiptapJsonToHtml(payload.editorJson);
+
+        const organizationId = localStorage.getItem('selectedOrganizationId') || '1';
+
+        let importedDocument = null;
+        try {
+          const response = await fetch('/api/coauthor/documents', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-organization-id': organizationId,
+            },
+            body: JSON.stringify({
+              title: importedTitle,
+              content: importedContent,
+              module: 'IND',
+              status: 'draft',
+              metadata: {
+                source: 'ind-upload-canvas-autoload',
+                templateId: payload.templateId || null,
+                specialization: payload.specialization || null,
+                projectId: payload.projectId || null,
+                moduleAssessments: payload.moduleAssessments || {},
+                reviewActions: payload.reviewActions || {},
+                importedAt: new Date().toISOString(),
+              },
+            }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result?.document) {
+              importedDocument = {
+                id: result.document.id,
+                title: result.document.title || importedTitle,
+                module: result.document.module || 'IND',
+                status: 'Draft',
+                lastEdited: 'Just now',
+                content: result.document.content || importedContent,
+                saveStatus: 'saved',
+                isImportedIndDraft: true,
+                indQualityReview: {
+                  projectId: payload.projectId || null,
+                  templateId: payload.templateId || null,
+                  moduleAssessments: payload.moduleAssessments || {},
+                  reviewActions: payload.reviewActions || {},
+                },
+                scrollPosition: 0,
+                cursorPosition: 0,
+              };
+            }
+          }
+        } catch (persistError) {
+          console.warn('Unable to persist imported IND draft; continuing with local editor tab');
+        }
+
+        if (!importedDocument) {
+          importedDocument = {
+            id: `ind-import-${Date.now()}`,
+            title: importedTitle,
+            module: 'IND',
+            status: 'Draft',
+            lastEdited: 'Just now',
+            content: importedContent,
+            saveStatus: 'unsaved',
+            isImportedIndDraft: true,
+            indQualityReview: {
+              projectId: payload.projectId || null,
+              templateId: payload.templateId || null,
+              moduleAssessments: payload.moduleAssessments || {},
+              reviewActions: payload.reviewActions || {},
+            },
+            scrollPosition: 0,
+            cursorPosition: 0,
+          };
+        }
+
+        setOpenDocuments(prev => {
+          const next = [...prev, importedDocument];
+          setTimeout(() => setActiveTabIndex(next.length - 1), 0);
+          return next;
+        });
+
+        toast({
+          title: 'IND Draft Loaded',
+          description: 'Your generated IND draft is now open in the Canvas editor.',
+          variant: 'success',
+        });
+      } catch (error) {
+        console.error('Failed to import pending IND canvas payload:', error);
+      }
+    };
+
+    importPendingIndCanvasPayload();
+  }, [toast]);
   const [authLoading, setAuthLoading] = useState(false);
   const [editorType, setEditorType] = useState('tiptap'); // Default to TipTap editor
   // AI Assistant state
@@ -2505,24 +2660,34 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     updateCurrentDocument({ saveStatus: 'saving' });
     setAutoSaveStatus('saving');
 
+    const hasDocumentId = !!selectedDocument.id;
+    const isEphemeralId =
+      typeof selectedDocument.id === 'string' &&
+      (selectedDocument.id.startsWith('temp-') || selectedDocument.id.startsWith('ind-import-'));
+    const shouldUpdateExisting = hasDocumentId && !isEphemeralId;
+    const selectedIndQualityReview = selectedDocument?.indQualityReview || null;
+
     try {
       // Save to database with assignment/routing
       const response = await fetch('/api/coauthor/documents', {
-        method: selectedDocument.id && !selectedDocument.id.startsWith('temp-') ? 'PUT' : 'POST',
+        method: shouldUpdateExisting ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-organization-id': '1',
         },
         body: JSON.stringify({
-          id:
-            selectedDocument.id && !selectedDocument.id.startsWith('temp-')
-              ? selectedDocument.id
-              : undefined,
+          id: shouldUpdateExisting ? selectedDocument.id : undefined,
           title: selectedDocument.title,
           content: selectedDocument.content || documentText || '',
           status: 'draft',
           assigned_to: assignTo,
           routed_to: routeTo,
+          metadata: selectedIndQualityReview
+            ? {
+                source: 'ind-upload-canvas-autoload',
+                indQualityReview: selectedIndQualityReview,
+              }
+            : undefined,
           sections: {
             module: selectedDocument.module,
             sectionId: selectedDocument.sectionId,
@@ -2591,6 +2756,54 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     await handleSaveDocument({ routeTo: colleague });
   };
 
+  const handleSaveImportedIndDraft = async () => {
+    await handleSaveDocument();
+  };
+
+  const emitIndKpiEvent = async (eventName, payload = {}) => {
+    try {
+      const projectId = selectedDocument?.indQualityReview?.projectId || null;
+      await fetch('/api/ind-templates/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventName,
+          projectId,
+          payload,
+        }),
+      });
+    } catch (error) {
+      console.warn('Unable to emit IND KPI event:', eventName, error);
+    }
+  };
+
+  const handleSetImportedReviewAction = (moduleName, action) => {
+    if (!selectedDocument?.indQualityReview) return;
+
+    const nextReview = {
+      ...selectedDocument.indQualityReview,
+      reviewActions: {
+        ...(selectedDocument.indQualityReview.reviewActions || {}),
+        [moduleName]: action,
+      },
+    };
+
+    updateCurrentDocument({
+      indQualityReview: nextReview,
+      saveStatus: 'unsaved',
+    });
+
+    if (action === 'accepted') {
+      void emitIndKpiEvent('section_accepted', { moduleName });
+    }
+
+    if (action === 'rewrite') {
+      void emitIndKpiEvent('section_rewritten', { moduleName });
+    }
+  };
+
   // Function to assign document to team member
   const handleAssignDocument = async teamMember => {
     await handleSaveDocument({ assignTo: teamMember });
@@ -2603,6 +2816,11 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
   const handleExportDocument = () => {
     if (!selectedDocument) return;
+    void emitIndKpiEvent('export_triggered', {
+      documentId: selectedDocument.id,
+      title: selectedDocument.title,
+      module: selectedDocument.module,
+    });
     setShowExportDialog(true);
   };
 
@@ -8029,6 +8247,20 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                           Save
                         </Button>
 
+                        {selectedDocument?.isImportedIndDraft &&
+                        selectedDocument?.saveStatus !== 'saved' ? (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={handleSaveImportedIndDraft}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                            data-testid="button-save-imported-ind-draft"
+                          >
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Imported IND Draft
+                          </Button>
+                        ) : null}
+
                         {/* Save and Route Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -8283,6 +8515,81 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
 
                     {/* Editor Content Area */}
                     <div className="p-6">
+                      {selectedDocument?.indQualityReview?.moduleAssessments ? (
+                        <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-xs font-semibold text-slate-700 mb-2">
+                            Imported IND Quality Review
+                          </p>
+                          <div className="space-y-2">
+                            {Object.entries(
+                              selectedDocument.indQualityReview.moduleAssessments
+                            ).map(([moduleName, assessment]) => {
+                              const reviewAction =
+                                selectedDocument.indQualityReview.reviewActions?.[moduleName] ||
+                                'pending';
+
+                              return (
+                                <div
+                                  key={moduleName}
+                                  className="rounded border border-slate-200 bg-white p-2"
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-medium text-slate-800">
+                                      {moduleName}
+                                    </p>
+                                    <span className="text-[10px] rounded-full border border-slate-200 px-2 py-0.5 text-slate-600">
+                                      {assessment.confidence || 'low'} confidence
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 mt-1">
+                                    Evidence sources: {assessment.evidence?.length || 0} · score{' '}
+                                    {assessment.relevanceScore || 0}
+                                  </p>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <button
+                                      onClick={() =>
+                                        handleSetImportedReviewAction(moduleName, 'accepted')
+                                      }
+                                      className={`px-2 py-1 rounded text-[11px] border ${
+                                        reviewAction === 'accepted'
+                                          ? 'bg-emerald-100 border-emerald-200 text-emerald-700'
+                                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleSetImportedReviewAction(moduleName, 'needs_revision')
+                                      }
+                                      className={`px-2 py-1 rounded text-[11px] border ${
+                                        reviewAction === 'needs_revision'
+                                          ? 'bg-amber-100 border-amber-200 text-amber-700'
+                                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      Needs Revision
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleSetImportedReviewAction(moduleName, 'rewrite')
+                                      }
+                                      className={`px-2 py-1 rounded text-[11px] border ${
+                                        reviewAction === 'rewrite'
+                                          ? 'bg-rose-100 border-rose-200 text-rose-700'
+                                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      Rewrite
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+
                       {editorType === 'tiptap' && (
                         <TipTapEditor
                           document={selectedDocument}

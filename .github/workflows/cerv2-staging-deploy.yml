@@ -50,9 +50,11 @@ jobs:
 
       - name: Resolve RC version
         id: version
+        env:
+          RC_TAG_INPUT: ${{ inputs.rc_tag }}
         run: |
-          if [[ -n "${{ inputs.rc_tag }}" ]]; then
-            echo "rc=${{ inputs.rc_tag }}" >> "$GITHUB_OUTPUT"
+          if [[ -n "$RC_TAG_INPUT" ]]; then
+            echo "rc=$RC_TAG_INPUT" >> "$GITHUB_OUTPUT"
           else
             echo "rc=rc-$(date +%Y%m%d)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
           fi
@@ -215,12 +217,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, test]
     timeout-minutes: 20
+    env:
+      STAGING_DB_PASSWORD: staging-${{ github.run_id }}-${{ github.run_attempt }}
     services:
       postgres:
         image: pgvector/pgvector:pg15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ env.STAGING_DB_PASSWORD }}
           POSTGRES_DB: clinicalsage_staging
         ports:
           - 5432:5432
@@ -248,7 +252,7 @@ jobs:
         run: |
           NODE_ENV=production \
           PORT=${{ env.STAGING_PORT }} \
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clinicalsage_staging" \
+          DATABASE_URL="postgresql://postgres:${{ env.STAGING_DB_PASSWORD }}@localhost:5432/clinicalsage_staging" \
           node dist/index.js &
           SERVER_PID=$!
           echo "SERVER_PID=$SERVER_PID" >> "$GITHUB_ENV"

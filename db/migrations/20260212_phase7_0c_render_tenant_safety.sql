@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Enforce tenant-safe render ownership and scoped idempotency guarantees.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1/5 render artifact access and tenant isolation
+--   - Integrity Risk Addressed: cross-tenant collisions and unauthorized artifact linkage
+--
+-- Determinism Contract:
+--   - program-scoped idempotency must align with runtime ownership semantics.
+--   - Constraint/index changes must preserve deterministic job replay behavior.
+--
+-- Notes:
+--   - Migration remains idempotent via IF EXISTS / IF NOT EXISTS clauses.
+-- =============================================================================
+
 -- Migration: Phase 7.0C — Tenant Safety for Render Jobs
 -- Adds program_id column for ownership enforcement,
 -- expands artifact_type CHECK for Phase 7.0E renderers,
@@ -29,9 +47,12 @@ CREATE INDEX IF NOT EXISTS idx_render_jobs_program_id
 ALTER TABLE predicate.render_jobs
     ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_render_jobs_idempotency
-    ON predicate.render_jobs (idempotency_key)
-    WHERE idempotency_key IS NOT NULL;
+DROP INDEX IF EXISTS predicate.idx_render_jobs_idempotency;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_render_jobs_program_idempotency
+        ON predicate.render_jobs (program_id, idempotency_key)
+        WHERE program_id IS NOT NULL
+            AND idempotency_key IS NOT NULL;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. Expand artifact_type CHECK to include Phase 7.0E renderers

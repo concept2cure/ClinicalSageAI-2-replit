@@ -93,6 +93,14 @@ export interface DemoPack {
   inputs: Record<string, unknown>;
 }
 
+export interface CatalogTemplateItem {
+  name: string;
+  doc_type: string;
+  doc_family: string;
+  tags: string[];
+  demo_inputs: string[];
+}
+
 interface ListResponse<T> {
   items: T[];
   total: number;
@@ -155,7 +163,13 @@ export const docxKeys = {
     ['docx-factory', 'render', programId, renderId] as const,
   renderEvents: (programId: string, renderId: string) =>
     ['docx-factory', 'render-events', programId, renderId] as const,
-  demoPacks: (docType: string) => ['docx-factory', 'demo-packs', docType] as const,
+  demoPacks: (docType: string, docFamily: string) =>
+    ['docx-factory', 'demo-packs', docType, docFamily] as const,
+  catalogFamilies: () => ['docx-factory', 'catalog', 'families'] as const,
+  catalogDocTypes: (docFamily: string) =>
+    ['docx-factory', 'catalog', 'doc-types', docFamily] as const,
+  catalogTemplates: (docFamily: string, docType: string) =>
+    ['docx-factory', 'catalog', 'templates', docFamily, docType] as const,
 };
 
 // =============================================================================
@@ -285,7 +299,16 @@ export function useRenderEvents(programId: string, renderId: string) {
 export function useSeedTemplates(programId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => docxFetch<SeedResult>(`/seed?program_id=${programId}`, { method: 'POST' }),
+    mutationFn: (filters?: { doc_family?: string; doc_type?: string }) => {
+      const params = new URLSearchParams({ program_id: programId });
+      if (filters?.doc_family) {
+        params.set('doc_family', filters.doc_family);
+      }
+      if (filters?.doc_type) {
+        params.set('doc_type', filters.doc_type);
+      }
+      return docxFetch<SeedResult>(`/seed?${params.toString()}`, { method: 'POST' });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: docxKeys.templates(programId) });
     },
@@ -296,11 +319,74 @@ export function useSeedTemplates(programId: string) {
 // Demo Packs
 // =============================================================================
 
-export function useDemoPacks(docType: string) {
+export function useDemoPacks(options: { docType?: string; docFamily?: string }) {
+  const docType = options.docType || '';
+  const docFamily = options.docFamily || '';
+
   return useQuery<DemoPack[]>({
-    queryKey: docxKeys.demoPacks(docType),
-    queryFn: () => docxFetch<DemoPack[]>(`/demo-packs?doc_type=${encodeURIComponent(docType)}`),
-    enabled: !!docType,
+    queryKey: docxKeys.demoPacks(docType, docFamily),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (docType) {
+        params.set('doc_type', docType);
+      }
+      if (docFamily) {
+        params.set('doc_family', docFamily);
+      }
+      return docxFetch<DemoPack[]>(`/demo-packs?${params.toString()}`);
+    },
+    enabled: !!docType || !!docFamily,
+    staleTime: 60_000,
+  });
+}
+
+// =============================================================================
+// Catalog Discovery
+// =============================================================================
+
+export function useCatalogFamilies() {
+  return useQuery<string[]>({
+    queryKey: docxKeys.catalogFamilies(),
+    queryFn: async () => {
+      const res = await docxFetch<ListResponse<string>>('/catalog/families');
+      return Array.isArray(res) ? (res as unknown as string[]) : res.items || [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useCatalogDocTypes(docFamily?: string) {
+  const familyKey = docFamily || '';
+  return useQuery<string[]>({
+    queryKey: docxKeys.catalogDocTypes(familyKey),
+    queryFn: async () => {
+      const suffix = docFamily ? `?doc_family=${encodeURIComponent(docFamily)}` : '';
+      const res = await docxFetch<ListResponse<string>>(`/catalog/doc-types${suffix}`);
+      return Array.isArray(res) ? (res as unknown as string[]) : res.items || [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useCatalogTemplates(options: { docFamily?: string; docType?: string }) {
+  const docFamily = options.docFamily || '';
+  const docType = options.docType || '';
+
+  return useQuery<ListResponse<CatalogTemplateItem>>({
+    queryKey: docxKeys.catalogTemplates(docFamily, docType),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (docFamily) {
+        params.set('doc_family', docFamily);
+      }
+      if (docType) {
+        params.set('doc_type', docType);
+      }
+      const suffix = params.toString();
+      return docxFetch<ListResponse<CatalogTemplateItem>>(
+        `/catalog/templates${suffix ? `?${suffix}` : ''}`
+      );
+    },
     staleTime: 60_000,
   });
 }

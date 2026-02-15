@@ -82,6 +82,7 @@ import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
 
 // Import sections routes - deprecated, using predictive-sections.ts instead
 // import sectionsRouter from './routes/sections.js';
+import predictiveSectionsRoutes from './routes/predictive-sections.ts';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
@@ -97,6 +98,8 @@ import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
+import reportsManifestRoutes from './routes/reports/manifest-routes.ts';
+import reportsGenerationRoutes from './routes/reports/generate-report.ts';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1435,6 +1438,716 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
       error: 'Failed to retrieve CSR statistics',
     });
   }
+});
+
+// Reports canonical routers (P1 extraction in progress)
+app.use('/api/reports', reportsGenerationRoutes);
+app.use('/api/reports', reportsManifestRoutes);
+
+// Reports compatibility facade (P0 route recovery)
+app.get('/api/reports', async (req: Request, res: Response) => {
+  try {
+    const mockReports = [
+      {
+        id: 'CSR001',
+        title: 'Pembrolizumab NSCLC Phase II CSR',
+        sponsor: 'Merck & Co',
+        indication: 'Non-Small Cell Lung Cancer',
+        phase: 'Phase II',
+        status: 'Completed',
+        createdAt: '2026-02-01T10:00:00.000Z',
+      },
+      {
+        id: 'CSR002',
+        title: 'Nivolumab + Ipilimumab Melanoma Phase III CSR',
+        sponsor: 'Bristol Myers Squibb',
+        indication: 'Melanoma',
+        phase: 'Phase III',
+        status: 'Completed',
+        createdAt: '2026-02-03T14:30:00.000Z',
+      },
+      {
+        id: 'CSR003',
+        title: 'Osimertinib EGFRm NSCLC Phase I/II CSR',
+        sponsor: 'AstraZeneca',
+        indication: 'Non-Small Cell Lung Cancer',
+        phase: 'Phase I/II',
+        status: 'Completed',
+        createdAt: '2026-02-05T09:15:00.000Z',
+      },
+    ];
+
+    const reportType = req.query.type as string | undefined;
+
+    if (!reportType) {
+      return res.json(mockReports);
+    }
+
+    if (reportType === 'section-generation-log') {
+      return res.json({
+        summary: { totalCalls: 87, avgLatency: 3.2, errorRate: 1.8 },
+        rows: [
+          {
+            timestamp: '2026-02-15T09:12:00Z',
+            user: 'regulatory.writer@clinicalsage.ai',
+            section: 'Module 2.5 Clinical Overview',
+            modelVersion: 'lumen-cortex-v2',
+            status: 'success',
+            latency: 2870,
+          },
+          {
+            timestamp: '2026-02-15T09:21:00Z',
+            user: 'regulatory.writer@clinicalsage.ai',
+            section: 'Module 2.7 Clinical Summary',
+            modelVersion: 'lumen-cortex-v2',
+            status: 'success',
+            latency: 3120,
+          },
+        ],
+      });
+    }
+
+    return res.json({
+      summary: {
+        overallScore: 85,
+        openFindingsCount: 3,
+        completedSections: 7,
+        totalSections: 9,
+      },
+      rows: [
+        {
+          finding: 'Missing traceability for efficacy endpoint rationale',
+          section: '2.7.3',
+          severity: 'major',
+          owner: 'Clinical Writer',
+          dueDate: '2026-02-20',
+        },
+        {
+          finding: 'Inconsistent terminology across Module 2 and 5',
+          section: '2.5 / 5.3',
+          severity: 'minor',
+          owner: 'Regulatory Lead',
+          dueDate: '2026-02-22',
+        },
+        {
+          finding: 'Missing citation for safety subgroup conclusion',
+          section: '2.7.4',
+          severity: 'critical',
+          owner: 'Medical Reviewer',
+          dueDate: '2026-02-18',
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Failed to fetch reports:', error);
+    return res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+app.post('/api/reports', async (req: Request, res: Response) => {
+  try {
+    return res.status(201).json({
+      success: true,
+      message: 'Report uploaded successfully',
+      reportId: `REPORT_${Date.now()}`,
+    });
+  } catch (error) {
+    console.error('Failed to upload report:', error);
+    return res.status(500).json({ error: 'Failed to upload report' });
+  }
+});
+
+app.get('/api/reports/count', async (_req: Request, res: Response) => {
+  return res.json({ count: 3 });
+});
+
+app.get('/api/reports/lumen-bio', async (_req: Request, res: Response) => {
+  return res.json({ reports: [], status: 'available' });
+});
+
+app.get('/api/reports/lumen-bio/recent', async (_req: Request, res: Response) => {
+  return res.json({ reports: [], status: 'available' });
+});
+
+app.get('/api/reports/export.pdf', async (_req: Request, res: Response) => {
+  const pdfContent = `%PDF-1.1
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 66 >>
+stream
+BT
+/F1 18 Tf
+72 720 Td
+(ClinicalSage Report Export) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000060 00000 n
+0000000117 00000 n
+0000000243 00000 n
+0000000361 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+431
+%%EOF`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="clinicalsage-report.pdf"');
+  return res.send(Buffer.from(pdfContent, 'utf-8'));
+});
+
+// Audit compatibility facade (P0 route recovery)
+const auditMockLogs = [
+  {
+    id: 'AUDIT-1681234567-123',
+    userId: 'john.smith',
+    user_id: 'john.smith',
+    userName: 'John Smith',
+    action: 'CREATE',
+    actionType: 'Create',
+    event_type: 'document.create',
+    severity: 'info',
+    component: 'CoAuthor',
+    details: 'Created Clinical Study Report draft',
+    description: 'Created Clinical Study Report draft',
+    ipAddress: '192.168.1.1',
+    region: 'US',
+    org_id: '1',
+    project_id: 'CSR-001',
+    timestamp: '2026-02-15T09:15:23.456Z',
+  },
+  {
+    id: 'AUDIT-1681234789-456',
+    userId: 'jane.doe',
+    user_id: 'jane.doe',
+    userName: 'Jane Doe',
+    action: 'UPDATE',
+    actionType: 'Update',
+    event_type: 'document.update',
+    severity: 'warning',
+    component: 'Workflow',
+    details: 'Updated section 2.7 summary content',
+    description: 'Updated section 2.7 summary content',
+    ipAddress: '192.168.1.2',
+    region: 'US',
+    org_id: '1',
+    project_id: 'CSR-001',
+    timestamp: '2026-02-15T10:30:45.789Z',
+  },
+  {
+    id: 'AUDIT-1681235012-789',
+    userId: 'robert.johnson',
+    user_id: 'robert.johnson',
+    userName: 'Robert Johnson',
+    action: 'DELETE',
+    actionType: 'Delete',
+    event_type: 'document.delete',
+    severity: 'error',
+    component: 'Templates',
+    details: 'Deleted outdated template revision',
+    description: 'Deleted outdated template revision',
+    ipAddress: '192.168.1.3',
+    region: 'EU',
+    org_id: '2',
+    project_id: 'TMP-442',
+    timestamp: '2026-02-15T11:45:12.345Z',
+  },
+  {
+    id: 'AUDIT-1681236234-012',
+    userId: 'susan.williams',
+    user_id: 'susan.williams',
+    userName: 'Susan Williams',
+    action: 'VIEW',
+    actionType: 'View',
+    event_type: 'document.view',
+    severity: 'info',
+    component: 'Audit',
+    details: 'Viewed audit dashboard',
+    description: 'Viewed audit dashboard',
+    ipAddress: '192.168.1.4',
+    region: 'US',
+    org_id: '1',
+    project_id: 'AUDIT-DASH',
+    timestamp: '2026-02-15T12:30:34.567Z',
+  },
+  {
+    id: 'AUDIT-1681237456-345',
+    userId: 'john.smith',
+    user_id: 'john.smith',
+    userName: 'John Smith',
+    action: 'EXPORT',
+    actionType: 'Export',
+    event_type: 'audit.export',
+    severity: 'success',
+    component: 'Audit',
+    details: 'Exported audit logs to CSV',
+    description: 'Exported audit logs to CSV',
+    ipAddress: '192.168.1.1',
+    region: 'US',
+    org_id: '1',
+    project_id: 'AUDIT-DASH',
+    timestamp: '2026-02-15T13:15:56.789Z',
+  },
+];
+
+const filterAuditLogs = (query: any) => {
+  let logs = [...auditMockLogs];
+
+  const orgId = query.org_id || query.tenantId;
+  const projectId = query.project_id;
+  const region = query.region;
+  const userId = query.user_id || query.userId;
+  const eventType = query.event_type;
+  const severity = query.severity;
+  const actionType = query.actionType;
+  const search = query.search;
+  const startDate = query.start_date || query.startDate;
+  const endDate = query.end_date || query.endDate;
+  const anomaliesOnly = query.anomaliesOnly === 'true';
+
+  if (orgId) logs = logs.filter(log => log.org_id === String(orgId));
+  if (projectId) logs = logs.filter(log => log.project_id === String(projectId));
+  if (region) logs = logs.filter(log => log.region === String(region));
+  if (userId)
+    logs = logs.filter(log => log.user_id === String(userId) || log.userId === String(userId));
+  if (eventType) logs = logs.filter(log => log.event_type === String(eventType));
+  if (severity) logs = logs.filter(log => log.severity === String(severity));
+  if (actionType)
+    logs = logs.filter(log => log.actionType.toLowerCase() === String(actionType).toLowerCase());
+
+  if (search) {
+    const queryText = String(search).toLowerCase();
+    logs = logs.filter(
+      log =>
+        log.userName.toLowerCase().includes(queryText) ||
+        log.action.toLowerCase().includes(queryText) ||
+        log.component.toLowerCase().includes(queryText) ||
+        log.details.toLowerCase().includes(queryText) ||
+        log.description.toLowerCase().includes(queryText)
+    );
+  }
+
+  if (startDate) {
+    const start = new Date(String(startDate));
+    logs = logs.filter(log => new Date(log.timestamp) >= start);
+  }
+
+  if (endDate) {
+    const end = new Date(String(endDate));
+    logs = logs.filter(log => new Date(log.timestamp) <= end);
+  }
+
+  if (anomaliesOnly) {
+    logs = logs.filter(log => ['warning', 'error'].includes(log.severity));
+  }
+
+  return logs;
+};
+
+const auditSignatures: Array<{
+  signatureId: string;
+  entityType: string;
+  entityId: string;
+  signedBy: string;
+  reason?: string;
+  timestamp: string;
+}> = [];
+
+app.get('/api/audit/logs', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.query);
+    const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
+    const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
+    const paged = filtered.slice(offset, offset + limit);
+
+    return res.json({
+      logs: paged,
+      total: filtered.length,
+      limit,
+      offset,
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit logs:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// Legacy alias compatibility for historical clients
+app.get('/api/audit-logs', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.query);
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
+    const start = (page - 1) * pageSize;
+    const paged = filtered.slice(start, start + pageSize);
+
+    return res.json({
+      logs: paged,
+      totalCount: filtered.length,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
+    });
+  } catch (error) {
+    console.error('Failed to fetch legacy audit logs:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+app.get('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.query);
+    return res.json({
+      success: true,
+      events: filtered.map(log => ({
+        eventId: log.id,
+        eventType: log.event_type,
+        severity: log.severity,
+        timestamp: log.timestamp,
+        actor: {
+          userId: log.user_id,
+          userName: log.userName,
+        },
+        target: {
+          component: log.component,
+          projectId: log.project_id,
+        },
+        details: log.details,
+      })),
+      total: filtered.length,
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit events:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit events' });
+  }
+});
+
+app.post('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const eventId = `AUDIT_EVT_${Date.now()}`;
+    return res.status(201).json({
+      success: true,
+      eventId,
+      receivedAt: new Date().toISOString(),
+      payload: req.body || {},
+    });
+  } catch (error) {
+    console.error('Failed to record audit event:', error);
+    return res.status(500).json({ error: 'Failed to record audit event' });
+  }
+});
+
+app.post('/api/audit/signatures', async (req: Request, res: Response) => {
+  try {
+    const signatureId = `SIG_${Date.now()}`;
+    const record = {
+      signatureId,
+      entityType: String(req.body?.entityType || 'unknown'),
+      entityId: String(req.body?.entityId || 'unknown'),
+      signedBy: String(req.body?.signedBy || req.body?.userId || 'system'),
+      reason: req.body?.reason,
+      timestamp: new Date().toISOString(),
+    };
+
+    auditSignatures.push(record);
+
+    return res.status(201).json({
+      success: true,
+      signatureId,
+      record,
+    });
+  } catch (error) {
+    console.error('Failed to record audit signature:', error);
+    return res.status(500).json({ error: 'Failed to record audit signature' });
+  }
+});
+
+app.get('/api/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
+  try {
+    const found = auditSignatures.find(item => item.signatureId === req.params.signatureId);
+    if (!found) {
+      return res.status(404).json({
+        success: false,
+        verified: false,
+        message: 'Signature not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      verified: true,
+      signature: found,
+    });
+  } catch (error) {
+    console.error('Failed to verify audit signature:', error);
+    return res.status(500).json({ error: 'Failed to verify audit signature' });
+  }
+});
+
+app.get('/api/audit', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.query);
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
+    const start = (page - 1) * limit;
+    const paged = filtered.slice(start, start + limit);
+
+    return res.json({
+      logs: paged,
+      pagination: {
+        page,
+        limit,
+        total: filtered.length,
+        pages: Math.max(1, Math.ceil(filtered.length / limit)),
+      },
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit entries:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit entries' });
+  }
+});
+
+app.get('/api/audit/export', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.query);
+    const headers = ['timestamp', 'userName', 'action', 'component', 'details', 'ipAddress'];
+
+    const csvRows = filtered.map(log =>
+      [log.timestamp, log.userName, log.action, log.component, log.details, log.ipAddress]
+        .map(cell => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(',')
+    );
+
+    const csv = [headers.join(','), ...csvRows].join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"');
+    return res.send(csv);
+  } catch (error) {
+    console.error('Failed to export audit logs:', error);
+    return res.status(500).json({ error: 'Failed to export audit logs' });
+  }
+});
+
+app.post('/api/audit/bulk-delete', async (req: Request, res: Response) => {
+  try {
+    const filtered = filterAuditLogs(req.body || {});
+    return res.json({
+      success: true,
+      deletedCount: filtered.length,
+      reason: req.body?.reason || null,
+    });
+  } catch (error) {
+    console.error('Failed to bulk-delete audit logs:', error);
+    return res.status(500).json({ error: 'Failed to bulk-delete audit logs' });
+  }
+});
+
+// Search compatibility facade (P0 route recovery)
+app.post('/api/search/vector', async (req: Request, res: Response) => {
+  try {
+    const query = String(req.body?.query || '').trim();
+    const k = Math.max(1, parseInt(String(req.body?.k || 5), 10));
+
+    const mockResults = [
+      {
+        content:
+          'The study demonstrated statistically significant overall survival improvement versus standard of care.',
+        relevance: 0.95,
+        document_id: 1,
+        document_title: 'Clinical Study Report XYZ-123',
+        source_page: 42,
+        source_section: 'Efficacy Results',
+      },
+      {
+        content:
+          'Grade 3 or higher adverse events were observed at acceptable rates with no unexpected safety signals.',
+        relevance: 0.88,
+        document_id: 1,
+        document_title: 'Clinical Study Report XYZ-123',
+        source_page: 67,
+        source_section: 'Safety Results',
+      },
+      {
+        content:
+          'Comparative analysis shows endpoint consistency with prior phase II oncology studies.',
+        relevance: 0.82,
+        document_id: 2,
+        document_title: 'Comparative Efficacy Analysis',
+        source_page: 15,
+        source_section: 'Discussion',
+      },
+    ];
+
+    const filtered = query
+      ? mockResults.filter(
+          row =>
+            row.content.toLowerCase().includes(query.toLowerCase()) ||
+            row.document_title.toLowerCase().includes(query.toLowerCase()) ||
+            row.source_section.toLowerCase().includes(query.toLowerCase())
+        )
+      : mockResults;
+
+    return res.json((filtered.length ? filtered : mockResults).slice(0, k));
+  } catch (error) {
+    console.error('Vector search failed:', error);
+    return res.status(500).json({ error: 'Vector search failed' });
+  }
+});
+
+// Endpoint recommendation compatibility facade (P0 route recovery)
+app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
+  try {
+    const indication = String(req.body?.indication || 'General');
+    const phase = String(req.body?.phase || 'Phase 2');
+
+    const recommendations = [
+      {
+        endpoint: 'Progression-Free Survival (PFS)',
+        summary: `${phase} ${indication} programs commonly use PFS as a primary efficacy endpoint.`,
+        matchCount: 124,
+        successRate: 0.62,
+        reference: 'CSR corpus cluster A',
+      },
+      {
+        endpoint: 'Overall Response Rate (ORR)',
+        summary:
+          'ORR is frequently selected for accelerated decision support in oncology-like indications.',
+        matchCount: 98,
+        successRate: 0.57,
+        reference: 'CSR corpus cluster C',
+      },
+      {
+        endpoint: 'Duration of Response (DoR)',
+        summary: 'DoR is often paired with ORR to strengthen clinical benefit characterization.',
+        matchCount: 86,
+        successRate: 0.54,
+        reference: 'CSR corpus cluster D',
+      },
+    ];
+
+    return res.json(recommendations);
+  } catch (error) {
+    console.error('Endpoint recommendation failed:', error);
+    return res.status(500).json({ error: 'Endpoint recommendation failed' });
+  }
+});
+
+// Retention policy compatibility facade (P0 route recovery)
+let retentionPolicies = [
+  {
+    id: 1,
+    policyName: 'Clinical Trial Master Files',
+    documentType: 'CTM',
+    retentionPeriod: 7,
+    periodUnit: 'years',
+    archiveBeforeDelete: true,
+    notifyBeforeDeletion: true,
+    notificationPeriod: 30,
+    notificationUnit: 'days',
+    active: true,
+  },
+  {
+    id: 2,
+    policyName: 'Pharmacovigilance Safety Reports',
+    documentType: 'Safety Report',
+    retentionPeriod: 10,
+    periodUnit: 'years',
+    archiveBeforeDelete: true,
+    notifyBeforeDeletion: true,
+    notificationPeriod: 45,
+    notificationUnit: 'days',
+    active: true,
+  },
+];
+
+const retentionDocumentTypes = [
+  { id: 'ctm', value: 'CTM', label: 'Clinical Trial Master File' },
+  { id: 'csr', value: 'CSR', label: 'Clinical Study Report' },
+  { id: 'safety', value: 'Safety Report', label: 'Safety Report' },
+  { id: 'protocol', value: 'Protocol', label: 'Clinical Protocol' },
+];
+
+app.get('/api/retention/policies', async (_req: Request, res: Response) => {
+  return res.json({ success: true, data: retentionPolicies });
+});
+
+app.get('/api/retention/document-types', async (_req: Request, res: Response) => {
+  return res.json({ success: true, data: retentionDocumentTypes });
+});
+
+app.post('/api/retention/policies', async (req: Request, res: Response) => {
+  try {
+    const newPolicy = {
+      id: Date.now(),
+      ...req.body,
+    };
+    retentionPolicies = [newPolicy, ...retentionPolicies];
+    return res.status(201).json({ success: true, data: newPolicy });
+  } catch (error) {
+    console.error('Failed to create retention policy:', error);
+    return res.status(500).json({ error: 'Failed to create retention policy' });
+  }
+});
+
+app.put('/api/retention/policies/:id', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = retentionPolicies.find(policy => policy.id === id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Retention policy not found' });
+    }
+
+    retentionPolicies = retentionPolicies.map(policy =>
+      policy.id === id ? { ...policy, ...req.body, id } : policy
+    );
+
+    const updated = retentionPolicies.find(policy => policy.id === id);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Failed to update retention policy:', error);
+    return res.status(500).json({ error: 'Failed to update retention policy' });
+  }
+});
+
+app.delete('/api/retention/policies/:id', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const before = retentionPolicies.length;
+    retentionPolicies = retentionPolicies.filter(policy => policy.id !== id);
+
+    if (retentionPolicies.length === before) {
+      return res.status(404).json({ error: 'Retention policy not found' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete retention policy:', error);
+    return res.status(500).json({ error: 'Failed to delete retention policy' });
+  }
+});
+
+app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    jobId: `RETENTION_JOB_${Date.now()}`,
+    status: 'started',
+  });
 });
 
 // Add missing Lumen AI endpoint
@@ -4314,6 +5027,14 @@ async function startServer() {
   // } catch (error) {
   //   console.error('Failed to mount sections routes:', error);
   // }
+
+  // Mount predictive sections routes
+  try {
+    app.use('/api/predictive-sections', predictiveSectionsRoutes);
+    console.log('✅ Predictive sections routes mounted successfully');
+  } catch (error) {
+    console.error('Failed to mount predictive sections routes:', error);
+  }
 
   // Mount Validation routes
   try {

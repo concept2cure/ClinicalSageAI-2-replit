@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Persist submission-grade defense packet artifacts with lifecycle and provenance.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 2/5 evidence traceability and submission packaging
+--   - Integrity Risk Addressed: unverifiable risk-code to artifact mapping and tenant bleed
+--
+-- Determinism Contract:
+--   - Manifest-linked packet records must remain content-addressable and replayable.
+--   - Any canonical payload contract change requires version/hash governance updates.
+--
+-- Notes:
+--   - program_id isolation and immutable audit fields are required downstream.
+-- =============================================================================
+
 -- Migration: Phase 6.6.D — defense_packets table
 -- First-class compliance artifact: versioned, signed, lifecycle-managed.
 -- Links SE Matrix → Evidence Tasks → DOCX render → eCTD → Truth Machine.

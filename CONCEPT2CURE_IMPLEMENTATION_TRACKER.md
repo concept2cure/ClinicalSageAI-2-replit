@@ -1,6 +1,202 @@
 # Concept2Cure Implementation Tracker
 
-## Last Updated: February 9, 2026
+## Last Updated: February 15, 2026
+
+## 🚨 Emergency Platform Recovery Plan (February 2026)
+
+### Objective
+
+Re-establish a professional, predictable release track across the full ClinicalSageAI platform (not just eCTD Co-Author) by enforcing canonical UX/API contracts and eliminating route/service drift.
+
+### Scope (Platform-Wide)
+
+- eCTD Co-Author + Canvas
+- IND workflows (wizard, templates, automation)
+- CMC
+- CER/CERV2
+- 510(k) / eSTAR
+- Lumen Cortex + Cortex Unified
+- Concept2Cure (Claude-style UX)
+- Shared platform services (document authoring, validation, export, notifications, tenant/org)
+
+### Non-Negotiable Guardrails
+
+1. Single canonical user journey per domain (no parallel legacy UX).
+2. Every frontend endpoint must map to one live backend contract.
+3. No new feature merges until P0 contract stability passes.
+4. No hidden aliases without explicit deprecation owner + removal date.
+
+### Domain Contract Map (Canonical Targets)
+
+| Domain         | Canonical Frontend Entry                          | Canonical API Namespace                                      | Current Risk                                               | P0 Action                                                |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------- |
+| eCTD Authoring | `/coauthor`, `/client-portal/ectd-coauthor`       | `/api/coauthor` facade + `/api/document-authoring` internals | Frontend expects richer endpoints than mounted facade      | Build compatibility facade and close endpoint gaps       |
+| IND Generation | `/client-portal/ectd-coauthor` + guided IND paths | `/api/ind-templates`, `/api/ind-wizard`, `/api/ind-*`        | Multiple IND paths and historical UX drift                 | Keep one visible journey and hard-redirect legacy routes |
+| DOCX Factory   | `/docx-factory`                                   | `/api/docx-factory` (Shadow proxy)                           | Lower risk, but depends on program access and token config | Keep as canonical doc generation backbone                |
+| Lumen/Cortex   | `/lumen-cortex`, `/concept2cure`                  | `/api/lumen-cortex`, `/api/cortex`, `/api/cognitive`         | Split between production + next-gen systems                | Define role boundaries and publish routing policy        |
+| CMC            | `/cmc*`, `/cmc-blueprint`                         | `/api/cmc/*`                                                 | Multiple route entry points                                | Consolidate UX entry and preserve API compatibility      |
+| CER/CERV2      | `/cerv2`, `/cer*`                                 | `/api/cerv2/*`, `/api/cer/*`                                 | Route sprawl and redirect complexity                       | Canonicalize paths and preserve report/export behavior   |
+| 510(k)         | `/510k*`, client portal 510(k) routes             | `/api/fda510k*`, `/api/510k/*`                               | Duplicate route families                                   | Publish canonical family + deprecate aliases             |
+
+### Executable Work Plan (10-Day Recovery)
+
+#### Day 0 (Immediate Stabilization)
+
+- Freeze non-recovery feature merges.
+- Add “recovery mode” note in engineering channel and PR template.
+- Enforce one canonical UX entry per domain in router redirects.
+
+#### Days 1–2 (Contract Inventory)
+
+- Generate machine-readable map:
+  - frontend route → page/component
+  - frontend API call → backend handler
+  - handler status: `live`, `alias`, `missing`, `stub`, `deprecated`
+- Deliverable: `P0_CONTRACT_MATRIX` reviewed by Eng + Product.
+
+#### Days 3–5 (P0 Contract Fixes)
+
+- Implement missing P0 facade endpoints for CoAuthor journey.
+- Route/namespace normalization for IND and eCTD entry points.
+- Add explicit deprecation wrappers for legacy endpoints (no silent 404 drift).
+
+#### Days 6–7 (P1 Platform Alignment)
+
+- Normalize duplicate route families (CER/CERV2, 510(k), CMC).
+- Publish canonical namespace registry.
+- Remove dead route declarations that are no longer reachable.
+
+#### Days 8–9 (Verification)
+
+- Contract tests for all P0/P1 endpoint families.
+- End-to-end golden flows:
+  - IND docs → draft → canvas/coauthor → validate → export
+  - CER/CERV2 create/edit/export
+  - CMC authoring core workflow
+  - 510(k) core workflow
+
+#### Day 10 (Release Gate)
+
+- Go/No-Go checklist:
+  - 0 critical route mismatches
+  - 0 unknown 404s on canonical journeys
+  - Contract tests passing
+  - Monitoring dashboards green
+
+### Ownership Model
+
+| Track                             | Owner            | Backup        | SLA            |
+| --------------------------------- | ---------------- | ------------- | -------------- |
+| Frontend Route Canonicalization   | FE Lead          | Staff FE      | 24h response   |
+| API Contract / Facade             | Platform BE Lead | Principal BE  | 24h response   |
+| Domain Modules (CER/CMC/510k/IND) | Domain Leads     | Platform Lead | 24h response   |
+| QA + Contract Testing             | QA Lead          | SDET Lead     | Daily report   |
+| Release Governance                | PM + Eng Manager | CTO delegate  | Daily go/no-go |
+
+### Definition of “Back on Professional Track”
+
+- Canonical route registry approved and versioned.
+- Canonical API contract approved and enforced by tests.
+- Legacy paths either redirected with intent or removed with change note.
+- Zero critical breakage in primary client workflows for all core domains.
+
+### Immediate Next Deliverables
+
+1. `P0_CONTRACT_MATRIX` (frontend calls ↔ backend handlers)
+2. `CANONICAL_ROUTE_REGISTRY` (domain-by-domain)
+3. `RECOVERY_BURNDOWN` (daily status, blockers, owner)
+
+### P0_CONTRACT_MATRIX (Initial Baseline)
+
+| Frontend Consumer | Frontend Endpoint                     | Backend Mount Target | Status            | Required Action                               |
+| ----------------- | ------------------------------------- | -------------------- | ----------------- | --------------------------------------------- |
+| `CoAuthor.jsx`    | `/api/coauthor/documents`             | `/api/coauthor`      | live              | Keep as canonical CoAuthor facade             |
+| `CoAuthor.jsx`    | `/api/coauthor/components/ingest`     | `/api/coauthor`      | partial/stub risk | Add contract test and complete handler parity |
+| `CoAuthor.jsx`    | `/api/coauthor/import-word`           | `/api/coauthor`      | live              | Keep and test on large DOCX files             |
+| `CoAuthor.jsx`    | `/api/coauthor/export`                | `/api/coauthor`      | live              | Align export format options with UX           |
+| `CoAuthor.jsx`    | `/api/workflow/templates`             | `/api/workflow`      | live              | Keep stable and pin response schema           |
+| `CoAuthor.jsx`    | `/api/workflow/export`                | `/api/workflow`      | live              | Add regression test for payload shape         |
+| `CoAuthor.jsx`    | `/api/workflow/progression/create`    | `/api/workflow`      | live              | Keep as progression write path                |
+| `CoAuthor.jsx`    | `/api/workflow/progression/dashboard` | `/api/workflow`      | live              | Add monitoring for dashboard failures         |
+| `CoAuthor.jsx`    | `/api/ind-templates/events`           | `/api/ind-templates` | live              | Keep event telemetry for IND handoff          |
+| `CoAuthor.jsx`    | `/api/templates`                      | `/api/templates`     | live              | Treat as shared template source               |
+| `CoAuthor.jsx`    | `/api/atoms`                          | `/api/atoms`         | live              | Keep atom contract versioned                  |
+| `CoAuthor.jsx`    | `/api/ai/commitments/extract`         | `/api/ai`            | live              | Add timeout/retry policy                      |
+
+### P0/P1_ENDPOINT_COVERAGE (Cross-Domain Snapshot)
+
+| Domain            | Frontend Endpoint (Observed)                    | Backend Namespace/Mount                              | Status         | Action                                                  |
+| ----------------- | ----------------------------------------------- | ---------------------------------------------------- | -------------- | ------------------------------------------------------- |
+| eCTD/CoAuthor     | `/api/coauthor/documents`                       | `/api/coauthor`                                      | mapped-live    | Add contract tests for read/write/export cycle          |
+| eCTD/Workflow     | `/api/workflow/progression/create`              | `/api/workflow`                                      | mapped-live    | Lock request/response schema                            |
+| IND               | `/api/ind-templates/events`                     | `/api/ind-templates`                                 | mapped-live    | Keep as canonical event telemetry path                  |
+| IND               | `/api/ind/wizard/data`                          | `/api/ind` + `/api/ind-wizard`                       | alias-risk     | Choose canonical namespace and deprecate one family     |
+| IND               | `/api/ind/create`                               | `/api/ind`                                           | mapped-live    | Confirm ownership with IND unified routes               |
+| IND               | `/api/ind/sequence/create-region`               | `/api/ind`                                           | mapped-live    | Add regression tests around sequence transitions        |
+| CMC               | `/api/cmc/generate-enhanced-blueprint`          | `/api/cmc`                                           | mapped-live    | Keep under single `/api/cmc/*` family                   |
+| CER/CERV2         | `/api/cer/sequence/create`                      | `/api/cer`                                           | mapped-live    | Verify report/export compatibility in CERV2 paths       |
+| CER/CERV2         | `/api/cer/export-pdf`                           | `/api/cer`                                           | mapped-live    | Add artifact format validation tests                    |
+| 510(k)            | `/api/510k-project/create`                      | `/api/510k-project`                                  | mapped-live    | Maintain as project-creation canonical path             |
+| 510(k)            | `/api/fda510k*` calls                           | `/api/fda510k`, `/api/fda510k-unified`               | duplicate-risk | Publish one canonical family and add redirect wrappers  |
+| Lumen/Cortex      | `/api/lumen-cortex/*`                           | `/api/lumen-cortex`                                  | mapped-live    | Frontend migrated; schedule alias sunset date           |
+| Analytics         | `/api/analytics/dashboard`                      | `/api/analytics`                                     | mapped-live    | Keep as canonical analytics dashboard contract          |
+| Vault             | `/api/vault/files`                              | `/api/vault`                                         | mapped-live    | Validate list/process/statistics sub-routes             |
+| Documents         | `/api/documents?status=approved`                | `/api/documents`                                     | mapped-live    | Validate query contract and pagination                  |
+| Drafting          | `/api/v1/drafting/start_task`                   | `/api/v1/drafting`                                   | mapped-live    | Add SLA/timeout thresholds for long-running jobs        |
+| Programs          | `/api/programs`, `/api/programs/stats/overview` | `/api/programs` (multiple route modules)             | overlap-risk   | Ensure route ordering and handler ownership clarity     |
+| Unknown/Gap Check | `/api/search/vector`                            | no direct `/api/search` mount found in index scan    | verify-missing | Confirm dynamic mount or add explicit route             |
+| Unknown/Gap Check | `/api/predictive-sections/suggestions`          | `/api/predictive-sections`                           | mapped-live    | Add contract tests for suggestions/analyze endpoints    |
+| Unknown/Gap Check | `/api/reports`, `/api/reports/export.pdf`       | no direct `/api/reports` mount found in index scan   | verify-missing | Confirm route source or add canonical reports namespace |
+| Unknown/Gap Check | `/api/audit/logs`                               | no direct `/api/audit` mount found in index scan     | verify-missing | Verify audit module mount path                          |
+| Unknown/Gap Check | `/api/retention/policies`                       | no direct `/api/retention` mount found in index scan | verify-missing | Confirm route source or implement retention mount       |
+| Unknown/Gap Check | `/api/endpoint/recommend`                       | no direct `/api/endpoint` mount found in index scan  | verify-missing | Confirm feature status and route ownership              |
+
+- Migration update: active frontend calls now use `/api/lumen-cortex/*`; legacy `/api/lumen*` remains backend compatibility-only until deprecation sunset.
+- Migration update: `/api/reports` now mounts canonical report routers (`routes/reports/generate-report.ts`, `routes/reports/manifest-routes.ts`) with compatibility fallback handlers retained in active bootstrap (`server/index.ts`).
+- Migration update: `/api/audit`, `/api/audit/logs`, `/api/audit/export`, and `/api/audit/bulk-delete` compatibility facade is now mounted in active bootstrap (`server/index.ts`).
+- Migration update: audit contract coverage expanded with `/api/audit/events`, `/api/audit/signatures`, `/api/audit/signatures/:signatureId/verify`, plus legacy bridge `/api/audit-logs` in active bootstrap (`server/index.ts`).
+- Migration update: `/api/search/vector`, `/api/retention/*`, and `/api/endpoint/recommend` compatibility facades are now mounted in active bootstrap (`server/index.ts`).
+- Current resolved status overrides for stale matrix rows:
+  - `/api/search/vector` is live via compatibility facade in active bootstrap.
+  - `/api/reports*` is live via canonical mounts + compatibility fallback in active bootstrap.
+  - `/api/audit*` is live via expanded compatibility contracts in active bootstrap.
+  - `/api/retention/*` is live via compatibility facade in active bootstrap.
+  - `/api/endpoint/recommend` is live via compatibility route in active bootstrap.
+
+- Mount audit (Feb 15, 2026) current active bootstrap status (`server/index.ts`):
+  - `/api/predictive-sections/*` now mounted in active bootstrap (`server/index.ts`); close gap and track with contract tests.
+  - `/api/reports*` compatibility facade is mounted in active bootstrap; canonical module extraction remains P1.
+  - `/api/search/vector` compatibility facade is mounted in active bootstrap; Python-backed BFF alignment remains P1.
+  - `/api/audit/*` compatibility facade is mounted in active bootstrap; canonical audit module extraction remains P1.
+  - `/api/retention/*` and `/api/endpoint/recommend` compatibility facades are mounted in active bootstrap; canonical service extraction remains P1.
+
+### CANONICAL_ROUTE_REGISTRY (Initial Baseline)
+
+| Domain        | Canonical Frontend Route(s)                                   | Canonical API Namespace(s)                                        | Legacy/Alias Route(s) to Redirect                         |
+| ------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| eCTD CoAuthor | `/coauthor`, `/client-portal/ectd-coauthor`                   | `/api/coauthor` + `/api/document-authoring`                       | `/ectd-co-author`, `/working-coauthor`, `/coauthor-clean` |
+| IND           | `/client-portal/ind-wizard`, `/client-portal/ectd-coauthor`   | `/api/ind-wizard`, `/api/ind-templates`, `/api/ind`, `/api/ind-*` | `/ind-full-solution`, `/ind-full-solution/:rest*`         |
+| DOCX Factory  | `/docx-factory`                                               | `/api/docx-factory`                                               | none (keep single route)                                  |
+| CERV2/CER     | `/cerv2/*`, `/client-portal/cer-generator/*`                  | `/api/cerv2/*`, `/api/cer/*`                                      | `/cer`, `/cerV2/*`, `/cer-generator` aliases              |
+| 510(k)        | `/510k`, `/client-portal/510k`, `/client-portal/510k-builder` | `/api/fda510k*`, `/api/510k/*`, `/api/510k-project`               | duplicate dashboard and legacy route family               |
+| CMC           | `/cmc`, `/cmc-blueprint`, `/client-portal/cmc-wizard`         | `/api/cmc/*`                                                      | redundant `cmc*` entry points                             |
+| Lumen/Cortex  | `/lumen-cortex`, `/concept2cure`                              | `/api/lumen-cortex`, `/api/cortex`, `/api/cognitive`              | `/foresight*`, `/lumen*` deprecated aliases               |
+
+### RECOVERY_BURNDOWN (Execution Template)
+
+| Day | Deliverable                         | Owner               | Status  | Blockers | Exit Criteria                         |
+| --- | ----------------------------------- | ------------------- | ------- | -------- | ------------------------------------- |
+| D0  | Freeze + route guardrails enabled   | Eng Manager         | pending | none     | Freeze announced, PR template updated |
+| D1  | Contract inventory export generated | Platform BE         | pending | none     | Matrix covers all P0 journeys         |
+| D2  | Matrix review + sign-off            | Product + Eng Leads | pending | none     | Approved `P0_CONTRACT_MATRIX`         |
+| D3  | CoAuthor facade gap fixes           | Platform BE         | pending | none     | Missing/partial endpoints resolved    |
+| D4  | IND/eCTD route normalization        | FE Lead             | pending | none     | Legacy routes hard-redirected         |
+| D5  | Deprecation wrappers in place       | Platform BE         | pending | none     | No silent legacy 404s                 |
+| D6  | CER/CMC/510k route consolidation    | Domain Leads        | pending | none     | Canonical route families published    |
+| D7  | Namespace registry finalized        | Platform Lead       | pending | none     | `CANONICAL_ROUTE_REGISTRY` approved   |
+| D8  | Contract tests complete             | QA Lead             | pending | none     | P0/P1 suites passing                  |
+| D9  | Golden flow E2E complete            | QA + Domain Leads   | pending | none     | All primary workflows validated       |
+| D10 | Release go/no-go                    | PM + Eng Manager    | pending | none     | All gate criteria green               |
 
 ## 🎯 Phase 1: Core UI Foundation (Claude.ai-Style Interface) ✅ COMPLETE
 
@@ -34,7 +230,7 @@
 
 ### 📊 Files Created in Phase 2
 
-```
+```text
 client/src/concept2cure/hooks/
 ├── index.ts                             ✅ NEW
 ├── useChat.ts                           ✅ NEW (Lumen Cortex API integration)
@@ -219,7 +415,7 @@ Based on user feedback demanding "significantly enhanced, simplified user experi
 
 ### 📊 Enhanced Files Created in Phase 5 Redesign
 
-```
+```text
 client/src/concept2cure/components/intelligentDocs/
 ├── index.ts                              ✅ NEW (exports all components)
 ├── types.ts                              ✅ NEW (~250 lines, user-centric types)
@@ -274,7 +470,7 @@ Phase 6 focused on eCTD Co-Authoring and Document Drafting with emphasis on the 
 
 ### 📊 Phase 6 Services Created
 
-```
+```text
 server/services/
 ├── documents/
 │   └── ArtifactSkeletonGenerator.ts          ✅ NEW (20,535 lines)
@@ -468,12 +664,10 @@ docs/audits/
 
 #### Build Health
 
-| Ecosystem              | Status     | Detail                                                       |
-| ---------------------- | ---------- | ------------------------------------------------------------ |
-| Node / Vitest          | ✅ Green   | 39 files, 1127 tests, 0 failures                             |
-| Python / Pytest (core) | ✅ Green   | 17 passed, 0 failures                                        |
-| Python / HSM tests     | ⏭ Skipped | `boto3` not in default env; `pytest.importorskip` gate added |
-| Lint / Typecheck       | 🔲 Pending | `npm run lint` / `tsc --noEmit` — add to CI gate             |
+- Node / Vitest: ✅ Green — 39 files, 1127 tests, 0 failures
+- Python / Pytest (core): ✅ Green — 17 passed, 0 failures
+- Python / HSM tests: ⏭ Skipped — `boto3` not in default env; `pytest.importorskip` gate added
+- Lint / Typecheck: 🔲 Pending — `npm run lint` / `tsc --noEmit` (add to CI gate)
 
 **Actions taken:**
 

@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Introduce render-job tracking for deterministic artifact generation and verification.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1/2/5 rendered output lifecycle and auditability
+--   - Integrity Risk Addressed: opaque render execution and unverifiable artifact lineage
+--
+-- Determinism Contract:
+--   - inputs_hash and artifact_hash must remain authoritative for replay validation.
+--   - Artifact type contract changes require explicit migration governance.
+--
+-- Notes:
+--   - Table supports immutable lifecycle evidence via audit events.
+-- =============================================================================
+
 -- Migration: Phase 7.0A — Render Jobs Table
 -- Tracks document rendering pipeline: PDF, DOCX, eCTD sequence generation
 -- Depends on: predicate schema + proof_pack_exports table (Phase 6.6.E)

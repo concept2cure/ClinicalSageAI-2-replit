@@ -114,6 +114,14 @@ async def create_render_job(
     if not pp_row:
         raise HTTPException(status_code=404, detail="Proof pack not found")
 
+    proof_pack_program_id = str(pp_row.get("program_id", ""))
+    requested_program_id = str(body.program_id or "")
+    if requested_program_id and proof_pack_program_id and requested_program_id != proof_pack_program_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Program mismatch for proof pack",
+        )
+
     if pp_row.get("block_download"):
         raise HTTPException(
             status_code=409,
@@ -131,7 +139,7 @@ async def create_render_job(
             artifact_type=body.artifact_type.value,
             user_id=body.user_id,
             request_id=body.request_id or str(uuid.uuid4()),
-            program_id=body.program_id or str(pp_row.get("program_id", "")),
+            program_id=proof_pack_program_id,
             idempotency_key=body.idempotency_key,
         )
     except ValueError as exc:

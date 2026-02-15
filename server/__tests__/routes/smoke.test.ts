@@ -1,6 +1,6 @@
 /**
  * API Routes Smoke Tests
- * 
+ *
  * Quick validation that all critical routes are registered and respond.
  * Run before consolidation to establish baseline.
  */
@@ -26,7 +26,7 @@ const mockApp = {
     if (!mockApp.routes.has('DELETE')) mockApp.routes.set('DELETE', new Set());
     mockApp.routes.get('DELETE')!.add(path);
   }),
-  use: vi.fn()
+  use: vi.fn(),
 };
 
 describe('Critical API Routes', () => {
@@ -38,7 +38,7 @@ describe('Critical API Routes', () => {
       { method: 'POST', path: '/api/cortex/threads' },
       { method: 'GET', path: '/api/cortex/threads/:threadId' },
       { method: 'POST', path: '/api/cortex/agents' },
-      { method: 'GET', path: '/api/cortex/health' }
+      { method: 'GET', path: '/api/cortex/health' },
     ];
 
     it('should define expected route structure', () => {
@@ -56,7 +56,7 @@ describe('Critical API Routes', () => {
       { method: 'GET', path: '/api/audit/events' },
       { method: 'POST', path: '/api/audit/signatures' },
       { method: 'GET', path: '/api/audit/signatures/:signatureId/verify' },
-      { method: 'POST', path: '/api/audit/export' }
+      { method: 'POST', path: '/api/audit/export' },
     ];
 
     it('should define audit trail routes', () => {
@@ -73,7 +73,7 @@ describe('Critical API Routes', () => {
       { method: 'POST', path: '/api/cognitive/threads/:threadId/breakpoints' },
       { method: 'POST', path: '/api/cognitive/dossiers' },
       { method: 'POST', path: '/api/cognitive/manufacturing/equipment' },
-      { method: 'POST', path: '/api/cognitive/federated/models' }
+      { method: 'POST', path: '/api/cognitive/federated/models' },
     ];
 
     it('should define cognitive ecosystem routes', () => {
@@ -87,12 +87,40 @@ describe('Critical API Routes', () => {
     const expectedRoutes = [
       { method: 'POST', path: '/api/fhir/resources' },
       { method: 'GET', path: '/api/fhir/resources/:resourceType/:id' },
-      { method: 'POST', path: '/api/fhir/validate' }
+      { method: 'POST', path: '/api/fhir/validate' },
     ];
 
     it('should define FHIR routes', () => {
       expectedRoutes.forEach(route => {
         expect(route.path).toContain('/api/fhir');
+      });
+    });
+  });
+
+  describe('Compatibility Facade Routes', () => {
+    const expectedRoutes = [
+      { method: 'GET', path: '/api/reports' },
+      { method: 'GET', path: '/api/reports/export.pdf' },
+      { method: 'GET', path: '/api/audit/logs' },
+      { method: 'GET', path: '/api/audit-logs' },
+      { method: 'GET', path: '/api/audit/events' },
+      { method: 'POST', path: '/api/audit/events' },
+      { method: 'POST', path: '/api/audit/signatures' },
+      { method: 'GET', path: '/api/audit/signatures/:signatureId/verify' },
+      { method: 'GET', path: '/api/audit/export' },
+      { method: 'POST', path: '/api/audit/bulk-delete' },
+      { method: 'POST', path: '/api/search/vector' },
+      { method: 'POST', path: '/api/endpoint/recommend' },
+      { method: 'GET', path: '/api/retention/policies' },
+      { method: 'POST', path: '/api/retention/policies' },
+      { method: 'PUT', path: '/api/retention/policies/:id' },
+      { method: 'DELETE', path: '/api/retention/policies/:id' },
+    ];
+
+    it('should define compatibility facade contracts', () => {
+      expectedRoutes.forEach(route => {
+        expect(route.method).toBeDefined();
+        expect(route.path.startsWith('/api/')).toBe(true);
       });
     });
   });

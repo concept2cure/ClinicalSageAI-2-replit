@@ -1,11 +1,11 @@
 /**
  * Cross-Module Data Bridge
- * 
+ *
  * Phase 5: Intelligent Document System
- * 
+ *
  * This is the critical integration layer that connects the Intelligent Document
  * System to ALL other modules in Concept2Cure:
- * 
+ *
  * - Predicate Finder → Get predicate device data for 510(k)
  * - Literature Search → Pull citations and evidence
  * - CMC Data → Manufacturing specs and batch data
@@ -13,7 +13,7 @@
  * - Vault/DMS → Uploaded documents
  * - MAUDE/FAERS → Safety databases
  * - Lumen Cortex → Intelligence feeds
- * 
+ *
  * The bridge automatically:
  * - Detects when data becomes available in other modules
  * - Converts module data into citation-ready sources
@@ -42,12 +42,7 @@ import {
   AlertCircle,
   Unplug,
 } from 'lucide-react';
-import type {
-  DataBridgeConnection,
-  DataModule,
-  BridgeDataType,
-  SourceSuggestion,
-} from './types';
+import type { DataBridgeConnection, DataModule, BridgeDataType, SourceSuggestion } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Module Configuration - What each module provides
@@ -134,7 +129,7 @@ const MODULE_CONFIGS: ModuleConfig[] = [
     icon: Zap,
     color: 'indigo',
     dataTypes: ['regulatory_references'],
-    apiEndpoint: '/api/lumen/intelligence',
+    apiEndpoint: '/api/lumen-cortex/intelligence',
   },
 ];
 
@@ -147,21 +142,21 @@ export interface CrossModuleDataBridgeProps {
   projectId: string;
   submissionType: 'IND' | '510K' | 'NDA' | 'BLA' | 'PMA' | 'CER' | 'MAA' | 'DE_NOVO';
   documentId?: string;
-  
+
   // Pre-loaded connections (from parent)
   connections?: DataBridgeConnection[];
-  
+
   // Data that's already available (passed from workflow)
   predicateDevices?: any[];
   literatureData?: any[];
   cmcData?: any[];
   clinicalData?: any[];
-  
+
   // Callbacks
   onConnectionChange?: (connections: DataBridgeConnection[]) => void;
   onSourcesGenerated?: (sources: SourceSuggestion[]) => void;
   onNavigateToModule?: (moduleId: DataModule) => void;
-  
+
   // Display mode
   compact?: boolean;
   className?: string;
@@ -171,21 +166,39 @@ export interface CrossModuleDataBridgeProps {
 // Connection Status Badge
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ConnectionStatusBadge: React.FC<{ 
+const ConnectionStatusBadge: React.FC<{
   status: DataBridgeConnection['status'];
   compact?: boolean;
 }> = ({ status, compact }) => {
   const config = {
-    connected: { icon: CheckCircle, label: 'Connected', color: 'text-green-500 bg-green-50 dark:bg-green-900/20' },
-    available: { icon: Download, label: 'Available', color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' },
-    'needs-update': { icon: RefreshCw, label: 'Update', color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' },
-    missing: { icon: Unplug, label: 'No Data', color: 'text-slate-400 bg-slate-50 dark:bg-slate-800' },
+    connected: {
+      icon: CheckCircle,
+      label: 'Connected',
+      color: 'text-green-500 bg-green-50 dark:bg-green-900/20',
+    },
+    available: {
+      icon: Download,
+      label: 'Available',
+      color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
+    },
+    'needs-update': {
+      icon: RefreshCw,
+      label: 'Update',
+      color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
+    },
+    missing: {
+      icon: Unplug,
+      label: 'No Data',
+      color: 'text-slate-400 bg-slate-50 dark:bg-slate-800',
+    },
   };
-  
+
   const { icon: Icon, label, color } = config[status];
-  
+
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${color}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${color}`}
+    >
       <Icon className="w-3 h-3" />
       {!compact && label}
     </span>
@@ -225,21 +238,23 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
     amber: 'bg-amber-500',
     indigo: 'bg-indigo-500',
   };
-  
+
   const Icon = config.icon;
-  
+
   if (compact) {
     return (
       <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded ${colorClasses[config.color as keyof typeof colorClasses]}`}>
+          <div
+            className={`p-1.5 rounded ${colorClasses[config.color as keyof typeof colorClasses]}`}
+          >
             <Icon className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {config.name}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <ConnectionStatusBadge status={connection?.status || 'missing'} compact />
           {connection?.status === 'connected' && (
@@ -249,12 +264,14 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
       </div>
     );
   }
-  
+
   return (
     <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-lg ${colorClasses[config.color as keyof typeof colorClasses]}`}>
+          <div
+            className={`p-2.5 rounded-lg ${colorClasses[config.color as keyof typeof colorClasses]}`}
+          >
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -264,12 +281,10 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
         </div>
         <ConnectionStatusBadge status={connection?.status || 'missing'} />
       </div>
-      
+
       {connection && connection.status !== 'missing' && (
         <div className="mb-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {connection.preview}
-          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{connection.preview}</p>
           <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <Database className="w-3 h-3" />
@@ -284,7 +299,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="flex items-center gap-2">
         {connection?.status === 'connected' ? (
           <>
@@ -359,55 +374,53 @@ const DataFlowDiagram: React.FC<{
 }> = ({ connections, submissionType }) => {
   const connectedCount = connections.filter(c => c.status === 'connected').length;
   const totalSources = connections.reduce((sum, c) => sum + c.itemCount, 0);
-  
+
   return (
     <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-slate-800 dark:text-slate-200">
-            Data Flow Overview
-          </h3>
+          <h3 className="font-semibold text-slate-800 dark:text-slate-200">Data Flow Overview</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Sources flowing into your {submissionType} document
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {totalSources}
-          </p>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalSources}</p>
           <p className="text-xs text-slate-500">Total Sources</p>
         </div>
       </div>
-      
+
       {/* Visual flow */}
       <div className="flex items-center justify-center gap-4 py-4">
         {/* Source modules */}
         <div className="flex flex-col gap-2">
           {connections.slice(0, 4).map(conn => (
-            <div 
+            <div
               key={conn.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-                ${conn.status === 'connected' 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}
+                ${
+                  conn.status === 'connected'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+                }`}
             >
               <Database className="w-4 h-4" />
               <span className="font-medium">{conn.itemCount}</span>
             </div>
           ))}
         </div>
-        
+
         {/* Flow arrows */}
         <div className="flex flex-col items-center gap-1">
           {Array.from({ length: Math.min(connectedCount, 4) }).map((_, i) => (
-            <ArrowRight 
-              key={i} 
+            <ArrowRight
+              key={i}
               className="w-6 h-6 text-blue-500 animate-pulse"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
         </div>
-        
+
         {/* Document */}
         <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-500 shadow-lg">
           <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
@@ -417,7 +430,7 @@ const DataFlowDiagram: React.FC<{
           <p className="text-xs text-slate-500 text-center">Document</p>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-center gap-6 mt-4 text-sm">
         <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
           <CheckCircle className="w-4 h-4" />
@@ -451,15 +464,13 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
   compact = false,
   className = '',
 }) => {
-  const [connections, setConnections] = useState<DataBridgeConnection[]>(
-    initialConnections || []
-  );
+  const [connections, setConnections] = useState<DataBridgeConnection[]>(initialConnections || []);
   const [loadingModule, setLoadingModule] = useState<DataModule | null>(null);
-  
+
   // Initialize connections from passed data
   useEffect(() => {
     const newConnections: DataBridgeConnection[] = [];
-    
+
     // Check predicate data
     newConnections.push({
       id: `bridge-${projectId}-predicates`,
@@ -467,14 +478,20 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       targetDocumentId: documentId || '',
       dataType: 'predicate_devices',
       dataLabel: 'Predicate Devices',
-      status: predicateDevices.length > 0 ? 'connected' : (submissionType === '510K' ? 'available' : 'missing'),
+      status:
+        predicateDevices.length > 0
+          ? 'connected'
+          : submissionType === '510K'
+            ? 'available'
+            : 'missing',
       lastSyncedAt: predicateDevices.length > 0 ? new Date() : undefined,
-      preview: predicateDevices.length > 0 
-        ? `${predicateDevices.length} predicate device(s) available for citation` 
-        : 'Find predicate devices in the Predicate Finder module',
+      preview:
+        predicateDevices.length > 0
+          ? `${predicateDevices.length} predicate device(s) available for citation`
+          : 'Find predicate devices in the Predicate Finder module',
       itemCount: predicateDevices.length,
     });
-    
+
     // Check literature data
     newConnections.push({
       id: `bridge-${projectId}-literature`,
@@ -484,12 +501,13 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       dataLabel: 'Literature Citations',
       status: literatureData.length > 0 ? 'connected' : 'available',
       lastSyncedAt: literatureData.length > 0 ? new Date() : undefined,
-      preview: literatureData.length > 0 
-        ? `${literatureData.length} literature citation(s) available` 
-        : 'Search for supporting literature in the Literature module',
+      preview:
+        literatureData.length > 0
+          ? `${literatureData.length} literature citation(s) available`
+          : 'Search for supporting literature in the Literature module',
       itemCount: literatureData.length,
     });
-    
+
     // Check CMC data
     newConnections.push({
       id: `bridge-${projectId}-cmc`,
@@ -497,14 +515,20 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       targetDocumentId: documentId || '',
       dataType: 'manufacturing_specs',
       dataLabel: 'CMC Data',
-      status: cmcData.length > 0 ? 'connected' : (submissionType === 'IND' || submissionType === 'NDA' ? 'available' : 'missing'),
+      status:
+        cmcData.length > 0
+          ? 'connected'
+          : submissionType === 'IND' || submissionType === 'NDA'
+            ? 'available'
+            : 'missing',
       lastSyncedAt: cmcData.length > 0 ? new Date() : undefined,
-      preview: cmcData.length > 0 
-        ? `${cmcData.length} manufacturing data point(s) available` 
-        : 'Add manufacturing data in the CMC module',
+      preview:
+        cmcData.length > 0
+          ? `${cmcData.length} manufacturing data point(s) available`
+          : 'Add manufacturing data in the CMC module',
       itemCount: cmcData.length,
     });
-    
+
     // Check clinical data
     newConnections.push({
       id: `bridge-${projectId}-clinical`,
@@ -514,12 +538,13 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       dataLabel: 'Clinical Data',
       status: clinicalData.length > 0 ? 'connected' : 'available',
       lastSyncedAt: clinicalData.length > 0 ? new Date() : undefined,
-      preview: clinicalData.length > 0 
-        ? `${clinicalData.length} clinical data point(s) available` 
-        : 'Import clinical trial data',
+      preview:
+        clinicalData.length > 0
+          ? `${clinicalData.length} clinical data point(s) available`
+          : 'Import clinical trial data',
       itemCount: clinicalData.length,
     });
-    
+
     // Document Vault - always available
     newConnections.push({
       id: `bridge-${projectId}-vault`,
@@ -531,7 +556,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       preview: 'Upload and link source documents',
       itemCount: 0,
     });
-    
+
     // Intelligence feeds
     newConnections.push({
       id: `bridge-${projectId}-intel`,
@@ -543,24 +568,24 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       preview: 'Regulatory updates and competitor monitoring',
       itemCount: 0,
     });
-    
+
     setConnections(newConnections);
     onConnectionChange?.(newConnections);
   }, [
-    projectId, 
-    documentId, 
+    projectId,
+    documentId,
     submissionType,
-    predicateDevices.length, 
-    literatureData.length, 
-    cmcData.length, 
+    predicateDevices.length,
+    literatureData.length,
+    cmcData.length,
     clinicalData.length,
-    onConnectionChange
+    onConnectionChange,
   ]);
-  
+
   // Generate sources from connected data
   useEffect(() => {
     const sources: SourceSuggestion[] = [];
-    
+
     // Convert predicate devices to sources
     predicateDevices.forEach((device, i) => {
       sources.push({
@@ -575,7 +600,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
         isLinked: false,
       });
     });
-    
+
     // Convert literature to sources
     literatureData.forEach((paper, i) => {
       sources.push({
@@ -589,67 +614,85 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
         isLinked: false,
       });
     });
-    
+
     onSourcesGenerated?.(sources);
   }, [predicateDevices, literatureData, cmcData, clinicalData, onSourcesGenerated]);
-  
+
   // Handle connection
   const handleConnect = useCallback(async (moduleId: DataModule) => {
     setLoadingModule(moduleId);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setConnections(prev => prev.map(conn =>
-      conn.sourceModule === moduleId
-        ? { ...conn, status: 'connected', lastSyncedAt: new Date() }
-        : conn
-    ));
-    
+
+    setConnections(prev =>
+      prev.map(conn =>
+        conn.sourceModule === moduleId
+          ? { ...conn, status: 'connected', lastSyncedAt: new Date() }
+          : conn
+      )
+    );
+
     setLoadingModule(null);
   }, []);
-  
+
   // Handle sync
   const handleSync = useCallback(async (moduleId: DataModule) => {
     setLoadingModule(moduleId);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setConnections(prev => prev.map(conn =>
-      conn.sourceModule === moduleId
-        ? { ...conn, lastSyncedAt: new Date() }
-        : conn
-    ));
-    
+
+    setConnections(prev =>
+      prev.map(conn =>
+        conn.sourceModule === moduleId ? { ...conn, lastSyncedAt: new Date() } : conn
+      )
+    );
+
     setLoadingModule(null);
   }, []);
-  
+
   // Handle navigate
-  const handleNavigate = useCallback((moduleId: DataModule) => {
-    onNavigateToModule?.(moduleId);
-  }, [onNavigateToModule]);
-  
+  const handleNavigate = useCallback(
+    (moduleId: DataModule) => {
+      onNavigateToModule?.(moduleId);
+    },
+    [onNavigateToModule]
+  );
+
   // Get module config
-  const getModuleConfig = (moduleId: DataModule) => 
-    MODULE_CONFIGS.find(m => m.id === moduleId);
-  
+  const getModuleConfig = (moduleId: DataModule) => MODULE_CONFIGS.find(m => m.id === moduleId);
+
   // Relevant modules for this submission type
   const relevantModules = useMemo(() => {
     const priorities: Record<string, DataModule[]> = {
       '510K': ['predicate_finder', 'literature_search', 'vault', 'maude', 'intelligence_feeds'],
-      'IND': ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'intelligence_feeds'],
-      'NDA': ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'faers', 'intelligence_feeds'],
-      'BLA': ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'faers', 'intelligence_feeds'],
-      'PMA': ['clinical_trials', 'literature_search', 'vault', 'maude', 'intelligence_feeds'],
-      'CER': ['literature_search', 'clinical_trials', 'vault', 'intelligence_feeds'],
-      'MAA': ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'intelligence_feeds'],
-      'DE_NOVO': ['predicate_finder', 'literature_search', 'vault', 'maude', 'intelligence_feeds'],
+      IND: ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'intelligence_feeds'],
+      NDA: [
+        'clinical_trials',
+        'cmc_data',
+        'literature_search',
+        'vault',
+        'faers',
+        'intelligence_feeds',
+      ],
+      BLA: [
+        'clinical_trials',
+        'cmc_data',
+        'literature_search',
+        'vault',
+        'faers',
+        'intelligence_feeds',
+      ],
+      PMA: ['clinical_trials', 'literature_search', 'vault', 'maude', 'intelligence_feeds'],
+      CER: ['literature_search', 'clinical_trials', 'vault', 'intelligence_feeds'],
+      MAA: ['clinical_trials', 'cmc_data', 'literature_search', 'vault', 'intelligence_feeds'],
+      DE_NOVO: ['predicate_finder', 'literature_search', 'vault', 'maude', 'intelligence_feeds'],
     };
-    
+
     return priorities[submissionType] || MODULE_CONFIGS.map(m => m.id);
   }, [submissionType]);
-  
+
   if (compact) {
     return (
       <div className={`space-y-2 ${className}`}>
@@ -662,7 +705,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
           .map(conn => {
             const config = getModuleConfig(conn.sourceModule);
             if (!config) return null;
-            
+
             return (
               <ModuleConnectionCard
                 key={conn.id}
@@ -679,24 +722,27 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
       </div>
     );
   }
-  
+
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 shadow-sm flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Data Bridges</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Keep sources in sync across modules.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Keep sources in sync across modules.
+          </p>
         </div>
         <div className="text-sm text-slate-600 dark:text-slate-300">
-          {connections.filter(c => c.status === 'connected').length} connected · {connections.filter(c => c.status === 'needs-update').length} needs update
+          {connections.filter(c => c.status === 'connected').length} connected ·{' '}
+          {connections.filter(c => c.status === 'needs-update').length} needs update
         </div>
       </div>
       {/* Data Flow Diagram */}
-      <DataFlowDiagram 
-        connections={connections.filter(c => relevantModules.includes(c.sourceModule))} 
+      <DataFlowDiagram
+        connections={connections.filter(c => relevantModules.includes(c.sourceModule))}
         submissionType={submissionType}
       />
-      
+
       {/* Module Connections */}
       <div>
         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
@@ -708,7 +754,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
             .map(conn => {
               const config = getModuleConfig(conn.sourceModule);
               if (!config) return null;
-              
+
               return (
                 <ModuleConnectionCard
                   key={conn.id}
