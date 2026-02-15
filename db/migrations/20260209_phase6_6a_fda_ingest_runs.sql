@@ -51,9 +51,9 @@ CREATE TABLE IF NOT EXISTS predicate.fda_ingest_runs (
     created_at            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_ingest_runs_status    ON predicate.fda_ingest_runs(status);
-CREATE INDEX idx_ingest_runs_started   ON predicate.fda_ingest_runs(started_at DESC);
-CREATE INDEX idx_ingest_runs_job       ON predicate.fda_ingest_runs(job_name, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ingest_runs_status  ON predicate.fda_ingest_runs(status);
+CREATE INDEX IF NOT EXISTS idx_ingest_runs_started ON predicate.fda_ingest_runs(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ingest_runs_job     ON predicate.fda_ingest_runs(job_name, started_at DESC);
 
 COMMENT ON TABLE predicate.fda_ingest_runs IS
     'Audit log for FDA data ingestion jobs. Every run creates a row so we can prove data freshness and catch silent failures.';
