@@ -11,7 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../../db';
 import { eq } from 'drizzle-orm';
-import { csr_reports, csr_details } from '../../../shared/schema';
+import { csrReports } from '../../../shared/schema';
 import { getReportGenerator } from '../../services/report-generator-service';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -115,8 +115,8 @@ router.post('/generate', async (req, res) => {
       // Fetch related trials from database based on indication
       relatedTrials = await db
         .select()
-        .from(csr_reports)
-        .where(eq(csr_reports.indication, indication))
+        .from(csrReports)
+        .where(eq(csrReports.indication, indication))
         .limit(10);
     }
 

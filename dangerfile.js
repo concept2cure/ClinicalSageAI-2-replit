@@ -303,9 +303,7 @@ const checkPackageChanges = () => {
   const packageChanged = changedFiles.includes('package.json');
   const lockfileChanged = changedFiles.includes('package-lock.json');
   const fs = require('fs');
-  const gitignore = fs.existsSync('.gitignore')
-    ? fs.readFileSync('.gitignore', 'utf8')
-    : '';
+  const gitignore = fs.existsSync('.gitignore') ? fs.readFileSync('.gitignore', 'utf8') : '';
   const lockfileIgnored = /^\s*package-lock\.json\s*$/m.test(gitignore);
 
   if (packageChanged && !lockfileChanged) {
@@ -314,10 +312,10 @@ const checkPackageChanges = () => {
         `📦 **package.json Changed Without Lockfile**: \`package-lock.json\` is gitignored in this repository, so lockfile updates are not expected in PR diffs.`
       );
     } else {
-    fail(
-      `📦 **package.json Changed Without Lockfile**: You modified \`package.json\` but \`package-lock.json\` wasn't updated.\n\n` +
-        `Run \`npm install\` to regenerate the lockfile.`
-    );
+      fail(
+        `📦 **package.json Changed Without Lockfile**: You modified \`package.json\` but \`package-lock.json\` wasn't updated.\n\n` +
+          `Run \`npm install\` to regenerate the lockfile.`
+      );
     }
   }
 
