@@ -66,7 +66,9 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your database credentials
+# Edit .env and set DATABASE_URL to your Neon connection string, e.g.:
+#   DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-YOUR-PROJECT-pooler.REGION.aws.neon.tech/neondb?sslmode=require
+# (see .env.example for full details)
 
 # Run database migrations
 npm run db:migrate

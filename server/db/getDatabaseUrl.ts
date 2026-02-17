@@ -34,10 +34,13 @@ function cleanDatabaseUrl(url: string | undefined): string | undefined {
 
 /**
  * Get the cleaned database URL from environment variables.
- * Prefers DATABASE_URL over DATABASE_NEON_NEW_SECRET.
+ * Prefers DATABASE_URL, then NEON_DATABASE_URL, then DATABASE_NEON_NEW_SECRET.
  */
 export function getDatabaseUrl(): string | undefined {
-  const rawUrl = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET;
+  const rawUrl =
+    process.env.DATABASE_URL ||
+    process.env.NEON_DATABASE_URL ||
+    process.env.DATABASE_NEON_NEW_SECRET;
   return cleanDatabaseUrl(rawUrl);
 }
 
@@ -47,7 +50,7 @@ export function getDatabaseUrl(): string | undefined {
 export function requireDatabaseUrl(): string {
   const url = getDatabaseUrl();
   if (!url) {
-    throw new Error('DATABASE_URL or DATABASE_NEON_NEW_SECRET environment variable is required');
+    throw new Error('DATABASE_URL, NEON_DATABASE_URL, or DATABASE_NEON_NEW_SECRET environment variable is required');
   }
   return url;
 }
