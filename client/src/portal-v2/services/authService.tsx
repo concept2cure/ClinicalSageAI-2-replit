@@ -463,7 +463,9 @@ export class AuthService {
   public api: ApiClient;
 
   constructor(private baseUrl: string = '/api/v1/auth') {
-    this.api = new ApiClient(baseUrl.replace('/auth', ''), this);
+    // ApiClient.baseUrl must be empty so AuthService.baseUrl is the single
+    // source of truth and paths aren't doubled (/api/v1 + /api/v1/auth/…).
+    this.api = new ApiClient('', this);
     this.loadStoredAuth();
     this.setupTokenRefresh();
   }
