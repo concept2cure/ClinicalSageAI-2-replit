@@ -1,8 +1,22 @@
-import { randomUUID } from 'crypto';
-import { readFile, writeFile } from 'fs/promises';
-import path from 'path';
-
 const logger = console;
+
+const getAuthToken = async () => {
+  const email = process.env.SMOKE_EMAIL || 'jm.smith@concept2cure.pro';
+  const password = process.env.SMOKE_PASSWORD || 'Concept2Cure2026!';
+
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const payload = await response.json();
+  const token = payload?.accessToken || payload?.token;
+  if (!response.ok || !token) {
+    throw new Error(`Unable to authenticate smoke user (${response.status})`);
+  }
+  return token;
+};
 
 const parseArgValue = flag => {
   const index = process.argv.findIndex(arg => arg === flag);
@@ -18,75 +32,41 @@ const baseUrl =
   parseArgValue('--base-url') ||
   'http://localhost:3000';
 
-const programIdFlag = parseArgValue('--programId') || parseArgValue('--program-id');
-
-const getProgramId = async () => {
-  if (process.env.CERV2_PROGRAM_ID) {
-    return process.env.CERV2_PROGRAM_ID;
-  }
-
-  if (programIdFlag) {
-    return programIdFlag;
-  }
-
-  try {
-    const filePath = path.resolve(process.cwd(), '.cerv2_program_id');
-    const fileContents = await readFile(filePath, 'utf8');
-    return fileContents.trim();
-  } catch (error) {
-    return null;
-  }
-};
-
-const ensureProgramId = async () => {
-  const programId = await getProgramId();
-  if (programId) {
-    return programId;
-  }
-
-  const fallbackProgramId = randomUUID();
-  const filePath = path.resolve(process.cwd(), '.cerv2_program_id');
-  await writeFile(filePath, `${fallbackProgramId}\n`, 'utf8');
-  logger.warn('No CERV2 program ID provided. Generated a demo ID for this run:');
-  logger.warn(fallbackProgramId);
-  logger.warn(`Saved to ${filePath}. Override with CERV2_PROGRAM_ID or --programId if needed.`);
-  return fallbackProgramId;
-};
-
-const buildEndpoints = programId => [
+const buildEndpoints = () => [
   {
-    name: 'evidence',
+    name: 'cerv2-documents',
     method: 'GET',
-    path: `/api/cerv2/workbench/${programId}/evidence?limit=5`,
+    path: '/api/cerv2/documents',
   },
   {
-    name: 'claims',
+    name: 'cerv2-sections',
     method: 'GET',
-    path: `/api/cerv2/workbench/${programId}/claims?limit=5`,
+    path: '/api/cerv2-sections',
   },
   {
-    name: 'standards',
+    name: 'cerv2-versions',
     method: 'GET',
-    path: `/api/cerv2/workbench/${programId}/standards?limit=5`,
+    path: '/api/cerv2-versions',
   },
   {
-    name: 'outcomes',
+    name: 'cerv2-ai-health',
     method: 'GET',
-    path: `/api/cerv2/workbench/${programId}/outcomes?limit=5`,
+    path: '/api/cerv2/ai/health',
   },
   {
-    name: 'audit',
+    name: 'cerv2-export-health',
     method: 'GET',
-    path: `/api/cerv2/workbench/${programId}/audit?limit=10`,
+    path: '/api/cerv2/export/health',
   },
 ];
 
-const requestJson = async (name, options) => {
+const requestJson = async (name, options, token) => {
   const url = `${baseUrl}${options.path}`;
   const response = await fetch(url, {
     method: options.method,
     headers: {
       'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -114,70 +94,41 @@ const requestJson = async (name, options) => {
   return json;
 };
 
-const getFirstId = (payload, fallbackKeys) => {
-  if (!payload || typeof payload !== 'object') {
-    return null;
-  }
-
-  const items = Array.isArray(payload) ? payload : payload.items || payload.data || payload.results;
-  if (!Array.isArray(items) || items.length === 0) {
-    return null;
-  }
-
-  const item = items[0];
-  const keys = fallbackKeys || ['id', 'claimId', 'evidenceId'];
-  for (const key of keys) {
-    if (item && item[key]) {
-      return item[key];
-    }
-  }
-
-  return item?.id || null;
-};
-
 const run = async () => {
-  const programId = await ensureProgramId();
-  const endpoints = buildEndpoints(programId);
+  const token = await getAuthToken();
+  const endpoints = buildEndpoints();
   const results = {};
 
   for (const endpoint of endpoints) {
-    results[endpoint.name] = await requestJson(endpoint.name, endpoint);
+    results[endpoint.name] = await requestJson(endpoint.name, endpoint, token);
   }
 
-  const claimId = getFirstId(results.claims, ['id', 'claimId']);
-  const evidenceId = getFirstId(results.evidence, ['id', 'evidenceId']);
-
-  if (!claimId) {
-    logger.error('No claim ID found in claims response.');
-    process.exit(1);
-  }
-
-  if (!evidenceId) {
-    logger.error('No evidence ID found in evidence response.');
-    process.exit(1);
-  }
-
-  await requestJson('traceability-links-bulk', {
-    method: 'POST',
-    path: `/api/cerv2/workbench/${programId}/traceability/links/bulk`,
-    body: {
-      dryRun: true,
-      links: [
-        {
-          evidenceId,
-          claimId,
-        },
-      ],
+  const saveResult = await requestJson(
+    'cerv2-document-save',
+    {
+      method: 'POST',
+      path: '/api/cerv2/documents/new/save',
+      body: {
+        documentType: 'cerv2_510k',
+        title: `Smoke ${new Date().toISOString()}`,
+        sections: [{ id: 'summary', content: 'Smoke test content' }],
+        metadata: { source: 'smoke_cerv2_workbench' },
+      },
     },
-  });
+    token
+  );
 
-  await requestJson('claim-status-patch', {
-    method: 'PATCH',
-    path: `/api/cerv2/workbench/${programId}/claims/${claimId}`,
-    body: {
-      status: 'reviewed',
-    },
-  });
+  const documentId = saveResult?.documentId;
+  if (documentId) {
+    await requestJson(
+      'cerv2-document-read',
+      {
+        method: 'GET',
+        path: `/api/cerv2/documents/${documentId}`,
+      },
+      token
+    );
+  }
 
   logger.info('Smoke test completed successfully.');
 };

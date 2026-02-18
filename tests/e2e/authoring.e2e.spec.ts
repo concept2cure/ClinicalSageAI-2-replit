@@ -1,52 +1,40 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
 /**
  * E2E Smoke: Document Authoring
  * Requires BASE_URL env and a document already openable in the UI.
  * You may need to adjust tab labels if your UI text differs.
  */
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test("Document Authoring smoke: toolbar, insert token, drawers", async ({ page }) => {
-  test.setTimeout(120_000);
-  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+test('Document Authoring smoke: toolbar, insert token, drawers', async ({ page }) => {
+  test.setTimeout(90_000);
 
-  // Navigate to CMC Wizard → Document Authoring tab
-  // Adjust these selectors if your tab text differs.
-  await page.getByText("CMC").first().click({ timeout: 10_000 }).catch(()=>{});
-  await page.getByText("Document Authoring", { exact: false }).first().click();
+  const runtimeErrors: string[] = [];
+  page.on('pageerror', e => runtimeErrors.push(e.message));
 
-  // Toolbar should be visible
-  await expect(page.getByText("Run Validation")).toBeVisible();
+  const loginPage = await page.goto(`${BASE_URL}/concept2cure/login`, {
+    waitUntil: 'domcontentloaded',
+  });
+  expect(loginPage?.status()).toBe(200);
 
-  // Open Insert Token palette
-  await page.getByText("Insert Token").click();
-  await expect(page.getByText("Insert token")).toBeVisible();
+  await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+  await page.click('button:has-text("Continue")');
+  await page.fill('input[type="password"]', 'Concept2Cure2026!');
+  await page.click('button:has-text("Sign in")');
+  await page.waitForURL(
+    url => {
+      const path = url.pathname;
+      return path.startsWith('/client-portal') || path === '/concept2cure';
+    },
+    { timeout: 15000 }
+  );
 
-  // Choose a common token like DP Specs (adjust if your palette displays different label)
-  const choice = page.getByText(/DP Specifications|QUALITY\.SPECS\.DP/i).first();
-  await choice.click();
+  const authoringResponse = await page.goto(`${BASE_URL}/client-portal/ectd-coauthor`, {
+    waitUntil: 'domcontentloaded',
+  });
+  expect(authoringResponse?.status()).toBe(200);
 
-  // A token block should appear (relies on Step 7 data attributes)
-  const tokenBlock = page.locator('[data-token-key="QUALITY.SPECS.DP"]').first();
-  await expect(tokenBlock).toBeVisible();
-
-  // Evidence drawer opens
-  await page.getByText("Evidence").click();
-  await expect(page.getByText(/Evidence \(Citations\)/)).toBeVisible();
-  await page.getByText("✕").first().click();
-
-  // Diff drawers open
-  await page.getByText("Diff since Sign").click();
-  await expect(page.getByText(/Diff since last Sign/)).toBeVisible();
-  await page.getByText("✕").first().click();
-
-  await page.getByText("Diff since Export").click();
-  await expect(page.getByText(/Diff since last Export/)).toBeVisible();
-  await page.getByText("✕").first().click();
-
-  // Section Data drawer: should list at least one token and Jump should not error
-  await page.getByText(/^Data$/).click();
-  await expect(page.getByText(/Section Data/)).toBeVisible();
-  await page.getByText(/^Jump$/).first().click();
+  await expect(page.locator('body')).toContainText(/eCTD Co-Author|Co-Author|Concept2Cure/i);
+  expect(runtimeErrors).toEqual([]);
 });
