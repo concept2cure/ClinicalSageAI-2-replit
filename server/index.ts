@@ -249,9 +249,7 @@ pool
 
     // Enterprise: Verify all core tables exist on startup
     try {
-      const result = await ensureCoreTables(
-        process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL
-      );
+      const result = await ensureCoreTables(process.env.DATABASE_URL);
       if (result.success) {
         console.log(`✅ All ${result.existingTables.length} core database tables verified`);
       } else if (result.missingCritical.length > 0) {
@@ -303,6 +301,19 @@ app.get('/api/health', async (req: Request, res: Response) => {
   };
   debugLog('Health response', healthData);
   res.json(healthData);
+});
+
+// Diagnostic page — serves without React/Vite to test Simple Browser rendering
+app.get('/api/diag', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html><head><title>Diag</title></head>
+<body style="font-family:system-ui;padding:40px;background:#f0fdf4">
+<h1 style="color:#16a34a">✅ Server is alive</h1>
+<p>If you see this, the Simple Browser can render HTML from this server.</p>
+<p>Timestamp: ${new Date().toISOString()}</p>
+<p><a href="/">← Go to main app</a></p>
+</body></html>`);
 });
 
 // Mount authentication routes (SECURE)
@@ -428,10 +439,6 @@ app.get('/api/projects', async (req, res) => {
 
     // Default to org 2 (Concept2Cure) if no org specified
     organization_id = organization_id || '2';
-
-    // Import database connection dynamically
-    const dbModule = await import('./db.js');
-    const { pool } = dbModule;
 
     if (!pool) {
       // Return empty array if database not available
@@ -912,6 +919,29 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
 }
+
+// Shadow service health proxy
+app.get('/api/shadow/health', async (_req: Request, res: Response) => {
+  try {
+    const shadowBase = process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    const response = await fetch(`${shadowBase}/health`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: 'Shadow service health check failed',
+        details: payload,
+      });
+    }
+
+    return res.json(payload);
+  } catch (error: any) {
+    return res.status(502).json({
+      error: 'Shadow service unavailable',
+      message: error?.message || 'Unknown error',
+    });
+  }
+});
 
 // Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
 // POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
@@ -1444,100 +1474,49 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
 app.use('/api/reports', reportsGenerationRoutes);
 app.use('/api/reports', reportsManifestRoutes);
 
-// Reports compatibility facade (P0 route recovery)
+// Reports compatibility facade — real DB query with fallback
 app.get('/api/reports', async (req: Request, res: Response) => {
   try {
-    const mockReports = [
-      {
-        id: 'CSR001',
-        title: 'Pembrolizumab NSCLC Phase II CSR',
-        sponsor: 'Merck & Co',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        status: 'Completed',
-        createdAt: '2026-02-01T10:00:00.000Z',
-      },
-      {
-        id: 'CSR002',
-        title: 'Nivolumab + Ipilimumab Melanoma Phase III CSR',
-        sponsor: 'Bristol Myers Squibb',
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        status: 'Completed',
-        createdAt: '2026-02-03T14:30:00.000Z',
-      },
-      {
-        id: 'CSR003',
-        title: 'Osimertinib EGFRm NSCLC Phase I/II CSR',
-        sponsor: 'AstraZeneca',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase I/II',
-        status: 'Completed',
-        createdAt: '2026-02-05T09:15:00.000Z',
-      },
-    ];
-
     const reportType = req.query.type as string | undefined;
 
-    if (!reportType) {
-      return res.json(mockReports);
-    }
-
     if (reportType === 'section-generation-log') {
+      // Query audit_events for report generation events
+      const result = await pool.query(
+        `SELECT event_type, user_name, metadata, timestamp FROM audit_events
+         WHERE event_type LIKE 'report.%' ORDER BY timestamp DESC LIMIT 20`
+      );
       return res.json({
-        summary: { totalCalls: 87, avgLatency: 3.2, errorRate: 1.8 },
-        rows: [
-          {
-            timestamp: '2026-02-15T09:12:00Z',
-            user: 'regulatory.writer@clinicalsage.ai',
-            section: 'Module 2.5 Clinical Overview',
-            modelVersion: 'lumen-cortex-v2',
-            status: 'success',
-            latency: 2870,
-          },
-          {
-            timestamp: '2026-02-15T09:21:00Z',
-            user: 'regulatory.writer@clinicalsage.ai',
-            section: 'Module 2.7 Clinical Summary',
-            modelVersion: 'lumen-cortex-v2',
-            status: 'success',
-            latency: 3120,
-          },
-        ],
+        summary: { totalCalls: result.rows.length, avgLatency: 0, errorRate: 0 },
+        rows: result.rows.map((r: any) => ({
+          timestamp: r.timestamp,
+          user: r.user_name,
+          section: r.metadata?.section || 'N/A',
+          modelVersion: 'lumen-cortex-v2',
+          status: 'success',
+          latency: 0,
+        })),
       });
     }
 
-    return res.json({
-      summary: {
-        overallScore: 85,
-        openFindingsCount: 3,
-        completedSections: 7,
-        totalSections: 9,
-      },
-      rows: [
-        {
-          finding: 'Missing traceability for efficacy endpoint rationale',
-          section: '2.7.3',
-          severity: 'major',
-          owner: 'Clinical Writer',
-          dueDate: '2026-02-20',
-        },
-        {
-          finding: 'Inconsistent terminology across Module 2 and 5',
-          section: '2.5 / 5.3',
-          severity: 'minor',
-          owner: 'Regulatory Lead',
-          dueDate: '2026-02-22',
-        },
-        {
-          finding: 'Missing citation for safety subgroup conclusion',
-          section: '2.7.4',
-          severity: 'critical',
-          owner: 'Medical Reviewer',
-          dueDate: '2026-02-18',
-        },
-      ],
-    });
+    // Query real reports from database
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, metadata, created_at, updated_at
+       FROM reports ORDER BY created_at DESC LIMIT 50`
+    );
+
+    return res.json(
+      result.rows.map((r: any) => ({
+        id: r.id,
+        title: r.title || `Report ${r.id}`,
+        type: r.report_type,
+        status: r.status || 'draft',
+        sponsor: r.metadata?.sponsor || '',
+        indication: r.metadata?.indication || '',
+        phase: r.metadata?.phase || '',
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }))
+    );
   } catch (error) {
     console.error('Failed to fetch reports:', error);
     return res.status(500).json({ error: 'Failed to fetch reports' });
@@ -1546,27 +1525,57 @@ app.get('/api/reports', async (req: Request, res: Response) => {
 
 app.post('/api/reports', async (req: Request, res: Response) => {
   try {
+    const { title, reportType, content, metadata } = req.body;
+    const result = await pool.query(
+      `INSERT INTO reports (organization_id, title, report_type, status, content, metadata, created_at, updated_at)
+       VALUES (1, $1, $2, 'draft', $3, $4, NOW(), NOW()) RETURNING id`,
+      [
+        title || 'Untitled Report',
+        reportType || 'general',
+        JSON.stringify(content || {}),
+        JSON.stringify(metadata || {}),
+      ]
+    );
     return res.status(201).json({
       success: true,
-      message: 'Report uploaded successfully',
-      reportId: `REPORT_${Date.now()}`,
+      message: 'Report created successfully',
+      reportId: result.rows[0].id,
     });
   } catch (error) {
-    console.error('Failed to upload report:', error);
-    return res.status(500).json({ error: 'Failed to upload report' });
+    console.error('Failed to create report:', error);
+    return res.status(500).json({ error: 'Failed to create report' });
   }
 });
 
 app.get('/api/reports/count', async (_req: Request, res: Response) => {
-  return res.json({ count: 3 });
+  try {
+    const result = await pool.query('SELECT COUNT(*)::int AS count FROM reports');
+    return res.json({ count: result.rows[0]?.count || 0 });
+  } catch (error) {
+    return res.json({ count: 0 });
+  }
 });
 
 app.get('/api/reports/lumen-bio', async (_req: Request, res: Response) => {
-  return res.json({ reports: [], status: 'available' });
+  try {
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC`
+    );
+    return res.json({ reports: result.rows, status: 'available' });
+  } catch (error) {
+    return res.json({ reports: [], status: 'available' });
+  }
 });
 
 app.get('/api/reports/lumen-bio/recent', async (_req: Request, res: Response) => {
-  return res.json({ reports: [], status: 'available' });
+  try {
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC LIMIT 5`
+    );
+    return res.json({ reports: result.rows, status: 'available' });
+  } catch (error) {
+    return res.json({ reports: [], status: 'available' });
+  }
 });
 
 app.get('/api/reports/export.pdf', async (_req: Request, res: Response) => {
@@ -1612,173 +1621,91 @@ startxref
   return res.send(Buffer.from(pdfContent, 'utf-8'));
 });
 
-// Audit compatibility facade (P0 route recovery)
-const auditMockLogs = [
-  {
-    id: 'AUDIT-1681234567-123',
-    userId: 'john.smith',
-    user_id: 'john.smith',
-    userName: 'John Smith',
-    action: 'CREATE',
-    actionType: 'Create',
-    event_type: 'document.create',
-    severity: 'info',
-    component: 'CoAuthor',
-    details: 'Created Clinical Study Report draft',
-    description: 'Created Clinical Study Report draft',
-    ipAddress: '192.168.1.1',
-    region: 'US',
-    org_id: '1',
-    project_id: 'CSR-001',
-    timestamp: '2026-02-15T09:15:23.456Z',
-  },
-  {
-    id: 'AUDIT-1681234789-456',
-    userId: 'jane.doe',
-    user_id: 'jane.doe',
-    userName: 'Jane Doe',
-    action: 'UPDATE',
-    actionType: 'Update',
-    event_type: 'document.update',
-    severity: 'warning',
-    component: 'Workflow',
-    details: 'Updated section 2.7 summary content',
-    description: 'Updated section 2.7 summary content',
-    ipAddress: '192.168.1.2',
-    region: 'US',
-    org_id: '1',
-    project_id: 'CSR-001',
-    timestamp: '2026-02-15T10:30:45.789Z',
-  },
-  {
-    id: 'AUDIT-1681235012-789',
-    userId: 'robert.johnson',
-    user_id: 'robert.johnson',
-    userName: 'Robert Johnson',
-    action: 'DELETE',
-    actionType: 'Delete',
-    event_type: 'document.delete',
-    severity: 'error',
-    component: 'Templates',
-    details: 'Deleted outdated template revision',
-    description: 'Deleted outdated template revision',
-    ipAddress: '192.168.1.3',
-    region: 'EU',
-    org_id: '2',
-    project_id: 'TMP-442',
-    timestamp: '2026-02-15T11:45:12.345Z',
-  },
-  {
-    id: 'AUDIT-1681236234-012',
-    userId: 'susan.williams',
-    user_id: 'susan.williams',
-    userName: 'Susan Williams',
-    action: 'VIEW',
-    actionType: 'View',
-    event_type: 'document.view',
-    severity: 'info',
-    component: 'Audit',
-    details: 'Viewed audit dashboard',
-    description: 'Viewed audit dashboard',
-    ipAddress: '192.168.1.4',
-    region: 'US',
-    org_id: '1',
-    project_id: 'AUDIT-DASH',
-    timestamp: '2026-02-15T12:30:34.567Z',
-  },
-  {
-    id: 'AUDIT-1681237456-345',
-    userId: 'john.smith',
-    user_id: 'john.smith',
-    userName: 'John Smith',
-    action: 'EXPORT',
-    actionType: 'Export',
-    event_type: 'audit.export',
-    severity: 'success',
-    component: 'Audit',
-    details: 'Exported audit logs to CSV',
-    description: 'Exported audit logs to CSV',
-    ipAddress: '192.168.1.1',
-    region: 'US',
-    org_id: '1',
-    project_id: 'AUDIT-DASH',
-    timestamp: '2026-02-15T13:15:56.789Z',
-  },
-];
+// Audit — DB-backed implementation using audit_events table
+async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) {
+  const conditions: string[] = [];
+  const params: any[] = [];
+  let idx = 1;
 
-const filterAuditLogs = (query: any) => {
-  let logs = [...auditMockLogs];
-
-  const orgId = query.org_id || query.tenantId;
-  const projectId = query.project_id;
-  const region = query.region;
-  const userId = query.user_id || query.userId;
-  const eventType = query.event_type;
-  const severity = query.severity;
-  const actionType = query.actionType;
-  const search = query.search;
-  const startDate = query.start_date || query.startDate;
-  const endDate = query.end_date || query.endDate;
-  const anomaliesOnly = query.anomaliesOnly === 'true';
-
-  if (orgId) logs = logs.filter(log => log.org_id === String(orgId));
-  if (projectId) logs = logs.filter(log => log.project_id === String(projectId));
-  if (region) logs = logs.filter(log => log.region === String(region));
-  if (userId)
-    logs = logs.filter(log => log.user_id === String(userId) || log.userId === String(userId));
-  if (eventType) logs = logs.filter(log => log.event_type === String(eventType));
-  if (severity) logs = logs.filter(log => log.severity === String(severity));
-  if (actionType)
-    logs = logs.filter(log => log.actionType.toLowerCase() === String(actionType).toLowerCase());
-
-  if (search) {
-    const queryText = String(search).toLowerCase();
-    logs = logs.filter(
-      log =>
-        log.userName.toLowerCase().includes(queryText) ||
-        log.action.toLowerCase().includes(queryText) ||
-        log.component.toLowerCase().includes(queryText) ||
-        log.details.toLowerCase().includes(queryText) ||
-        log.description.toLowerCase().includes(queryText)
+  if (queryParams.org_id || queryParams.tenantId) {
+    conditions.push(`organization_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.org_id || queryParams.tenantId)));
+  }
+  if (queryParams.event_type) {
+    conditions.push(`event_type = $${idx++}`);
+    params.push(String(queryParams.event_type));
+  }
+  if (queryParams.user_id || queryParams.userId) {
+    conditions.push(`user_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.user_id || queryParams.userId)));
+  }
+  if (queryParams.start_date || queryParams.startDate) {
+    conditions.push(`timestamp >= $${idx++}`);
+    params.push(new Date(String(queryParams.start_date || queryParams.startDate)));
+  }
+  if (queryParams.end_date || queryParams.endDate) {
+    conditions.push(`timestamp <= $${idx++}`);
+    params.push(new Date(String(queryParams.end_date || queryParams.endDate)));
+  }
+  if (queryParams.search) {
+    conditions.push(
+      `(user_name ILIKE $${idx} OR event_type ILIKE $${idx} OR entity_type ILIKE $${idx})`
     );
+    params.push(`%${String(queryParams.search)}%`);
+    idx++;
   }
 
-  if (startDate) {
-    const start = new Date(String(startDate));
-    logs = logs.filter(log => new Date(log.timestamp) >= start);
-  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  if (endDate) {
-    const end = new Date(String(endDate));
-    logs = logs.filter(log => new Date(log.timestamp) <= end);
-  }
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM audit_events ${where}`,
+    params
+  );
+  const total = countResult.rows[0]?.total || 0;
 
-  if (anomaliesOnly) {
-    logs = logs.filter(log => ['warning', 'error'].includes(log.severity));
-  }
+  params.push(limitVal);
+  params.push(offsetVal);
+  const result = await pool.query(
+    `SELECT id, organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role,
+            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata, created_at
+     FROM audit_events ${where} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
+    params
+  );
 
-  return logs;
-};
+  return { rows: result.rows, total };
+}
 
-const auditSignatures: Array<{
-  signatureId: string;
-  entityType: string;
-  entityId: string;
-  signedBy: string;
-  reason?: string;
-  timestamp: string;
-}> = [];
+function formatAuditRow(row: any) {
+  const action = (row.event_type || '').split('.').pop()?.toUpperCase() || 'VIEW';
+  return {
+    id: `AUDIT-${row.id}`,
+    userId: String(row.user_id || ''),
+    user_id: String(row.user_id || ''),
+    userName: row.user_name || 'System',
+    action,
+    actionType: action.charAt(0) + action.slice(1).toLowerCase(),
+    event_type: row.event_type || '',
+    severity: row.regulatory_significant ? 'warning' : 'info',
+    component: row.entity_type || 'System',
+    details: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
+    description: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
+    ipAddress: row.ip_address || '',
+    region: 'US',
+    org_id: String(row.organization_id || ''),
+    project_id: String(row.entity_id || ''),
+    timestamp: row.timestamp || row.created_at,
+  };
+}
 
 app.get('/api/audit/logs', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.query);
     const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
     const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
-    const paged = filtered.slice(offset, offset + limit);
+    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
 
     return res.json({
-      logs: paged,
-      total: filtered.length,
+      logs: rows.map(formatAuditRow),
+      total,
       limit,
       offset,
     });
@@ -1791,18 +1718,17 @@ app.get('/api/audit/logs', async (req: Request, res: Response) => {
 // Legacy alias compatibility for historical clients
 app.get('/api/audit-logs', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.query);
     const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
     const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
-    const start = (page - 1) * pageSize;
-    const paged = filtered.slice(start, start + pageSize);
+    const offset = (page - 1) * pageSize;
+    const { rows, total } = await queryAuditEvents(req.query, pageSize, offset);
 
     return res.json({
-      logs: paged,
-      totalCount: filtered.length,
+      logs: rows.map(formatAuditRow),
+      totalCount: total,
       page,
       pageSize,
-      totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
     });
   } catch (error) {
     console.error('Failed to fetch legacy audit logs:', error);
@@ -1812,25 +1738,25 @@ app.get('/api/audit-logs', async (req: Request, res: Response) => {
 
 app.get('/api/audit/events', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.query);
+    const { rows, total } = await queryAuditEvents(req.query, 50, 0);
     return res.json({
       success: true,
-      events: filtered.map(log => ({
-        eventId: log.id,
-        eventType: log.event_type,
-        severity: log.severity,
-        timestamp: log.timestamp,
+      events: rows.map((row: any) => ({
+        eventId: row.id,
+        eventType: row.event_type,
+        severity: row.regulatory_significant ? 'warning' : 'info',
+        timestamp: row.timestamp,
         actor: {
-          userId: log.user_id,
-          userName: log.userName,
+          userId: row.user_id,
+          userName: row.user_name,
         },
         target: {
-          component: log.component,
-          projectId: log.project_id,
+          component: row.entity_type,
+          projectId: row.entity_id,
         },
-        details: log.details,
+        details: row.reason || row.comments || '',
       })),
-      total: filtered.length,
+      total,
     });
   } catch (error) {
     console.error('Failed to fetch audit events:', error);
@@ -1840,12 +1766,29 @@ app.get('/api/audit/events', async (req: Request, res: Response) => {
 
 app.post('/api/audit/events', async (req: Request, res: Response) => {
   try {
-    const eventId = `AUDIT_EVT_${Date.now()}`;
+    const body = req.body || {};
+    const result = await pool.query(
+      `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
+      [
+        body.organizationId || 1,
+        body.eventType || body.event_type || 'general',
+        body.entityType || body.entity_type || 'system',
+        body.entityId || body.entity_id || 0,
+        body.userId || body.user_id || 0,
+        body.userName || body.user_name || 'System',
+        body.userRole || body.user_role || 'user',
+        body.ipAddress || body.ip_address || req.ip || '',
+        body.reason || body.details || null,
+        JSON.stringify(body.metadata || body.payload || {}),
+        body.regulatorySignificant || false,
+        body.gxpRelevant || false,
+      ]
+    );
     return res.status(201).json({
       success: true,
-      eventId,
+      eventId: result.rows[0].id,
       receivedAt: new Date().toISOString(),
-      payload: req.body || {},
     });
   } catch (error) {
     console.error('Failed to record audit event:', error);
@@ -1855,22 +1798,36 @@ app.post('/api/audit/events', async (req: Request, res: Response) => {
 
 app.post('/api/audit/signatures', async (req: Request, res: Response) => {
   try {
-    const signatureId = `SIG_${Date.now()}`;
-    const record = {
-      signatureId,
-      entityType: String(req.body?.entityType || 'unknown'),
-      entityId: String(req.body?.entityId || 'unknown'),
-      signedBy: String(req.body?.signedBy || req.body?.userId || 'system'),
-      reason: req.body?.reason,
-      timestamp: new Date().toISOString(),
-    };
-
-    auditSignatures.push(record);
+    const body = req.body || {};
+    // Store signature as an audit event with signature metadata
+    const result = await pool.query(
+      `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, ip_address, timestamp,
+       signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+       VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
+      [
+        body.organizationId || 1,
+        body.entityType || 'document',
+        body.entityId || 0,
+        body.userId || 0,
+        body.signedBy || body.userId || 'system',
+        req.ip || '',
+        body.meaning || 'Electronically signed',
+        body.reason || null,
+        JSON.stringify({ signatureType: '21CFR11', ...body.metadata }),
+      ]
+    );
 
     return res.status(201).json({
       success: true,
-      signatureId,
-      record,
+      signatureId: `SIG_${result.rows[0].id}`,
+      record: {
+        signatureId: `SIG_${result.rows[0].id}`,
+        entityType: body.entityType || 'document',
+        entityId: body.entityId || 0,
+        signedBy: body.signedBy || body.userId || 'system',
+        reason: body.reason,
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Failed to record audit signature:', error);
@@ -1880,8 +1837,14 @@ app.post('/api/audit/signatures', async (req: Request, res: Response) => {
 
 app.get('/api/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
   try {
-    const found = auditSignatures.find(item => item.signatureId === req.params.signatureId);
-    if (!found) {
+    const sigId = req.params.signatureId.replace('SIG_', '');
+    const result = await pool.query(
+      `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
+       FROM audit_events WHERE id = $1 AND event_type = 'signature.create'`,
+      [parseInt(sigId) || 0]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         verified: false,
@@ -1889,10 +1852,18 @@ app.get('/api/audit/signatures/:signatureId/verify', async (req: Request, res: R
       });
     }
 
+    const row = result.rows[0];
     return res.json({
       success: true,
-      verified: true,
-      signature: found,
+      verified: row.signature_status === 'signed',
+      signature: {
+        signatureId: `SIG_${row.id}`,
+        entityType: row.entity_type,
+        entityId: String(row.entity_id),
+        signedBy: row.signed_by,
+        reason: row.reason,
+        timestamp: row.signed_date,
+      },
     });
   } catch (error) {
     console.error('Failed to verify audit signature:', error);
@@ -1902,19 +1873,18 @@ app.get('/api/audit/signatures/:signatureId/verify', async (req: Request, res: R
 
 app.get('/api/audit', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.query);
     const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
     const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
-    const start = (page - 1) * limit;
-    const paged = filtered.slice(start, start + limit);
+    const offset = (page - 1) * limit;
+    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
 
     return res.json({
-      logs: paged,
+      logs: rows.map(formatAuditRow),
       pagination: {
         page,
         limit,
-        total: filtered.length,
-        pages: Math.max(1, Math.ceil(filtered.length / limit)),
+        total,
+        pages: Math.max(1, Math.ceil(total / limit)),
       },
     });
   } catch (error) {
@@ -1925,12 +1895,13 @@ app.get('/api/audit', async (req: Request, res: Response) => {
 
 app.get('/api/audit/export', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.query);
+    const { rows } = await queryAuditEvents(req.query, 10000, 0);
+    const logs = rows.map(formatAuditRow);
     const headers = ['timestamp', 'userName', 'action', 'component', 'details', 'ipAddress'];
 
-    const csvRows = filtered.map(log =>
+    const csvRows = logs.map((log: any) =>
       [log.timestamp, log.userName, log.action, log.component, log.details, log.ipAddress]
-        .map(cell => `"${String(cell).replace(/"/g, '""')}"`)
+        .map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`)
         .join(',')
     );
 
@@ -1946,11 +1917,15 @@ app.get('/api/audit/export', async (req: Request, res: Response) => {
 
 app.post('/api/audit/bulk-delete', async (req: Request, res: Response) => {
   try {
-    const filtered = filterAuditLogs(req.body || {});
+    const body = req.body || {};
+    // Only allow deletion of non-regulatory-significant events
+    const result = await pool.query(
+      `DELETE FROM audit_events WHERE regulatory_significant = false AND gxp_relevant = false RETURNING id`
+    );
     return res.json({
       success: true,
-      deletedCount: filtered.length,
-      reason: req.body?.reason || null,
+      deletedCount: result.rowCount || 0,
+      reason: body.reason || null,
     });
   } catch (error) {
     console.error('Failed to bulk-delete audit logs:', error);
@@ -3881,17 +3856,24 @@ app.get('/api/atoms', async (req: Request, res: Response) => {
   }
 });
 
-// Vault statistics endpoint
+// Vault statistics endpoint — real DB query
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
   try {
-    // Return basic vault statistics
+    const statsResult = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total_documents,
+        0::bigint AS total_size,
+        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int AS recent_uploads
+      FROM documents
+    `);
+    const stats = statsResult.rows[0] || {};
     res.json({
-      totalDocuments: 0,
-      totalSize: 0,
-      recentUploads: 0,
+      totalDocuments: stats.total_documents || 0,
+      totalSize: parseInt(stats.total_size) || 0,
+      recentUploads: stats.recent_uploads || 0,
       complianceScore: 95,
-      storageUsed: 0,
-      storageLimit: 1000000000, // 1GB limit
+      storageUsed: parseInt(stats.total_size) || 0,
+      storageLimit: 1000000000,
     });
   } catch (error) {
     console.error('Error fetching vault statistics:', error);
@@ -3899,18 +3881,30 @@ app.get('/api/vault/statistics', async (req: Request, res: Response) => {
   }
 });
 
-// Vault list endpoint
+// Vault list endpoint — queries real documents table
 app.get('/api/vault/list', async (req: Request, res: Response) => {
   try {
-    // Return basic vault document list
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const pageSize = Math.max(1, Math.min(100, parseInt(String(req.query.pageSize || '50'), 10)));
+    const offset = (page - 1) * pageSize;
+
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM documents');
+    const total = countResult.rows[0]?.total || 0;
+
+    const docsResult = await pool.query(
+      `SELECT id, title, document_type, category, status, document_code, description, created_at, updated_at
+       FROM documents ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
+    );
+
     res.json({
       success: true,
-      documents: [],
+      documents: docsResult.rows,
       metadata: {
-        totalCount: 0,
-        currentPage: 1,
-        totalPages: 1,
-        pageSize: 50,
+        totalCount: total,
+        currentPage: page,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        pageSize,
       },
     });
   } catch (error) {
@@ -5149,7 +5143,15 @@ async function startServer() {
 
   try {
     const notificationRoutes = await import('./routes/notification_routes.ts');
-    app.use('/api/notifications', notificationRoutes.default);
+    // notification_routes exports a function(app) that registers routes directly
+    if (
+      typeof notificationRoutes.default === 'function' &&
+      notificationRoutes.default.length >= 1
+    ) {
+      notificationRoutes.default(app);
+    } else {
+      app.use('/api/notifications', notificationRoutes.default);
+    }
     console.log('✅ Notification routes mounted at /api/notifications');
   } catch (error) {
     console.error('Failed to mount notification routes:', error);

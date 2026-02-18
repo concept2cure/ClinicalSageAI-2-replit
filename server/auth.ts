@@ -11,6 +11,7 @@ import { eq } from 'drizzle-orm';
 import { users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
+import jwt from 'jsonwebtoken';
 
 const logger = createScopedLogger('auth');
 
@@ -68,7 +69,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   try {
     // 1. Try JWT verification first (primary auth method)
-    const jwt = require('jsonwebtoken');
     const JWT_SECRET =
       process.env.JWT_SECRET ||
       process.env.SESSION_SECRET ||

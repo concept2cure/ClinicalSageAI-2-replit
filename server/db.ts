@@ -20,6 +20,7 @@ let pool: Pool | null = null;
 
 // Get cleaned database URL
 const databaseUrl = getDatabaseUrl();
+const skipDbStartupTest = process.env.SKIP_DB_STARTUP_TEST === 'true';
 
 // Initialize database connection
 try {
@@ -58,8 +59,12 @@ try {
       });
     };
 
-    // Start the connection test with retries
-    testConnection();
+    // Start the connection test with retries unless explicitly skipped
+    if (skipDbStartupTest) {
+      logger.warn('Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)');
+    } else {
+      testConnection();
+    }
 
     // Log database errors
     pool.on('error', err => {

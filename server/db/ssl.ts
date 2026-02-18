@@ -5,12 +5,16 @@ export const requiresSsl = (connectionString?: string): boolean => {
 
   const normalized = connectionString.toLowerCase();
 
+  // Explicitly disabled SSL takes priority
+  if (normalized.includes('sslmode=disable')) {
+    return false;
+  }
+
   return (
-    normalized.startsWith('postgres://') ||
-    normalized.startsWith('postgresql://') ||
     normalized.includes('neon.tech') ||
     normalized.includes('neondb') ||
-    normalized.includes('sslmode=require')
+    normalized.includes('sslmode=require') ||
+    normalized.includes('sslmode=verify')
   );
 };
 

@@ -24,8 +24,8 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "NODE_OPTIONS=\"--trace-warnings\" tsx --inspect server/index.ts",
-    "dev:local": "bash -c 'source scripts/startup.sh && tsx --inspect server/index.ts'",
+    "dev": "bash -lc 'source scripts/startup.sh && main && NODE_OPTIONS=\"--trace-warnings\" tsx --inspect=0 server/index.ts'",
+    "dev:local": "bash -lc 'source scripts/startup.sh && main && NODE_OPTIONS=\"--trace-warnings\" tsx --inspect=0 server/index.ts'",
     "db:ensure": "tsx server/db/ensureCoreTables.ts",
     "db:check-assembly": "node scripts/check_assembly_docs.mjs",
     "smoke:e2e-assembly": "node scripts/e2e_smoke_assembly.mjs",

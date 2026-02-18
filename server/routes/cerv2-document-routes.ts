@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
-import { getDb } from '../db/tenantDbHelper';
+import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -39,12 +39,8 @@ const resolveUserId = (req: any) => {
   return Number.isFinite(parsed) ? parsed : 1;
 };
 
-const tableExists = async (req: any, tableName: string) => {
+const tableExists = async (_req: any, tableName: string) => {
   try {
-    const db = getDb(req);
-    if (!db || !('execute' in db)) {
-      return false;
-    }
     const result = await db.execute(sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
@@ -79,11 +75,6 @@ router.get('/documents', authMiddleware, async (req, res) => {
     return res.json({ documents: [] });
   }
 
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
-  }
-
   try {
     const docs = await db
       .select()
@@ -108,11 +99,6 @@ router.get('/documents/:documentId', authMiddleware, async (req, res) => {
   const documentId = Number(req.params.documentId);
   if (!Number.isFinite(documentId)) {
     return res.status(400).json({ error: 'Invalid document id' });
-  }
-
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   try {
@@ -151,11 +137,6 @@ router.post('/documents/:documentId/save', authMiddleware, async (req, res) => {
   const parsed = saveSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
-  }
-
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   const hasDocsTable = await tableExists(req, 'documents');
@@ -260,6 +241,7 @@ router.post('/documents/:documentId/save', authMiddleware, async (req, res) => {
         changeDescription: 'Auto-save from CERV2 editor',
         changeType: 'auto_save',
         status: 'draft',
+        createdById: userId,
       })
       .returning();
 

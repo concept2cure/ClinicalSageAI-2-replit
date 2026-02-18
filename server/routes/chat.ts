@@ -10,6 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import OpenAI from 'openai';
+import { pool } from '../db.js';
 
 const router = Router();
 
@@ -27,8 +28,43 @@ try {
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Store conversation threads (in production, use database)
-const threads = new Map<string, { messages: any[]; createdAt: Date }>();
+// DB-backed thread helpers
+async function getOrCreateThread(threadId: string | null, userId?: number): Promise<string> {
+  if (threadId) {
+    const existing = await pool.query('SELECT id FROM chat_threads WHERE id = $1', [threadId]);
+    if (existing.rows.length > 0) return threadId;
+  }
+  const newId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  await pool.query(
+    'INSERT INTO chat_threads (id, user_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
+    [newId, userId || null]
+  );
+  return newId;
+}
+
+async function getThreadMessages(
+  threadId: string
+): Promise<Array<{ role: string; content: string }>> {
+  const result = await pool.query(
+    'SELECT role, content FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+    [threadId]
+  );
+  return result.rows;
+}
+
+async function saveMessage(
+  threadId: string,
+  role: string,
+  content: string,
+  model?: string,
+  tokens?: number
+) {
+  await pool.query(
+    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
+    [threadId, role, content, model || null, tokens || 0]
+  );
+  await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
+}
 
 // System prompt for regulatory AI assistant
 const REGULATORY_SYSTEM_PROMPT = `You are Lumen Cortex, an expert AI assistant for regulatory affairs in the life sciences industry. You specialize in:
@@ -285,14 +321,9 @@ router.post('/send-message', async (req: Request, res: Response) => {
       });
     }
 
-    // Get or create thread
-    let threadId = thread_id;
-    if (!threadId) {
-      threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      threads.set(threadId, { messages: [], createdAt: new Date() });
-    }
-
-    const thread = threads.get(threadId) || { messages: [], createdAt: new Date() };
+    // Get or create thread in DB
+    const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
+    const previousMessages = await getThreadMessages(threadId);
 
     let assistantMessage: string;
     let model = 'lumen-cortex-demo';
@@ -301,12 +332,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
     // Try OpenAI first, fall back to intelligent demo responses
     if (openai) {
       try {
-        // Build messages array for OpenAI
         const systemPrompt = system_prompt || REGULATORY_SYSTEM_PROMPT;
 
         const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
           { role: 'system', content: systemPrompt },
-          ...thread.messages.map((m: any) => ({
+          ...previousMessages.map((m: any) => ({
             role: m.role as 'user' | 'assistant',
             content: m.content,
           })),
@@ -337,23 +367,13 @@ router.post('/send-message', async (req: Request, res: Response) => {
         model = 'lumen-cortex-demo';
       }
     } else {
-      // No OpenAI client - use demo mode
       console.log('[Lumen Cortex] Using demo mode (no OpenAI API key)');
       assistantMessage = generateDemoResponse(message);
     }
 
-    // Store messages in thread
-    thread.messages.push({ role: 'user', content: message });
-    thread.messages.push({ role: 'assistant', content: assistantMessage });
-    threads.set(threadId, thread);
-
-    // Cleanup old threads (keep for 24 hours)
-    const now = Date.now();
-    for (const [id, t] of threads.entries()) {
-      if (now - t.createdAt.getTime() > 24 * 60 * 60 * 1000) {
-        threads.delete(id);
-      }
-    }
+    // Save messages to database
+    await saveMessage(threadId, 'user', message, model);
+    await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
 
     res.json({
       answer: assistantMessage,
@@ -374,18 +394,31 @@ router.post('/send-message', async (req: Request, res: Response) => {
 
 /**
  * POST /api/chat/upload
- * Handle file uploads for context
+ * Handle file uploads — stores metadata in file_uploads table
  */
 router.post('/upload', async (req: Request, res: Response) => {
   try {
-    // For now, return a mock file ID
-    // In production, this would handle actual file parsing
-    const fileId = `file_${Date.now()}`;
+    const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const fileName = (req as any).file?.originalname || req.body?.fileName || 'uploaded_file';
+    const mimeType =
+      (req as any).file?.mimetype || req.body?.mimeType || 'application/octet-stream';
+    const fileSize = (req as any).file?.size || req.body?.fileSize || 0;
+
+    // Store in uploads directory
+    const storagePath = `uploads/${fileId}`;
+
+    // Save metadata to DB
+    await pool.query(
+      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
+      [fileId, (req as any).user?.id || null, fileName, mimeType, fileSize, storagePath]
+    );
 
     res.json({
       fileId,
       message: 'File uploaded successfully',
       status: 'ready',
+      fileName,
     });
   } catch (error: any) {
     console.error('[Lumen Cortex] Upload error:', error);
@@ -398,24 +431,28 @@ router.post('/upload', async (req: Request, res: Response) => {
 
 /**
  * GET /api/chat/thread/:threadId
- * Retrieve conversation history
+ * Retrieve conversation history from database
  */
 router.get('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const thread = threads.get(threadId);
+    const threadResult = await pool.query('SELECT id, created_at FROM chat_threads WHERE id = $1', [
+      threadId,
+    ]);
 
-    if (!thread) {
+    if (threadResult.rows.length === 0) {
       return res.status(404).json({
         error: 'Thread not found',
         code: 'THREAD_NOT_FOUND',
       });
     }
 
+    const messages = await getThreadMessages(threadId);
+
     res.json({
       thread_id: threadId,
-      messages: thread.messages,
-      created_at: thread.createdAt,
+      messages,
+      created_at: threadResult.rows[0].created_at,
     });
   } catch (error: any) {
     console.error('[Lumen Cortex] Thread retrieval error:', error);
@@ -428,12 +465,13 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/chat/thread/:threadId
- * Delete a conversation thread
+ * Delete a conversation thread from database
  */
 router.delete('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const deleted = threads.delete(threadId);
+    const result = await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    const deleted = (result.rowCount || 0) > 0;
 
     res.json({
       success: deleted,
@@ -455,11 +493,20 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
 router.get('/health', async (req: Request, res: Response) => {
   const hasApiKey = !!process.env.OPENAI_API_KEY;
 
+  let threadCount = 0;
+  try {
+    const result = await pool.query('SELECT COUNT(*)::int AS count FROM chat_threads');
+    threadCount = result.rows[0]?.count || 0;
+  } catch (e) {
+    /* ignore */
+  }
+
   res.json({
     status: hasApiKey ? 'healthy' : 'degraded',
     service: 'Lumen Cortex Chat',
     openai_configured: hasApiKey,
-    active_threads: threads.size,
+    active_threads: threadCount,
+    persistence: 'postgresql',
     timestamp: new Date().toISOString(),
   });
 });

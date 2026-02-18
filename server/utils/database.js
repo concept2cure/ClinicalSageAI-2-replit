@@ -3,6 +3,7 @@
 import { pool as dbPool, query as baseQuery, transaction as baseTransaction } from '../db.ts';
 
 const pool = dbPool;
+const shouldSkipDbBootstrap = process.env.SKIP_DB_STARTUP_TEST === 'true';
 
 /**
  * Execute a database query with parameters
@@ -50,6 +51,11 @@ export async function transaction(callback) {
  * Initialize database tables if they don't exist
  */
 export async function initializeTables() {
+  if (shouldSkipDbBootstrap) {
+    console.warn('[database] SKIP_DB_STARTUP_TEST=true, skipping table initialization at startup');
+    return;
+  }
+
   try {
     // Create IND Projects table
     await query(`
@@ -104,7 +110,9 @@ export async function initializeTables() {
 }
 
 // Initialize database tables on module load
-initializeTables().catch(console.error);
+if (!shouldSkipDbBootstrap) {
+  initializeTables().catch(console.error);
+}
 
 export default {
   pool,

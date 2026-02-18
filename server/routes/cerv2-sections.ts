@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
-import { getDb } from '../db/tenantDbHelper';
+import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -28,12 +28,8 @@ const resolveUserId = (req: any) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const tableExists = async (req: any, tableName: string) => {
+const tableExists = async (_req: any, tableName: string) => {
   try {
-    const db = getDb(req);
-    if (!db || !('execute' in db)) {
-      return false;
-    }
     const result = await db.execute(sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
@@ -122,10 +118,6 @@ router.get('/', authMiddleware, async (req, res) => {
 
   const rawDocumentId = req.query.document_id;
   const documentId = rawDocumentId ? Number(rawDocumentId) : null;
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
-  }
 
   try {
     const condition = documentId
@@ -157,11 +149,6 @@ router.get('/:sectionId', authMiddleware, async (req, res) => {
   const sectionId = Number(req.params.sectionId);
   if (!Number.isFinite(sectionId)) {
     return res.status(400).json({ error: 'Invalid section id' });
-  }
-
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   try {
@@ -196,11 +183,6 @@ router.post('/', authMiddleware, async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
-  }
-
-  const db = getDb(req);
-  if (!db || !('insert' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   try {
@@ -276,11 +258,6 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
-  }
-
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   try {
@@ -393,11 +370,6 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Invalid section id' });
   }
 
-  const db = getDb(req);
-  if (!db || !('delete' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
-  }
-
   try {
     const deleted = await db
       .delete(cerv2510kSections)
@@ -429,11 +401,6 @@ router.get('/:sectionId/versions', authMiddleware, async (req, res) => {
   const sectionId = Number(req.params.sectionId);
   if (!Number.isFinite(sectionId)) {
     return res.status(400).json({ error: 'Invalid section id' });
-  }
-
-  const db = getDb(req);
-  if (!db || !('select' in db)) {
-    return res.status(503).json({ error: 'Database unavailable' });
   }
 
   try {
