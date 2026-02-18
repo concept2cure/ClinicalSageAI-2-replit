@@ -187,6 +187,126 @@ verify_connection_via_node() {
 }
 
 # ============================================================================
+# NATIVE POSTGRES: Install, start, and seed when Docker is not available
+# ============================================================================
+ensure_native_postgres() {
+    log_info "Docker not available — checking native PostgreSQL..."
+
+    # Install PostgreSQL if not present
+    if ! command -v pg_isready >/dev/null 2>&1; then
+        log_warn "PostgreSQL not installed. Installing..."
+        sudo apt-get update -qq >/dev/null 2>&1
+        sudo apt-get install -y -qq postgresql postgresql-client >/dev/null 2>&1
+        log_success "PostgreSQL installed"
+    fi
+
+    # Start the cluster if it's down
+    local pg_status
+    pg_status=$(sudo pg_lsclusters -h 2>/dev/null | awk '{print $4}' | head -1)
+    if [[ "$pg_status" != "online" ]]; then
+        log_info "Starting PostgreSQL cluster..."
+        sudo pg_ctlcluster 15 main start 2>/dev/null || sudo pg_ctlcluster $(pg_lsclusters -h | awk '{print $1}') main start 2>/dev/null
+        sleep 2
+    fi
+    log_success "PostgreSQL is running"
+
+    # Configure password auth if needed
+    local hba_file="/etc/postgresql/15/main/pg_hba.conf"
+    if [[ -f "$hba_file" ]] && grep -q "peer" "$hba_file"; then
+        sudo sed -i 's/local   all             all                                     peer/local   all             all                                     md5/' "$hba_file"
+        sudo sed -i 's/host    all             all             127.0.0.1\/32            scram-sha-256/host    all             all             127.0.0.1\/32            md5/' "$hba_file"
+        sudo pg_ctlcluster 15 main reload 2>/dev/null
+        log_success "Password auth configured"
+    fi
+
+    # Set postgres user password
+    sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
+
+    # Create the database
+    if ! PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "${DB_NAME}"; then
+        log_info "Creating database '${DB_NAME}'..."
+        sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};" >/dev/null 2>&1
+        log_success "Database '${DB_NAME}' created"
+    else
+        log_success "Database '${DB_NAME}' exists"
+    fi
+
+    # Create vault schema
+    PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE SCHEMA IF NOT EXISTS vault;" >/dev/null 2>&1
+
+    # Install pgvector extension (build from source if needed)
+    if ! PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1; then
+        log_info "Building pgvector from source..."
+        local build_dir="/tmp/pgvector-build"
+        if [[ ! -d "$build_dir" ]]; then
+            git clone --branch v0.7.4 --depth 1 https://github.com/pgvector/pgvector.git "$build_dir" >/dev/null 2>&1
+        fi
+        sudo apt-get install -y -qq postgresql-server-dev-15 >/dev/null 2>&1 || true
+        (cd "$build_dir" && make -j"$(nproc)" >/dev/null 2>&1 && sudo make install >/dev/null 2>&1)
+        PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1
+        log_success "pgvector extension installed"
+    else
+        log_success "pgvector extension ready"
+    fi
+
+    # Create auth tables and seed demo user if not present
+    PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" <<'SEED_SQL' >/dev/null 2>&1
+CREATE TABLE IF NOT EXISTS organizations (
+  id SERIAL PRIMARY KEY,
+  uuid UUID DEFAULT gen_random_uuid() NOT NULL,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  domain TEXT, logo TEXT, industry_mode TEXT, stripe_customer_id TEXT,
+  settings JSONB, api_key TEXT UNIQUE,
+  tier TEXT NOT NULL DEFAULT 'standard',
+  status TEXT NOT NULL DEFAULT 'active',
+  max_users INTEGER DEFAULT 5, max_projects INTEGER DEFAULT 10, max_storage INTEGER DEFAULT 5,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  title TEXT, department TEXT, avatar TEXT, bio TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  last_login TIMESTAMP,
+  default_organization_id INTEGER REFERENCES organizations(id),
+  preferences JSONB,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+CREATE TABLE IF NOT EXISTS organization_users (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  role TEXT NOT NULL DEFAULT 'member',
+  permissions JSONB,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  CONSTRAINT unique_user_org UNIQUE (user_id, organization_id)
+);
+INSERT INTO organizations (name, slug, domain, industry_mode, tier)
+  VALUES ('Concept2Cure Inc.', 'concept2cure', 'concept2cure.pro', 'biotech', 'enterprise')
+  ON CONFLICT (slug) DO NOTHING;
+INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
+  VALUES ('jm.smith@concept2cure.pro', 'JM Smith',
+    '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
+    'Founder', 'Executive', 'active',
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'))
+  ON CONFLICT (email) DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+  VALUES (
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'),
+    (SELECT id FROM users WHERE email = 'jm.smith@concept2cure.pro'),
+    'admin')
+  ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
+SEED_SQL
+    log_success "Auth tables and demo user seeded"
+}
+
+# ============================================================================
 # STEP 2: Verify database connection
 # ============================================================================
 verify_connection() {
@@ -308,6 +428,10 @@ main() {
 
     if [[ $docker_status -eq 0 ]]; then
         ensure_database || fail "Failed to provision local Docker database"
+        export DATABASE_URL="$DEFAULT_DATABASE_URL"
+    elif [[ $docker_status -eq 2 ]]; then
+        # Docker not available — bootstrap PostgreSQL natively
+        ensure_native_postgres || log_warn "Native PostgreSQL setup had issues"
         export DATABASE_URL="$DEFAULT_DATABASE_URL"
     fi
 
