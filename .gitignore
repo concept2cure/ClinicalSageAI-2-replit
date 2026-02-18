@@ -53,3 +53,5 @@ pool.end*
 package-lock.json
 staging-report.json
 postmerge-report.json
+test-results/
+playwright-report/

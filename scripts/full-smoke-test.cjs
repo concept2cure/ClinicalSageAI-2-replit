@@ -205,7 +205,7 @@ async function main() {
     '/api/submission-center',
     '/api/tenants',
     '/api/organizations',
-    '/api/clients',
+    '/api/clients/all',
     '/api/ind',
     '/api/quality',
     '/api/analytics',
