@@ -1,15 +1,15 @@
 /**
  * Redis-based Distributed Rate Limiter
- * 
+ *
  * Enterprise-grade rate limiting for multi-node deployments.
  * Uses Redis for shared state across all server instances.
- * 
+ *
  * Features:
  * - Sliding window algorithm for smooth rate limiting
  * - Per-user, per-organization, and per-IP limits
  * - Configurable rules per endpoint category
  * - Graceful fallback to in-memory when Redis unavailable
- * 
+ *
  * @module server/middleware/redisRateLimiter
  * @version 1.0.0
  */
@@ -64,43 +64,43 @@ let redisAvailable = false;
  */
 export async function initializeRedisRateLimiter(): Promise<boolean> {
   const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-  
+
   if (!redisUrl) {
     logger.warn('REDIS_URL not configured - using in-memory rate limiting');
     return false;
   }
-  
+
   try {
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
-      retryStrategy: (times) => Math.min(times * 100, 2000),
+      retryStrategy: times => Math.min(times * 100, 2000),
       enableReadyCheck: true,
       connectTimeout: 5000,
       lazyConnect: true,
     });
-    
+
     // Test connection
     await redisClient.connect();
     await redisClient.ping();
-    
+
     redisAvailable = true;
     logger.info('Redis rate limiter initialized successfully');
-    
+
     // Handle connection errors gracefully
-    redisClient.on('error', (err) => {
+    redisClient.on('error', err => {
       logger.error('Redis connection error', { error: err.message });
       redisAvailable = false;
     });
-    
+
     redisClient.on('connect', () => {
       redisAvailable = true;
       logger.info('Redis reconnected');
     });
-    
+
     return true;
   } catch (error) {
-    logger.error('Failed to initialize Redis', { 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    logger.error('Failed to initialize Redis', {
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     redisClient = null;
     redisAvailable = false;
@@ -118,8 +118,8 @@ export async function closeRedisRateLimiter(): Promise<void> {
       await redisClient.quit();
       logger.info('Redis rate limiter connection closed');
     } catch (error) {
-      logger.error('Error closing Redis connection', { 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      logger.error('Error closing Redis connection', {
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
     redisClient = null;
@@ -150,19 +150,15 @@ setInterval(() => {
 /**
  * Check rate limit using in-memory store (fallback).
  */
-function checkMemoryRateLimit(
-  key: string,
-  maxRequests: number,
-  windowMs: number
-): RateLimitResult {
+function checkMemoryRateLimit(key: string, maxRequests: number, windowMs: number): RateLimitResult {
   const now = Date.now();
   const entry = memoryStore.get(key);
-  
+
   if (!entry || entry.resetAt < now) {
     memoryStore.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs };
   }
-  
+
   if (entry.count >= maxRequests) {
     return {
       allowed: false,
@@ -171,7 +167,7 @@ function checkMemoryRateLimit(
       retryAfter: Math.ceil((entry.resetAt - now) / 1000),
     };
   }
-  
+
   entry.count++;
   return { allowed: true, remaining: maxRequests - entry.count, resetAt: entry.resetAt };
 }
@@ -191,42 +187,42 @@ async function checkRedisRateLimit(
   if (!redisClient || !redisAvailable) {
     return checkMemoryRateLimit(key, maxRequests, windowMs);
   }
-  
+
   try {
     const now = Date.now();
     const windowStart = now - windowMs;
     const fullKey = `ratelimit:${key}`;
-    
+
     // Use Redis transaction for atomic operations
     const pipeline = redisClient.pipeline();
-    
+
     // Remove old entries outside the window
     pipeline.zremrangebyscore(fullKey, 0, windowStart);
-    
+
     // Count entries in current window
     pipeline.zcard(fullKey);
-    
+
     // Add current request with timestamp as score
     pipeline.zadd(fullKey, now, `${now}:${Math.random().toString(36).slice(2)}`);
-    
+
     // Set expiry on the key
     pipeline.pexpire(fullKey, windowMs);
-    
+
     const results = await pipeline.exec();
-    
+
     if (!results) {
       // Pipeline failed, fall back to memory
       return checkMemoryRateLimit(key, maxRequests, windowMs);
     }
-    
+
     const count = (results[1]?.[1] as number) || 0;
-    
+
     if (count >= maxRequests) {
       // Get the oldest entry to calculate retry time
       const oldest = await redisClient.zrange(fullKey, 0, 0, 'WITHSCORES');
       const oldestTime = oldest.length >= 2 ? parseInt(oldest[1], 10) : now;
       const resetAt = oldestTime + windowMs;
-      
+
       return {
         allowed: false,
         remaining: 0,
@@ -234,16 +230,16 @@ async function checkRedisRateLimit(
         retryAfter: Math.ceil((resetAt - now) / 1000),
       };
     }
-    
+
     return {
       allowed: true,
       remaining: maxRequests - count - 1,
       resetAt: now + windowMs,
     };
   } catch (error) {
-    logger.error('Redis rate limit check failed', { 
+    logger.error('Redis rate limit check failed', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      key 
+      key,
     });
     // Fall back to memory
     return checkMemoryRateLimit(key, maxRequests, windowMs);
@@ -257,18 +253,21 @@ async function checkRedisRateLimit(
 const DEFAULT_RULES: Record<string, RateLimitRule> = {
   // Authentication endpoints
   auth: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 20,
-    message: 'Too many authentication attempts. Please try again later.',
+    windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 1000,
+    maxRequests: process.env.NODE_ENV === 'production' ? 20 : 300,
+    message:
+      process.env.NODE_ENV === 'production'
+        ? 'Too many authentication attempts. Please try again later.'
+        : 'Too many authentication attempts. Please wait briefly and try again.',
   },
-  
+
   // General API
   api: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 100,
     message: 'Too many requests. Please slow down.',
   },
-  
+
   // AI/ML endpoints (resource intensive)
   ai: {
     windowMs: 60 * 1000, // 1 minute
@@ -276,28 +275,28 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
     message: 'Too many AI requests. Please wait before making more.',
     skipRoles: ['admin', 'super_admin'],
   },
-  
+
   // Document generation
   documents: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 20,
     message: 'Too many document requests. Please wait.',
   },
-  
+
   // Concept2Cure specific
   concept2cure: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 100,
     message: 'Rate limit exceeded for Concept2Cure API.',
   },
-  
+
   // Heavy validation endpoints
   validation: {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 10,
     message: 'Too many validation requests.',
   },
-  
+
   // File uploads
   upload: {
     windowMs: 60 * 1000, // 1 minute
@@ -317,7 +316,12 @@ function getCategory(path: string): string {
   if (path.includes('/login') || path.includes('/register') || path.includes('/auth')) {
     return 'auth';
   }
-  if (path.includes('/ai') || path.includes('/generate') || path.includes('/openai') || path.includes('/anthropic')) {
+  if (
+    path.includes('/ai') ||
+    path.includes('/generate') ||
+    path.includes('/openai') ||
+    path.includes('/anthropic')
+  ) {
     return 'ai';
   }
   if (path.includes('/concept2cure')) {
@@ -338,38 +342,33 @@ function getCategory(path: string): string {
 /**
  * Generate rate limit key based on request context.
  */
-function getRateLimitKey(
-  req: Request,
-  category: string,
-  perOrganization: boolean
-): string {
+function getRateLimitKey(req: Request, category: string, perOrganization: boolean): string {
   const parts: string[] = [category];
-  
+
   // Add organization ID if per-org limiting enabled
   if (perOrganization && req.tenantContext?.organizationId) {
     parts.push(`org:${req.tenantContext.organizationId}`);
   }
-  
+
   // Add user ID if authenticated
   if (req.userId) {
     parts.push(`user:${req.userId}`);
   } else {
     // Fall back to IP
-    const ip = req.ip || 
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
-      'unknown';
+    const ip =
+      req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
     parts.push(`ip:${ip}`);
   }
-  
+
   return parts.join(':');
 }
 
 /**
  * Create a Redis-backed rate limiter middleware.
- * 
+ *
  * @param config - Rate limiting configuration
  * @returns Express middleware
- * 
+ *
  * @example
  * ```typescript
  * const limiter = createRedisRateLimiter({
@@ -385,35 +384,47 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
   const rules = { ...DEFAULT_RULES, ...config.rules };
   const keyPrefix = config.keyPrefix || '';
   const perOrganization = config.perOrganization ?? true;
-  
+
   return async function redisRateLimiterMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    // In development, never throttle interactive auth entry points.
+    // This prevents local/demo lockouts while keeping production controls intact.
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      (req.path.includes('/auth/login') ||
+        req.path.includes('/v1/auth/login') ||
+        req.path.includes('/auth/signup') ||
+        req.path.includes('/auth/register'))
+    ) {
+      return next();
+    }
+
     // Skip rate limiting for health checks
     if (req.path.includes('/health') || req.path.includes('/ready')) {
       return next();
     }
-    
+
     const category = getCategory(req.path);
     const rule = rules[category] || rules.api;
-    
+
     // Skip for privileged roles if configured
     if (rule.skipRoles && req.userRole && rule.skipRoles.includes(req.userRole)) {
       return next();
     }
-    
+
     const key = keyPrefix + getRateLimitKey(req, category, perOrganization);
-    
+
     try {
       const result = await checkRedisRateLimit(key, rule.maxRequests, rule.windowMs);
-      
+
       // Set rate limit headers
       res.setHeader('X-RateLimit-Limit', rule.maxRequests);
       res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining));
       res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetAt / 1000));
-      
+
       if (!result.allowed) {
         res.setHeader('Retry-After', result.retryAfter || 60);
         res.status(429).json({
@@ -423,13 +434,13 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
         });
         return;
       }
-      
+
       next();
     } catch (error) {
       // On error, allow the request but log the issue
-      logger.error('Rate limiter error', { 
+      logger.error('Rate limiter error', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        path: req.path 
+        path: req.path,
       });
       next();
     }
@@ -452,12 +463,12 @@ export async function getRateLimitStatus(
       resetAt: entry.resetAt,
     };
   }
-  
+
   try {
     const now = Date.now();
     const fullKey = `ratelimit:${key}`;
     const count = await redisClient.zcount(fullKey, now - windowMs, now);
-    
+
     return {
       count,
       remaining: Math.max(0, 100 - count),
