@@ -280,6 +280,15 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Content (protected)
 function AppContent() {
+  const [location] = useLocation();
+
+  const isConcept2CurePublicRoute =
+    location === '/concept2cure' || location.startsWith('/concept2cure/');
+
+  if (isConcept2CurePublicRoute) {
+    return <MainApp />;
+  }
+
   return (
     <ProtectedRoute>
       <MainApp />

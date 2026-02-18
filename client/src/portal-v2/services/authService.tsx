@@ -525,7 +525,7 @@ export class AuthService {
       this.setAuth(
         {
           accessToken: result.data.accessToken,
-          refreshToken: result.data.refreshToken!,
+          refreshToken: result.data.refreshToken || result.data.accessToken,
           expiresAt: new Date(Date.now() + (result.data.expiresIn || 3600) * 1000),
           tokenType: 'Bearer',
         },
@@ -533,9 +533,16 @@ export class AuthService {
         credentials.rememberDevice
       );
       this.events.emit('login', { user: result.data.user });
+      return { success: true, data: { mfaRequired: false } };
     }
 
-    return { success: true, data: { mfaRequired: false } };
+    return {
+      success: false,
+      error: {
+        code: AUTH_ERROR_CODES.NETWORK_ERROR,
+        message: 'Login response was incomplete. Please try again.',
+      },
+    };
   }
 
   async verifyMfa(verification: MfaVerification): Promise<AuthResult<AuthUser>> {
@@ -764,6 +771,29 @@ export class AuthService {
       this.events.emit('user_updated', { user: result.data });
     }
     return result;
+  }
+
+  setToken(
+    accessToken: string,
+    user?: Partial<AuthUser> | null,
+    refreshToken?: string,
+    expiresInSeconds: number = 3600
+  ): void {
+    this.tokens = {
+      accessToken,
+      refreshToken: refreshToken || accessToken,
+      expiresAt: new Date(Date.now() + expiresInSeconds * 1000),
+      tokenType: 'Bearer',
+    };
+
+    if (user) {
+      this.user = user as AuthUser;
+      this.storeUser();
+    }
+
+    this.storeTokens(true);
+    this.setupTokenRefresh();
+    this.events.emit('login', { user: this.user });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
