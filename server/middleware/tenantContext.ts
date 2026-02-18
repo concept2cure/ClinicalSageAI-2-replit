@@ -83,12 +83,16 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
   const clientWorkspaceId = (req.headers['x-client-id'] as string) || null;
   const module = (req.headers['x-module'] as string) || null;
 
-  // Create tenant context object
+  // Preserve existing tenant context (e.g., set by authMiddleware from JWT)
+  const existing = req.tenantContext || ({} as any);
+
+  // Create tenant context object — header values override, but fall back to existing
   const tenantContext: TenantContext = {
-    organizationId,
-    organizationUuid,
-    clientWorkspaceId,
-    module,
+    organizationId:
+      organizationId || (existing.organizationId != null ? String(existing.organizationId) : null),
+    organizationUuid: organizationUuid || existing.organizationUuid || null,
+    clientWorkspaceId: clientWorkspaceId || existing.clientWorkspaceId || null,
+    module: module || existing.module || null,
   };
 
   // Attach to request

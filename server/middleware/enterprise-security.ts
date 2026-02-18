@@ -307,8 +307,10 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     }
     (req as any).organizationId = user.organizationId;
   } else if (headerOrgId && typeof headerOrgId === 'string') {
-    // Validate UUID format
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(headerOrgId)) {
+    // Validate UUID format or numeric ID or simple alphanumeric
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const simpleRegex = /^[a-z0-9_-]{1,64}$/i;
+    if (!uuidRegex.test(headerOrgId) && !simpleRegex.test(headerOrgId)) {
       return res.status(400).json({
         error: 'Invalid organization ID format',
         code: 'INVALID_ORG_ID',
