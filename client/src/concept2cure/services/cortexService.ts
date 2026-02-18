@@ -1,6 +1,6 @@
 /**
  * Concept2Cure Cortex Service
- * 
+ *
  * Unified connectivity layer for Lumen Cortex and Project Cortex backends.
  * Provides typed access to:
  * - AI chat/reasoning (Lumen Cortex)
@@ -8,11 +8,10 @@
  * - Regulatory intelligence (Project Cortex Data Farmers)
  * - Document analysis and extraction
  * - Submission predictions and risk assessment
- * 
+ *
  * @module concept2cure/services/cortexService
  * @version 3.0.0
  */
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -199,6 +198,21 @@ export class CortexService {
     return payload?.error?.message || payload?.error || fallback;
   }
 
+  private getAuthHeaders(): Record<string, string> {
+    const token =
+      sessionStorage.getItem('trialsage_access_token') ||
+      localStorage.getItem('trialsage_access_token');
+
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  private withAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
+    return {
+      ...headers,
+      ...this.getAuthHeaders(),
+    };
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // HEALTH & STATUS
   // ─────────────────────────────────────────────────────────────────────────────
@@ -208,7 +222,9 @@ export class CortexService {
    */
   async getHealth(): Promise<CortexHealth> {
     try {
-      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.healthEndpoint}`);
+      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.healthEndpoint}`, {
+        headers: this.withAuthHeaders(),
+      });
       if (!response.ok) {
         return {
           status: 'unhealthy',
@@ -252,13 +268,19 @@ export class CortexService {
    * Get Cortex statistics
    */
   async getStats(): Promise<CortexStats> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.statsEndpoint}`);
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.statsEndpoint}`, {
+      headers: this.withAuthHeaders(),
+    });
     if (!response.ok) {
       throw new CortexServiceError('Failed to fetch stats', 'STATS_ERROR', response.status);
     }
     const payload = await response.json().catch(() => ({}));
     if (payload?.success === false) {
-      throw new CortexServiceError(this.getErrorMessage(payload, 'Failed to fetch stats'), 'STATS_ERROR', response.status);
+      throw new CortexServiceError(
+        this.getErrorMessage(payload, 'Failed to fetch stats'),
+        'STATS_ERROR',
+        response.status
+      );
     }
     const data = this.unwrapPayload<any>(payload);
     return {
@@ -296,7 +318,7 @@ export class CortexService {
     try {
       const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           message: params.message,
           thread_id: params.threadId,
@@ -326,17 +348,19 @@ export class CortexService {
         );
       }
       const data = this.unwrapPayload<any>(payload);
-      
+
       return {
         response: data.answer || data.response || '',
         threadId: data.thread_id || params.threadId || crypto.randomUUID(),
         artifacts: this.parseArtifacts(data.answer || data.response || ''),
         citations: data.citations,
-        tokenUsage: data.usage ? {
-          promptTokens: data.usage.prompt_tokens,
-          completionTokens: data.usage.completion_tokens,
-          totalTokens: data.usage.total_tokens,
-        } : undefined,
+        tokenUsage: data.usage
+          ? {
+              promptTokens: data.usage.prompt_tokens,
+              completionTokens: data.usage.completion_tokens,
+              totalTokens: data.usage.total_tokens,
+            }
+          : undefined,
       };
     } finally {
       this.abortController = null;
@@ -371,7 +395,7 @@ export class CortexService {
     try {
       const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           message: params.message,
           thread_id: params.threadId,
@@ -437,7 +461,7 @@ export class CortexService {
   }): Promise<CortexSearchResult[]> {
     const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.searchEndpoint}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         query: params.query,
         atom_types: params.types,
@@ -453,7 +477,11 @@ export class CortexService {
 
     const payload = await response.json().catch(() => ({}));
     if (payload?.success === false) {
-      throw new CortexServiceError(this.getErrorMessage(payload, 'Search failed'), 'SEARCH_ERROR', response.status);
+      throw new CortexServiceError(
+        this.getErrorMessage(payload, 'Search failed'),
+        'SEARCH_ERROR',
+        response.status
+      );
     }
     const data = this.unwrapPayload<any>(payload);
     return (data.results || []).map((r: any) => ({
@@ -482,11 +510,14 @@ export class CortexService {
   }): Promise<CortexSearchResult[]> {
     const response = await fetch(
       `${CORTEX_CONFIG.baseUrl}/management/graph/neighbors/${params.atomId}?` +
-      new URLSearchParams({
-        depth: String(params.depth ?? 1),
-        limit: String(params.limit ?? 10),
-        ...(params.edgeTypes ? { edge_types: params.edgeTypes.join(',') } : {}),
-      })
+        new URLSearchParams({
+          depth: String(params.depth ?? 1),
+          limit: String(params.limit ?? 10),
+          ...(params.edgeTypes ? { edge_types: params.edgeTypes.join(',') } : {}),
+        }),
+      {
+        headers: this.withAuthHeaders(),
+      }
     );
 
     if (!response.ok) {
@@ -495,7 +526,11 @@ export class CortexService {
 
     const payload = await response.json().catch(() => ({}));
     if (payload?.success === false) {
-      throw new CortexServiceError(this.getErrorMessage(payload, 'Graph traversal failed'), 'GRAPH_ERROR', response.status);
+      throw new CortexServiceError(
+        this.getErrorMessage(payload, 'Graph traversal failed'),
+        'GRAPH_ERROR',
+        response.status
+      );
     }
     const data = this.unwrapPayload<any>(payload);
     return (data.neighbors || []).map((n: any) => ({
@@ -529,9 +564,9 @@ export class CortexService {
     if (params?.limit) queryParams.set('limit', String(params.limit));
     if (params?.since) queryParams.set('since', params.since.toISOString());
 
-    const response = await fetch(
-      `${CORTEX_CONFIG.baseUrl}/advisory/signals?${queryParams}`
-    );
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/advisory/signals?${queryParams}`, {
+      headers: this.withAuthHeaders(),
+    });
 
     if (!response.ok) {
       // Return empty array if endpoint not available
@@ -560,9 +595,9 @@ export class CortexService {
    * Get submission predictions
    */
   async getPredictions(submissionId: string): Promise<SubmissionPrediction[]> {
-    const response = await fetch(
-      `${CORTEX_CONFIG.baseUrl}/advisory/predictions/${submissionId}`
-    );
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/advisory/predictions/${submissionId}`, {
+      headers: this.withAuthHeaders(),
+    });
 
     if (!response.ok) {
       return [];
@@ -605,7 +640,10 @@ export class CortexService {
     riskScore: number;
   }> {
     const response = await fetch(
-      `${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.advisoryEndpoint}/${projectId}`
+      `${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.advisoryEndpoint}/${projectId}`,
+      {
+        headers: this.withAuthHeaders(),
+      }
     );
 
     if (!response.ok) {
@@ -652,7 +690,9 @@ export class CortexService {
     if (params?.limit) queryParams.set('limit', String(params.limit));
     if (params?.offset) queryParams.set('offset', String(params.offset));
 
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads?${queryParams}`);
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads?${queryParams}`, {
+      headers: this.withAuthHeaders(),
+    });
 
     if (!response.ok) {
       return [];
@@ -679,7 +719,9 @@ export class CortexService {
    * Get thread with messages
    */
   async getThread(threadId: string): Promise<CortexThread | null> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`);
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
+      headers: this.withAuthHeaders(),
+    });
 
     if (!response.ok) {
       return null;
@@ -717,6 +759,7 @@ export class CortexService {
   async deleteThread(threadId: string): Promise<void> {
     const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
       method: 'DELETE',
+      headers: this.withAuthHeaders(),
     });
 
     if (!response.ok && response.status !== 404) {
@@ -733,7 +776,7 @@ export class CortexService {
    */
   private parseArtifacts(content: string): CortexArtifact[] {
     const artifacts: CortexArtifact[] = [];
-    
+
     // Parse code blocks
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     let match;
@@ -786,6 +829,7 @@ export const cortexQueryKeys = {
   threads: (projectId?: string) => [...cortexQueryKeys.all, 'threads', projectId] as const,
   thread: (id: string) => [...cortexQueryKeys.all, 'thread', id] as const,
   signals: (filters?: object) => [...cortexQueryKeys.all, 'signals', filters] as const,
-  predictions: (submissionId: string) => [...cortexQueryKeys.all, 'predictions', submissionId] as const,
+  predictions: (submissionId: string) =>
+    [...cortexQueryKeys.all, 'predictions', submissionId] as const,
   advisory: (projectId: string) => [...cortexQueryKeys.all, 'advisory', projectId] as const,
 } as const;

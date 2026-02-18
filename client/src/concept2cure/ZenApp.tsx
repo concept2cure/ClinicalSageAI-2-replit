@@ -6,7 +6,7 @@
  * @description
  * The "New iPhone" of regulatory intelligence - complete minimalist application.
  * Combines all zen components into a cohesive, elegant experience.
- * 
+ *
  * NOW CONNECTED TO:
  * - Lumen Cortex (AI chat)
  * - Project Cortex (data harvesting)
@@ -60,7 +60,9 @@ import {
 } from 'lucide-react';
 
 // Lazy load the Convergent Canvas for the Sherpa System
-const ConvergentCanvas = lazy(() => import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas })));
+const ConvergentCanvas = lazy(() =>
+  import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -122,21 +124,29 @@ const TOOL_PANELS: Record<
   sop: { title: 'SOP Management', icon: BookOpen, component: 'SOPManagement' },
   capa: { title: 'CAPA Management', icon: AlertTriangle, component: 'CAPAManagement' },
   pms: { title: 'Post-Market Surveillance', icon: BarChart2, component: 'PostMarketSurveillance' },
-  inspection: { title: 'Inspection Readiness', icon: CheckSquare, component: 'InspectionReadiness' },
-  intelligence: { title: 'Regulatory Intelligence', icon: Globe, component: 'RegulatoryIntelligence' },
+  inspection: {
+    title: 'Inspection Readiness',
+    icon: CheckSquare,
+    component: 'InspectionReadiness',
+  },
+  intelligence: {
+    title: 'Regulatory Intelligence',
+    icon: Globe,
+    component: 'RegulatoryIntelligence',
+  },
 };
 
 // Helper to get project color by type
 function getProjectColor(type: string): string {
   const colors: Record<string, string> = {
     '510K': 'blue',
-    'IND': 'purple',
-    'NDA': 'green',
-    'BLA': 'orange',
-    'PMA': 'red',
-    'MAA': 'pink',
-    'DE_NOVO': 'amber',
-    'EUA': 'cyan',
+    IND: 'purple',
+    NDA: 'green',
+    BLA: 'orange',
+    PMA: 'red',
+    MAA: 'pink',
+    DE_NOVO: 'amber',
+    EUA: 'cyan',
   };
   return colors[type] || 'gray';
 }
@@ -190,11 +200,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
             className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
-            {isFullscreen ? (
-              <Minimize2 className="w-4 h-4" />
-            ) : (
-              <Maximize2 className="w-4 h-4" />
-            )}
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           <button
             onClick={onClose}
@@ -213,12 +219,10 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
               <Icon className="w-8 h-8 text-zinc-500" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-              {config.title}
-            </h3>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
             <p className="text-sm text-zinc-500 max-w-sm">
-              This module is ready. The {config.component} component will render here
-              with full functionality.
+              This module is ready. The {config.component} component will render here with full
+              functionality.
             </p>
           </div>
         </div>
@@ -250,7 +254,7 @@ export const ZenApp: React.FC = () => {
 
   // Transform projects for UI
   const projects = useMemo(() => {
-    return rawProjects.map((p) => ({
+    return rawProjects.map(p => ({
       id: p.id,
       name: p.name,
       type: p.submissionType,
@@ -286,9 +290,7 @@ export const ZenApp: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('assistant');
 
   // Active selection
-  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
-    projects[0]?.id
-  );
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
@@ -297,7 +299,7 @@ export const ZenApp: React.FC = () => {
 
   // Transform threads to conversations for sidebar
   const conversations = useMemo(() => {
-    return threads.map((t) => ({
+    return threads.map(t => ({
       id: t.id,
       title: t.title || 'New conversation',
       projectId: t.projectId || activeProjectId || '',
@@ -313,6 +315,12 @@ export const ZenApp: React.FC = () => {
       setActiveProjectId(projects[0].id);
     }
   }, [projects, activeProjectId]);
+
+  const handleNewChat = useCallback(() => {
+    // Clear active conversation/thread to start fresh
+    setActiveConversationId(undefined);
+    setActiveThreadId(undefined);
+  }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS
@@ -353,19 +361,16 @@ export const ZenApp: React.FC = () => {
   // HANDLERS
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread to start fresh
-    setActiveConversationId(undefined);
-    setActiveThreadId(undefined);
-  }, []);
-
-  const handleDeleteConversation = useCallback((id: string) => {
-    // Threads are managed by Cortex - would call deleteThread mutation
-    if (activeConversationId === id) {
-      setActiveConversationId(undefined);
-      setActiveThreadId(undefined);
-    }
-  }, [activeConversationId]);
+  const handleDeleteConversation = useCallback(
+    (id: string) => {
+      // Threads are managed by Cortex - would call deleteThread mutation
+      if (activeConversationId === id) {
+        setActiveConversationId(undefined);
+        setActiveThreadId(undefined);
+      }
+    },
+    [activeConversationId]
+  );
 
   const handleToggleConversationStar = useCallback((id: string) => {
     // Would update thread metadata via Cortex
@@ -382,70 +387,76 @@ export const ZenApp: React.FC = () => {
     setActiveConversationId(threadId);
   }, []);
 
-  const handleCommandAction = useCallback((actionId: string) => {
-    console.log('Command action:', actionId);
+  const handleCommandAction = useCallback(
+    (actionId: string) => {
+      console.log('Command action:', actionId);
 
-    // Handle tool panel opens
-    if (actionId.startsWith('tool-')) {
-      const panel = actionId.replace('tool-', '') as ToolPanel;
-      setActiveToolPanel(panel);
-      setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
-      setCommandPaletteOpen(false);
-      return;
-    }
+      // Handle tool panel opens
+      if (actionId.startsWith('tool-')) {
+        const panel = actionId.replace('tool-', '') as ToolPanel;
+        setActiveToolPanel(panel);
+        setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
+        setCommandPaletteOpen(false);
+        return;
+      }
 
-    // Handle other actions
-    switch (actionId) {
-      case 'new-chat':
-        handleNewChat();
-        setCommandPaletteOpen(false);
-        break;
-      case 'new-510k':
-      case 'new-ind':
-      case 'new-nda':
-      case 'new-bla':
-      case 'new-pma':
-        setNewProjectOpen(true);
-        setCommandPaletteOpen(false);
-        break;
-      case 'settings-account':
-      case 'settings-org':
-      case 'settings':
-        setSettingsOpen(true);
-        setCommandPaletteOpen(false);
-        break;
-      case 'projects':
-        setProjectSwitcherOpen(true);
-        setCommandPaletteOpen(false);
-        break;
-    }
-  }, [handleNewChat]);
+      // Handle other actions
+      switch (actionId) {
+        case 'new-chat':
+          handleNewChat();
+          setCommandPaletteOpen(false);
+          break;
+        case 'new-510k':
+        case 'new-ind':
+        case 'new-nda':
+        case 'new-bla':
+        case 'new-pma':
+          setNewProjectOpen(true);
+          setCommandPaletteOpen(false);
+          break;
+        case 'settings-account':
+        case 'settings-org':
+        case 'settings':
+          setSettingsOpen(true);
+          setCommandPaletteOpen(false);
+          break;
+        case 'projects':
+          setProjectSwitcherOpen(true);
+          setCommandPaletteOpen(false);
+          break;
+      }
+    },
+    [handleNewChat]
+  );
 
-  const handleLayoutModeChange = useCallback((mode: LayoutMode) => {
-    setLayoutMode(mode);
+  const handleLayoutModeChange = useCallback(
+    (mode: LayoutMode) => {
+      setLayoutMode(mode);
 
-    if (mode === 'assistant' || mode === 'sherpa') {
+      if (mode === 'assistant' || mode === 'sherpa') {
+        setActiveToolPanel(null);
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      if (mode === 'ctd') {
+        setActiveToolPanel('ectd');
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      if (mode === 'editor') {
+        setActiveToolPanel(activeToolPanel || 'protocol');
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      // Analytics, timeline, audit modes are full-width content (hide tool panel)
       setActiveToolPanel(null);
       setToolPanelFullscreen(false);
-      return;
-    }
-
-    if (mode === 'ctd') {
-      setActiveToolPanel('ectd');
-      setToolPanelFullscreen(false);
-      return;
-    }
-
-    if (mode === 'editor') {
-      setActiveToolPanel(activeToolPanel || 'protocol');
-      setToolPanelFullscreen(false);
-      return;
-    }
-
-    // Analytics, timeline, audit modes are full-width content (hide tool panel)
-    setActiveToolPanel(null);
-    setToolPanelFullscreen(false);
-  }, [activeToolPanel]);
+    },
+    [activeToolPanel]
+  );
 
   const handleCreateProject = useCallback(
     async (data: { name: string; type: string; description?: string }) => {
@@ -466,7 +477,7 @@ export const ZenApp: React.FC = () => {
 
   const handleArchiveProject = useCallback(
     async (id: string) => {
-      const project = rawProjects.find((p) => p.id === id);
+      const project = rawProjects.find(p => p.id === id);
       if (project) {
         await updateProjectMutation({
           ...project,
@@ -481,7 +492,7 @@ export const ZenApp: React.FC = () => {
     async (id: string) => {
       await deleteProjectMutation(id);
       if (activeProjectId === id && projects.length > 1) {
-        setActiveProjectId(projects.find((p) => p.id !== id)?.id);
+        setActiveProjectId(projects.find(p => p.id !== id)?.id);
       }
     },
     [activeProjectId, projects, deleteProjectMutation]
@@ -489,7 +500,7 @@ export const ZenApp: React.FC = () => {
 
   const handleToggleProjectStar = useCallback(
     async (id: string) => {
-      const project = rawProjects.find((p) => p.id === id);
+      const project = rawProjects.find(p => p.id === id);
       if (project) {
         await updateProjectMutation({
           ...project,
@@ -504,7 +515,7 @@ export const ZenApp: React.FC = () => {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  const activeProject = projects.find(p => p.id === activeProjectId);
 
   const contextMetrics = {
     deadlineDays: 47,
@@ -514,7 +525,11 @@ export const ZenApp: React.FC = () => {
     auditStatus: 'Audit trail active',
   };
 
-  const layoutModes: { id: LayoutMode; label: string; icon?: React.ComponentType<{ className?: string }> }[] = [
+  const layoutModes: {
+    id: LayoutMode;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[] = [
     { id: 'assistant', label: 'Assistant' },
     { id: 'sherpa', label: 'Sherpa', icon: Compass },
     { id: 'editor', label: 'Editor' },
@@ -586,7 +601,9 @@ export const ZenApp: React.FC = () => {
   const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
   const userRole = userProfile?.role || 'Regulatory Lead';
   const rawIndustry = userProfile?.preferences?.industryMode;
-  const industryMode = normalizeIndustryMode(typeof rawIndustry === 'string' ? rawIndustry : undefined);
+  const industryMode = normalizeIndustryMode(
+    typeof rawIndustry === 'string' ? rawIndustry : undefined
+  );
   const rawDisplayName = userProfile?.preferences?.displayName;
   const userName = typeof rawDisplayName === 'string' ? rawDisplayName : 'User';
 
@@ -700,21 +717,21 @@ export const ZenApp: React.FC = () => {
           --zen-border: #E4E4E7;
           --zen-accent: #2563EB;
         }
-        
+
         .zen-scroll::-webkit-scrollbar {
           width: 6px;
           height: 6px;
         }
-        
+
         .zen-scroll::-webkit-scrollbar-track {
           background: transparent;
         }
-        
+
         .zen-scroll::-webkit-scrollbar-thumb {
           background-color: #E4E4E7;
           border-radius: 9999px;
         }
-        
+
         .zen-scroll::-webkit-scrollbar-thumb:hover {
           background-color: #D4D4D8;
         }
@@ -736,7 +753,7 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
-        onSelectConversation={(id) => {
+        onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
         }}
@@ -747,7 +764,7 @@ export const ZenApp: React.FC = () => {
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
-        onNavigate={(id) => {
+        onNavigate={id => {
           switch (id) {
             case 'home':
               setLayoutMode('assistant');
@@ -831,7 +848,7 @@ export const ZenApp: React.FC = () => {
 
           {/* Layout Mode Switcher */}
           <div className="flex items-center gap-2 px-4 pb-2">
-            {layoutModes.map((mode) => (
+            {layoutModes.map(mode => (
               <button
                 key={mode.id}
                 onClick={() => handleLayoutModeChange(mode.id)}
@@ -962,7 +979,7 @@ export const ZenApp: React.FC = () => {
                         Active Agents
                       </div>
                       <div className="mt-3 space-y-2">
-                        {agentRoster.map((agent) => (
+                        {agentRoster.map(agent => (
                           <div
                             key={agent.id}
                             className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
@@ -1016,10 +1033,7 @@ export const ZenApp: React.FC = () => {
       />
 
       {/* Settings */}
-      <ZenSettings
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
+      <ZenSettings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher
@@ -1027,7 +1041,7 @@ export const ZenApp: React.FC = () => {
         onClose={() => setProjectSwitcherOpen(false)}
         projects={projects}
         activeProjectId={activeProjectId}
-        onSelectProject={(id) => {
+        onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
           // Clear conversation when switching projects

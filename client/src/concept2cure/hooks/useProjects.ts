@@ -2,15 +2,15 @@
  * @fileoverview Concept2Cure Projects API Hook
  * @module concept2cure/hooks/useProjects
  * @version 2.0.0
- * 
+ *
  * @description
  * Handles project CRUD operations with database persistence.
  * Falls back to localStorage for offline/demo mode.
- * 
+ *
  * @compliance
  * - FDA 21 CFR Part 11: Audit trail maintained server-side
  * - Data persistence with automatic backup to localStorage
- * 
+ *
  * @see {@link https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application}
  */
 
@@ -22,6 +22,14 @@ const STORAGE_KEY = 'concept2cure_projects';
 
 /** Feature flag to enable API-first approach with fallback */
 const USE_API = true;
+
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    sessionStorage.getItem('trialsage_access_token') ||
+    localStorage.getItem('trialsage_access_token');
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 /**
  * Retrieves projects from localStorage
@@ -37,15 +45,17 @@ function getStoredProjects(): Project[] {
         ...p,
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
-        conversations: p.conversations?.map((c: any) => ({
-          ...c,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-          messages: c.messages?.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
+        conversations:
+          p.conversations?.map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+            messages:
+              c.messages?.map((m: any) => ({
+                ...m,
+                timestamp: new Date(m.timestamp),
+              })) || [],
           })) || [],
-        })) || [],
       }));
     }
   } catch (e) {
@@ -82,10 +92,14 @@ function saveStoredProjects(projects: Project[]): void {
  * @private
  */
 async function fetchProjectsFromAPI(): Promise<Project[]> {
-  const response = await fetch('/api/concept2cure/projects');
+  const response = await fetch('/api/concept2cure/projects', {
+    headers: getAuthHeaders(),
+  });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`);
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`
+    );
   }
   return payload?.data ?? payload;
 }
@@ -97,15 +111,22 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
  * @throws {Error} If API request fails
  * @private
  */
-async function createProjectAPI(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
+async function createProjectAPI(
+  project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<Project> {
   const response = await fetch('/api/concept2cure/projects', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify(project),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`);
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`
+    );
   }
   return payload?.data ?? payload;
 }
@@ -120,12 +141,17 @@ async function createProjectAPI(project: Omit<Project, 'id' | 'createdAt' | 'upd
 async function updateProjectAPI(project: Project): Promise<Project> {
   const response = await fetch(`/api/concept2cure/projects/${project.id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify(project),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`);
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`
+    );
   }
   return payload?.data ?? payload;
 }
@@ -139,27 +165,30 @@ async function updateProjectAPI(project: Project): Promise<Project> {
 async function deleteProjectAPI(projectId: string): Promise<void> {
   const response = await fetch(`/api/concept2cure/projects/${projectId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.error?.message || payload?.error || `Failed to delete project: ${response.status}`);
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to delete project: ${response.status}`
+    );
   }
 }
 
 /**
  * React Query hook for managing Concept2Cure projects
- * 
+ *
  * @description
  * Provides CRUD operations for regulatory submission projects with:
  * - API-first approach with automatic localStorage fallback
  * - Optimistic updates for better UX
  * - Automatic cache invalidation
  * - Rate limit handling
- * 
+ *
  * @example
  * ```tsx
  * const { projects, createProject, isCreating } = useProjects();
- * 
+ *
  * const handleCreate = async () => {
  *   const project = await createProject({
  *     name: 'My Device',
@@ -167,7 +196,7 @@ async function deleteProjectAPI(projectId: string): Promise<void> {
  *   });
  * };
  * ```
- * 
+ *
  * @returns {Object} Project operations and state
  */
 export function useProjects() {
@@ -198,7 +227,11 @@ export function useProjects() {
 
   // Create project mutation
   const createProject = useMutation({
-    mutationFn: async (data: { name: string; submissionType: SubmissionType; description?: string }) => {
+    mutationFn: async (data: {
+      name: string;
+      submissionType: SubmissionType;
+      description?: string;
+    }) => {
       if (USE_API) {
         try {
           const result = await createProjectAPI(data);
@@ -207,7 +240,7 @@ export function useProjects() {
           console.warn('API create failed, using localStorage fallback:', e);
         }
       }
-      
+
       // Fallback to localStorage
       const newProject: Project = {
         id: `proj_${Date.now()}`,
@@ -232,7 +265,7 @@ export function useProjects() {
   const updateProject = useMutation({
     mutationFn: async (project: Project) => {
       const updatedProject = { ...project, updatedAt: new Date() };
-      
+
       if (USE_API) {
         try {
           return await updateProjectAPI(updatedProject);
@@ -240,7 +273,7 @@ export function useProjects() {
           console.warn('API update failed, using localStorage fallback:', e);
         }
       }
-      
+
       // Fallback to localStorage
       const projects = getStoredProjects();
       const index = projects.findIndex(p => p.id === project.id);
@@ -266,7 +299,7 @@ export function useProjects() {
           console.warn('API delete failed, using localStorage fallback:', e);
         }
       }
-      
+
       // Fallback to localStorage
       const projects = getStoredProjects();
       const filtered = projects.filter(p => p.id !== projectId);
@@ -285,13 +318,18 @@ export function useProjects() {
         try {
           const response = await fetch(`/api/concept2cure/projects/${projectId}/conversations`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders(),
+            },
             body: JSON.stringify({ title }),
           });
           if (response.ok) {
             const payload = await response.json().catch(() => ({}));
             if (payload?.success === false) {
-              throw new Error(payload?.error?.message || payload?.error || 'Failed to create conversation');
+              throw new Error(
+                payload?.error?.message || payload?.error || 'Failed to create conversation'
+              );
             }
             return payload?.data ?? payload;
           }
@@ -299,11 +337,11 @@ export function useProjects() {
           console.warn('API conversation create failed, using localStorage fallback:', e);
         }
       }
-      
+
       // Fallback to localStorage
       const projects = getStoredProjects();
       const project = projects.find(p => p.id === projectId);
-      
+
       if (!project) {
         throw new Error('Project not found');
       }
@@ -330,11 +368,17 @@ export function useProjects() {
 
   // Update conversation (add messages, update title)
   const updateConversation = useMutation({
-    mutationFn: async ({ projectId, conversation }: { projectId: string; conversation: Conversation }) => {
+    mutationFn: async ({
+      projectId,
+      conversation,
+    }: {
+      projectId: string;
+      conversation: Conversation;
+    }) => {
       // For now, use localStorage for conversation updates (API would need full sync)
       const projects = getStoredProjects();
       const project = projects.find(p => p.id === projectId);
-      
+
       if (!project) {
         throw new Error('Project not found');
       }
@@ -379,15 +423,19 @@ export function useProject(projectId: string | null) {
     queryKey: ['concept2cure-project', projectId],
     queryFn: async () => {
       if (!projectId) return null;
-      
+
       // Try API first
       if (USE_API) {
         try {
-          const response = await fetch(`/api/concept2cure/projects/${projectId}`);
+          const response = await fetch(`/api/concept2cure/projects/${projectId}`, {
+            headers: getAuthHeaders(),
+          });
           if (response.ok) {
             const payload = await response.json().catch(() => ({}));
             if (payload?.success === false) {
-              throw new Error(payload?.error?.message || payload?.error || 'Failed to fetch project');
+              throw new Error(
+                payload?.error?.message || payload?.error || 'Failed to fetch project'
+              );
             }
             return payload?.data ?? payload;
           }
@@ -395,7 +443,7 @@ export function useProject(projectId: string | null) {
           console.warn('API project fetch failed, using localStorage fallback:', e);
         }
       }
-      
+
       const projects = getStoredProjects();
       return projects.find(p => p.id === projectId) || null;
     },
