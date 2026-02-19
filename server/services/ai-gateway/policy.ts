@@ -1,0 +1,159 @@
+/**
+ * AI Gateway — Policy Engine
+ *
+ * Enforces organizational policies, rate limits, content filters,
+ * and token budgets before AI requests are executed.
+ */
+
+import type { GatewayRequest, PolicyConfig } from './types';
+
+export interface PolicyResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+// In-memory rate limit tracking
+interface RateBucket {
+  count: number;
+  windowStart: number;
+}
+
+const DEFAULT_POLICY: PolicyConfig = {
+  maxTokensPerRequest: 128_000,
+  maxRequestsPerMinutePerOrg: 120,
+  maxRequestsPerMinutePerUser: 30,
+  blockedPatterns: [],
+  contentFilters: true,
+  piiDetection: false,
+};
+
+export class GatewayPolicyEngine {
+  private config: PolicyConfig;
+
+  // Rate limit: Map<org/global key, bucket>
+  private rateBuckets: Map<string, RateBucket> = new Map();
+
+  // Daily cost accumulator: Map<org/global key, {date: string, totalCost: number}>
+  private dailyCost: Map<string, { date: string; total: number }> = new Map();
+
+  constructor(config?: Partial<PolicyConfig>) {
+    this.config = { ...DEFAULT_POLICY, ...config };
+  }
+
+  /**
+   * Evaluate a request against all active policies.
+   */
+  evaluate(request: GatewayRequest): PolicyResult {
+    // 1. Token budget
+    const tokenResult = this.checkTokenBudget(request);
+    if (!tokenResult.allowed) return tokenResult;
+
+    // 2. Blocked content patterns
+    const contentResult = this.checkBlockedPatterns(request);
+    if (!contentResult.allowed) return contentResult;
+
+    // 3. Rate limit (per org)
+    const rateResult = this.checkRateLimit(request);
+    if (!rateResult.allowed) return rateResult;
+
+    return { allowed: true };
+  }
+
+  /**
+   * Record cost for daily budget tracking.
+   */
+  recordCost(orgId: string | undefined, cost: number): void {
+    const key = orgId || '__global__';
+    const today = new Date().toISOString().slice(0, 10);
+    const bucket = this.dailyCost.get(key);
+    if (bucket && bucket.date === today) {
+      bucket.total += cost;
+    } else {
+      this.dailyCost.set(key, { date: today, total: cost });
+    }
+  }
+
+  /**
+   * Update policy configuration.
+   */
+  updateConfig(patch: Partial<PolicyConfig>): void {
+    this.config = { ...this.config, ...patch };
+  }
+
+  /**
+   * Get current config (for admin/debug).
+   */
+  getConfig(): PolicyConfig {
+    return { ...this.config };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Individual Policy Checks
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private checkTokenBudget(request: GatewayRequest): PolicyResult {
+    if (request.maxTokens && request.maxTokens > this.config.maxTokensPerRequest) {
+      return {
+        allowed: false,
+        reason: `Requested maxTokens (${request.maxTokens}) exceeds policy limit (${this.config.maxTokensPerRequest})`,
+      };
+    }
+    return { allowed: true };
+  }
+
+  private checkBlockedPatterns(request: GatewayRequest): PolicyResult {
+    if (!this.config.blockedPatterns || this.config.blockedPatterns.length === 0) {
+      return { allowed: true };
+    }
+
+    // Check all message content against blocked patterns
+    const textsToCheck: string[] = [];
+
+    if (request.messages) {
+      for (const msg of request.messages) {
+        if (typeof msg.content === 'string') {
+          textsToCheck.push(msg.content);
+        }
+      }
+    }
+
+    for (const pattern of this.config.blockedPatterns) {
+      const regex = new RegExp(pattern, 'i');
+      for (const text of textsToCheck) {
+        if (regex.test(text)) {
+          return {
+            allowed: false,
+            reason: `Content matched blocked pattern: ${pattern}`,
+          };
+        }
+      }
+    }
+
+    return { allowed: true };
+  }
+
+  private checkRateLimit(request: GatewayRequest): PolicyResult {
+    const key = request.organizationId?.toString() || '__global__';
+    const now = Date.now();
+    const windowMs = 60_000; // 1 minute
+
+    let bucket = this.rateBuckets.get(key);
+
+    // Reset bucket if window expired
+    if (!bucket || now - bucket.windowStart > windowMs) {
+      bucket = { count: 0, windowStart: now };
+      this.rateBuckets.set(key, bucket);
+    }
+
+    bucket.count++;
+
+    if (bucket.count > this.config.maxRequestsPerMinutePerOrg) {
+      return {
+        allowed: false,
+        reason: `Rate limit exceeded: ${bucket.count}/${this.config.maxRequestsPerMinutePerOrg} requests per minute`,
+      };
+    }
+
+    return { allowed: true };
+  }
+}

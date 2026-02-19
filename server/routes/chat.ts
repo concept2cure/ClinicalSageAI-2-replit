@@ -9,21 +9,23 @@
  */
 
 import { Router, Request, Response } from 'express';
-import OpenAI from 'openai';
+import { getGateway } from '../services/ai-gateway/index.js';
+import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import { pool } from '../db.js';
 
 const router = Router();
 
-// Initialize OpenAI client (may fail if key is invalid)
-let openai: OpenAI | null = null;
-try {
-  if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+// AI Gateway instance (lazy-initialized on first request)
+let gateway: ReturnType<typeof getGateway> | null = null;
+function ensureGateway() {
+  if (!gateway) {
+    try {
+      gateway = getGateway();
+    } catch (e) {
+      console.warn('[Lumen Cortex] AI Gateway initialization failed, using demo mode');
+    }
   }
-} catch (e) {
-  console.warn('[Lumen Cortex] OpenAI initialization failed, using demo mode');
+  return gateway;
 }
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -329,45 +331,53 @@ router.post('/send-message', async (req: Request, res: Response) => {
     let model = 'lumen-cortex-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
-    // Try OpenAI first, fall back to intelligent demo responses
-    if (openai) {
+    // Route through AI Gateway — falls back to demo responses
+    const gw = ensureGateway();
+    if (gw && gw.getEnabledProviders().length > 0) {
       try {
         const systemPrompt = system_prompt || REGULATORY_SYSTEM_PROMPT;
 
-        const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-          { role: 'system', content: systemPrompt },
+        const gwMessages = [
+          { role: 'system' as const, content: systemPrompt },
           ...previousMessages.map((m: any) => ({
             role: m.role as 'user' | 'assistant',
             content: m.content,
           })),
-          { role: 'user', content: message },
+          { role: 'user' as const, content: message },
         ];
 
-        console.log('[Lumen Cortex] Sending message to OpenAI...');
+        console.log('[Lumen Cortex] Sending message through AI Gateway...');
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages,
+        const gwResponse: GatewayResponse = await gw.route({
+          taskType: 'chat',
+          messages: gwMessages,
           temperature: 0.7,
-          max_tokens: 2000,
-          presence_penalty: 0.1,
-          frequency_penalty: 0.1,
+          maxTokens: 2000,
+          callerModule: 'lumen-cortex-chat',
+          organizationId: (req as any).tenantId || (req as any).tenantContext?.organizationId,
+          userId: (req as any).userId,
         });
 
         assistantMessage =
-          completion.choices[0]?.message?.content ||
+          gwResponse.content ||
           'I apologize, but I was unable to generate a response. Please try again.';
-        model = completion.model;
-        usage = completion.usage || usage;
+        model = `${gwResponse.provider}/${gwResponse.model}`;
+        usage = {
+          prompt_tokens: gwResponse.usage.inputTokens,
+          completion_tokens: gwResponse.usage.outputTokens,
+          total_tokens: gwResponse.usage.totalTokens,
+        };
 
-        console.log('[Lumen Cortex] OpenAI response generated successfully');
-      } catch (openAIError: any) {
-        console.warn('[Lumen Cortex] OpenAI call failed, using demo mode:', openAIError.message);
+        console.log(
+          `[Lumen Cortex] AI Gateway response via ${model} (${gwResponse.latencyMs}ms, req=${gwResponse.requestId})`
+        );
+      } catch (gwError: any) {
+        console.warn('[Lumen Cortex] AI Gateway call failed, using demo mode:', gwError.message);
         assistantMessage = generateDemoResponse(message);
         model = 'lumen-cortex-demo';
       }
     } else {
-      console.log('[Lumen Cortex] Using demo mode (no OpenAI API key)');
+      console.log('[Lumen Cortex] Using demo mode (no AI providers available)');
       assistantMessage = generateDemoResponse(message);
     }
 

@@ -20,11 +20,11 @@
  * @version 2.0.0 - Project Cortex
  */
 
-import OpenAI from 'openai';
+import { getGateway } from './ai-gateway/index.js';
 import { pool } from '../db';
 
-// Initialize clients
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// AI Gateway instance (replaces direct OpenAI client)
+const getGw = () => getGateway();
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -750,8 +750,8 @@ ${memory
   .map(m => `- ${m.eventType}: ${m.description?.substring(0, 100)}`)
   .join('\n')}`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+    const gwResponse = await getGw().route({
+      taskType: 'regulatory_review',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -765,11 +765,13 @@ ${memory
 Format as JSON array with fields: title, description, actionItems (array), priority, pyramidLevel`,
         },
       ],
-      response_format: { type: 'json_object' },
+      jsonMode: true,
       temperature: 0.3,
+      callerModule: 'cognitiveAdvisoryService',
+      organizationId: context.id,
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = gwResponse.content;
     if (!content) return [];
 
     const parsed = JSON.parse(content);

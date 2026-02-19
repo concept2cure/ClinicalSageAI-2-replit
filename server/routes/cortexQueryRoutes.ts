@@ -21,7 +21,8 @@
 
 import { Router, Request, Response } from 'express';
 import pg from 'pg';
-import { getAIRouter, AIRequest, RoutingStrategy } from '../services/aiProviderRouter.js';
+import { getGateway } from '../services/ai-gateway/index.js';
+import type { GatewayRequest, RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getRAGPipeline, RetrievalOptions } from '../services/advancedRAGPipeline.js';
 
@@ -226,7 +227,7 @@ async function handleGenerateMode(
   persistCitations?: boolean
 ): Promise<CortexQueryResponse> {
   const ragPipeline = getRAGPipeline(pool!);
-  const aiRouter = getAIRouter(pool!);
+  const gateway = getGateway();
 
   // Configure retrieval options
   const retrievalOptions: RetrievalOptions = {
@@ -368,7 +369,7 @@ async function handleAdvisoryMode(
   context: CortexQueryRequest['context'],
   organizationUuid?: string
 ): Promise<CortexQueryResponse> {
-  const aiRouter = getAIRouter(pool!);
+  const gateway = getGateway();
   const ragPipeline = getRAGPipeline(pool!);
 
   // Get relevant context
@@ -385,7 +386,7 @@ async function handleAdvisoryMode(
     .join('\n\n');
 
   // Generate advisory response
-  const advisoryResponse = await aiRouter.route({
+  const advisoryResponse = await gateway.route({
     taskType: 'regulatory_review',
     messages: [
       {
@@ -531,11 +532,17 @@ router.get('/providers', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Database not initialized' });
     }
 
-    const aiRouter = getAIRouter(pool);
-    const status = aiRouter.getProviderStatus();
+    const gateway = getGateway();
+    const healthInfo = gateway.getProviderHealth();
 
     res.json({
-      providers: status,
+      providers: healthInfo.map(h => ({
+        name: h.provider,
+        healthy: h.healthy,
+        avgLatencyMs: h.avgLatencyMs,
+        requestCount: h.requestCount,
+        errorRate: h.errorRate,
+      })),
     });
   } catch (error) {
     console.error('Providers error:', error);
