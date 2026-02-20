@@ -16,6 +16,7 @@ import type {
   RuleEventPayload,
   RuleDefinition,
 } from '../types';
+import type { ProjectRulesEngine } from '../engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Task Handler
@@ -182,7 +183,7 @@ export class BlockTransitionHandler implements ActionHandler {
       const stageId = (payload.data as any).stage?.id || (payload.data as any).stageId;
       if (stageId) {
         await this.pool.query(
-          `UPDATE project_workflow_stages SET status = 'blocked', metadata = COALESCE(metadata, '{}'::json)::jsonb || $1::jsonb WHERE id = $2`,
+          `UPDATE project_workflow_stages SET status = 'blocked', metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
           [
             JSON.stringify({ blockReason: params.reason, blockedAt: new Date().toISOString() }),
             stageId,
@@ -579,7 +580,7 @@ export class CreateChildProjectHandler implements ActionHandler {
 /**
  * Register all built-in action handlers with the engine.
  */
-export function registerAllHandlers(engine: any, pool: Pool): void {
+export function registerAllHandlers(engine: ProjectRulesEngine, pool: Pool): void {
   engine.registerHandler(new CreateTaskHandler(pool));
   engine.registerHandler(new SendNotificationHandler(pool));
   engine.registerHandler(new BlockTransitionHandler(pool));

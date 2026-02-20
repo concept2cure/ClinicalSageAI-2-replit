@@ -237,6 +237,10 @@ export class ProjectRollupService {
     const tasks = taskCountsMap.get(node.id) || { total: 0, completed: 0, blocked: 0, overdue: 0 };
     const moduleCount = moduleCountsMap.get(node.id) || 0;
 
+    const riskLevel = RISK_LEVELS.includes(node.riskLevel as any)
+      ? (node.riskLevel as 'low' | 'medium' | 'high' | 'critical')
+      : 'medium';
+
     // Aggregate
     let rollup: RollupMetrics;
 
@@ -245,7 +249,7 @@ export class ProjectRollupService {
       rollup = {
         aggregateProgress: node.progress,
         totalBudget: node.budget || 0,
-        worstRiskLevel: (node.riskLevel as any) || 'medium',
+        worstRiskLevel: riskLevel,
         totalTasks: tasks.total,
         completedTasks: tasks.completed,
         blockedTasks: tasks.blocked,
@@ -268,7 +272,7 @@ export class ProjectRollupService {
         childStatusSummary[child.status] = (childStatusSummary[child.status] || 0) + 1;
       }
 
-      let risk: 'low' | 'medium' | 'high' | 'critical' = (node.riskLevel as any) || 'medium';
+      let risk: 'low' | 'medium' | 'high' | 'critical' = riskLevel;
       for (const cr of childRollups) {
         risk = worstRisk(risk, cr.worstRiskLevel);
       }
