@@ -5,6 +5,7 @@ import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/
 import { and, eq } from 'drizzle-orm';
 import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
+import { emitRuleEvent } from '../services/rules-engine';
 
 const router = Router();
 
@@ -15,6 +16,7 @@ const createProjectSchema = z.object({
   type: z.enum(['clinical_trial', 'regulatory_submission', 'medical_device', 'literature_review']),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
   dueDate: z.string().optional(),
+  parentProjectId: z.number().optional(),
   organizationId: z
     .union([z.string(), z.number()])
     .transform(val => {
@@ -42,7 +44,12 @@ router.get('/', async (req, res) => {
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
 
-    console.log('🔍 GET projects request - organizationId:', organizationId, 'from:', req.headers['x-organization-id'] ? 'header' : 'query');
+    console.log(
+      '🔍 GET projects request - organizationId:',
+      organizationId,
+      'from:',
+      req.headers['x-organization-id'] ? 'header' : 'query'
+    );
 
     const license = await getActiveLicenseForOrganization(organizationId);
     if (!license) {
@@ -55,7 +62,10 @@ router.get('/', async (req, res) => {
       .from(projects)
       .where(
         clientWorkspaceId
-          ? and(eq(projects.organizationId, organizationId), eq(projects.clientWorkspaceId, clientWorkspaceId))
+          ? and(
+              eq(projects.organizationId, organizationId),
+              eq(projects.clientWorkspaceId, clientWorkspaceId)
+            )
           : eq(projects.organizationId, organizationId)
       );
 
@@ -129,7 +139,7 @@ router.post('/', async (req, res) => {
     if (!license) {
       return res.status(403).json({ error: 'No active license for this organization' });
     }
-    
+
     // Find an available client workspace for the organization first
     let availableClients = await db
       .select()
@@ -185,7 +195,7 @@ router.post('/', async (req, res) => {
         `Using existing client workspace ${clientWorkspaceId} (${availableClients[0].name}) for project creation`
       );
     }
-    
+
     // Use atomic project creation with quota enforcement
     const { atomicCreateProject } = await import('../services/atomicQuotaService.js');
     const result = await atomicCreateProject(validatedData.organizationId, {
@@ -195,22 +205,22 @@ router.post('/', async (req, res) => {
       priority: validatedData.priority,
       dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
       clientWorkspaceId: clientWorkspaceId,
-      status: 'active'
+      status: 'active',
     });
-    
+
     if (!result.success) {
       if (result.error === 'QUOTA_EXCEEDED') {
         return res.status(403).json({
           success: false,
           error: 'Quota exceeded',
           message: result.message,
-          details: result.details
+          details: result.details,
         });
       }
       return res.status(400).json({
         success: false,
         error: result.error,
-        message: result.message
+        message: result.message,
       });
     }
 
@@ -249,7 +259,16 @@ router.post('/', async (req, res) => {
     } catch (auditError) {
       console.error('Audit trail creation failed (non-blocking):', auditError);
     }
-    
+
+    // Emit rules engine event for project creation
+    try {
+      await emitRuleEvent('project_created', validatedData.organizationId, result.data.id, {
+        project: result.data,
+      });
+    } catch (ruleError) {
+      console.error('Rules engine event emission failed (non-blocking):', ruleError);
+    }
+
     res.status(201).json(result.data);
   } catch (error) {
     console.error('Error creating project:', error);
@@ -414,6 +433,25 @@ router.patch('/:projectId', async (req, res) => {
       });
     } catch (auditError) {
       console.error('Audit trail creation failed (non-blocking):', auditError);
+    }
+
+    // Emit rules engine events for project updates
+    try {
+      await emitRuleEvent('project_updated', organizationId, projectId, {
+        project: updatedProject,
+        previousValues: existingProject,
+        changedFields: Object.keys(updates),
+      });
+      // Detect status change specifically
+      if (updates.status && updates.status !== existingProject.status) {
+        await emitRuleEvent('project_status_changed', organizationId, projectId, {
+          project: updatedProject,
+          previousStatus: existingProject.status,
+          newStatus: updates.status,
+        });
+      }
+    } catch (ruleError) {
+      console.error('Rules engine event emission failed (non-blocking):', ruleError);
     }
 
     res.json(updatedProject);

@@ -4,6 +4,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { pool } from '../db';
+import { getGateway } from '../services/ai-gateway';
 
 const router = express.Router();
 
@@ -202,16 +203,16 @@ async function generateCERNarrative(faersData: any, productName?: string) {
 
   const promptTemplate = `
     Generate a detailed Clinical Evaluation Report (CER) for ${displayName} (${organizationData.generic}) based on FDA FAERS data.
-    
+
     FAERS DATA SUMMARY:
     - Total adverse event reports: ${organizationData.total_reports}
     - Manufacturer: ${organizationData.manufacturer}
     - Patient demographics: Ages ${organizationData.demographics.age.min} to ${organizationData.demographics.age.max}, average ${organizationData.demographics.age.avg} years
     - Gender distribution: ${organizationData.demographics.sex.male} males, ${organizationData.demographics.sex.female} females, ${organizationData.demographics.sex.unknown} unspecified
     - Top reported adverse events: ${organizationData.top_reactions.map(r => `${r.term} (${r.percentage}%)`).join(', ')}
-    
+
     Your CER should follow MEDDEV 2.7/1 Rev. 4 structure with these sections:
-    
+
     1. EXECUTIVE SUMMARY
     2. SCOPE OF THE CLINICAL EVALUATION
       2.1. Device Description
@@ -224,42 +225,35 @@ async function generateCERNarrative(faersData: any, productName?: string) {
       4.1. Safety & Performance Conclusions
       4.2. Overall Risk-Benefit Conclusions
       4.3. Ongoing Monitoring Recommendations
-    
+
     Make the report structured, authoritative, evidence-based, and balanced using real FDA FAERS data provided.
     Ensure appropriate clinical language but exclude raw data tables or placeholders.
     Include specific recommendations for clinicians.
   `;
 
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4-0125-preview',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a clinical research expert specialized in generating regulatory-compliant Clinical Evaluation Reports based on pharmacovigilance data.',
-          },
-          { role: 'user', content: promptTemplate },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
+    // Route through AI Gateway — centralised audit, policy & rate limiting
+    const gateway = getGateway();
+    const gatewayResponse = await gateway.route({
+      taskType: 'cer_narrative',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a clinical research expert specialized in generating regulatory-compliant Clinical Evaluation Reports based on pharmacovigilance data.',
         },
-      }
-    );
+        { role: 'user', content: promptTemplate },
+      ],
+      temperature: 0.7,
+      maxTokens: 4000,
+      callerModule: 'cer-routes',
+      metadata: { product: displayName },
+    });
 
-    return response.data.choices[0].message.content;
+    return gatewayResponse.content;
   } catch (error: any) {
-    console.error('Error generating CER narrative:', error.response?.data || error.message);
-    throw new Error(
-      'Failed to generate CER narrative: ' + (error.response?.data?.error?.message || error.message)
-    );
+    console.error('Error generating CER narrative:', error.message);
+    throw new Error('Failed to generate CER narrative: ' + error.message);
   }
 }
 

@@ -11,6 +11,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { requireOpenAIKey } from '../check-secrets';
+import { getGateway } from '../services/ai-gateway';
 
 const router = express.Router();
 
@@ -331,20 +332,17 @@ router.post('/nlp-query', requireOpenAIKey(), async (req: Request, res: Response
       return res.json(result);
     }
 
-    // Otherwise, use OpenAI to generate structured filter parameters
-    const openai = require('openai');
-    const openaiClient = new openai.OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+    // Route through AI Gateway — centralised audit, policy & rate limiting
     const prompt = `
       You are an expert analyst that converts natural language queries about clinical trial data into structured filter parameters.
       Given this query: "${query}"
-      
+
       Extract relevant filter parameters like:
       - age (numeric)
       - event (string, e.g., "headache", "nausea")
       - period (string, e.g., "months", "years")
       - view (string, e.g., "trend", "comparison")
-      
+
       Return ONLY a JSON object with these fields:
       {
         "natural_language_query": "the original query",
@@ -356,8 +354,9 @@ router.post('/nlp-query', requireOpenAIKey(), async (req: Request, res: Response
       }
     `;
 
-    const response = await openaiClient.chat.completions.create({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const gateway = getGateway();
+    const gatewayResponse = await gateway.route({
+      taskType: 'cer_nlp_query',
       messages: [
         {
           role: 'system',
@@ -366,11 +365,13 @@ router.post('/nlp-query', requireOpenAIKey(), async (req: Request, res: Response
         },
         { role: 'user', content: prompt },
       ],
-      response_format: { type: 'json_object' },
+      jsonMode: true,
+      callerModule: 'cer-analytics',
+      metadata: { queryLength: query.length },
     });
 
-    // Parse the OpenAI response
-    const nlpResponse = JSON.parse(response.choices[0].message.content);
+    // Parse the AI Gateway response
+    const nlpResponse = JSON.parse(gatewayResponse.content);
 
     res.json(nlpResponse);
   } catch (error) {

@@ -5065,6 +5065,61 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
+  // Mount project hierarchy routes (Pillar 1: 4-level hierarchy tree)
+  try {
+    const hierarchyRoutes = await import('./routes/project-hierarchy');
+    app.use('/api/project-hierarchy', hierarchyRoutes.default || hierarchyRoutes);
+    console.log('✅ Project Hierarchy routes mounted at /api/project-hierarchy');
+  } catch (error) {
+    console.error('Failed to mount project-hierarchy routes:', error);
+  }
+
+  // Mount project rules routes (Pillar 2: Client-configurable rules engine)
+  try {
+    const rulesRoutes = await import('./routes/project-rules');
+    app.use('/api/project-rules', rulesRoutes.default || rulesRoutes);
+    console.log('✅ Project Rules Engine routes mounted at /api/project-rules');
+  } catch (error) {
+    console.error('Failed to mount project-rules routes:', error);
+  }
+
+  // Mount AI Sentinel routes (Pillar 3: Proactive monitoring)
+  try {
+    const sentinelRoutes = await import('./routes/sentinel-routes');
+    app.use('/api/sentinel', sentinelRoutes.default || sentinelRoutes);
+    console.log('✅ AI Sentinel routes mounted at /api/sentinel');
+  } catch (error) {
+    console.error('Failed to mount sentinel routes:', error);
+  }
+
+  // Start Sentinel background scheduler (Pillar 3)
+  try {
+    const { getSentinelScheduler } = await import('./services/sentinel/scheduler');
+    const scheduler = getSentinelScheduler(pool);
+    scheduler
+      .start()
+      .then(() => {
+        console.log('✅ AI Sentinel background scheduler started');
+      })
+      .catch(err => {
+        console.error('Failed to start sentinel scheduler:', err);
+      });
+  } catch (error) {
+    console.error('Failed to initialize sentinel scheduler:', error);
+  }
+
+  // Mount project-module integration routes (Pillar 4: Full module integration)
+  try {
+    const moduleRoutes = await import('./routes/project-modules');
+    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
+    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
+    console.log(
+      '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
+    );
+  } catch (error) {
+    console.error('Failed to mount project-modules routes:', error);
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // Wave 5: Mount previously-unmounted core route files
   // ──────────────────────────────────────────────────────────────────────────

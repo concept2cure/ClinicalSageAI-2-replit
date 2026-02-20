@@ -5,12 +5,17 @@
  * by enhancing compliance with specific regulatory frameworks.
  */
 
-const { OpenAI } = require('openai');
+const { OpenAI } = require('openai'); // kept for type reference only
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// AI Gateway integration — centralised LLM routing, audit & policy
+let _gateway = null;
+async function getGatewayInstance() {
+  if (!_gateway) {
+    const mod = await import('../../services/ai-gateway/index.ts');
+    _gateway = mod.getGateway();
+  }
+  return _gateway;
+}
 
 /**
  * Get AI-generated improvements for a CER section to increase compliance
@@ -51,9 +56,9 @@ async function improveComplianceHandler(req, res) {
       role: 'system',
       content: `You are an expert medical device regulatory specialist with deep knowledge of Clinical Evaluation Reports.
       Your task is to improve the content of a CER section to enhance its compliance with ${standard} requirements.
-      
+
       ${issuesText}
-      
+
       IMPORTANT GUIDELINES:
       1. Maintain the original section structure and intent
       2. Add necessary regulatory content and context
@@ -62,7 +67,7 @@ async function improveComplianceHandler(req, res) {
       5. Preserve any factual information present in the original
       6. Use appropriate regulatory terminology
       7. Include specific references to standards where relevant
-      
+
       Return ONLY the improved content, formatted with markdown as needed.`,
     };
 
@@ -72,21 +77,26 @@ async function improveComplianceHandler(req, res) {
       content: `SECTION TITLE: ${section.title || 'Untitled Section'}\n\nCURRENT CONTENT:\n${section.content}`,
     };
 
-    console.log(`Improving compliance for "${section.title}" against ${standard} standard...`);
+    console.log(
+      `Improving compliance for "${section.title}" against ${standard} standard via AI Gateway...`
+    );
 
-    // Call OpenAI API for improved content
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    // Route through AI Gateway — centralised audit, policy & rate limiting
+    const gateway = await getGatewayInstance();
+    const gatewayResponse = await gateway.route({
+      taskType: 'cer_compliance_improve',
       messages: [systemMessage, userMessage],
-      temperature: 0.3, // Lower temperature for more consistent output
-      max_tokens: 2500, // Allow substantial content improvement
+      temperature: 0.3,
+      maxTokens: 2500,
+      callerModule: 'cer-improve-compliance',
+      metadata: { sectionTitle: section.title, standard },
     });
 
     // Return the improved section
     res.json({
       originalTitle: section.title,
       originalType: section.type,
-      improvedContent: response.choices[0].message.content,
+      improvedContent: gatewayResponse.content,
       standard,
       timestamp: new Date().toISOString(),
     });
