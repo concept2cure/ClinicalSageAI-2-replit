@@ -57,11 +57,20 @@ import {
   ClipboardCheck,
   Compass,
   Loader2,
+  Target,
 } from 'lucide-react';
 
 // Lazy load the Convergent Canvas for the Sherpa System
 const ConvergentCanvas = lazy(() =>
   import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
+);
+
+// Lazy load Phase 7 Mission Control components
+const MissionControl = lazy(() =>
+  import('./pages/MissionControl').then(m => ({ default: m.MissionControl }))
+);
+const RulesManager = lazy(() =>
+  import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -78,7 +87,16 @@ type ToolPanel =
   | 'intelligence'
   | null;
 
-type LayoutMode = 'assistant' | 'sherpa' | 'editor' | 'analytics' | 'timeline' | 'audit' | 'ctd';
+type LayoutMode =
+  | 'assistant'
+  | 'sherpa'
+  | 'editor'
+  | 'analytics'
+  | 'timeline'
+  | 'audit'
+  | 'ctd'
+  | 'mission-control'
+  | 'rules';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -537,6 +555,7 @@ export const ZenApp: React.FC = () => {
     { id: 'timeline', label: 'Timeline' },
     { id: 'audit', label: 'Audit' },
     { id: 'ctd', label: 'CTD' },
+    { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
   ];
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
@@ -937,6 +956,38 @@ export const ZenApp: React.FC = () => {
                 />
               </div>
             </div>
+          )}
+
+          {/* Phase 7: Mission Control Dashboard */}
+          {layoutMode === 'mission-control' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Mission Control...</p>
+                  </div>
+                </div>
+              }
+            >
+              <MissionControl />
+            </Suspense>
+          )}
+
+          {/* Rules Engine Manager */}
+          {layoutMode === 'rules' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Rules Engine...</p>
+                  </div>
+                </div>
+              }
+            >
+              <RulesManager onBack={() => setLayoutMode('mission-control')} />
+            </Suspense>
           )}
 
           {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (

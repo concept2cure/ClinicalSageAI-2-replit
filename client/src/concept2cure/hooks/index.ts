@@ -13,6 +13,7 @@ export * from './useChat';
 export * from './useCMC';
 export * from './useCortex';
 export * from './useDocumentIntelligence';
+export * from './useEnterprise';
 export * from './useIntelligentDocs';
 export * from './useMedicalDevice';
 export * from './useProjectKnowledge';
