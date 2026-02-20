@@ -1,0 +1,243 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# C2C Codespace Agent Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# Governs autonomous agent behaviors within GitHub Codespaces for
+# regulatory validation, security auditing, compliance checking, and
+# documentation generation.
+#
+# NOTE: External integrations (Veeva, CTMS, EDC) are deferred to a future
+# phase. This config covers core platform capabilities only.
+# ═══════════════════════════════════════════════════════════════════════════════
+version: '2.0'
+
+project:
+  name: 'concept2cure'
+  id: 'ep-frosty-salad-afl93crk'
+  production_branch: 'ep-wild-forest-ahbojhu4-pooler'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Agent Capabilities
+# ─────────────────────────────────────────────────────────────────────────────
+agent:
+  name: 'c2c-regulatory-agent'
+  version: '1.0.0'
+  permissions:
+    - regulatory_validation
+    - ai_model_training
+    - security_auditing
+    - compliance_checking
+    - documentation_generation
+
+  # Auto-trigger on file changes
+  triggers:
+    - pattern: 'ectd/**'
+      action: validate_submission_content
+    - pattern: 'server/services/**'
+      action: run_type_check
+    - pattern: 'db/migrations/**'
+      action: validate_migration
+    - pattern: 'server/services/module-intelligence.ts'
+      action: validate_prompt_quality
+    - pattern: 'server/services/lumen-*.ts'
+      action: validate_prompt_quality
+    - pattern: 'docs/**'
+      action: generate_documentation
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Environment Secrets
+# ─────────────────────────────────────────────────────────────────────────────
+secrets:
+  - name: DATABASE_NEON_NEW_SECRET
+    source: github_secrets
+    required: true
+    validation: postgresql_connection_string
+
+  - name: OPENAI_API_KEY
+    source: github_secrets
+    required: true
+    zero_retention: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Database Configuration (Neon)
+# ─────────────────────────────────────────────────────────────────────────────
+database:
+  type: 'postgresql'
+  provider: 'neon'
+  connection_string: '${DATABASE_NEON_NEW_SECRET}'
+  ssl_mode: 'require'
+  channel_binding: 'require'
+  pooler_mode: true
+
+  migrations:
+    auto_run: true
+    validate_before_apply: true
+    rollback_on_failure: true
+
+  branching:
+    strategy: 'git-branch-sync'
+    preview_branches:
+      enabled: true
+      naming_pattern: 'preview-{branch-name}'
+      auto_suspend: '1h'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI Training & Validation Pipeline
+# ─────────────────────────────────────────────────────────────────────────────
+ai:
+  data_retention_policy: 'zero' # ZDR enforced across all providers
+  provider: 'openai'
+  model: 'gpt-4o'
+
+  # Quality gates — every AI output must pass these before reaching a user
+  quality_gates:
+    accuracy: '>95%'
+    hallucination_rate: '<1%'
+    citation_coverage: '>90%'
+    regulatory_term_accuracy: '100%'
+
+  # Prompt engineering pipeline
+  prompt_pipeline:
+    # Module-specific prompt sets (matched to module-intelligence.ts verticals)
+    verticals:
+      - name: 'ectd-coauthor'
+        system_prompt_source: 'server/services/module-intelligence.ts'
+        evaluation_set: 'tests/prompts/ectd-coauthor-eval.jsonl'
+        metrics: ['section_accuracy', 'ectd_compliance', 'citation_rate']
+
+      - name: 'medical-device'
+        system_prompt_source: 'server/services/module-intelligence.ts'
+        evaluation_set: 'tests/prompts/medical-device-eval.jsonl'
+        metrics: ['predicate_accuracy', 'classification_accuracy', '510k_compliance']
+
+      - name: 'cmc-wizard'
+        system_prompt_source: 'server/services/module-intelligence.ts'
+        evaluation_set: 'tests/prompts/cmc-wizard-eval.jsonl'
+        metrics: ['spec_accuracy', 'ich_q_compliance', 'batch_record_completeness']
+
+      - name: 'doc-canvas'
+        system_prompt_source: 'server/services/module-intelligence.ts'
+        evaluation_set: 'tests/prompts/doc-canvas-eval.jsonl'
+        metrics: ['formatting_accuracy', 'cross_reference_integrity']
+
+      - name: 'vault-intelligence'
+        system_prompt_source: 'server/services/module-intelligence.ts'
+        evaluation_set: 'tests/prompts/vault-eval.jsonl'
+        metrics: ['classification_accuracy', 'version_control_compliance']
+
+    # Instruction execution engine validation (Lumen)
+    instruction_engine:
+      source: 'server/services/lumen-instruction-engine.ts'
+      evaluation_set: 'tests/prompts/instruction-engine-eval.jsonl'
+      metrics: ['instruction_fidelity', 'table_accuracy', 'figure_relevance']
+
+  # Hallucination detection pipeline
+  hallucination_detection:
+    enabled: true
+    method: 'source-grounding' # Compare every claim to uploaded evidence
+    enforcement: 'block' # block | warn | log
+    thresholds:
+      claim_without_source: 'block'
+      statistical_mismatch: 'block'
+      regulatory_term_misuse: 'block'
+      unsupported_conclusion: 'warn'
+
+  # Continuous evaluation — run on every PR that touches AI prompts
+  continuous_eval:
+    trigger_paths:
+      - 'server/services/module-intelligence.ts'
+      - 'server/services/lumen-instruction-engine.ts'
+      - 'server/services/lumen-context-builder.ts'
+    eval_runner: 'node tests/ai-eval/run-eval.ts'
+    min_pass_rate: 0.95
+    report_to: 'pr-comment'
+
+  # Model registry — tracks which models power each C2C capability
+  model_registry:
+    - capability: 'regulatory-drafting'
+      model: 'gpt-4o'
+      context_window: 128000
+      temperature: 0.3
+      max_tokens: 8192
+      notes: 'Primary drafting model for all eCTD sections'
+
+    - capability: 'extraction-classification'
+      model: 'gpt-4o'
+      context_window: 128000
+      temperature: 0.1
+      max_tokens: 4096
+      notes: 'Document classification, entity extraction, keyword tagging'
+
+    - capability: 'claim-verification'
+      model: 'gpt-4o'
+      context_window: 128000
+      temperature: 0.0
+      max_tokens: 2048
+      notes: 'NLI-based claim vs evidence verification'
+
+    - capability: 'figure-generation'
+      model: 'gpt-4o'
+      context_window: 128000
+      temperature: 0.2
+      max_tokens: 4096
+      notes: 'Chart spec generation from data (SVG/Plotly output)'
+
+  # Data isolation — no client data leaves the platform boundary
+  data_isolation:
+    training_on_client_data: false
+    prompt_logging: 'audit-trail-only' # logged to audit_logs table, not OpenAI
+    pii_scrubbing: true
+    model_fine_tuning: 'not-in-scope' # We use prompt engineering, not fine-tuning
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Security & Compliance
+# ─────────────────────────────────────────────────────────────────────────────
+security:
+  soc2_compliance:
+    target_date: '2026-03-31'
+    auto_audit: true
+
+  cfr_part_11:
+    enabled: true
+    electronic_signatures: true
+    audit_trails: true
+
+  encryption:
+    at_rest: 'AES-256'
+    in_transit: 'TLS-1.3'
+
+  access_controls:
+    mfa_required: true
+    sso_integration: true
+    role_based_permissions: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Regulatory Validation
+# ─────────────────────────────────────────────────────────────────────────────
+regulatory:
+  health_authorities:
+    - 'FDA'
+    - 'EMA'
+    - 'PMDA'
+    - 'Health_Canada'
+
+  submission_types:
+    - 'IND'
+    - 'NDA'
+    - 'BLA'
+    - 'MAA'
+    - 'sNDA'
+    - 'sBLA'
+
+  validation_rules:
+    ectd_compliance: true
+    citation_integrity: true
+    cross_reference_validation: true
+    formatting_standards: 'ICH'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Future Integrations (deferred — not yet in scope)
+# ─────────────────────────────────────────────────────────────────────────────
+# integrations:
+#   veeva: { enabled: false }
+#   ctms: { enabled: false }
+#   edc: { enabled: false }

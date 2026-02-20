@@ -1,14 +1,24 @@
 {
-  "name": "ClinicalSageAI Development",
+  "name": "C2C Regulatory Development Environment",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
 
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/postgresql-client:1": {}
   },
 
   "containerEnv": {
-    "HOME": "/root"
+    "HOME": "/root",
+    "NEON_PROJECT_ID": "ep-frosty-salad-afl93crk",
+    "NEON_PROD_BRANCH": "ep-wild-forest-ahbojhu4-pooler",
+    "C2C_ENVIRONMENT": "development",
+    "C2C_AGENT_MODE": "active"
   },
 
   "customizations": {
@@ -20,7 +30,13 @@
         "GitHub.copilot-chat",
         "GitHub.copilot-edits",
         "bradlc.vscode-tailwindcss",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.vscode-typescript-next",
+        "redhat.vscode-yaml",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
       ],
       "settings": {
         "github.copilot.enable": {
@@ -28,7 +44,15 @@
         },
         "github.copilot.chat.enabled": true,
         "github.copilot.editor.enableAutoCompletions": true,
-        "github.copilot.chat.agent.enabled": true
+        "github.copilot.chat.agent.enabled": true,
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "c2c.regulatoryAutoValidate": true,
+        "c2c.aiModelZeroRetention": true,
+        "c2c.databaseSSLRequire": true,
+        "c2c.previewBranchAutoCreate": true
       }
     },
     "codespaces": {
@@ -36,24 +60,37 @@
     }
   },
 
-  "forwardPorts": [3000, 5000, 5173, 8000],
+  "forwardPorts": [3000, 5000, 5173, 8000, 5432],
 
   "portsAttributes": {
     "5000": {
-      "label": "Express Server",
+      "label": "C2C Express Server",
       "onAutoForward": "notify"
     },
     "8000": {
-      "label": "FastAPI Server",
+      "label": "C2C FastAPI Server",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "C2C Frontend",
       "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "Neon DB (Local Proxy)",
+      "onAutoForward": "silent"
     }
   },
 
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
 
   "remoteUser": "root",
+  "updateRemoteUserUID": true,
 
   "remoteEnv": {
-    "NODE_ENV": "development"
-  }
+    "NODE_ENV": "development",
+    "DATABASE_URL": "${localEnv:DATABASE_NEON_NEW_SECRET}"
+  },
+
+  "mounts": ["source=c2c-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume"]
 }

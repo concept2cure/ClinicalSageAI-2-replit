@@ -750,6 +750,16 @@ try {
   console.error('❌ Failed to mount License routes:', error);
 }
 
+// Mount Module Subscriptions & User Intelligence routes
+try {
+  const moduleSubModule = await import('./routes/module-subscriptions.js');
+  const moduleSubRoutes = moduleSubModule.default;
+  app.use('/api/module-subscriptions', moduleSubRoutes);
+  console.log('✅ Module Subscriptions & User Intelligence API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Module Subscriptions routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
@@ -5336,6 +5346,17 @@ async function startServer() {
     console.log('✅ IND Automation routes mounted at /api/ind-automation');
   } catch (error) {
     console.error('Failed to mount ind-automation routes:', error);
+  }
+
+  // Mount Audit-Gap Remediation Services (figures, export, traceability, keywords, extraction, confidence, verification)
+  try {
+    const auditServicesModule = await import('./routes/audit-services.js');
+    app.use('/api/audit-services', auditServicesModule.default);
+    console.log(
+      '✅ Audit Services API routes mounted (figures, export, traceability, keywords, extraction, confidence, verification)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Audit Services routes:', error);
   }
 
   // ──────────────────────────────────────────────────────────────────────────

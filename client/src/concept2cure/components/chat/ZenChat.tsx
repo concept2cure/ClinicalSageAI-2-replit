@@ -73,6 +73,12 @@ interface ZenChatProps {
   initialMessage?: string | null;
   onNewArtifact?: (artifact: CortexArtifact) => void;
   onThreadChange?: (threadId: string) => void;
+  /** Personalized greeting from user intelligence */
+  greeting?: { text: string; subtitle?: string } | null;
+  /** Last work session summary for continuity */
+  lastWork?: { contextTitle: string; contextType: string } | null;
+  /** AI-recommended next task */
+  nextTask?: { taskTitle: string; taskDescription?: string } | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -288,43 +294,79 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WELCOME SCREEN - Empty state, like Claude.ai
+// WELCOME SCREEN - Personalized, like Claude.ai
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
+  greeting?: { text: string; subtitle?: string } | null;
+  lastWork?: { contextTitle: string; contextType: string } | null;
+  nextTask?: { taskTitle: string; taskDescription?: string } | null;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
+  onSuggestionClick,
+  greeting,
+  lastWork,
+  nextTask,
+}) => {
   const suggestions = [
+    // If we have AI-recommended next task, show it first
+    ...(nextTask
+      ? [
+          {
+            title: nextTask.taskTitle,
+            description: nextTask.taskDescription || 'AI-recommended next step',
+            highlight: true,
+          },
+        ]
+      : []),
+    // If we have last work context, offer to continue
+    ...(lastWork
+      ? [
+          {
+            title: `Continue: ${lastWork.contextTitle}`,
+            description: `Pick up where you left off with ${lastWork.contextType.replace(/_/g, ' ')}`,
+            highlight: false,
+          },
+        ]
+      : []),
     {
       title: 'Start a 510(k) submission',
       description: 'Guide me through the predicate device selection',
+      highlight: false,
     },
     {
       title: 'Draft an IND protocol',
       description: 'Help me design a Phase 1 clinical trial',
+      highlight: false,
     },
     {
       title: 'Analyze regulatory pathway',
       description: 'Compare 510(k) vs PMA for my device',
+      highlight: false,
     },
     {
       title: 'Generate submission documents',
       description: 'Create an indications for use statement',
+      highlight: false,
     },
-  ];
+  ].slice(0, 5); // Show max 5 suggestions
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-4 py-12">
-      {/* Logo & greeting */}
+      {/* Logo & personalized greeting */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-md shadow-violet-500/20">
           <Sparkles className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">How can I help today?</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
+          {greeting?.text || 'How can I help today?'}
+        </h1>
         <p className="text-sm text-zinc-500 max-w-md">
-          I'm Lumen, your regulatory intelligence assistant.
+          {greeting?.subtitle
+            ? `${greeting.subtitle} · Lumen Cortex is ready`
+            : "I'm Lumen, your regulatory intelligence assistant."}
         </p>
       </div>
 
@@ -335,14 +377,28 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
             key={index}
             onClick={() => onSuggestionClick(suggestion.title)}
             className={cn(
-              'group p-4 text-left rounded-xl border border-zinc-200 bg-white',
-              'hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-150'
+              'group p-4 text-left rounded-xl border bg-white transition-all duration-150',
+              suggestion.highlight
+                ? 'border-violet-300 bg-violet-50/50 hover:border-violet-400 hover:bg-violet-50'
+                : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
             )}
           >
-            <div className="text-sm font-medium text-zinc-900 group-hover:text-zinc-950">
+            <div
+              className={cn(
+                'text-sm font-medium group-hover:text-zinc-950',
+                suggestion.highlight ? 'text-violet-900' : 'text-zinc-900'
+              )}
+            >
               {suggestion.title}
             </div>
-            <div className="text-xs text-zinc-500 mt-1">{suggestion.description}</div>
+            <div
+              className={cn(
+                'text-xs mt-1',
+                suggestion.highlight ? 'text-violet-600' : 'text-zinc-500'
+              )}
+            >
+              {suggestion.description}
+            </div>
           </button>
         ))}
       </div>
@@ -497,6 +553,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   initialMessage,
   onNewArtifact,
   onThreadChange,
+  greeting,
+  lastWork,
+  nextTask,
 }) => {
   const [, setLocation] = useLocation();
   // Cortex integration
@@ -647,7 +706,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         className="flex-1 overflow-y-auto zen-scroll"
       >
         {showWelcome ? (
-          <WelcomeScreen onSuggestionClick={handleSuggestionClick} />
+          <WelcomeScreen
+            onSuggestionClick={handleSuggestionClick}
+            greeting={greeting}
+            lastWork={lastWork}
+            nextTask={nextTask}
+          />
         ) : (
           <div className="py-4">
             {displayMessages.map(message => (

@@ -38,3 +38,4 @@ export { useMAUDESearch as useRegulatoryMAUDESearch } from './useRegulatoryIntel
 export * from './useSessionRestore';
 export * from './useTemplates';
 export * from './useZenActions';
+export * from './useLicense';

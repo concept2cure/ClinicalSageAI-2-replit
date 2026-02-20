@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "total_findings": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "submission_ready": true,
+    "scanned_paths": [
+      "ectd",
+      "ectd-stubs"
+    ]
+  },
+  "findings": [],
+  "recommendations": [
+    "No critical or high-priority issues found \u2014 proceed with review"
+  ],
+  "auto_fixes_available": 0
+}

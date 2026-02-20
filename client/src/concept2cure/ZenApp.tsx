@@ -35,6 +35,7 @@ import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectS
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
+import { usePlatformContext } from './hooks/useLicense';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import {
@@ -270,6 +271,17 @@ export const ZenApp: React.FC = () => {
   // Cortex health check
   const { data: cortexHealth } = useCortexHealth({ refetchInterval: 30000 });
   const isConnected = cortexHealth?.status === 'healthy';
+
+  // License gating + user intelligence (personalized context)
+  const {
+    canAccessLayoutMode,
+    tier: orgTier,
+    industryMode: orgIndustryMode,
+    greeting: platformGreeting,
+    intelligence: userIntelligence,
+    lastWorkSummary,
+    nextTask,
+  } = usePlatformContext();
 
   // Projects from database
   const {
@@ -577,7 +589,7 @@ export const ZenApp: React.FC = () => {
     }
   }, [activeProject?.type]);
 
-  const layoutModes: {
+  const allLayoutModes: {
     id: LayoutMode;
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
@@ -592,6 +604,12 @@ export const ZenApp: React.FC = () => {
     { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
     { id: 'ind-workspace' as LayoutMode, label: submissionWorkspaceLabel, icon: FileText },
   ];
+
+  // Filter layout modes by license — only show modes the org has access to
+  const layoutModes = useMemo(
+    () => allLayoutModes.filter(mode => canAccessLayoutMode(mode.id)),
+    [allLayoutModes, canAccessLayoutMode]
+  );
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const timelineSteps = useMemo(
@@ -1065,6 +1083,13 @@ export const ZenApp: React.FC = () => {
                   projectName={activeProject?.name}
                   submissionType={activeProject?.type}
                   threadId={activeThreadId}
+                  greeting={platformGreeting}
+                  lastWork={lastWorkSummary}
+                  nextTask={
+                    nextTask
+                      ? { taskTitle: nextTask.taskTitle, taskDescription: nextTask.taskDescription }
+                      : null
+                  }
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`

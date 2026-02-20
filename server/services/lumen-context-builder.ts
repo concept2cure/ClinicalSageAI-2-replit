@@ -16,6 +16,17 @@
  */
 
 import { pool } from '../db.js';
+import {
+  loadUserIntelligence,
+  touchWorkSession,
+  type UserIntelligence,
+} from './user-intelligence.js';
+import {
+  getModuleIntelligence,
+  getCrossCuttingIntelligence,
+  detectActiveModule,
+} from './module-intelligence.js';
+import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -71,6 +82,7 @@ export interface LumenContext {
   userRole: string | null;
   userName: string | null;
   organizationName: string | null;
+  userIntelligence: UserIntelligence | null;
   timestamp: string;
 }
 
@@ -78,7 +90,25 @@ export interface LumenContext {
 // BASE SYSTEM PROMPT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const BASE_SYSTEM_PROMPT = `You are Lumen Cortex, the AI regulatory intelligence engine powering TrialSage — a comprehensive platform for life sciences regulatory submissions.
+const BASE_SYSTEM_PROMPT = `You are Lumen Cortex, the AI regulatory intelligence engine powering the Concept2Cure platform — a comprehensive, connected workspace for life sciences regulatory submissions.
+
+## Core Identity
+You are NOT a generic AI assistant. You are Lumen Cortex — a named, persistent regulatory intelligence partner. You remember your users, their projects, their work history, and their preferences. You proactively guide them through regulatory complexity.
+
+## You Accept Instructions and Execute Them
+When a user instructs you to generate a table, draft a section, create a figure, or analyze data — you EXECUTE it immediately. You are an authoring intelligence, not a search tool. You produce regulatory-grade output on command:
+- "Draft Module 2.5" → You generate the complete Clinical Overview
+- "Create Table 2.7.4.1-1" → You produce the formatted regulatory table
+- "Compare our safety data against..." → You deliver a structured analysis
+- "Start a new IND draft" → You begin structuring the submission
+
+## One Intelligent, Connected Workspace
+Everything in the Concept2Cure platform flows together:
+- **Data Room**: The operational center of source data. AI-extracted metadata. Semantic search. Traceable flow.
+- **eCTD Co-Author 4.0**: Start new drafts directly or ask Lumen to draft them. Finalized submissions serve as trusted reference points.
+- **Document Editor**: Writing, reviewing, and collaboration in one environment across the drug development lifecycle.
+- **Dossier Manager**: Build and manage through the entire lifecycle. Sections tied to underlying data. Updates surface where needed.
+- **Vault**: 21 CFR Part 11 compliant storage with version control and electronic signatures.
 
 ## Core Capabilities
 - Deep expertise in FDA IND applications (21 CFR 312.23), 510(k) submissions, NDA/BLA, EU MDR
@@ -87,13 +117,26 @@ const BASE_SYSTEM_PROMPT = `You are Lumen Cortex, the AI regulatory intelligence
 - Nonclinical study design per ICH M3(R2), S-series guidelines
 - Clinical protocol optimization per ICH E6(R2)/E8(R3)
 - 21 CFR Part 11 electronic records and signatures compliance
+- Evidence generation, insight synthesis, and strategic decision-making
+- Cross-study analysis, competitive intelligence, regulatory precedent mining
+- Table, figure, and listing generation from source data
+- Complete section drafting with iterative refinement
+- Consistency checking and cross-section change propagation
+- Sentence-level traceability verification
 
-## Communication Style
+## Shape the Story with Precision
+You surface insights, flag inconsistencies, and present data strategically — but the USER makes every critical decision. You handle time-consuming updates across sections while the user focuses on shaping strategy.
+
+## Communication Principles
+- Always greet users by name on first message of a session
+- Reference their current project, last work, and suggested next steps
 - Precise, evidence-based regulatory guidance with citations
 - Structure responses with headers, bullets, and bold key terms
 - Flag risks and compliance gaps proactively
 - When uncertain, say so and cite authoritative sources
-- Generate actionable next steps, not just information`;
+- Generate actionable next steps, not just information
+- Adapt communication style to user preferences (concise/detailed/academic)
+- When instructed to generate content, execute immediately — don't explain what you'll do, just do it`;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONTEXT LOADING FUNCTIONS
@@ -297,29 +340,49 @@ export async function buildLumenContext(params: {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
-  // Load all context in parallel for speed
-  const [project, documents, conversation, userInfo, orgName] = await Promise.all([
-    projectId && organizationId
-      ? loadProjectContext(projectId, organizationId)
-      : Promise.resolve(null),
-    projectId && organizationId
-      ? loadDocumentContext(projectId, organizationId)
-      : Promise.resolve(null),
-    projectId && organizationId
-      ? loadConversationContext(projectId, organizationId)
-      : Promise.resolve(null),
-    loadUserContext(userId || null, organizationId || undefined),
-    loadOrganizationName(organizationId || null),
-  ]);
+  // Load all context in parallel for speed — including full user intelligence
+  const [project, documents, conversation, userInfo, orgName, userIntelligence] = await Promise.all(
+    [
+      projectId && organizationId
+        ? loadProjectContext(projectId, organizationId)
+        : Promise.resolve(null),
+      projectId && organizationId
+        ? loadDocumentContext(projectId, organizationId)
+        : Promise.resolve(null),
+      projectId && organizationId
+        ? loadConversationContext(projectId, organizationId)
+        : Promise.resolve(null),
+      loadUserContext(userId || null, organizationId || undefined),
+      loadOrganizationName(organizationId || null),
+      userId && organizationId
+        ? loadUserIntelligence({
+            userId,
+            organizationId,
+            activeProjectId: projectId || undefined,
+          })
+        : Promise.resolve(null),
+    ]
+  );
+
+  // Touch the work session so we track what the user is currently doing
+  if (userId && organizationId) {
+    touchWorkSession({
+      userId,
+      organizationId,
+      projectId: projectId || undefined,
+      contextType: params.submissionType ? 'section_drafting' : 'general',
+    }).catch(() => {}); // Non-blocking
+  }
 
   return {
     project,
     documents,
-    workflow: null, // Workflow context loaded separately when workflow engine is active
+    workflow: null,
     conversation,
     userRole: userInfo.role,
     userName: userInfo.name,
     organizationName: orgName,
+    userIntelligence,
     timestamp: new Date().toISOString(),
   };
 }
@@ -333,16 +396,135 @@ export function assembleSystemPrompt(context: LumenContext, customSystemPrompt?:
   if (customSystemPrompt) return customSystemPrompt;
 
   const parts: string[] = [BASE_SYSTEM_PROMPT];
+  const intel = context.userIntelligence;
 
-  // ── Project Context ──────────────────────────────────────────────────────
+  // ── Deep User Identity ───────────────────────────────────────────────────
+  if (intel?.identity) {
+    const u = intel.identity;
+    const style = u.communicationStyle || 'professional';
+    const expertise = u.expertiseLevel || 'intermediate';
+    parts.push(`
+## User Identity — You Know This Person
+- **Name**: ${u.greetingName} (${u.name})
+- **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${u.department ? `\n- **Department**: ${u.department}` : ''}
+- **Role**: ${u.role}
+- **Expertise Level**: ${expertise}
+- **Communication Preference**: ${style}${u.focusAreas.length ? `\n- **Focus Areas**: ${u.focusAreas.join(', ')}` : ''}
+
+### How to Address This User:
+- Greet them as "${u.greetingName}" on first message
+- ${expertise === 'expert' ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.' : expertise === 'novice' ? 'Provide clear explanations of regulatory concepts. Define technical terms on first use. Use examples.' : 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'}
+- ${style === 'concise' ? 'Keep responses focused and brief. Use bullet points heavily. Skip unnecessary preambles.' : style === 'academic' ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.' : 'Use a professional yet approachable tone. Structured responses with clear headings.'}`);
+  } else if (context.userName || context.userRole) {
+    parts.push(`
+## User Context
+- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''}`);
+  }
+
+  // ── Organization & License Context ────────────────────────────────────────
+  if (intel?.organization) {
+    const org = intel.organization;
+    parts.push(`
+## Organization Profile
+- **Organization**: ${org.name}
+- **Industry**: ${org.industryMode}
+- **Tier**: ${org.tier}
+- **Enabled Modules**: ${org.enabledModules.length > 0 ? org.enabledModules.join(', ') : 'None configured'}
+
+### Industry-Specific Awareness:
+${org.industryMode === 'medtech' ? '- This is a medical device / diagnostics company. Emphasize 510(k), PMA, De Novo pathways, ISO standards, and design controls.' : org.industryMode === 'biotech' || org.industryMode === 'pharma' ? '- This is a pharma/biotech company. Emphasize IND/NDA/BLA pathways, ICH guidelines, and CTD structure.' : org.industryMode === 'cro' ? '- This is a CRO (Contract Research Organization). Focus on multi-sponsor workflows, SOW compliance, and study management.' : org.industryMode === 'academic' ? '- This is an academic/research institution. Emphasize investigator-initiated IND requirements, IRB processes, and grant compliance.' : '- Provide balanced guidance across all regulatory pathways.'}`);
+  }
+
+  // ── Cross-Project Awareness ───────────────────────────────────────────────
+  if (intel?.projects && intel.projects.length > 0) {
+    const projectList = intel.projects
+      .slice(0, 6)
+      .map(
+        p =>
+          `  - **${p.name}** (${p.submissionType}, ${p.status}, ${p.progress}% complete)${p.phase ? ` — ${p.phase}` : ''}${p.therapeuticArea ? ` [${p.therapeuticArea}]` : ''}`
+      )
+      .join('\n');
+
+    parts.push(`
+## All User Projects (${intel.projects.length} total)
+${projectList}${intel.projects.length > 6 ? `\n  - ... and ${intel.projects.length - 6} more` : ''}`);
+  }
+
+  // ── Active Project Context ────────────────────────────────────────────────
   if (context.project) {
     const p = context.project;
     parts.push(`
-## Active Project Context
+## Active Project Context (Currently Working On)
 - **Project**: ${p.name} (ID: ${p.id})
 - **Submission Type**: ${p.submissionType}${p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''}${p.phase ? `\n- **Phase**: ${p.phase}` : ''}
 - **Status**: ${p.status} | **Progress**: ${p.progress}%
 - **Priority**: ${p.priority} | **Risk Level**: ${p.riskLevel}${p.description ? `\n- **Description**: ${p.description}` : ''}${p.tags?.length ? `\n- **Tags**: ${p.tags.join(', ')}` : ''}`);
+  }
+
+  // ── Work Continuity — What They Were Doing ────────────────────────────────
+  if (intel?.currentSession) {
+    const s = intel.currentSession;
+    parts.push(`
+## Current Work Session
+- **Currently working on**: ${s.contextTitle || s.contextType || 'General work'}${s.contextReference ? ` (${s.contextReference})` : ''}${s.projectName ? `\n- **In project**: ${s.projectName}` : ''}
+- **Session started**: ${s.startedAt ? new Date(s.startedAt).toLocaleString() : 'Unknown'}
+- **Messages in session**: ${s.messagesSent} | **Artifacts created**: ${s.artifactsCreated}`);
+  }
+
+  if (intel?.recentSessions && intel.recentSessions.length > 0) {
+    const recent = intel.recentSessions
+      .slice(0, 3)
+      .map(
+        s =>
+          `  - ${s.contextTitle || s.contextType || 'General'} in ${s.projectName || 'unknown project'} (${s.durationMinutes ? `${s.durationMinutes} min` : 'brief session'})`
+      )
+      .join('\n');
+    parts.push(`
+## Recent Work History
+${recent}
+
+Use this to provide continuity — reference what they last worked on and suggest logical next steps.`);
+  }
+
+  // ── AI-Recommended Next Tasks ─────────────────────────────────────────────
+  if (intel?.workQueue && intel.workQueue.length > 0) {
+    const tasks = intel.workQueue
+      .slice(0, 5)
+      .map(
+        (t, i) =>
+          `  ${i + 1}. **${t.taskTitle}**${t.projectName ? ` (${t.projectName})` : ''}${t.dueDate ? ` — due ${new Date(t.dueDate).toLocaleDateString()}` : ''}${t.aiReasoning ? `\n     _Reason: ${t.aiReasoning}_` : ''}`
+      )
+      .join('\n');
+    parts.push(`
+## Recommended Next Actions
+These are the highest-priority items for this user:
+${tasks}
+
+When the user asks "what should I work on?" or you're providing proactive guidance, reference these tasks.`);
+  }
+
+  // ── Conversation Memory ───────────────────────────────────────────────────
+  if (intel?.conversationMemory && intel.conversationMemory.totalMessages > 0) {
+    const mem = intel.conversationMemory;
+    parts.push(`
+## Conversation History
+- **Total conversations**: ${mem.totalConversations} | **Total messages**: ${mem.totalMessages}${
+      mem.lastTopics.length > 0
+        ? `\n- **Last topics discussed**: ${mem.lastTopics
+            .slice(0, 3)
+            .map(t => `"${t}"`)
+            .join(', ')}`
+        : ''
+    }${
+      mem.frequentTopics.length > 0
+        ? `\n- **Frequent themes**: ${mem.frequentTopics
+            .slice(0, 3)
+            .map(t => `"${t}"`)
+            .join(', ')}`
+        : ''
+    }
+
+Use conversation history to avoid re-asking for information the user has already provided.`);
   }
 
   // ── Document Context ─────────────────────────────────────────────────────
@@ -367,11 +549,49 @@ export function assembleSystemPrompt(context: LumenContext, customSystemPrompt?:
 - **Active workflows**: ${w.activeWorkflows} | **Steps**: ${w.completedSteps}/${w.totalSteps}${w.currentPhase ? `\n- **Current Phase**: ${w.currentPhase}` : ''}${w.blockers.length > 0 ? `\n- **Blockers**: ${w.blockers.join('; ')}` : ''}`);
   }
 
-  // ── User Context ─────────────────────────────────────────────────────────
-  if (context.userName || context.userRole) {
-    parts.push(`
-## User Context
-- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''}`);
+  // ── Module-Specific Intelligence ──────────────────────────────────────────
+  if (intel) {
+    const activeModuleId = detectActiveModule(intel);
+    if (activeModuleId) {
+      const moduleIntel = getModuleIntelligence(activeModuleId, intel.activeProject || null);
+      if (moduleIntel) {
+        parts.push(moduleIntel.systemPromptAddon);
+
+        // Add document type awareness
+        if (moduleIntel.documentTypes.length > 0) {
+          const draftable = moduleIntel.documentTypes.filter(d => d.aiDraftable);
+          if (draftable.length > 0) {
+            parts.push(`
+### AI-Draftable Document Types in This Module
+${draftable
+  .slice(0, 8)
+  .map(d => `- **${d.name}**: ${d.description} (${d.estimatedHours}h est.)`)
+  .join('\n')}
+
+When the user asks to draft any of these document types, you can generate a complete first draft with proper regulatory formatting.`);
+          }
+        }
+
+        // Add workflow awareness
+        if (moduleIntel.workflowStages.length > 0) {
+          parts.push(`
+### Standard Workflow Stages
+${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimatedDays}d) — ${s.description}`).join('\n')}`);
+        }
+      }
+    }
+
+    // Cross-cutting intelligence (evidence, safety)
+    const crossCutting = getCrossCuttingIntelligence(intel.organization.enabledModules);
+    if (crossCutting) {
+      parts.push(crossCutting);
+    }
+
+    // Instruction Engine — 5-step workflow, Data Room, Dossier Manager, Editor, Narrative
+    const instructionPrompt = assembleInstructionEnginePrompt(intel.organization.enabledModules);
+    if (instructionPrompt) {
+      parts.push(instructionPrompt);
+    }
   }
 
   // ── Submission-specific guidance ─────────────────────────────────────────
@@ -408,7 +628,18 @@ You are assisting with a ${subType === 'NDA' ? 'New Drug Application' : 'Biologi
   // ── Instructions ─────────────────────────────────────────────────────────
   parts.push(`
 ## Context-Aware Instructions
-Use the project context above to provide highly specific, relevant guidance. Reference the user's actual documents and progress when suggesting next steps. Do not ask for information that is already in the context. Proactively identify gaps based on the document status and submission requirements.`);
+1. **Accept instructions and execute**: When told to draft, generate, analyze, or review — do it immediately. Produce the output.
+2. **Be personal**: Greet the user by name. Reference their specific projects and documents.
+3. **Be continuous**: Know what they last worked on and suggest what to do next.
+4. **Be proactive**: Identify gaps, deadlines, and blockages without being asked.
+5. **Be specific**: Use actual document names, section codes, and project details from context.
+6. **Be regulatory**: Every recommendation must cite the applicable regulation or guideline.
+7. **Shape the narrative**: Synthesize evidence, flag inconsistencies, present data strategically — but let the user decide.
+8. **Generate at scale**: Tables, figures, entire sections — produce thousands of pages of regulatory content with precision.
+9. **Maintain traceability**: Every claim traces to a source. Every change is tracked. Audit readiness at every stage.
+10. **Never ask for info already in context**: You have their projects, documents, work history, and queue.
+11. **Adapt to expertise**: Match response depth to the user's expertise level and communication preference.
+12. **Handle updates across sections**: When data changes, identify all affected sections and propagate updates.`);
 
   return parts.join('\n');
 }

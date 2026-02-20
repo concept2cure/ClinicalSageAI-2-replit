@@ -1,0 +1,214 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# c2c-agent — CLI for C2C Codespace Agent
+# ═══════════════════════════════════════════════════════════════════════════════
+# Usage: c2c-agent <command> [args]
+# Add .github/agents/commands to PATH, or run directly:
+#   bash .github/agents/commands/c2c-agent <command>
+# ═══════════════════════════════════════════════════════════════════════════════
+set -e
+
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+COMMAND="${1:-help}"
+shift 2>/dev/null || true
+
+case "$COMMAND" in
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # REGULATORY
+  # ─────────────────────────────────────────────────────────────────────────
+  validate)
+    echo "Running regulatory validation..."
+    python "$REPO_ROOT/.github/agents/regulatory-validator/agent.py" \
+      "${@:-$REPO_ROOT/ectd $REPO_ROOT/ectd-stubs}"
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TYPE CHECK
+  # ─────────────────────────────────────────────────────────────────────────
+  typecheck)
+    echo "Running TypeScript type check..."
+    cd "$REPO_ROOT"
+    node --max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --skipLibCheck
+    echo "TSC passed"
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SECURITY
+  # ─────────────────────────────────────────────────────────────────────────
+  security-audit)
+    echo "Running security checks..."
+    cd "$REPO_ROOT"
+
+    echo "--- Hardcoded secrets scan ---"
+    HITS=$(grep -rn --include="*.ts" --include="*.js" -iE \
+      'password|secret|api.key|private.key' \
+      --exclude-dir=node_modules --exclude-dir=.git \
+      --exclude="*.test.*" --exclude="*.d.ts" \
+      server/ client/ 2>/dev/null | grep -v 'process.env' | grep -v 'interface ' | grep -v '//' || true)
+    if [ -n "$HITS" ]; then
+      echo "WARNING: Potential hardcoded secrets:"
+      echo "$HITS"
+    else
+      echo "OK: No hardcoded secrets"
+    fi
+
+    echo ""
+    echo "--- Zero Data Retention check ---"
+    if grep -rn 'store.*true\|log_prompts.*true' server/ --include="*.ts" 2>/dev/null; then
+      echo "WARNING: Possible ZDR violation"
+    else
+      echo "OK: ZDR enforced"
+    fi
+
+    echo ""
+    echo "--- npm audit ---"
+    npm audit --audit-level=high 2>/dev/null || echo "(audit complete)"
+    ;;
+
+  verify-zero-retention)
+    echo "Verifying Zero Data Retention..."
+    cd "$REPO_ROOT"
+    if grep -rn 'store.*true\|log_prompts.*true' server/ --include="*.ts" 2>/dev/null; then
+      echo "FAIL: ZDR violation detected"
+      exit 1
+    fi
+    echo "PASS: Zero Data Retention verified"
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # COMPLIANCE
+  # ─────────────────────────────────────────────────────────────────────────
+  check-compliance)
+    echo "Checking 21 CFR Part 11 compliance markers..."
+    cd "$REPO_ROOT"
+
+    echo "--- Audit trail coverage ---"
+    TOTAL=0
+    COVERED=0
+    for f in server/routes/*.ts; do
+      if grep -q 'router\.\(post\|put\|patch\|delete\)' "$f" 2>/dev/null; then
+        TOTAL=$((TOTAL + 1))
+        if grep -q 'audit' "$f" 2>/dev/null; then
+          COVERED=$((COVERED + 1))
+        else
+          echo "  Missing audit trail: $f"
+        fi
+      fi
+    done
+    echo "  Audit trail: $COVERED/$TOTAL route files"
+
+    echo ""
+    echo "--- Auth middleware coverage ---"
+    for f in server/routes/*.ts; do
+      if ! grep -q 'requireAuth\|authenticate\|verifyToken\|requireModule\|requireTier' "$f" 2>/dev/null; then
+        echo "  Unprotected: $f"
+      fi
+    done
+    echo "  Compliance check complete"
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # DATABASE (Neon)
+  # ─────────────────────────────────────────────────────────────────────────
+  db-migrate)
+    echo "Running database migrations..."
+    cd "$REPO_ROOT"
+    if [ -n "$DATABASE_URL" ]; then
+      for migration in db/migrations/*.sql; do
+        echo "  Applying: $migration"
+        psql "$DATABASE_URL" -f "$migration" 2>/dev/null || echo "  (skipped or already applied)"
+      done
+    else
+      echo "ERROR: DATABASE_URL not set"
+      exit 1
+    fi
+    ;;
+
+  db-branch)
+    echo "Creating Neon preview branch..."
+    BRANCH_NAME="preview-$(git branch --show-current 2>/dev/null || echo 'dev')"
+    if command -v neonctl &>/dev/null; then
+      neonctl branches create --name "$BRANCH_NAME" --parent "${NEON_PROD_BRANCH:-main}"
+    else
+      echo "neonctl not installed. Run: npm install -g neonctl"
+    fi
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # AI PROMPT QUALITY
+  # ─────────────────────────────────────────────────────────────────────────
+  check-prompts)
+    echo "Checking AI prompt quality..."
+    cd "$REPO_ROOT"
+
+    for f in server/services/module-intelligence.ts server/services/lumen-instruction-engine.ts server/services/lumen-context-builder.ts; do
+      if [ -f "$f" ]; then
+        COUNT=$(grep -c 'system.*prompt\|systemPrompt\|role.*system\|SYSTEM_PROMPT' "$f" 2>/dev/null || echo 0)
+        LINES=$(wc -l < "$f")
+        echo "  $f: $LINES lines, $COUNT prompt refs"
+      fi
+    done
+
+    echo ""
+    echo "--- Hallucination guardrails ---"
+    if grep -rqn 'hallucination\|source.grounding\|citation.enforcement\|claim.verification' server/services/ --include="*.ts" 2>/dev/null; then
+      echo "  OK: Hallucination guardrails present"
+    else
+      echo "  WARNING: No hallucination detection found"
+    fi
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # FULL AUDIT
+  # ─────────────────────────────────────────────────────────────────────────
+  full-audit)
+    echo "Running full C2C audit..."
+    echo ""
+    "$0" typecheck
+    echo ""
+    "$0" validate "$REPO_ROOT/ectd" "$REPO_ROOT/ectd-stubs"
+    echo ""
+    "$0" security-audit
+    echo ""
+    "$0" check-compliance
+    echo ""
+    "$0" check-prompts
+    echo ""
+    echo "Full audit complete. Check ./reports/ for detailed results."
+    ;;
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # HELP
+  # ─────────────────────────────────────────────────────────────────────────
+  help|*)
+    cat <<'EOF'
+c2c-agent — Concept2Cure Codespace Agent CLI
+
+REGULATORY
+  validate [paths...]       Scan eCTD directories for compliance issues
+
+CODE QUALITY
+  typecheck                 Run TypeScript type check (tsc --noEmit)
+
+SECURITY
+  security-audit            Run secret scan + ZDR check + npm audit
+  verify-zero-retention     Verify Zero Data Retention compliance
+
+COMPLIANCE
+  check-compliance          Check 21 CFR Part 11 markers (audit trails, auth)
+
+DATABASE (Neon)
+  db-migrate                Apply pending SQL migrations
+  db-branch                 Create a Neon preview branch
+
+AI QUALITY
+  check-prompts             Validate prompt quality and guardrails
+
+UTILITIES
+  full-audit                Run all checks in sequence
+  help                      Show this help
+EOF
+    ;;
+
+esac
