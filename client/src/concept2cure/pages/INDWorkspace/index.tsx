@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -30,6 +31,10 @@ import {
   Search,
   Filter,
   BarChart3,
+  Play,
+  ArrowRight,
+  Lock,
+  Save,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -674,27 +679,132 @@ const SectionRow: React.FC<{
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// API DATA ADAPTER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Adapt API response sections to local CTDSection format.
+ * The API returns enriched sections with liveStatus/documents — map those into
+ * the status field the UI components already expect.
+ */
+function adaptApiSections(modules: any[]): CTDSection[] {
+  return modules.map((m: any) => {
+    const section: CTDSection = {
+      code: m.code,
+      title: m.title,
+      module: m.module,
+      required: m.required ?? false,
+      aiDraftable: m.aiDraftable ?? false,
+      status: m.liveStatus || m.status || 'not_started',
+      role: m.role || '',
+      estimatedHours: m.estimatedHours ?? 0,
+    };
+    if (m.children && m.children.length > 0) {
+      section.children = adaptApiSections(m.children);
+    }
+    return section;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
+  projectId,
   projectName = 'IND Application',
   onOpenSection,
   onDraftWithAI,
   onNavigateToCoAuthor,
 }) => {
+  // Fetch live sections from API (falls back to static IND_MODULES)
+  const numericProjectId = projectId ? parseInt(String(projectId).replace(/^proj_/, ''), 10) : 0;
+  const { data: apiData } = useQuery({
+    queryKey: ['ind-sections', numericProjectId],
+    queryFn: async () => {
+      const url = numericProjectId
+        ? `/api/ind-sections?project_id=${numericProjectId}`
+        : '/api/ind-sections';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load IND sections');
+      return res.json();
+    },
+    staleTime: 30_000, // 30s — sections don't change rapidly
+    retry: 1,
+  });
+
+  // Merge API data with static fallback
+  const modules: CTDSection[] = useMemo(() => {
+    if (apiData?.modules) return adaptApiSections(apiData.modules);
+    return IND_MODULES;
+  }, [apiData]);
+
   const [expandedSet, setExpandedSet] = useState<Set<string>>(new Set(['m1', 'm2', 'm3']));
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [filter, setFilter] = useState<ViewFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Mutation: Section status transitions
+  const queryClient = useQueryClient();
+  const statusMutation = useMutation({
+    mutationFn: async ({
+      code,
+      newStatus,
+      reason,
+    }: {
+      code: string;
+      newStatus: string;
+      reason?: string;
+    }) => {
+      const res = await fetch(`/api/project-sections/${encodeURIComponent(code)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: numericProjectId,
+          new_status: newStatus,
+          reason,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || 'Failed to update status');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ind-sections', numericProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-sections', numericProjectId] });
+    },
+  });
+
+  // Available status transitions per current status
+  const getNextActions = useCallback(
+    (status: SectionStatus): { label: string; status: string; icon: typeof Play }[] => {
+      const map: Record<string, { label: string; status: string; icon: typeof Play }[]> = {
+        not_started: [
+          { label: 'Start Drafting', status: 'drafting', icon: Play },
+          { label: 'Gather Data', status: 'data_gathering', icon: Search },
+        ],
+        drafting: [{ label: 'Submit for Review', status: 'internal_review', icon: ArrowRight }],
+        review: [
+          { label: 'Approve', status: 'approved', icon: CheckCircle2 },
+          { label: 'Request Revision', status: 'revision', icon: ArrowRight },
+        ],
+        approved: [{ label: 'Lock for Submission', status: 'locked', icon: Lock }],
+        locked: [],
+      };
+      return map[status] || [];
+    },
+    []
+  );
+
   // Counts
-  const allSections = useMemo(() => flattenSections(IND_MODULES), []);
+  const allSections = useMemo(() => flattenSections(modules), [modules]);
   const leafSections = useMemo(
     () => allSections.filter(s => !s.children || s.children.length === 0),
     [allSections]
   );
-  const counts = useMemo(() => countByStatus(IND_MODULES), []);
+  const counts = useMemo(() => countByStatus(modules), [modules]);
   const totalLeaves = leafSections.length;
   const requiredLeaves = leafSections.filter(s => s.required).length;
   const aiDraftableLeaves = leafSections.filter(s => s.aiDraftable).length;
@@ -704,7 +814,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
 
   // Filter sections
   const filteredModules = useMemo(() => {
-    if (filter === 'all' && !searchQuery) return IND_MODULES;
+    if (filter === 'all' && !searchQuery) return modules;
 
     const filterFn = (s: CTDSection): boolean => {
       const matchesSearch =
@@ -736,8 +846,8 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
         .filter(Boolean) as CTDSection[];
     };
 
-    return filterTree(IND_MODULES);
-  }, [filter, searchQuery]);
+    return filterTree(modules);
+  }, [filter, searchQuery, modules]);
 
   const handleToggle = useCallback((code: string) => {
     setExpandedSet(prev => {
@@ -802,7 +912,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
 
         {/* Module progress bars */}
         <div className="grid grid-cols-5 gap-4 mt-4">
-          {IND_MODULES.map(mod => (
+          {modules.map(mod => (
             <div key={mod.code}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] font-medium text-zinc-600 truncate">
@@ -945,6 +1055,27 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Status transition actions */}
+                  {getNextActions(section.status).map(action => {
+                    const ActionIcon = action.icon;
+                    return (
+                      <button
+                        key={action.status}
+                        onClick={() =>
+                          statusMutation.mutate({
+                            code: section.code,
+                            newStatus: action.status,
+                          })
+                        }
+                        disabled={statusMutation.isPending}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                      >
+                        <ActionIcon className="w-3.5 h-3.5" />
+                        {action.label}
+                      </button>
+                    );
+                  })}
+
                   {section.aiDraftable && (
                     <button
                       onClick={() => onDraftWithAI?.(section.code, section.title)}
@@ -969,8 +1100,15 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   </button>
                 </div>
               </div>
-              <div className="mt-1 text-xs text-zinc-500">
-                Role: {section.role} • Est. {section.estimatedHours}h • Module {section.module}
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-xs text-zinc-500">
+                  Role: {section.role} • Est. {section.estimatedHours}h • Module {section.module}
+                </span>
+                {statusMutation.isError && (
+                  <span className="text-xs text-red-500">
+                    {statusMutation.error?.message || 'Status update failed'}
+                  </span>
+                )}
               </div>
             </div>
           );

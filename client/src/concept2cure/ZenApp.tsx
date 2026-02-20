@@ -104,7 +104,8 @@ type LayoutMode =
   | 'ctd'
   | 'mission-control'
   | 'rules'
-  | 'ind-workspace';
+  | 'ind-workspace'
+  | 'submission-workspace';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -557,6 +558,25 @@ export const ZenApp: React.FC = () => {
     auditStatus: 'Audit trail active',
   };
 
+  // Dynamic workspace label based on active project's submission type
+  const submissionWorkspaceLabel = useMemo(() => {
+    const subType = activeProject?.type?.toUpperCase();
+    switch (subType) {
+      case '510K':
+      case '510(K)':
+        return '510(k) Filing';
+      case 'NDA':
+        return 'NDA Filing';
+      case 'BLA':
+        return 'BLA Filing';
+      case 'PMA':
+        return 'PMA Filing';
+      case 'IND':
+      default:
+        return 'IND Filing';
+    }
+  }, [activeProject?.type]);
+
   const layoutModes: {
     id: LayoutMode;
     label: string;
@@ -570,7 +590,7 @@ export const ZenApp: React.FC = () => {
     { id: 'audit', label: 'Audit' },
     { id: 'ctd', label: 'CTD' },
     { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
-    { id: 'ind-workspace' as LayoutMode, label: 'IND Filing', icon: FileText },
+    { id: 'ind-workspace' as LayoutMode, label: submissionWorkspaceLabel, icon: FileText },
   ];
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
@@ -1045,7 +1065,16 @@ export const ZenApp: React.FC = () => {
                   projectName={activeProject?.name}
                   submissionType={activeProject?.type}
                   threadId={activeThreadId}
-                  onThreadChange={handleThreadChange}
+                  initialMessage={
+                    pendingDraftSection
+                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
+                      : null
+                  }
+                  onThreadChange={tid => {
+                    handleThreadChange(tid);
+                    // Clear pending draft after it's been sent
+                    if (pendingDraftSection) setPendingDraftSection(null);
+                  }}
                 />
               </div>
 

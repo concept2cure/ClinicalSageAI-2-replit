@@ -172,7 +172,7 @@ function ensureChatGateway() {
  */
 router.post('/chat', async (req: Request, res: Response) => {
   try {
-    const { message, thread_id, project_id, submission_type, system_prompt, stream } =
+    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
       req.body || {};
 
     if (!message || typeof message !== 'string') {
@@ -192,13 +192,14 @@ router.post('/chat', async (req: Request, res: Response) => {
       numericProjectId = parseInt(cleaned, 10) || undefined;
     }
 
-    // Build context-aware system prompt
+    // Build context-aware system prompt (with optional section-specific guidance)
     const { systemPrompt, context } = await buildContextAwarePrompt({
       projectId: numericProjectId,
       organizationId,
       userId,
       submissionType: submission_type,
       customSystemPrompt: system_prompt,
+      sectionCode: section_code || undefined,
     });
 
     // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
@@ -223,7 +224,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         ];
 
         logger.info(
-          `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'})`
+          `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'}, section=${section_code || 'none'})`
         );
 
         const gwResponse: GatewayResponse = await gw.route({
@@ -271,6 +272,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         progress: context.project?.progress || null,
         documentsTotal: context.documents?.totalDocuments || 0,
         documentsCompleted: context.documents?.completedDocuments || 0,
+        sectionCode: section_code || null,
       },
     });
   } catch (error: any) {
@@ -280,6 +282,64 @@ router.post('/chat', async (req: Request, res: Response) => {
       code: 'CHAT_ERROR',
       message: error.message,
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAVE DRAFT — Persist AI-generated content as a tagged artifact
+// POST /api/cortex/save-draft
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/save-draft', async (req: Request, res: Response) => {
+  try {
+    const { project_id, section_code, title, content, status } = req.body || {};
+
+    if (!project_id || !section_code || !content) {
+      return res.status(400).json({
+        error: 'project_id, section_code, and content are required',
+      });
+    }
+
+    const organizationId =
+      parseInt((req as any).tenantContext?.organizationId, 10) ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+
+    const numericProjectId = parseInt(String(project_id).replace(/^proj_/, ''), 10);
+    if (!numericProjectId) {
+      return res.status(400).json({ error: 'Invalid project_id' });
+    }
+
+    // Lazy-import to avoid circular deps
+    const { tagArtifact } = await import('../services/artifact-tagger.js');
+
+    const result = await tagArtifact({
+      projectId: numericProjectId,
+      organizationId,
+      userId: userId || undefined,
+      sectionCode: section_code,
+      title: title || `Draft: ${section_code}`,
+      content,
+      status: status || 'draft',
+      source: 'lumen_cortex',
+      metadata: { savedVia: 'cortex-save-draft' },
+    });
+
+    logger.info(
+      `[SaveDraft] Artifact ${result.isNew ? 'created' : 'updated'}: ${result.artifactId} for section ${section_code}`
+    );
+
+    res.json({
+      success: true,
+      artifactId: result.artifactId,
+      sectionCode: result.sectionCode,
+      isNew: result.isNew,
+      sectionStatusUpdated: result.sectionStatusUpdated,
+    });
+  } catch (error: any) {
+    logger.error(`[SaveDraft] Error: ${error.message}`);
+    res.status(500).json({ error: 'Failed to save draft' });
   }
 });
 

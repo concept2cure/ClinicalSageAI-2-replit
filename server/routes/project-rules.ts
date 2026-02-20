@@ -405,6 +405,13 @@ router.post('/:ruleId/test', async (req: Request, res: Response) => {
 // GET /api/project-rules/executions — Execution log
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Alias: frontend calls /logs (shorthand)
+router.get('/logs', (req: Request, res: Response, next: Function) => {
+  req.url =
+    '/executions/log' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
+  router.handle(req, res, next);
+});
+
 router.get('/executions/log', async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
@@ -467,6 +474,12 @@ router.get('/executions/log', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/templates — Built-in rule templates
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Alias: frontend calls /templates (shorthand)
+router.get('/templates', (req: Request, res: Response, next: Function) => {
+  req.url = '/templates/catalog';
+  router.handle(req, res, next);
+});
 
 router.get('/templates/catalog', async (_req: Request, res: Response) => {
   const templates = [

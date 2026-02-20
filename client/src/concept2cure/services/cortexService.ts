@@ -305,6 +305,7 @@ export class CortexService {
     projectId?: string;
     submissionType?: string;
     systemPrompt?: string;
+    sectionCode?: string;
     stream?: boolean;
   }): Promise<{
     response: string;
@@ -325,6 +326,7 @@ export class CortexService {
           project_id: params.projectId,
           submission_type: params.submissionType,
           system_prompt: params.systemPrompt,
+          section_code: params.sectionCode,
           stream: params.stream ?? false,
         }),
         signal: this.abortController.signal,
@@ -386,6 +388,7 @@ export class CortexService {
     projectId?: string;
     submissionType?: string;
     systemPrompt?: string;
+    sectionCode?: string;
     onChunk: (chunk: string) => void;
     onComplete: (response: { threadId: string; artifacts?: CortexArtifact[] }) => void;
     onError: (error: Error) => void;
@@ -402,6 +405,7 @@ export class CortexService {
           project_id: params.projectId,
           submission_type: params.submissionType,
           system_prompt: params.systemPrompt,
+          section_code: params.sectionCode,
           stream: true,
         }),
         signal: this.abortController.signal,

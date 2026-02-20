@@ -827,6 +827,26 @@ try {
   console.error('❌ Failed to mount eCTD Validation routes:', error);
 }
 
+// Mount IND Sections API (live CTD section map with document status)
+try {
+  const indSectionsModule = await import('./routes/ind-sections.ts');
+  const indSectionsRoutes = indSectionsModule.default;
+  app.use('/api/ind-sections', indSectionsRoutes);
+  console.log('✅ IND Sections API routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount IND Sections routes:', error);
+}
+
+// Mount Project Sections API (section tracking, assignments, comments, audit trail)
+try {
+  const projectSectionsModule = await import('./routes/project-sections.ts');
+  const projectSectionsRoutes = projectSectionsModule.default;
+  app.use('/api/project-sections', projectSectionsRoutes);
+  console.log('✅ Project Sections API routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount Project Sections routes:', error);
+}
+
 // Mount Document Data Center routes (integrated vault + 3-axis tagging for 510(k) file management)
 try {
   const documentDataCenterModule = await import('./routes/document-data-center.js');

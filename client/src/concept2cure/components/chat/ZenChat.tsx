@@ -6,7 +6,7 @@
  * @description
  * Claude.ai / ChatGPT style conversational interface.
  * Clean, focused, breathing room for thinking.
- * 
+ *
  * Now connected to Lumen Cortex backend for real AI responses.
  *
  * Design Philosophy:
@@ -69,6 +69,8 @@ interface ZenChatProps {
   projectName?: string;
   submissionType?: string;
   threadId?: string;
+  /** Auto-send this message on mount (e.g., from IND Workspace "Draft with AI") */
+  initialMessage?: string | null;
   onNewArtifact?: (artifact: CortexArtifact) => void;
   onThreadChange?: (threadId: string) => void;
 }
@@ -118,20 +120,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
     const urlRegex = /(https?:\/\/[^\s)]+)/g;
     const urls = message.content.match(urlRegex) || [];
-    urls.forEach((href) => {
-      if (!links.some((l) => l.href === href)) {
+    urls.forEach(href => {
+      if (!links.some(l => l.href === href)) {
         const label = href.replace(/^https?:\/\//, '').split('/')[0];
         links.push({ href, label });
       }
     });
 
-    const internalRegex = /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
+    const internalRegex =
+      /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
     const internalMatches = message.content.match(internalRegex) || [];
     internalMatches
-      .map((raw) => raw.trim())
-      .forEach((raw) => {
+      .map(raw => raw.trim())
+      .forEach(raw => {
         const href = raw.startsWith('/') ? raw : raw.slice(1);
-        if (!links.some((l) => l.href === href)) {
+        if (!links.some(l => l.href === href)) {
           links.push({ href, label: `Open ${href}` });
         }
       });
@@ -161,9 +164,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm',
-              isUser
-                ? 'bg-zinc-900'
-                : 'bg-gradient-to-br from-violet-500 to-violet-600'
+              isUser ? 'bg-zinc-900' : 'bg-gradient-to-br from-violet-500 to-violet-600'
             )}
           >
             {isUser ? (
@@ -198,7 +199,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {message.attachments.map((attachment) => (
+                {message.attachments.map(attachment => (
                   <div
                     key={attachment.id}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg text-sm text-zinc-600"
@@ -213,7 +214,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Actions - appear on hover */}
             {!message.isStreaming && actionLinks.length > 0 && !isUser && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {actionLinks.map((link) => (
+                {actionLinks.map(link => (
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
@@ -321,9 +322,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
         <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-md shadow-violet-500/20">
           <Sparkles className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
-          How can I help today?
-        </h1>
+        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">How can I help today?</h1>
         <p className="text-sm text-zinc-500 max-w-md">
           I'm Lumen, your regulatory intelligence assistant.
         </p>
@@ -420,7 +419,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <textarea
             ref={textareaRef}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -495,6 +494,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   projectName: _projectName,
   submissionType,
   threadId: initialThreadId,
+  initialMessage,
   onNewArtifact,
   onThreadChange,
 }) => {
@@ -524,7 +524,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Convert Cortex messages to local format
-  const messages: Message[] = cortexMessages.map((m) => ({
+  const messages: Message[] = cortexMessages.map(m => ({
     id: m.id,
     role: m.role as 'user' | 'assistant',
     content: m.content,
@@ -534,9 +534,10 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   }));
 
   // Add streaming indicator if active
-  const displayMessages = isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
-    ? messages.map((m, i) => i === messages.length - 1 ? { ...m, isStreaming: true } : m)
-    : messages;
+  const displayMessages =
+    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+      ? messages.map((m, i) => (i === messages.length - 1 ? { ...m, isStreaming: true } : m))
+      : messages;
 
   // Refs
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -609,6 +610,15 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     setInput(text);
   };
 
+  // Auto-send initial message (e.g., from IND Workspace → Draft with AI)
+  const initialMessageSentRef = useRef(false);
+  useEffect(() => {
+    if (initialMessage && !initialMessageSentRef.current && !isLoading && !isStreaming) {
+      initialMessageSentRef.current = true;
+      streamMessage(initialMessage);
+    }
+  }, [initialMessage, isLoading, isStreaming, streamMessage]);
+
   // Show welcome screen if no messages
   const showWelcome = displayMessages.length === 0;
 
@@ -640,13 +650,13 @@ export const ZenChat: React.FC<ZenChatProps> = ({
           <WelcomeScreen onSuggestionClick={handleSuggestionClick} />
         ) : (
           <div className="py-4">
-            {displayMessages.map((message) => (
+            {displayMessages.map(message => (
               <MessageBubble
                 key={message.id}
                 message={message}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? () => {} : undefined}
-                onFeedback={(positive) =>
+                onFeedback={positive =>
                   console.log('Feedback:', positive ? 'positive' : 'negative')
                 }
                 onNavigate={handleNavigate}
@@ -658,10 +668,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       </div>
 
       {/* Scroll to bottom button */}
-      <ScrollToBottomButton
-        visible={showScrollButton}
-        onClick={() => scrollToBottom()}
-      />
+      <ScrollToBottomButton visible={showScrollButton} onClick={() => scrollToBottom()} />
 
       {/* Input area */}
       <ChatInput
