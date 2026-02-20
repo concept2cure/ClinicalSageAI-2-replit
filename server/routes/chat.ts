@@ -12,6 +12,11 @@ import { Router, Request, Response } from 'express';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import { pool } from '../db.js';
+import {
+  getOrCreateThread,
+  getThreadMessages,
+  saveChatMessage as saveMessage,
+} from '../services/chat-thread-helpers.js';
 
 const router = Router();
 
@@ -29,44 +34,6 @@ function ensureGateway() {
 }
 
 const isDev = process.env.NODE_ENV !== 'production';
-
-// DB-backed thread helpers
-async function getOrCreateThread(threadId: string | null, userId?: number): Promise<string> {
-  if (threadId) {
-    const existing = await pool.query('SELECT id FROM chat_threads WHERE id = $1', [threadId]);
-    if (existing.rows.length > 0) return threadId;
-  }
-  const newId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  await pool.query(
-    'INSERT INTO chat_threads (id, user_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
-    [newId, userId || null]
-  );
-  return newId;
-}
-
-async function getThreadMessages(
-  threadId: string
-): Promise<Array<{ role: string; content: string }>> {
-  const result = await pool.query(
-    'SELECT role, content FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
-    [threadId]
-  );
-  return result.rows;
-}
-
-async function saveMessage(
-  threadId: string,
-  role: string,
-  content: string,
-  model?: string,
-  tokens?: number
-) {
-  await pool.query(
-    'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
-    [threadId, role, content, model || null, tokens || 0]
-  );
-  await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
-}
 
 // System prompt for regulatory AI assistant
 const REGULATORY_SYSTEM_PROMPT = `You are Lumen Cortex, an expert AI assistant for regulatory affairs in the life sciences industry. You specialize in:

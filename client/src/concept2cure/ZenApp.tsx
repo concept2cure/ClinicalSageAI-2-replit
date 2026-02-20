@@ -58,6 +58,7 @@ import {
   Compass,
   Loader2,
   Target,
+  FileText,
 } from 'lucide-react';
 
 // Lazy load the Convergent Canvas for the Sherpa System
@@ -71,6 +72,11 @@ const MissionControl = lazy(() =>
 );
 const RulesManager = lazy(() =>
   import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
+);
+
+// Lazy load IND Workspace (eCTD filing hub)
+const INDWorkspace = lazy(() =>
+  import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -96,7 +102,8 @@ type LayoutMode =
   | 'audit'
   | 'ctd'
   | 'mission-control'
-  | 'rules';
+  | 'rules'
+  | 'ind-workspace';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -311,6 +318,12 @@ export const ZenApp: React.FC = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
+
+  // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
+  const [pendingDraftSection, setPendingDraftSection] = useState<{
+    code: string;
+    title: string;
+  } | null>(null);
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -556,6 +569,7 @@ export const ZenApp: React.FC = () => {
     { id: 'audit', label: 'Audit' },
     { id: 'ctd', label: 'CTD' },
     { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
+    { id: 'ind-workspace' as LayoutMode, label: 'IND Filing', icon: FileText },
   ];
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
@@ -971,6 +985,38 @@ export const ZenApp: React.FC = () => {
               }
             >
               <MissionControl />
+            </Suspense>
+          )}
+
+          {/* IND Filing Workspace */}
+          {layoutMode === 'ind-workspace' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading IND Workspace...</p>
+                  </div>
+                </div>
+              }
+            >
+              <INDWorkspace
+                projectId={activeProjectId}
+                projectName={activeProject?.name || 'Untitled Project'}
+                submissionType={activeProject?.type || 'IND'}
+                onOpenSection={sectionCode => {
+                  // Navigate to CoAuthor/editor with the section context
+                  // TODO: pass sectionCode to CoAuthor to open the correct document
+                  console.log(`[IND] Opening section ${sectionCode} in editor`);
+                  setLayoutMode('editor');
+                }}
+                onDraftWithAI={(sectionCode, sectionTitle) => {
+                  // Store section context so ZenChat can auto-populate the draft request
+                  setPendingDraftSection({ code: sectionCode, title: sectionTitle });
+                  setLayoutMode('assistant');
+                }}
+                onNavigateToCoAuthor={() => setLayoutMode('editor')}
+              />
             </Suspense>
           )}
 

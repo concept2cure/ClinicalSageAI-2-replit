@@ -817,6 +817,16 @@ try {
   console.error('❌ Failed to mount eCTD Documents routes:', error);
 }
 
+// Mount eCTD 4.0 Validation & Backbone routes
+try {
+  const ectdValidateModule = await import('./routes/ectd-validate.ts');
+  const ectdValidateRoutes = ectdValidateModule.default;
+  app.use('/api/ectd-validate', ectdValidateRoutes);
+  console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Validation routes:', error);
+}
+
 // Mount Document Data Center routes (integrated vault + 3-axis tagging for 510(k) file management)
 try {
   const documentDataCenterModule = await import('./routes/document-data-center.js');
