@@ -1,6 +1,5 @@
 import express from 'express';
 import { z } from 'zod';
-import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { pool } from '../db';
@@ -8,12 +7,7 @@ import { getGateway } from '../services/ai-gateway';
 
 const router = express.Router();
 
-// Validate the presence of API key
-async function validateOpenAIKey() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
-  }
-}
+// Note: API key validation is handled by the AI Gateway (supports multiple providers + demo mode)
 
 // Schema for validating FAERS data request
 const faersDataRequestSchema = z.object({
@@ -190,10 +184,8 @@ function organizeFaersDataForReport(faersData: any) {
   };
 }
 
-// Generate a CER report using OpenAI API
+// Generate a CER report using AI Gateway
 async function generateCERNarrative(faersData: any, productName?: string) {
-  await validateOpenAIKey();
-
   const organizationData = organizeFaersDataForReport(faersData);
   const displayName =
     productName ||

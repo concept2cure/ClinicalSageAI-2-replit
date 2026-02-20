@@ -8,13 +8,11 @@
  * with EU MDR, FDA 21 CFR 812, and ISO 14155 requirements.
  */
 
-const { OpenAI } = require('openai'); // kept for type reference only
-
 // AI Gateway integration — centralised LLM routing, audit & policy
 let _gateway = null;
 async function getGatewayInstance() {
   if (!_gateway) {
-    const mod = await import('../../services/ai-gateway/index.ts');
+    const mod = await import('../../services/ai-gateway/index.js');
     _gateway = mod.getGateway();
   }
   return _gateway;

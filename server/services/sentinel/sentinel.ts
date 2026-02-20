@@ -140,16 +140,16 @@ export class AISentinel {
     const findings: SentinelFinding[] = [];
     const warningDays = config.thresholds.deadlineWarningDays;
 
-    // Projects approaching deadline
+    // Projects approaching deadline (parameterized to prevent SQL injection)
     const projectsResult = await this.pool.query(
       `SELECT id, name, status, target_end_date, progress, risk_level, depth, parent_project_id
        FROM projects
        WHERE organization_id = $1
          AND status NOT IN ('completed', 'archived')
          AND target_end_date IS NOT NULL
-         AND target_end_date <= NOW() + INTERVAL '${warningDays} days'
+         AND target_end_date <= NOW() + make_interval(days => $2)
        ORDER BY target_end_date ASC`,
-      [orgId]
+      [orgId, warningDays]
     );
 
     for (const proj of projectsResult.rows) {

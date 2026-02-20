@@ -144,45 +144,98 @@ export class ProjectRollupService {
     }
 
     // Compute rollups bottom-up (post-order traversal)
+    // Pre-fetch task and module counts in bulk to avoid N+1 queries
+    const allNodeIds = Array.from(nodeMap.keys());
+    const [taskCountsMap, moduleCountsMap] = await Promise.all([
+      this.batchFetchTaskCounts(allNodeIds),
+      this.batchFetchModuleCounts(allNodeIds),
+    ]);
+
     const rootNode = nodeMap.get(projectId)!;
-    await this.computeRollupRecursive(rootNode, organizationId);
+    this.computeRollupFromCache(rootNode, taskCountsMap, moduleCountsMap);
+
+    // Persist rollups for all nodes
+    await this.persistRollups(nodeMap);
 
     return rootNode;
   }
 
   /**
-   * Compute rollup metrics for a node and all its descendants (post-order).
+   * Fetch task counts for all project IDs in a single query.
    */
-  private async computeRollupRecursive(
-    node: ProjectTreeNode,
-    organizationId: number
-  ): Promise<RollupMetrics> {
-    // First, recurse into children
-    const childRollups: RollupMetrics[] = [];
-    for (const child of node.children) {
-      childRollups.push(await this.computeRollupRecursive(child, organizationId));
-    }
+  private async batchFetchTaskCounts(
+    projectIds: number[]
+  ): Promise<Map<number, { total: number; completed: number; blocked: number; overdue: number }>> {
+    const map = new Map<
+      number,
+      { total: number; completed: number; blocked: number; overdue: number }
+    >();
+    if (projectIds.length === 0) return map;
 
-    // Get task counts for this specific project
-    const taskResult = await this.pool.query(
+    const result = await this.pool.query(
       `SELECT
+         project_id,
          COUNT(*)::int as total,
          COUNT(*) FILTER (WHERE status = 'done')::int as completed,
          COUNT(*) FILTER (WHERE status = 'blocked')::int as blocked,
          COUNT(*) FILTER (WHERE status != 'done' AND due_date < NOW())::int as overdue
        FROM unified_tasks
-       WHERE project_id = $1`,
-      [node.id]
+       WHERE project_id = ANY($1)
+       GROUP BY project_id`,
+      [projectIds]
     );
 
-    const tasks = taskResult.rows[0] || { total: 0, completed: 0, blocked: 0, overdue: 0 };
+    for (const row of result.rows) {
+      map.set(row.project_id, {
+        total: row.total,
+        completed: row.completed,
+        blocked: row.blocked,
+        overdue: row.overdue,
+      });
+    }
+    return map;
+  }
 
-    // Get module count for this project
-    const moduleResult = await this.pool.query(
-      `SELECT COUNT(*)::int as count FROM project_modules WHERE project_id = $1`,
-      [node.id]
+  /**
+   * Fetch module counts for all project IDs in a single query.
+   */
+  private async batchFetchModuleCounts(projectIds: number[]): Promise<Map<number, number>> {
+    const map = new Map<number, number>();
+    if (projectIds.length === 0) return map;
+
+    const result = await this.pool.query(
+      `SELECT project_id, COUNT(*)::int as count
+       FROM project_modules
+       WHERE project_id = ANY($1)
+       GROUP BY project_id`,
+      [projectIds]
     );
-    const moduleCount = moduleResult.rows[0]?.count || 0;
+
+    for (const row of result.rows) {
+      map.set(row.project_id, row.count);
+    }
+    return map;
+  }
+
+  /**
+   * Compute rollup metrics using pre-fetched data (no additional DB queries).
+   */
+  private computeRollupFromCache(
+    node: ProjectTreeNode,
+    taskCountsMap: Map<
+      number,
+      { total: number; completed: number; blocked: number; overdue: number }
+    >,
+    moduleCountsMap: Map<number, number>
+  ): RollupMetrics {
+    // First, recurse into children
+    const childRollups: RollupMetrics[] = [];
+    for (const child of node.children) {
+      childRollups.push(this.computeRollupFromCache(child, taskCountsMap, moduleCountsMap));
+    }
+
+    const tasks = taskCountsMap.get(node.id) || { total: 0, completed: 0, blocked: 0, overdue: 0 };
+    const moduleCount = moduleCountsMap.get(node.id) || 0;
 
     // Aggregate
     let rollup: RollupMetrics;
@@ -259,17 +312,38 @@ export class ProjectRollupService {
     }
 
     node.rollup = rollup;
-
-    // Persist rollup to project metadata for fast reads
-    await this.pool.query(
-      `UPDATE projects
-       SET metadata = COALESCE(metadata, '{}'::json)::jsonb || jsonb_build_object('rollup', $1::jsonb),
-           updated_at = NOW()
-       WHERE id = $2`,
-      [JSON.stringify(rollup), node.id]
-    );
-
     return rollup;
+  }
+
+  /**
+   * Persist rollup metadata for all nodes in a single batched update.
+   */
+  private async persistRollups(nodeMap: Map<number, ProjectTreeNode>): Promise<void> {
+    const updates: Array<{ id: number; rollup: RollupMetrics }> = [];
+    for (const [id, node] of nodeMap) {
+      if (node.rollup) {
+        updates.push({ id, rollup: node.rollup });
+      }
+    }
+    if (updates.length === 0) return;
+
+    // Use a single UPDATE ... FROM VALUES batch
+    const idParams: string[] = [];
+    const values: any[] = [];
+    for (let i = 0; i < updates.length; i++) {
+      const base = i * 2;
+      idParams.push(`($${base + 1}::int, $${base + 2}::jsonb)`);
+      values.push(updates[i].id, JSON.stringify(updates[i].rollup));
+    }
+
+    await this.pool.query(
+      `UPDATE projects AS p
+       SET metadata = COALESCE(p.metadata::jsonb, '{}'::jsonb) || jsonb_build_object('rollup', v.rollup_data),
+           updated_at = NOW()
+       FROM (VALUES ${idParams.join(', ')}) AS v(project_id, rollup_data)
+       WHERE p.id = v.project_id`,
+      values
+    );
   }
 
   /**

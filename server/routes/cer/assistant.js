@@ -13,7 +13,7 @@ const router = express.Router();
 let _gateway = null;
 async function getGatewayInstance() {
   if (!_gateway) {
-    const mod = await import('../../services/ai-gateway/index.ts');
+    const mod = await import('../../services/ai-gateway/index.js');
     _gateway = mod.getGateway();
   }
   return _gateway;

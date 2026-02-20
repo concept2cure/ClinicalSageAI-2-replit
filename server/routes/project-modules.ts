@@ -114,13 +114,18 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
 
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
+    if (!tenant.clientWorkspaceId) {
+      return res
+        .status(400)
+        .json({ error: 'Client workspace context is required to link modules' });
+    }
 
     const body = linkSchema.parse(req.body);
 
     const link = await projectModuleBridge.linkModule({
       projectId,
       organizationId: tenant.organizationId,
-      clientWorkspaceId: tenant.clientWorkspaceId!,
+      clientWorkspaceId: tenant.clientWorkspaceId,
       moduleType: body.moduleType as ModuleType,
       moduleInstanceId: body.moduleInstanceId,
       settings: body.settings,
@@ -148,13 +153,18 @@ router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
 
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
+    if (!tenant.clientWorkspaceId) {
+      return res
+        .status(400)
+        .json({ error: 'Client workspace context is required to link modules' });
+    }
 
     const body = bulkLinkSchema.parse(req.body);
 
     const links = await projectModuleBridge.bulkLink(
       projectId,
       tenant.organizationId,
-      tenant.clientWorkspaceId!,
+      tenant.clientWorkspaceId,
       body.modules as Array<{
         moduleType: ModuleType;
         moduleInstanceId: number;

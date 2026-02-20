@@ -70,6 +70,7 @@ router.get('/programs', async (req: Request, res: Response) => {
 
     const programs = await db
       .select()
+      // Cast required: Drizzle ORM type inference limitation with large (13K-line) schema
       .from(projects as any)
       .where(and(...conditions))
       .orderBy(asc((projects as any).name));
@@ -223,6 +224,31 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
     // Compute materialized path
     const childPath = parent.path ? `${parent.path}/${parentId}` : String(parentId);
+
+    // Enforce project quota before insert (same logic as atomicCreateProject)
+    const quotaResult = await pool.query(
+      `SELECT l.max_projects
+       FROM licenses l
+       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
+       WHERE cw.organization_id = $1 AND l.status = 'active'
+       LIMIT 1`,
+      [organizationId]
+    );
+    if (quotaResult.rows.length > 0) {
+      const maxProjects = quotaResult.rows[0].max_projects || 20;
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int as count FROM projects WHERE organization_id = $1`,
+        [organizationId]
+      );
+      const currentCount = countResult.rows[0].count;
+      if (currentCount >= maxProjects) {
+        return res.status(403).json({
+          error: 'QUOTA_EXCEEDED',
+          message: `Project quota exceeded. Current: ${currentCount}, Maximum: ${maxProjects}`,
+          details: { current: currentCount, maximum: maxProjects, remaining: 0 },
+        });
+      }
+    }
 
     // Insert child project
     const insertResult = await pool.query(

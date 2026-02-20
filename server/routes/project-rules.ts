@@ -437,11 +437,18 @@ router.get('/executions/log', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
-    // Total count for pagination
+    // Total count for pagination (parameterized to prevent SQL injection)
     let countQuery = `SELECT COUNT(*)::int as total FROM rule_execution_log WHERE organization_id = $1`;
     const countParams: any[] = [organizationId];
-    if (ruleId) countQuery += ` AND rule_id = '${ruleId}'`;
-    if (projectId) countQuery += ` AND project_id = ${projectId}`;
+    let countIdx = 2;
+    if (ruleId) {
+      countQuery += ` AND rule_id = $${countIdx++}`;
+      countParams.push(ruleId);
+    }
+    if (projectId) {
+      countQuery += ` AND project_id = $${countIdx++}`;
+      countParams.push(projectId);
+    }
 
     const countResult = await pool.query(countQuery, countParams);
 
