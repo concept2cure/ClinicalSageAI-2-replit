@@ -36,6 +36,7 @@ import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import type { IndustryMode } from './types/workspace';
+import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import {
   X,
   ChevronLeft,
@@ -958,17 +959,8 @@ export const ZenApp: React.FC = () => {
           )}
 
           {layoutMode === 'audit' && (
-            <div className="flex-1 p-8 bg-white overflow-y-auto">
-              <div className="max-w-3xl mx-auto">
-                <WorkflowTimeline
-                  steps={timelineSteps}
-                  currentStepId="step-authoring"
-                  progressPercent={50}
-                  assetState="REVIEW"
-                  workflowRunId={workflowRunId}
-                  showPhases
-                />
-              </div>
+            <div className="flex-1 overflow-y-auto bg-zinc-50">
+              <ProductAuditQuestionnaire />
             </div>
           )}
 
