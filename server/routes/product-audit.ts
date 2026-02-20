@@ -26,6 +26,11 @@ router.use(requireOrganizationContext);
 
 // In-memory storage for audit responses
 // Map<organizationId, AuditState>
+// 
+// WARNING: Data is not persisted and will be lost on server restart.
+// This is suitable for development and lightweight auditing only.
+// For production use, migrate to database storage to ensure data persistence
+// and proper audit trail compliance.
 const auditStore = new Map<number, AuditState>();
 
 /**
@@ -82,7 +87,7 @@ router.get('/responses', async (req: Request, res: Response) => {
       organizationId,
       responses: {},
       lastUpdated: new Date().toISOString(),
-      auditor: user?.email || 'unknown'
+      auditor: user?.email || 'system'
     };
     
     res.json({
@@ -121,7 +126,7 @@ router.post('/responses', async (req: Request, res: Response) => {
       organizationId,
       responses: {},
       lastUpdated: new Date().toISOString(),
-      auditor: user?.email || 'unknown'
+      auditor: user?.email || 'system'
     };
     
     // Merge new responses with existing ones
